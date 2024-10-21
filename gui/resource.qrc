@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="assets">
+    <file>assets/image/github.png</file>
+    <file>assets/image/uet.png</file>
+  </qresource>
+</RCC>
