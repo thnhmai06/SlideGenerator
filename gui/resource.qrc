@@ -1,5 +1,7 @@
 <RCC>
   <qresource prefix="assets">
+    <file>assets/image/guide.png</file>
+    <file>assets/image/about.png</file>
     <file>assets/image/github.png</file>
     <file>assets/image/uet.png</file>
   </qresource>
