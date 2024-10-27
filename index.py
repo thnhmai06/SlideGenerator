@@ -1,7 +1,18 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 import sys
 
-from gui import error, information, menu, progress
+try:
+    from gui import error, information, menu, progress
+except:
+    import create_gui_script
+    create_gui_script.UIconverter() # Chuyển .ui -> .py
+    create_gui_script.QRCconverter() # Chuyển .qrc -> .py
+
+    try:
+        from gui import error, information, menu, progress
+    except:
+        print("ERR: Khong the chuyen file UI thanh code")
+        sys.exit(1)
 app = QtWidgets.QApplication(sys.argv)
 window = QtWidgets.QMainWindow()
 
