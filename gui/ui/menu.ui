@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>MainWindow</class>
- <widget class="QMainWindow" name="MainWindow">
+ <class>menu</class>
+ <widget class="QMainWindow" name="menu">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -9,6 +9,18 @@
     <width>959</width>
     <height>867</height>
    </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>959</width>
+    <height>867</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>959</width>
+    <height>867</height>
+   </size>
   </property>
   <property name="cursor">
    <cursorShape>ArrowCursor</cursorShape>
@@ -20,8 +32,8 @@
    <string>Phần mềm tạo slide tốt nghiệp</string>
   </property>
   <property name="windowIcon">
-   <iconset>
-    <normaloff>uet80x80.png</normaloff>uet80x80.png</iconset>
+   <iconset resource="../resource.qrc">
+    <normaloff>:/main/uet</normaloff>:/main/uet</iconset>
   </property>
   <property name="whatsThis">
    <string/>
@@ -120,7 +132,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Chọn file Template &lt;/span&gt;(*.pptx)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Chọn file Template &lt;/span&gt;(.pptx)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
     </widget>
    </widget>
@@ -175,7 +187,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Chọn danh sách sinh viên &lt;/span&gt;(*.csv)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Chọn danh sách sinh viên &lt;/span&gt;(.csv)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
     </widget>
    </widget>
@@ -257,7 +269,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;img src=&quot;:/assets/assets/image/uet.png&quot;/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;img src=&quot;:/main/uet&quot;/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
    <widget class="QLabel" name="github">
@@ -270,7 +282,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;img src=&quot;:/assets/assets/image/github.png&quot;/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;img src=&quot;:/main/github&quot;/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
    <widget class="QGroupBox" name="config">
@@ -283,8 +295,156 @@
      </rect>
     </property>
     <property name="title">
-     <string>B3. Thiết lập</string>
+     <string>B3. Thiết lập thay thế</string>
     </property>
+    <widget class="QTableWidget" name="config_text_table">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>60</y>
+       <width>401</width>
+       <height>301</height>
+      </rect>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>401</width>
+       <height>301</height>
+      </size>
+     </property>
+     <column>
+      <property name="text">
+       <string>Placeholder</string>
+      </property>
+     </column>
+    </widget>
+    <widget class="QTableWidget" name="config_image_table">
+     <property name="geometry">
+      <rect>
+       <x>470</x>
+       <y>60</y>
+       <width>401</width>
+       <height>301</height>
+      </rect>
+     </property>
+     <column>
+      <property name="text">
+       <string>Ảnh mẫu đối chiếu</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Placeholder</string>
+      </property>
+     </column>
+    </widget>
+    <widget class="QLabel" name="config_text_label">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>30</y>
+       <width>401</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Text&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="config_image_label">
+     <property name="geometry">
+      <rect>
+       <x>470</x>
+       <y>30</y>
+       <width>401</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Hình ảnh&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="config_image_autodownload_label">
+     <property name="geometry">
+      <rect>
+       <x>470</x>
+       <y>370</y>
+       <width>211</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Hỗ trợ tự động download ảnh nếu là liên kết</string>
+     </property>
+    </widget>
+    <widget class="QToolButton" name="config_image_add_button">
+     <property name="geometry">
+      <rect>
+       <x>800</x>
+       <y>370</y>
+       <width>31</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>add</string>
+     </property>
+     <property name="icon">
+      <iconset resource="../resource.qrc">
+       <normaloff>:/main/add</normaloff>:/main/add</iconset>
+     </property>
+    </widget>
+    <widget class="QToolButton" name="config_image_remove_button">
+     <property name="geometry">
+      <rect>
+       <x>840</x>
+       <y>370</y>
+       <width>31</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>remove</string>
+     </property>
+     <property name="icon">
+      <iconset resource="../resource.qrc">
+       <normaloff>:/main/remove</normaloff>:/main/remove</iconset>
+     </property>
+    </widget>
+    <widget class="QToolButton" name="config_text_remove_button">
+     <property name="geometry">
+      <rect>
+       <x>390</x>
+       <y>370</y>
+       <width>31</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>remove</string>
+     </property>
+     <property name="icon">
+      <iconset resource="../resource.qrc">
+       <normaloff>:/main/remove</normaloff>:/main/remove</iconset>
+     </property>
+    </widget>
+    <widget class="QToolButton" name="config_text_add_button">
+     <property name="geometry">
+      <rect>
+       <x>350</x>
+       <y>370</y>
+       <width>31</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>add</string>
+     </property>
+     <property name="icon">
+      <iconset resource="../resource.qrc">
+       <normaloff>:/main/add</normaloff>:/main/add</iconset>
+     </property>
+    </widget>
    </widget>
    <widget class="QLabel" name="about">
     <property name="geometry">
@@ -296,7 +456,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;img src=&quot;:/assets/assets/image/about.png&quot;/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;img src=&quot;:/main/about&quot;/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
    <widget class="QLabel" name="guide">
@@ -309,14 +469,40 @@
      </rect>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;img src=&quot;:/assets/assets/image/guide.png&quot;/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;img src=&quot;:/main/guide&quot;/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="log_button">
+    <property name="geometry">
+     <rect>
+      <x>490</x>
+      <y>760</y>
+      <width>111</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Lưu lại log tạo Slide</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="log_path">
+    <property name="geometry">
+     <rect>
+      <x>490</x>
+      <y>790</y>
+      <width>101</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Mở vị trí lưu log</string>
     </property>
    </widget>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
  <resources>
-  <include location="resource.qrc"/>
+  <include location="../resource.qrc"/>
  </resources>
  <connections/>
 </ui>
