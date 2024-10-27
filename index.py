@@ -1,17 +1,21 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 import sys
 
+# Lấy UI
 try:
     from gui import error, information, menu, progress
-except:
+except: # UI chưa được chuyển thành code
     import create_gui_script
     create_gui_script.UIconverter() # Chuyển .ui -> .py
     create_gui_script.QRCconverter() # Chuyển .qrc -> .py
 
-    try:
+    try: # Thử lại
         from gui import error, information, menu, progress
-    except:
+    except Exception as err:
         print("ERR: Khong the chuyen file UI thanh code")
+        print(err)
+        print('\n')
+        input("Press Enter to continue...")
         sys.exit(1)
 app = QtWidgets.QApplication(sys.argv)
 window = QtWidgets.QMainWindow()
