@@ -207,7 +207,7 @@ class Ui_menu(object):
         item.setText(_translate("menu", "Ảnh mẫu đối chiếu"))
         self.config_text_label.setText(_translate("menu", "<html><head/><body><p align=\"center\"><span style=\" font-weight:600;\">Text (Placeholder)</span></p></body></html>"))
         self.config_image_label.setText(_translate("menu", "<html><head/><body><p align=\"center\"><span style=\" font-weight:600;\">Hình ảnh</span></p></body></html>"))
-        self.config_image_autodownload_label.setText(_translate("menu", "Hỗ trợ tự động download ảnh nếu là liên kết"))
+        self.config_image_autodownload_label.setText(_translate("menu", "Ảnh hỗ trợ tự động download nếu là liên kết"))
         __sortingEnabled = self.config_text_list.isSortingEnabled()
         self.config_text_list.setSortingEnabled(False)
         item = self.config_text_list.item(0)

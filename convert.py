@@ -1,4 +1,4 @@
-from src import convertUI
+from src.script import convertUI
 import sys
 
 try:

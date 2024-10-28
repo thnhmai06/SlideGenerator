@@ -1,6 +1,6 @@
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets
-from src import *
+from src.script import showUI
 
 app = QtWidgets.QApplication(sys.argv)
 window = QtWidgets.QMainWindow()
