@@ -26,7 +26,7 @@
    <string>Thông báo</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../resource.qrc">
+   <iconset resource="resource.qrc">
     <normaloff>:/notice/information</normaloff>:/notice/information</iconset>
   </property>
   <widget class="QLabel" name="image">
@@ -70,7 +70,7 @@
   </widget>
  </widget>
  <resources>
-  <include location="../resource.qrc"/>
+  <include location="resource.qrc"/>
  </resources>
  <connections/>
 </ui>

@@ -32,7 +32,7 @@
    <string>Phần mềm tạo slide tốt nghiệp</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../resource.qrc">
+   <iconset resource="resource.qrc">
     <normaloff>:/main/uet</normaloff>:/main/uet</iconset>
   </property>
   <property name="whatsThis">
@@ -390,7 +390,7 @@
       <string>add</string>
      </property>
      <property name="icon">
-      <iconset resource="../resource.qrc">
+      <iconset resource="resource.qrc">
        <normaloff>:/main/add</normaloff>:/main/add</iconset>
      </property>
     </widget>
@@ -407,7 +407,7 @@
       <string>remove</string>
      </property>
      <property name="icon">
-      <iconset resource="../resource.qrc">
+      <iconset resource="resource.qrc">
        <normaloff>:/main/remove</normaloff>:/main/remove</iconset>
      </property>
     </widget>
@@ -424,7 +424,7 @@
       <string>remove</string>
      </property>
      <property name="icon">
-      <iconset resource="../resource.qrc">
+      <iconset resource="resource.qrc">
        <normaloff>:/main/remove</normaloff>:/main/remove</iconset>
      </property>
     </widget>
@@ -441,7 +441,7 @@
       <string>add</string>
      </property>
      <property name="icon">
-      <iconset resource="../resource.qrc">
+      <iconset resource="resource.qrc">
        <normaloff>:/main/add</normaloff>:/main/add</iconset>
      </property>
     </widget>
@@ -502,7 +502,7 @@
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
  <resources>
-  <include location="../resource.qrc"/>
+  <include location="resource.qrc"/>
  </resources>
  <connections/>
 </ui>
