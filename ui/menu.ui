@@ -297,27 +297,6 @@
     <property name="title">
      <string>B3. Thiết lập thay thế</string>
     </property>
-    <widget class="QTableWidget" name="config_text_table">
-     <property name="geometry">
-      <rect>
-       <x>20</x>
-       <y>60</y>
-       <width>401</width>
-       <height>301</height>
-      </rect>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>401</width>
-       <height>301</height>
-      </size>
-     </property>
-     <column>
-      <property name="text">
-       <string>Placeholder</string>
-      </property>
-     </column>
-    </widget>
     <widget class="QTableWidget" name="config_image_table">
      <property name="geometry">
       <rect>
@@ -327,14 +306,47 @@
        <height>301</height>
       </rect>
      </property>
+     <property name="autoFillBackground">
+      <bool>false</bool>
+     </property>
+     <property name="gridStyle">
+      <enum>Qt::SolidLine</enum>
+     </property>
+     <attribute name="horizontalHeaderDefaultSectionSize">
+      <number>199</number>
+     </attribute>
+     <attribute name="horizontalHeaderHighlightSections">
+      <bool>true</bool>
+     </attribute>
+     <attribute name="horizontalHeaderShowSortIndicator" stdset="0">
+      <bool>false</bool>
+     </attribute>
+     <attribute name="horizontalHeaderStretchLastSection">
+      <bool>true</bool>
+     </attribute>
+     <attribute name="verticalHeaderVisible">
+      <bool>true</bool>
+     </attribute>
      <column>
       <property name="text">
        <string>Ảnh mẫu đối chiếu</string>
+      </property>
+      <property name="font">
+       <font>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
       </property>
      </column>
      <column>
       <property name="text">
        <string>Placeholder</string>
+      </property>
+      <property name="font">
+       <font>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
       </property>
      </column>
     </widget>
@@ -348,7 +360,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Text&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Text (Placeholder)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
     </widget>
     <widget class="QLabel" name="config_image_label">
@@ -444,6 +456,31 @@
       <iconset resource="resource.qrc">
        <normaloff>:/main/add</normaloff>:/main/add</iconset>
      </property>
+    </widget>
+    <widget class="QListWidget" name="config_text_list">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>60</y>
+       <width>401</width>
+       <height>301</height>
+      </rect>
+     </property>
+     <item>
+      <property name="text">
+       <string>{hoten}</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>{msv}</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>{nganh}</string>
+      </property>
+     </item>
     </widget>
    </widget>
    <widget class="QLabel" name="about">

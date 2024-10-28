@@ -1,11 +1,16 @@
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QHeaderView
 from src.ui import error, information, progress, menu
 
 #? Các hàm hiển thị UI
 def Menu(window):
-    # Xây dựng UI mẫu
-    menu.Ui_menu().setupUi(window)
+    ui = menu.Ui_menu()
+    ui.setupUi(window) # Xây dựng UI mẫu
+
+    #Thiết đặt config_image
+    # ui.config_image_add_button.clicked.emit()
+
     window.show()
 def Error(context):
     #Tạo mới app, window khác
