@@ -39,7 +39,7 @@ class Ui_error_notice(object):
         self.image.setText(_translate("error_notice", "<html><head/><body><p><img src=\":/notice/error\"/></p></body></html>"))
         self.okbutton.setText(_translate("error_notice", "OK"))
         self.label.setText(_translate("error_notice", "<html><head/><body><p><span style=\" font-size:12pt;\">Đã có lỗi xảy ra, vui lòng kiểm tra Console</span></p></body></html>"))
-import resource_rc
+
 
 
 if __name__ == "__main__":

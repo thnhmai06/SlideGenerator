@@ -39,7 +39,7 @@ class Ui_information_notice(object):
         self.image.setText(_translate("information_notice", "<html><head/><body><p><img src=\":/notice/information\"/></p></body></html>"))
         self.okbutton.setText(_translate("information_notice", "OK"))
         self.label.setText(_translate("information_notice", "<html><head/><body><p><span style=\" font-size:10pt; font-weight:600;\">Vui lòng cài đặt Microsoft PowerPoint (Office) <br/>để sử dụng phần mềm này!</span><br/></p></body></html>"))
-import resource_rc
+
 
 
 if __name__ == "__main__":
