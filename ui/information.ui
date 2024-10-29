@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>information_notice</class>
- <widget class="QDialog" name="information_notice">
+ <class>information</class>
+ <widget class="QDialog" name="information">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -46,7 +46,7 @@
    <property name="geometry">
     <rect>
      <x>170</x>
-     <y>90</y>
+     <y>100</y>
      <width>91</width>
      <height>31</height>
     </rect>
@@ -65,7 +65,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;Vui lòng cài đặt Microsoft PowerPoint (Office) &lt;br/&gt;để sử dụng phần mềm này!&lt;/span&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
  </widget>

@@ -8,9 +8,6 @@ def Menu(window):
     ui = menu.Ui_menu()
     ui.setupUi(window) # Xây dựng UI mẫu
 
-    #Thiết đặt config_image
-    # ui.config_image_add_button.clicked.emit()
-
     window.show()
 def Error(context):
     #Tạo mới app, window khác
@@ -18,15 +15,16 @@ def Error(context):
     popup_window = QtWidgets.QMainWindow()
     
     # Thiết đặt: UI
-    ui = error.Ui_error_notice()
+    ui = error.Ui_error()
     ui.setupUi(popup_window) # Xây dựng UI mẫu
     ui.okbutton.clicked.connect(popup_app.quit) # Nút OK sẽ đóng cửa sổ
 
+    #In ra lỗi ở phần Chi tiết
+    ui.details.setPlainText(context)
+    ui.details.setReadOnly(True)
+
     #Thiết đặt: window
     popup_window.show() # Xây dựng (Hiển thị) window
-
-    #In ra lỗi
-    print(f"ERROR: {context}")
 
     #Chạy hộp thoại
     sys.exit(popup_app.exec_())

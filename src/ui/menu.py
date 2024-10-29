@@ -193,7 +193,6 @@ class Ui_menu(object):
 
         _translate = QtCore.QCoreApplication.translate
         menu.setWindowTitle(_translate("menu", "Phần mềm tạo slide tốt nghiệp"))
-        self.title.setToolTip(_translate("menu", "<html><head/><body><p><br/></p></body></html>"))
         self.title.setText(_translate("menu", "PHẦN MỀM TẠO SLIDE TỐT NGHIỆP"))
         self.template.setTitle(_translate("menu", "B1. Chọn mẫu"))
         self.template_broswe.setText(_translate("menu", "Duyệt"))
@@ -220,11 +219,11 @@ class Ui_menu(object):
         __sortingEnabled = self.config_text_list.isSortingEnabled()
         self.config_text_list.setSortingEnabled(False)
         item = self.config_text_list.item(0)
-        item.setText(_translate("menu", "{hoten}"))
+        item.setText(_translate("menu", "hoten"))
         item = self.config_text_list.item(1)
-        item.setText(_translate("menu", "{msv}"))
+        item.setText(_translate("menu", "msv"))
         item = self.config_text_list.item(2)
-        item.setText(_translate("menu", "{nganh}"))
+        item.setText(_translate("menu", "nganh"))
         self.config_text_list.setSortingEnabled(__sortingEnabled)
         self.about.setText(_translate("menu", "<html><head/><body><p><img src=\":/main/about\"/></p></body></html>"))
         self.about.setToolTip("About")
