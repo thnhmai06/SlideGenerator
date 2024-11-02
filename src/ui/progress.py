@@ -9,48 +9,41 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QWidget
 
+class Ui(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setupUi()
+        self.retranslateUi()
 
-class Ui_progress(object):
-    def setupUi(self, progress):
-        progress.setObjectName("progress")
-        progress.resize(574, 374)
-        self.progressBar = QtWidgets.QProgressBar(progress)
+    def setupUi(self):
+        self.setObjectName("progress")
+        self.resize(574, 374)
+        self.progressBar = QtWidgets.QProgressBar(self)
         self.progressBar.setGeometry(QtCore.QRect(20, 50, 541, 31))
         self.progressBar.setProperty("value", 0)
         self.progressBar.setTextVisible(True)
         self.progressBar.setOrientation(QtCore.Qt.Horizontal)
         self.progressBar.setTextDirection(QtWidgets.QProgressBar.TopToBottom)
         self.progressBar.setObjectName("progressBar")
-        self.stop_button = QtWidgets.QPushButton(progress)
+        self.stop_button = QtWidgets.QPushButton(self)
         self.stop_button.setGeometry(QtCore.QRect(450, 320, 101, 41))
         self.stop_button.setObjectName("stop_button")
-        self.pause_button = QtWidgets.QPushButton(progress)
+        self.pause_button = QtWidgets.QPushButton(self)
         self.pause_button.setGeometry(QtCore.QRect(330, 320, 101, 41))
         self.pause_button.setObjectName("pause_button")
-        self.label = QtWidgets.QLabel(progress)
+        self.label = QtWidgets.QLabel(self)
         self.label.setGeometry(QtCore.QRect(20, 20, 141, 16))
         self.label.setObjectName("label")
-        self.log = QtWidgets.QTextEdit(progress)
+        self.log = QtWidgets.QTextEdit(self)
         self.log.setGeometry(QtCore.QRect(20, 100, 531, 211))
         self.log.setObjectName("log")
 
-        self.retranslateUi(progress)
-        QtCore.QMetaObject.connectSlotsByName(progress)
-
-    def retranslateUi(self, progress):
+        QtCore.QMetaObject.connectSlotsByName(self)
+    def retranslateUi(self):
         _translate = QtCore.QCoreApplication.translate
-        progress.setWindowTitle(_translate("progress", "Dialog"))
+        self.setWindowTitle(_translate("progress", "Tiến trình"))
         self.stop_button.setText(_translate("progress", "Dừng"))
         self.pause_button.setText(_translate("progress", "Tạm dừng"))
         self.label.setText(_translate("progress", "<html><head/><body><p><span style=\" font-size:10pt; font-weight:600;\">Đang tạo các slide...</span></p></body></html>"))
-
-
-if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    progress = QtWidgets.QDialog()
-    ui = Ui_progress()
-    ui.setupUi(progress)
-    progress.show()
-    sys.exit(app.exec_())
