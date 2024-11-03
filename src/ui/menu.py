@@ -45,7 +45,7 @@ class Ui(QMainWindow):
         self.setupTitle()
         self.setupTemplateGroupBox()
         self.setupDSSVGroupBox()
-        self.setupVTLuuGroupBox()
+        self.setupsaveGroupBox()
         self.setupConfigGroupBox()
         self.setupButtons()
         self.setupLabels()
@@ -118,27 +118,27 @@ class Ui(QMainWindow):
         self.dssv_label.setGeometry(QtCore.QRect(20, 40, 221, 31))
         self.dssv_label.setObjectName("dssv_label")
 
-    def setupVTLuuGroupBox(self):
-        """Sets up the VTLuu group box."""
-        self.VTLuu = QGroupBox(self.centralwidget)
-        self.VTLuu.setGeometry(QtCore.QRect(20, 720, 411, 121))
-        self.VTLuu.setObjectName("VTLuu")
+    def setupsaveGroupBox(self):
+        """Sets up the save group box."""
+        self.save = QGroupBox(self.centralwidget)
+        self.save.setGeometry(QtCore.QRect(20, 720, 411, 121))
+        self.save.setObjectName("save")
         
-        self.VTLuu_broswe = QPushButton(self.VTLuu)
-        self.VTLuu_broswe.setGeometry(QtCore.QRect(300, 60, 93, 28))
-        self.VTLuu_broswe.setObjectName("VTLuu_broswe")
+        self.save_broswe = QPushButton(self.save)
+        self.save_broswe.setGeometry(QtCore.QRect(300, 60, 93, 28))
+        self.save_broswe.setObjectName("save_broswe")
         
-        self.VTLuu_path = QLineEdit(self.VTLuu)
-        self.VTLuu_path.setGeometry(QtCore.QRect(20, 60, 271, 31))
-        self.VTLuu_path.setCursorPosition(0)
-        self.VTLuu_path.setDragEnabled(False)
-        self.VTLuu_path.setObjectName("VTLuu_path")
-        self.VTLuu_path.setReadOnly(True)
-        self.VTLuu_path.setStyleSheet("background-color: #f0f0f0")
+        self.save_path = QLineEdit(self.save)
+        self.save_path.setGeometry(QtCore.QRect(20, 60, 271, 31))
+        self.save_path.setCursorPosition(0)
+        self.save_path.setDragEnabled(False)
+        self.save_path.setObjectName("save_path")
+        self.save_path.setReadOnly(True)
+        self.save_path.setStyleSheet("background-color: #f0f0f0")
         
-        self.VTLuu_label = QLabel(self.VTLuu)
-        self.VTLuu_label.setGeometry(QtCore.QRect(20, 20, 81, 31))
-        self.VTLuu_label.setObjectName("VTLuu_label")
+        self.save_label = QLabel(self.save)
+        self.save_label.setGeometry(QtCore.QRect(20, 20, 81, 31))
+        self.save_label.setObjectName("save_label")
 
     def setupConfigGroupBox(self):
         """Sets up the config group box."""
@@ -229,6 +229,7 @@ class Ui(QMainWindow):
         self.start_button = QPushButton(self.centralwidget)
         self.start_button.setGeometry(QtCore.QRect(690, 740, 191, 71))
         self.start_button.setObjectName("start_button")
+        self.start_button.setEnabled(False)
         
         self.viewShape_button = QPushButton(self.centralwidget)
         self.viewShape_button.setGeometry(QtCore.QRect(20, 710, 191, 71))
@@ -244,6 +245,7 @@ class Ui(QMainWindow):
         self.viewPlaceholder_button.setText("Xem Placeholder")
         self.viewPlaceholder_button.resize(191 // 2, 71 // 2)
         self.viewPlaceholder_button.move(810, 240)
+        self.viewPlaceholder_button.setEnabled(False)
 
     def setupLabels(self):
         """Sets up the additional labels."""
@@ -276,9 +278,9 @@ class Ui(QMainWindow):
         self.dssv.setTitle(_translate("menu", "B2. Chọn danh sách sinh viên"))
         self.dssv_broswe.setText(_translate("menu", "Duyệt"))
         self.dssv_label.setText(_translate("menu", "<html><head/><body><p><span style=\" font-weight:600;\">Chọn danh sách sinh viên </span>(.csv)</p></body></html>"))
-        self.VTLuu.setTitle(_translate("menu", "B4. Chọn vị trí lưu"))
-        self.VTLuu_broswe.setText(_translate("menu", "Duyệt"))
-        self.VTLuu_label.setText(_translate("menu", "<html><head/><body><p><span style=\" font-weight:600;\">Chọn vị trí lưu</span></p></body></html>"))
+        self.save.setTitle(_translate("menu", "B4. Chọn vị trí lưu"))
+        self.save_broswe.setText(_translate("menu", "Duyệt"))
+        self.save_label.setText(_translate("menu", "<html><head/><body><p><span style=\" font-weight:600;\">Chọn vị trí lưu</span></p></body></html>"))
         self.start_button.setText(_translate("menu", "Bắt đầu"))
         self.uet.setText(_translate("menu", "<html><head/><body><p><img src=\":/main/uet\"/></p></body></html>"))
         self.uet.setToolTip("CTSV.UET.VNU")
@@ -288,7 +290,7 @@ class Ui(QMainWindow):
         item = self.config_image_table.horizontalHeaderItem(0)
         item.setText(_translate("menu", "Placeholder"))
         item = self.config_image_table.horizontalHeaderItem(1)
-        item.setText(_translate("menu", "Ảnh mẫu đối chiếu"))
+        item.setText(_translate("menu", "Tên ảnh mẫu"))
         self.config_text_label.setText(_translate("menu", "<html><head/><body><p align=\"center\"><span style=\" font-weight:600;\">Text (Placeholder)</span></p></body></html>"))
         self.config_image_label.setText(_translate("menu", "<html><head/><body><p align=\"center\"><span style=\" font-weight:600;\">Hình ảnh</span></p></body></html>"))
         self.config_image_autodownload_label.setText(_translate("menu", "Ảnh hỗ trợ tự động download nếu là liên kết"))
@@ -308,13 +310,19 @@ class Ui(QMainWindow):
 
     def handleUI(self):
         """Connects UI elements to their respective event handlers."""
+        # Mỗi lần save_path, template_path, dssv_path thay đổi, kiểm tra xem start_button có được enable không
+        self.save_path.textChanged.connect(lambda: menuButtonEvent.checkStartButton(self))
+        self.template_path.textChanged.connect(lambda: menuButtonEvent.checkStartButton(self))
+        self.dssv_path.textChanged.connect(lambda: menuButtonEvent.checkStartButton(self))
+
+        # Xử lý sự kiện cho các button
         self.config_text_add_button.clicked.connect(lambda: listEvent.add_item(self))
         self.config_text_remove_button.clicked.connect(lambda: listEvent.remove_item(self))
         self.config_image_add_button.clicked.connect(lambda: tableEvent.add_item(self))
         self.config_image_remove_button.clicked.connect(lambda: tableEvent.remove_item(self))
         self.template_broswe.clicked.connect(lambda: menuButtonEvent.template_powerpoint_broswe(self.centralwidget, self.template_path))
         self.dssv_broswe.clicked.connect(lambda: menuButtonEvent.dssv_broswe(self.viewPlaceholder_button, self.centralwidget, self.dssv_path))
-        self.VTLuu_broswe.clicked.connect(lambda: menuButtonEvent.save_broswe(self.centralwidget, self.VTLuu_path))
+        self.save_broswe.clicked.connect(lambda: menuButtonEvent.save_broswe(self.centralwidget, self.save_path))
         self.viewPlaceholder_button.clicked.connect(lambda: menuButtonEvent.viewPlaceholder(self.dssv_path))
         self.viewShape_button.clicked.connect(lambda: menuButtonEvent.viewShape())
         self.start_button.clicked.connect(lambda: process.Start())
