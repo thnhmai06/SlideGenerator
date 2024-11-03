@@ -8,5 +8,8 @@ def Menu():
     ui = menu.Ui()
     ui.show() # Hiển thị UI
 
-def Error(err):
-    QtWidgets.QMessageBox.critical(None, "Lỗi", err)
+def Progress():
+    ui = progress.Ui()
+    ui.show() # Hiển thị UI
+
+
