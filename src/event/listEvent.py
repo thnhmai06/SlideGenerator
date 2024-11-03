@@ -19,7 +19,7 @@ def remove_item(ui):
 def add_item(ui):
     # Lấy số lượng item hiện có để tạo item mới với tên mới
     item_count = ui.config_text_list.count() + 1
-    new_item = QListWidgetItem(f'{"{"}item{item_count}{"}"}')
+    new_item = QListWidgetItem(f'item{item_count}')
     new_item.setFlags(new_item.flags() | QtCore.Qt.ItemIsEditable)
     
     # Thêm item mới
