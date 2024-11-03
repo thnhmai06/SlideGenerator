@@ -78,4 +78,4 @@ class Ui(QWidget):
         self.setWindowTitle(_translate("progress", "Tiến trình"))
         self.stop_button.setText(_translate("progress", "Dừng"))
         self.pause_button.setText(_translate("progress", "Tạm dừng"))
-        self.label.setText(_translate("progress", "<html><head/><body><p><span style=\" font-size:10pt; font-weight:600;\">Đang tạo các slide...</span></p></body></html>"))
+        self.label.setText(_translate("progress", "<html><head/><body><p><span style=\" font-size:10pt; font-weight:600;\">Đang chuẩn bị...</span></p></body></html>"))
