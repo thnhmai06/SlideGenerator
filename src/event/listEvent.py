@@ -1,9 +1,9 @@
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import QListWidget, QListWidgetItem, QWidget
+from PyQt5.QtWidgets import QListWidget, QListWidgetItem, QWidget, QComboBox
+from src.ui.diaglogs import show_info
+from globals import placeholders
 
-def remove_item(ui: QWidget):
-    # @params: ui: QWidget
-    config_text_list: QListWidget = ui.config_text_list
+def remove_item(config_text_list: QListWidget):
     # Lấy các item được chọn
     selected_items: list[QListWidgetItem] = config_text_list.selectedItems()
     
@@ -18,13 +18,19 @@ def remove_item(ui: QWidget):
             last_row = config_text_list.count() - 1
             config_text_list.takeItem(last_row)
 
-def add_item(ui: QWidget):
-    # @params: ui: QWidget
-    config_text_list: QListWidget = ui.config_text_list
-    # Lấy số lượng item hiện có để tạo item mới với tên mới
-    item_count = config_text_list.count() + 1
-    new_item = QListWidgetItem(f'item{item_count}')
-    new_item.setFlags(new_item.flags() | QtCore.Qt.ItemIsEditable)
+def add_item(config_text_list: QListWidget):
+    # Nếu số lượng item vượt quá placeholders, không thêm item mới mà thông báo
+    if config_text_list.count() >= len(placeholders):
+        show_info('Thông báo', 'Số lượng đã nhiều hơn số placeholders có sẵn')
+        return
+
+    # Thêm item mới
+    item = QListWidgetItem("Đang tải...")
+    combo = QComboBox(config_text_list)
+    combo.addItems(placeholders)
+    combo.setCurrentText(placeholders[0])
+    combo.setStyleSheet("background: white; border: none; QComboBox::drop-down { border: none; background: white; }")
     
     # Thêm item mới
-    config_text_list.addItem(new_item)
+    config_text_list.addItem(item)
+    config_text_list.setItemWidget(item, combo)

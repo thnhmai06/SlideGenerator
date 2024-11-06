@@ -10,7 +10,7 @@
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import *
 from src.event import menuButtonEvent, tableEvent, listEvent
-from src.script import process
+from src.script import loadCSV, process, loadTemplate
 from src.ui import progress
 
 class Ui(QMainWindow):
@@ -146,11 +146,17 @@ class Ui(QMainWindow):
         self.config.setGeometry(QtCore.QRect(20, 300, 901, 401))
         self.config.setObjectName("config")
         
+        self.config_text_list = QListWidget(self.config)
+        self.config_text_list.setGeometry(QtCore.QRect(20, 60, 401, 301))
+        self.config_text_list.setObjectName("config_text_list")
+        self.config_text_list.setEnabled(False)
+
         self.config_image_table = QTableWidget(self.config)
         self.config_image_table.setGeometry(QtCore.QRect(470, 60, 401, 301))
         self.config_image_table.setObjectName("config_image_table")
         self.config_image_table.setColumnCount(2)
         self.config_image_table.setRowCount(0)
+        self.config_image_table.setEnabled(False)
         
         item = QTableWidgetItem()
         font = QtGui.QFont()
@@ -190,6 +196,7 @@ class Ui(QMainWindow):
         icon1.addPixmap(QtGui.QPixmap(":/main/add"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.config_image_add_button.setIcon(icon1)
         self.config_image_add_button.setObjectName("config_image_add_button")
+        self.config_image_add_button.setEnabled(False)
         
         self.config_image_remove_button = QPushButton(self.config)
         self.config_image_remove_button.setGeometry(QtCore.QRect(840, 370, 31, 21))
@@ -197,32 +204,19 @@ class Ui(QMainWindow):
         icon2.addPixmap(QtGui.QPixmap(":/main/remove"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.config_image_remove_button.setIcon(icon2)
         self.config_image_remove_button.setObjectName("config_image_remove_button")
+        self.config_image_remove_button.setEnabled(False)
         
         self.config_text_remove_button = QPushButton(self.config)
         self.config_text_remove_button.setGeometry(QtCore.QRect(390, 370, 31, 21))
         self.config_text_remove_button.setIcon(icon2)
         self.config_text_remove_button.setObjectName("config_text_remove_button")
+        self.config_text_remove_button.setEnabled(False)
         
         self.config_text_add_button = QPushButton(self.config)
         self.config_text_add_button.setGeometry(QtCore.QRect(350, 370, 31, 21))
         self.config_text_add_button.setIcon(icon1)
         self.config_text_add_button.setObjectName("config_text_add_button")
-        
-        self.config_text_list = QListWidget(self.config)
-        self.config_text_list.setGeometry(QtCore.QRect(20, 60, 401, 301))
-        self.config_text_list.setObjectName("config_text_list")
-        
-        item = QListWidgetItem()
-        item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
-        self.config_text_list.addItem(item)
-        
-        item = QListWidgetItem()
-        item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
-        self.config_text_list.addItem(item)
-        
-        item = QListWidgetItem()
-        item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
-        self.config_text_list.addItem(item)
+        self.config_text_add_button.setEnabled(False)
 
     def setupButtons(self):
         """Sets up the main buttons."""
@@ -230,22 +224,6 @@ class Ui(QMainWindow):
         self.start_button.setGeometry(QtCore.QRect(690, 740, 191, 71))
         self.start_button.setObjectName("start_button")
         self.start_button.setEnabled(False)
-        
-        self.viewShape_button = QPushButton(self.centralwidget)
-        self.viewShape_button.setGeometry(QtCore.QRect(20, 710, 191, 71))
-        self.viewShape_button.setObjectName("viewShape_button")
-        self.viewShape_button.setText("Xem mẫu ảnh")
-        self.viewShape_button.resize(191 // 2, 71 // 2)
-        self.viewShape_button.move(320, 240)
-        self.viewShape_button.setEnabled(False)
-        
-        self.viewPlaceholder_button = QPushButton(self.centralwidget)
-        self.viewPlaceholder_button.setGeometry(QtCore.QRect(20, 710, 191, 71))
-        self.viewPlaceholder_button.setObjectName("viewPlaceholder_button")
-        self.viewPlaceholder_button.setText("Xem Placeholder")
-        self.viewPlaceholder_button.resize(191 // 2, 71 // 2)
-        self.viewPlaceholder_button.move(810, 240)
-        self.viewPlaceholder_button.setEnabled(False)
 
     def setupLabels(self):
         """Sets up the additional labels."""
@@ -295,13 +273,6 @@ class Ui(QMainWindow):
         self.config_image_label.setText(_translate("menu", "<html><head/><body><p align=\"center\"><span style=\" font-weight:600;\">Hình ảnh</span></p></body></html>"))
         self.config_image_autodownload_label.setText(_translate("menu", "Ảnh hỗ trợ tự động download nếu là liên kết"))
         __sortingEnabled = self.config_text_list.isSortingEnabled()
-        self.config_text_list.setSortingEnabled(False)
-        item = self.config_text_list.item(0)
-        item.setText(_translate("menu", "hoten"))
-        item = self.config_text_list.item(1)
-        item.setText(_translate("menu", "msv"))
-        item = self.config_text_list.item(2)
-        item.setText(_translate("menu", "nganh"))
         self.config_text_list.setSortingEnabled(__sortingEnabled)
         self.about.setText(_translate("menu", "<html><head/><body><p><img src=\":/main/about\"/></p></body></html>"))
         self.about.setToolTip("About")
@@ -316,16 +287,18 @@ class Ui(QMainWindow):
         self.dssv_path.textChanged.connect(lambda: menuButtonEvent.checkStartButton(self))
 
         # Xử lý sự kiện cho các button
-        self.config_text_add_button.clicked.connect(lambda: listEvent.add_item(self))
-        self.config_text_remove_button.clicked.connect(lambda: listEvent.remove_item(self))
-        self.config_image_add_button.clicked.connect(lambda: tableEvent.add_item(self))
-        self.config_image_remove_button.clicked.connect(lambda: tableEvent.remove_item(self))
+        self.config_text_add_button.clicked.connect(lambda: listEvent.add_item(self.config_text_list))
+        self.config_text_remove_button.clicked.connect(lambda: listEvent.remove_item(self.config_text_list))
+        self.config_image_add_button.clicked.connect(lambda: tableEvent.add_item(self.config_image_table))
+        self.config_image_remove_button.clicked.connect(lambda: tableEvent.remove_item(self.config_image_table))
         self.template_broswe.clicked.connect(lambda: menuButtonEvent.template_powerpoint_broswe(self.centralwidget, self.template_path))
-        self.dssv_broswe.clicked.connect(lambda: menuButtonEvent.dssv_broswe(self.viewPlaceholder_button, self.centralwidget, self.dssv_path))
+        self.dssv_broswe.clicked.connect(lambda: menuButtonEvent.dssv_broswe(self.centralwidget, self.dssv_path))
         self.save_broswe.clicked.connect(lambda: menuButtonEvent.save_broswe(self.centralwidget, self.save_path))
-        self.viewPlaceholder_button.clicked.connect(lambda: menuButtonEvent.viewPlaceholder(self.dssv_path))
-        self.viewShape_button.clicked.connect(lambda: menuButtonEvent.viewShape())
         self.start_button.clicked.connect(lambda: process.Start())
+
+        # Xử lý sự kiện cho input
+        self.dssv_path.textChanged.connect(lambda: loadCSV.loadPlaceholders(self))
+        self.template_path.textChanged.connect(lambda: loadTemplate.loadShapes(self.template_path))
 
     def showProgress(self):
         """Shows the progress window."""

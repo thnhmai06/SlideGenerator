@@ -1260,6 +1260,7 @@ else:
     qt_resource_struct = qt_resource_struct_v2
 
 def qInitResources():
+    print("Loading resources")
     QtCore.qRegisterResourceData(rcc_version, qt_resource_struct, qt_resource_name, qt_resource_data)
 
 def qCleanupResources():
