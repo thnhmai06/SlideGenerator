@@ -19,10 +19,5 @@ if __name__ == "__main__":
 
         # Chạy ứng dụng
         sys.exit(app.exec_())
-    
     except Exception as err:
         error.expection(err, traceback.format_exc())
-
-    finally:
-        # Cleanup resources
-        qCleanupResources()
