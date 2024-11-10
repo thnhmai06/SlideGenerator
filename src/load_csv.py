@@ -23,6 +23,7 @@ def load(ui: 'Ui'):
 
     _console_info(__name__, "Import CSV:", csv_path)
     csv_file.load(csv_path)
+    1/0
     is_vaild = csv_file.get()
     if not is_vaild:
         info(__name__, "invaild_csv")

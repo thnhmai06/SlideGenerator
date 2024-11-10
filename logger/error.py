@@ -1,4 +1,5 @@
 import logging
+import traceback
 from ui import diaglogs
 from translations import TRANS
 
@@ -13,7 +14,8 @@ def _console_critical(where: str, content: str) -> None:
     if content:
         __logger.critical(content)
 
-def default(where: str, title_key: str, details: str = None, window_name: str = TRANS["diaglogs"]["error"]["window_name"]) -> None:
+def default(where: str, title_key: str, details: str = None, 
+            window_name: str = TRANS["diaglogs"]["error"]["window_name"]) -> None:
     """
     title_key: str - Tương ứng với key trong translation
     error_name: str - Lỗi là lỗi gì bên dưới title_key
@@ -23,7 +25,10 @@ def default(where: str, title_key: str, details: str = None, window_name: str = 
     title = TRANS["diaglogs"]["error"][title_key]
     _console_error(where, details)
     _show_err_diaglog(title, details, window_name)
-def expection(where: str, err: Exception, details: str, title: str = TRANS["diaglogs"]["error"]["expection"], window_name: str = TRANS["diaglogs"]["error"]["window_name"] or "LANG is not found!") -> None:
-    error_name = err.__class__.__name__
-    _console_critical(where, details)
-    _show_err_diaglog(window_name, title + "\n\n" + error_name + ": " + str(err), details)
+def exception(where: str, exctype: BaseException, value: str, tb: traceback.TracebackException,
+              window_name: str = TRANS["diaglogs"]["error"]["window_name"] or "LANG is not found!") -> None:
+    error_name = exctype.__name__
+    title = f"{TRANS['diaglogs']['error']['exception']}\n\n{error_name}: {value}"
+    details = ''.join(traceback.format_tb(tb))
+    _console_critical(where, f"{title}\n{details}")
+    _show_err_diaglog(window_name, title, f"{error_name}: {value}\n{details}")

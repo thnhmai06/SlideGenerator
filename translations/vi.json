@@ -5,7 +5,7 @@
     "diaglogs": {
         "error": {
             "window_name": "Lỗi",
-            "expection": "Đã xảy ra lỗi không mong muốn!",
+            "exception": "Đã xảy ra lỗi không mong muốn!",
             "cant_save_file": "Không thể lưu file!"
         },
         "information": {

@@ -11,12 +11,5 @@
             "program": "index.py",
             "console": "integratedTerminal"
         },
-        {
-            "name": "Convert UI",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "convert.py",
-            "console": "integratedTerminal"
-        }
     ]
 }

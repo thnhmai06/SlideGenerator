@@ -6,20 +6,24 @@ from ui import menu, progress
 from logger import error
 from logger.debug import default as console_debug
 
+def __uncaught_exception_handler(exctype, value, tb):
+    error.exception(__name__, exctype, str(value), tb)
+    sys.exit(1)
+sys.excepthook = __uncaught_exception_handler
+
+
 app = QtWidgets.QApplication(sys.argv)
 menu_window = menu.Ui()
 progress_window = progress.Ui()
 
 if __name__ == "__main__":
-    try:
-        # Nạp resources
-        console_debug(__name__, "load_resources")
-        qInitResources()
+    # Nạp resources
+    console_debug(__name__, "load_resources")
+    qInitResources()
 
-        # Hiển thị menu
-        menu_window.show()
+    # Hiển thị menu
+    menu_window.show()
 
-        # Chạy ứng dụng
-        app.exec_()
-    except Exception as err:
-        error.expection(__name__, err, traceback.format_exc())
+    # Chạy ứng dụng
+    sys.exit(app.exec_())
+        

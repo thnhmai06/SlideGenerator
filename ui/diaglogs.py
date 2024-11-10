@@ -1,7 +1,6 @@
 from PyQt5.QtWidgets import QMessageBox
 from PyQt5 import QtGui
 
-
 def info(title, message):
     msg = QMessageBox()
     msg.setIcon(QMessageBox.Information)
@@ -11,7 +10,6 @@ def info(title, message):
     msg.setWindowTitle(title)
     msg.setText(message)
     msg.setStandardButtons(QMessageBox.Ok)
-    msg.setMinimumSize(400, 200)  # Set minimum size
     msg.exec_()
 
 def warning(title, message):
@@ -22,7 +20,6 @@ def warning(title, message):
     msg.setWindowTitle(title)
     msg.setText(message)
     msg.setStandardButtons(QMessageBox.Ok)
-    msg.setMinimumSize(400, 200)  # Set minimum size
     msg.exec_()
 
 def error(title, message, details=None):
@@ -35,5 +32,4 @@ def error(title, message, details=None):
     msg.setStandardButtons(QMessageBox.Ok)
     if details:
         msg.setDetailedText(details)
-    msg.setMinimumSize(400, 200)  # Set minimum size
     msg.exec_()
