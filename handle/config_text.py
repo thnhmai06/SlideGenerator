@@ -1,7 +1,8 @@
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QListWidget, QListWidgetItem, QWidget, QComboBox
-from src.ui.diaglogs import show_info
+from logger.information import default as info
 from globals import placeholders
+from translation import TRANS
 
 def remove_item(config_text_list: QListWidget):
     # Lấy các item được chọn
@@ -21,11 +22,11 @@ def remove_item(config_text_list: QListWidget):
 def add_item(config_text_list: QListWidget):
     # Nếu số lượng item vượt quá placeholders, không thêm item mới mà thông báo
     if config_text_list.count() >= len(placeholders):
-        show_info('Thông báo', 'Số lượng đã nhiều hơn số placeholders có sẵn')
+        info("too_much_placeholders")
         return
 
     # Thêm item mới
-    item = QListWidgetItem("Đang tải...")
+    item = QListWidgetItem()
     combo = QComboBox(config_text_list)
     combo.addItems(placeholders)
     combo.setCurrentText(placeholders[0])

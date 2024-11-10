@@ -1,8 +1,3 @@
-import os, requests, re
-from src.context import infoContext
-from src.script import showWidget
-import csv
-
 # Thank you github copilot for helping me coding this file hehe :D
 
 class ClientInput:

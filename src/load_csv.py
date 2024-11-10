@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QLineEdit, QListWidget, QPushButton, QWidget
-from globals import *
-from src.event.listEvent import add_item
+from globals import import_csv_fields, placeholders
+from handle.config_text import add_item
 
 def loadPlaceholders(ui: QWidget):
     inputPath = ui.dssv_path
@@ -15,7 +15,7 @@ def loadPlaceholders(ui: QWidget):
         return
     
     # Load fields from csv file
-    importCSVFields(csv_path)
+    import_csv_fields(csv_path)
     print("CSV Fields: ", end="")
     for placeholder in placeholders:
         print(placeholder, end='\t')

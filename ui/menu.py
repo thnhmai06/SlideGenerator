@@ -9,9 +9,11 @@
 
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import *
-from src.event import menuButtonEvent, tableEvent, listEvent
-from src.script import loadCSV, process, loadTemplate
-from src.ui import progress
+from handle import config_images, config_text, menu_button
+from src import load_csv, load_pptx, process
+from ui import progress
+from globals import GITHUB_URL
+from translation import TRANS
 
 class Ui(QMainWindow):
     def __init__(self):
@@ -19,7 +21,7 @@ class Ui(QMainWindow):
         self.setupUi()
         self.retranslateUi()
         self.handleUI()
-        self.progress = None  # Init progress window
+        self.progress = None  # Create a space for progress window and it will save here
 
     def setupUi(self):
         """
@@ -47,7 +49,7 @@ class Ui(QMainWindow):
         self.setupDSSVGroupBox()
         self.setupsaveGroupBox()
         self.setupConfigGroupBox()
-        self.setupButtons()
+        self.setupStartButton()
         self.setupLabels()
         
         self.setCentralWidget(self.centralwidget)
@@ -218,7 +220,7 @@ class Ui(QMainWindow):
         self.config_text_add_button.setObjectName("config_text_add_button")
         self.config_text_add_button.setEnabled(False)
 
-    def setupButtons(self):
+    def setupStartButton(self):
         """Sets up the main buttons."""
         self.start_button = QPushButton(self.centralwidget)
         self.start_button.setGeometry(QtCore.QRect(690, 740, 191, 71))
@@ -246,7 +248,6 @@ class Ui(QMainWindow):
 
     def retranslateUi(self):
         """Retranslates the UI elements."""
-        github_link = "https://github.com/thnhmai06/tao-slide-tot-nghiep"
         _translate = QtCore.QCoreApplication.translate
         self.setWindowTitle(_translate("menu", "Phần mềm tạo slide tốt nghiệp"))
         self.title.setText(_translate("menu", "PHẦN MỀM TẠO SLIDE TỐT NGHIỆP"))
@@ -262,7 +263,7 @@ class Ui(QMainWindow):
         self.start_button.setText(_translate("menu", "Bắt đầu"))
         self.uet.setText(_translate("menu", "<html><head/><body><p><img src=\":/main/uet\"/></p></body></html>"))
         self.uet.setToolTip("CTSV.UET.VNU")
-        self.github.setText(_translate("menu", f'<html><head/><body><p><a href="{github_link}"><img src=\":/main/github\"/></a></p></body></html>'))
+        self.github.setText(_translate("menu", f'<html><head/><body><p><a href="{GITHUB_URL}"><img src=\":/main/github\"/></a></p></body></html>'))
         self.github.setToolTip("Github")
         self.config.setTitle(_translate("menu", "B3. Thiết lập thay thế"))
         item = self.config_image_table.horizontalHeaderItem(0)
@@ -282,23 +283,23 @@ class Ui(QMainWindow):
     def handleUI(self):
         """Connects UI elements to their respective event handlers."""
         # Mỗi lần save_path, template_path, dssv_path thay đổi, kiểm tra xem start_button có được enable không
-        self.save_path.textChanged.connect(lambda: menuButtonEvent.checkStartButton(self))
-        self.template_path.textChanged.connect(lambda: menuButtonEvent.checkStartButton(self))
-        self.dssv_path.textChanged.connect(lambda: menuButtonEvent.checkStartButton(self))
+        self.save_path.textChanged.connect(lambda: menu_button.check_start_button(self))
+        self.template_path.textChanged.connect(lambda: menu_button.check_start_button(self))
+        self.dssv_path.textChanged.connect(lambda: menu_button.check_start_button(self))
 
         # Xử lý sự kiện cho các button
-        self.config_text_add_button.clicked.connect(lambda: listEvent.add_item(self.config_text_list))
-        self.config_text_remove_button.clicked.connect(lambda: listEvent.remove_item(self.config_text_list))
-        self.config_image_add_button.clicked.connect(lambda: tableEvent.add_item(self.config_image_table))
-        self.config_image_remove_button.clicked.connect(lambda: tableEvent.remove_item(self.config_image_table))
-        self.template_broswe.clicked.connect(lambda: menuButtonEvent.template_powerpoint_broswe(self.centralwidget, self.template_path))
-        self.dssv_broswe.clicked.connect(lambda: menuButtonEvent.dssv_broswe(self.centralwidget, self.dssv_path))
-        self.save_broswe.clicked.connect(lambda: menuButtonEvent.save_broswe(self.centralwidget, self.save_path))
+        self.config_text_add_button.clicked.connect(lambda: config_text.add_item(self.config_text_list))
+        self.config_text_remove_button.clicked.connect(lambda: config_text.remove_item(self.config_text_list))
+        self.config_image_add_button.clicked.connect(lambda: config_images.add_item(self.config_image_table))
+        self.config_image_remove_button.clicked.connect(lambda: config_images.remove_item(self.config_image_table))
+        self.template_broswe.clicked.connect(lambda: menu_button.template_powerpoint_broswe(self.centralwidget, self.template_path))
+        self.dssv_broswe.clicked.connect(lambda: menu_button.dssv_broswe(self.centralwidget, self.dssv_path))
+        self.save_broswe.clicked.connect(lambda: menu_button.save_path_broswe(self.centralwidget, self.save_path))
         self.start_button.clicked.connect(lambda: process.Start())
 
         # Xử lý sự kiện cho input
-        self.dssv_path.textChanged.connect(lambda: loadCSV.loadPlaceholders(self))
-        self.template_path.textChanged.connect(lambda: loadTemplate.loadShapes(self.template_path))
+        self.dssv_path.textChanged.connect(lambda: load_csv.loadPlaceholders(self))
+        self.template_path.textChanged.connect(lambda: load_pptx.loadShapes(self.template_path))
 
     def showProgress(self):
         """Shows the progress window."""

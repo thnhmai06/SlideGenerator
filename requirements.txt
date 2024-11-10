@@ -1,0 +1,4 @@
+PyQt5
+pywin32
+pandas
+python-pptx

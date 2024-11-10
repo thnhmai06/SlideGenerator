@@ -1,0 +1,18 @@
+{
+    "window": {
+        
+    },
+    "diaglogs": {
+        "error": {
+            "window_name": "Lỗi",
+            "expection": "Đã xảy ra lỗi không mong muốn!"
+        },
+        "information": {
+            "window_name": "Thông báo",
+            "too_much_placeholders": "Số lượng đã nhiều hơn số placeholders có sẵn!"
+        }
+    },
+    "images_table": {
+        "new_item": "Mục mới"
+    }
+}

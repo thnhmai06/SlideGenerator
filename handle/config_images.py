@@ -1,4 +1,5 @@
 from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QWidget
+from translation import TRANS
 
 def remove_item(config_image_table: QTableWidget):
     # Lấy item đang chọn
@@ -24,5 +25,5 @@ def add_item(config_image_table: QTableWidget):
     config_image_table.insertRow(row_count)
     # Thêm item vào dòng mới
     for col in range(config_image_table.columnCount()):
-        item = QTableWidgetItem(f'Mục mới {row_count + 1}-{col + 1}')
+        item = QTableWidgetItem(f'{TRANS["image_table"]["new_item"]} {row_count + 1}-{col + 1}')
         config_image_table.setItem(row_count, col, item)
