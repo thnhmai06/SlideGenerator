@@ -9,12 +9,12 @@
 
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import *
-from handle import config_images, config_text, menu_broswe_button
+from handle import config_images, config_text, menu_broswe_button, menu_start_button
 from handle.menu_start_button import check_start_button
-from src import load_csv, load_pptx, processing
+from src import load_csv, load_pptx
 from ui import progress
 from globals import GITHUB_URL
-from translation import TRANS
+from translations import TRANS
 
 class Ui(QMainWindow):
     def __init__(self):
@@ -296,10 +296,10 @@ class Ui(QMainWindow):
         self.template_broswe.clicked.connect(lambda: menu_broswe_button.template_powerpoint_broswe(self.centralwidget, self.pptx_path))
         self.dssv_broswe.clicked.connect(lambda: menu_broswe_button.dssv_broswe(self.centralwidget, self.csv_path))
         self.save_broswe.clicked.connect(lambda: menu_broswe_button.save_path_broswe(self.centralwidget, self.save_path))
-        self.start_button.clicked.connect(lambda: processing.Start())
+        self.start_button.clicked.connect(lambda: menu_start_button.start())
 
         # Xử lý sự kiện cho input
-        self.csv_path.textChanged.connect(lambda: load_csv.load_placeholders(self))
+        self.csv_path.textChanged.connect(lambda: load_csv.load(self))
         self.pptx_path.textChanged.connect(lambda: load_pptx.load_shapes(self.pptx_path))
 
     def showProgress(self):

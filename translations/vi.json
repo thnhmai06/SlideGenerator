@@ -12,11 +12,14 @@
             "window_name": "Thông báo",
             "too_much_placeholders": "Số lượng đã nhiều hơn số placeholders có sẵn!",
             "no_powerpoint": "Ứng dụng yêu cầu cài đặt Microsoft PowerPoint (Office) để sử dụng!",
-            "invaid_csv": "File DSSV không có thông tin sinh viên hoặc đang bị trống!",
-            "invaid_pptx": "File PowerPoint này trống!"
+            "invaild_csv": "File DSSV không chứa thông tin sinh viên!",
+            "invaild_pptx": "File PowerPoint này trống!"
         }
     },
     "images_table": {
         "new_item": "Mục mới"
+    },
+    "debug": {
+        "load_resources": "Tải Resources"
     }
 }

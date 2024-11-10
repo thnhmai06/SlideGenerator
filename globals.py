@@ -1,23 +1,42 @@
 import os
+import pandas as pd
 from configparser import ConfigParser
 
-# Read Config file
-_CONFIG_PATH = "./config.ini"
-CONFIG = ConfigParser()
-CONFIG.read(_CONFIG_PATH)
-
-#? Global Constants
 '''
 SHAPES_PATH: str - Nơi lưu trữ ảnh Preview của các Shapes
-GIT_URL: str - Đường dẫn đến Repository trên Github
+TRANSLATION_PATH: str - Nơi lưu trữ các file ngôn ngữ
+GITHUB_URL: str - Đường dẫn đến Repository trên Github
 LANG: str - Ngôn ngữ hiện tại của ứng dụng
 '''
+
+# Read Config file
+__CONFIG = ConfigParser()
+__CONFIG.read("./config.ini")
+LANG = __CONFIG.get("Config", "lang")
+DEBUG_MODE = __CONFIG.getboolean("Debug", "debug")
+
+#? Global Constants
 GITHUB_URL = "https://github.com/thnhmai06/tao-slide-tot-nghiep"
 SHAPES_PATH = os.path.dirname("./temp/shapes/") 
-LANG = CONFIG.get("Config", "lang")
+TRANSLATION_PATH = os.path.dirname("./translations/")
 
 #? Global Variables
-'''
-placeholders: list - Danh sách các placeholders/fields có trong file csv
-'''
-placeholders = list()
+class CSV_data(dict):
+    def __init__(self):
+        super().__init__()
+        self.placeholders = list()
+        self.students = dict()
+        self._df = pd.DataFrame()
+    def load(self, csv_path) -> None:
+        self._df = pd.read_csv(csv_path)
+
+    def get(self) -> bool:
+        __number_of_students = len(self._df)
+        if not __number_of_students>=1:
+            return False
+        
+        self.placeholders = self._df.columns.tolist()
+        self.students = self._df.to_dict(orient='records')
+        return True
+
+csv_file = CSV_data()

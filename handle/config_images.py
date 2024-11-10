@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QWidget
-from translation import TRANS
+from translations import TRANS
 
 def remove_item(config_image_table: QTableWidget):
     # Lấy item đang chọn
@@ -17,7 +17,6 @@ def remove_item(config_image_table: QTableWidget):
 
         if last_item:
             config_image_table.removeRow(last_item.row())
-        
 
 def add_item(config_image_table: QTableWidget):
     # Tìm dòng mới
