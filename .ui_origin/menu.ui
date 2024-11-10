@@ -161,7 +161,7 @@
       <string>Duyệt</string>
      </property>
     </widget>
-    <widget class="QLineEdit" name="dssv_path">
+    <widget class="QLineEdit" name="csv_path">
      <property name="geometry">
       <rect>
        <x>20</x>

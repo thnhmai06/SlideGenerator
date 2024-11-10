@@ -1,13 +1,16 @@
 from PyQt5.QtWidgets import QLineEdit
-from globals import import_template
+import os
+from globals import SHAPES_PATH
 
-def loadShapes(inputPath: QLineEdit):
-    # @params: inputPath: QLineEdit
-    template_path = inputPath.text()
+def import_template():
+    if not os.path.exists(SHAPES_PATH):
+        os.makedirs(SHAPES_PATH)
+
+    # TODO: Download all shapes to SHAPES_PATH here
+
+def load_shapes(inputPath: QLineEdit):
+    pptx_path = inputPath.text()
 
     import_template()
-
-    # Image lưu ở shapesPath
     # TODO: Load shape here
-    print("Load Shape Here!!")
 

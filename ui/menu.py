@@ -9,8 +9,9 @@
 
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import *
-from handle import config_images, config_text, menu_button
-from src import load_csv, load_pptx, process
+from handle import config_images, config_text, menu_broswe_button
+from handle.menu_start_button import check_start_button
+from src import load_csv, load_pptx, processing
 from ui import progress
 from globals import GITHUB_URL
 from translation import TRANS
@@ -86,13 +87,13 @@ class Ui(QMainWindow):
         self.template_broswe.setGeometry(QtCore.QRect(300, 90, 93, 28))
         self.template_broswe.setObjectName("template_broswe")
         
-        self.template_path = QLineEdit(self.template)
-        self.template_path.setGeometry(QtCore.QRect(20, 90, 271, 31))
-        self.template_path.setCursorPosition(0)
-        self.template_path.setDragEnabled(False)
-        self.template_path.setObjectName("template_path")
-        self.template_path.setReadOnly(True)
-        self.template_path.setStyleSheet("background-color: #f0f0f0")
+        self.pptx_path = QLineEdit(self.template)
+        self.pptx_path.setGeometry(QtCore.QRect(20, 90, 271, 31))
+        self.pptx_path.setCursorPosition(0)
+        self.pptx_path.setDragEnabled(False)
+        self.pptx_path.setObjectName("pptx_path")
+        self.pptx_path.setReadOnly(True)
+        self.pptx_path.setStyleSheet("background-color: #f0f0f0")
         
         self.template_label = QLabel(self.template)
         self.template_label.setGeometry(QtCore.QRect(20, 40, 171, 31))
@@ -108,13 +109,13 @@ class Ui(QMainWindow):
         self.dssv_broswe.setGeometry(QtCore.QRect(300, 90, 93, 28))
         self.dssv_broswe.setObjectName("dssv_broswe")
         
-        self.dssv_path = QLineEdit(self.dssv)
-        self.dssv_path.setGeometry(QtCore.QRect(20, 90, 271, 31))
-        self.dssv_path.setCursorPosition(0)
-        self.dssv_path.setDragEnabled(False)
-        self.dssv_path.setObjectName("dssv_path")
-        self.dssv_path.setReadOnly(True)
-        self.dssv_path.setStyleSheet("background-color: #f0f0f0")
+        self.csv_path = QLineEdit(self.dssv)
+        self.csv_path.setGeometry(QtCore.QRect(20, 90, 271, 31))
+        self.csv_path.setCursorPosition(0)
+        self.csv_path.setDragEnabled(False)
+        self.csv_path.setObjectName("csv_path")
+        self.csv_path.setReadOnly(True)
+        self.csv_path.setStyleSheet("background-color: #f0f0f0")
         
         self.dssv_label = QLabel(self.dssv)
         self.dssv_label.setGeometry(QtCore.QRect(20, 40, 221, 31))
@@ -282,24 +283,24 @@ class Ui(QMainWindow):
 
     def handleUI(self):
         """Connects UI elements to their respective event handlers."""
-        # Mỗi lần save_path, template_path, dssv_path thay đổi, kiểm tra xem start_button có được enable không
-        self.save_path.textChanged.connect(lambda: menu_button.check_start_button(self))
-        self.template_path.textChanged.connect(lambda: menu_button.check_start_button(self))
-        self.dssv_path.textChanged.connect(lambda: menu_button.check_start_button(self))
+        # Mỗi lần save_path, pptx_path, csv_path thay đổi, kiểm tra xem start_button có được enable không
+        self.save_path.textChanged.connect(lambda: check_start_button(self))
+        self.pptx_path.textChanged.connect(lambda: check_start_button(self))
+        self.csv_path.textChanged.connect(lambda: check_start_button(self))
 
         # Xử lý sự kiện cho các button
         self.config_text_add_button.clicked.connect(lambda: config_text.add_item(self.config_text_list))
         self.config_text_remove_button.clicked.connect(lambda: config_text.remove_item(self.config_text_list))
         self.config_image_add_button.clicked.connect(lambda: config_images.add_item(self.config_image_table))
         self.config_image_remove_button.clicked.connect(lambda: config_images.remove_item(self.config_image_table))
-        self.template_broswe.clicked.connect(lambda: menu_button.template_powerpoint_broswe(self.centralwidget, self.template_path))
-        self.dssv_broswe.clicked.connect(lambda: menu_button.dssv_broswe(self.centralwidget, self.dssv_path))
-        self.save_broswe.clicked.connect(lambda: menu_button.save_path_broswe(self.centralwidget, self.save_path))
-        self.start_button.clicked.connect(lambda: process.Start())
+        self.template_broswe.clicked.connect(lambda: menu_broswe_button.template_powerpoint_broswe(self.centralwidget, self.pptx_path))
+        self.dssv_broswe.clicked.connect(lambda: menu_broswe_button.dssv_broswe(self.centralwidget, self.csv_path))
+        self.save_broswe.clicked.connect(lambda: menu_broswe_button.save_path_broswe(self.centralwidget, self.save_path))
+        self.start_button.clicked.connect(lambda: processing.Start())
 
         # Xử lý sự kiện cho input
-        self.dssv_path.textChanged.connect(lambda: load_csv.loadPlaceholders(self))
-        self.template_path.textChanged.connect(lambda: load_pptx.loadShapes(self.template_path))
+        self.csv_path.textChanged.connect(lambda: load_csv.load_placeholders(self))
+        self.pptx_path.textChanged.connect(lambda: load_pptx.load_shapes(self.pptx_path))
 
     def showProgress(self):
         """Shows the progress window."""

@@ -1,28 +1,34 @@
 from PyQt5.QtWidgets import QLineEdit, QListWidget, QPushButton, QWidget
-from globals import import_csv_fields, placeholders
-from handle.config_text import add_item
+from typing import TYPE_CHECKING
+import pandas as pd
+import os
+from globals import placeholders
+from logger.information import _console_info
+from handle import config_text
 
-def loadPlaceholders(ui: QWidget):
-    inputPath = ui.dssv_path
+if TYPE_CHECKING:
+    # Anti-circular import
+    from ui.menu import Ui
+
+def __import_csv_fields(csv_path: str) -> None:
+    _console_info("Import CSV: ", os.path.dirname(csv_path))
+    df = pd.read_csv(csv_path)
+    fields = df.columns.tolist()
+    for field in fields:
+        placeholders.append(field)
+    _console_info("Fields: ", " | ".join(placeholders), "(*end)")
+
+def load_placeholders(ui: 'Ui'):
+    csv_path = ui.csv_path.text()
     config_text_list = ui.config_text_list
     add_button = ui.config_text_add_button
     remove_button = ui.config_text_remove_button
-    csv_path = inputPath.text()
-
-    print("CSV Path: ", csv_path)
 
     if not csv_path:
         return
     
     # Load fields from csv file
-    import_csv_fields(csv_path)
-    print("CSV Fields: ", end="")
-    for placeholder in placeholders:
-        print(placeholder, end='\t')
-    print() # New line
-
-    # Add 1 item to list
-    add_item(config_text_list)
+    __import_csv_fields(csv_path)
 
     # Enable the config_text_list, add_button, and remove_button
     config_text_list.setEnabled(True)

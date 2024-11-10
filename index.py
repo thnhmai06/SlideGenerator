@@ -1,7 +1,7 @@
 import sys
 import traceback
 from PyQt5 import QtWidgets
-from ui.resources import qInitResources, qCleanupResources
+from ui.resources import qInitResources
 from ui import menu, progress
 from logger import error
 

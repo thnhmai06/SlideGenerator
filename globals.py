@@ -1,30 +1,23 @@
 import os
-import pandas as pd
-from ui import menu, progress
 from configparser import ConfigParser
 
+# Read Config file
 _CONFIG_PATH = "./config.ini"
 CONFIG = ConfigParser()
 CONFIG.read(_CONFIG_PATH)
 
-#? Constants
+#? Global Constants
+'''
+SHAPES_PATH: str - Nơi lưu trữ ảnh Preview của các Shapes
+GIT_URL: str - Đường dẫn đến Repository trên Github
+LANG: str - Ngôn ngữ hiện tại của ứng dụng
+'''
 GITHUB_URL = "https://github.com/thnhmai06/tao-slide-tot-nghiep"
-SHAPES_PATH = os.path.dirname("./temp/shapes/")
+SHAPES_PATH = os.path.dirname("./temp/shapes/") 
 LANG = CONFIG.get("Config", "lang")
 
 #? Global Variables
+'''
+placeholders: list - Danh sách các placeholders/fields có trong file csv
+'''
 placeholders = list()
-
-#? Global functions
-# A Function Load fields from csv file and put it in placeholders using pandas
-def import_csv_fields(csv_path: str) -> None:
-    df = pd.read_csv(csv_path)
-    fields = df.columns.tolist()
-    for field in fields:
-        placeholders.append(field)
-
-def import_template():
-    if not os.path.exists(SHAPES_PATH):
-        os.makedirs(SHAPES_PATH)
-
-    # TODO: Download all shapes to SHAPES_PATH here
