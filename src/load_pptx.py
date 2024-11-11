@@ -13,4 +13,4 @@ def load_shapes(inputPath: QLineEdit):
 
     import_template()
     # TODO: Load shape here
-
+    

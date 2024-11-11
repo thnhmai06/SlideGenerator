@@ -8,7 +8,7 @@ from pptx import Presentation
 
 def open_presentation(link_presentation):
     # Author: @oceantran27
-    
+    # Edit: @thnhmai06
     try:
         ppt_instance = win32com.client.Dispatch('PowerPoint.Application')
         read_only = True
@@ -24,7 +24,7 @@ def open_presentation(link_presentation):
     
 def close_presentation(prs, ppt_instance):
     # Author: @oceantran27
-    
+    # Edit: @thnhmai06
     try:
         if (prs and ppt_instance):
             prs.Close()
@@ -38,6 +38,7 @@ def close_presentation(prs, ppt_instance):
 
 def duplicate_slide(prs, number_of_copies, slide_index = 1): # count from 1 for win32COM
     # Author: @oceantran27
+    # Edit: @thnhmai06
     
     try:
         if (prs):
@@ -52,6 +53,7 @@ def duplicate_slide(prs, number_of_copies, slide_index = 1): # count from 1 for 
     
 def replace_text_placeholders(prs, data):
     # Author: @oceantran27
+    # Edit: @thnhmai06
     
     column_names = data.columns.tolist()
     for slide_index in range(1, prs.Slides.Count):
@@ -67,6 +69,7 @@ def replace_text_placeholders(prs, data):
 
 def get_image_shape_indices(slide):
     # Author: @oceantran27
+    # Edit: @thnhmai06
     
     image_indices = []
     for index in range(1, slide.Shapes.Count + 1):
@@ -77,6 +80,7 @@ def get_image_shape_indices(slide):
 
 def save_images_from_shapes(prs_path, images_output_path, shape_indices, slide_index = 0): # count from 0 for pptx
     # Author: @oceantran27
+    # Edit: @thnhmai06
     
     presentation = Presentation(prs_path)
 

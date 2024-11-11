@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import win32com.client
 from configparser import ConfigParser
 
 '''
@@ -19,6 +20,7 @@ DEBUG_MODE = __CONFIG.getboolean("Debug", "debug")
 GITHUB_URL = "https://github.com/thnhmai06/tao-slide-tot-nghiep"
 SHAPES_PATH = os.path.dirname("./temp/shapes/") 
 TRANSLATION_PATH = os.path.dirname("./translations/")
+ppt_instance = win32com.client.Dispatch('PowerPoint.Application')
 
 #? Global Variables
 class CSV_data(dict):
@@ -40,3 +42,11 @@ class CSV_data(dict):
         return True
 
 csv_file = CSV_data()
+
+class PPT_data(dict):
+    def __init__(self):
+        super().__init__()
+        self.__ppt_instance = win32com.client.Dispatch('PowerPoint.Application')
+        __read_only = True
+        __has_title = False
+        __window    = False
