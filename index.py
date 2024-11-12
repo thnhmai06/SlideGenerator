@@ -21,6 +21,7 @@ if __name__ == "__main__":
     console_debug(__name__, "load_resources")
     qInitResources()
 
+    # Kiểm tra Powerpoint có sẵn không
     if not ppt_instance:
         error.default(__name__, "no_powerpoint")
         sys.exit(0)

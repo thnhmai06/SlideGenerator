@@ -11,7 +11,7 @@
         "information": {
             "window_name": "Thông báo",
             "too_much_placeholders": "Số lượng đã nhiều hơn số placeholders có sẵn!",
-            "no_powerpoint": "Ứng dụng yêu cầu cài đặt Microsoft PowerPoint (Office) để tiếp tục!",
+            "no_powerpoint": "Ứng dụng yêu cầu Microsoft PowerPoint (Office) để tiếp tục!",
             "invaild_csv": "File DSSV không chứa thông tin sinh viên!",
             "invaild_pptx": "File PowerPoint này trống!"
         }

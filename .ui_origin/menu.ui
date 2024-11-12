@@ -33,7 +33,7 @@
   </property>
   <property name="windowIcon">
    <iconset resource="resource.qrc">
-    <normaloff>:/main/uet</normaloff>:/main/uet</iconset>
+    <normaloff>./assets/logo</normaloff>./assets/logo</iconset>
   </property>
   <property name="whatsThis">
    <string/>
@@ -269,7 +269,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;img src=&quot;:/main/uet&quot;/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;img src=&quot;./assets/logo&quot;/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
    <widget class="QLabel" name="github">
@@ -403,7 +403,7 @@
      </property>
      <property name="icon">
       <iconset resource="resource.qrc">
-       <normaloff>:/main/add</normaloff>:/main/add</iconset>
+       <normaloff>./assets/button/add</normaloff>./assets/button/add</iconset>
      </property>
     </widget>
     <widget class="QToolButton" name="config_image_remove_button">
@@ -420,7 +420,7 @@
      </property>
      <property name="icon">
       <iconset resource="resource.qrc">
-       <normaloff>:/main/remove</normaloff>:/main/remove</iconset>
+       <normaloff>./assets/button/remove</normaloff>./assets/button/remove</iconset>
      </property>
     </widget>
     <widget class="QToolButton" name="config_text_remove_button">
@@ -437,7 +437,7 @@
      </property>
      <property name="icon">
       <iconset resource="resource.qrc">
-       <normaloff>:/main/remove</normaloff>:/main/remove</iconset>
+       <normaloff>./assets/button/remove</normaloff>./assets/button/remove</iconset>
      </property>
     </widget>
     <widget class="QToolButton" name="config_text_add_button">
@@ -454,7 +454,7 @@
      </property>
      <property name="icon">
       <iconset resource="resource.qrc">
-       <normaloff>:/main/add</normaloff>:/main/add</iconset>
+       <normaloff>./assets/button/add</normaloff>./assets/button/add</iconset>
      </property>
     </widget>
     <widget class="QListWidget" name="config_text_list">
