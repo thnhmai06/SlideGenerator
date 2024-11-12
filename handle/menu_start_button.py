@@ -18,4 +18,5 @@ def check_start_button(ui: 'Ui'):
         start_button.setEnabled(False)
 
 def start():
-    print("hello")
+    # Hàm này sẽ được gọi khi start_button được nhấn
+    None

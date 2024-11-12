@@ -6,13 +6,13 @@ from translations import TRANS
 def _show_err_diaglog(window_name: str, title: str, details: str = None):
     diaglogs.error(window_name, title, details) # Show error dialog
 def _console_error(where: str, content: str) -> None:
-    __logger = logging.getLogger(where)
+    logger = logging.getLogger(where)
     if content: 
-        __logger.error(content)
+        logger.error(content)
 def _console_critical(where: str, content: str) -> None:
-    __logger = logging.getLogger(where)
+    logger = logging.getLogger(where)
     if content:
-        __logger.critical(content)
+        logger.critical(content)
 
 def default(where: str, title_key: str, details: str = None, 
             window_name: str = TRANS["diaglogs"]["error"]["window_name"]) -> None:

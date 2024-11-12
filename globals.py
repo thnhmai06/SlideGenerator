@@ -20,7 +20,7 @@ DEBUG_MODE = __CONFIG.getboolean("Debug", "debug")
 GITHUB_URL = "https://github.com/thnhmai06/tao-slide-tot-nghiep"
 SHAPES_PATH = os.path.dirname("./temp/shapes/") 
 TRANSLATION_PATH = os.path.dirname("./translations/")
-ppt_instance = win32com.client.Dispatch('PowerPoint.Application')
+pptx_instance = win32com.client.Dispatch('PowerPoint.Application')
 
 #? Global Variables
 class CSV_data(dict):
@@ -43,10 +43,11 @@ class CSV_data(dict):
 
 csv_file = CSV_data()
 
-class PPT_data(dict):
+class PPTX_data(dict):
     def __init__(self):
         super().__init__()
-        self.__ppt_instance = win32com.client.Dispatch('PowerPoint.Application')
-        __read_only = True
-        __has_title = False
-        __window    = False
+        self.presentation = None
+    def load_preview(self, pptx_path):
+        # TODO: Chỗ này sẽ dùng python-pptx để lưu lại các shapes, dùng cho việc preview
+        None #Edit here
+    

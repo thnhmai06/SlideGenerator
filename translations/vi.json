@@ -13,14 +13,20 @@
             "too_much_placeholders": "Số lượng đã nhiều hơn số placeholders có sẵn!",
             "no_powerpoint": "Ứng dụng yêu cầu Microsoft PowerPoint (Office) để tiếp tục!",
             "invaild_csv": "File DSSV không chứa thông tin sinh viên!",
-            "invaild_pptx": "File PowerPoint này trống!"
+            "invaild_pptx": "File PowerPoint này trống!",
+            "no_slide_pptx": "Không tìm thấy slide nào trong file PowerPoint này!"
         }
     },
     "images_table": {
         "new_item": "Mục mới"
     },
-    "debug": {
-        "load_resources": "Tải Resources",
-        "had_powerpoint": "Phát hiện Microsoft PowerPoint"
+    "console": {
+        "debug": {
+            "load_resources": "Tải Resources",
+            "had_powerpoint": "Phát hiện Microsoft PowerPoint"
+        },
+        "info": {
+            
+        }
     }
 }

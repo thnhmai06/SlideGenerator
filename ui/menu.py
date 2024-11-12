@@ -236,16 +236,16 @@ class Ui(QMainWindow):
         
         self.github = QLabel(self.centralwidget)
         self.github.setGeometry(QtCore.QRect(870, 10, 31, 31))
-        self.github.setObjectName("github")
+        self.github.setObjectName("./assets/button/github")
         self.github.setOpenExternalLinks(True)
         
         self.about = QLabel(self.centralwidget)
         self.about.setGeometry(QtCore.QRect(930, 10, 31, 31))
-        self.about.setObjectName("about")
+        self.about.setObjectName("./assets/button/about")
         
         self.guide = QLabel(self.centralwidget)
         self.guide.setGeometry(QtCore.QRect(900, 10, 21, 31))
-        self.guide.setObjectName("guide")
+        self.guide.setObjectName("./assets/button/guide")
 
     def retranslateUi(self):
         """Retranslates the UI elements."""
