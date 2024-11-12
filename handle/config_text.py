@@ -16,14 +16,14 @@ def remove_item(config_text_list: QListWidget):
         # Xóa item được chọn
         for item in selected_items:
             row = config_text_list.row(item)
-            console_debug(__name__, None, f"Remove item {item.text()} [{row + 1}]") # row + 1 vì row bắt đầu từ 0
+            console_debug(__name__, None, f"Remove item {row + 1}: {item.text()}") # row + 1 vì row bắt đầu từ 0
             config_text_list.takeItem(row)
     else:
         # Nếu không có item nào được chọn, xóa item cuối cùng
         if config_text_list.count() > 0:
             last_row = config_text_list.count() - 1
             last_row_item = config_text_list.item(last_row)
-            console_debug(__name__, None, f"Remove item {last_row_item.text()} [{last_row + 1}]") # last_row + 1 vì last_row bắt đầu từ 0
+            console_debug(__name__, None, f"Remove item {last_row + 1}: {last_row_item.text()}") # last_row + 1 vì last_row bắt đầu từ 0
             config_text_list.takeItem(last_row)
         else:
             info(__name__, "no_item_to_remove")
