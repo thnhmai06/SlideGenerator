@@ -1,5 +1,5 @@
-PyQt5
-pywin32
-pandas
-python-pptx
-colorama
+PyQt5 # for GUI
+pywin32 # for replace placeholders
+pandas # for csv reading
+python-pptx # for load shape preview
+colorama # for console color

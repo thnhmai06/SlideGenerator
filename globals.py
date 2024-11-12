@@ -40,14 +40,7 @@ class CSV_data(dict):
         self.placeholders = self._df.columns.tolist()
         self.students = self._df.to_dict(orient='records')
         return True
-
 csv_file = CSV_data()
 
-class PPTX_data(dict):
-    def __init__(self):
-        super().__init__()
-        self.presentation = None
-    def load_preview(self, pptx_path):
-        # TODO: Chỗ này sẽ dùng python-pptx để lưu lại các shapes, dùng cho việc preview
-        None #Edit here
+
     
