@@ -236,16 +236,16 @@ class Ui(QMainWindow):
         
         self.github = QLabel(self.centralwidget)
         self.github.setGeometry(QtCore.QRect(870, 10, 31, 31))
-        self.github.setObjectName("./assets/button/github")
+        self.github.setObjectName("github")
         self.github.setOpenExternalLinks(True)
         
         self.about = QLabel(self.centralwidget)
         self.about.setGeometry(QtCore.QRect(930, 10, 31, 31))
-        self.about.setObjectName("./assets/button/about")
+        self.about.setObjectName("about")
         
         self.guide = QLabel(self.centralwidget)
         self.guide.setGeometry(QtCore.QRect(900, 10, 21, 31))
-        self.guide.setObjectName("./assets/button/guide")
+        self.guide.setObjectName("guide")
 
     def retranslateUi(self):
         """Retranslates the UI elements."""
@@ -264,7 +264,7 @@ class Ui(QMainWindow):
         self.start_button.setText(_translate("menu", "Bắt đầu"))
         self.uet.setText(_translate("menu", "<html><head/><body><p><img src=\"./assets/logo\"/></p></body></html>"))
         self.uet.setToolTip("CTSV.UET.VNU")
-        self.github.setText(_translate("menu", f'<html><head/><body><p><a href="{GITHUB_URL}"><img src=\":/main/github\"/></a></p></body></html>'))
+        self.github.setText(_translate("menu", f'<html><head/><body><p><a href="{GITHUB_URL}"><img src=\"./assets/button/github\"/></a></p></body></html>'))
         self.github.setToolTip("Github")
         self.config.setTitle(_translate("menu", "B3. Thiết lập thay thế"))
         item = self.config_image_table.horizontalHeaderItem(0)
@@ -276,9 +276,9 @@ class Ui(QMainWindow):
         self.config_image_autodownload_label.setText(_translate("menu", "Ảnh hỗ trợ tự động download nếu là liên kết"))
         __sortingEnabled = self.config_text_list.isSortingEnabled()
         self.config_text_list.setSortingEnabled(__sortingEnabled)
-        self.about.setText(_translate("menu", "<html><head/><body><p><img src=\":/main/about\"/></p></body></html>"))
+        self.about.setText(_translate("menu", "<html><head/><body><p><img src=\"./assets/button/about\"/></p></body></html>"))
         self.about.setToolTip("About")
-        self.guide.setText(_translate("menu", "<html><head/><body><p><img src=\":/main/guide\"/></p></body></html>"))
+        self.guide.setText(_translate("menu", "<html><head/><body><p><img src=\"./assets/button/guide\"/></p></body></html>"))
         self.guide.setToolTip("Hướng dẫn sử dụng")
 
     def handleUI(self):

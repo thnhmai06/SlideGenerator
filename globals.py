@@ -31,7 +31,6 @@ class CSV_data(dict):
         self._df = pd.DataFrame()
     def load(self, csv_path) -> None:
         self._df = pd.read_csv(csv_path)
-
     def get(self) -> bool:
         __number_of_students = len(self._df)
         if not __number_of_students>=1:

@@ -37,7 +37,7 @@ def load(ui: 'Ui'):
     if not is_csv_vaild:
         info(__name__, "invaild_csv")
         return
-    console_info(__name__, "Fields:", (" | ").join(csv_file.placeholders), "(*end)")
+    console_info(__name__, "Fields:", (" - ").join(csv_file.placeholders))
     console_info(__name__, "Students:", f"({len(csv_file.students)})")
 
     __toggle_config_text(ui, True)

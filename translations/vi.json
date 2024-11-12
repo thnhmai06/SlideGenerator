@@ -14,7 +14,8 @@
             "no_powerpoint": "Ứng dụng yêu cầu Microsoft PowerPoint (Office) để tiếp tục!",
             "invaild_csv": "File DSSV không chứa thông tin sinh viên!",
             "invaild_pptx": "File PowerPoint này trống!",
-            "no_slide_pptx": "Không tìm thấy slide nào trong file PowerPoint này!"
+            "no_slide_pptx": "Không tìm thấy slide nào trong file PowerPoint này!",
+            "no_item_to_remove": "Không có mục nào để xóa cả!"
         }
     },
     "images_table": {
