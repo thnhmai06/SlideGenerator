@@ -164,6 +164,3 @@ cython_debug/
 # Test files (will be update later)
 test
 temp
-
-# File đang được merge vào chương trình
-backend
