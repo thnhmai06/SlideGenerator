@@ -136,7 +136,7 @@
      </property>
     </widget>
    </widget>
-   <widget class="QGroupBox" name="dssv">
+   <widget class="QGroupBox" name="csv">
     <property name="geometry">
      <rect>
       <x>510</x>
@@ -148,7 +148,7 @@
     <property name="title">
      <string>B2. Chọn danh sách sinh viên</string>
     </property>
-    <widget class="QPushButton" name="dssv_broswe">
+    <widget class="QPushButton" name="csv_broswe">
      <property name="geometry">
       <rect>
        <x>300</x>
@@ -177,7 +177,7 @@
       <bool>false</bool>
      </property>
     </widget>
-    <widget class="QLabel" name="dssv_label">
+    <widget class="QLabel" name="csv_label">
      <property name="geometry">
       <rect>
        <x>20</x>

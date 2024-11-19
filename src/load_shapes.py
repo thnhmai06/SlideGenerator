@@ -1,26 +1,21 @@
 import os
 from typing import TYPE_CHECKING
-from globals import SHAPES_PATH   
+from globals import SHAPES_PATH, shapes_list, csv_file
 from pptx.shapes.picture import Picture
 from pptx.presentation import Presentation
 from pptx import Presentation as init_presentation
 from logger.info import console_info, default as info
+from src.toggle_config import toggle_config_image
 
 if TYPE_CHECKING:
     # Anti-circular import
     from ui.menu import Ui
 
-def __toggle_config_image(ui: 'Ui', is_enable: bool):
-    # Enable the config_image_table, add_button, and remove_button
-    config_image_table = ui.config_image_table
-    add_button = ui.config_image_add_button
-    remove_button = ui.config_image_remove_button
-
-    config_image_table.setEnabled(is_enable)
-    add_button.setEnabled(is_enable)
-    remove_button.setEnabled(is_enable)
-
-def __save_image_shapes_preview(prs: Presentation, slide_index = 0, save_path: str = SHAPES_PATH): # Slide đầu tiên có index = 0
+def __refresh_placeholders():
+    # Làm mới placeholders ở local file này
+    global __placeholders
+    __placeholders = csv_file.placeholders
+def __save_shapes(prs: Presentation, slide_index = 0, save_path: str = SHAPES_PATH): # Slide đầu tiên có index = 0
     # Author: @oceantran27
     # Edit: @thnhmai06
     # Description: Hàm này sẽ lưu lại các Shapes ảnh (đã xác định trong shape_indices) vào thư mục SHAPES_PATH
@@ -58,23 +53,28 @@ def __save_image_shapes_preview(prs: Presentation, slide_index = 0, save_path: s
             image_path = os.path.join(save_path, f"{__shape_index_python_pptx + 1}.{image.ext}")
             with open(image_path, "wb") as img_file:
                 img_file.write(image_bytes)
+                # Lưu thông tin ảnh vào shapes_list
+                shapes_list.add(__shape_index_python_pptx, image_path)
             console_info(__name__, f"Image ID: {__shape_index_win32COM} -> {image_path} (Preview)")
 
-def __load_preview_to_items_of_config_image_table(ui: 'Ui'):
-    config_image_table = ui.config_image_table
-    
 
 def load(ui: 'Ui'):
     pptx_path = ui.pptx_path.text()
     prs = init_presentation(pptx_path)
 
-    __toggle_config_image(ui, False)
-    ui.config_image_table.clear()
+    toggle_config_image(ui, False)
+    ui.config_image_table.clearContents()
 
-    # Kiểm tra xem trong prs có slide nào không
+    # Nếu prs không có slide nào
     if not prs.slides:
         ui.pptx_path.clear() # Xóa đường dẫn file pptx
         info(__name__, "no_slide_pptx")
         return
     
-    __save_image_shapes_preview(prs) # Lưu các ảnh từ slide đầu tiên vào thư mục SHAPES_PATH
+    __save_shapes(prs) # Lưu các ảnh từ slide đầu tiên vào thư mục SHAPES_PATH
+
+    __refresh_placeholders()
+    # Chỉ khi đã có sẵn placeholder rồi thì mới enable config_image_table
+    if (len(__placeholders) > 0):
+        toggle_config_image(ui, True)
+        

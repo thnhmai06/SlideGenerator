@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import win32com.client
 from configparser import ConfigParser
+from PyQt5.QtGui import QIcon
 
 '''
 SHAPES_PATH: str - Nơi lưu trữ ảnh Preview của các Shapes
@@ -23,7 +24,7 @@ TRANSLATION_PATH = os.path.dirname("./translations/")
 pptx_instance = win32com.client.Dispatch('PowerPoint.Application')
 
 #? Global Variables
-class CSV_data(dict):
+class Csv_saver(dict):
     def __init__(self):
         super().__init__()
         self.placeholders = list()
@@ -39,7 +40,13 @@ class CSV_data(dict):
         self.placeholders = self._df.columns.tolist()
         self.students = self._df.to_dict(orient='records')
         return True
-csv_file = CSV_data()
+csv_file = Csv_saver()
 
+class Shapes_saver(list):
+    def __init__(self):
+        super().__init__()
 
-    
+    def add(self, id: int, image_path: str):
+        shape_image = {"id": str(id), "path": image_path, "icon": QIcon(image_path)}
+        self.append(shape_image)
+shapes_list = Shapes_saver()

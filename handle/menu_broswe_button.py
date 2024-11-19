@@ -27,7 +27,7 @@ def template_powerpoint_broswe(widget: QWidget, inputLine: QLineEdit):
     # Load ImageShape here
     __setPathText(file_path, inputLine)
 
-def dssv_broswe(widget: QWidget, inputLine: QLineEdit):
+def csv_broswe(widget: QWidget, inputLine: QLineEdit):
     # @params: widget: QWidget, inputLine: QLineEdit
     file_path, _ = QFileDialog.getOpenFileName(widget, "Chọn file DSSV", "", "CSV File (*.csv)")
     __setPathText(file_path, inputLine)

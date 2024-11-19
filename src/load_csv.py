@@ -2,22 +2,17 @@ from PyQt5.QtWidgets import QLineEdit, QListWidget, QPushButton, QWidget
 from typing import TYPE_CHECKING
 from logger.info import console_info, default as info
 from logger.debug import console_debug
-from globals import csv_file
-from handle import config_text
+from globals import csv_file, shapes_list
+from src.toggle_config import toggle_config_text, toggle_config_image
 
 if TYPE_CHECKING:
     # Anti-circular import
     from ui.menu import Ui
-    
-def __toggle_config_text(ui: 'Ui', is_enable: bool):
-    # Enable the config_text_list, add_button, and remove_button
-    config_text_list = ui.config_text_list
-    add_button = ui.config_text_add_button
-    remove_button = ui.config_text_remove_button
 
-    config_text_list.setEnabled(is_enable)
-    add_button.setEnabled(is_enable)
-    remove_button.setEnabled(is_enable)
+def __refresh_shapes():
+    # Làm mới placeholders ở local file này
+    global __shapes
+    __shapes = shapes_list
 
 def load(ui: 'Ui'):
     csv_path = ui.csv_path.text()
@@ -26,10 +21,10 @@ def load(ui: 'Ui'):
 
     if not csv_path:
         return
-    __toggle_config_text(ui, False)
+    toggle_config_text(ui, False)
     # Clear config_text_list và config_image_table
     config_text_list.clear()
-    config_image_table.clear()
+    config_image_table.clearContents()
 
     console_info(__name__, "CSV Path:", csv_path)
     csv_file.load(csv_path) #Chuyển dữ liệu thô từ file csv vào csv_file (ở globals)
@@ -40,4 +35,8 @@ def load(ui: 'Ui'):
     console_info(__name__, "Fields:", (" - ").join(csv_file.placeholders))
     console_info(__name__, "Students:", f"({len(csv_file.students)})")
 
-    __toggle_config_text(ui, True)
+    __refresh_shapes()
+    toggle_config_text(ui, True)
+    # Nếu có Shapes ảnh thì enable config_image
+    if (len(shapes_list) > 0):
+        toggle_config_image(ui, True)

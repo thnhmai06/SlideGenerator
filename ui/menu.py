@@ -9,9 +9,9 @@
 
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import *
-from handle import config_images, config_text, menu_broswe_button, menu_start_button
+from handle import menu_broswe_button, menu_config_images, menu_config_text, menu_start_button
 from handle.menu_start_button import check_start_button
-from src import load_csv, load_pptx
+from src import load_csv, load_shapes
 from ui import progress
 from globals import GITHUB_URL
 from translations import TRANS
@@ -47,8 +47,8 @@ class Ui(QMainWindow):
         
         self.setupTitle()
         self.setupTemplateGroupBox()
-        self.setupDSSVGroupBox()
-        self.setupsaveGroupBox()
+        self.setupCSVGroupBox()
+        self.setupSaveGroupBox()
         self.setupConfigGroupBox()
         self.setupStartButton()
         self.setupLabels()
@@ -99,17 +99,17 @@ class Ui(QMainWindow):
         self.template_label.setGeometry(QtCore.QRect(20, 40, 171, 31))
         self.template_label.setObjectName("template_label")
 
-    def setupDSSVGroupBox(self):
-        """Sets up the DSSV group box."""
-        self.dssv = QGroupBox(self.centralwidget)
-        self.dssv.setGeometry(QtCore.QRect(510, 120, 411, 161))
-        self.dssv.setObjectName("dssv")
+    def setupCSVGroupBox(self):
+        """Sets up the CSV group box."""
+        self.csv = QGroupBox(self.centralwidget)
+        self.csv.setGeometry(QtCore.QRect(510, 120, 411, 161))
+        self.csv.setObjectName("csv")
         
-        self.dssv_broswe = QPushButton(self.dssv)
-        self.dssv_broswe.setGeometry(QtCore.QRect(300, 90, 93, 28))
-        self.dssv_broswe.setObjectName("dssv_broswe")
+        self.csv_broswe = QPushButton(self.csv)
+        self.csv_broswe.setGeometry(QtCore.QRect(300, 90, 93, 28))
+        self.csv_broswe.setObjectName("csv_broswe")
         
-        self.csv_path = QLineEdit(self.dssv)
+        self.csv_path = QLineEdit(self.csv)
         self.csv_path.setGeometry(QtCore.QRect(20, 90, 271, 31))
         self.csv_path.setCursorPosition(0)
         self.csv_path.setDragEnabled(False)
@@ -117,11 +117,11 @@ class Ui(QMainWindow):
         self.csv_path.setReadOnly(True)
         self.csv_path.setStyleSheet("background-color: #f0f0f0")
         
-        self.dssv_label = QLabel(self.dssv)
-        self.dssv_label.setGeometry(QtCore.QRect(20, 40, 221, 31))
-        self.dssv_label.setObjectName("dssv_label")
+        self.csv_label = QLabel(self.csv)
+        self.csv_label.setGeometry(QtCore.QRect(20, 40, 221, 31))
+        self.csv_label.setObjectName("csv_label")
 
-    def setupsaveGroupBox(self):
+    def setupSaveGroupBox(self):
         """Sets up the save group box."""
         self.save = QGroupBox(self.centralwidget)
         self.save.setGeometry(QtCore.QRect(20, 720, 411, 121))
@@ -255,9 +255,9 @@ class Ui(QMainWindow):
         self.template.setTitle(_translate("menu", "B1. Chọn mẫu"))
         self.template_broswe.setText(_translate("menu", "Duyệt"))
         self.template_label.setText(_translate("menu", "<html><head/><body><p><span style=\" font-weight:600;\">Chọn file Template </span>(.pptx)</p></body></html>"))
-        self.dssv.setTitle(_translate("menu", "B2. Chọn danh sách sinh viên"))
-        self.dssv_broswe.setText(_translate("menu", "Duyệt"))
-        self.dssv_label.setText(_translate("menu", "<html><head/><body><p><span style=\" font-weight:600;\">Chọn danh sách sinh viên </span>(.csv)</p></body></html>"))
+        self.csv.setTitle(_translate("menu", "B2. Chọn danh sách sinh viên"))
+        self.csv_broswe.setText(_translate("menu", "Duyệt"))
+        self.csv_label.setText(_translate("menu", "<html><head/><body><p><span style=\" font-weight:600;\">Chọn danh sách sinh viên </span>(.csv)</p></body></html>"))
         self.save.setTitle(_translate("menu", "B4. Chọn vị trí lưu"))
         self.save_broswe.setText(_translate("menu", "Duyệt"))
         self.save_label.setText(_translate("menu", "<html><head/><body><p><span style=\" font-weight:600;\">Chọn vị trí lưu</span></p></body></html>"))
@@ -268,9 +268,9 @@ class Ui(QMainWindow):
         self.github.setToolTip("Github")
         self.config.setTitle(_translate("menu", "B3. Thiết lập thay thế"))
         item = self.config_image_table.horizontalHeaderItem(0)
-        item.setText(_translate("menu", "Placeholder"))
+        item.setText(_translate("menu", "ID Shape"))
         item = self.config_image_table.horizontalHeaderItem(1)
-        item.setText(_translate("menu", "Tên ảnh mẫu"))
+        item.setText(_translate("menu", "Placeholder"))
         self.config_text_label.setText(_translate("menu", "<html><head/><body><p align=\"center\"><span style=\" font-weight:600;\">Text (Placeholder)</span></p></body></html>"))
         self.config_image_label.setText(_translate("menu", "<html><head/><body><p align=\"center\"><span style=\" font-weight:600;\">Hình ảnh</span></p></body></html>"))
         self.config_image_autodownload_label.setText(_translate("menu", "Ảnh hỗ trợ tự động download nếu là liên kết"))
@@ -289,18 +289,18 @@ class Ui(QMainWindow):
         self.csv_path.textChanged.connect(lambda: check_start_button(self))
 
         # Xử lý sự kiện cho các button
-        self.config_text_add_button.clicked.connect(lambda: config_text.add_item(self.config_text_list))
-        self.config_text_remove_button.clicked.connect(lambda: config_text.remove_item(self.config_text_list))
-        self.config_image_add_button.clicked.connect(lambda: config_images.add_item(self.config_image_table))
-        self.config_image_remove_button.clicked.connect(lambda: config_images.remove_item(self.config_image_table))
+        self.config_text_add_button.clicked.connect(lambda: menu_config_text.add_item(self.config_text_list))
+        self.config_text_remove_button.clicked.connect(lambda: menu_config_text.remove_item(self.config_text_list))
+        self.config_image_add_button.clicked.connect(lambda: menu_config_images.add_item(self.config_image_table))
+        self.config_image_remove_button.clicked.connect(lambda: menu_config_images.remove_item(self.config_image_table))
         self.template_broswe.clicked.connect(lambda: menu_broswe_button.template_powerpoint_broswe(self.centralwidget, self.pptx_path))
-        self.dssv_broswe.clicked.connect(lambda: menu_broswe_button.dssv_broswe(self.centralwidget, self.csv_path))
+        self.csv_broswe.clicked.connect(lambda: menu_broswe_button.csv_broswe(self.centralwidget, self.csv_path))
         self.save_broswe.clicked.connect(lambda: menu_broswe_button.save_path_broswe(self.centralwidget, self.save_path))
         self.start_button.clicked.connect(lambda: menu_start_button.start())
 
         # Xử lý sự kiện cho input
         self.csv_path.textChanged.connect(lambda: load_csv.load(self))
-        self.pptx_path.textChanged.connect(lambda: load_pptx.load_shapes(self.pptx_path))
+        self.pptx_path.textChanged.connect(lambda: load_shapes.load(self))
 
     def showProgress(self):
         """Shows the progress window."""
