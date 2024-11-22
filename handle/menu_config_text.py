@@ -1,12 +1,12 @@
 from PyQt5.QtWidgets import QListWidget, QListWidgetItem, QWidget, QComboBox
 from logger.info import default as info
 from logger.debug import console_debug
-from globals import Input
+from globals import input
 
 def __refresh_placeholders():
     # Làm mới placeholders ở local file này
     global __placeholders
-    __placeholders = Input.csv.placeholders
+    __placeholders = input.csv.placeholders
 
 def remove_item(config_text_list: QListWidget):
     # Lấy các item được chọn
@@ -39,9 +39,10 @@ def add_item(config_text_list: QListWidget):
 
     # Thêm item mới
     item = QListWidgetItem()
-    item.setText(__placeholders[0]) # Mặc định là item đầu tiên trong placeholders
     combo = QComboBox(config_text_list)
     combo.addItems(__placeholders)
+    combo.setCurrentIndex(items_count)
+    item.setText(combo.currentText())
     combo.setStyleSheet("""
         background: white; 
         border: none;

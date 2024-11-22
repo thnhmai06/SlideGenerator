@@ -230,9 +230,9 @@ class Ui(QMainWindow):
 
     def setupLabels(self):
         """Sets up the additional labels."""
-        self.uet = QLabel(self.centralwidget)
-        self.uet.setGeometry(QtCore.QRect(30, 20, 81, 81))
-        self.uet.setObjectName("uet")
+        self.logo = QLabel(self.centralwidget)
+        self.logo.setGeometry(QtCore.QRect(30, 20, 81, 81))
+        self.logo.setObjectName("logo")
         
         self.github = QLabel(self.centralwidget)
         self.github.setGeometry(QtCore.QRect(870, 10, 31, 31))
@@ -262,13 +262,15 @@ class Ui(QMainWindow):
         self.save_broswe.setText(_translate("menu", "Duyệt"))
         self.save_label.setText(_translate("menu", "<html><head/><body><p><span style=\" font-weight:600;\">Chọn vị trí lưu</span></p></body></html>"))
         self.start_button.setText(_translate("menu", "Bắt đầu"))
-        self.uet.setText(_translate("menu", "<html><head/><body><p><img src=\"./assets/logo\"/></p></body></html>"))
-        self.uet.setToolTip("CTSV.UET.VNU")
+        self.logo.setText(_translate("menu", "<html><head/><body><p><img src=\"./assets/logo\"/></p></body></html>"))
+        self.logo.setToolTip("CTSV.UET.VNU")
         self.github.setText(_translate("menu", f'<html><head/><body><p><a href="{GITHUB_URL}"><img src=\"./assets/button/github\"/></a></p></body></html>'))
         self.github.setToolTip("Github")
         self.config.setTitle(_translate("menu", "B3. Thiết lập thay thế"))
+        # Cột đầu tiên là cột ID Shape
         item = self.config_image_table.horizontalHeaderItem(0)
         item.setText(_translate("menu", "ID Shape"))
+        # Cột thứ hai là cột Placeholder
         item = self.config_image_table.horizontalHeaderItem(1)
         item.setText(_translate("menu", "Placeholder"))
         self.config_text_label.setText(_translate("menu", "<html><head/><body><p align=\"center\"><span style=\" font-weight:600;\">Text (Placeholder)</span></p></body></html>"))

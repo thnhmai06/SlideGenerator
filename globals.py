@@ -24,38 +24,61 @@ TRANSLATION_PATH = os.path.dirname("./translations/")
 pptx_instance = win32com.client.Dispatch('PowerPoint.Application')
 
 #? Biến lưu thông tin người dùng nhập vào
-class InputData:
-    class CsvData(dict):
+class Input(dict):
+    class Csv(dict):
         def __init__(self):
             super().__init__()
             self.placeholders = list()
             self.students = dict()
-            self._df: pd.DataFrame = None
-        def read_csv(self, csv_path) -> None:
-            self._df = pd.read_csv(csv_path)
-        def get(self) -> bool:
-            __number_of_students = len(self._df)
-            if not __number_of_students>=1:
-                return False
-
-            self.placeholders = self._df.columns.tolist()
-            self.students = self._df.to_dict(orient='records')
-            return True
-    class ShapesData(list):
+    class Shapes(list):
         def __init__(self):
             super().__init__()
 
         def add(self, id: int, image_path: str):
             shape_image = {"id": str(id), "path": image_path, "icon": QIcon(image_path)}
             self.append(shape_image)
+    class Config(dict):
+        class ConfigText(str):
+            def __init__(self):
+                super().__init__()
+                self.text: str = None
+            def set(self, text: str):
+                self.text = text
+        class ConfigImage(dict):
+            def __init__(self):
+                super().__init__()
+                self.placeholder: str = None
+                self.shape_id: str = None
+            def set(self, shape_id: str, placeholder: str):
+                self.placeholder = placeholder
+                self.shape_id = shape_id
+
+        def __init__(self):
+            super().__init__()
+            self.text = list()
+            self.image = list()
+        def add_text(self, text: str):
+            config_text = self.ConfigText()
+            config_text.set(text)
+            self.text.append(text)
+        def add_image(self, shape_id: str, placeholder: str):
+            config_image = self.ConfigImage()
+            config_image.set(placeholder, shape_id)
+            self.image.append(config_image) 
+    class SavePath(str):
+        def __init__(self):
+            super().__init__()
+            self.save_path: str = None
+        def set(self, save_path: str):
+            self.save_path = save_path
     
     def __init__(self):
         self._df: pd.DataFrame = None
-        self.csv = self.CsvData()
-        self.shapes = self.ShapesData()
-        self.save_path = ""
-        self.config = {
-            "text": [],
-            "image": []
-        }
-Input = InputData()
+
+        self.csv = self.Csv()
+        self.shapes = self.Shapes()
+        self.config = self.Config()
+        self.save_path = self.SavePath()
+input = Input()
+
+# TODO: chuyển get sang collect_input.py
