@@ -15,16 +15,15 @@ app = QtWidgets.QApplication(sys.argv)
 menu_window = menu.Ui()
 progress_window = progress.Ui()
 
-if __name__ == "__main__":
+def __is_Powerpoint_available():
     # Kiểm tra Powerpoint có sẵn không
     if not pptx_instance:
         error.default(__name__, "no_powerpoint")
         sys.exit(0)
     console_debug(__name__, "had_powerpoint")
 
-    # Hiển thị menu
-    menu_window.show()
-
-    # Chạy ứng dụng
-    sys.exit(app.exec_())
+if __name__ == "__main__":
+    __is_Powerpoint_available()
+    menu_window.show() # Hiển thị menu
+    sys.exit(app.exec_()) # Chạy ứng dụng
         
