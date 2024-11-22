@@ -1,4 +1,4 @@
-# Configuration logging
+# Desciption: Logger Configuration
 
 from colorama import Fore
 from globals import DEBUG_MODE

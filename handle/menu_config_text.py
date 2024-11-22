@@ -1,12 +1,12 @@
 from PyQt5.QtWidgets import QListWidget, QListWidgetItem, QWidget, QComboBox
 from logger.info import default as info
 from logger.debug import console_debug
-from globals import csv_file
+from globals import Input
 
 def __refresh_placeholders():
     # Làm mới placeholders ở local file này
     global __placeholders
-    __placeholders = csv_file.placeholders
+    __placeholders = Input.csv.placeholders
 
 def remove_item(config_text_list: QListWidget):
     # Lấy các item được chọn

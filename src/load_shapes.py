@@ -1,6 +1,6 @@
 import os
 from typing import TYPE_CHECKING
-from globals import SHAPES_PATH, shapes_list, csv_file
+from globals import SHAPES_PATH, Input
 from pptx.shapes.picture import Picture
 from pptx.presentation import Presentation
 from pptx import Presentation as init_presentation
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 def __refresh_placeholders():
     # Làm mới placeholders ở local file này
     global __placeholders
-    __placeholders = csv_file.placeholders
+    __placeholders = Input.csv.placeholders
 def __save_shapes(prs: Presentation, slide_index = 0, save_path: str = SHAPES_PATH): # Slide đầu tiên có index = 0
     # Author: @oceantran27
     # Edit: @thnhmai06
@@ -53,8 +53,8 @@ def __save_shapes(prs: Presentation, slide_index = 0, save_path: str = SHAPES_PA
             image_path = os.path.join(save_path, f"{__shape_index_python_pptx + 1}.{image.ext}")
             with open(image_path, "wb") as img_file:
                 img_file.write(image_bytes)
-                # Lưu thông tin ảnh vào shapes_list
-                shapes_list.add(__shape_index_python_pptx, image_path)
+                # Lưu thông tin ảnh vào Input.shapes
+                Input.shapes.add(__shape_index_python_pptx, image_path)
             console_info(__name__, f"Image ID: {__shape_index_win32COM} -> {image_path} (Preview)")
 
 

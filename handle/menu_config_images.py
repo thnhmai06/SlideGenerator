@@ -2,16 +2,16 @@ from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QComboBox, QTableWid
 from translations import TRANS
 from logger.info import default as info
 from logger.debug import console_debug
-from globals import csv_file, shapes_list
+from globals import Input
 
 def __refresh_placeholders():
     # Làm mới placeholders ở local file này
     global __placeholders
-    __placeholders = csv_file.placeholders
+    __placeholders = Input.csv.placeholders
 def __refresh_shapes():
     # Làm mới placeholders ở local file này
     global __shapes
-    __shapes = shapes_list
+    __shapes = Input.shapes
 
 def remove_item(config_image_table: QTableWidget):
     selected_item = config_image_table.currentItem()
@@ -53,9 +53,9 @@ def add_item(config_image_table: QTableWidget):
 
     # Setup cột thứ hai (image) của item
     item_image = QTableWidgetItem()
-    item_image.setText(shapes_list[0]["id"])
+    item_image.setText(Input.shapes[0]["id"])
     combo_image = QComboBox(config_image_table)
-    for combobox_item in shapes_list:
+    for combobox_item in Input.shapes:
         combo_image.addItem(combobox_item["icon"], f"ID {combobox_item["id"]}")
         combo_image.setStyleSheet("background: white; border: none;")
     combo_image.currentTextChanged.connect(lambda: item_image.setText(combo_image.currentText())) # Khi chọn item khác, cập nhật item text

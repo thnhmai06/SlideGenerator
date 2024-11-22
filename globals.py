@@ -23,30 +23,39 @@ SHAPES_PATH = os.path.dirname("./temp/shapes/")
 TRANSLATION_PATH = os.path.dirname("./translations/")
 pptx_instance = win32com.client.Dispatch('PowerPoint.Application')
 
-#? Global Variables
-class Csv_saver(dict):
-    def __init__(self):
-        super().__init__()
-        self.placeholders = list()
-        self.students = dict()
-        self._df = pd.DataFrame()
-    def load(self, csv_path) -> None:
-        self._df = pd.read_csv(csv_path)
-    def get(self) -> bool:
-        __number_of_students = len(self._df)
-        if not __number_of_students>=1:
-            return False
-        
-        self.placeholders = self._df.columns.tolist()
-        self.students = self._df.to_dict(orient='records')
-        return True
-csv_file = Csv_saver()
+#? Biến lưu thông tin người dùng nhập vào
+class InputData:
+    class CsvData(dict):
+        def __init__(self):
+            super().__init__()
+            self.placeholders = list()
+            self.students = dict()
+            self._df: pd.DataFrame = None
+        def read_csv(self, csv_path) -> None:
+            self._df = pd.read_csv(csv_path)
+        def get(self) -> bool:
+            __number_of_students = len(self._df)
+            if not __number_of_students>=1:
+                return False
 
-class Shapes_saver(list):
-    def __init__(self):
-        super().__init__()
+            self.placeholders = self._df.columns.tolist()
+            self.students = self._df.to_dict(orient='records')
+            return True
+    class ShapesData(list):
+        def __init__(self):
+            super().__init__()
 
-    def add(self, id: int, image_path: str):
-        shape_image = {"id": str(id), "path": image_path, "icon": QIcon(image_path)}
-        self.append(shape_image)
-shapes_list = Shapes_saver()
+        def add(self, id: int, image_path: str):
+            shape_image = {"id": str(id), "path": image_path, "icon": QIcon(image_path)}
+            self.append(shape_image)
+    
+    def __init__(self):
+        self._df: pd.DataFrame = None
+        self.csv = self.CsvData()
+        self.shapes = self.ShapesData()
+        self.save_path = ""
+        self.config = {
+            "text": [],
+            "image": []
+        }
+Input = InputData()
