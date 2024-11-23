@@ -13,13 +13,6 @@ def __setPathText(file_path: str, inputLine: QLineEdit):
         # Gán đường dẫn vào QLineEdit
         inputLine.setText(file_path)
 
-def __openFolder(path: str):
-    # @params: path: str
-    folder_path = os.path.abspath(path)
-    if not os.path.isdir(folder_path):
-        os.makedirs(folder_path)
-    os.startfile(folder_path)
-
 #? Các hàm xử lý sự kiện của các button
 def template_powerpoint_broswe(widget: QWidget, inputLine: QLineEdit):
     # @params: widget: QWidget, inputLine: QLineEdit

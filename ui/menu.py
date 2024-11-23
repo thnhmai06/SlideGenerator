@@ -188,6 +188,11 @@ class Ui(QMainWindow):
         self.config_image_label = QLabel(self.config)
         self.config_image_label.setGeometry(QtCore.QRect(470, 30, 401, 20))
         self.config_image_label.setObjectName("config_image_label")
+
+        self.config_image_preview = QPushButton(self.config)
+        self.config_image_preview.setGeometry(QtCore.QRect(770, 25, 93, 28))
+        self.config_image_preview.setObjectName("config_image_preview")
+        self.config_image_preview.setEnabled(False)
         
         self.config_image_autodownload_label = QLabel(self.config)
         self.config_image_autodownload_label.setGeometry(QtCore.QRect(470, 370, 211, 16))
@@ -274,6 +279,7 @@ class Ui(QMainWindow):
         item = self.config_image_table.horizontalHeaderItem(1)
         item.setText(_translate("menu", "Placeholder"))
         self.config_text_label.setText(_translate("menu", "<html><head/><body><p align=\"center\"><span style=\" font-weight:600;\">Text (Placeholder)</span></p></body></html>"))
+        self.config_image_preview.setText(_translate("menu", "Xem các Shapes"))
         self.config_image_label.setText(_translate("menu", "<html><head/><body><p align=\"center\"><span style=\" font-weight:600;\">Hình ảnh</span></p></body></html>"))
         self.config_image_autodownload_label.setText(_translate("menu", "Ảnh hỗ trợ tự động download nếu là liên kết"))
         __sortingEnabled = self.config_text_list.isSortingEnabled()
@@ -298,6 +304,7 @@ class Ui(QMainWindow):
         self.template_broswe.clicked.connect(lambda: menu_broswe_button.template_powerpoint_broswe(self.centralwidget, self.pptx_path))
         self.csv_broswe.clicked.connect(lambda: menu_broswe_button.csv_broswe(self.centralwidget, self.csv_path))
         self.save_broswe.clicked.connect(lambda: menu_broswe_button.save_path_broswe(self.centralwidget, self.save_path))
+        self.config_image_preview.clicked.connect(lambda: menu_config_images.preview())
         self.start_button.clicked.connect(lambda: menu_start_button.start())
 
         # Xử lý sự kiện cho input

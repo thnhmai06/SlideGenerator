@@ -19,8 +19,8 @@ DEBUG_MODE = __CONFIG.getboolean("Debug", "debug")
 
 #? Global Constants
 GITHUB_URL = "https://github.com/thnhmai06/tao-slide-tot-nghiep"
-SHAPES_PATH = os.path.dirname("./temp/shapes/") 
-TRANSLATION_PATH = os.path.dirname("./translations/")
+SHAPES_PATH = os.path.abspath("./temp/shapes/") 
+TRANSLATION_PATH = os.path.abspath("./translations/")
 pptx_instance = win32com.client.Dispatch('PowerPoint.Application')
 
 #? Biến lưu thông tin người dùng nhập vào
