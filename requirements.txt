@@ -1,0 +1,5 @@
+PyQt5 # for GUI
+pywin32 # for replace placeholders
+pandas # for csv reading
+python-pptx # for save shape
+colorama # for console color
