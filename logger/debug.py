@@ -1,6 +1,6 @@
 import logging
-from ui import diaglogs
 from translations import TRANS
+
 
 def console_debug(where: str, title_key: str | None, *details: str) -> None:
     title = TRANS["console"]["debug"][title_key] if title_key else ""
