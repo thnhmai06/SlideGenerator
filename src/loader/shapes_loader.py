@@ -3,8 +3,8 @@ from typing import TYPE_CHECKING
 from globals import input
 from pptx import Presentation
 from logger.info import default as info
-from src.toggle_config import toggle_config_image
-from src.get_input import get_shapes
+from src.loader._toggle_config import toggle_config_image
+from src.loader._input_utils import get_shapes
 from globals import SHAPES_PATH
 
 if TYPE_CHECKING:

@@ -11,26 +11,9 @@ from logger.info import console_info
 import pandas as pd
 
 
-def __get_save_path(ui: "Ui") -> str:
+def get_save_path(ui: "Ui") -> str:
     save_path = ui.save_path.text()
     input.save_path.set(save_path)
-
-
-def __get_config(ui: "Ui") -> None:
-    def _get_text_config() -> None:
-        text_list = ui.config_text_list
-        for index in range(text_list):
-            input.config.add_text(text_list.item(index).text())
-
-    def _get_image_config() -> None:
-        image_table = ui.config_image_table
-        for row in range(image_table.rowCount()):
-            shape_id = image_table.item(row, 0).text()
-            placeholder = image_table.item(row, 1).text()
-            input.config.add_image(shape_id=shape_id, placeholder=placeholder)
-
-    _get_text_config()
-    _get_image_config()
 
 
 def get_shapes(
@@ -99,8 +82,3 @@ def get_csv(csv_path: str) -> bool:
     input.csv.students = __df.to_dict(orient="records")
     console_info(__name__, "Students:", f"({len(input.csv.students)})")
     return True
-
-
-def get_save_path_and_config(ui: "Ui") -> None:
-    __get_save_path(ui)
-    __get_config(ui)
