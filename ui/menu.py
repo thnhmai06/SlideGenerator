@@ -12,12 +12,12 @@ from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QLabel, QGroupBox, QPushButton, QLineEdit, QListWidget, 
     QTableWidget, QTableWidgetItem, QHeaderView, QStatusBar
 )
-from handle.menu import (
+from handler.menu import (
     config_image,
     start_button,
 )
-from handle.menu import broswe_button, config_text
-from handle.menu.start_button import check_start_button
+from handler.menu import broswe_button, config_text
+from handler.menu.start_button import check_start_button
 from src.loader import shapes_loader
 from src.loader import csv_loader
 from ui import progress
