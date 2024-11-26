@@ -6,7 +6,7 @@ from src.loader._toggle_config import toggle_config_text, toggle_config_image, c
 
 if TYPE_CHECKING:
     # Anti-circular import
-    from ui.menu import Ui
+    from ui.menu import Menu
 
 
 def __refresh_shapes():
@@ -14,8 +14,8 @@ def __refresh_shapes():
     global __shapes
     __shapes = input.shapes
 
-def load(ui: "Ui"):
-    csv_path = ui.csv_path.text()
+def load(menu: "Menu"):
+    csv_path = menu.csv_path.text()
 
     # Kiểm tra xem csv_path có tồn tại không (trường hợp Cancel việc chọn file)
     if not csv_path:
@@ -23,8 +23,8 @@ def load(ui: "Ui"):
     console_info(__name__, "CSV Path:", csv_path)
 
     
-    toggle_config_text(ui, False)
-    clear_config(ui)
+    toggle_config_text(menu, False)
+    clear_config(menu)
 
     is_Csv_vaild = get_csv(
         csv_path
@@ -34,9 +34,9 @@ def load(ui: "Ui"):
         return
 
     # Now we can enable config_text
-    toggle_config_text(ui, True)
+    toggle_config_text(menu, True)
 
     # Nếu có Shapes ảnh thì enable config_image
     __refresh_shapes()
     if len(__shapes) > 0:
-        toggle_config_image(ui, True)
+        toggle_config_image(menu, True)

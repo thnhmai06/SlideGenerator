@@ -1,8 +1,10 @@
 import os
+import sys
 import pandas as pd
 import win32com.client
 from configparser import ConfigParser
 from PyQt5.QtGui import QIcon
+from PyQt5 import QtWidgets
 
 """
 SHAPES_PATH: str - Nơi lưu trữ ảnh Preview của các Shapes
@@ -21,8 +23,8 @@ DEBUG_MODE = __CONFIG.getboolean("Debug", "debug")
 GITHUB_URL = "https://github.com/thnhmai06/tao-slide-tot-nghiep"
 SHAPES_PATH = os.path.abspath("./temp/shapes/")
 TRANSLATION_PATH = os.path.abspath("./translations/")
+app = QtWidgets.QApplication(sys.argv)
 pptx_instance = win32com.client.Dispatch("PowerPoint.Application")
-
 
 # ? Biến lưu thông tin người dùng nhập vào
 class Input(dict):

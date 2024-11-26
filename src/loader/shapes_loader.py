@@ -9,7 +9,7 @@ from globals import SHAPES_PATH
 
 if TYPE_CHECKING:
     # Anti-circular import
-    from ui.menu import Ui
+    from ui.menu import Menu
 
 
 def __refresh_placeholders():
@@ -18,16 +18,16 @@ def __refresh_placeholders():
     __placeholders = input.csv.placeholders
 
 
-def load(ui: "Ui"):
-    pptx_path = ui.pptx_path.text()
+def load(menu: "Menu"):
+    pptx_path = menu.pptx_path.text()
     prs = Presentation(pptx_path)
 
-    toggle_config_image(ui, False)
-    ui.config_image_table.clearContents()
+    toggle_config_image(menu, False)
+    menu.config_image_table.clearContents()
 
     # Nếu prs không có slide nào
     if not prs.slides:
-        ui.pptx_path.clear()  # Xóa đường dẫn file pptx
+        menu.pptx_path.clear()  # Xóa đường dẫn file pptx
         info(__name__, "no_slide_pptx")
         return
 
@@ -42,8 +42,8 @@ def load(ui: "Ui"):
 
     get_shapes(prs)  # Lưu các ảnh từ slide đầu tiên vào thư mục SHAPES_PATH
 
-    ui.config_image_preview.setEnabled(True)  # Enable preview button
+    menu.config_image_preview.setEnabled(True)  # Enable preview button
     # Chỉ khi đã có sẵn placeholder rồi thì mới enable config_image_table
     __refresh_placeholders()
     if len(__placeholders) > 0:
-        toggle_config_image(ui, True)
+        toggle_config_image(menu, True)

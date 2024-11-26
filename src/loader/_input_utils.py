@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     # Anti-circular import
-    from ui.menu import Ui
+    from ui.menu import Menu
 from globals import input, SHAPES_PATH
 import os
 from pptx.presentation import Presentation
@@ -11,8 +11,8 @@ from logger.info import console_info
 import pandas as pd
 
 
-def get_save_path(ui: "Ui") -> str:
-    save_path = ui.save_path.text()
+def get_save_path(menu: "Menu") -> str:
+    save_path = menu.save_path.text()
     input.save_path.set(save_path)
 
 
