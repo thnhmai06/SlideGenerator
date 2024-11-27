@@ -4,7 +4,7 @@ from globals import input
 from pptx import Presentation
 from logger.info import default as info
 from src.loader._toggle_config import toggle_config_image
-from src.loader._input_utils import get_shapes
+from src.loader._get_utils import get_shapes
 from globals import SHAPES_PATH
 
 if TYPE_CHECKING:
@@ -40,7 +40,7 @@ def load(menu: "Menu"):
             elif os.path.isdir(file_path):
                 os.rmdir(file_path)
 
-    get_shapes(prs)  # Lưu các ảnh từ slide đầu tiên vào thư mục SHAPES_PATH
+    get_shapes(prs, 0)  # Lưu các ảnh từ slide đầu tiên (0) vào thư mục SHAPES_PATH
 
     menu.config_image_preview.setEnabled(True)  # Enable preview button
     # Chỉ khi đã có sẵn placeholder rồi thì mới enable config_image_table

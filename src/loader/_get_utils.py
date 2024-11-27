@@ -9,7 +9,33 @@ from pptx.presentation import Presentation
 from pptx.shapes.picture import Picture
 from logger.info import console_info
 import pandas as pd
+from PIL import Image
+import io
 
+def _reduce_image_quality(image_bytes: bytes, quality: int) -> bytes:
+    """
+    Reduce the quality of the image to the minimum visible level.
+    
+    Args:
+    - image_bytes: The original image in bytes.
+    - quality: The quality of the reduced image (0-100).
+    
+    Returns:
+    - The reduced quality image in bytes.
+    """
+    # Open the image from bytes
+    image = Image.open(io.BytesIO(image_bytes))
+    
+    # Create a BytesIO object to save the reduced quality image
+    output = io.BytesIO()
+    
+    # Save the image with the lowest quality
+    image.save(output, format = image.format, quality = quality)
+    
+    # Get the reduced quality image bytes
+    reduced_image_bytes = output.getvalue()
+    
+    return reduced_image_bytes
 
 def get_save_path(menu: "Menu") -> str:
     save_path = menu.save_path.text()
@@ -25,6 +51,7 @@ def get_shapes(
     # Edit note: Đã gộp hàm get_image_shape_indices và save_images_from_shapes thành hàm này
 
     IMAGE_TYPE = 13  # ID của shape ảnh trong PowerPoint
+    IMAGE_QUALITY = 5  # Chất lượng ảnh sau khi lưu (0-100)
 
     # Tạo folder nếu thư mục lưu không tồn tại
     if not os.path.exists(save_path):
@@ -50,7 +77,7 @@ def get_shapes(
 
             # Lấy dữ liệu ảnh từ shape
             image = shape.image
-            image_bytes = image.blob
+            image_bytes = _reduce_image_quality(image.blob, IMAGE_QUALITY)
 
             # Lưu ảnh vào thư mục save_path
             image_path = os.path.join(

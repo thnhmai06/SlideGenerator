@@ -75,3 +75,7 @@ class Progress(QWidget):
                 '<html><head/><body><p><span style=" font-size:10pt; font-weight:600;">Đang chuẩn bị...</span></p></body></html>',
             )
         )
+
+    def addLog(self, text: str):
+        """Adds a log message to the Log"""
+        self.log.append(text)
