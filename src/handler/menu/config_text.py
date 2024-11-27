@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QListWidget, QListWidgetItem, QComboBox
-from logger.info import default as info
-from logger.debug import console_debug
+from src.logger.info import default as info
+from src.logger.debug import console_debug
 from globals import input
 
 

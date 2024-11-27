@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     # Anti-circular import
-    from ui.menu import Menu
+    from src.ui.menu import Menu
 
 
 def toggle_config_text(menu: "Menu", is_enable: bool):

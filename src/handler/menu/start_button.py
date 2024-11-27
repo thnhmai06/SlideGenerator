@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     # Anti-circular import
-    from ui.menu import Menu
+    from src.ui.menu import Menu
 
 # ? Riêng với start_button, sau khi các thông tin trong csv_path, save_path, pptx_path đã được điền đầy đủ, ta sẽ enable nó
 

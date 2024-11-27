@@ -1,6 +1,6 @@
 import logging
 import traceback
-from ui import diaglogs
+from src.ui import diaglogs
 from translations import TRANS
 
 

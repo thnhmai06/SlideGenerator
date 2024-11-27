@@ -1,7 +1,7 @@
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWidgets import QWidget
-from logger.info import console_info
-from logger.error import console_error
+from src.logger.info import console_info
+from src.logger.error import console_error
 from translations import TRANS
 
 class Progress(QWidget):

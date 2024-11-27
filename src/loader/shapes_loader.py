@@ -2,14 +2,14 @@ import os
 from typing import TYPE_CHECKING
 from globals import input
 from pptx import Presentation
-from logger.info import default as info
+from src.logger.info import default as info
 from src.loader._toggle_config import toggle_config_image
 from src.loader._get_utils import get_shapes
 from globals import SHAPES_PATH
 
 if TYPE_CHECKING:
     # Anti-circular import
-    from ui.menu import Menu
+    from src.ui.menu import Menu
 
 
 def __refresh_placeholders():

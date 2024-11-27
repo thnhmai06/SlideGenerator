@@ -1,12 +1,12 @@
 from typing import TYPE_CHECKING
-from logger.info import console_info, default as info
+from src.logger.info import console_info, default as info
 from globals import input
 from src.loader._get_utils import get_csv
 from src.loader._toggle_config import toggle_config_text, toggle_config_image, clear_config
 
 if TYPE_CHECKING:
     # Anti-circular import
-    from ui.menu import Menu
+    from src.ui.menu import Menu
 
 
 def __refresh_shapes():

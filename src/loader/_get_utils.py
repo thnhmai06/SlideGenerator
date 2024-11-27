@@ -2,12 +2,12 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     # Anti-circular import
-    from ui.menu import Menu
+    from src.ui.menu import Menu
 from globals import input, SHAPES_PATH
 import os
 from pptx.presentation import Presentation
 from pptx.shapes.picture import Picture
-from logger.info import console_info
+from src.logger.info import console_info
 import pandas as pd
 from PIL import Image
 import io

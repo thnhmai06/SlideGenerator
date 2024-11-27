@@ -3,14 +3,14 @@ from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QLabel, QGroupBox, QPushButton, QLineEdit, QListWidget, 
     QTableWidget, QTableWidgetItem, QHeaderView, QStatusBar
 )
-from handler.menu import (
+from src.handler.menu import (
     config_image,
     start_button,
 )
-from handler.menu import broswe_button, config_text
-from handler.menu.start_button import check_start_button
+from src.handler.menu import broswe_button, config_text
+from src.handler.menu.start_button import check_start_button
 from src.loader import shapes_loader, csv_loader
-from ui.progress import Progress
+from src.ui.progress import Progress
 from globals import GITHUB_URL
 
 

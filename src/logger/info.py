@@ -1,5 +1,5 @@
 import logging
-from ui import diaglogs
+from src.ui import diaglogs
 from translations import TRANS
 
 
