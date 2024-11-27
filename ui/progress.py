@@ -4,24 +4,24 @@ from PyQt5.QtWidgets import QWidget
 class Progress(QWidget):
     def __init__(self):
         super().__init__()
-        self.setupUi()
-        self.retranslateUi()
+        self._setupUi()
+        self._retranslateUi()
 
-    def setupUi(self):
+    def _setupUi(self):
         """
         Set up the user interface.
         """
         self.setObjectName("progress")
         self.resize(574, 374)
 
-        self.initProgressBar()
-        self.initButtons()
-        self.initLabel()
-        self.initLog()
+        self.__initProgressBar()
+        self.__initButtons()
+        self.__initLabel()
+        self.__initLog()
 
         QtCore.QMetaObject.connectSlotsByName(self)
 
-    def initProgressBar(self):
+    def __initProgressBar(self):
         """
         Initialize the progress bar.
         """
@@ -33,7 +33,7 @@ class Progress(QWidget):
         self.progressBar.setTextDirection(QtWidgets.QProgressBar.TopToBottom)
         self.progressBar.setObjectName("progressBar")
 
-    def initButtons(self):
+    def __initButtons(self):
         """
         Initialize the stop and pause buttons.
         """
@@ -45,7 +45,7 @@ class Progress(QWidget):
         self.pause_button.setGeometry(QtCore.QRect(330, 320, 101, 41))
         self.pause_button.setObjectName("pause_button")
 
-    def initLabel(self):
+    def __initLabel(self):
         """
         Initialize the label.
         """
@@ -53,7 +53,7 @@ class Progress(QWidget):
         self.label.setGeometry(QtCore.QRect(20, 20, 141, 16))
         self.label.setObjectName("label")
 
-    def initLog(self):
+    def __initLog(self):
         """
         Initialize the log text edit.
         """
@@ -61,7 +61,7 @@ class Progress(QWidget):
         self.log.setGeometry(QtCore.QRect(20, 100, 531, 211))
         self.log.setObjectName("log")
 
-    def retranslateUi(self):
+    def _retranslateUi(self):
         """
         Set the text for the UI elements.
         """

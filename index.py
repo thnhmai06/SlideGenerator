@@ -6,6 +6,8 @@ from ui import menu
 
 def __uncaught_exception_handler(exctype, value, tb):
     error.exception(__name__, exctype, str(value), tb)
+    if pptx_instance:
+        pptx_instance.quit()
     sys.exit(1)
 sys.excepthook = __uncaught_exception_handler
 

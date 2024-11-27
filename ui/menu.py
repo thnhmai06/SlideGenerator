@@ -17,12 +17,12 @@ from globals import GITHUB_URL
 class Menu(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setupUi()
-        self.retranslateUi()
-        self.handleUI()
+        self._setupUi()
+        self._retranslateUi()
+        self._handleUI()
         self.progress = Progress()
 
-    def setupUi(self):
+    def _setupUi(self):
         """
         Sets up the user interface for the menu window.
         This method initializes and configures the main window and its widgets.
@@ -45,13 +45,13 @@ class Menu(QMainWindow):
         self.centralwidget = QWidget(self)
         self.centralwidget.setObjectName("centralwidget")
 
-        self.setupTitle()
-        self.setupTemplateGroupBox()
-        self.setupCSVGroupBox()
-        self.setupSaveGroupBox()
-        self.setupConfigGroupBox()
-        self.setupStartButton()
-        self.setupLabels()
+        self.__initTitle()
+        self.__initTemplateGroupBox()
+        self.__initCSVGroupBox()
+        self.__initSaveGroupBox()
+        self.__initConfigGroupBox()
+        self.__initStartButton()
+        self.__initLabels()
 
         self.setCentralWidget(self.centralwidget)
         self.statusbar = QStatusBar(self)
@@ -60,7 +60,7 @@ class Menu(QMainWindow):
 
         QtCore.QMetaObject.connectSlotsByName(self)
 
-    def setupTitle(self):
+    def __initTitle(self):
         """Sets up the title label."""
         self.title = QLabel(self.centralwidget)
         self.title.setEnabled(True)
@@ -77,7 +77,7 @@ class Menu(QMainWindow):
         self.title.setWordWrap(False)
         self.title.setObjectName("title")
 
-    def setupTemplateGroupBox(self):
+    def __initTemplateGroupBox(self):
         """Sets up the template group box."""
         self.template = QGroupBox(self.centralwidget)
         self.template.setGeometry(QtCore.QRect(20, 120, 411, 161))
@@ -99,7 +99,7 @@ class Menu(QMainWindow):
         self.template_label.setGeometry(QtCore.QRect(20, 40, 171, 31))
         self.template_label.setObjectName("template_label")
 
-    def setupCSVGroupBox(self):
+    def __initCSVGroupBox(self):
         """Sets up the CSV group box."""
         self.csv = QGroupBox(self.centralwidget)
         self.csv.setGeometry(QtCore.QRect(510, 120, 411, 161))
@@ -121,7 +121,7 @@ class Menu(QMainWindow):
         self.csv_label.setGeometry(QtCore.QRect(20, 40, 221, 31))
         self.csv_label.setObjectName("csv_label")
 
-    def setupSaveGroupBox(self):
+    def __initSaveGroupBox(self):
         """Sets up the save group box."""
         self.save = QGroupBox(self.centralwidget)
         self.save.setGeometry(QtCore.QRect(20, 720, 411, 121))
@@ -143,7 +143,7 @@ class Menu(QMainWindow):
         self.save_label.setGeometry(QtCore.QRect(20, 20, 81, 31))
         self.save_label.setObjectName("save_label")
 
-    def setupConfigGroupBox(self):
+    def __initConfigGroupBox(self):
         """Sets up the config group box."""
         self.config = QGroupBox(self.centralwidget)
         self.config.setGeometry(QtCore.QRect(20, 300, 901, 401))
@@ -238,14 +238,14 @@ class Menu(QMainWindow):
         self.config_text_add_button.setObjectName("config_text_add_button")
         self.config_text_add_button.setEnabled(False)
 
-    def setupStartButton(self):
+    def __initStartButton(self):
         """Sets up the main buttons."""
         self.start_button = QPushButton(self.centralwidget)
         self.start_button.setGeometry(QtCore.QRect(690, 740, 191, 71))
         self.start_button.setObjectName("start_button")
         self.start_button.setEnabled(False)
 
-    def setupLabels(self):
+    def __initLabels(self):
         """Sets up the additional labels."""
         self.logo = QLabel(self.centralwidget)
         self.logo.setGeometry(QtCore.QRect(30, 20, 81, 81))
@@ -264,7 +264,7 @@ class Menu(QMainWindow):
         self.guide.setGeometry(QtCore.QRect(900, 10, 21, 31))
         self.guide.setObjectName("guide")
 
-    def retranslateUi(self):
+    def _retranslateUi(self):
         """Retranslates the UI elements."""
         _translate = QtCore.QCoreApplication.translate
         self.setWindowTitle(_translate("menu", "Phần mềm tạo slide tốt nghiệp"))
@@ -348,8 +348,9 @@ class Menu(QMainWindow):
         )
         self.guide.setToolTip("Hướng dẫn sử dụng")
 
-    def handleUI(self):
+    def _handleUI(self):
         """Connects UI elements to their respective event handlers."""
+        
         # Mỗi lần save_path, pptx_path, csv_path thay đổi, kiểm tra xem start_button có được enable không
         self.save_path.textChanged.connect(lambda: check_start_button(self))
         self.pptx_path.textChanged.connect(lambda: check_start_button(self))
