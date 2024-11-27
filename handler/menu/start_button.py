@@ -25,7 +25,4 @@ def start(menu: "Menu"):
     progress = menu.progress
 
     progress.show()
-    progress.addLog("Đang chuẩn bị...")
-    progress.addLog("1")
-    progress.addLog("2")
-    progress.addLog("3")
+    

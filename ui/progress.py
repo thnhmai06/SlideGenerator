@@ -79,10 +79,20 @@ class Progress(QWidget):
             )
         )
 
-    def addLog(self, where: str, level: str = "info" | "error", title_key: str = None, *details: str) -> None:
-        """Adds a log message to the Log"""
-        title = TRANS["progress"][title_key]
-        content = ' '.join(details)
+    def addLog(self, where: str, content: str, level: str = "info", title_key: str = None) -> None:
+        """
+        Adds a log message to the Log.
+
+        Parameters:
+        where (str): The location where the log is being added.
+        content (str): The content of the log message.
+        level (str, optional): The level of the log message. (info, error). Defaults to "info".
+        title_key (str, optional): The key to retrieve the title from the TRANS dictionary. Defaults to None.
+
+        Returns:
+        None
+        """
+        title = TRANS["progress"][title_key] if title_key else ""
         match level:
             case "info":
                 console_info(where, title + content)
