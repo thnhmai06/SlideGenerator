@@ -99,10 +99,11 @@ def get_csv(csv_path: str) -> bool:
     - True: Saved successfully
     - False: CSV is not valid
     """
-    csv: pl.LazyFrame = pl.scan_csv(csv_path)
-    input.csv.df = csv.collect(streaming=True)
+    LINES_PER_BATCH = 1
+
+    input.csv.df = pl.read_csv(csv_path, batch_size=LINES_PER_BATCH)
     input.csv.placeholders = input.csv.df.columns
-    input.csv.number_of_students = sum(1 for _ in input.csv.df.rows())
+    input.csv.number_of_students = len(input.csv.df)
 
     if not input.csv.number_of_students >= 1:
         return False
