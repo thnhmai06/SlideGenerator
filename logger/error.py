@@ -8,7 +8,7 @@ def _show_err_diaglog(window_name: str, title: str, details: str = None):
     diaglogs.error(window_name, title, details)  # Show error dialog
 
 
-def _console_error(where: str, content: str) -> None:
+def console_error(where: str, content: str) -> None:
     logger = logging.getLogger(where)
     if content:
         logger.error(content)
@@ -33,7 +33,7 @@ def default(
     window_name: str - Tên của cửa sổ
     """
     title = TRANS["diaglogs"]["error"][title_key]
-    _console_error(where, details)
+    console_error(where, details)
     _show_err_diaglog(title, details, window_name)
 
 

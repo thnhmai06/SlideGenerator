@@ -1,5 +1,8 @@
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWidgets import QWidget
+from logger.info import console_info
+from logger.error import console_error
+from translations import TRANS
 
 class Progress(QWidget):
     def __init__(self):
@@ -76,6 +79,13 @@ class Progress(QWidget):
             )
         )
 
-    def addLog(self, text: str):
+    def addLog(self, where: str, level: str = "info" | "error", title_key: str = None, *details: str) -> None:
         """Adds a log message to the Log"""
-        self.log.append(text)
+        title = TRANS["progress"][title_key]
+        content = ' '.join(details)
+        match level:
+            case "info":
+                console_info(where, title + content)
+            case "error":
+                console_error(where, title + content)
+        self.log.append(title + content)

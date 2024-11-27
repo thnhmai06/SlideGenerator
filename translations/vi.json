@@ -1,5 +1,8 @@
 {
-    "window": {},
+    "menu": {},
+    "progress": {
+
+    },
     "diaglogs": {
         "error": {
             "window_name": "Lỗi",
