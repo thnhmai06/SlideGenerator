@@ -8,7 +8,7 @@ import os
 from pptx.presentation import Presentation
 from pptx.shapes.picture import Picture
 from src.logger.info import console_info
-import pandas as pd
+import polars as pl
 from PIL import Image
 import io
 
@@ -99,13 +99,14 @@ def get_csv(csv_path: str) -> bool:
     - True: Saved successfully
     - False: CSV is not valid
     """
-    __df = pd.read_csv(csv_path)
-    number_of_students = len(__df)
-    if not number_of_students >= 1:
-        return False
+    csv: pl.LazyFrame = pl.scan_csv(csv_path)
+    input.csv.df = csv.collect(streaming=True)
+    input.csv.placeholders = input.csv.df.columns
+    input.csv.number_of_students = sum(1 for _ in input.csv.df.rows())
 
-    input.csv.placeholders = __df.columns.tolist()
+    if not input.csv.number_of_students >= 1:
+        return False
+    
     console_info(__name__, "Fields:", (" - ").join(input.csv.placeholders))
-    input.csv.students = __df.to_dict(orient="records")
-    console_info(__name__, "Students:", f"({len(input.csv.students)})")
+    console_info(__name__, "Students:", f"({input.csv.number_of_students})")
     return True

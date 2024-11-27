@@ -1,10 +1,10 @@
 import os
 import sys
-import pandas as pd
 import win32com.client
 from configparser import ConfigParser
 from PyQt5.QtGui import QIcon
 from PyQt5 import QtWidgets
+from polars import DataFrame
 
 """
 SHAPES_PATH: str - Nơi lưu trữ ảnh Preview của các Shapes
@@ -31,8 +31,9 @@ class Input(dict):
     class Csv(dict):
         def __init__(self):
             super().__init__()
-            self.placeholders = list()
-            self.students = dict()
+            self.df: DataFrame = None
+            self.placeholders: list = None
+            self.number_of_students = 0
 
     class Shapes(list):
         def __init__(self):
@@ -54,8 +55,8 @@ class Input(dict):
         class ConfigImage(dict):
             def __init__(self):
                 super().__init__()
-                self.placeholder: str = None
-                self.shape_id: str = None
+                self.placeholder = str()
+                self.shape_id = str()
 
             def set(self, shape_id: str, placeholder: str):
                 self.placeholder = placeholder
@@ -85,8 +86,6 @@ class Input(dict):
             self.save_path = save_path
 
     def __init__(self):
-        self._df: pd.DataFrame = None
-
         self.csv = self.Csv()
         self.shapes = self.Shapes()
         self.config = self.Config()
@@ -94,5 +93,3 @@ class Input(dict):
 
 
 input = Input()
-
-# TODO: chuyển get sang collect_input.py
