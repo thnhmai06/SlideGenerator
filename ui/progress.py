@@ -79,7 +79,7 @@ class Progress(QWidget):
             )
         )
 
-    def addLog(self, where: str, content: str, level: str = "info", title_key: str = None) -> None:
+    def addLog(self, where: str, content: str = "", level: str = "info", title_key: str = None) -> None:
         """
         Adds a log message to the Log.
 
@@ -92,10 +92,11 @@ class Progress(QWidget):
         Returns:
         None
         """
-        title = TRANS["progress"][title_key] if title_key else ""
         match level:
             case "info":
+                title = TRANS["progress"]["info"][title_key] if title_key else ""
                 console_info(where, title + content)
             case "error":
+                title = TRANS["progress"]["error"][title_key] if title_key else ""
                 console_error(where, title + content)
         self.log.append(title + content)

@@ -1,7 +1,22 @@
 {
     "menu": {},
     "progress": {
-
+        "info": {
+            "start": "================================= Bắt đầu thực hiện =================================",
+            "read_student": "Đọc thông tin sinh viên dòng: ",
+            "clone_slide": "Nhân bản slide",
+            "replace_text": "Thay thế văn bản: ",
+            "download_image_start": "Tải hình ảnh: ",
+            "download_image_finish": "Đã tải hình ảnh: ",
+            "keep_original_image": "Giữ nguyên hình ảnh gốc cho ID=",
+            "replace_image": "Thay thế hình ảnh: ",
+            "finish_replace": "Hoàn tất thay thế\n---------------------------------",
+            "save_file": "Lưu vào: ",
+            "done": "================================= Hoàn tất ================================="
+        },
+        "error": {
+            "download_image_error": "Lỗi khi tải: "
+        }
     },
     "diaglogs": {
         "error": {
