@@ -24,5 +24,6 @@ def start(menu: "Menu"):
     '''Hàm này sẽ được gọi khi start_button được nhấn'''
     progress = menu.progress
 
+    menu.hide()
     progress.show()
     

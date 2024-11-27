@@ -3,7 +3,7 @@
     "progress": {
         "info": {
             "start": "================================= Bắt đầu thực hiện =================================",
-            "read_student": "Đọc thông tin sinh viên dòng: ",
+            "read_student": "Đọc thông tin sinh viên dòng thứ: ",
             "clone_slide": "Nhân bản slide",
             "replace_text": "Thay thế văn bản: ",
             "download_image_start": "Tải hình ảnh: ",
@@ -11,8 +11,9 @@
             "keep_original_image": "Giữ nguyên hình ảnh gốc cho ID=",
             "replace_image": "Thay thế hình ảnh: ",
             "finish_replace": "Hoàn tất thay thế\n---------------------------------",
-            "save_file": "Lưu vào: ",
-            "done": "================================= Hoàn tất ================================="
+            "saving": "Đang lưu file...",
+            "done": "================================= Hoàn tất =================================",
+            "save_path": "Vị trí file: "
         },
         "error": {
             "download_image_error": "Lỗi khi tải: "
@@ -22,7 +23,7 @@
         "error": {
             "window_name": "Lỗi",
             "exception": "Đã xảy ra lỗi không mong muốn!",
-            "cant_save_file": "Không thể lưu file!"
+            "cant_save_file": "Không thể lưu file! Vui lòng kiểm tra các quyền!"
         },
         "information": {
             "window_name": "Thông báo",
