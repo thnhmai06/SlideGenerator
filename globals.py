@@ -35,6 +35,13 @@ class Input(dict):
             self.placeholders: list = None
             self.number_of_students = 0
 
+        def get(self, num: int):
+            num-=1 # Convert to 0-based index
+            if self.df is not None and 0 <= num < self.number_of_students:
+                return self.df[num].to_dict()
+            else:
+                return None
+
     class Shapes(list):
         def __init__(self):
             super().__init__()
