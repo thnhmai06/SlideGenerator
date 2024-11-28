@@ -2,7 +2,7 @@
     "menu": {},
     "progress": {
         "info": {
-            "start": "================================= Bắt đầu thực hiện =================================",
+            "start": "============== Bắt đầu thực hiện ==============",
             "read_student": "Đọc thông tin sinh viên dòng thứ: ",
             "clone_slide": "Nhân bản slide",
             "replace_text": "Thay thế văn bản: ",
@@ -12,7 +12,7 @@
             "replace_image": "Thay thế hình ảnh: ",
             "finish_replace": "Hoàn tất thay thế\n---------------------------------",
             "saving": "Đang lưu file...",
-            "done": "================================= Hoàn tất =================================",
+            "done": "============== Hoàn tất ==============",
             "save_path": "Vị trí file: "
         },
         "error": {
