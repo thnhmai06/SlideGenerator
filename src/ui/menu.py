@@ -1,7 +1,16 @@
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import (
-    QMainWindow, QWidget, QLabel, QGroupBox, QPushButton, QLineEdit, QListWidget, 
-    QTableWidget, QTableWidgetItem, QHeaderView, QStatusBar
+    QMainWindow,
+    QWidget,
+    QLabel,
+    QGroupBox,
+    QPushButton,
+    QLineEdit,
+    QListWidget,
+    QTableWidget,
+    QTableWidgetItem,
+    QHeaderView,
+    QStatusBar,
 )
 from src.handler.menu import (
     config_image,
@@ -350,7 +359,7 @@ class Menu(QMainWindow):
 
     def _handleUI(self):
         """Connects UI elements to their respective event handlers."""
-        
+
         # Mỗi lần save_path, pptx_path, csv_path thay đổi, kiểm tra xem start_button có được enable không
         self.save_path.textChanged.connect(lambda: check_start_button(self))
         self.pptx_path.textChanged.connect(lambda: check_start_button(self))
@@ -370,21 +379,13 @@ class Menu(QMainWindow):
             lambda: config_image.remove_item(self.config_image_table)
         )
         self.template_broswe.clicked.connect(
-            lambda: broswe_button.template_powerpoint_broswe(
-                self.centralwidget, self.pptx_path
-            )
+            lambda: broswe_button.template_powerpoint_broswe(self)
         )
         self.csv_broswe.clicked.connect(
-            lambda: broswe_button.csv_broswe(self.centralwidget, self.csv_path)
+            lambda: broswe_button.csv_broswe(self)
         )
         self.save_broswe.clicked.connect(
-            lambda: broswe_button.save_path_broswe(
-                self.centralwidget, self.save_path
-            )
+            lambda: broswe_button.save_path_broswe(self.centralwidget, self.save_path)
         )
         self.config_image_preview.clicked.connect(lambda: config_image.preview())
         self.start_button.clicked.connect(lambda: start_button.start(self))
-
-        # Xử lý sự kiện cho input
-        self.csv_path.textChanged.connect(lambda: csv_loader.load(self))
-        self.pptx_path.textChanged.connect(lambda: shapes_loader.load(self))

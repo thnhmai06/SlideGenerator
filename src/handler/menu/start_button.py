@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 from src.core.exec import exec
+from globals import input
 
 if TYPE_CHECKING:
     # Anti-circular import
@@ -27,4 +28,4 @@ def start(menu: "Menu"):
 
     menu.hide()
     progress.show()    
-    exec(progress)
+    exec(progress, 1, input.csv.number_of_students)

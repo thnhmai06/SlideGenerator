@@ -1,6 +1,7 @@
 import os
 import sys
 import win32com.client
+from typing import List
 from configparser import ConfigParser
 from PyQt5.QtGui import QIcon
 from PyQt5 import QtWidgets
@@ -24,19 +25,66 @@ GITHUB_URL = "https://github.com/thnhmai06/tao-slide-tot-nghiep"
 SHAPES_PATH = os.path.abspath("./temp/shapes/")
 TRANSLATION_PATH = os.path.abspath("./translations/")
 app = QtWidgets.QApplication(sys.argv)
-pptx_instance = win32com.client.Dispatch("PowerPoint.Application")
+
+
+class PowerPoint:
+    def __init__(self):
+        super().__init__()
+        self.instance = None
+        self.prs = None
+
+    def open_instance(self):
+        if not self.instance:
+            self.instance = win32com.client.Dispatch("PowerPoint.Application")
+        return self.instance
+
+    def open_presentation(self, path):
+        read_only = True
+        has_title = False
+        window = False
+        if self.instance:
+            self.prs = self.instance.Presentations.open(
+                path, read_only, has_title, window
+            )
+        return self.prs
+
+    def close_instance(self) -> bool:
+        if self.instance:
+            self.instance.Quit()
+            self.instance = None
+            return True
+        return False
+
+    def close_presentation(self) -> bool:
+        if self.prs and self.instance:
+            self.prs.Close()
+            self.prs = None
+            return True
+        return False
+
+
+pptx = PowerPoint()
+
 
 # ? Biến lưu thông tin người dùng nhập vào
-class Input(dict):
-    class Csv(dict):
+class Input:
+    class Pptx:
+        def __init__(self):
+            super().__init__()
+            self.path = str()
+
+        def setPath(self, path: str):
+            self.path = path
+
+    class Csv:
         def __init__(self):
             super().__init__()
             self.df: DataFrame = None
-            self.placeholders: list = None
+            self.placeholders = list()
             self.number_of_students = 0
 
         def get(self, num: int):
-            num-=1 # Convert to 0-based index
+            num -= 1  # Convert to 0-based index
             if self.df is not None and 0 <= num < self.number_of_students:
                 return self.df[num].to_dict()
             else:
@@ -47,56 +95,42 @@ class Input(dict):
             super().__init__()
 
         def add(self, id: int, image_path: str):
-            shape_image = {"id": str(id), "path": image_path, "icon": QIcon(image_path)}
-            self.append(shape_image)
+            shape = {"id": str(id), "path": image_path, "icon": QIcon(image_path)}
+            self.append(shape)
 
-    class Config(dict):
-        class ConfigText(str):
-            def __init__(self):
+    class Config:
+        class ConfigImage:
+            def __init__(self, placeholder: str, shape_id: str):
                 super().__init__()
-                self.text: str = None
-
-            def set(self, text: str):
-                self.text = text
-
-        class ConfigImage(dict):
-            def __init__(self):
-                super().__init__()
-                self.placeholder = str()
-                self.shape_id = str()
-
-            def set(self, shape_id: str, placeholder: str):
                 self.placeholder = placeholder
                 self.shape_id = shape_id
 
         def __init__(self):
             super().__init__()
-            self.text = list()
-            self.image = list()
+            self.text: List[str] = []
+            self.image: List[Input.Config.ConfigImage] = []
 
         def add_text(self, text: str):
-            config_text = self.ConfigText()
-            config_text.set(text)
             self.text.append(text)
 
         def add_image(self, shape_id: str, placeholder: str):
-            config_image = self.ConfigImage()
-            config_image.set(placeholder, shape_id)
+            config_image = self.ConfigImage(placeholder, shape_id)
             self.image.append(config_image)
 
-    class SavePath(str):
+    class Save:
         def __init__(self):
             super().__init__()
-            self.save_path: str = None
+            self.path: str = None
 
-        def set(self, save_path: str):
-            self.save_path = save_path
+        def setPath(self, save_path: str):
+            self.path = save_path
 
     def __init__(self):
+        self.pptx = self.Pptx()
         self.csv = self.Csv()
         self.shapes = self.Shapes()
         self.config = self.Config()
-        self.save_path = self.SavePath()
+        self.save = self.Save()
 
 
 input = Input()

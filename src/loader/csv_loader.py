@@ -14,7 +14,7 @@ def __refresh_shapes():
     global __shapes
     __shapes = input.shapes
 
-def load(menu: "Menu"):
+def load_csv(menu: "Menu"):
     csv_path = menu.csv_path.text()
 
     # Kiểm tra xem csv_path có tồn tại không (trường hợp Cancel việc chọn file)
@@ -30,7 +30,7 @@ def load(menu: "Menu"):
         csv_path
     )  # Thu thập thông tin trong file csv và Chuyển dữ liệu vào dict (ở globals)
     if not is_Csv_vaild:
-        info(__name__, "invaild_csv")
+        info(__name__, "csv.no_students")
         return
 
     # Now we can enable config_text

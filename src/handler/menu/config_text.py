@@ -34,7 +34,7 @@ def remove_item(config_text_list: QListWidget):
             )  # last_row + 1 vì last_row bắt đầu từ 0
             config_text_list.takeItem(last_row)
         else:
-            info(__name__, "no_item_to_remove")
+            info(__name__, "config.no_item_to_remove")
 
 
 def add_item(config_text_list: QListWidget):
@@ -43,7 +43,7 @@ def add_item(config_text_list: QListWidget):
 
     # Nếu số lượng item vượt quá placeholders, không thêm item mới mà thông báo
     if config_text_list.count() >= len(__placeholders):
-        info(__name__, "too_much_placeholders")
+        info(__name__, "config.too_much_placeholders")
         return
 
     # Thêm item mới

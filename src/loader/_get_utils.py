@@ -1,16 +1,12 @@
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    # Anti-circular import
-    from src.ui.menu import Menu
 from globals import input, SHAPES_PATH
 import os
+import io
+from PyQt5.QtWidgets import QLineEdit
 from pptx.presentation import Presentation
 from pptx.shapes.picture import Picture
 from src.logger.info import console_info
 import polars as pl
 from PIL import Image
-import io
 
 def _reduce_image_quality(image_bytes: bytes, quality: int) -> bytes:
     """
@@ -37,14 +33,31 @@ def _reduce_image_quality(image_bytes: bytes, quality: int) -> bytes:
     
     return reduced_image_bytes
 
-def get_save_path(menu: "Menu") -> str:
-    save_path = menu.save_path.text()
-    input.save_path.set(save_path)
+def get_pptx_path(line_widget: QLineEdit) -> str:
+    pptx_path = line_widget.text()
+    input.pptx.setPath(pptx_path)
+    return pptx_path
 
+def get_csv(csv_path: str) -> bool:
+    """
+    Return:
+    - True: Saved successfully
+    - False: CSV is not valid
+    """
+    LINES_PER_BATCH = 1
 
-def get_shapes(
-    prs: Presentation, slide_index=0, save_path: str = SHAPES_PATH
-):  # Slide đầu tiên có index = 0
+    input.csv.df = pl.read_csv(csv_path, batch_size=LINES_PER_BATCH)
+    input.csv.placeholders = input.csv.df.columns
+    input.csv.number_of_students = len(input.csv.df)
+
+    if not input.csv.number_of_students >= 1:
+        return False
+    
+    console_info(__name__, "Fields:", (" - ").join(input.csv.placeholders))
+    console_info(__name__, "Students:", f"({input.csv.number_of_students})")
+    return True
+
+def get_shapes(prs: Presentation, slide_index=0, shapes_path: str = SHAPES_PATH):  # Slide đầu tiên có index = 0
     # Author: @oceantran27
     # Edit: @thnhmai06
     # Description: Hàm này sẽ lưu lại các Shapes ảnh (đã xác định trong shape_indices) vào thư mục SHAPES_PATH
@@ -54,11 +67,11 @@ def get_shapes(
     IMAGE_QUALITY = 5  # Chất lượng ảnh sau khi lưu (0-100)
 
     # Tạo folder nếu thư mục lưu không tồn tại
-    if not os.path.exists(save_path):
-        os.makedirs(save_path)
+    if not os.path.exists(shapes_path):
+        os.makedirs(shapes_path)
     # Xóa hết các file trong save_path
-    for filename in os.listdir(save_path):
-        file_path = os.path.join(save_path, filename)
+    for filename in os.listdir(shapes_path):
+        file_path = os.path.join(shapes_path, filename)
         if os.path.isfile(file_path):
             os.remove(file_path)
 
@@ -81,7 +94,7 @@ def get_shapes(
 
             # Lưu ảnh vào thư mục save_path
             image_path = os.path.join(
-                save_path, f"{__shape_index_python_pptx + 1}.{image.ext}"
+                shapes_path, f"{__shape_index_python_pptx + 1}.{image.ext}"
             )
             with open(image_path, "wb") as img_file:
                 img_file.write(image_bytes)
@@ -89,25 +102,10 @@ def get_shapes(
                 input.shapes.add(__shape_index_python_pptx, image_path)
             console_info(
                 __name__,
-                f"Image ID: {__shape_index_win32COM} -> {image_path} (Preview)",
+                f"Shape ID: {__shape_index_win32COM} -> {image_path}",
             )
 
-
-def get_csv(csv_path: str) -> bool:
-    """
-    Return:
-    - True: Saved successfully
-    - False: CSV is not valid
-    """
-    LINES_PER_BATCH = 1
-
-    input.csv.df = pl.read_csv(csv_path, batch_size=LINES_PER_BATCH)
-    input.csv.placeholders = input.csv.df.columns
-    input.csv.number_of_students = len(input.csv.df)
-
-    if not input.csv.number_of_students >= 1:
-        return False
-    
-    console_info(__name__, "Fields:", (" - ").join(input.csv.placeholders))
-    console_info(__name__, "Students:", f"({input.csv.number_of_students})")
-    return True
+def get_save_path(line_widget: QLineEdit) -> str:
+    save_path = line_widget.text()
+    input.save.setPath(save_path)
+    return save_path

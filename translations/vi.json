@@ -2,6 +2,9 @@
     "menu": {},
     "progress": {
         "info": {
+            "create_file": "Tạo file trên thư mục lưu",
+            "open_instance": "Đang tạo giao thức với PowerPoint",
+            "open_presentation": "Đang mở file PowerPoint",
             "start": "============== Bắt đầu thực hiện ==============",
             "read_student": "Đọc thông tin sinh viên dòng thứ: ",
             "clone_slide": "Nhân bản slide",
@@ -21,19 +24,18 @@
     },
     "diaglogs": {
         "error": {
-            "window_name": "Lỗi",
-            "exception": "Đã xảy ra lỗi không mong muốn!",
-            "cant_save_file": "Không thể lưu file! Vui lòng kiểm tra các quyền!"
+            "window_name": "Đã xả ra lỗi",
+            "exception": "Đã xảy ra lỗi không mong muốn!"
         },
         "information": {
             "window_name": "Thông báo",
-            "too_much_placeholders": "Số lượng đã nhiều hơn số placeholders có sẵn!",
-            "too_much_shapes": "Số lượng đã nhiều hơn số shapes có sẵn!",
             "no_powerpoint": "Ứng dụng yêu cầu Microsoft PowerPoint (Office) để tiếp tục!",
-            "invaild_csv": "File DSSV không chứa thông tin sinh viên!",
-            "invaild_pptx": "File PowerPoint này trống!",
-            "no_slide_pptx": "Không tìm thấy slide nào trong file PowerPoint này!",
-            "no_item_to_remove": "Không có mục nào để xóa cả!"
+            "pptx.no_slide": "Không tìm thấy slide nào trong file PowerPoint này!",
+            "pptx.too_much_slides": "File chứa nhiều hơn 1 slide!",
+            "csv.no_students": "File DSSV không chứa thông tin sinh viên!",
+            "config.too_much_placeholders": "Số lượng đã nhiều hơn số placeholders có sẵn!",
+            "config.too_much_shapes": "Số lượng đã nhiều hơn số shapes có sẵn!",
+            "config.no_item_to_remove": "Không có mục nào để xóa cả!"
         }
     },
     "images_table": {
