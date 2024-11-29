@@ -1,10 +1,10 @@
 from typing import TYPE_CHECKING
 from globals import input, pptx
+import shutil
 
 if TYPE_CHECKING:
     # Anti-circular import
     from src.ui.progress import Progress
-import shutil
 
 class LogLevel():
     info = "info"
