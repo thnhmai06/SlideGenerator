@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QTableWidget, QComboBox, QTableWidgetItem
-from src.logger.info import default as info
-from src.logger.debug import console_debug
+from src.logging.info import default as info
+from src.logging.debug import console_debug
 from globals import user_input, SHAPES_PATH
 from typing import Tuple
 import os

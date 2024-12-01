@@ -1,9 +1,8 @@
 import sys
-from src.logger import error
-from src.logger.debug import console_debug
+from src.logging import error
+from src.logging.debug import console_debug
 from globals import app, pptx
 from src.ui import menu
-
 
 def __uncaught_exception_handler(exctype, value, traceback):
     error.exception(__name__, exctype, str(value), traceback)

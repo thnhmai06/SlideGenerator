@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 import polars as pl
 from globals import user_input
-from src.logger.info import console_info, default as info
+from src.logging.info import console_info, default as info
 from src.loader._ui_config_controls import toggle_config_text, toggle_config_image, clear_config
 
 if TYPE_CHECKING:

@@ -3,10 +3,10 @@ from typing import TYPE_CHECKING
 from globals import user_input
 from pptx.presentation import Presentation
 from pptx import Presentation as initPresentation
-from src.logger.info import default as info
+from src.logging.info import default as info
 from src.loader._ui_config_controls import toggle_config_image
 from globals import SHAPES_PATH
-from src.logger.info import console_info
+from src.logging.info import console_info
 from pptx.shapes.picture import Picture
 from PyQt5.QtWidgets import QLineEdit
 from src.loader._utils import delete_all_file
