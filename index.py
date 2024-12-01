@@ -9,7 +9,7 @@ def __uncaught_exception_handler(exctype, value, traceback):
     error.exception(__name__, exctype, str(value), traceback)
     if pptx.instance:
         pptx.close_instance()
-    if pptx.prs:
+    if pptx.presentation:
         pptx.close_presentation()
     sys.exit(1)
 

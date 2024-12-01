@@ -1,13 +1,7 @@
 from PyQt5.QtWidgets import QListWidget, QListWidgetItem, QComboBox
 from src.logger.info import default as info
 from src.logger.debug import console_debug
-from globals import input
-
-
-def __refresh_placeholders():
-    # Làm mới placeholders ở local file này
-    global __placeholders
-    __placeholders = input.csv.placeholders
+from globals import user_input
 
 
 def remove_item(config_text_list: QListWidget):
@@ -38,18 +32,17 @@ def remove_item(config_text_list: QListWidget):
 
 
 def add_item(config_text_list: QListWidget):
-    __refresh_placeholders()
     items_count = config_text_list.count()
 
     # Nếu số lượng item vượt quá placeholders, không thêm item mới mà thông báo
-    if config_text_list.count() >= len(__placeholders):
+    if config_text_list.count() >= len(user_input.csv.placeholders):
         info(__name__, "config.too_much_placeholders")
         return
 
     # Thêm item mới
     item = QListWidgetItem()
     combo = QComboBox(config_text_list)
-    combo.addItems(__placeholders)
+    combo.addItems(user_input.csv.placeholders)
     combo.setCurrentIndex(items_count)
     item.setText(combo.currentText())
     combo.setStyleSheet("""

@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 from src.core.exec import exec
-from globals import input
+from globals import user_input
+from src.loader.config import get_config
 
 if TYPE_CHECKING:
     # Anti-circular import
@@ -24,8 +25,9 @@ def check_start_button(menu: "Menu"):
 
 def start(menu: "Menu"):
     '''Hàm này sẽ được gọi khi start_button được nhấn'''
+    get_config(menu.config_text_list, menu.config_image_table)
     progress = menu.progress
 
     menu.hide()
     progress.show()    
-    exec(progress, 1, input.csv.number_of_students)
+    exec(progress, 1, user_input.csv.number_of_students)

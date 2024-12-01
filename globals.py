@@ -6,6 +6,7 @@ from configparser import ConfigParser
 from PyQt5.QtGui import QIcon
 from PyQt5 import QtWidgets
 from polars import DataFrame
+from win32com.client import CDispatch
 
 """
 SHAPES_PATH: str - Nơi lưu trữ ảnh Preview của các Shapes
@@ -30,8 +31,8 @@ app = QtWidgets.QApplication(sys.argv)
 class PowerPoint:
     def __init__(self):
         super().__init__()
-        self.instance = None
-        self.prs = None
+        self.instance: CDispatch = None
+        self.presentation = None
 
     def open_instance(self):
         if not self.instance:
@@ -43,10 +44,10 @@ class PowerPoint:
         has_title = False
         window = False
         if self.instance:
-            self.prs = self.instance.Presentations.open(
+            self.presentation = self.instance.Presentations.open(
                 path, read_only, has_title, window
             )
-        return self.prs
+        return self.presentation
 
     def close_instance(self) -> bool:
         if self.instance:
@@ -56,9 +57,9 @@ class PowerPoint:
         return False
 
     def close_presentation(self) -> bool:
-        if self.prs and self.instance:
-            self.prs.Close()
-            self.prs = None
+        if self.presentation and self.instance:
+            self.presentation.Close()
+            self.presentation = None
             return True
         return False
 
@@ -90,17 +91,23 @@ class Input:
             else:
                 return None
 
-    class Shapes(list):
+    class Shape:
+        def __init__(self, shape_id: int, image_path: str):
+            super().__init__()
+            self.shape_id = shape_id
+            self.image_path = image_path
+            self.icon = QIcon(image_path)
+    class Shapes(list[Shape]):
         def __init__(self):
             super().__init__()
 
-        def add(self, id: int, image_path: str):
-            shape = {"id": str(id), "path": image_path, "icon": QIcon(image_path)}
+        def add(self, shape_id: int, image_path: str):
+            shape = Input.Shape(shape_id, image_path)
             self.append(shape)
 
     class Config:
         class ConfigImage:
-            def __init__(self, placeholder: str, shape_id: str):
+            def __init__(self, placeholder: str, shape_id: int):
                 super().__init__()
                 self.placeholder = placeholder
                 self.shape_id = shape_id
@@ -113,7 +120,7 @@ class Input:
         def add_text(self, text: str):
             self.text.append(text)
 
-        def add_image(self, shape_id: str, placeholder: str):
+        def add_image(self, shape_id: int, placeholder: str):
             config_image = self.ConfigImage(placeholder, shape_id)
             self.image.append(config_image)
 
@@ -133,4 +140,4 @@ class Input:
         self.save = self.Save()
 
 
-input = Input()
+user_input = Input()

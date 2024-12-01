@@ -1,33 +1,18 @@
 from PyQt5.QtWidgets import QTableWidget, QComboBox, QTableWidgetItem
 from src.logger.info import default as info
 from src.logger.debug import console_debug
-from globals import input, SHAPES_PATH
+from globals import user_input, SHAPES_PATH
 from typing import Tuple
 import os
 
-
-def __refresh_placeholders():
-    # Làm mới placeholders ở local file này
-    global __placeholders
-    __placeholders = input.csv.placeholders
-
-
-def __refresh_shapes():
-    # Làm mới placeholders ở local file này
-    global __shapes
-    __shapes = input.shapes
-
-
 def __sync_item_with_combo(item: QTableWidgetItem, combo: QComboBox):
-    combo.setCurrentText(item.text())
+    item.setText(combo.currentText())
 
-
-def preview():
+def shapes_preview():
     if not os.path.exists(SHAPES_PATH):
         os.makedirs(SHAPES_PATH)
     if os.name == "nt":  # Check if the OS is Windows
         os.startfile(SHAPES_PATH)
-
 
 def remove_item(config_image_table: QTableWidget):
     selected_item = config_image_table.currentItem()
@@ -46,55 +31,51 @@ def remove_item(config_image_table: QTableWidget):
         else:
             info(__name__, "config.no_item_to_remove")
 
-
 def add_item(config_image_table: QTableWidget):
-    def text_item_setup(row_count: int) -> Tuple[QTableWidgetItem, QComboBox]:
-        item_placeholder = QTableWidgetItem()
-        combo_placeholder = QComboBox(config_image_table)
-        combo_placeholder.addItems(__placeholders)
-        combo_placeholder.currentTextChanged.connect(
-            lambda: __sync_item_with_combo(item_placeholder, combo_placeholder)
-        )  # Khi chọn item khác, cập nhật item text
-        combo_placeholder.setCurrentIndex(row_count)
-        combo_placeholder.setStyleSheet("background: white; border: none;")
-        return item_placeholder, combo_placeholder
+    def placeholder_item_setup(row: int) -> Tuple[QTableWidgetItem, QComboBox]:
+        item = QTableWidgetItem()
+        combo = QComboBox(config_image_table)
+        combo.addItems(user_input.csv.placeholders)
+        combo.currentTextChanged.connect(
+            lambda: __sync_item_with_combo(item, combo)
+        )  # Khi chọn item khác, cập nhật nội dung item
+        combo.setStyleSheet("background: white; border: none;")
+        combo.setCurrentIndex(row)
+        __sync_item_with_combo(item, combo) #for sure because first item already has first index, so combo.currentTextChanged will not be triggered
+        return item, combo
     
-    def image_item_setup() -> Tuple[QTableWidgetItem, QComboBox]:
-        item_image = QTableWidgetItem()
-        combo_image = QComboBox(config_image_table)
-        combo_image.currentTextChanged.connect(
-            lambda: __sync_item_with_combo(item_image, combo_image)
-        )  # Khi chọn item khác, cập nhật item text
-        for combobox_item in input.shapes:
-            combo_image.addItem(combobox_item["icon"], f"ID {combobox_item['id']}")
-            combo_image.setStyleSheet("background: white; border: none;")
-        combo_image.setCurrentIndex(row_count)
-        return item_image, combo_image
-
-    __refresh_placeholders()
-    __refresh_shapes()
+    def shape_item_setup(row: int) -> Tuple[QTableWidgetItem, QComboBox]:
+        item = QTableWidgetItem()
+        combo = QComboBox(config_image_table)
+        combo.currentTextChanged.connect(
+            lambda: __sync_item_with_combo(item, combo)
+        )  # Khi chọn item khác, cập nhật nội dung item
+        for shape in user_input.shapes:
+            combo.addItem(shape.icon, str(shape.shape_id))
+            combo.setStyleSheet("background: white; border: none;")
+        combo.setCurrentIndex(row)
+        return item, combo
+    
     # Tìm dòng mới
-    row_count = config_image_table.rowCount()
+    row = config_image_table.rowCount()
 
     # Nếu số lượng item vượt quá len của placeholder hoặc shapes, không thêm item mới mà thông báo
-    if row_count >= len(__placeholders):
+    if row >= len(user_input.csv.placeholders):
         info(__name__, "config.too_much_placeholders")
         return
-    if row_count >= len(__shapes):
+    if row >= len(user_input.shapes):
         info(__name__, "config.too_much_shapes")
         return
 
     # Tạo item mới
-    config_image_table.insertRow(row_count)
-    # Setup cột đầu tiên (placeholder) của item
-    _item_placeholder, _combo_placeholder = text_item_setup(row_count)
-    # Setup cột thứ hai (image) của item
-    _item_image, _combo_image = image_item_setup()
+    config_image_table.insertRow(row)
+    placeholder_item, placeholder_combo = placeholder_item_setup(row) # Setup cột đầu tiên (placeholder) của item
+    shape_item, shape_combo = shape_item_setup(row) # Setup cột thứ hai (shape) của item
 
+    console_debug(__name__, None, f"Add image item {row + 1}")
     # Thêm item mới
-    console_debug(__name__, None, f"Add image item {row_count + 1}")
-    config_image_table.setItem(row_count, 0, _item_image)
-    config_image_table.setItem(row_count, 1, _item_placeholder)
+    config_image_table.setItem(row, 0, shape_item)
+    config_image_table.setItem(row, 1, placeholder_item)
     # Gán combo box vào item
-    config_image_table.setCellWidget(row_count, 0, _combo_image)
-    config_image_table.setCellWidget(row_count, 1, _combo_placeholder)
+    config_image_table.setCellWidget(row, 0, shape_combo)
+    config_image_table.setCellWidget(row, 1, placeholder_combo)

@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING
-from globals import input, pptx
+from globals import user_input, pptx
 import shutil
 
 if TYPE_CHECKING:
@@ -18,14 +18,15 @@ def _copy_file(path: str, save_path: str):
 
 def _per_processing(progress: "Progress", num: int):
     progress.add_log(__name__, __loglevel.info, "read_student", num)
-    student = input.csv.get(num)
+    student = user_input.csv.get(num)
 
+    pass
     #TODO: Continue here
 
 def exec(progress: "Progress", from_: int, to_: int):
     # Sao chép file gốc sang file lưu
     progress.add_log(__name__, __loglevel.info, "create_file")
-    _copy_file(input.pptx.path, input.save.path)
+    _copy_file(user_input.pptx.path, user_input.save.path)
     
     # Tạo giao thức với PowerPoint
     progress.add_log(__name__, __loglevel.info, "open_instance")
@@ -33,7 +34,7 @@ def exec(progress: "Progress", from_: int, to_: int):
 
     # Mở file PowerPoint
     progress.add_log(__name__, __loglevel.info, "open_presentation")
-    pptx.open_presentation(input.pptx.path)
+    pptx.open_presentation(user_input.pptx.path)
 
     # Bắt đầu
     progress.add_log(__name__, __loglevel.info, "start")

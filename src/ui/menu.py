@@ -18,7 +18,6 @@ from src.handler.menu import (
 )
 from src.handler.menu import broswe_button, config_text
 from src.handler.menu.start_button import check_start_button
-from src.loader import shapes_loader, csv_loader
 from src.ui.progress import Progress
 from globals import GITHUB_URL
 
@@ -379,7 +378,7 @@ class Menu(QMainWindow):
             lambda: config_image.remove_item(self.config_image_table)
         )
         self.template_broswe.clicked.connect(
-            lambda: broswe_button.template_powerpoint_broswe(self)
+            lambda: broswe_button.pptx_broswe(self)
         )
         self.csv_broswe.clicked.connect(
             lambda: broswe_button.csv_broswe(self)
@@ -387,5 +386,5 @@ class Menu(QMainWindow):
         self.save_broswe.clicked.connect(
             lambda: broswe_button.save_path_broswe(self.centralwidget, self.save_path)
         )
-        self.config_image_preview.clicked.connect(lambda: config_image.preview())
+        self.config_image_preview.clicked.connect(lambda: config_image.shapes_preview())
         self.start_button.clicked.connect(lambda: start_button.start(self))

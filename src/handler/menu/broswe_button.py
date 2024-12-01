@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QFileDialog, QLineEdit, QWidget
-from src.loader.shapes_loader import load_shapes
-from src.loader.csv_loader import load_csv
-from src.loader._get_utils import get_save_path
+from src.loader.shapes import process_shapes
+from src.loader.csv import process_csv
+from src.loader.save_path import get_save_path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -18,7 +18,7 @@ def __setPathText(file_path: str, inputLine: QLineEdit):
 
 
 # ? Các hàm xử lý sự kiện của các button
-def template_powerpoint_broswe(menu: "Menu"):
+def pptx_broswe(menu: "Menu"):
     # @params: menu: "Menu"
     widget = menu.centralwidget
     inputLine = menu.pptx_path
@@ -28,8 +28,7 @@ def template_powerpoint_broswe(menu: "Menu"):
     # Load ImageShape here
     __setPathText(file_path, inputLine)
     if file_path:
-        load_shapes(menu)
-
+        process_shapes(menu)
 
 
 def csv_broswe(menu: "Menu"):
@@ -41,7 +40,7 @@ def csv_broswe(menu: "Menu"):
     )
     __setPathText(file_path, inputLine)
     if file_path:
-        load_csv(menu)
+        process_csv(menu)
 
 
 def save_path_broswe(widget: QWidget, inputLine: QLineEdit):
