@@ -1,14 +1,11 @@
-def replace_text_placeholders(prs, data):
-    # Author: @oceantran27
-    # Edit: @thnhmai06
+from pystache import render
+from typing import Callable, Type
 
-    column_names = data.columns.tolist()
-    for slide_index in range(1, prs.Slides.Count):
-        row = data.iloc[slide_index - 1]
-        for shape in prs.Slides(slide_index).Shapes:
-            if shape.HasTextFrame and shape.TextFrame.HasText:
-                text = shape.TextFrame.TextRange.Text
-                for column_name in column_names:
-                    if column_name in text:
-                        new_text = text.replace(column_name, str(row[column_name]))
-                        shape.TextFrame.TextRange.Text = new_text
+def replace_text_placeholders(slide, student: dict, add_log: Callable[[str, str, str, str], None], loglevel: Type) -> None:
+    for shape in slide.Shapes:
+        if shape.HasTextFrame and shape.TextFrame.HasText: # Xác nhận nó là shape text
+            text = shape.TextFrame.TextRange.Text
+            new_text = render(text, student)
+            if (text != new_text):
+                add_log(__name__, loglevel.info, "replace_text", f"{text} -> {new_text}")
+                shape.TextFrame.TextRange.Text = new_text

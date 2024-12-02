@@ -20,6 +20,7 @@ def __load(csv_path: str) -> bool:
     user_input.csv.placeholders = user_input.csv.df.columns
     user_input.csv.number_of_students = len(user_input.csv.df)
 
+    # Trường hợp không có sinh viên nào
     if not user_input.csv.number_of_students >= 1:
         return False
     

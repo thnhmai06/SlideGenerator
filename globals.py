@@ -87,7 +87,7 @@ class Input:
         def get(self, num: int):
             num -= 1  # Convert to 0-based index
             if self.df is not None and 0 <= num < self.number_of_students:
-                return self.df[num].to_dict()
+                return self.df[num].to_dicts()
             else:
                 return None
 

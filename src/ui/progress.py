@@ -103,3 +103,5 @@ class Progress(QWidget):
                 title = TRANS["progress"]["error"][title_key] if title_key else ""
                 console_error(where, title + content)
         self.log.append(title + content)
+
+        #TODO: Cần thay thế QTextEdit bằng QPlainTextEdit để tăng hiệu suất (https://stackoverflow.com/questions/28655198/best-way-to-display-logs-in-pyqt)
