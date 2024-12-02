@@ -3,3 +3,4 @@ pywin32 # for replace placeholders
 polars # for csv reading
 python-pptx # for save shape
 colorama # for console color
+gdown # for download file from google drive
