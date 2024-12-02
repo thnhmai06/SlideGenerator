@@ -23,12 +23,10 @@ class GoogleDrive:
         return IS_LINK_REGEX.match(url) is not None
 
     def get_google_drive_file_id(url) -> str | None:
-        from re import Match
-
         FILE_ID_REGEX = r"/file/d/([a-zA-Z0-9_-]+)"
         match = re.search(FILE_ID_REGEX, url)
         if match:
-            assert isinstance(match, Match[bytes])
+            assert isinstance(match, re.Match[bytes])
             return match.group(1)
         else:
             return None
