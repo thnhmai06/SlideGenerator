@@ -49,7 +49,7 @@ def __per_processing(pptx: PowerPoint, progress: "Progress", num: int):
     progress.log.append(__name__, loglevel.info, "finish_replace")
 
 
-def execute(pptx: PowerPoint, progress: "Progress", from_: int, to_: int):
+def __execute(pptx: PowerPoint, progress: "Progress", from_: int, to_: int):
     # * Chuẩn bị
     # Sao chép file gốc sang file lưu
     progress.log.append(__name__, loglevel.info, "create_file")
@@ -88,6 +88,6 @@ def execute(pptx: PowerPoint, progress: "Progress", from_: int, to_: int):
     
 def work(progress: "Progress", from_: int, to_: int):
     pptx = PowerPoint()
-    worker = threading.Thread(name = "core", target=execute, args=(pptx, progress, from_, to_))
+    worker = threading.Thread(name = "core", target=__execute, args=(pptx, progress, from_, to_))
     worker.start()
 
