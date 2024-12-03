@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING
-from src.core.exec import exec
+from src.core.exec import work
 from globals import user_input
 from src.loader.config import get_config
 
@@ -23,11 +23,11 @@ def check_start_button(menu: "Menu"):
     #     start_button.setEnabled(False)
     start_button.setEnabled(True)
 
-def start(menu: "Menu"):
+def handling(menu: "Menu"):
     '''Hàm này sẽ được gọi khi start_button được nhấn'''
     get_config(menu.config_text_list, menu.config_image_table)
     progress = menu.progress
 
     menu.hide()
     progress.show()    
-    exec(progress, 1, user_input.csv.number_of_students)
+    work(progress, 1, user_input.csv.number_of_students)

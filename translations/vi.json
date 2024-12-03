@@ -47,7 +47,7 @@
     "console": {
         "debug": {
             "load_resources": "Tải Resources",
-            "had_powerpoint": "Phát hiện Microsoft PowerPoint"
+            "powerpoint_found": "Phát hiện Microsoft PowerPoint"
         },
         "info": {}
     }

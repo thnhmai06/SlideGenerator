@@ -1,8 +1,46 @@
 from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtWidgets import QWidget, QPlainTextEdit
 from src.logging.info import console_info
 from src.logging.error import console_error
 from translations import TRANS
+
+class QTextEditLogger(QtCore.QObject):
+    appendPlainText = QtCore.pyqtSignal(str)
+    
+    # https://stackoverflow.com/a/60528393/16410937
+    def __init__(self, parent):
+        super().__init__()
+        QtCore.QObject.__init__(self)
+        self.widget = QPlainTextEdit(parent)
+        self.widget.setReadOnly(True)
+        self.appendPlainText.connect(self.widget.appendPlainText)
+
+    def append(self, where: str, level: str = "info", title_key: str = None, content: str = "") -> None:
+        """
+        Adds a log message to the Log.
+
+        Parameters:
+        where (str): The location where the log is being added.
+        content (str): The content of the log message.
+        level (str, optional): The level of the log message. (info, error). Defaults to "info".
+        title_key (str, optional): The key to retrieve the title from the TRANS dictionary. Defaults to None.
+
+        Returns:
+        None
+        """
+        if not isinstance(content, str):
+            content = str(content)
+
+        match level:
+            case "info":
+                title = TRANS["progress"]["info"][title_key] if title_key else ""
+                console_info(where, title + content)
+            case "error":
+                title = TRANS["progress"]["error"][title_key] if title_key else ""
+                console_error(where, title + content)
+
+        text = title + content
+        self.appendPlainText.emit(text)
 
 class Progress(QWidget):
     def __init__(self):
@@ -60,8 +98,8 @@ class Progress(QWidget):
         """
         Initialize the log text edit.
         """
-        self.log = QtWidgets.QTextEdit(self)
-        self.log.setGeometry(QtCore.QRect(20, 100, 531, 211))
+        self.log = QTextEditLogger(self)
+        self.log.widget.setGeometry(QtCore.QRect(20, 100, 531, 211))
         self.log.setObjectName("log")
 
     def _retranslateUi(self):
@@ -78,30 +116,3 @@ class Progress(QWidget):
                 '<html><head/><body><p><span style=" font-size:10pt; font-weight:600;">Đang chuẩn bị...</span></p></body></html>',
             )
         )
-
-    def add_log(self, where: str, level: str = "info", title_key: str = None, content: str = "") -> None:
-        """
-        Adds a log message to the Log.
-
-        Parameters:
-        where (str): The location where the log is being added.
-        content (str): The content of the log message.
-        level (str, optional): The level of the log message. (info, error). Defaults to "info".
-        title_key (str, optional): The key to retrieve the title from the TRANS dictionary. Defaults to None.
-
-        Returns:
-        None
-        """
-        if not isinstance(content, str):
-            content = str(content)
-
-        match level:
-            case "info":
-                title = TRANS["progress"]["info"][title_key] if title_key else ""
-                console_info(where, title + content)
-            case "error":
-                title = TRANS["progress"]["error"][title_key] if title_key else ""
-                console_error(where, title + content)
-        self.log.append(title + content)
-
-        #TODO: Cần thay thế QTextEdit bằng QPlainTextEdit để tăng hiệu suất (https://stackoverflow.com/questions/28655198/best-way-to-display-logs-in-pyqt)

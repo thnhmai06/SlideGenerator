@@ -387,4 +387,4 @@ class Menu(QMainWindow):
             lambda: broswe_button.save_path_broswe(self.centralwidget, self.save_path)
         )
         self.config_image_preview.clicked.connect(lambda: config_image.shapes_preview())
-        self.start_button.clicked.connect(lambda: start_button.start(self))
+        self.start_button.clicked.connect(lambda: start_button.handling(self))
