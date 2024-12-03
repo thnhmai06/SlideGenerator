@@ -17,6 +17,7 @@
             "saving": "Đang lưu file",
             "finish_replace": "Hoàn tất thay thế\n---------------------------------",
             "done": "============== Hoàn tất ==============",
+            "delete_sample_slide": "Xóa slide mẫu trong file",
             "close_presentation": "Đóng file PowerPoint",
             "close_instance": "Ngắt giao thức PowerPoint",
             "save_path": "Vị trí file: "

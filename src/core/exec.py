@@ -2,7 +2,7 @@ import threading
 from typing import TYPE_CHECKING
 from globals import user_input
 from classes.models import PowerPoint
-from src.core._slide_utils import duplicate_slide
+from src.core._slide_utils import duplicate_slide, delete_slide
 from src.core._replace import replace_text_placeholders
 
 if TYPE_CHECKING:
@@ -70,8 +70,9 @@ def __execute(pptx: PowerPoint, progress: "Progress", from_: int, to_: int):
         __per_processing(pptx, progress, num)
 
     # * Kết thúc
-    # Thông báo hoàn thành
-    progress.log.append(__name__, loglevel.info, "done")
+    # Xóa slide đầu tiên (là slide mẫu)
+    progress.log.append(__name__, loglevel.info, "delete_sample_slide")
+    delete_slide(pptx.presentation, 1)
 
     # Đóng file PowerPoint
     progress.log.append(__name__, loglevel.info, "close_presentation")
@@ -80,6 +81,9 @@ def __execute(pptx: PowerPoint, progress: "Progress", from_: int, to_: int):
     # Đóng giao thức với PowerPoint
     progress.log.append(__name__, loglevel.info, "close_instance")
     pptx.close_instance()
+
+    # Thông báo hoàn thành
+    progress.log.append(__name__, loglevel.info, "done")
 
     # Thông báo vị trí lưu file
     progress.log.append(__name__, loglevel.info, "save_path", user_input.save.path)
