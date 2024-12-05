@@ -18,6 +18,7 @@ DEBUG_MODE = __CONFIG.getboolean("Debug", "debug")
 # ? Global Constants
 GITHUB_URL = "https://github.com/thnhmai06/tao-slide-tot-nghiep"
 SHAPES_PATH = os.path.abspath("./temp/shapes/")
+DOWNLOAD_PATH = os.path.abspath("./temp/downloads/")
 TRANSLATION_PATH = os.path.abspath("./translations/")
 
 # ? Biến lưu thông tin người dùng nhập vào

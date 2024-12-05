@@ -366,16 +366,16 @@ class Menu(QMainWindow):
 
         # Xử lý sự kiện cho các button
         self.config_text_add_button.clicked.connect(
-            lambda: config_text.add_item(self.config_text_list)
+            lambda: config_text.add_item(self.config_text_list), check_start_button(self)
         )
         self.config_text_remove_button.clicked.connect(
-            lambda: config_text.remove_item(self.config_text_list)
+            lambda: config_text.remove_item(self.config_text_list), check_start_button(self)
         )
         self.config_image_add_button.clicked.connect(
-            lambda: config_image.add_item(self.config_image_table)
+            lambda: config_image.add_item(self.config_image_table), check_start_button(self)
         )
         self.config_image_remove_button.clicked.connect(
-            lambda: config_image.remove_item(self.config_image_table)
+            lambda: config_image.remove_item(self.config_image_table), check_start_button(self)
         )
         self.template_broswe.clicked.connect(
             lambda: broswe_button.pptx_broswe(self)
