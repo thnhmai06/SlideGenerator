@@ -6,6 +6,9 @@ from translations import TRANS
 
 class QTextEditLogger(QtCore.QObject):
     appendPlainText = QtCore.pyqtSignal(str)
+    class LogLevels:
+        INFO = "info"
+        ERROR = "error"
     
     # https://stackoverflow.com/a/60528393/16410937
     def __init__(self, parent):
@@ -14,8 +17,10 @@ class QTextEditLogger(QtCore.QObject):
         self.widget = QPlainTextEdit(parent)
         self.widget.setReadOnly(True)
         self.appendPlainText.connect(self.widget.appendPlainText)
+        self.LogLevels = QTextEditLogger.LogLevels
 
-    def append(self, where: str, level: str = "info", title_key: str = None, content: str = "") -> None:
+
+    def append(self, where: str, level: str, title_key: str = None, content: str = "") -> None:
         """
         Adds a log message to the Log.
 
@@ -32,10 +37,10 @@ class QTextEditLogger(QtCore.QObject):
             content = str(content)
 
         match level:
-            case "info":
+            case self.LogLevels.INFO:
                 title = TRANS["progress"]["info"][title_key] if title_key else ""
                 console_info(where, title + content)
-            case "error":
+            case self.LogLevels.ERROR:
                 title = TRANS["progress"]["error"][title_key] if title_key else ""
                 console_error(where, title + content)
 

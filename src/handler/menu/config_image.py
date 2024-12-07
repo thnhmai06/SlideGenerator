@@ -8,7 +8,7 @@ import os
 def __sync_item_with_combo(item: QTableWidgetItem, combo: QComboBox):
     item.setText(combo.currentText())
 
-def shapes_preview():
+def shapes_viewShapes():
     if not os.path.exists(SHAPES_PATH):
         os.makedirs(SHAPES_PATH)
     if os.name == "nt":  # Check if the OS is Windows

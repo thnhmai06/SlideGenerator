@@ -9,7 +9,7 @@ from globals import SHAPES_PATH
 from src.logging.info import console_info
 from pptx.shapes.picture import Picture
 from PyQt5.QtWidgets import QLineEdit
-from src.loader._utils import delete_all_file
+from src.utils.file import delete_file
 
 if TYPE_CHECKING:
     # Anti-circular import
@@ -37,7 +37,7 @@ def __load_shapes(
         os.makedirs(shapes_path)
 
     # Xóa hết các file trong save_path
-    delete_all_file(shapes_path)
+    delete_file(shapes_path)
 
     slide = prs.slides[slide_index]
     for shape_index_win32COM in range(1, len(slide.shapes) + 1):
@@ -89,13 +89,13 @@ def process_shapes(menu: "Menu"):
         return
 
     # Xóa các ảnh cũ trong thư mục SHAPES_PATH
-    delete_all_file(SHAPES_PATH)
+    delete_file(SHAPES_PATH)
 
     # Lưu các ảnh từ slide đầu tiên (0) vào thư mục SHAPES_PATH
     __load_shapes(prs, 0)
 
-    # Enable preview button
-    menu.config_image_preview.setEnabled(True)
+    # Enable viewShapes button
+    menu.config_image_viewShapes.setEnabled(True)
 
     # Chỉ khi đã có sẵn placeholder rồi thì mới enable config_image_table
     if user_input.csv.number_of_students > 0:

@@ -201,10 +201,10 @@ class Menu(QMainWindow):
         self.config_image_label.setGeometry(QtCore.QRect(470, 30, 401, 20))
         self.config_image_label.setObjectName("config_image_label")
 
-        self.config_image_preview = QPushButton(self.config)
-        self.config_image_preview.setGeometry(QtCore.QRect(770, 25, 93, 28))
-        self.config_image_preview.setObjectName("config_image_preview")
-        self.config_image_preview.setEnabled(False)
+        self.config_image_viewShapes = QPushButton(self.config)
+        self.config_image_viewShapes.setGeometry(QtCore.QRect(770, 25, 93, 28))
+        self.config_image_viewShapes.setObjectName("config_image_viewShapes")
+        self.config_image_viewShapes.setEnabled(False)
 
         self.config_image_autodownload_label = QLabel(self.config)
         self.config_image_autodownload_label.setGeometry(
@@ -329,7 +329,7 @@ class Menu(QMainWindow):
                 '<html><head/><body><p align="center"><span style=" font-weight:600;">Text (Placeholder)</span></p></body></html>',
             )
         )
-        self.config_image_preview.setText(_translate("menu", "Xem các Shapes"))
+        self.config_image_viewShapes.setText(_translate("menu", "Xem các Shapes"))
         self.config_image_label.setText(
             _translate(
                 "menu",
@@ -359,23 +359,29 @@ class Menu(QMainWindow):
     def _handleUI(self):
         """Connects UI elements to their respective event handlers."""
 
-        # Mỗi lần save_path, pptx_path, csv_path thay đổi, kiểm tra xem start_button có được enable không
+        # Mỗi lần save_path, pptx_path, csv_path, config_text_list và config_image_table thay đổi, kiểm tra xem start_button có được enable không
         self.save_path.textChanged.connect(lambda: check_start_button(self))
         self.pptx_path.textChanged.connect(lambda: check_start_button(self))
         self.csv_path.textChanged.connect(lambda: check_start_button(self))
+        self.config_text_list.itemSelectionChanged.connect(
+            lambda: check_start_button(self)
+        )
+        self.config_image_table.itemSelectionChanged.connect(
+            lambda: check_start_button(self)
+        )
 
         # Xử lý sự kiện cho các button
         self.config_text_add_button.clicked.connect(
-            lambda: config_text.add_item(self.config_text_list), check_start_button(self)
+            lambda: config_text.add_item(self.config_text_list)
         )
         self.config_text_remove_button.clicked.connect(
-            lambda: config_text.remove_item(self.config_text_list), check_start_button(self)
+            lambda: config_text.remove_item(self.config_text_list)
         )
         self.config_image_add_button.clicked.connect(
-            lambda: config_image.add_item(self.config_image_table), check_start_button(self)
+            lambda: config_image.add_item(self.config_image_table)
         )
         self.config_image_remove_button.clicked.connect(
-            lambda: config_image.remove_item(self.config_image_table), check_start_button(self)
+            lambda: config_image.remove_item(self.config_image_table)
         )
         self.template_broswe.clicked.connect(
             lambda: broswe_button.pptx_broswe(self)
@@ -386,5 +392,5 @@ class Menu(QMainWindow):
         self.save_broswe.clicked.connect(
             lambda: broswe_button.save_path_broswe(self.centralwidget, self.save_path)
         )
-        self.config_image_preview.clicked.connect(lambda: config_image.shapes_preview())
+        self.config_image_viewShapes.clicked.connect(lambda: config_image.shapes_viewShapes())
         self.start_button.clicked.connect(lambda: start_button.handling(self))

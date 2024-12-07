@@ -9,14 +9,11 @@
             "read_student": "Đọc thông tin sinh viên dòng thứ: ",
             "duplicate_slide": "Nhân bản slide mẫu",
             "replace_text": "Thay thế văn bản: ",
-            "download_image_start": "Tải hình ảnh: ",
-            "download_image_invalid_url": "Bỏ qua do URL không hợp lệ: ",
-            "download_image_not_image": "Bỏ qua do không phải hình ảnh: ",
-            "download_image_cant_access": "Không thể truy cập đến link: ",
-            "download_image_finish": "Tải hoàn tất, lưu ở: ",
-            "is_not_image": "File không phải là hình ảnh: ",
+            "download_image_start": "Đang tải: ",
+            "download_image_success": "Tải thành công, lưu ở: ",
+            "download_image_not_image": "Không phải là hình ảnh: ",
             "keep_original_image": "Giữ nguyên hình ảnh gốc cho ID=",
-            "replace_image": "Thay thế hình ảnh: ",
+            "replace_image": "Thay thế hình ảnh cho ID=",
             "saving": "Đang lưu file",
             "finish_replace": "Hoàn tất thay thế\n---------------------------------",
             "done": "============== Hoàn tất ==============",
@@ -26,7 +23,8 @@
             "save_path": "Vị trí file: "
         },
         "error": {
-            "download_image_error": "Lỗi khi tải: "
+            "download_image_return_none": "Không tải được hình ảnh từ URL: ",
+            "download_image_return_exception": "Lỗi khi tải hình ảnh: "
         }
     },
     "diaglogs": {

@@ -16,7 +16,7 @@ def __load(csv_path: str) -> bool:
     """
     LINES_PER_BATCH = 1
 
-    user_input.csv.df = pl.read_csv(csv_path, batch_size=LINES_PER_BATCH)
+    user_input.csv.df = pl.read_csv(csv_path, batch_size=LINES_PER_BATCH, encoding="utf8-lossy")
     user_input.csv.placeholders = user_input.csv.df.columns
     user_input.csv.number_of_students = len(user_input.csv.df)
 

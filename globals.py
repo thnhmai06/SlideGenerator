@@ -3,7 +3,7 @@ from configparser import ConfigParser
 from classes.models import Input
 
 """
-SHAPES_PATH: str - Nơi lưu trữ ảnh Preview của các Shapes
+SHAPES_PATH: str - Nơi lưu trữ các Shapes ảnh
 TRANSLATION_PATH: str - Nơi lưu trữ các file ngôn ngữ
 GITHUB_URL: str - Đường dẫn đến Repository trên Github
 LANG: str - Ngôn ngữ hiện tại của ứng dụng
@@ -14,6 +14,7 @@ __CONFIG = ConfigParser()
 __CONFIG.read("./config.ini")
 LANG = __CONFIG.get("Config", "lang")
 DEBUG_MODE = __CONFIG.getboolean("Debug", "debug")
+TIMEOUT = __CONFIG.getint("Config", "timeout")
 
 # ? Global Constants
 GITHUB_URL = "https://github.com/thnhmai06/tao-slide-tot-nghiep"
