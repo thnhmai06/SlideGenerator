@@ -30,7 +30,8 @@
     "diaglogs": {
         "error": {
             "window_name": "Đã xả ra lỗi",
-            "exception": "Đã xảy ra lỗi không mong muốn!"
+            "exception": "Đã xảy ra lỗi không mong muốn!",
+            "pptx.can_not_open": "Không thể mở file PowerPoint!\nHãy đảm bảo file không bị mã hóa bởi mật khẩu, hay bị mở bởi ứng dụng khác!"
         },
         "information": {
             "window_name": "Thông báo",
@@ -40,7 +41,8 @@
             "csv.no_students": "File DSSV không chứa thông tin sinh viên!",
             "config.too_much_placeholders": "Số lượng đã nhiều hơn số placeholders có sẵn!",
             "config.too_much_shapes": "Số lượng đã nhiều hơn số shapes có sẵn!",
-            "config.no_item_to_remove": "Không có mục nào để xóa cả!"
+            "config.no_item_to_remove": "Không có mục nào để xóa cả!",
+            "save_path.coincide_pptx": "File lưu mới không được thay thế file PowerPoint mẫu!"
         }
     },
     "images_table": {
@@ -48,9 +50,11 @@
     },
     "console": {
         "debug": {
-            "load_resources": "Tải Resources",
             "powerpoint_found": "Phát hiện Microsoft PowerPoint"
         },
-        "info": {}
+        "info": {
+            "pptx_load": "Tải file Template: ",
+            "csv_load": "Tải file DSSV: "
+        }
     }
 }

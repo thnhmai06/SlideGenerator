@@ -34,7 +34,7 @@ def default(
     """
     title = TRANS["diaglogs"]["error"][title_key]
     console_error(where, details)
-    _show_err_diaglog(title, details, window_name)
+    _show_err_diaglog(window_name, title, details)
 
 
 def exception(

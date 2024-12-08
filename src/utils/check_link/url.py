@@ -4,7 +4,7 @@ from src.logging.error import console_error
 from globals import TIMEOUT
 
 URL_PATTERN = r'^(https?|ftp):\/\/[a-zA-Z0-9.-]+(:\d+)?(\/[^\s]*)?$'
-IMAGE_EXTENSIONS = ('png', 'jpg', 'jpeg', 'gif', 'bmp', 'tiff', 'webp', 'svg')
+IMAGE_EXTENSIONS = ('png', 'jpg', 'jpeg', 'gif', 'bmp', 'tiff', 'svg')
 
 def is_url(url: str):
     """
@@ -14,7 +14,7 @@ def is_url(url: str):
     Returns:
         bool: True nếu là url hợp lệ, ngược lại False.
     """
-    return (url is not None) and (re.match(URL_PATTERN, url) is not None)
+    return (url is not None)  and (isinstance(url, str)) and (re.match(URL_PATTERN, url) is not None)
 
 def is_image_url(url: str):
     """

@@ -39,9 +39,8 @@ class Input:
         def add(self, shape_id: int, image_path: str):
             shape = Input.Shape(shape_id, image_path)
             self.append(shape)
-
     class Config:
-        class ConfigImage:
+        class ConfigImage():
             def __init__(self, placeholder: str, shape_id: int):
                 super().__init__()
                 self.placeholder = placeholder
@@ -56,8 +55,8 @@ class Input:
             self.text.append(text)
 
         def add_image(self, shape_id: int, placeholder: str):
-            config_image = self.ConfigImage(placeholder, shape_id)
-            self.image.append(config_image)
+            config_image_item = self.ConfigImage(placeholder, shape_id)
+            self.image.append(config_image_item)
 
     class Save:
         def __init__(self):
@@ -98,11 +97,12 @@ class PowerPoint:
         if self.instance and not self.presentation:
             try:
                 self.presentation = self.instance.Presentations.open(
-                    path, read_only, has_title, window
+                    r"{}".format(path), read_only, has_title, window
                 )
-            except Exception:
+                return None
+            except Exception as e:
                 self.presentation = None
-        return self.presentation
+                return e
 
     def close_instance(self) -> bool:
         if self.instance:

@@ -2,6 +2,7 @@ from typing import Callable, Type
 from src.utils.check_link import file as file_check, google_drive as GD_check, url as url_check
 from src.utils.download import google_drive as GD_download, url as url_download 
 from globals import DOWNLOAD_PATH
+import os
 
 
 def __return_handler(add_log: Callable[[str, str, str, str], None], loglevel: Type, re: str | Exception | None, link: str):
@@ -37,7 +38,6 @@ def download_image(link: str, num: int, add_log: Callable[[str, str, str, str], 
     Returns:
         str: Đường dẫn tới file đã tải về nếu thành công, ngược lại None.
     """
-    save_path = f"{DOWNLOAD_PATH}/image_{num}.jpg"
 
     # Nếu link không được cung cấp, bỏ qua
     if not link:
@@ -48,14 +48,16 @@ def download_image(link: str, num: int, add_log: Callable[[str, str, str, str], 
         return link
     elif url_check.is_url(link):
         add_log(__name__, loglevel.INFO, "download_image_start", link)
-        if url_check.is_image_url(link):
+        if (ext := url_check.is_image_url(link)):
+            save_path = os.path.abspath(f"{DOWNLOAD_PATH}/image_{num}.{ext}")
             re = url_download.download(link, save_path)
             return re if __return_handler(add_log, loglevel, re, link) else None
 
-        elif GD_check.is_gd_url(link):
+        elif (GD_check.is_gd_url(link)):
             file_id = GD_check.get_file_id(link)
             raw_link = GD_check.get_raw_url(file_id)
-            if url_check.is_image_url(raw_link):
+            if (ext := url_check.is_image_url(raw_link)):
+                save_path = os.path.abspath(f"{DOWNLOAD_PATH}/image_{num}.{ext}")
                 re = GD_download.download(raw_link, save_path)
                 return re if __return_handler(add_log, loglevel, re, link) else None
             else:

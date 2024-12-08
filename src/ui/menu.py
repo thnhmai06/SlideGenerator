@@ -19,6 +19,7 @@ from src.handler.menu import (
 from src.handler.menu import broswe_button, config_text
 from src.handler.menu.start_button import check_start_button
 from src.ui.progress import Progress
+from classes.thread import GetShapesThread
 from globals import GITHUB_URL
 
 
@@ -29,6 +30,7 @@ class Menu(QMainWindow):
         self._retranslateUi()
         self._handleUI()
         self.progress = Progress()
+        self.get_shapes_thread = GetShapesThread()
 
     def _setupUi(self):
         """
@@ -91,9 +93,9 @@ class Menu(QMainWindow):
         self.template.setGeometry(QtCore.QRect(20, 120, 411, 161))
         self.template.setObjectName("template")
 
-        self.template_broswe = QPushButton(self.template)
-        self.template_broswe.setGeometry(QtCore.QRect(300, 90, 93, 28))
-        self.template_broswe.setObjectName("template_broswe")
+        self.pptx_broswe = QPushButton(self.template)
+        self.pptx_broswe.setGeometry(QtCore.QRect(300, 90, 93, 28))
+        self.pptx_broswe.setObjectName("pptx_broswe")
 
         self.pptx_path = QLineEdit(self.template)
         self.pptx_path.setGeometry(QtCore.QRect(20, 90, 271, 31))
@@ -278,7 +280,7 @@ class Menu(QMainWindow):
         self.setWindowTitle(_translate("menu", "Phần mềm tạo slide tốt nghiệp"))
         self.title.setText(_translate("menu", "PHẦN MỀM TẠO SLIDE TỐT NGHIỆP"))
         self.template.setTitle(_translate("menu", "B1. Chọn mẫu"))
-        self.template_broswe.setText(_translate("menu", "Duyệt"))
+        self.pptx_broswe.setText(_translate("menu", "Duyệt"))
         self.template_label.setText(
             _translate(
                 "menu",
@@ -383,7 +385,7 @@ class Menu(QMainWindow):
         self.config_image_remove_button.clicked.connect(
             lambda: config_image.remove_item(self.config_image_table)
         )
-        self.template_broswe.clicked.connect(
+        self.pptx_broswe.clicked.connect(
             lambda: broswe_button.pptx_broswe(self)
         )
         self.csv_broswe.clicked.connect(
