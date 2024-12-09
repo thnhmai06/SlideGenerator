@@ -89,21 +89,22 @@ class GetShapesThread(QThread):
         PP_SHAPEFORMATPNG = 2  # https://learn.microsoft.com/en-us/office/vba/api/powerpoint.shape.export
 
         slide = self.powerpoint.presentation.Slides(slide_index)
-        for shape in slide.Shapes:
+        for iteractor, shape in enumerate(slide.Shapes):
+            index = iteractor + 1
             fill = shape.Fill
             # Nếu Shape được fill bởi 1 hình ảnh
             if fill.Type == MSO_FILLPICTURE:
-                file_name = f"{shape.Id}.png" 
-                #TODO: Không lưu dưới dạng id nữa, lưu dưới dạng chỉ số index tương ứng trong slide.shapes
-                # Vì không có cách nào để truy cập trực tiếp đến shape bằng ID (why Microsoft?) 
+                file_name = f"{index}.png" 
+                # Không lưu dưới dạng id nữa, lưu dưới dạng chỉ số index tương ứng trong slide.shapes
+                # Vì không có cách nào để truy cập trực tiếp đến shape bằng ID (why Microsoft tạo ra id để làm gì?) 
                 path = os.path.join(SHAPES_PATH, file_name)
 
                 # Lưu ảnh
                 shape.Export(path, PP_SHAPEFORMATPNG)
                 # Thêm ảnh vào user_input.config
-                user_input.shapes.add(shape.Id, path)
+                user_input.shapes.add(index, path)
 
-                console_info(__name__, f"Export: Shape ID {shape.Id} -> {file_name}")
+                console_info(__name__, f"Export: Shape ID {index} -> {file_name}")
 
     def run(self):
         user_input.shapes.clear()  # Clear shapes

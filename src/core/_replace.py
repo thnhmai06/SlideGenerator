@@ -17,7 +17,7 @@ def replace_text(slide, student: dict, add_log: Callable[[str, str, str, str], N
     return True
 
 #? Thay thế Image
-def __each_item_replace_image(slide, num: int, shape_id: int, placeholder: str, add_log: Callable[[str, str, str, str], None], loglevel: Type) -> bool:
+def __each_item_replace_image(slide, num: int, shape_index: int, placeholder: str, add_log: Callable[[str, str, str, str], None], loglevel: Type) -> bool:
     # Tạo folder nếu thư mục lưu không tồn tại
     if not os.path.exists(DOWNLOAD_PATH):
         os.makedirs(DOWNLOAD_PATH)
@@ -25,20 +25,20 @@ def __each_item_replace_image(slide, num: int, shape_id: int, placeholder: str, 
     # Lấy ảnh từ link
     image_path = download_image(placeholder, num, add_log, loglevel)
     if not image_path:
-        add_log(__name__, loglevel.INFO, "keep_original_image", shape_id)
+        add_log(__name__, loglevel.INFO, "keep_original_image", shape_index)
         return False
 
     # Refill
-    shape = slide.Shapes(shape_id)
+    shape = slide.Shapes(shape_index)
     shape.Fill.UserPicture(image_path)
 
     # Thông báo đã thay thế ảnh
-    add_log(__name__, loglevel.INFO, "replace_image", f"{shape_id}")
+    add_log(__name__, loglevel.INFO, "replace_image", f"{shape_index}")
     return True
 
 def replace_image(slide, student: dict, num: int, add_log: Callable[[str, str, str, str], None], loglevel: Type) -> bool:    
     for config_image_item in user_input.config.image:
-        shape_id = config_image_item.shape_id
+        shape_index = config_image_item.shape_index
         link = student[config_image_item.placeholder]
-        __each_item_replace_image(slide, num, shape_id, link, add_log, loglevel)
+        __each_item_replace_image(slide, num, shape_index, link, add_log, loglevel)
         

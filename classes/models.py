@@ -27,24 +27,24 @@ class Input:
                 return None
 
     class Shape:
-        def __init__(self, shape_id: int, image_path: str):
+        def __init__(self, shape_index: int, image_path: str):
             super().__init__()
-            self.shape_id = shape_id
+            self.shape_index = shape_index
             self.image_path = image_path
             self.icon = QIcon(image_path)
     class Shapes(list[Shape]):
         def __init__(self):
             super().__init__()
 
-        def add(self, shape_id: int, image_path: str):
-            shape = Input.Shape(shape_id, image_path)
+        def add(self, shape_index: int, image_path: str):
+            shape = Input.Shape(shape_index, image_path)
             self.append(shape)
     class Config:
         class ConfigImage():
-            def __init__(self, placeholder: str, shape_id: int):
+            def __init__(self, placeholder: str, shape_index: int):
                 super().__init__()
                 self.placeholder = placeholder
-                self.shape_id = shape_id
+                self.shape_index = shape_index
 
         def __init__(self):
             super().__init__()
@@ -54,8 +54,8 @@ class Input:
         def add_text(self, text: str):
             self.text.append(text)
 
-        def add_image(self, shape_id: int, placeholder: str):
-            config_image_item = self.ConfigImage(placeholder, shape_id)
+        def add_image(self, shape_index: int, placeholder: str):
+            config_image_item = self.ConfigImage(placeholder, shape_index)
             self.image.append(config_image_item)
 
     class Save:

@@ -8,9 +8,9 @@ def _get_text_config(config_text: QListWidget):
 
 def _get_image_config(config_image: QTableWidget):
     for row in range(config_image.rowCount()):
-        shape_id = int(config_image.item(row, 0).text())
+        shape_index = int(config_image.item(row, 0).text())
         placeholder = config_image.item(row, 1).text()
-        user_input.config.add_image(shape_id, placeholder)
+        user_input.config.add_image(shape_index, placeholder)
 
 def get_config(config_text: QListWidget, config_image: QTableWidget):
     _get_text_config(config_text)

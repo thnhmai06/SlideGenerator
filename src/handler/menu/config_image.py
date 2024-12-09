@@ -51,7 +51,7 @@ def add_item(config_image_table: QTableWidget):
             lambda: __sync_item_with_combo(item, combo)
         )  # Khi chọn item khác, cập nhật nội dung item
         for shape in user_input.shapes:
-            combo.addItem(shape.icon, str(shape.shape_id))
+            combo.addItem(shape.icon, str(shape.shape_index))
             combo.setStyleSheet("background: white; border: none;")
         combo.setCurrentIndex(row)
         return item, combo
