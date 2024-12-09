@@ -6,7 +6,6 @@ from src.logging.debug import console_debug
 from src.logging.info import default as info, console_info
 from src.utils.file import delete_file
 from globals import SHAPES_PATH, user_input
-from typing import Callable
 
 
 def _onFinished(powerpoint: PowerPoint):

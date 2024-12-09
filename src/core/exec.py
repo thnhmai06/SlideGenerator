@@ -102,7 +102,7 @@ def work(progress: "Progress", from_: int, to_: int):
     worker = CoreWorker(thread.powerpoint, progress, from_, to_)
     worker.moveToThread(thread)
     
-    # Tại sao ở đây lại không connect với thread.started signal mà lại gán trực tiếp thread.run?
+    #* Tại sao ở đây lại không connect với thread.started signal mà lại gán trực tiếp thread.run?
     # Vì khi thread.start() được gọi, thread.started phải chờ một thời gian nhất định mới được emit (unoffical, 
     # nhưng thực nghiệm chứng minh là vậy) 
     # Nên là, gán trực tiếp luôn cho thread.run cho đỡ lằng nhằng
