@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QWidget, QPlainTextEdit
 from src.logging.info import console_info
 from src.logging.error import console_error
 from translations import TRANS
+from classes.thread import WorkingThread
 
 class QTextEditLogger(QtCore.QObject):
     appendPlainText = QtCore.pyqtSignal(str)
@@ -52,6 +53,7 @@ class Progress(QWidget):
         super().__init__()
         self._setupUi()
         self._retranslateUi()
+        self.core_thread = WorkingThread()
 
     def _setupUi(self):
         """
@@ -71,13 +73,13 @@ class Progress(QWidget):
         """
         Initialize the progress bar.
         """
-        self.progressBar = QtWidgets.QProgressBar(self)
-        self.progressBar.setGeometry(QtCore.QRect(20, 50, 541, 31))
-        self.progressBar.setProperty("value", 0)
-        self.progressBar.setTextVisible(True)
-        self.progressBar.setOrientation(QtCore.Qt.Horizontal)
-        self.progressBar.setTextDirection(QtWidgets.QProgressBar.TopToBottom)
-        self.progressBar.setObjectName("progressBar")
+        self.progress_bar = QtWidgets.QProgressBar(self)
+        self.progress_bar.setGeometry(QtCore.QRect(20, 50, 541, 31))
+        self.progress_bar.setProperty("value", 0)
+        self.progress_bar.setTextVisible(True)
+        self.progress_bar.setOrientation(QtCore.Qt.Horizontal)
+        self.progress_bar.setTextDirection(QtWidgets.QProgressBar.TopToBottom)
+        self.progress_bar.setObjectName("progress_bar")
 
     def __initButtons(self):
         """

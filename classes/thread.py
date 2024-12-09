@@ -6,6 +6,7 @@ from src.logging.debug import console_debug
 from src.logging.info import default as info, console_info
 from src.utils.file import delete_file
 from globals import SHAPES_PATH, user_input
+from typing import Callable
 
 
 def _onFinished(powerpoint: PowerPoint):
@@ -110,9 +111,7 @@ class GetShapesThread(QThread):
         user_input.shapes.clear()  # Clear shapes
         self.toggle_config_image.emit(False)  # Disable config_image_table
         self.menu_config_image_clearContents.emit()  # Clear config_image_table
-        self.menu_config_image_viewShapes_setEnabled.emit(
-            False
-        )  # Disable viewShapes button
+        self.menu_config_image_viewShapes_setEnabled.emit(False)  # Disable viewShapes button
         self.toogle_browse_button.emit(False)  # Disable browse button
 
         self.powerpoint.open_instance()
@@ -144,12 +143,11 @@ class GetShapesThread(QThread):
         return self.quit()
 
 
-class CoreThread(QThread):
+class WorkingThread(QThread):
     def __init__(self):
         super().__init__()
         self.powerpoint = PowerPoint()
 
     def quit(self):
-        self.powerpoint.close_presentation()
         self.exit()  # Kết thúc Thread
-        self.__init__()
+        # self.__init__()

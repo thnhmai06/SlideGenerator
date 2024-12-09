@@ -11,7 +11,7 @@ def download(url: str, output_path: str):
         str: Đường dẫn tới file đã tải về nếu thành công, Exception: Nếu có lỗi xảy ra, None: Nếu không tải được file.
     """
     try:
-        response = requests.get(url, allow_redirects=True, timeout=TIMEOUT)
+        response = requests.get(url, allow_redirects=True, timeout=TIMEOUT, stream=True)
         if response.status_code == 200:
             with open(output_path, 'wb') as f:
                 f.write(response.content)

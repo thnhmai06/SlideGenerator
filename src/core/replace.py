@@ -1,7 +1,7 @@
 import os
 from typing import Callable, Type
 from pystache import render
-from src.core._download_image import download_image
+from src.core.download_image import download_image
 from globals import user_input, DOWNLOAD_PATH
 
 #? Thay thế Text

@@ -28,7 +28,7 @@ def is_image_url(url: str):
     #     return None
     
     try:
-        response = requests.head(url, allow_redirects=True, timeout=TIMEOUT)
+        response = requests.head(url, allow_redirects=True, timeout=TIMEOUT, stream=True)
         content_type = response.headers.get('Content-Type')
         content_extension = content_type.split('/')[1]
         if content_type and content_type.startswith('image/') and content_extension in IMAGE_EXTENSIONS:
