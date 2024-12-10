@@ -1,10 +1,8 @@
 TODO LIST:
    
-TODO: - Set icon nhỏ lại để tiết kiệm tài nguyên ram (./assets)
-TODO: - Làm progress bar smoothly
-TODO: - Kiểm tra xem file có ở read-only không, các quyền của file (kiểm tra trước khi chạy core, có thể thử bằng cách thử save?)
-TODO: - Set trạng thái của chương trình khi đang chạy (Thay đổi label của progress)
+SKIP: - Làm progress bar smoothly (maybe not necessercy)
 TODO: - Chuyển hết translation trong ui sang transtaltions/vi.json
+TODO: - Kiểm tra xem file có ở read-only không, các quyền của file (kiểm tra trước khi chạy core, có thể thử bằng cách thử save?)
 TODO: - Set handler cho uncaught exception của QThread
 TODO: - Set sự kiện đóng powerpoint khi chương trình dừng/buộc dừng
 TODO: - Đổi buttuon thành Hoàn tất -> Set back về Menu, thêm thông báo khi hoàn tất/uncaught

@@ -5,7 +5,7 @@ from src.logging.error import console_error
 from translations import TRANS
 from classes.thread import WorkingThread
 
-class QTextEditLogger(QtCore.QObject):
+class TextEditLogger(QtCore.QObject):
     appendPlainText = QtCore.pyqtSignal(str)
     class LogLevels:
         INFO = "info"
@@ -14,11 +14,10 @@ class QTextEditLogger(QtCore.QObject):
     # https://stackoverflow.com/a/60528393/16410937
     def __init__(self, parent):
         super().__init__()
-        QtCore.QObject.__init__(self)
         self.widget = QPlainTextEdit(parent)
         self.widget.setReadOnly(True)
         self.appendPlainText.connect(self.widget.appendPlainText)
-        self.LogLevels = QTextEditLogger.LogLevels
+        self.LogLevels = TextEditLogger.LogLevels
 
 
     def append(self, where: str, level: str, title_key: str = None, content: str = "") -> None:
@@ -47,6 +46,14 @@ class QTextEditLogger(QtCore.QObject):
 
         text = title + content
         self.appendPlainText.emit(text)
+
+class StatusLabel(QtWidgets.QLabel):
+    def __init__(self, parent):
+        super().__init__(parent)
+
+    def set_label(self, title_key: str, content: tuple[str, ...]):
+        title = TRANS["progress"]["label"][title_key]
+        self.setText(f"<b>{title + " ".join(content)}</b>")
 
 class Progress(QWidget):
     def __init__(self):
@@ -97,15 +104,15 @@ class Progress(QWidget):
         """
         Initialize the label.
         """
-        self.label = QtWidgets.QLabel(self)
-        self.label.setGeometry(QtCore.QRect(20, 20, 141, 16))
+        self.label = StatusLabel(self)
+        self.label.setGeometry(QtCore.QRect(20, 20, 531, 16))
         self.label.setObjectName("label")
 
     def __initLog(self):
         """
         Initialize the log text edit.
         """
-        self.log = QTextEditLogger(self)
+        self.log = TextEditLogger(self)
         self.log.widget.setGeometry(QtCore.QRect(20, 100, 531, 211))
         self.log.setObjectName("log")
 
@@ -117,9 +124,3 @@ class Progress(QWidget):
         self.setWindowTitle(_translate("progress", "Tiến trình"))
         self.stop_button.setText(_translate("progress", "Dừng"))
         self.pause_button.setText(_translate("progress", "Tạm dừng"))
-        self.label.setText(
-            _translate(
-                "progress",
-                '<html><head/><body><p><span style=" font-size:10pt; font-weight:600;">Đang chuẩn bị...</span></p></body></html>',
-            )
-        )

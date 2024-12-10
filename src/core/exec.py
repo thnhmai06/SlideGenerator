@@ -13,6 +13,7 @@ SAMPLE_SLIDE_INDEX = 1
 
 class CoreWorker(QObject):
     progress_bar_setValue = pyqtSignal(int)
+    progress_label_set_label = pyqtSignal(str, tuple)
     onFinished = pyqtSignal()
     
     def __init__(self, pptx: PowerPoint, progress: "Progress", from_: int, to_: int):
@@ -24,7 +25,9 @@ class CoreWorker(QObject):
         self.from_ = from_
         self.to_ = to_
 
-    def _each(self, pptx: PowerPoint, progress: "Progress", num: int, count: int):
+    def _each(self, pptx: PowerPoint, progress: "Progress", num: int, count: int, total: int):
+        self.progress_label_set_label.emit("replacing", (str(num), f"({count}/{total})"))
+
         # Lấy thông tin sinh viên thứ num
         progress.log.append(__name__, progress.log.LogLevels.INFO, "read_student", num)
         student = user_input.csv.get(num)[0]
@@ -51,6 +54,7 @@ class CoreWorker(QObject):
 
     def run(self):
     # * Chuẩn bị
+        self.progress_label_set_label.emit("perparing", ())
         # Xóa folder Download cũ
         delete_file(DOWNLOAD_PATH)
 
@@ -70,8 +74,9 @@ class CoreWorker(QObject):
         self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "start")
         # For lùi để cho các slide khi tạo sẽ đúng theo thứ tự trong file csv
         for count, num in enumerate(range(self.to_, self.from_ - 1, -1), start=1):
-            self._each(self.pptx, self.progress, num, count)
+            self._each(self.pptx, self.progress, num, count, self.to_ - self.from_ + 1)
 
+        self.progress_label_set_label.emit("finishing", ())
     # * Kết thúc
         # Xóa slide đầu tiên (là slide mẫu)
         self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "delete_sample_slide")
@@ -87,6 +92,7 @@ class CoreWorker(QObject):
         self.pptx.close_instance()
 
         # Thông báo hoàn thành
+        self.progress_label_set_label.emit("finished", ())
         self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "done")
 
         # Thông báo vị trí lưu file
@@ -100,7 +106,7 @@ def work(progress: "Progress", from_: int, to_: int):
 
     thread = progress.core_thread
     worker = CoreWorker(thread.powerpoint, progress, from_, to_)
-    worker.moveToThread(thread)
+    # worker.moveToThread(thread)
     
     #* Tại sao ở đây lại không connect với thread.started signal mà lại gán trực tiếp thread.run?
     # Vì khi thread.start() được gọi, thread.started phải chờ một thời gian nhất định mới được emit (unoffical, 
@@ -108,6 +114,7 @@ def work(progress: "Progress", from_: int, to_: int):
     # Nên là, gán trực tiếp luôn cho thread.run cho đỡ lằng nhằng
     thread.run = worker.run 
     worker.progress_bar_setValue.connect(progress.progress_bar.setValue)    
+    worker.progress_label_set_label.connect(progress.label.set_label)
     worker.onFinished.connect(thread.quit)
 
     thread.start()

@@ -6,7 +6,7 @@
             "open_instance": "Đang tạo giao thức với PowerPoint",
             "open_presentation": "Đang mở file PowerPoint",
             "start": "============== Bắt đầu thực hiện ==============",
-            "read_student": "Đọc thông tin sinh viên dòng thứ: ",
+            "read_student": "Đọc thông tin sinh viên thứ: ",
             "duplicate_slide": "Nhân bản slide mẫu",
             "replace_text": "Thay thế văn bản: ",
             "download_image_start": "Đang tải: ",
@@ -25,6 +25,12 @@
         "error": {
             "download_image_return_none": "Không tải được hình ảnh từ URL: ",
             "download_image_return_exception": "Lỗi khi tải hình ảnh: "
+        },
+        "label": {
+            "perparing": "Đang chuẩn bị",
+            "replacing": "Đang tạo slide cho sinh viên thứ",
+            "finishing": "Đang dọn dẹp",
+            "finished": "Hoàn tất"
         }
     },
     "diaglogs": {
