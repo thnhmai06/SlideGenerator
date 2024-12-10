@@ -1,4 +1,4 @@
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtWidgets import QWidget, QPlainTextEdit
 from classes.thread import WorkingThread
 from src.logging.info import console_info
@@ -70,6 +70,8 @@ class StatusLabel(QtWidgets.QLabel):
 
 
 class Progress(QWidget):
+    LOGO_PATH = "src/assets/logo.png"
+
     def __init__(self):
         super().__init__()
         self._setupUi()
@@ -88,6 +90,12 @@ class Progress(QWidget):
         """
         self.setObjectName("progress")
         self.resize(574, 374)
+
+        icon = QtGui.QIcon()
+        icon.addPixmap(
+            QtGui.QPixmap(self.LOGO_PATH), QtGui.QIcon.Normal, QtGui.QIcon.Off
+        )
+        self.setWindowIcon(icon)
 
         self.__initProgressBar()
         self.__initButtons()
