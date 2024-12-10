@@ -1,7 +1,6 @@
 TODO LIST:
    
 SKIP: - Làm progress bar smoothly (maybe not necessercy)
-TODO: - Chuyển hết translation trong ui sang transtaltions/vi.json
 TODO: - Kiểm tra xem file có ở read-only không, các quyền của file (kiểm tra trước khi chạy core, có thể thử bằng cách thử save?)
 TODO: - Set handler cho uncaught exception của QThread
 TODO: - Set sự kiện đóng powerpoint khi chương trình dừng/buộc dừng

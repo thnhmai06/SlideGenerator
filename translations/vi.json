@@ -1,37 +1,86 @@
 {
-    "menu": {},
+    "menu": {
+        "window": {
+            "title": "Phần mềm tạo Slide tốt nghiệp",
+            "broswe": "Duyệt",
+            "pptx": {
+                "title": "B1. Chọn mẫu",
+                "label": "Chọn file mẫu PowerPoint",
+                "extension": "(.pptx)"
+            },
+            "csv": {
+                "title": "B2. Chọn danh sách sinh viên",
+                "label": "Chọn danh sách sinh viên",
+                "extension": "(.csv)"
+            },
+            "config": {
+                "title": "B3. Cấu hình thay thế",
+                "text": {
+                    "label": "Văn bản"
+                },
+                "image": {
+                    "shape_index": "Shape Index",
+                    "placeholder": "Placeholder",
+                    "label": "Hình ảnh",
+                    "view_shapes": "Xem Shapes",
+                    "auto_download": "Tự động tải ảnh nếu Placeholder là liên kết"
+                }
+            },
+            "save": {
+                "title": "B4. Chọn nơi lưu",
+                "label": "Chọn vị trí lưu"
+            },
+            "start": "Bắt đầu",
+            "logo": "Phần mềm tạo Slide tốt nghiệp",
+            "github": "GitHub",
+            "guide": "Hướng dẫn sử dụng",
+            "about": "About"
+        }
+    },
     "progress": {
-        "info": {
-            "create_file": "Tạo file trên thư mục lưu",
-            "open_instance": "Đang tạo giao thức với PowerPoint",
-            "open_presentation": "Đang mở file PowerPoint",
-            "start": "============== Bắt đầu thực hiện ==============",
-            "read_student": "Đọc thông tin sinh viên thứ: ",
-            "duplicate_slide": "Nhân bản slide mẫu",
-            "replace_text": "Thay thế văn bản: ",
-            "download_image_start": "Đang tải: ",
-            "download_image_success": "Tải thành công, lưu ở: ",
-            "download_image_not_image": "Không phải là hình ảnh: ",
-            "keep_original_image": "Giữ nguyên hình ảnh gốc cho ID=",
-            "replace_image": "Thay thế hình ảnh cho ID=",
-            "saving": "Đang lưu file",
-            "finish_replace": "Hoàn tất thay thế\n---------------------------------",
-            "done": "============== Hoàn tất ==============",
-            "delete_sample_slide": "Xóa slide mẫu trong file",
-            "delete_downloaded_image": "Xóa các hình ảnh đã tải",
-            "close_presentation": "Đóng file PowerPoint",
-            "close_instance": "Ngắt giao thức PowerPoint",
-            "save_path": "Vị trí file: "
-        },
-        "error": {
-            "download_image_return_none": "Không tải được hình ảnh từ URL: ",
-            "download_image_return_exception": "Lỗi khi tải hình ảnh: "
+        "log": {
+            "info": {
+                "create_file": "Tạo file trên thư mục lưu",
+                "open_instance": "Đang tạo giao thức với PowerPoint",
+                "open_presentation": "Đang mở file PowerPoint",
+                "start": "============== Bắt đầu thực hiện ==============",
+                "read_student": "Đọc thông tin sinh viên thứ: ",
+                "duplicate_slide": "Nhân bản slide mẫu",
+                "replace_text": "Thay thế văn bản: ",
+                "download_image_start": "Đang tải: ",
+                "download_image_success": "Tải thành công, lưu ở: ",
+                "download_image_not_image": "Không phải là hình ảnh: ",
+                "keep_original_image": "Giữ nguyên hình ảnh gốc cho ID=",
+                "replace_image": "Thay thế hình ảnh cho ID=",
+                "saving": "Đang lưu file",
+                "finish_replace": "Hoàn tất thay thế\n---------------------------------",
+                "done": "============== Hoàn tất ==============",
+                "delete_sample_slide": "Xóa slide mẫu trong file",
+                "delete_downloaded_image": "Xóa các hình ảnh đã tải",
+                "close_presentation": "Đóng file PowerPoint",
+                "close_instance": "Ngắt giao thức PowerPoint",
+                "save_path": "Vị trí file: "
+            },
+            "error": {
+                "download_image_return_none": "Không tải được hình ảnh từ URL: ",
+                "download_image_return_exception": "Lỗi khi tải hình ảnh: "
+            }
         },
         "label": {
             "perparing": "Đang chuẩn bị",
             "replacing": "Đang tạo slide cho sinh viên thứ ",
+            "pausing": "Đang tạm dừng",
+            "paused": "Đã tạm dừng",
+            "stopping": "Đang dừng",
+            "stopped": "Đã dừng",
             "finishing": "Đang dọn dẹp",
             "finished": "Hoàn tất"
+        },
+        "window": {
+            "title": "Tiến trình",
+            "stop": "Dừng",
+            "pause": "Tạm dừng",
+            "done": "Hoàn tất"
         }
     },
     "diaglogs": {

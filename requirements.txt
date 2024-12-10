@@ -1,7 +1,7 @@
 PyQt5 # For GUI.
-pywin32 # For replacing placeholders.
+pywin32 # For core
 polars # For CSV reading.
 python-pptx # For saving shapes.
 colorama # For console color.
 gdown # For downloading files from Google Drive.
-pystache # For replacement.
+pystache # For text replacement.

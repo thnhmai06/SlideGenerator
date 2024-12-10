@@ -12,15 +12,21 @@ from PyQt5.QtWidgets import (
     QHeaderView,
     QStatusBar,
 )
+from functools import reduce
+from src.ui.progress import Progress
+from classes.thread import GetShapesThread
 from src.handler.menu import (
     config_image,
     start_button,
 )
 from src.handler.menu import broswe_button, config_text
 from src.handler.menu.start_button import check_start_button
-from src.ui.progress import Progress
-from classes.thread import GetShapesThread
 from globals import GITHUB_URL
+from translations import TRANS
+
+
+def _get_retranslate_window(*args: str) -> str:
+    return reduce(lambda d, key: d[key], args, TRANS["menu"]["window"])
 
 
 class Menu(QMainWindow):
@@ -61,7 +67,7 @@ class Menu(QMainWindow):
         self.__initSaveGroupBox()
         self.__initConfigGroupBox()
         self.__initStartButton()
-        self.__initLabels()
+        self.__initIcons()
 
         self.setCentralWidget(self.centralwidget)
         self.statusbar = QStatusBar(self)
@@ -89,15 +95,15 @@ class Menu(QMainWindow):
 
     def __initTemplateGroupBox(self):
         """Sets up the template group box."""
-        self.template = QGroupBox(self.centralwidget)
-        self.template.setGeometry(QtCore.QRect(20, 120, 411, 161))
-        self.template.setObjectName("template")
+        self.pptx = QGroupBox(self.centralwidget)
+        self.pptx.setGeometry(QtCore.QRect(20, 120, 411, 161))
+        self.pptx.setObjectName("template")
 
-        self.pptx_broswe = QPushButton(self.template)
+        self.pptx_broswe = QPushButton(self.pptx)
         self.pptx_broswe.setGeometry(QtCore.QRect(300, 90, 93, 28))
         self.pptx_broswe.setObjectName("pptx_broswe")
 
-        self.pptx_path = QLineEdit(self.template)
+        self.pptx_path = QLineEdit(self.pptx)
         self.pptx_path.setGeometry(QtCore.QRect(20, 90, 271, 31))
         self.pptx_path.setCursorPosition(0)
         self.pptx_path.setDragEnabled(False)
@@ -105,9 +111,9 @@ class Menu(QMainWindow):
         self.pptx_path.setReadOnly(True)
         self.pptx_path.setStyleSheet("background-color: #f0f0f0")
 
-        self.template_label = QLabel(self.template)
-        self.template_label.setGeometry(QtCore.QRect(20, 40, 171, 31))
-        self.template_label.setObjectName("template_label")
+        self.pptx_label = QLabel(self.pptx)
+        self.pptx_label.setGeometry(QtCore.QRect(20, 40, 371, 31))
+        self.pptx_label.setObjectName("template_label")
 
     def __initCSVGroupBox(self):
         """Sets up the CSV group box."""
@@ -128,7 +134,7 @@ class Menu(QMainWindow):
         self.csv_path.setStyleSheet("background-color: #f0f0f0")
 
         self.csv_label = QLabel(self.csv)
-        self.csv_label.setGeometry(QtCore.QRect(20, 40, 221, 31))
+        self.csv_label.setGeometry(QtCore.QRect(20, 40, 371, 31))
         self.csv_label.setObjectName("csv_label")
 
     def __initSaveGroupBox(self):
@@ -150,7 +156,7 @@ class Menu(QMainWindow):
         self.save_path.setStyleSheet("background-color: #f0f0f0")
 
         self.save_label = QLabel(self.save)
-        self.save_label.setGeometry(QtCore.QRect(20, 20, 81, 31))
+        self.save_label.setGeometry(QtCore.QRect(20, 20, 371, 31))
         self.save_label.setObjectName("save_label")
 
     def __initConfigGroupBox(self):
@@ -255,7 +261,7 @@ class Menu(QMainWindow):
         self.start_button.setObjectName("start_button")
         self.start_button.setEnabled(False)
 
-    def __initLabels(self):
+    def __initIcons(self):
         """Sets up the additional labels."""
         self.logo = QLabel(self.centralwidget)
         self.logo.setGeometry(QtCore.QRect(30, 20, 81, 81))
@@ -276,87 +282,135 @@ class Menu(QMainWindow):
 
     def _retranslateUi(self):
         """Retranslates the UI elements."""
+        LOGO_PATH = "./assets/logo"
+        GITHUB_ICON_PATH = "./assets/button/github"
+        GUIDE_ICON_PATH = "./assets/button/guide"
+        ABOUT_ICON_PATH = "./assets/button/about"
+
         _translate = QtCore.QCoreApplication.translate
-        self.setWindowTitle(_translate("menu", "Phần mềm tạo slide tốt nghiệp"))
-        self.title.setText(_translate("menu", "PHẦN MỀM TẠO SLIDE TỐT NGHIỆP"))
-        self.template.setTitle(_translate("menu", "B1. Chọn mẫu"))
-        self.pptx_broswe.setText(_translate("menu", "Duyệt"))
-        self.template_label.setText(
-            _translate(
-                "menu",
-                '<html><head/><body><p><span style=" font-weight:600;">Chọn file Template </span>(.pptx)</p></body></html>',
-            )
-        )
-        self.csv.setTitle(_translate("menu", "B2. Chọn danh sách sinh viên"))
-        self.csv_broswe.setText(_translate("menu", "Duyệt"))
-        self.csv_label.setText(
-            _translate(
-                "menu",
-                '<html><head/><body><p><span style=" font-weight:600;">Chọn danh sách sinh viên </span>(.csv)</p></body></html>',
-            )
-        )
-        self.save.setTitle(_translate("menu", "B4. Chọn vị trí lưu"))
-        self.save_broswe.setText(_translate("menu", "Duyệt"))
-        self.save_label.setText(
-            _translate(
-                "menu",
-                '<html><head/><body><p><span style=" font-weight:600;">Chọn vị trí lưu</span></p></body></html>',
-            )
-        )
-        self.start_button.setText(_translate("menu", "Bắt đầu"))
+
+        # Window Title
+        self.setWindowTitle(_translate("menu", _get_retranslate_window("title")))
+
+        # Title
+        self.title.setText(_translate("menu", _get_retranslate_window("title").upper()))
+
+        # Logo
         self.logo.setText(
             _translate(
                 "menu",
-                '<html><head/><body><p><img src="./assets/logo"/></p></body></html>',
+                f'<html><head/><body><p><img src="{LOGO_PATH}"></p></body></html>',
             )
         )
-        self.logo.setToolTip("CTSV.UET.VNU")
+        self.logo.setToolTip(_get_retranslate_window("logo"))
+
+        # GitHub
         self.github.setText(
             _translate(
                 "menu",
-                f'<html><head/><body><p><a href="{GITHUB_URL}"><img src="./assets/button/github"/></a></p></body></html>',
+                f'<html><head/><body><p><a href="{GITHUB_URL}"><img src="{GITHUB_ICON_PATH}"/></a></p></body></html>',
             )
         )
-        self.github.setToolTip("Github")
-        self.config.setTitle(_translate("menu", "B3. Thiết lập thay thế"))
-        # Cột đầu tiên là cột ID Shape
-        item = self.config_image_table.horizontalHeaderItem(0)
-        item.setText(_translate("menu", "ID Shape"))
-        # Cột thứ hai là cột Placeholder
-        item = self.config_image_table.horizontalHeaderItem(1)
-        item.setText(_translate("menu", "Placeholder"))
-        self.config_text_label.setText(
-            _translate(
-                "menu",
-                '<html><head/><body><p align="center"><span style=" font-weight:600;">Text (Placeholder)</span></p></body></html>',
-            )
-        )
-        self.config_image_viewShapes.setText(_translate("menu", "Xem các Shapes"))
-        self.config_image_label.setText(
-            _translate(
-                "menu",
-                '<html><head/><body><p align="center"><span style=" font-weight:600;">Hình ảnh</span></p></body></html>',
-            )
-        )
-        self.config_image_autodownload_label.setText(
-            _translate("menu", "Ảnh hỗ trợ tự động download nếu là liên kết")
-        )
-        __sortingEnabled = self.config_text_list.isSortingEnabled()
-        self.config_text_list.setSortingEnabled(__sortingEnabled)
+        self.github.setToolTip(_get_retranslate_window("github"))
+
+        # About
         self.about.setText(
             _translate(
                 "menu",
-                '<html><head/><body><p><img src="./assets/button/about"/></p></body></html>',
+                f'<html><head/><body><p><img src="{ABOUT_ICON_PATH}"/></p></body></html>',
             )
         )
-        self.about.setToolTip("About")
+        self.about.setToolTip(_get_retranslate_window("about"))
+
+        # Guide
         self.guide.setText(
             _translate(
                 "menu",
-                '<html><head/><body><p><img src="./assets/button/guide"/></p></body></html>',
+                f'<html><head/><body><p><img src="{GUIDE_ICON_PATH}"/></p></body></html>',
             )
         )
-        self.guide.setToolTip("Hướng dẫn sử dụng")
+        self.guide.setToolTip(_get_retranslate_window("guide"))
+
+        # PPTX Group Box
+        self.pptx.setTitle(_translate("menu", _get_retranslate_window("pptx", "title")))
+        self.pptx_broswe.setText(_translate("menu", _get_retranslate_window("broswe")))
+        self.pptx_label.setText(
+            _translate(
+                "menu",
+                f'<html><head/><body><p><span style=" font-weight:600;">{_get_retranslate_window("pptx", "label")} </span>{_get_retranslate_window("pptx", "extension")}</p></body></html>',
+            )
+        )
+
+        # CSV Group Box
+        self.csv.setTitle(_translate("menu", _get_retranslate_window("csv", "title")))
+        self.csv_broswe.setText(_translate("menu", _get_retranslate_window("broswe")))
+        self.csv_label.setText(
+            _translate(
+                "menu",
+                f'<html><head/><body><p><span style=" font-weight:600;">{_get_retranslate_window("csv", "label")} </span>{_get_retranslate_window("csv", "extension")}</p></body></html>',
+            )
+        )
+
+        # Config Group Box
+        self.config.setTitle(
+            _translate("menu", _get_retranslate_window("config", "title"))
+        )
+        # Config Text
+        self.config_text_label.setText(
+            _translate(
+                "menu",
+                f'<html><head/><body><p align="center"><span style=" font-weight:600;">{_get_retranslate_window("config", "text", "label")}</span></p></body></html>',
+            )
+        )
+        self.config_text_list.setSortingEnabled(False)
+        # Config Image Table
+        item = self.config_image_table.horizontalHeaderItem(0)
+        item.setText(
+            _translate(
+                "menu", _get_retranslate_window("config", "image", "shape_index")
+            )
+        )
+        item = self.config_image_table.horizontalHeaderItem(1)
+        item.setText(
+            _translate(
+                "menu", _get_retranslate_window("config", "image", "placeholder")
+            )
+        )
+
+        # Config Image Label
+        self.config_image_label.setText(
+            _translate(
+                "menu",
+                f'<html><head/><body><p align="center"><span style=" font-weight:600;">{_get_retranslate_window("config", "image", "label")}</span></p></body></html>',
+            )
+        )
+
+        # Config Image View Shapes Button
+        self.config_image_viewShapes.setText(
+            _translate(
+                "menu", _get_retranslate_window("config", "image", "view_shapes")
+            )
+        )
+
+        # Config Image Auto Download Label
+        self.config_image_autodownload_label.setText(
+            _translate(
+                "menu", _get_retranslate_window("config", "image", "auto_download")
+            )
+        )
+
+        # Save Group Box
+        self.save.setTitle(_translate("menu", _get_retranslate_window("save", "title")))
+        self.save_broswe.setText(_translate("menu", _get_retranslate_window("broswe")))
+        self.save_label.setText(
+            _translate(
+                "menu",
+                f'<html><head/><body><p><span style=" font-weight:600;">{_get_retranslate_window("save", "label")}</span></p></body></html>',
+            )
+        )
+
+        # Start Button
+        self.start_button.setText(_translate("menu", _get_retranslate_window("start")))
 
     def _handleUI(self):
         """Connects UI elements to their respective event handlers."""
@@ -385,14 +439,12 @@ class Menu(QMainWindow):
         self.config_image_remove_button.clicked.connect(
             lambda: config_image.remove_item(self.config_image_table)
         )
-        self.pptx_broswe.clicked.connect(
-            lambda: broswe_button.pptx_broswe(self)
-        )
-        self.csv_broswe.clicked.connect(
-            lambda: broswe_button.csv_broswe(self)
-        )
+        self.pptx_broswe.clicked.connect(lambda: broswe_button.pptx_broswe(self))
+        self.csv_broswe.clicked.connect(lambda: broswe_button.csv_broswe(self))
         self.save_broswe.clicked.connect(
             lambda: broswe_button.save_path_broswe(self.centralwidget, self.save_path)
         )
-        self.config_image_viewShapes.clicked.connect(lambda: config_image.shapes_viewShapes())
+        self.config_image_viewShapes.clicked.connect(
+            lambda: config_image.shapes_viewShapes()
+        )
         self.start_button.clicked.connect(lambda: start_button.handling(self))
