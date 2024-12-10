@@ -18,6 +18,7 @@
             "finish_replace": "Hoàn tất thay thế\n---------------------------------",
             "done": "============== Hoàn tất ==============",
             "delete_sample_slide": "Xóa slide mẫu trong file",
+            "delete_downloaded_image": "Xóa các hình ảnh đã tải",
             "close_presentation": "Đóng file PowerPoint",
             "close_instance": "Ngắt giao thức PowerPoint",
             "save_path": "Vị trí file: "

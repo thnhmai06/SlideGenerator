@@ -55,7 +55,7 @@ class CoreWorker(QObject):
     def run(self):
     # * Chuẩn bị
         self.progress_label_set_label.emit("perparing", ())
-        # Xóa folder Download cũ
+        # Xóa folder Download cũ (nếu có)
         delete_file(DOWNLOAD_PATH)
 
         # Sao chép file gốc sang file lưu
@@ -82,6 +82,10 @@ class CoreWorker(QObject):
         self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "delete_sample_slide")
         self.pptx.presentation.Slides(SAMPLE_SLIDE_INDEX).Delete()
         self.pptx.presentation.Save()
+
+        # Xóa các ảnh đã tải xuống
+        self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "delete_downloaded_image")
+        delete_file(DOWNLOAD_PATH)
 
         # Đóng file PowerPoint
         self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "close_presentation")

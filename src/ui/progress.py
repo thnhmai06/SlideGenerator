@@ -18,6 +18,9 @@ class TextEditLogger(QtCore.QObject):
         self.widget.setReadOnly(True)
         self.appendPlainText.connect(self.widget.appendPlainText)
         self.LogLevels = TextEditLogger.LogLevels
+        self.widget.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+        self.widget.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+        self.widget.setLineWrapMode(QPlainTextEdit.NoWrap)
 
 
     def append(self, where: str, level: str, title_key: str = None, content: str = "") -> None:

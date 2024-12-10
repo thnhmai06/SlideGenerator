@@ -20,7 +20,7 @@ def __return_handler(add_log: Callable[[str, str, str, str], None], loglevel: Ty
         add_log(__name__, loglevel.ERROR, "download_image_return_none", link)
         return False
     elif isinstance(re, Exception):
-        add_log(__name__, loglevel.ERROR, "download_image_return_exception", f"{link} -> {re}")
+        add_log(__name__, loglevel.ERROR, "download_image_return_exception", f"{re}")
         return False
     else:
         add_log(__name__, loglevel.INFO, "download_image_success", f"{re}")
