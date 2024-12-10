@@ -23,7 +23,6 @@ def check_start_button(menu: "Menu"):
         start_button.setEnabled(True)
     else:
         start_button.setEnabled(False)
-    start_button.setEnabled(True)
 
 def handling(menu: "Menu"):
     '''Hàm này sẽ được gọi khi start_button được nhấn'''
