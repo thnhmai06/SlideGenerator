@@ -30,7 +30,7 @@ class TextEditLogger(QtCore.QObject):
 
     def append(
         self, where: str, level: str, title_key: str = None, content: str = ""
-    ) -> None:
+    ) -> str:
         """
         Adds a log message to the Log.
 
@@ -41,7 +41,7 @@ class TextEditLogger(QtCore.QObject):
         title_key (str, optional): The key to retrieve the title from the TRANS dictionary. Defaults to None.
 
         Returns:
-        None
+        str: The log message.
         """
         if not isinstance(content, str):
             content = str(content)
@@ -58,6 +58,7 @@ class TextEditLogger(QtCore.QObject):
 
         text = title + content
         self.appendPlainText.emit(text)
+        return text
 
 
 class StatusLabel(QtWidgets.QLabel):

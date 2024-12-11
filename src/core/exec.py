@@ -1,9 +1,12 @@
+import traceback
 from typing import TYPE_CHECKING
-from globals import user_input, DOWNLOAD_PATH
 from PyQt5.QtCore import QObject, pyqtSignal
 from classes.models import PowerPoint
+from src.logging.error import show_err_diaglog
 from src.core.replace import replace_text, replace_image
 from src.utils.file import copy_file, delete_file
+from globals import user_input, DOWNLOAD_PATH
+from translations import TRANS
 
 if TYPE_CHECKING:
     # Anti-circular import
@@ -15,7 +18,36 @@ class CoreWorker(QObject):
     progress_bar_setValue = pyqtSignal(int)
     progress_label_set_label = pyqtSignal(str, tuple)
     onFinished = pyqtSignal()
-    
+    show_err_diaglog = pyqtSignal(str, str, str)
+
+    def __expection_handler(self, expection: Exception):
+        expection_traceback = traceback.format_exc()
+        if isinstance(expection, PermissionError):
+            self.progress.log.append(
+                __name__,
+                self.progress.log.LogLevels.ERROR,
+                "PermissionError",
+                expection_traceback,
+            )
+            self.show_err_diaglog.emit(
+                TRANS["diaglogs"]["error"]["window_name"],
+                TRANS["progress"]["log"]["error"]["PermissionError"],
+                expection_traceback,
+            )
+        else:
+            self.progress.log.append(
+                __name__,
+                self.progress.log.LogLevels.ERROR,
+                "uncaught_exception",
+                expection_traceback,
+            )
+            self.show_err_diaglog.emit(
+                f"{TRANS["progress"]["log"]["error"]["uncaught_exception"]}\n",
+                f"{TRANS["progress"]["log"]["error"]["uncaught_exception"]}\n\n{str(expection)}",
+                expection_traceback,
+            )
+        return self.onFinished.emit()
+
     def __init__(self, pptx: PowerPoint, progress: "Progress", from_: int, to_: int):
         super().__init__()
         # Liệu có xảy ra Đệ quy không?
@@ -25,31 +57,31 @@ class CoreWorker(QObject):
         self.from_ = from_
         self.to_ = to_
 
-    def _each(self, pptx: PowerPoint, progress: "Progress", num: int, count: int, total: int):
+    def _each(self, num: int, count: int, total: int):
         self.progress_label_set_label.emit("replacing", (str(num), f"({count}/{total})"))
 
         # Lấy thông tin sinh viên thứ num
-        progress.log.append(__name__, progress.log.LogLevels.INFO, "read_student", num)
+        self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "read_student", num)
         student = user_input.csv.get(num)[0]
 
         # Nhân bản slide
-        progress.log.append(__name__, progress.log.LogLevels.INFO, "duplicate_slide")
-        slide = pptx.presentation.Slides(SAMPLE_SLIDE_INDEX).Duplicate()
+        self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "duplicate_slide")
+        slide = self.pptx.presentation.Slides(SAMPLE_SLIDE_INDEX).Duplicate()
 
         # Thay thế Text
         if user_input.config.text:
-            replace_text(slide, student, progress.log.append, progress.log.LogLevels)
+            replace_text(slide, student, self.progress.log.append, self.progress.log.LogLevels)
 
         # Thay thế Image
         if user_input.config.image:
-            replace_image(slide, student, num, progress.log.append, progress.log.LogLevels)
+            replace_image(slide, student, num, self.progress.log.append, self.progress.log.LogLevels)
 
         # Lưu file
-        progress.log.append(__name__, progress.log.LogLevels.INFO, "saving")
-        pptx.presentation.Save()
+        self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "saving")
+        self.pptx.presentation.Save()
 
         # Thông báo thay thế sinh viên này thành công, cập nhật thanh progress_bar
-        progress.log.append(__name__, progress.log.LogLevels.INFO, "finish_replace")
+        self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "finish_replace")
         self.progress_bar_setValue.emit(count)
 
     def run(self):
@@ -74,7 +106,7 @@ class CoreWorker(QObject):
         self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "start")
         # For lùi để cho các slide khi tạo sẽ đúng theo thứ tự trong file csv
         for count, num in enumerate(range(self.to_, self.from_ - 1, -1), start=1):
-            self._each(self.pptx, self.progress, num, count, self.to_ - self.from_ + 1)
+            self._each(num, count, self.to_ - self.from_ + 1)
 
         self.progress_label_set_label.emit("finishing", ())
     # * Kết thúc
@@ -103,6 +135,11 @@ class CoreWorker(QObject):
         self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "save_path", user_input.save.path)
         return self.onFinished.emit()
     
+    def start(self):
+        try:
+            self.run()
+        except Exception as e:
+            self.__expection_handler(e)
 
 def work(progress: "Progress", from_: int, to_: int):
     progress.progress_bar.setMinimum(0)
@@ -116,9 +153,10 @@ def work(progress: "Progress", from_: int, to_: int):
     # Vì khi thread.start() được gọi, thread.started phải chờ một thời gian nhất định mới được emit (unoffical, 
     # nhưng thực nghiệm chứng minh là vậy) 
     # Nên là, gán trực tiếp luôn cho thread.run cho đỡ lằng nhằng
-    thread.run = worker.run 
+    thread.run = worker.start 
     worker.progress_bar_setValue.connect(progress.progress_bar.setValue)    
     worker.progress_label_set_label.connect(progress.label.set_label)
     worker.onFinished.connect(thread.quit)
+    worker.show_err_diaglog.connect(show_err_diaglog)
 
     thread.start()

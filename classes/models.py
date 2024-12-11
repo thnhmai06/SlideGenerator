@@ -91,7 +91,7 @@ class PowerPoint:
         return self.instance
 
     def open_presentation(self, path):
-        read_only = True
+        read_only = True #! = True để tránh bị lỗi "file is currently in use. PowerPoint can't modify it at this time."
         has_title = False
         window = False
         if self.instance and not self.presentation:

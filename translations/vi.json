@@ -62,8 +62,10 @@
                 "save_path": "Vị trí file: "
             },
             "error": {
+                "uncaught_exception": "Đã xảy ra lỗi không mong muốn:",
                 "download_image_return_none": "Không tải được hình ảnh từ URL: ",
-                "download_image_return_exception": "Lỗi khi tải hình ảnh: "
+                "download_image_return_exception": "Lỗi khi tải hình ảnh: ",
+                "PermissionError": "Thiếu quyền để truy cập đến file lưu!\nHãy đảm bảo file lưu không bị mở bởi ứng dụng khác hoặc bị thiếu quyền để truy cập!"
             }
         },
         "label": {
@@ -87,7 +89,7 @@
         "error": {
             "window_name": "Đã xả ra lỗi",
             "exception": "Đã xảy ra lỗi không mong muốn!",
-            "pptx.can_not_open": "Không thể mở file PowerPoint!\nHãy đảm bảo file không bị mã hóa bởi mật khẩu, hay bị mở bởi ứng dụng khác!"
+            "pptx.can_not_open": "Không thể truy cập file PowerPoint!\nHãy đảm bảo file không bị mã hóa bởi mật khẩu, ở chế độ chỉ đọc,\n hay bị mở bởi ứng dụng khác hoặc bị thiếu quyền!"
         },
         "information": {
             "window_name": "Thông báo",

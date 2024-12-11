@@ -4,7 +4,7 @@ from src.ui import diaglogs
 from translations import TRANS
 
 
-def _show_err_diaglog(window_name: str, title: str, details: str = None):
+def show_err_diaglog(window_name: str, title: str, details: str = None):
     diaglogs.error(window_name, title, details)  # Show error dialog
 
 
@@ -34,7 +34,7 @@ def default(
     """
     title = TRANS["diaglogs"]["error"][title_key]
     console_error(where, details)
-    _show_err_diaglog(window_name, title, details)
+    show_err_diaglog(window_name, title, details)
 
 
 def exception(
@@ -49,4 +49,4 @@ def exception(
     title = f"{TRANS['diaglogs']['error']['exception']}\n\n{error_name}: {value}"
     details = "".join(traceback.format_tb(tb))
     _console_critical(where, f"{title}\n{details}")
-    _show_err_diaglog(window_name, title, f"{error_name}: {value}\n{details}")
+    show_err_diaglog(window_name, title, f"{error_name}: {value}\n{details}")
