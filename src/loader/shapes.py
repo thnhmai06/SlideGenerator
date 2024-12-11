@@ -150,7 +150,6 @@ def process_shapes(menu: "Menu"):
     worker.toogle_browse_button.connect(lambda is_enable: __toogle_browse_button(menu, is_enable))
 
     #? Thread Configuration
-    thread.toogle_browse_button.connect(worker.toogle_browse_button.emit)
     thread.run = worker.run
     worker.onFinished.connect(thread.quit)
 

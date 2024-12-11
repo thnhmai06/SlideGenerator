@@ -49,8 +49,6 @@ class CheckingThread(QThread):
 
 
 class WorkingThread(QThread):
-    toogle_browse_button = pyqtSignal(bool)
-
     def __init__(self):
         super().__init__()
         self.powerpoint = PowerPoint()
