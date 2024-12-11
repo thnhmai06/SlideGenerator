@@ -14,7 +14,7 @@ from PyQt5.QtWidgets import (
 )
 from functools import reduce
 from src.ui.progress import Progress
-from classes.thread import GetShapesThread
+from classes.thread import WorkingThread
 from src.handler.menu import (
     config_image,
     start_button,
@@ -43,7 +43,7 @@ class Menu(QMainWindow):
         self._retranslateUi()
         self._handleUI()
         self.progress = Progress()
-        self.get_shapes_thread = GetShapesThread()
+        self.get_shapes_thread = WorkingThread()
 
     def _setupUi(self):
         """

@@ -48,7 +48,7 @@ class CheckingThread(QThread):
             self.quit()
 
 
-class GetShapesThread(QThread):
+class WorkingThread(QThread):
     toogle_browse_button = pyqtSignal(bool)
 
     def __init__(self):
@@ -59,13 +59,3 @@ class GetShapesThread(QThread):
         onFinished(self.powerpoint)
         self.exit()  # Kết thúc Thread
         self.__init__() # Khởi tạo lại Thread cho lần sau
-
-class WorkingThread(QThread):
-    def __init__(self):
-        super().__init__()
-        self.powerpoint = PowerPoint()
-
-    def quit(self):
-        # Ở hàm run đã có phần đóng file với giao thức PowerPoint rồi
-        self.exit()  # Kết thúc Thread
-        # self.__init__() # Khởi tạo lại Thread cho lần sau
