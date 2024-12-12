@@ -42,7 +42,7 @@ class Menu(QMainWindow):
         self._setupUi()
         self._retranslateUi()
         self._handleUI()
-        self.progress = Progress()
+        self.progress = Progress(self)
         self.get_shapes_thread = WorkingThread()
 
     def _setupUi(self):

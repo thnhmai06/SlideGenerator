@@ -2,7 +2,6 @@ TODO LIST:
    
 SKIP: - Làm progress bar smoothly (maybe not necessercy)
 SKIP: - Kiểm tra xem file có ở read-only không, các quyền của file (về read-only thì file vẫn save được ngay cả khi read-only, quá mạnh)
-TODO: - Đổi buttuon thành Hoàn tất -> Set back về Menu, thêm thông báo khi hoàn tất/uncaught
 TODO: - refactor: Gộp các config trong globals vào 1 class
 TODO: - Set sự kiện đóng powerpoint khi chương trình dừng/buộc dừng
 TODO: - Thêm tính năng dừng, tạm dừng

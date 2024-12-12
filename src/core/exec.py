@@ -156,7 +156,10 @@ def work(progress: "Progress", from_: int, to_: int):
     thread.run = worker.start 
     worker.progress_bar_setValue.connect(progress.progress_bar.setValue)    
     worker.progress_label_set_label.connect(progress.label.set_label)
-    worker.onFinished.connect(thread.quit)
+    worker.onFinished.connect(lambda: {
+        progress.done_button_toggle(True),
+        thread.quit()
+    })
     worker.show_err_diaglog.connect(show_err_diaglog)
 
     thread.start()

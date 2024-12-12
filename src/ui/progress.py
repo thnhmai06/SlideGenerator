@@ -3,8 +3,8 @@ from PyQt5.QtWidgets import QWidget, QPlainTextEdit
 from classes.thread import WorkingThread
 from src.logging.info import console_info
 from src.logging.error import console_error
+from src.handler.progress import done
 from translations import TRANS
-
 
 def _get_retranslate_window(title_key: str):
     return TRANS["progress"]["window"][title_key]
@@ -73,15 +73,16 @@ class StatusLabel(QtWidgets.QLabel):
 class Progress(QWidget):
     LOGO_PATH = "src/assets/logo.png"
 
-    def __init__(self):
+    def __init__(self, menu):
         super().__init__()
         self._setupUi()
         self._retranslateUi()
+        self._handleUI()
+        self.parent_ = menu
         self.core_thread = WorkingThread()
 
     def done_button_toggle(self, is_done_visible: bool):
         self.done_button.setVisible(is_done_visible)
-
         self.pause_button.setVisible(not is_done_visible)
         self.stop_button.setVisible(not is_done_visible)
 
@@ -165,3 +166,6 @@ class Progress(QWidget):
         self.done_button.setText(
             _translate("progress", _get_retranslate_window("done"))
         )
+
+    def _handleUI(self):
+        self.done_button.clicked.connect(lambda: done.done(self))
