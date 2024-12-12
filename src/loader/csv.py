@@ -1,14 +1,17 @@
 from typing import TYPE_CHECKING
 import polars as pl
-from globals import user_input
 from src.logging.info import console_info, default as info
-from src.utils.ui.controls import toggle_config_text, toggle_config_image, clear_config
+from src.utils.ui.toggle import toggle_config_text, toggle_config_image
+from src.utils.ui.clear import clear_config
+from src.utils.ui.set import set_csv_loaded_label
+from globals import user_input
+from translations import TRANS
 
 if TYPE_CHECKING:
     # Anti-circular import
     from src.ui.menu import Menu
 
-def __load(csv_path: str) -> bool:
+def _read_data(csv_path: str) -> bool:
     """
     Return:
     - True: Saved successfully
@@ -23,27 +26,26 @@ def __load(csv_path: str) -> bool:
     # Trường hợp không có sinh viên nào
     if not user_input.csv.number_of_students >= 1:
         return False
-    
-    console_info(__name__, "Fields:", (" - ").join(user_input.csv.placeholders))
-    console_info(__name__, "Students:", f"({user_input.csv.number_of_students})")
     return True
 
 def process_csv(menu: "Menu"):
     csv_path = menu.csv_path.text()
 
-    # Kiểm tra xem csv_path có tồn tại không (trường hợp Cancel việc chọn file)
-    if not csv_path:
-        return
-    console_info(__name__, "CSV Path:", csv_path)
+    set_csv_loaded_label(menu.csv_loaded, 0, 0)
+    console_info(__name__, TRANS["console"]["info"]["csv_load"], csv_path)
 
     toggle_config_text(menu, False)
     clear_config(menu)
 
-    is_Csv_vaild = __load(csv_path)  # Thu thập thông tin trong file csv và Chuyển dữ liệu vào dict (ở globals)
+    is_Csv_vaild = _read_data(csv_path)  # Thu thập thông tin trong file csv và Chuyển dữ liệu vào dict (ở globals)
     if not is_Csv_vaild:
         info(__name__, "csv.no_students")
         return
 
+    # Hiển thị thông tin đã đọc
+    set_csv_loaded_label(menu.csv_loaded, len(user_input.csv.placeholders), user_input.csv.number_of_students)
+    console_info(__name__, "Fields:", (", ").join(user_input.csv.placeholders), f"({len(user_input.csv.placeholders)})")
+    console_info(__name__, "Students:", f"({user_input.csv.number_of_students})")
     # Now we can enable config_text
     toggle_config_text(menu, True)
 

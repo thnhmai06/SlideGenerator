@@ -6,20 +6,15 @@ from classes.models import PowerPoint
 from src.utils.file import delete_file
 from src.logging.info import default as info, console_info
 from src.logging.error import default as error
-from src.utils.ui.controls import clear_config_image_table, toggle_config_image
+from src.utils.ui.clear import clear_config_image_table
+from src.utils.ui.toggle import toggle_config_image
+from src.utils.ui.set import set_pptx_loaded_label
 from globals import user_input, SHAPES_PATH
 from translations import TRANS
 
 if TYPE_CHECKING:
     # Anti-circular import
     from src.ui.menu import Menu
-
-def get_pptx_path(line_widget: QLineEdit) -> str:
-    import os
-
-    pptx_path = line_widget.text()
-    user_input.pptx.setPath(os.path.abspath(pptx_path))
-    return pptx_path
 
 def __logging_no_slide(menu: "Menu"):
     menu.pptx_path.clear()  # Xóa đường dẫn file pptx
@@ -36,6 +31,13 @@ def __logging_can_not_open(menu: "Menu", e: Exception):
 def __toogle_browse_button(menu: "Menu", is_enable: bool):
     menu.pptx_broswe.setEnabled(is_enable)
 
+def get_pptx_path(line_widget: QLineEdit) -> str:
+    import os
+
+    pptx_path = line_widget.text()
+    user_input.pptx.setPath(os.path.abspath(pptx_path))
+    return pptx_path
+
 class GetShapesWorker(QObject):
     logging_no_slide = pyqtSignal()
     logging_too_much_slide = pyqtSignal()
@@ -44,6 +46,7 @@ class GetShapesWorker(QObject):
     menu_config_image_viewShapes_setEnabled = pyqtSignal(bool)
     can_not_open = pyqtSignal(Exception)
     toogle_browse_button = pyqtSignal(bool)
+    set_loaded_label = pyqtSignal(int)
     onFinished = pyqtSignal()
 
     def __init__(self, powerpoint: PowerPoint):
@@ -96,6 +99,7 @@ class GetShapesWorker(QObject):
 
     def run(self):
         user_input.shapes.clear()  # Clear shapes
+        self.set_loaded_label.emit(0)  # Set loaded_label to 0 (hide)
         self.toggle_config_image.emit(False)  # Disable config_image_table
         self.menu_config_image_clearContents.emit()  # Clear config_image_table
         self.menu_config_image_viewShapes_setEnabled.emit(False)  # Disable viewShapes button
@@ -121,6 +125,8 @@ class GetShapesWorker(QObject):
 
         self._get_shapes()
 
+        # Set loaded_label
+        self.set_loaded_label.emit(len(user_input.shapes)) 
         # Enable viewShapes button
         self.menu_config_image_viewShapes_setEnabled.emit(True)
 
@@ -148,6 +154,7 @@ def process_shapes(menu: "Menu"):
     worker.menu_config_image_viewShapes_setEnabled.connect(menu.config_image_viewShapes.setEnabled)
     worker.can_not_open.connect(lambda expection: __logging_can_not_open(menu, expection))
     worker.toogle_browse_button.connect(lambda is_enable: __toogle_browse_button(menu, is_enable))
+    worker.set_loaded_label.connect(lambda num: set_pptx_loaded_label(menu.pptx_loaded, num))
 
     #? Thread Configuration
     thread.run = worker.run

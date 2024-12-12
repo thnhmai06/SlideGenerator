@@ -69,7 +69,7 @@ class Menu(QMainWindow):
         self.centralwidget.setObjectName("centralwidget")
 
         self.__initTitle()
-        self.__initTemplateGroupBox()
+        self.__initPPTXGroupBox()
         self.__initCSVGroupBox()
         self.__initSaveGroupBox()
         self.__initConfigGroupBox()
@@ -100,11 +100,11 @@ class Menu(QMainWindow):
         self.title.setWordWrap(False)
         self.title.setObjectName("title")
 
-    def __initTemplateGroupBox(self):
+    def __initPPTXGroupBox(self):
         """Sets up the template group box."""
         self.pptx = QGroupBox(self.centralwidget)
         self.pptx.setGeometry(QtCore.QRect(20, 120, 411, 161))
-        self.pptx.setObjectName("template")
+        self.pptx.setObjectName("pptx")
 
         self.pptx_broswe = QPushButton(self.pptx)
         self.pptx_broswe.setGeometry(QtCore.QRect(300, 90, 93, 28))
@@ -120,7 +120,12 @@ class Menu(QMainWindow):
 
         self.pptx_label = QLabel(self.pptx)
         self.pptx_label.setGeometry(QtCore.QRect(20, 40, 371, 31))
-        self.pptx_label.setObjectName("template_label")
+        self.pptx_label.setObjectName("pptx_label")
+
+        self.pptx_loaded = QLabel(self.pptx)
+        self.pptx_loaded.setGeometry(QtCore.QRect(20, 130, 371, 20))
+        self.pptx_loaded.setObjectName("pptx_loaded")
+        self.pptx_loaded.setVisible(False)
 
     def __initCSVGroupBox(self):
         """Sets up the CSV group box."""
@@ -143,6 +148,11 @@ class Menu(QMainWindow):
         self.csv_label = QLabel(self.csv)
         self.csv_label.setGeometry(QtCore.QRect(20, 40, 371, 31))
         self.csv_label.setObjectName("csv_label")
+
+        self.csv_loaded = QLabel(self.csv)
+        self.csv_loaded.setGeometry(QtCore.QRect(20, 130, 271, 20))
+        self.csv_loaded.setObjectName("csv_loaded")
+        self.csv_loaded.setVisible(False)
 
     def __initSaveGroupBox(self):
         """Sets up the save group box."""

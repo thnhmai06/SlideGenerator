@@ -1,13 +1,14 @@
 from PyQt5.QtWidgets import QMessageBox
 from PyQt5 import QtGui
 
+LOGO_PATH = "./assets/logo"
 
 def info(title, message):
     msg = QMessageBox()
     msg.setIcon(QMessageBox.Information)
     windowIcon = QtGui.QIcon()
     windowIcon.addPixmap(
-        QtGui.QPixmap("./assets/logo"), QtGui.QIcon.Normal, QtGui.QIcon.Off
+        QtGui.QPixmap(LOGO_PATH), QtGui.QIcon.Normal, QtGui.QIcon.Off
     )
     msg.setWindowIcon(windowIcon)
     msg.setWindowTitle(title)
@@ -21,7 +22,7 @@ def warning(title, message):
     msg.setIcon(QMessageBox.Warning)
     windowIcon = QtGui.QIcon()
     windowIcon.addPixmap(
-        QtGui.QPixmap("./assets/logo"), QtGui.QIcon.Normal, QtGui.QIcon.Off
+        QtGui.QPixmap(LOGO_PATH), QtGui.QIcon.Normal, QtGui.QIcon.Off
     )
     msg.setWindowTitle(title)
     msg.setText(message)
@@ -34,7 +35,7 @@ def error(title, message, details=None):
     msg.setIcon(QMessageBox.Critical)
     windowIcon = QtGui.QIcon()
     windowIcon.addPixmap(
-        QtGui.QPixmap("./assets/logo"), QtGui.QIcon.Normal, QtGui.QIcon.Off
+        QtGui.QPixmap(LOGO_PATH), QtGui.QIcon.Normal, QtGui.QIcon.Off
     )
     msg.setWindowTitle(title)
     msg.setText(message)

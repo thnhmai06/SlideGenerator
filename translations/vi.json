@@ -6,12 +6,14 @@
             "pptx": {
                 "title": "B1. Chọn mẫu",
                 "label": "Chọn file mẫu PowerPoint",
-                "extension": "(.pptx)"
+                "extension": "(.pptx)",
+                "loaded": "Đã tải {shapes} shapes được fill bởi hình ảnh"
             },
             "csv": {
                 "title": "B2. Chọn danh sách sinh viên",
                 "label": "Chọn danh sách sinh viên",
-                "extension": "(.csv)"
+                "extension": "(.csv)",
+                "loaded": "File chứa {fields} cột và {students} sinh viên"
             },
             "config": {
                 "title": "B3. Thiết lập thay thế",
