@@ -11,7 +11,7 @@ LANG: str - Ngôn ngữ hiện tại của ứng dụng
 
 # Read Config file
 __CONFIG = ConfigParser()
-__CONFIG.read("./config.ini")
+__CONFIG.read("./settings.ini")
 LANG = __CONFIG.get("Config", "lang")
 DEBUG_MODE = __CONFIG.getboolean("Debug", "debug")
 TIMEOUT = __CONFIG.getint("Config", "timeout")
