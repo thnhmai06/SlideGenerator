@@ -2,4 +2,5 @@ TODO LIST:
    
 SKIP: - Làm progress bar smoothly (maybe not necessercy)
 SKIP: - Kiểm tra xem file có ở read-only không, các quyền của file (về read-only thì file vẫn save được ngay cả khi read-only, quá mạnh)
+TODO: - refactor: Gộp các config trong globals thành một biến, gộp các path assets trong ui thành một biến và chuyển về globals
 TODO: - Thêm wiki, readme

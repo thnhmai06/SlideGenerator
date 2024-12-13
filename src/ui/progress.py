@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     # Anti-circular import
     from src.ui.menu import Menu
 
-LOGO_PATH = "src/assets/logo.png"
+LOGO_PATH = "./assets/logo.png"
 
 
 def _get_retranslate_window(*args: str) -> str:
@@ -74,7 +74,9 @@ class TextEditLogger(QtCore.QObject):
 class CloseConfirmWidget(QMessageBox):
     def __init__(self, parent):
         super().__init__(parent)
-        self.setWindowIcon(QtGui.QIcon(LOGO_PATH))
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(LOGO_PATH), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.setWindowIcon(icon)
         self.setIcon(QMessageBox.Question)
         self.setWindowTitle(_get_retranslate_window("close", "title"))
         self.setText(_get_retranslate_window("close", "message"))

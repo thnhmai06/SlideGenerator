@@ -24,6 +24,7 @@ def warning(title, message):
     windowIcon.addPixmap(
         QtGui.QPixmap(LOGO_PATH), QtGui.QIcon.Normal, QtGui.QIcon.Off
     )
+    msg.setWindowIcon(windowIcon)
     msg.setWindowTitle(title)
     msg.setText(message)
     msg.setStandardButtons(QMessageBox.Ok)
@@ -37,6 +38,7 @@ def error(title, message, details=None):
     windowIcon.addPixmap(
         QtGui.QPixmap(LOGO_PATH), QtGui.QIcon.Normal, QtGui.QIcon.Off
     )
+    msg.setWindowIcon(windowIcon)
     msg.setWindowTitle(title)
     msg.setText(message)
     msg.setStandardButtons(QMessageBox.Ok)
