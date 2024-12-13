@@ -24,19 +24,19 @@ from src.handler.menu.start_button import check_start_button
 from globals import GITHUB_URL
 from translations import TRANS
 
+LOGO_PATH = "./assets/logo"
+ADD_ICON_PATH = "./assets/button/add"
+REMOVE_ICON_PATH = "./assets/button/remove"
+GITHUB_ICON_PATH = "./assets/button/github"
+GUIDE_ICON_PATH = "./assets/button/guide"
+ABOUT_ICON_PATH = "./assets/button/about"
+
 
 def _get_retranslate_window(*args: str) -> str:
     return reduce(lambda d, key: d[key], args, TRANS["menu"]["window"])
 
 
 class Menu(QMainWindow):
-    LOGO_PATH = "./assets/logo"
-    ADD_ICON_PATH = "./assets/button/add"
-    REMOVE_ICON_PATH = "./assets/button/remove"
-    GITHUB_ICON_PATH = "./assets/button/github"
-    GUIDE_ICON_PATH = "./assets/button/guide"
-    ABOUT_ICON_PATH = "./assets/button/about"
-    
     def __init__(self):
         super().__init__()
         self._setupUi()
@@ -58,9 +58,7 @@ class Menu(QMainWindow):
         self.setMouseTracking(False)
 
         icon = QtGui.QIcon()
-        icon.addPixmap(
-            QtGui.QPixmap(self.LOGO_PATH), QtGui.QIcon.Normal, QtGui.QIcon.Off
-        )
+        icon.addPixmap(QtGui.QPixmap(LOGO_PATH), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.setWindowIcon(icon)
         self.setWhatsThis("")
         self.setAutoFillBackground(False)
@@ -233,7 +231,7 @@ class Menu(QMainWindow):
 
         self.config_image_autodownload_label = QLabel(self.config)
         self.config_image_autodownload_label.setGeometry(
-            QtCore.QRect(470, 370, 211, 16)
+            QtCore.QRect(470, 370, 321, 16)
         )
         self.config_image_autodownload_label.setObjectName(
             "config_image_autodownload_label"
@@ -243,7 +241,7 @@ class Menu(QMainWindow):
         self.config_image_add_button.setGeometry(QtCore.QRect(800, 370, 31, 21))
         icon1 = QtGui.QIcon()
         icon1.addPixmap(
-            QtGui.QPixmap(self.ADD_ICON_PATH), QtGui.QIcon.Normal, QtGui.QIcon.Off
+            QtGui.QPixmap(ADD_ICON_PATH), QtGui.QIcon.Normal, QtGui.QIcon.Off
         )
         self.config_image_add_button.setIcon(icon1)
         self.config_image_add_button.setObjectName("config_image_add_button")
@@ -253,7 +251,7 @@ class Menu(QMainWindow):
         self.config_image_remove_button.setGeometry(QtCore.QRect(840, 370, 31, 21))
         icon2 = QtGui.QIcon()
         icon2.addPixmap(
-            QtGui.QPixmap(self.REMOVE_ICON_PATH), QtGui.QIcon.Normal, QtGui.QIcon.Off
+            QtGui.QPixmap(REMOVE_ICON_PATH), QtGui.QIcon.Normal, QtGui.QIcon.Off
         )
         self.config_image_remove_button.setIcon(icon2)
         self.config_image_remove_button.setObjectName("config_image_remove_button")
@@ -311,7 +309,7 @@ class Menu(QMainWindow):
         self.logo.setText(
             _translate(
                 "menu",
-                f'<html><head/><body><p><img src="{self.LOGO_PATH}"></p></body></html>',
+                f'<html><head/><body><p><img src="{LOGO_PATH}"></p></body></html>',
             )
         )
         self.logo.setToolTip(_get_retranslate_window("logo"))
@@ -320,7 +318,7 @@ class Menu(QMainWindow):
         self.github.setText(
             _translate(
                 "menu",
-                f'<html><head/><body><p><a href="{GITHUB_URL}"><img src="{self.GITHUB_ICON_PATH}"/></a></p></body></html>',
+                f'<html><head/><body><p><a href="{GITHUB_URL}"><img src="{GITHUB_ICON_PATH}"/></a></p></body></html>',
             )
         )
         self.github.setToolTip(_get_retranslate_window("github"))
@@ -329,7 +327,7 @@ class Menu(QMainWindow):
         self.about.setText(
             _translate(
                 "menu",
-                f'<html><head/><body><p><img src="{self.ABOUT_ICON_PATH}"/></p></body></html>',
+                f'<html><head/><body><p><img src="{ABOUT_ICON_PATH}"/></p></body></html>',
             )
         )
         self.about.setToolTip(_get_retranslate_window("about"))
@@ -338,7 +336,7 @@ class Menu(QMainWindow):
         self.guide.setText(
             _translate(
                 "menu",
-                f'<html><head/><body><p><img src="{self.GUIDE_ICON_PATH}"/></p></body></html>',
+                f'<html><head/><body><p><img src="{GUIDE_ICON_PATH}"/></p></body></html>',
             )
         )
         self.guide.setToolTip(_get_retranslate_window("guide"))
@@ -436,25 +434,25 @@ class Menu(QMainWindow):
         self.config_text_add_button.clicked.connect(
             lambda: {
                 config_text.add_item(self.config_text_list),
-                check_start_button(self)
+                check_start_button(self),
             }
         )
         self.config_text_remove_button.clicked.connect(
             lambda: {
                 config_text.remove_item(self.config_text_list),
-                check_start_button(self)
+                check_start_button(self),
             }
         )
         self.config_image_add_button.clicked.connect(
             lambda: {
                 config_image.add_item(self.config_image_table),
-                check_start_button(self)
+                check_start_button(self),
             }
         )
         self.config_image_remove_button.clicked.connect(
             lambda: {
                 config_image.remove_item(self.config_image_table),
-                check_start_button(self)
+                check_start_button(self),
             }
         )
         self.pptx_broswe.clicked.connect(lambda: broswe_button.pptx_broswe(self))

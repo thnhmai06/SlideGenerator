@@ -1,4 +1,6 @@
 import os
+import sys
+from PyQt5.QtWidgets import QApplication
 from configparser import ConfigParser
 from classes.models import Input
 
@@ -23,4 +25,5 @@ DOWNLOAD_PATH = os.path.abspath("./temp/downloads/")
 TRANSLATION_PATH = os.path.abspath("./translations/")
 
 # ? Global Variables
+app = QApplication(sys.argv)
 user_input = Input() 

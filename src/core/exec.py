@@ -1,6 +1,6 @@
 import traceback
-from typing import TYPE_CHECKING
-from PyQt5.QtCore import QObject, pyqtSignal
+from typing import TYPE_CHECKING, List
+from PyQt5.QtCore import QObject, pyqtSignal, QMutex, QWaitCondition
 from classes.models import PowerPoint
 from src.logging.error import show_err_diaglog
 from src.core.replace import replace_text, replace_image
@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 SAMPLE_SLIDE_INDEX = 1
 
 class CoreWorker(QObject):
+    # Các tín hiệu nối với việc xử lý UI bên ngoài
     progress_bar_setValue = pyqtSignal(int)
     progress_label_set_label = pyqtSignal(str, tuple)
     onFinished = pyqtSignal()
@@ -48,45 +49,29 @@ class CoreWorker(QObject):
             )
         return self.onFinished.emit()
 
-    def __init__(self, pptx: PowerPoint, progress: "Progress", from_: int, to_: int):
+    def __init__(self, pptx: PowerPoint, progress: "Progress", from_: int, to_: int, 
+                 locker: "QMutex", wait_condition: "QWaitCondition", is_paused: List[bool], 
+                 is_stopped: List[bool]):
         super().__init__()
         # Liệu có xảy ra Đệ quy không?
         # Không, vì đây là truyền tham chiếu
         self.pptx = pptx
         self.progress = progress
         self.from_ = from_
+        self.current = 0
         self.to_ = to_
+        self.total = to_ - from_ + 1
 
-    def _each(self, num: int, count: int, total: int):
-        self.progress_label_set_label.emit("replacing", (str(num), f"({count}/{total})"))
-
-        # Lấy thông tin sinh viên thứ num
-        self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "read_student", num)
-        student = user_input.csv.get(num)[0]
-
-        # Nhân bản slide
-        self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "duplicate_slide")
-        slide = self.pptx.presentation.Slides(SAMPLE_SLIDE_INDEX).Duplicate()
-
-        # Thay thế Text
-        if user_input.config.text:
-            replace_text(slide, student, self.progress.log.append, self.progress.log.LogLevels)
-
-        # Thay thế Image
-        if user_input.config.image:
-            replace_image(slide, student, num, self.progress.log.append, self.progress.log.LogLevels)
-
-        # Lưu file
-        self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "saving")
-        self.pptx.presentation.Save()
-
-        # Thông báo thay thế sinh viên này thành công, cập nhật thanh progress_bar
-        self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "finish_replace")
-        self.progress_bar_setValue.emit(count)
-
-    def run(self):
-    # * Chuẩn bị
+        # Các biến phục vụ tạm dừng thread
+        self.is_paused = is_paused # Truyền tham chiếu thông qua List
+        self.is_stopped = is_stopped
+        self.locker = locker
+        self.wait_condition = wait_condition
+    
+    def _prepare(self):
+        # * Chuẩn bị
         self.progress_label_set_label.emit("perparing", ())
+
         # Xóa folder Download cũ (nếu có)
         delete_file(DOWNLOAD_PATH)
 
@@ -102,14 +87,63 @@ class CoreWorker(QObject):
         self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "open_presentation")
         self.pptx.open_presentation(user_input.save.path)
 
-    # * Bắt đầu
-        self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "start")
-        # For lùi để cho các slide khi tạo sẽ đúng theo thứ tự trong file csv
-        for count, num in enumerate(range(self.to_, self.from_ - 1, -1), start=1):
-            self._each(num, count, self.to_ - self.from_ + 1)
+    def _each(self, index: int):
+        self.progress_label_set_label.emit("replacing", (str(index), f"({self.current}/{self.total})"))
 
-        self.progress_label_set_label.emit("finishing", ())
-    # * Kết thúc
+        # Lấy thông tin sinh viên thứ num
+        self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "read_student", index)
+        student = user_input.csv.get(index)[0]
+
+        # Nhân bản slide
+        self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "duplicate_slide")
+        slide = self.pptx.presentation.Slides(SAMPLE_SLIDE_INDEX).Duplicate()
+
+        # Thay thế Text
+        if user_input.config.text:
+            replace_text(slide, student, self.progress.log.append, self.progress.log.LogLevels)
+
+        # Thay thế Image
+        if user_input.config.image:
+            replace_image(slide, student, index, self.progress.log.append, self.progress.log.LogLevels)
+
+        # Lưu file
+        self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "saving")
+        self.pptx.presentation.Save()
+
+        # Thông báo thay thế sinh viên này thành công, cập nhật thanh progress_bar
+        self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "finish_replace")
+        self.progress_bar_setValue.emit(self.current)
+
+    def _process(self):
+        # * Bắt đầu
+        self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "starting")
+        # For lùi để cho các slide khi tạo sẽ đúng theo thứ tự trong file csv
+        for count, index in enumerate(range(self.to_, self.from_ - 1, -1), start=1):
+            self.current = count
+
+            # Check Pause 
+            self.locker.lock()
+            #* Tại sao lại dùng while mà không phải if?
+            # Vì nếu dùng if thì khi bị wake up, thread sẽ không kiểm tra lại điều kiện
+            # mà sẽ tiếp tục chạy xuống dưới, dẫn đến việc bị tạm dừng không hiệu quả
+            # (tức là khi đánh thức mà is_paused vẫn True thì chương trình vẫn chạy tiếp)
+            while self.is_paused[0]:
+                self.progress.status_label.set_label("paused", ())
+                self.progress.show_resume()
+                self.wait_condition.wait(self.locker) # Chờ đến khi được đánh thức (resume) nếu bị tạm dừng
+            self.locker.unlock()
+
+            # Check Stop
+            if (self.is_stopped[0]):
+                return
+
+            # Do work
+            self._each(index)
+
+    def _finish(self):
+        # * Kết thúc
+        self.progress_label_set_label.emit("cleaning", ())
+
         # Xóa slide đầu tiên (là slide mẫu)
         self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "delete_sample_slide")
         self.pptx.presentation.Slides(SAMPLE_SLIDE_INDEX).Delete()
@@ -133,8 +167,13 @@ class CoreWorker(QObject):
 
         # Thông báo vị trí lưu file
         self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "save_path", user_input.save.path)
+
+    def run(self):
+        self._prepare()
+        self._process()
+        self._finish()
         return self.onFinished.emit()
-    
+
     def start(self):
         try:
             self.run()
@@ -146,20 +185,20 @@ def work(progress: "Progress", from_: int, to_: int):
     progress.progress_bar.setMaximum(to_ - from_ + 1)
 
     thread = progress.core_thread
-    worker = CoreWorker(thread.powerpoint, progress, from_, to_)
-    # worker.moveToThread(thread)
+    worker = CoreWorker(thread.powerpoint, progress, from_, to_, 
+                        thread.locker, thread.wait_condition, thread.is_paused, 
+                        thread.is_stopped)
     
-    #* Tại sao ở đây lại không connect với thread.started signal mà lại gán trực tiếp thread.run?
-    # Vì khi thread.start() được gọi, thread.started phải chờ một thời gian nhất định mới được emit (unoffical, 
-    # nhưng thực nghiệm chứng minh là vậy) 
-    # Nên là, gán trực tiếp luôn cho thread.run cho đỡ lằng nhằng
-    thread.run = worker.start 
     worker.progress_bar_setValue.connect(progress.progress_bar.setValue)    
-    worker.progress_label_set_label.connect(progress.label.set_label)
-    worker.onFinished.connect(lambda: {
-        progress.done_button_toggle(True),
-        thread.quit()
-    })
+    worker.progress_label_set_label.connect(progress.status_label.set_label)
+    worker.onFinished.connect(progress.finish)
     worker.show_err_diaglog.connect(show_err_diaglog)
+
+    # worker.moveToThread(thread)
+    #* Tại sao ở đây lại không connect với thread.started signal mà lại gán trực tiếp thread.run?
+    # Vì khi thread.start() được gọi, thread.started phải chờ một thời gian nhất định mới được emit 
+    # (unoffical, nhưng thực nghiệm chứng minh là vậy) 
+    # Nên là, gán trực tiếp luôn cho thread.run, như vậy sẽ chạy ngay lập tức
+    thread.run = worker.start
 
     thread.start()

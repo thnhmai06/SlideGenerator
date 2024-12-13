@@ -1,5 +1,5 @@
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 from PyQt5.QtWidgets import QLineEdit
 from PyQt5.QtCore import pyqtSignal, QObject
 from classes.models import PowerPoint
@@ -47,16 +47,35 @@ class GetShapesWorker(QObject):
     can_not_open = pyqtSignal(Exception)
     toogle_browse_button = pyqtSignal(bool)
     set_loaded_label = pyqtSignal(int)
-    onFinished = pyqtSignal()
+    onFinish: Callable = None
 
     def __init__(self, powerpoint: PowerPoint):
         super().__init__()
         self.powerpoint = powerpoint
 
     def quit(self):
-        self.powerpoint.close_presentation()
-        self.toogle_browse_button.emit(True)  # Enable browse button
-        self.onFinished.emit()
+        self.onFinish(lambda: {
+            self.toogle_browse_button.emit(True),  # Enable browse button
+        })
+
+    def _each(self, index: int, shape):
+        MSO_FILLPICTURE = 6  # https://learn.microsoft.com/en-us/office/vba/api/office.msofilltype
+        PP_SHAPEFORMATPNG = 2  # https://learn.microsoft.com/en-us/office/vba/api/powerpoint.shape.export
+        
+        fill = shape.Fill
+        # Nếu Shape được fill bởi 1 hình ảnh
+        if fill.Type == MSO_FILLPICTURE:
+            file_name = f"{index}.png" 
+            # Không lưu dưới dạng id nữa, lưu dưới dạng chỉ số index tương ứng trong slide.shapes
+            # Vì không có cách nào để truy cập trực tiếp đến shape bằng ID (why Microsoft tạo ra id để làm gì?) 
+            path = os.path.join(SHAPES_PATH, file_name)
+
+            # Lưu ảnh
+            shape.Export(path, PP_SHAPEFORMATPNG)
+            # Thêm ảnh vào user_input.config
+            user_input.shapes.add(index, path)
+
+            console_info(__name__, f"Export: Shape {index} -> {file_name}")
 
     def _get_shapes(self, slide_index=1):
         """
@@ -76,26 +95,10 @@ class GetShapesWorker(QObject):
         # Xóa hết các file trong save_path
         delete_file(SHAPES_PATH)
 
-        MSO_FILLPICTURE = 6  # https://learn.microsoft.com/en-us/office/vba/api/office.msofilltype
-        PP_SHAPEFORMATPNG = 2  # https://learn.microsoft.com/en-us/office/vba/api/powerpoint.shape.export
-
         slide = self.powerpoint.presentation.Slides(slide_index)
         for iteractor, shape in enumerate(slide.Shapes):
             index = iteractor + 1
-            fill = shape.Fill
-            # Nếu Shape được fill bởi 1 hình ảnh
-            if fill.Type == MSO_FILLPICTURE:
-                file_name = f"{index}.png" 
-                # Không lưu dưới dạng id nữa, lưu dưới dạng chỉ số index tương ứng trong slide.shapes
-                # Vì không có cách nào để truy cập trực tiếp đến shape bằng ID (why Microsoft tạo ra id để làm gì?) 
-                path = os.path.join(SHAPES_PATH, file_name)
-
-                # Lưu ảnh
-                shape.Export(path, PP_SHAPEFORMATPNG)
-                # Thêm ảnh vào user_input.config
-                user_input.shapes.add(index, path)
-
-                console_info(__name__, f"Export: Shape ID {index} -> {file_name}")
+            self._each(index, shape)
 
     def run(self):
         user_input.shapes.clear()  # Clear shapes
@@ -105,6 +108,7 @@ class GetShapesWorker(QObject):
         self.menu_config_image_viewShapes_setEnabled.emit(False)  # Disable viewShapes button
         self.toogle_browse_button.emit(False)  # Disable browse button
 
+        # Mở file
         self.powerpoint.open_instance()
         open_status = self.powerpoint.open_presentation(user_input.pptx.path)
 
@@ -113,6 +117,7 @@ class GetShapesWorker(QObject):
             self.can_not_open.emit(open_status)
             return self.quit()
 
+        # Đếm số slide
         slide_count = self.powerpoint.presentation.Slides.Count
         # Nếu không có Slide nào
         if slide_count == 0:
@@ -129,10 +134,10 @@ class GetShapesWorker(QObject):
         self.set_loaded_label.emit(len(user_input.shapes)) 
         # Enable viewShapes button
         self.menu_config_image_viewShapes_setEnabled.emit(True)
-
         # Chỉ khi đã có sẵn placeholder rồi thì mới enable config_image_table
         if user_input.csv.number_of_students > 0:
             self.toggle_config_image.emit(True)
+
         return self.quit()
 
 
@@ -158,6 +163,6 @@ def process_shapes(menu: "Menu"):
 
     #? Thread Configuration
     thread.run = worker.run
-    worker.onFinished.connect(thread.quit)
+    worker.onFinish = thread.quit
 
     thread.start()  # Bắt đầu quá trình lấy ảnh từ slide

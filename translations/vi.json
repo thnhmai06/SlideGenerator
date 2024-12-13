@@ -25,7 +25,7 @@
                     "placeholder": "Placeholder",
                     "label": "Hình ảnh",
                     "view_shapes": "Xem Shapes",
-                    "auto_download": "Tự động tải ảnh nếu Placeholder là liên kết"
+                    "auto_download": "Tự động tải ảnh nếu nội dung trong Placeholder là liên kết"
                 }
             },
             "save": {
@@ -45,15 +45,15 @@
                 "create_file": "Tạo file trên thư mục lưu",
                 "open_instance": "Đang tạo giao thức với PowerPoint",
                 "open_presentation": "Đang mở file PowerPoint",
-                "start": "============== Bắt đầu thực hiện ==============",
+                "starting": "============== Bắt đầu thực hiện ==============",
                 "read_student": "Đọc thông tin sinh viên thứ: ",
                 "duplicate_slide": "Nhân bản slide mẫu",
                 "replace_text": "Thay thế văn bản: ",
                 "download_image_start": "Đang tải: ",
                 "download_image_success": "Tải thành công, lưu ở: ",
                 "download_image_not_image": "Không phải là hình ảnh: ",
-                "keep_original_image": "Giữ nguyên hình ảnh gốc cho ID=",
-                "replace_image": "Thay thế hình ảnh cho ID=",
+                "keep_original_image": "Giữ nguyên hình ảnh gốc cho shape",
+                "replace_image": "Thay thế hình ảnh cho shape",
                 "saving": "Đang lưu file",
                 "finish_replace": "Hoàn tất thay thế\n---------------------------------",
                 "done": "============== Hoàn tất ==============",
@@ -67,7 +67,7 @@
                 "uncaught_exception": "Đã xảy ra lỗi không mong muốn:",
                 "download_image_return_none": "Không tải được hình ảnh từ URL: ",
                 "download_image_return_exception": "Lỗi khi tải hình ảnh: ",
-                "PermissionError": "Thiếu quyền để truy cập đến file lưu!\nHãy đảm bảo file lưu không bị mở bởi ứng dụng khác hoặc bị thiếu quyền để truy cập!"
+                "PermissionError": "Thiếu quyền để truy cập đến file lưu!\nHãy đảm bảo file lưu không bị mở bởi ứng dụng khác hoặc bị thiếu quyền để truy cập!\n"
             }
         },
         "label": {
@@ -75,16 +75,21 @@
             "replacing": "Đang tạo slide cho sinh viên thứ ",
             "pausing": "Đang tạm dừng",
             "paused": "Đã tạm dừng",
+            "resuming": "Đang tiếp tục",
             "stopping": "Đang dừng",
-            "stopped": "Đã dừng",
-            "finishing": "Đang dọn dẹp",
+            "cleaning": "Đang dọn dẹp",
             "finished": "Hoàn tất"
         },
         "window": {
             "title": "Tiến trình",
             "stop": "Dừng",
             "pause": "Tạm dừng",
-            "done": "Hoàn tất"
+            "resume": "Tiếp tục",
+            "done": "Hoàn tất",
+            "close": {
+                "title": "Đóng cửa sổ",
+                "message": "Bạn có chắc chắn muốn dừng tiến trình không?"
+            }
         }
     },
     "diaglogs": {

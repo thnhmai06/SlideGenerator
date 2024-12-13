@@ -1,5 +1,6 @@
 import sys
-from PyQt5.QtCore import QThread, pyqtSignal
+from typing import Callable
+from PyQt5.QtCore import QThread, pyqtSignal, QMutex, QWaitCondition
 from classes.models import PowerPoint
 from src.logging.info import default as info
 from src.logging.debug import console_debug
@@ -8,6 +9,10 @@ from src.logging.debug import console_debug
 def onFinished(powerpoint: PowerPoint):
     try:
         if powerpoint.presentation:
+            try:
+                powerpoint.presentation.Save()
+            except Exception:
+                pass
             powerpoint.close_presentation()
         if powerpoint.instance:
             powerpoint.close_instance()
@@ -30,7 +35,7 @@ class CheckingThread(QThread):
 
     def quit(self):
         onFinished(self.powerpoint)
-        self.exit()
+        super().quit()  # Kết thúc Thread
 
     def run(self):
         try:
@@ -40,7 +45,7 @@ class CheckingThread(QThread):
             # Không có Powerpoint
             console_debug(__name__, None, str(e))
             self.logging_no_powerpoint.emit()
-            # Ở đây không close Powerpoint vì có mở Powerpoint được đâu
+            # Ở đây không close Powerpoint vì có mở Powerpoint được đâu mà đòi đóng
         else:
             # Có Powerpoint
             console_debug(__name__, "powerpoint_found")
@@ -53,7 +58,39 @@ class WorkingThread(QThread):
         super().__init__()
         self.powerpoint = PowerPoint()
 
-    def quit(self):
+    def quit(self, next: Callable = None):
+        #* Hàm này dừng việc EventLoop trong CoreThread, không phải dừng hàm run trong CoreThread ngay
         onFinished(self.powerpoint)
-        self.exit()  # Kết thúc Thread
+        if next:
+            next()
+        super().quit()  # Kết thúc Thread
         self.__init__() # Khởi tạo lại Thread cho lần sau
+
+class CoreThread(WorkingThread):
+    # Giống WorkingThread nhưng có chức năng tạm dừng, dừng
+    # Logic tạm dừng được thực hiện trong CoreWorker
+    def __init__(self):
+        super().__init__()
+        # Các biến phục vụ cho việc tạm dừng
+        self.is_paused = [False] # Dùng để truyền tham chiếu cho CoreWorker thông qua List
+        self.is_stopped = [False]
+        self.locker = QMutex()
+        self.wait_condition = QWaitCondition()
+    
+    def pause(self):
+        self.locker.lock()
+        self.is_paused[0] = True
+        self.locker.unlock()
+
+    def resume(self):
+        self.locker.lock()
+        self.is_paused[0] = False
+        self.wait_condition.wakeAll()
+        self.locker.unlock()
+
+    def stop(self):
+        self.locker.lock()
+        self.is_stopped[0] = True
+        self.locker.unlock()
+        if (self.is_paused[0]):
+            self.resume()
