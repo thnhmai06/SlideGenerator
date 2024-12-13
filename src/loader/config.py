@@ -2,11 +2,13 @@ from globals import user_input
 from PyQt5.QtWidgets import QListWidget, QTableWidget
 
 def _get_text_config(config_text: QListWidget):
+    user_input.config.text.clear() # Clear all text config
     for index in range(config_text.count()):
         item = config_text.item(index)
         user_input.config.add_text(item.text())
 
 def _get_image_config(config_image: QTableWidget):
+    user_input.config.image.clear() # Clear all image config
     for row in range(config_image.rowCount()):
         shape_index = int(config_image.item(row, 0).text())
         placeholder = config_image.item(row, 1).text()

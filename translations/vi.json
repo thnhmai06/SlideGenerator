@@ -52,8 +52,8 @@
                 "download_image_start": "Đang tải: ",
                 "download_image_success": "Tải thành công, lưu ở: ",
                 "download_image_not_image": "Không phải là hình ảnh: ",
-                "keep_original_image": "Giữ nguyên hình ảnh gốc cho shape",
-                "replace_image": "Thay thế hình ảnh cho shape",
+                "keep_original_image": "Giữ nguyên hình ảnh gốc cho shape ",
+                "replace_image": "Thay thế hình ảnh cho shape ",
                 "saving": "Đang lưu file",
                 "finish_replace": "Hoàn tất thay thế\n---------------------------------",
                 "done": "============== Hoàn tất ==============",
@@ -104,7 +104,7 @@
             "pptx.no_slide": "Không tìm thấy slide nào trong file PowerPoint này!",
             "pptx.too_much_slides": "File chứa nhiều hơn 1 slide!",
             "csv.no_students": "File DSSV không chứa thông tin sinh viên!",
-            "config.too_much_placeholders": "Số lượng đã nhiều hơn số placeholders có sẵn!",
+            "config.too_much_placeholders": "Số lượng đã nhiều hơn số cột có sẵn!",
             "config.too_much_shapes": "Số lượng đã nhiều hơn số shapes có sẵn!",
             "config.no_item_to_remove": "Không có mục nào để xóa cả!",
             "save_path.coincide_pptx": "File lưu mới không được thay thế file PowerPoint mẫu!"
@@ -119,7 +119,8 @@
         },
         "info": {
             "pptx_load": "Tải file Template: ",
-            "csv_load": "Tải file DSSV: "
+            "csv_load": "Tải file DSSV: ",
+            "save_load": "Thiết lập Lưu file tại: "
         }
     }
 }
