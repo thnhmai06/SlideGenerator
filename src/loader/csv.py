@@ -17,9 +17,9 @@ def _read_data(csv_path: str) -> bool:
     - True: Saved successfully
     - False: CSV is not valid
     """
-    LINES_PER_BATCH = 1
+    BATCH_SIZE = 10000 # Tiêu hao bộ nhớ rơi vào đâu đó 6.4mb/buffer (10 cột str, 1 cột str url)
 
-    user_input.csv.df = pl.read_csv(csv_path, batch_size=LINES_PER_BATCH, encoding="utf8-lossy")
+    user_input.csv.df = pl.read_csv(csv_path, batch_size=BATCH_SIZE, encoding="utf8-lossy")
     user_input.csv.placeholders = user_input.csv.df.columns
     user_input.csv.number_of_students = len(user_input.csv.df)
 
