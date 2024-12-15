@@ -25,25 +25,27 @@ jobs:
 
     - name: Convert Python to EXE
       run: |
-        pyinstaller --onefile your_script.py
-        mkdir release
-        move dist\your_script.exe release\
+        pyinstaller --onefile index.py
+        mkdir tao-slide-tot-nghiep
+        move dist\index.exe tao-slide-tot-nghiep\
 
     - name: Add necessary files
       run: |
-        xcopy assets release\assets /E /I
-        xcopy translations release\translations /E /I
-        copy settings.ini release\
+        xcopy assets tao-slide-tot-nghiep\assets /E /I
+        xcopy translations tao-slide-tot-nghiep\translations /E /I
+        copy settings.ini tao-slide-tot-nghiep\
 
     - name: Compress files into ZIP
       run: |
-        cd release
-        powershell Compress-Archive -Path * -DestinationPath ../release.zip
+        cd tao-slide-tot-nghiep
+        powershell Compress-Archive -Path * -DestinationPath ../tao-slide-tot-nghiep.zip
 
     - name: Upload to release
       uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./release.zip
-        asset_name: release.zip
+        asset_path: ./tao-slide-tot-nghiep.zip
+        asset_name: tao-slide-tot-nghiep.zip
         asset_content_type: application/zip
