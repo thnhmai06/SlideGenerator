@@ -22,6 +22,7 @@ TIMEOUT = __CONFIG.getint("Config", "timeout")
 GITHUB_URL = "https://github.com/thnhmai06/tao-slide-tot-nghiep"
 SHAPES_PATH = os.path.abspath("./temp/shapes/")
 DOWNLOAD_PATH = os.path.abspath("./temp/downloads/")
+LOG_PATH = os.path.abspath("./logs/")
 TRANSLATION_PATH = os.path.abspath("./translations/")
 
 # ? Global Variables
