@@ -59,12 +59,13 @@ class GetShapesWorker(QObject):
         })
 
     def _each(self, index: int, shape):
-        MSO_FILLPICTURE = 6  # https://learn.microsoft.com/en-us/office/vba/api/office.msofilltype
-        PP_SHAPEFORMATPNG = 2  # https://learn.microsoft.com/en-us/office/vba/api/powerpoint.shape.export
+        PP_SHAPEFORMATPNG = 2  # https://learn.microsoft.com/en-us/office/vba/api/powerpoint.shape.export#:~:text=Compressed%20JPG-,ppShapeFormatPNG,-2
+        MSO_FILLPICTURE = 6  # https://learn.microsoft.com/en-us/office/vba/api/office.msofilltype#:~:text=Patterned%20fill-,msoFillPicture,-6
+        MSO_FILLTEXTURED = 4 # https://learn.microsoft.com/en-us/office/vba/api/office.msofilltype#:~:text=Solid%20fill-,msoFillTextured,-4
         
         fill = shape.Fill
         # Nếu Shape được fill bởi 1 hình ảnh
-        if fill.Type == MSO_FILLPICTURE:
+        if fill.Type == MSO_FILLPICTURE or fill.Type == MSO_FILLTEXTURED:
             file_name = f"{index}.png" 
             # Không lưu dưới dạng id nữa, lưu dưới dạng chỉ số index tương ứng trong slide.shapes
             # Vì không có cách nào để truy cập trực tiếp đến shape bằng ID (why Microsoft tạo ra id để làm gì?) 

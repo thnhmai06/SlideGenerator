@@ -1,3 +1,4 @@
+import pythoncom
 from typing import List
 import win32com.client
 from polars import DataFrame
@@ -80,8 +81,8 @@ class PowerPoint:
         self.presentation = None
 
     def open_instance(self):
-        from pythoncom import CoInitialize
-        CoInitialize()
+        # Tạo môi trường COM cho thread
+        pythoncom.CoInitialize()
 
         if not self.instance:
             try:
@@ -105,11 +106,22 @@ class PowerPoint:
                 return e
 
     def close_instance(self) -> bool:
-        if self.instance:
-            self.instance.Quit()
-            self.instance = None
+        # Không cần close instance, vì
+        # - Nếu đang mở một file pptx khác thì close instance sẽ đóng cả file đó
+        # - instance sẽ tự đóng khi không có presentation nào đang được mở  
+
+        # if self.instance:
+        #     self.instance.Quit()
+        #     self.instance = None
+        #     return True
+        # return False
+
+        # Giải phóng môi trường COM
+        try: 
+            pythoncom.CoUninitialize()
             return True
-        return False
+        except Exception:
+            return False
 
     def close_presentation(self) -> bool:
         if self.presentation and self.instance:

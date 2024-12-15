@@ -7,7 +7,7 @@
                 "title": "B1. Chọn mẫu",
                 "label": "Chọn file mẫu PowerPoint",
                 "extension": "(.pptx)",
-                "loaded": "Đã tải {shapes} shapes được fill bởi hình ảnh"
+                "loaded": "Đã tải {shapes} shapes được fill bởi hình ảnh/texture"
             },
             "csv": {
                 "title": "B2. Chọn danh sách sinh viên",
@@ -43,7 +43,7 @@
         "log": {
             "info": {
                 "create_file": "Tạo file trên thư mục lưu",
-                "open_instance": "Đang tạo giao thức với PowerPoint",
+                "open_instance": "Đang tạo môi trường và kết nối tới giao thức của PowerPoint",
                 "open_presentation": "Đang mở file PowerPoint",
                 "starting": "============== Bắt đầu thực hiện ==============",
                 "read_student": "Đọc thông tin sinh viên thứ: ",
@@ -60,7 +60,7 @@
                 "delete_sample_slide": "Xóa slide mẫu trong file",
                 "delete_downloaded_image": "Xóa các hình ảnh đã tải",
                 "close_presentation": "Đóng file PowerPoint",
-                "close_instance": "Ngắt giao thức PowerPoint",
+                "close_instance": "Giải phóng môi trường thiết lập giao thức",
                 "save_path": "Vị trí file: "
             },
             "error": {
