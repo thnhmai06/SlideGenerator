@@ -115,8 +115,7 @@
     },
     "console": {
         "debug": {
-            "powerpoint_found": "Phát hiện Microsoft PowerPoint",
-            "powerpoint_version": "Phiên bản Powerpoint: "
+            "powerpoint_found": "Phát hiện Microsoft PowerPoint "
         },
         "info": {
             "pptx_load": "Tải file Template: ",

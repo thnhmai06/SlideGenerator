@@ -46,20 +46,18 @@ class CheckingThread(QThread):
             # Thử tạo giao thức với PowerPoint
             self.powerpoint.open_instance()
 
-            console_debug(__name__, "powerpoint_version", self.powerpoint.instance.Version)
+            # Thông báo có Powerpoint
+            version = self.powerpoint.instance.Version #! Nếu ko có powerpoint sẽ lỗi ở đây
+            console_debug(__name__, "powerpoint_found", version)
         except Exception as e:
             # Không có Powerpoint
             console_debug(__name__, None, str(e))
             self.logging_no_powerpoint.emit()
             # Ở đây không close Powerpoint vì có mở Powerpoint được đâu mà đòi đóng
-        else:
-            # Có Powerpoint
-            console_debug(__name__, "powerpoint_found")
         finally:
             # Tạo môi trường COM cho thread
             pythoncom.CoUninitialize()
             self.quit()
-
 
 class WorkingThread(QThread):
     def __init__(self):
