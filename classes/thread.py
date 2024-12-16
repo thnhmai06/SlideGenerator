@@ -46,8 +46,7 @@ class CheckingThread(QThread):
             # Thử tạo giao thức với PowerPoint
             self.powerpoint.open_instance()
 
-            # Thoát PowerPoint
-            self.powerpoint.instance.Quit()
+            console_debug(__name__, "powerpoint_version", self.powerpoint.instance.Version)
         except Exception as e:
             # Không có Powerpoint
             console_debug(__name__, None, str(e))
