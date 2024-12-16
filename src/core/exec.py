@@ -85,7 +85,7 @@ class CoreWorker(QObject):
 
         # Mở file PowerPoint
         self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "open_presentation")
-        self.pptx.open_presentation(user_input.save.path)
+        self.pptx.open_presentation(user_input.save.path, read_only=False)
 
     def _each(self, index: int):
         self.progress_label_set_label.emit("replacing", (str(index), f"({self.current}/{self.total})"))

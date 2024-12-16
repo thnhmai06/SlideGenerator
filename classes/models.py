@@ -84,15 +84,24 @@ class PowerPoint:
                 self.instance = None
         return self.instance
 
-    def open_presentation(self, path):
-        read_only = True #! = True để tránh bị lỗi "file is currently in use. PowerPoint can't modify it at this time."
-        has_title = False
-        window = False
+    def open_presentation(self, path, read_only=False):
+        MSOFALSE = 0
+        MSOTRUE = -1
+
+        read_only = MSOTRUE if read_only else MSOFALSE
+        has_title = MSOFALSE
+        window = MSOFALSE
         if self.instance and not self.presentation:
             try:
+                # Mở File PowerPoint
                 self.presentation = self.instance.Presentations.open(
                     path, read_only, has_title, window
                 )
+
+                # Nếu file mở ở read-write mode, và đang ở Final State
+                if read_only == MSOFALSE and self.presentation.Final:
+                    self.presentation.Final = False
+
                 return None
             except Exception as e:
                 self.presentation = None

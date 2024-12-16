@@ -33,7 +33,7 @@ def default(
     window_name: str - Tên của cửa sổ
     """
     title = TRANS["diaglogs"]["error"][title_key]
-    console_error(where, details)
+    console_error(where, f"{title}{'\n' if details else ''}{details or ''}")
     show_err_diaglog(window_name, title, details)
 
 

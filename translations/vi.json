@@ -96,7 +96,8 @@
         "error": {
             "window_name": "Đã xả ra lỗi",
             "exception": "Đã xảy ra lỗi không mong muốn!",
-            "pptx.can_not_open": "Không thể truy cập file PowerPoint!\nHãy đảm bảo file không bị mã hóa bởi mật khẩu, ở chế độ chỉ đọc,\n hay bị mở bởi ứng dụng khác hoặc bị thiếu quyền!"
+            "pptx.can_not_open": "Không thể truy cập file PowerPoint!\nHãy đảm bảo file không bị mã hóa bởi mật khẩu, ở chế độ chỉ đọc, hay đang\n bị mở bởi ứng dụng khác hoặc chương trình bị thiếu quyền để mở!",
+            "pptx.always_read_only": "File PowerPoint đang ở chế độ Luôn mở Chỉ đọc!\n\nHãy đảm bảo file không để ở tùy chọn này!\n1. Mở file lên chọn Edit Anyways, sau đó chọn\n File > Info > Protect Presentation > Bỏ chọn Always Open Read-Only\n2. Shift + Chuột phải vào File > Properties > Bỏ chọn Read-only"
         },
         "information": {
             "window_name": "Thông báo",

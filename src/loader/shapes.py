@@ -28,6 +28,10 @@ def __logging_can_not_open(menu: "Menu", e: Exception):
     menu.pptx_path.clear()  # Xóa đường dẫn file pptx
     error(__name__, "pptx.can_not_open", str(e))
 
+def __logging_always_read_only(menu: "Menu"):
+    menu.pptx_path.clear()  # Xóa đường dẫn file pptx
+    error(__name__, "pptx.always_read_only")
+
 def __toogle_browse_button(menu: "Menu", is_enable: bool):
     menu.pptx_broswe.setEnabled(is_enable)
 
@@ -43,6 +47,7 @@ class GetShapesWorker(QObject):
     menu_config_image_clearContents = pyqtSignal()
     menu_config_image_viewShapes_setEnabled = pyqtSignal(bool)
     can_not_open = pyqtSignal(Exception)
+    always_read_only = pyqtSignal()
     toogle_browse_button = pyqtSignal(bool)
     set_loaded_label = pyqtSignal(int)
     onFinish: Callable = None
@@ -107,13 +112,20 @@ class GetShapesWorker(QObject):
         self.menu_config_image_viewShapes_setEnabled.emit(False)  # Disable viewShapes button
         self.toogle_browse_button.emit(False)  # Disable browse button
 
+        MSOTRUE = -1
+
         # Mở file
         self.powerpoint.open_instance()
-        open_status = self.powerpoint.open_presentation(user_input.pptx.path)
+        open_status = self.powerpoint.open_presentation(user_input.pptx.path, read_only=False)
 
         # Nếu không mở được file
         if isinstance(open_status, Exception):
             self.can_not_open.emit(open_status)
+            return self.quit()
+        
+        # Nếu file ở chế độ Luôn mở Chỉ đọc
+        if self.powerpoint.presentation.ReadOnly == MSOTRUE:
+            self.always_read_only.emit()
             return self.quit()
 
         # Đếm số slide
@@ -157,6 +169,7 @@ def process_shapes(menu: "Menu"):
     worker.menu_config_image_clearContents.connect(lambda: clear_config_image_table(menu))
     worker.menu_config_image_viewShapes_setEnabled.connect(menu.config_image_viewShapes.setEnabled)
     worker.can_not_open.connect(lambda expection: __logging_can_not_open(menu, expection))
+    worker.always_read_only.connect(lambda: __logging_always_read_only(menu))
     worker.toogle_browse_button.connect(lambda is_enable: __toogle_browse_button(menu, is_enable))
     worker.set_loaded_label.connect(lambda num: set_pptx_loaded_label(menu.pptx_loaded, num))
 
