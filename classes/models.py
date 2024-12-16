@@ -91,7 +91,7 @@ class PowerPoint:
         if self.instance and not self.presentation:
             try:
                 self.presentation = self.instance.Presentations.open(
-                    r"{}".format(path), read_only, has_title, window
+                    path, read_only, has_title, window
                 )
                 return None
             except Exception as e:
