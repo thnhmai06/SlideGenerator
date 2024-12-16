@@ -32,10 +32,8 @@ def __toogle_browse_button(menu: "Menu", is_enable: bool):
     menu.pptx_broswe.setEnabled(is_enable)
 
 def get_pptx_path(line_widget: QLineEdit) -> str:
-    import os
-
     pptx_path = line_widget.text()
-    user_input.pptx.setPath(os.path.abspath(pptx_path))
+    user_input.pptx.setPath(pptx_path)
     return pptx_path
 
 class GetShapesWorker(QObject):

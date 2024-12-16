@@ -1,3 +1,4 @@
+import os
 import pythoncom
 from typing import List
 import win32com.client
@@ -5,13 +6,13 @@ from polars import DataFrame
 from PyQt5.QtGui import QIcon
 
 class Input:
-    class Pptx:
+    class Path:
         def __init__(self):
             super().__init__()
             self.path = str()
 
         def setPath(self, path: str):
-            self.path = path
+            self.path = os.path.abspath(path)
 
     class Csv:
         def __init__(self):
@@ -59,20 +60,12 @@ class Input:
             config_image_item = self.ConfigImage(placeholder, shape_index)
             self.image.append(config_image_item)
 
-    class Save:
-        def __init__(self):
-            super().__init__()
-            self.path: str = None
-
-        def setPath(self, save_path: str):
-            self.path = save_path
-
     def __init__(self):
-        self.pptx = self.Pptx()
+        self.pptx = self.Path()
         self.csv = self.Csv()
         self.shapes = self.Shapes()
         self.config = self.Config()
-        self.save = self.Save()
+        self.save = self.Path()
 
 class PowerPoint:
     def __init__(self):
