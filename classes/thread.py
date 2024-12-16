@@ -1,4 +1,5 @@
 import sys
+import pythoncom
 from typing import Callable
 from PyQt5.QtCore import QThread, pyqtSignal, QMutex, QWaitCondition
 from classes.models import PowerPoint
@@ -39,8 +40,14 @@ class CheckingThread(QThread):
 
     def run(self):
         try:
+            # Tạo môi trường COM cho thread
+            pythoncom.CoInitialize()
+
             # Thử tạo giao thức với PowerPoint
             self.powerpoint.open_instance()
+
+            # Thoát PowerPoint
+            self.powerpoint.instance.Quit()
         except Exception as e:
             # Không có Powerpoint
             console_debug(__name__, None, str(e))
@@ -50,6 +57,8 @@ class CheckingThread(QThread):
             # Có Powerpoint
             console_debug(__name__, "powerpoint_found")
         finally:
+            # Tạo môi trường COM cho thread
+            pythoncom.CoUninitialize()
             self.quit()
 
 
