@@ -4,3 +4,4 @@ polars # For CSV reading.
 colorama # For console color.
 gdown # For downloading files from Google Drive.
 pystache # For text replacement.
+pillow # For image processing.

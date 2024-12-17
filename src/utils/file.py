@@ -27,3 +27,4 @@ def copy_file(from_: str, to_: str):
     if os.path.exists(to_):
         os.remove(to_)
     shutil.copyfile(from_, to_)
+    return to_

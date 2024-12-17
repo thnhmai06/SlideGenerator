@@ -2,6 +2,7 @@ import os
 from typing import Callable, Type
 from pystache import render
 from src.core.download_image import download_image
+from src.core.process_image import process_image
 from globals import user_input, DOWNLOAD_PATH
 
 #? Thay thế Text
@@ -16,7 +17,7 @@ def replace_text(slide, student: dict, add_log: Callable[[str, str, str, str], N
                 shape.TextFrame.TextRange.Text = new_text
     return True
 
-def __fill_by_picture(fill, image_path: str):
+def __fill_picture(fill, image_path: str):
     # Lưu lại thiết lập của fill trước khi thay đổi
     transparency_before = fill.Transparency  # Độ trong suốt
 
@@ -26,7 +27,7 @@ def __fill_by_picture(fill, image_path: str):
     # Phục hồi các thiết lập cũ
     fill.Transparency = transparency_before  # Độ trong suốt
 
-def __fill_by_textured(fill, image_path: str):
+def __fill_texture(fill, image_path: str):
     # Lưu lại thiết lập của fill trước khi thay đổi
     alignment_before = fill.TextureAlignment  # Căn chỉnh
     tile_before = fill.TextureTile  # True nếu Tile ảnh
@@ -62,13 +63,18 @@ def __each_item_replace_image(slide, num: int, shape_index: int, placeholder: st
     if not image_path:
         add_log(__name__, loglevel.INFO, "keep_original_image", shape_index)
         return False
+    
+    shape = slide.Shapes(shape_index)
+    
+    # Xử lý hình ảnh
+    process_image(image_path, shape, add_log, loglevel)
 
     # Refill
-    shape = slide.Shapes(shape_index)
-    if (shape.Fill.Type == MSO_FILLPICTURE):
-        __fill_by_picture(shape.Fill, image_path)
-    elif (shape.Fill.Type == MSO_FILLTEXTURED):
-        __fill_by_textured(shape.Fill, image_path)
+    __fill_picture(shape.Fill, image_path)
+    # if (shape.Fill.Type == MSO_FILLPICTURE):
+    #     __fill_picture(shape.Fill, image_path)
+    # elif (shape.Fill.Type == MSO_FILLTEXTURED):
+    #     __fill_texture(shape.Fill, image_path)
 
     # Thông báo đã thay thế ảnh
     add_log(__name__, loglevel.INFO, "replace_image", f"{shape_index}")

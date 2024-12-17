@@ -53,6 +53,7 @@
                 "download_image_success": "Tải thành công, lưu ở: ",
                 "download_image_not_image": "Không phải là hình ảnh: ",
                 "keep_original_image": "Giữ nguyên hình ảnh gốc cho shape ",
+                "process_image": "Xử lý hình ảnh: ",
                 "replace_image": "Thay thế hình ảnh cho shape ",
                 "saving": "Đang lưu file",
                 "finish_replace": "Hoàn tất thay thế\n---------------------------------",

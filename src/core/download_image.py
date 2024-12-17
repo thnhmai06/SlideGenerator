@@ -1,6 +1,7 @@
 from typing import Callable, Type
 from src.utils.check_link import file as file_check, google_drive as GD_check, url as url_check
 from src.utils.download import google_drive as GD_download, url as url_download 
+from src.utils.file import copy_file
 from globals import DOWNLOAD_PATH
 import os
 
@@ -45,7 +46,8 @@ def download_image(link: str, num: int, add_log: Callable[[str, str, str, str], 
 
     # Là file ảnh trên hệ thống
     if file_check.is_image_file(link):
-        return link
+        ext = link.split('.')[-1]
+        return copy_file(link, f"{DOWNLOAD_PATH}/image_{num}.{ext}")
     elif url_check.is_url(link):
         add_log(__name__, loglevel.INFO, "download_image_start", link)
         if (ext := url_check.is_image_url(link)):
