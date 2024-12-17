@@ -3,6 +3,7 @@ from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtWidgets import QWidget, QPlainTextEdit, QMessageBox
 from functools import reduce
 from classes.thread import CoreThread
+from classes.models import ProgressLogLevel
 from src.handler.progress import stop
 from src.logging.info import console_info
 from src.logging.error import console_error
@@ -23,17 +24,12 @@ def _get_retranslate_window(*args: str) -> str:
 class TextEditLogger(QtCore.QObject):
     appendPlainText = QtCore.pyqtSignal(str)
 
-    class LogLevels:
-        INFO = "info"
-        ERROR = "error"
-
     # https://stackoverflow.com/a/60528393/16410937
     def __init__(self, parent):
         super().__init__()
         self.widget = QPlainTextEdit(parent)
         self.widget.setReadOnly(True)
         self.appendPlainText.connect(self.widget.appendPlainText)
-        self.LogLevels = TextEditLogger.LogLevels
         self.widget.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
         self.widget.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
         self.widget.setLineWrapMode(QPlainTextEdit.NoWrap)
@@ -57,10 +53,10 @@ class TextEditLogger(QtCore.QObject):
             content = str(content)
 
         match level:
-            case self.LogLevels.INFO:
+            case ProgressLogLevel.INFO:
                 title = TRANS["progress"]["log"]["info"][title_key] if title_key else ""
                 console_info(where, title + content)
-            case self.LogLevels.ERROR:
+            case ProgressLogLevel.ERROR:
                 title = (
                     TRANS["progress"]["log"]["error"][title_key] if title_key else ""
                 )
@@ -112,16 +108,6 @@ class Progress(QWidget):
             self.__init__(menu)
             menu.show()
 
-    def __init__(self, menu):
-        super().__init__()
-        self.is_Finished = False
-        self.parent_ = menu
-        self.core_thread = CoreThread()
-        self.close_widget = CloseConfirmWidget(self)
-        self._setupUi()
-        self._retranslateUi()
-        self._handleUI()
-
     def toggle_stop_pause_buttons(self, is_enable: bool):
         self.stop_button.setEnabled(is_enable)
         self.pause_button.setEnabled(is_enable)
@@ -132,6 +118,30 @@ class Progress(QWidget):
         self.stop_button.setVisible(not is_done_visible)
         self.pause_button.setVisible(not is_done_visible)
         self.resume_button.setVisible(not is_done_visible)
+
+    def show_resume(self):
+        self.pause_button.setVisible(False)
+        self.resume_button.setVisible(True)
+
+    def show_pause(self):
+        self.pause_button.setVisible(True)
+        self.resume_button.setVisible(False)
+
+    def finish(self):
+        self.toggle_stop_pause_buttons(False)
+        self.is_Finished = True
+        self.core_thread.quit()
+        self.toggle_done_button(True)
+
+    def __init__(self, menu):
+        super().__init__()
+        self.is_Finished = False
+        self.parent_ = menu
+        self.core_thread = CoreThread()
+        self.close_widget = CloseConfirmWidget(self)
+        self._setupUi()
+        self._retranslateUi()
+        self._handleUI()
 
     def _setupUi(self):
         """
@@ -226,17 +236,3 @@ class Progress(QWidget):
         self.pause_button.clicked.connect(lambda: pause.pause(self))
         self.resume_button.clicked.connect(lambda: pause.resume(self))
         self.stop_button.clicked.connect(self.close_widget.close_when_not_finished)
-
-    def show_resume(self):
-        self.pause_button.setVisible(False)
-        self.resume_button.setVisible(True)
-
-    def show_pause(self):
-        self.pause_button.setVisible(True)
-        self.resume_button.setVisible(False)
-
-    def finish(self):
-        self.toggle_stop_pause_buttons(False)
-        self.is_Finished = True
-        self.core_thread.quit()
-        self.toggle_done_button(True)

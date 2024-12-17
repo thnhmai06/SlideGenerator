@@ -1,7 +1,7 @@
 import traceback
 from typing import TYPE_CHECKING, List
 from PyQt5.QtCore import QObject, pyqtSignal, QMutex, QWaitCondition
-from classes.models import PowerPoint
+from classes.models import PowerPoint, ProgressLogLevel
 from src.logging.error import show_err_diaglog
 from src.core.replace import replace_text, replace_image
 from src.utils.file import copy_file, delete_file
@@ -26,7 +26,7 @@ class CoreWorker(QObject):
         if isinstance(expection, PermissionError):
             self.progress.log.append(
                 __name__,
-                self.progress.log.LogLevels.ERROR,
+                ProgressLogLevel.ERROR,
                 "PermissionError",
                 expection_traceback,
             )
@@ -38,7 +38,7 @@ class CoreWorker(QObject):
         else:
             self.progress.log.append(
                 __name__,
-                self.progress.log.LogLevels.ERROR,
+                ProgressLogLevel.ERROR,
                 "uncaught_exception",
                 expection_traceback,
             )
@@ -73,47 +73,47 @@ class CoreWorker(QObject):
         self.progress_label_set_label.emit("perparing", ())
 
         # Sao chép file gốc sang file lưu
-        self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "create_file")
+        self.progress.log.append(__name__, ProgressLogLevel.INFO, "create_file")
         copy_file(user_input.pptx.path, user_input.save.path)
 
         # Tạo giao thức với PowerPoint
-        self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "open_instance")
+        self.progress.log.append(__name__, ProgressLogLevel.INFO, "open_instance")
         self.pptx.open_instance()
 
         # Mở file PowerPoint
-        self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "open_presentation")
+        self.progress.log.append(__name__, ProgressLogLevel.INFO, "open_presentation")
         self.pptx.open_presentation(user_input.save.path, read_only=False)
 
     def _each(self, index: int):
         self.progress_label_set_label.emit("replacing", (str(index), f"({self.current}/{self.total})"))
 
         # Lấy thông tin sinh viên thứ num
-        self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "read_student", index)
+        self.progress.log.append(__name__, ProgressLogLevel.INFO, "read_student", index)
         student = user_input.csv.get(index)[0]
 
         # Nhân bản slide
-        self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "duplicate_slide")
+        self.progress.log.append(__name__, ProgressLogLevel.INFO, "duplicate_slide")
         slide = self.pptx.presentation.Slides(SAMPLE_SLIDE_INDEX).Duplicate()
 
         # Thay thế Text
         if user_input.config.text:
-            replace_text(slide, student, self.progress.log.append, self.progress.log.LogLevels)
+            replace_text(slide, student, self.progress.log.append)
 
         # Thay thế Image
         if user_input.config.image:
-            replace_image(slide, student, index, self.progress.log.append, self.progress.log.LogLevels)
+            replace_image(slide, student, index, self.progress.log.append)
 
         # Lưu file
-        self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "saving")
+        self.progress.log.append(__name__, ProgressLogLevel.INFO, "saving")
         self.pptx.presentation.Save()
 
         # Thông báo thay thế sinh viên này thành công, cập nhật thanh progress_bar
-        self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "finish_replace")
+        self.progress.log.append(__name__, ProgressLogLevel.INFO, "finish_replace")
         self.progress_bar_setValue.emit(self.current)
 
     def _process(self):
         # * Bắt đầu
-        self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "starting")
+        self.progress.log.append(__name__, ProgressLogLevel.INFO, "starting")
         # For lùi để cho các slide khi tạo sẽ đúng theo thứ tự trong file csv
         for count, index in enumerate(range(self.to_, self.from_ - 1, -1), start=1):
             self.current = count
@@ -142,28 +142,28 @@ class CoreWorker(QObject):
         self.progress_label_set_label.emit("cleaning", ())
 
         # Xóa slide đầu tiên (là slide mẫu)
-        self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "delete_sample_slide")
+        self.progress.log.append(__name__, ProgressLogLevel.INFO, "delete_sample_slide")
         self.pptx.presentation.Slides(SAMPLE_SLIDE_INDEX).Delete()
         self.pptx.presentation.Save()
 
         # Xóa các ảnh đã tải xuống
-        self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "delete_downloaded_image")
+        self.progress.log.append(__name__, ProgressLogLevel.INFO, "delete_downloaded_image")
         delete_file(DOWNLOAD_PATH)
 
         # Đóng file PowerPoint
-        self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "close_presentation")
+        self.progress.log.append(__name__, ProgressLogLevel.INFO, "close_presentation")
         self.pptx.close_presentation()
 
         # Đóng giao thức với PowerPoint
-        self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "close_instance")
+        self.progress.log.append(__name__, ProgressLogLevel.INFO, "close_instance")
         self.pptx.close_instance()
 
         # Thông báo hoàn thành
         self.progress_label_set_label.emit("finished", ())
-        self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "done")
+        self.progress.log.append(__name__, ProgressLogLevel.INFO, "done")
 
         # Thông báo vị trí lưu file
-        self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "save_path", user_input.save.path)
+        self.progress.log.append(__name__, ProgressLogLevel.INFO, "save_path", user_input.save.path)
 
     def run(self):
         self._prepare()

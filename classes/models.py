@@ -131,3 +131,7 @@ class PowerPoint:
             self.presentation = None
             return True
         return False
+
+class ProgressLogLevel:
+    INFO = "INFO"
+    ERROR = "ERROR"

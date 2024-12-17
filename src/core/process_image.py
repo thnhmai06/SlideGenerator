@@ -1,9 +1,10 @@
-from typing import Callable, Type
+from typing import Callable
+from classes.models import ProgressLogLevel
 from src.utils.image import crop
 from PIL import Image
 
-def process_image(image_path: str, shape, add_log: Callable[[str, str, str, str], None], loglevel: Type):
-    add_log(__name__, loglevel.INFO, "process_image", image_path)
+def process_image(image_path: str, shape, add_log: Callable[[str, str, str, str], None]):
+    add_log(__name__, ProgressLogLevel.INFO, "process_image", image_path)
     with Image.open(image_path) as image:
         # Xử lý
         processed_image = crop.crop_image_to_aspect_ratio(image, shape.Width, shape.Height)
