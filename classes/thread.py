@@ -8,17 +8,12 @@ from src.logging.debug import console_debug
 
 
 def onFinished(powerpoint: PowerPoint):
-    try:
-        if powerpoint.presentation:
-            try:
-                powerpoint.presentation.Save()
-            except Exception:
-                pass
+    if powerpoint.presentation:
+        try:
+            powerpoint.presentation.Save()
             powerpoint.close_presentation()
-        if powerpoint.instance:
-            powerpoint.close_instance()
-    finally:
-        return
+        except Exception:
+            pass
 
 
 class CheckingThread(QThread):
