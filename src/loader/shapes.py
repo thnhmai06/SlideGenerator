@@ -5,6 +5,7 @@ from PyQt5.QtCore import pyqtSignal, QObject
 from classes.models import PowerPoint
 from src.logging.info import default as info, console_info
 from src.logging.error import default as error
+from src.utils.file import delete_file
 from src.utils.ui.clear import clear_config_image_table
 from src.utils.ui.toggle import toggle_config_image
 from src.utils.ui.set import set_pptx_loaded_label
@@ -90,10 +91,11 @@ class GetShapesWorker(QObject):
         Returns:
             None
         """
+        # Xóa hết ảnh cũ
+        delete_file(SHAPES_PATH)
 
-        # Tạo folder nếu thư mục lưu không tồn tại
-        if not os.path.exists(SHAPES_PATH):
-            os.makedirs(SHAPES_PATH)
+        # Tạo folder
+        os.makedirs(SHAPES_PATH)
 
         slide = self.powerpoint.presentation.Slides(slide_index)
         for iteractor, shape in enumerate(slide.Shapes):

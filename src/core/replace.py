@@ -51,9 +51,6 @@ def __fill_texture(fill, image_path: str):
 
 #? Thay thế Image
 def __each_item_replace_image(slide, num: int, shape_index: int, placeholder: str, add_log: Callable[[str, str, str, str], None], loglevel: Type) -> bool:
-    MSO_FILLPICTURE = 6  # https://learn.microsoft.com/en-us/office/vba/api/office.msofilltype#:~:text=Patterned%20fill-,msoFillPicture,-6
-    MSO_FILLTEXTURED = 4 # https://learn.microsoft.com/en-us/office/vba/api/office.msofilltype#:~:text=Solid%20fill-,msoFillTextured,-4
-    
     # Tạo folder nếu thư mục lưu không tồn tại
     if not os.path.exists(DOWNLOAD_PATH):
         os.makedirs(DOWNLOAD_PATH)
@@ -67,10 +64,12 @@ def __each_item_replace_image(slide, num: int, shape_index: int, placeholder: st
     shape = slide.Shapes(shape_index)
     
     # Xử lý hình ảnh
-    process_image(image_path, shape, add_log, loglevel)
+    processed_image_path = process_image(image_path, shape, add_log, loglevel)
 
     # Refill
-    __fill_picture(shape.Fill, image_path)
+    # MSO_FILLPICTURE = 6  # https://learn.microsoft.com/en-us/office/vba/api/office.msofilltype#:~:text=Patterned%20fill-,msoFillPicture,-6
+    # MSO_FILLTEXTURED = 4 # https://learn.microsoft.com/en-us/office/vba/api/office.msofilltype#:~:text=Solid%20fill-,msoFillTextured,-4
+    __fill_picture(shape.Fill, processed_image_path)
     # if (shape.Fill.Type == MSO_FILLPICTURE):
     #     __fill_picture(shape.Fill, image_path)
     # elif (shape.Fill.Type == MSO_FILLTEXTURED):
