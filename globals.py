@@ -1,5 +1,6 @@
 import os
 import sys
+from datetime import datetime
 from PyQt5.QtWidgets import QApplication
 from configparser import ConfigParser
 from classes.models import Input
@@ -18,13 +19,16 @@ LANG = __CONFIG.get("Config", "lang")
 DEBUG_MODE = __CONFIG.getboolean("Debug", "debug")
 TIMEOUT = __CONFIG.getint("Config", "timeout")
 
-# ? Global Configurations
+# ? Configurations
 GITHUB_URL = "https://github.com/thnhmai06/tao-slide-tot-nghiep"
-SHAPES_PATH = os.path.abspath("./temp/shapes/")
-DOWNLOAD_PATH = os.path.abspath("./temp/downloads/")
+SHAPES_FOLDER = os.path.abspath("./temp/shapes/")
+DOWNLOAD_FOLDER = os.path.abspath("./temp/downloads/")
 LOG_PATH = os.path.abspath("./logs/")
 TRANSLATION_PATH = os.path.abspath("./translations/")
 
 # ? Global Variables
+OPEN_TIME = datetime.now()
+SHAPES_PATH = os.path.join(SHAPES_FOLDER, OPEN_TIME.strftime('%Y-%m-%d_%H-%M-%S'))
+DOWNLOAD_PATH = os.path.join(DOWNLOAD_FOLDER, OPEN_TIME.strftime('%Y-%m-%d_%H-%M-%S'))
 app = QApplication(sys.argv)
 user_input = Input() 

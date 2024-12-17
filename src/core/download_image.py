@@ -33,7 +33,7 @@ def download_image(link: str, num: int, add_log: Callable[[str, str, str, str], 
     Tải hình ảnh từ link đã cho và lưu vào đường dẫn đã cho.
     Args:
         link (str): Link của hình ảnh.
-        save_path (str): Đường dẫn để lưu file nếu tải về.
+        num (int): Số thứ tự của sinh viên.
         add_log (Callable[[str, str, str, str], None]): Hàm ghi log progress.
         loglevel (Type): Level của log.
     Returns:

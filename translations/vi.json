@@ -117,7 +117,9 @@
     },
     "console": {
         "debug": {
-            "powerpoint_found": "Phát hiện Microsoft PowerPoint "
+            "powerpoint_found": "Phát hiện Microsoft PowerPoint ",
+            "open_time": "Thời gian mở chương trình: ",
+            "delete_shapes": "Xóa các shapes lưu trong: "
         },
         "info": {
             "pptx_load": "Tải file Template: ",

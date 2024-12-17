@@ -2,14 +2,13 @@
 import os
 import logging
 import logging.handlers
-from datetime import datetime
 from colorama import Fore, init
-from globals import DEBUG_MODE, LOG_PATH
+from globals import DEBUG_MODE, LOG_PATH, OPEN_TIME
 
 # ? Configurations
 init(autoreset=True)
 BACKUP_COUNT = 50
-log_filename = f"logs_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.log"
+log_filename = f"logs_{OPEN_TIME.strftime('%Y-%m-%d_%H-%M-%S')}.log"
 log_filepath = os.path.abspath(f"{LOG_PATH}/{log_filename}")
 
 # If log_filepath does not exist, create it

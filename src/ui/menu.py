@@ -37,6 +37,15 @@ def _get_retranslate_window(*args: str) -> str:
 
 
 class Menu(QMainWindow):
+    def closeEvent(self, a0):
+        from src.utils.file import delete_file
+        from globals import SHAPES_PATH
+        from src.logging.debug import console_debug
+
+        console_debug(__name__, "delete_shapes", SHAPES_PATH)
+        delete_file(SHAPES_PATH)
+        return super().closeEvent(a0)
+
     def __init__(self):
         super().__init__()
         self._setupUi()

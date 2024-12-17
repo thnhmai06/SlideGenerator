@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING, Callable
 from PyQt5.QtWidgets import QLineEdit
 from PyQt5.QtCore import pyqtSignal, QObject
 from classes.models import PowerPoint
-from src.utils.file import delete_file
 from src.logging.info import default as info, console_info
 from src.logging.error import default as error
 from src.utils.ui.clear import clear_config_image_table
@@ -79,7 +78,7 @@ class GetShapesWorker(QObject):
             # Thêm ảnh vào user_input.config
             user_input.shapes.add(index, path)
 
-            console_info(__name__, f"Export: Shape {index} -> {file_name}")
+            console_info(__name__, f"Export: Shape {index} -> {path}")
 
     def _get_shapes(self, slide_index=1):
         """
@@ -95,9 +94,6 @@ class GetShapesWorker(QObject):
         # Tạo folder nếu thư mục lưu không tồn tại
         if not os.path.exists(SHAPES_PATH):
             os.makedirs(SHAPES_PATH)
-
-        # Xóa hết các file trong save_path
-        delete_file(SHAPES_PATH)
 
         slide = self.powerpoint.presentation.Slides(slide_index)
         for iteractor, shape in enumerate(slide.Shapes):

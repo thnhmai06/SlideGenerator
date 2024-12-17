@@ -72,9 +72,6 @@ class CoreWorker(QObject):
         # * Chuẩn bị
         self.progress_label_set_label.emit("perparing", ())
 
-        # Xóa folder Download cũ (nếu có)
-        delete_file(DOWNLOAD_PATH)
-
         # Sao chép file gốc sang file lưu
         self.progress.log.append(__name__, self.progress.log.LogLevels.INFO, "create_file")
         copy_file(user_input.pptx.path, user_input.save.path)
