@@ -54,6 +54,7 @@
                 "download_image_not_image": "Không phải là hình ảnh: ",
                 "keep_original_image": "Giữ nguyên hình ảnh gốc cho shape ",
                 "process_image": "Xử lý hình ảnh: ",
+                "skip_process_image": "Bỏ qua việc xử lý hình ảnh",
                 "replace_image": "Thay thế hình ảnh cho shape ",
                 "saving": "Đang lưu file",
                 "finish_replace": "Hoàn tất thay thế\n---------------------------------",
@@ -68,6 +69,7 @@
                 "uncaught_exception": "Đã xảy ra lỗi không mong muốn:",
                 "download_image_return_none": "Không tải được hình ảnh từ URL: ",
                 "download_image_return_exception": "Lỗi khi tải hình ảnh: ",
+                "process_image_error": "Lỗi khi xử lý hình ảnh: ",
                 "PermissionError": "Thiếu quyền để truy cập đến file lưu!\nHãy đảm bảo file lưu không bị mở bởi ứng dụng khác hoặc bị thiếu quyền để truy cập!\n"
             }
         },

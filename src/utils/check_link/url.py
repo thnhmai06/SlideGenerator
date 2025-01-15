@@ -4,7 +4,7 @@ from src.logging.error import console_error
 from globals import TIMEOUT
 
 URL_PATTERN = r'^(https?|ftp):\/\/[a-zA-Z0-9.-]+(:\d+)?(\/[^\s]*)?$'
-IMAGE_EXTENSIONS = {'emf', 'wmf', 'jpg', 'jpeg', 'jfif', 'jpe', 'png', 'bmp', 'dib', 'rle', 'gif', 'emz', 'wmz', 'tif', 'tiff', 'svg', 'ico', 'heif', 'heic', 'hif', 'avif', 'webp'}
+IMAGE_EXTENSIONS = {'jpg', 'jpeg', 'jfif', 'jpe', 'png', 'bmp', 'dib', 'gif', 'tif', 'tiff', 'ico', 'heif', 'heic', 'avif', 'webp'}
 
 def is_url(url: str):
     """
@@ -30,13 +30,21 @@ def is_image_url(url: str):
     try:
         response = requests.head(url, allow_redirects=True, timeout=TIMEOUT, stream=True)
         content_type = response.headers.get('Content-Type')
-        content_extension = content_type.split('/')[1]
-        if content_type and content_type.startswith('image/') and content_extension in IMAGE_EXTENSIONS:
-            return content_extension
+        content_disposition = response.headers.get('Content-Disposition')
+        if content_disposition:
+            exts = content_disposition.split('.')[-1].strip('"')
+        elif content_type and content_type.startswith('image/'):
+            exts = content_type.split('/')[1]
+        else: 
+            return None
+
+        exts = exts.lower()
+        if exts in IMAGE_EXTENSIONS:
+            return exts
+        return None
+    
     except requests.RequestException:
         return None
     except Exception as e:
         console_error(__name__, str(e))
         return None
-    return None
-    

@@ -24,12 +24,22 @@ def get_file_id(url: str):
         return url.split('/')[-2]
     return None
 
-def get_raw_url(file_id: str):
+def get_download_url(file_id: str):
     """
-    Lấy ra URL trực tiếp của file từ ID của file Google Drive.
+    Lấy ra URL tải xuống của file từ ID của file Google Drive.
     Args:
         file_id (str): ID của file Google Drive.
     Returns:
         str: URL trực tiếp của file nếu có, ngược lại None.
     """
-    return f"https://drive.google.com/uc?export=view&id={file_id}"
+    return f"https://drive.usercontent.google.com/u/0/uc?id={file_id}&export=download"
+
+def get_view_url(file_id: str):
+    """
+    Lấy ra URL xem trước của file từ ID của file Google Drive.
+    Args:
+        file_id (str): ID của file Google Drive.
+    Returns:
+        str: URL xem trước của file nếu có, ngược lại None.
+    """
+    return f"https://drive.google.com/uc?id={file_id}&export=view"

@@ -5,3 +5,7 @@ colorama # For console color.
 gdown # For downloading files from Google Drive.
 pystache # For text replacement.
 pillow # For image processing.
+
+# Add-ons
+pillow-heif # HEIF Pillow supports.
+pillow-avif-plugin # AVIF Pillow supports.

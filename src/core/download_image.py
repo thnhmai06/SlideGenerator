@@ -59,11 +59,12 @@ def download_image(link: str, num: int, add_log: Callable[[str, str, str, str], 
         elif (GD_check.is_gd_url(link)):
             # Là URL Google Drive
             file_id = GD_check.get_file_id(link)
-            raw_link = GD_check.get_raw_url(file_id)
-            if (ext := url_check.is_image_url(raw_link)):
+            view_link = GD_check.get_view_url(file_id)
+            download_link = GD_check.get_download_url(file_id)
+            if (ext := url_check.is_image_url(download_link)):
                 # Là URL Google Drive Ảnh
                 save_path = os.path.abspath(f"{DOWNLOAD_PATH}/image_{num}.{ext}")
-                re = GD_download.download(raw_link, save_path)
+                re = GD_download.download(view_link, save_path)
                 return re if __return_handler(add_log, re, link) else None
             else:
                 # URL không phải là Google Drive Ảnh
