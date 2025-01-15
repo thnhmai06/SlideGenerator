@@ -43,30 +43,34 @@ def download_image(link: str, num: int, add_log: Callable[[str, str, str, str], 
     if not link:
         return None
 
-    # Là file ảnh trên hệ thống
     if file_check.is_image_file(link):
+        # Là file ảnh trên hệ thống
         ext = link.split('.')[-1]
         return copy_file(link, f"{DOWNLOAD_PATH}/image_{num}.{ext}")
     elif url_check.is_url(link):
+        # Là URL
         add_log(__name__, ProgressLogLevel.INFO, "download_image_start", link)
         if (ext := url_check.is_image_url(link)):
+            # Là URL Ảnh
             save_path = os.path.abspath(f"{DOWNLOAD_PATH}/image_{num}.{ext}")
             re = url_download.download(link, save_path)
             return re if __return_handler(add_log, re, link) else None
 
         elif (GD_check.is_gd_url(link)):
+            # Là URL Google Drive
             file_id = GD_check.get_file_id(link)
             raw_link = GD_check.get_raw_url(file_id)
             if (ext := url_check.is_image_url(raw_link)):
+                # Là URL Google Drive Ảnh
                 save_path = os.path.abspath(f"{DOWNLOAD_PATH}/image_{num}.{ext}")
                 re = GD_download.download(raw_link, save_path)
                 return re if __return_handler(add_log, re, link) else None
             else:
-                # URL không phải là ảnh
+                # URL không phải là Google Drive Ảnh
                 add_log(__name__, ProgressLogLevel.INFO, "download_image_not_image", link)
                 return None
         else:
-            # Không phải là URL ảnh/GD
+            # Không phải là URL ảnh hay GD
             add_log(__name__, ProgressLogLevel.INFO, "download_image_not_image", link)
             return None
     else:
