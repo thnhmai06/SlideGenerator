@@ -18,8 +18,12 @@ def process_image(image_path: str, shape, add_log: Callable[[str, str, str, str]
 
             # Lưu lại
             file_name, file_extension = image_path.rsplit('.', 1)
-            image_path = f"{file_name}_processed.{file_extension}"
+            image_path = f"{file_name}_processed.png" # Buộc về dạng PNG, 
+            # tránh trường hợp máy ko hỗ trợ các kiểu ảnh đặc biệt như HEIC, AVIF
             image.save(image_path)
+
+            # Thông báo
+            add_log(__name__, ProgressLogLevel.INFO, "process_image_success", image_path)
     except Exception as e:
         add_log(__name__, ProgressLogLevel.ERROR, "process_image_error", f"{e}")
         add_log(__name__, ProgressLogLevel.INFO, "skip_process_image")
