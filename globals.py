@@ -25,9 +25,8 @@ SHAPES_FOLDER = os.path.abspath("./temp/shapes/")
 DOWNLOAD_FOLDER = os.path.abspath("./temp/downloads/")
 LOG_PATH = os.path.abspath("./logs/")
 TRANSLATION_PATH = os.path.abspath("./translations/")
-
-IMAGE_EXTENSIONS = {'emf', 'wmf', 'jpg', 'jpeg', 'jfif', 'jpe', 'png', 'bmp', 'dib', 'rle', 'gif', 'emz', 'wmz', 'tif', 'tiff', 'svg', 'ico', 'heif', 'heic', 'hif', 'avif', 'webp'}
-# SUPPORT_PROCESS_IMAGE_EXTENSIONS = {'jpg', 'jpeg', 'jfif', 'jpe', 'png', 'bmp', 'dib', 'gif', 'tif', 'tiff', 'ico', 'heif', 'heic', 'avif', 'webp'}
+# IMAGE_EXTENSIONS = {'emf', 'wmf', 'jpg', 'jpeg', 'jfif', 'jpe', 'png', 'bmp', 'dib', 'rle', 'gif', 'emz', 'wmz', 'tif', 'tiff', 'svg', 'ico', 'heif', 'heic', 'hif', 'avif', 'webp'} # Powerpoint Support
+IMAGE_EXTENSIONS = {'jpg', 'jpeg', 'jfif', 'jpe', 'png', 'bmp', 'dib', 'gif', 'tif', 'tiff', 'ico', 'heif', 'heic', 'avif', 'webp'} # Pillow Support
 
 # ? Global Variables
 OPEN_TIME = datetime.now()
