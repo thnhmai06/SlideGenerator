@@ -4,7 +4,7 @@ from src.logging.error import console_error
 from globals import TIMEOUT
 
 URL_PATTERN = r'^(https?|ftp):\/\/[a-zA-Z0-9.-]+(:\d+)?(\/[^\s]*)?$'
-IMAGE_EXTENSIONS = ('png', 'jpg', 'jpeg', 'gif', 'bmp', 'tiff', 'svg')
+IMAGE_EXTENSIONS = {'emf', 'wmf', 'jpg', 'jpeg', 'jfif', 'jpe', 'png', 'bmp', 'dib', 'rle', 'gif', 'emz', 'wmz', 'tif', 'tiff', 'svg', 'ico', 'heif', 'heic', 'hif', 'avif', 'webp'}
 
 def is_url(url: str):
     """
