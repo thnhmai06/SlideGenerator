@@ -26,6 +26,9 @@ DOWNLOAD_FOLDER = os.path.abspath("./temp/downloads/")
 LOG_PATH = os.path.abspath("./logs/")
 TRANSLATION_PATH = os.path.abspath("./translations/")
 
+IMAGE_EXTENSIONS = {'emf', 'wmf', 'jpg', 'jpeg', 'jfif', 'jpe', 'png', 'bmp', 'dib', 'rle', 'gif', 'emz', 'wmz', 'tif', 'tiff', 'svg', 'ico', 'heif', 'heic', 'hif', 'avif', 'webp'}
+# SUPPORT_PROCESS_IMAGE_EXTENSIONS = {'jpg', 'jpeg', 'jfif', 'jpe', 'png', 'bmp', 'dib', 'gif', 'tif', 'tiff', 'ico', 'heif', 'heic', 'avif', 'webp'}
+
 # ? Global Variables
 OPEN_TIME = datetime.now()
 SHAPES_PATH = os.path.join(SHAPES_FOLDER, OPEN_TIME.strftime('%Y-%m-%d_%H-%M-%S'))

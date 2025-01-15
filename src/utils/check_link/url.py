@@ -1,10 +1,9 @@
 import re
 import requests
 from src.logging.error import console_error
-from globals import TIMEOUT
+from globals import TIMEOUT, IMAGE_EXTENSIONS
 
 URL_PATTERN = r'^(https?|ftp):\/\/[a-zA-Z0-9.-]+(:\d+)?(\/[^\s]*)?$'
-IMAGE_EXTENSIONS = {'jpg', 'jpeg', 'jfif', 'jpe', 'png', 'bmp', 'dib', 'gif', 'tif', 'tiff', 'ico', 'heif', 'heic', 'avif', 'webp'}
 
 def is_url(url: str):
     """

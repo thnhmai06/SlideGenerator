@@ -54,7 +54,7 @@
                 "download_image_not_image": "Không phải là hình ảnh: ",
                 "keep_original_image": "Giữ nguyên hình ảnh gốc cho shape ",
                 "process_image": "Xử lý hình ảnh: ",
-                "skip_process_image": "Bỏ qua việc xử lý hình ảnh",
+                "skip_process_image": "Bỏ qua việc xử lý hình ảnh (có thể do Định dạng ảnh không hỗ trợ)",
                 "replace_image": "Thay thế hình ảnh cho shape ",
                 "saving": "Đang lưu file",
                 "finish_replace": "Hoàn tất thay thế\n---------------------------------",

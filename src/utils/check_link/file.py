@@ -1,6 +1,5 @@
 import os
-
-IMAGE_EXTENSIONS = ('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff', '.webp', '.svg')
+from globals import IMAGE_EXTENSIONS
 
 def is_file(path: str):
     """
