@@ -161,8 +161,7 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-# Test files (will be update later)
-test
+# Temp files
 temp
 
 # VSCode Line Counter (don't worry will be upload when it's done)
