@@ -1,31 +1,33 @@
-import re
 import requests
+import validators
 from src.logging.error import console_error
 from globals import TIMEOUT, IMAGE_EXTENSIONS
 
-URL_PATTERN = r'^(https?|ftp):\/\/[a-zA-Z0-9.-]+(:\d+)?(\/[^\s]*)?$'
-
-def is_url(url: str):
+def is_url(url: str) -> bool:
     """
     Kiểm tra xem url đã cho có phải là url hợp lệ không.
+
     Args:
         url (str): URL cần kiểm tra.
+
     Returns:
         bool: True nếu là url hợp lệ, ngược lại False.
     """
-    return (url is not None)  and (isinstance(url, str)) and (re.match(URL_PATTERN, url) is not None)
+    # Kiểm tra
+    if validators.url(url):
+        return True
+    return False
 
-def is_image_url(url: str):
+def get_image_extension(url: str) -> str:
     """
-    Kiểm tra xem url đã cho có phải là url của ảnh không và trả về phần mở rộng của file
+    Kiểm tra xem url đã cho có phải là url của ảnh không và trả về phần mở rộng của file.
+
     Args:
         url (str): URL cần kiểm tra.
+
     Returns:
         str: Phần mở rộng của file ảnh nếu là url của ảnh, ngược lại None.
     """
-    # if not is_url(url):
-    #     return None
-    
     try:
         response = requests.head(url, allow_redirects=True, timeout=TIMEOUT, stream=True)
         content_type = response.headers.get('Content-Type')
@@ -34,14 +36,14 @@ def is_image_url(url: str):
             exts = content_disposition.split('.')[-1].strip('"')
         elif content_type and content_type.startswith('image/'):
             exts = content_type.split('/')[1]
-        else: 
+        else:
             return None
 
         exts = exts.lower()
         if exts in IMAGE_EXTENSIONS:
             return exts
         return None
-    
+
     except requests.RequestException:
         return None
     except Exception as e:

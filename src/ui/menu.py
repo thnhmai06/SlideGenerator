@@ -1,3 +1,5 @@
+from functools import reduce
+from typing import Optional
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import (
     QMainWindow,
@@ -12,13 +14,8 @@ from PyQt5.QtWidgets import (
     QHeaderView,
     QStatusBar,
 )
-from functools import reduce
 from src.ui.progress import Progress
-from classes.thread import WorkingThread
-from src.handler.menu import (
-    config_image,
-    start_button,
-)
+from src.handler.menu import config_image, start_button
 from src.handler.menu import broswe_button, config_text
 from src.handler.menu.start_button import check_start_button
 from globals import GITHUB_URL
@@ -31,13 +28,50 @@ GITHUB_ICON_PATH = "./assets/button/github"
 GUIDE_ICON_PATH = "./assets/button/guide"
 ABOUT_ICON_PATH = "./assets/button/about"
 
-
 def _get_retranslate_window(*args: str) -> str:
+    """
+    Lấy chuỗi dịch cho cửa sổ từ các khóa trong từ điển dịch.
+
+    Args:
+        *args (str): Các khóa để truy cập vào từ điển dịch.
+
+    Returns:
+        str: Chuỗi dịch tương ứng.
+    """
     return reduce(lambda d, key: d[key], args, TRANS["menu"]["window"])
 
-
 class Menu(QMainWindow):
+    """
+    Lớp quản lý giao diện Menu chính.
+
+    Attributes:
+        load_shapes_thread (WorkingThread): Thread để tải các hình ảnh.
+        load_shapes_worker (WorkingWorker): Worker để tải các hình ảnh.
+
+        centralwidget (QWidget): Widget trung tâm.
+        title (QLabel): Tiêu đề của cửa sổ.
+        pptx (QGroupBox): Nhóm chứa thông tin về file PPTX.
+        csv (QGroupBox): Nhóm chứa thông tin về file CSV.
+        save (QGroupBox): Nhóm chứa thông tin về đường dẫn lưu file.
+        config (QGroupBox): Nhóm chứa thông tin cấu hình.
+        start_button (QPushButton): Nút bắt đầu.
+        logo (QLabel): Logo của ứng dụng.
+        github (QLabel): Biểu tượng GitHub.
+        about (QLabel): Biểu tượng About.
+        guide (QLabel): Biểu tượng Guide.
+        statusbar (QStatusBar): Thanh trạng thái.
+        progress (Progress): Widget Progress.
+    """
+    load_shapes_thread: Optional[type]  # Slot cho Thread để load shapes
+    load_shapes_worker: Optional[type]  # Slot cho Worker để load shapes
+
     def closeEvent(self, a0):
+        """
+        Xử lý sự kiện khi đóng cửa sổ.
+
+        Args:
+            a0: Sự kiện đóng cửa sổ.
+        """
         from src.utils.file import delete_file
         from globals import SHAPES_PATH
         from src.logging.debug import console_debug
@@ -47,17 +81,18 @@ class Menu(QMainWindow):
         return super().closeEvent(a0)
 
     def __init__(self):
+        """
+        Khởi tạo cửa sổ Menu.
+        """
         super().__init__()
         self._setupUi()
         self._retranslateUi()
         self._handleUI()
         self.progress = Progress(self)
-        self.get_shapes_thread = WorkingThread()
 
     def _setupUi(self):
         """
-        Sets up the user interface for the menu window.
-        This method initializes and configures the main window and its widgets.
+        Thiết lập giao diện người dùng.
         """
         self.setObjectName("menu")
         self.resize(959, 867)
@@ -91,7 +126,9 @@ class Menu(QMainWindow):
         QtCore.QMetaObject.connectSlotsByName(self)
 
     def __initTitle(self):
-        """Sets up the title label."""
+        """
+        Thiết lập tiêu đề.
+        """
         self.title = QLabel(self.centralwidget)
         self.title.setEnabled(True)
         self.title.setGeometry(QtCore.QRect(190, 20, 611, 81))
@@ -108,14 +145,16 @@ class Menu(QMainWindow):
         self.title.setObjectName("title")
 
     def __initPPTXGroupBox(self):
-        """Sets up the template group box."""
+        """
+        Thiết lập nhóm PPTX.
+        """
         self.pptx = QGroupBox(self.centralwidget)
         self.pptx.setGeometry(QtCore.QRect(20, 120, 411, 161))
         self.pptx.setObjectName("pptx")
 
-        self.pptx_broswe = QPushButton(self.pptx)
-        self.pptx_broswe.setGeometry(QtCore.QRect(300, 90, 93, 28))
-        self.pptx_broswe.setObjectName("pptx_broswe")
+        self.pptx_browse = QPushButton(self.pptx)
+        self.pptx_browse.setGeometry(QtCore.QRect(300, 90, 93, 28))
+        self.pptx_browse.setObjectName("pptx_browse")
 
         self.pptx_path = QLineEdit(self.pptx)
         self.pptx_path.setGeometry(QtCore.QRect(20, 90, 271, 31))
@@ -135,7 +174,9 @@ class Menu(QMainWindow):
         self.pptx_loaded.setVisible(False)
 
     def __initCSVGroupBox(self):
-        """Sets up the CSV group box."""
+        """
+        Thiết lập nhóm CSV.
+        """
         self.csv = QGroupBox(self.centralwidget)
         self.csv.setGeometry(QtCore.QRect(510, 120, 411, 161))
         self.csv.setObjectName("csv")
@@ -162,7 +203,9 @@ class Menu(QMainWindow):
         self.csv_loaded.setVisible(False)
 
     def __initSaveGroupBox(self):
-        """Sets up the save group box."""
+        """
+        Thiết lập nhóm Save.
+        """
         self.save = QGroupBox(self.centralwidget)
         self.save.setGeometry(QtCore.QRect(20, 720, 411, 121))
         self.save.setObjectName("save")
@@ -184,7 +227,9 @@ class Menu(QMainWindow):
         self.save_label.setObjectName("save_label")
 
     def __initConfigGroupBox(self):
-        """Sets up the config group box."""
+        """
+        Thiết lập nhóm Config.
+        """
         self.config = QGroupBox(self.centralwidget)
         self.config.setGeometry(QtCore.QRect(20, 300, 901, 401))
         self.config.setObjectName("config")
@@ -279,14 +324,18 @@ class Menu(QMainWindow):
         self.config_text_add_button.setEnabled(False)
 
     def __initStartButton(self):
-        """Sets up the main buttons."""
+        """
+        Thiết lập nút Start.
+        """
         self.start_button = QPushButton(self.centralwidget)
         self.start_button.setGeometry(QtCore.QRect(690, 740, 191, 71))
         self.start_button.setObjectName("start_button")
         self.start_button.setEnabled(False)
 
     def __initIcons(self):
-        """Sets up the additional labels."""
+        """
+        Thiết lập các biểu tượng.
+        """
         self.logo = QLabel(self.centralwidget)
         self.logo.setGeometry(QtCore.QRect(30, 20, 81, 81))
         self.logo.setObjectName("logo")
@@ -305,13 +354,15 @@ class Menu(QMainWindow):
         self.guide.setObjectName("guide")
 
     def _retranslateUi(self):
-        """Retranslates the UI elements."""
+        """
+        Dịch UI.
+        """
         _translate = QtCore.QCoreApplication.translate
 
-        # Window Title
+        # Tiêu đề cửa sổ
         self.setWindowTitle(_translate("menu", _get_retranslate_window("title")))
 
-        # Title
+        # Tiêu đề
         self.title.setText(_translate("menu", _get_retranslate_window("title").upper()))
 
         # Logo
@@ -350,9 +401,9 @@ class Menu(QMainWindow):
         )
         self.guide.setToolTip(_get_retranslate_window("guide"))
 
-        # PPTX Group Box
+        # Nhóm PPTX
         self.pptx.setTitle(_translate("menu", _get_retranslate_window("pptx", "title")))
-        self.pptx_broswe.setText(_translate("menu", _get_retranslate_window("broswe")))
+        self.pptx_browse.setText(_translate("menu", _get_retranslate_window("broswe")))
         self.pptx_label.setText(
             _translate(
                 "menu",
@@ -360,7 +411,7 @@ class Menu(QMainWindow):
             )
         )
 
-        # CSV Group Box
+        # Nhóm CSV
         self.csv.setTitle(_translate("menu", _get_retranslate_window("csv", "title")))
         self.csv_broswe.setText(_translate("menu", _get_retranslate_window("broswe")))
         self.csv_label.setText(
@@ -370,11 +421,11 @@ class Menu(QMainWindow):
             )
         )
 
-        # Config Group Box
+        # Nhóm Config
         self.config.setTitle(
             _translate("menu", _get_retranslate_window("config", "title"))
         )
-        # Config Text
+        # - Config Text
         self.config_text_label.setText(
             _translate(
                 "menu",
@@ -382,7 +433,13 @@ class Menu(QMainWindow):
             )
         )
         self.config_text_list.setSortingEnabled(False)
-        # Config Image Table
+        # - Config Image
+        self.config_image_label.setText(
+            _translate(
+                "menu",
+                f'<html><head/><body><p align="center"><span style=" font-weight:600;">{_get_retranslate_window("config", "image", "label")}</span></p></body></html>',
+            )
+        )
         item = self.config_image_table.horizontalHeaderItem(0)
         item.setText(
             _translate(
@@ -396,29 +453,21 @@ class Menu(QMainWindow):
             )
         )
 
-        # Config Image Label
-        self.config_image_label.setText(
-            _translate(
-                "menu",
-                f'<html><head/><body><p align="center"><span style=" font-weight:600;">{_get_retranslate_window("config", "image", "label")}</span></p></body></html>',
-            )
-        )
-
-        # Config Image View Shapes Button
+        # Nút Xem Shapes
         self.config_image_viewShapes.setText(
             _translate(
                 "menu", _get_retranslate_window("config", "image", "view_shapes")
             )
         )
 
-        # Config Image Auto Download Label
+        # Label Tự động tải xuống
         self.config_image_autodownload_label.setText(
             _translate(
                 "menu", _get_retranslate_window("config", "image", "auto_download")
             )
         )
 
-        # Save Group Box
+        # Nhóm Save
         self.save.setTitle(_translate("menu", _get_retranslate_window("save", "title")))
         self.save_broswe.setText(_translate("menu", _get_retranslate_window("broswe")))
         self.save_label.setText(
@@ -428,12 +477,13 @@ class Menu(QMainWindow):
             )
         )
 
-        # Start Button
+        # Nút Start
         self.start_button.setText(_translate("menu", _get_retranslate_window("start")))
 
     def _handleUI(self):
-        """Connects UI elements to their respective event handlers."""
-
+        """
+        Xử lý tương tác giao diện người dùng.
+        """
         # Mỗi lần save_path, pptx_path, csv_path, config_text_list và config_image_table thay đổi, kiểm tra xem start_button có được enable không
         self.save_path.textChanged.connect(lambda: check_start_button(self))
         self.pptx_path.textChanged.connect(lambda: check_start_button(self))
@@ -464,12 +514,8 @@ class Menu(QMainWindow):
                 check_start_button(self),
             }
         )
-        self.pptx_broswe.clicked.connect(lambda: broswe_button.pptx_broswe(self))
+        self.pptx_browse.clicked.connect(lambda: broswe_button.pptx_broswe(self))
         self.csv_broswe.clicked.connect(lambda: broswe_button.csv_broswe(self))
-        self.save_broswe.clicked.connect(
-            lambda: broswe_button.save_path_broswe(self.centralwidget, self.save_path)
-        )
-        self.config_image_viewShapes.clicked.connect(
-            lambda: config_image.shapes_viewShapes()
-        )
-        self.start_button.clicked.connect(lambda: start_button.handling(self))
+        self.save_broswe.clicked.connect(lambda: broswe_button.save_path_broswe(self))
+        self.config_image_viewShapes.clicked.connect(config_image.open_saved_shapes_folder)
+        self.start_button.clicked.connect(lambda: start_button.exec(self))

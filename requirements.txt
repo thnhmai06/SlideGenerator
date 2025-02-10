@@ -1,7 +1,8 @@
 PyQt5 # For GUI.
-pywin32 # For core
-polars # For CSV reading.
+pywin32 # For interacting with Powerpoint.
+polars # For csv processing.
 colorama # For console color.
+validators # For URL validation.
 gdown # For downloading files from Google Drive.
 pystache # For text replacement.
 pillow # For image processing.

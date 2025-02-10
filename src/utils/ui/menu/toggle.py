@@ -1,8 +1,19 @@
 from typing import TYPE_CHECKING
+from PyQt5.QtWidgets import QPushButton
 
 if TYPE_CHECKING:
     # Anti-circular import
     from src.ui.menu import Menu
+
+def toggle_pptx_browse_button(pptx_browse: QPushButton, is_enable: bool):
+    """
+    Bật hoặc tắt nút duyệt file PowerPoint.
+
+    Args:
+        pptx_browse (QPushButton): Nút duyệt file PowerPoint.
+        is_enable (bool): Trạng thái bật hoặc tắt.
+    """
+    pptx_browse.setEnabled(is_enable)
 
 def toggle_config_text(menu: "Menu", enable: bool):
     """Enable the config_text_list, add_button, and remove_button"""
@@ -13,7 +24,6 @@ def toggle_config_text(menu: "Menu", enable: bool):
     config_text_list.setEnabled(enable)
     add_button.setEnabled(enable)
     remove_button.setEnabled(enable)
-
 
 def toggle_config_image(menu: "Menu", enable: bool):
     """Enable the config_image_table, add_button, and remove_button"""

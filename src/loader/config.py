@@ -1,19 +1,38 @@
-from globals import user_input
 from PyQt5.QtWidgets import QListWidget, QTableWidget
+from globals import user_input
 
-def _get_text_config(config_text: QListWidget):
-    user_input.config.text.clear() # Clear all text config
+def _load_text_config(config_text: QListWidget):
+    """
+    Lấy Text Config từ widget và cập nhật vào user_input.
+
+    Args:
+        config_text (QListWidget): Widget chứa Text Config.
+    """
+    user_input.config.text.clear()  # Xóa text config được lưu trước đó
     for index in range(config_text.count()):
         item = config_text.item(index)
         user_input.config.add_text(item.text())
 
-def _get_image_config(config_image: QTableWidget):
-    user_input.config.image.clear() # Clear all image config
+def _load_image_config(config_image: QTableWidget):
+    """
+    Lấy Image Config từ widget và cập nhật vào user_input.
+
+    Args:
+        config_image (QTableWidget): Widget chứa Image Config.
+    """
+    user_input.config.image.clear()  # Xóa image config cũ được lưu trước đó
     for row in range(config_image.rowCount()):
         shape_index = int(config_image.item(row, 0).text())
         placeholder = config_image.item(row, 1).text()
         user_input.config.add_image(shape_index, placeholder)
 
-def get_config(config_text: QListWidget, config_image: QTableWidget):
-    _get_text_config(config_text)
-    _get_image_config(config_image)
+def load_config(config_text: QListWidget, config_image: QTableWidget):
+    """
+    Lấy Config từ các widget và cập nhật vào user_input.
+
+    Args:
+        config_text (QListWidget): Widget chứa Text Config.
+        config_image (QTableWidget): Widget chứa Image Config.
+    """
+    _load_text_config(config_text)
+    _load_image_config(config_image)

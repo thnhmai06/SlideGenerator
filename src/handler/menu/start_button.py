@@ -1,20 +1,30 @@
 from typing import TYPE_CHECKING
-from src.core.exec import work
 from globals import user_input
-from src.loader.config import get_config
+from src.core.main import work
+from src.loader.config import load_config
 
 if TYPE_CHECKING:
     # Anti-circular import
     from src.ui.menu import Menu
 
-# Riêng với start_button, sau khi các thông tin trong csv_path, save_path, pptx_path đã được điền đầy đủ, ta sẽ enable nó
 def check_start_button(menu: "Menu"):
-    '''Kiểm tra với mỗi lần nhập liệu, nếu đạt điều kiện chạy tối thiểu, thì enable start_button'''
-    csv_path = menu.csv_path  # noqa: F841
-    save_path = menu.save_path  # noqa: F841
-    pptx_path = menu.pptx_path  # noqa: F841
-    config_text = menu.config_text_list  # noqa: F841
-    config_image = menu.config_image_table  # noqa: F841
+    """
+    Kiểm tra với mỗi lần nhập liệu, nếu đạt điều kiện chạy tối thiểu, thì enable start_button.
+
+    **Điều kiện chạy tối thiểu:**
+    - Đã điền File pptx mẫu
+    - Đã điền File csv
+    - Đã điền vị trí lưu
+    - Đã điền ít nhất một cấu hình text hoặc image.
+
+    Args:
+        menu (Menu): Widget Menu.
+    """
+    csv_path = menu.csv_path
+    save_path = menu.save_path
+    pptx_path = menu.pptx_path
+    config_text = menu.config_text_list
+    config_image = menu.config_image_table 
     start_button = menu.start_button
 
     if csv_path.text() and save_path.text() and pptx_path.text() and (config_text.count() > 0 or config_image.rowCount() > 0):
@@ -22,11 +32,25 @@ def check_start_button(menu: "Menu"):
     else:
         start_button.setEnabled(False)
 
-def handling(menu: "Menu"):
-    '''Hàm này sẽ được gọi khi start_button được nhấn'''
-    get_config(menu.config_text_list, menu.config_image_table)
+def exec(menu: "Menu"):
+    """
+    Hàm này sẽ được gọi khi start_button được nhấn.
+
+    Args:
+        menu (Menu): Widget Menu.
+    """
     progress = menu.progress
 
+    # Load Text Config và Image Config vào user_input
+    load_config(menu.config_text_list, menu.config_image_table)
+
+    # Ẩn Menu và Hiện Progress
     menu.hide()
-    progress.show()    
-    work(progress, 1, user_input.csv.number_of_students)
+    progress.show()
+
+    # Bắt đầu công việc
+    work(
+        progress=progress, 
+        from_=1, 
+        to_=user_input.csv.number_of_students
+    )

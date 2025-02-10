@@ -1,14 +1,18 @@
 import requests
 from globals import TIMEOUT
 
-def download(url: str, output_path: str):
+def download(url: str, output_path: str) -> str | None | Exception:
     """
     Tải hình ảnh từ url xuống.
+
     Args:
         url (str): URL của file.
-        output (str): Đường dẫn để lưu file tải về.
+        output_path (str): Đường dẫn để lưu file tải về.
+
     Returns:
-        str: Đường dẫn tới file đã tải về nếu thành công, Exception: Nếu có lỗi xảy ra, None: Nếu không tải được file.
+        str: Đường dẫn tới file đã tải về nếu thành công.
+        None: Nếu không tải được file.
+        Exception: Nếu có lỗi xảy ra.
     """
     try:
         response = requests.get(url, allow_redirects=True, timeout=TIMEOUT, stream=True)
@@ -17,4 +21,4 @@ def download(url: str, output_path: str):
                 f.write(response.content)
             return output_path
     except Exception as e:
-        return e 
+        return None #TODO: Handle Exception

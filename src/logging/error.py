@@ -1,24 +1,18 @@
 import logging
-import traceback
-from src.ui import diaglogs
+from src.ui.diaglogs import error as show_error_diaglog
 from translations import TRANS
 
-
-def show_err_diaglog(window_name: str, title: str, details: str = None):
-    diaglogs.error(window_name, title, details)  # Show error dialog
-
-
 def console_error(where: str, content: str) -> None:
+    """
+    Ghi log lỗi ra console.
+
+    Args:
+        where (str): Tên module hoặc vị trí gọi hàm.
+        content (str): Nội dung lỗi.
+    """
     logger = logging.getLogger(where)
     if content:
         logger.error(content)
-
-
-def _console_critical(where: str, content: str) -> None:
-    logger = logging.getLogger(where)
-    if content:
-        logger.critical(content)
-
 
 def default(
     where: str,
@@ -27,26 +21,14 @@ def default(
     window_name: str = TRANS["diaglogs"]["error"]["window_name"],
 ) -> None:
     """
-    title_key: str - Tương ứng với key trong translation
-    error_name: str - Lỗi là lỗi gì bên dưới title_key
-    details: str - Chi tiết lỗi
-    window_name: str - Tên của cửa sổ
+    Ghi log lỗi mặc định và hiển thị hộp thoại lỗi.
+
+    Args:
+        where (str): Tên module hoặc vị trí gọi hàm.
+        title_key (str): Khóa tiêu đề trong file dịch.
+        details (str, optional): Chi tiết lỗi. Mặc định là None.
+        window_name (str, optional): Tên cửa sổ. Mặc định như trong file dịch quy định.
     """
     title = TRANS["diaglogs"]["error"][title_key]
     console_error(where, f"{title}{'\n' if details else ''}{details or ''}")
-    show_err_diaglog(window_name, title, details)
-
-
-def exception(
-    where: str,
-    exctype: BaseException,
-    value: str,
-    tb: traceback.TracebackException,
-    window_name: str = TRANS["diaglogs"]["error"]["window_name"]
-    or "LANG is not found!",
-) -> None:
-    error_name = exctype.__name__
-    title = f"{TRANS['diaglogs']['error']['exception']}\n\n{error_name}: {value}"
-    details = "".join(traceback.format_tb(tb))
-    _console_critical(where, f"{title}\n{details}")
-    show_err_diaglog(window_name, title, f"{error_name}: {value}\n{details}")
+    show_error_diaglog(window_name, title, details)
