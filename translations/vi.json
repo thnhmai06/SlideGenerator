@@ -7,13 +7,13 @@
                 "title": "B1. Chọn mẫu",
                 "label": "Chọn file mẫu PowerPoint",
                 "extension": "(.pptx)",
-                "loaded": "Đã tải {shapes} shapes được fill bởi hình ảnh/texture"
+                "loaded": "Đã tải {{shapes}} shapes được fill bởi hình ảnh/texture"
             },
             "csv": {
                 "title": "B2. Chọn danh sách sinh viên",
                 "label": "Chọn danh sách sinh viên",
                 "extension": "(.csv)",
-                "loaded": "File chứa {fields} cột và {students} sinh viên"
+                "loaded": "File chứa {{fields}} cột và {{students}} sinh viên"
             },
             "config": {
                 "title": "B3. Thiết lập thay thế",
@@ -40,7 +40,7 @@
             "language": {
                 "title": "Ngôn ngữ",
                 "change": "Thay đổi ngôn ngữ",
-                "current": "Ngôn ngữ hiện tại: {lang}"
+                "current": "Ngôn ngữ hiện tại: {{lang}}"
             }
         }
     },
@@ -52,23 +52,28 @@
                 "open_presentation": "Đang mở file PowerPoint",
                 "try_save": "Thử lưu file PowerPoint để kiểm tra lỗi",
                 "started": "============== Bắt đầu ===============",
-                "read_student": "- Đọc thông tin sinh viên thứ: ",
+                "read_student": "- Đọc thông tin sinh viên thứ {{num}}",
                 "duplicate_slide": "- Nhân bản slide mẫu",
                 "replace_text": "- Thay thế văn bản cho slide",
+                "retry": {
+                    "cooldown": "(Thất bại, thử lại sau {{delay}} giây)",
+                    "attempt": "Thử lại lần {{attempt}}/{{retries}}"
+                },
                 "download_image": {
-                    "start": "- Đang tải ảnh xuống: ",
-                    "success": "Đã tải xuống, lưu ở:",
-                    "failed": "Không tải được hình ảnh từ: ",
-                    "no_link": "Không có liên kết để tải cho sinh viên số ",
-                    "invalid_url": "URL không hợp lệ: "
+                    "check_vaild": "- Kiểm tra link ảnh có hợp lệ không: {{url}}",
+                    "start": "- Đang tải ảnh xuống: {{url}}",
+                    "success": "Đã tải xuống, lưu ở: {{path}}",
+                    "failed": "Không tải được hình ảnh từ: {{url}}",
+                    "no_link": "- Không có link ảnh của sinh viên {{student_num}}",
+                    "invalid_url": "- URL không hợp lệ: {{url}}"
                 },
-                "keep_original_image": "- Giữ nguyên hình ảnh gốc cho shape ",
+                "keep_original_image": "- Giữ nguyên hình ảnh gốc cho shape {{num}}",
                 "process_image": {
-                    "start": "- Đang xử lý hình ảnh: ",
+                    "start": "- Đang xử lý hình ảnh: {{path}}",
                     "success": "Đã xử lý xong hình ảnh!",
-                    "skip": "- Bỏ qua việc xử lý hình ảnh!"
+                    "skip": "Bỏ qua việc xử lý hình ảnh!"
                 },
-                "replace_image": "- Thay thế hình ảnh cho shape: ",
+                "replace_image": "- Thay thế hình ảnh cho shape {{num}}",
                 "saving": "- Lưu lại file",
                 "finish_replace": "---------------------------------",
                 "ended": "============== Kết thúc ==============",
@@ -76,18 +81,31 @@
                 "delete_image_folder": "Xóa thư mục ảnh vừa tải xuống",
                 "close_presentation": "Đóng file PowerPoint",
                 "free_com_environment": "Giải phóng môi trường giao thức",
-                "save_path": "Vị trí file: "
+                "save_path": "Vị trí file: {{path}}",
+                "download": {
+                    "start": "Đang tải xuống: {{url}}",
+                    "success": "Đã tải xuống thành công: {{path}}",
+                    "failed": "Không tải được từ: {{url}}"
+                },
+                "google_drive": {
+                    "start": "Đang tải từ Google Drive: {{url}}",
+                    "success": "Đã tải từ Google Drive thành công: {{path}}",
+                    "failed": "Không tải được từ Google Drive: {{url}}"
+                }
             },
             "error": {
-                "uncaught_exception": "Đã xảy ra lỗi không mong muốn:",
+                "uncaught_exception": "Đã xảy ra lỗi không mong muốn: {{error}}",
                 "download_image": {
-                    "return_none": "Không tải được hình ảnh từ URL: ",
-                    "return_exception": "Lỗi khi tải hình ảnh: "
+                    "return_exception": "Lỗi khi tải ảnh: {{error}}",
+                    "invalid_url": "URL không hợp lệ: {{link}}",
+                    "connection_error": "Lỗi kết nối khi tải: {{url}}",
+                    "timeout": "Quá thời gian chờ để tải: {{url}}",
+                    "no_link": "Không có liên kết để tải cho sinh viên số {{num}}",
+                    "failed": "Không tải được hình ảnh từ: {{link}}",
+                    "return_none": "Không tải được hình ảnh từ URL: {{link}}"
                 },
-                "process_image": {
-                    "error": "Lỗi khi xử lý hình ảnh: "
-                },
-                "PermissionError": "Thiếu quyền để truy cập đến file lưu!\nHãy đảm bảo file lưu không bị mở bởi ứng dụng khác hoặc bị thiếu quyền để truy cập!\n"
+                "process_image": "Lỗi khi xử lý hình ảnh: {{error}}",
+                "permission": "Thiếu quyền để truy cập đến file lưu!\nHãy đảm bảo file lưu không bị mở bởi ứng dụng khác hoặc bị thiếu quyền để truy cập!\n"
             }
         },
         "label": {
@@ -156,67 +174,6 @@
             "pptx_load": "Tải file Template: ",
             "csv_load": "Tải file DSSV: ",
             "save_load": "Thiết lập Lưu file tại: "
-        }
-    },
-    "errors": {
-        "uncaught_exception": "Đã xảy ra lỗi không mong muốn: {error}",
-        "application": {
-            "general": "Lỗi ứng dụng: {error}",
-            "startup": "Lỗi khi mở ứng dụng: {error}",
-            "shutdown": "Lỗi khi đóng ứng dụng: {error}"
-        },
-        "image_processing": {
-            "file_not_found": "File không tồn tại: {path}",
-            "unsupported_format": "Định dạng ảnh không hỗ trợ: {path}",
-            "unidentified": "Không thể nhận dạng định dạng hình ảnh: {error}",
-            "os_error": "Lỗi hệ thống khi xử lý hình ảnh: {error}",
-            "general": "Lỗi xử lý ảnh: {error}"
-        },
-        "download_image": {
-            "invalid_url": "URL không hợp lệ: {link}",
-            "connection_error": "Lỗi kết nối khi tải: {url}",
-            "timeout": "Quá thời gian chờ khi tải: {url}",
-            "no_link": "Không có liên kết để tải cho sinh viên số {num}",
-            "failed": "Không tải được hình ảnh từ: {link}",
-            "return_none": "Không tải được hình ảnh từ URL: {link}",
-            "return_exception": "Lỗi khi tải hình ảnh: {error}",
-            "general": "Lỗi tải ảnh: {error}"
-        },
-        "file": {
-            "not_found": "Không tìm thấy file: {path}",
-            "permission_denied": "Không có quyền truy cập file: {path}",
-            "general": "Lỗi file: {error}"
-        },
-        "powerpoint": {
-            "not_installed": "Microsoft PowerPoint không được cài đặt",
-            "cannot_open": "Không thể mở file PowerPoint: {path}",
-            "cannot_save": "Không thể lưu file PowerPoint: {path}",
-            "general": "Lỗi PowerPoint: {error}"
-        }
-    },
-    "success": {
-        "image_processing": {
-            "completed": "Xử lý ảnh thành công: {path}"
-        },
-        "download_image": {
-            "completed": "Tải ảnh thành công: {link}"
-        },
-        "file": {
-            "saved": "Đã lưu file: {path}"
-        },
-        "application": {
-            "language_changed": "Đã thay đổi ngôn ngữ thành: {lang}"
-        }
-    },
-    "info": {
-        "processing": "Đang xử lý...",
-        "waiting": "Đang chờ...",
-        "completed": "Hoàn thành",
-        "skipped": "Đã bỏ qua",
-        "language": {
-            "available": "Các ngôn ngữ có sẵn: {langs}",
-            "current": "Ngôn ngữ hiện tại: {lang}",
-            "fallback": "Ngôn ngữ dự phòng: {lang}"
         }
     }
 }

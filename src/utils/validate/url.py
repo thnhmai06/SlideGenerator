@@ -1,7 +1,16 @@
 import requests
 import validators
+from classes.models import ProgressLogLevel
 from src.logging.error import console_error
+from src.utils.retry import retry_with_exponential_backoff
 from globals import TIMEOUT, IMAGE_EXTENSIONS
+from src.ui.progress import log_progress
+
+def _attempt_callback(attempt: int, retries: int):
+    log_progress(__name__, ProgressLogLevel.INFO, "retry.attempt", attempt=attempt, retries=retries)
+
+def _cooldown_callback(delay: float):
+    log_progress(__name__, ProgressLogLevel.INFO, "retry.cooldown", delay=round(delay, 2))
 
 def is_url(url: str) -> bool:
     """
@@ -18,6 +27,7 @@ def is_url(url: str) -> bool:
         return True
     return False
 
+@retry_with_exponential_backoff(on_attempt=_attempt_callback, on_cooldown=_cooldown_callback)
 def get_image_extension(url: str) -> str:
     """
     Kiểm tra xem url đã cho có phải là url của ảnh không và trả về phần mở rộng của file.

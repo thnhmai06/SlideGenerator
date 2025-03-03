@@ -21,7 +21,7 @@ def replace_text(slide, student: dict) -> bool:
     log_progress(__name__, ProgressLogLevel.INFO, "replace_text")
     
     # Chuẩn bị placeholders cho pystache
-    placeholders = {}
+    placeholders = dict()
     for key in user_input.csv.placeholders:
         value = student.get(key)
         # Nếu giá trị là None hoặc không tồn tại, sử dụng chuỗi rỗng
@@ -98,13 +98,13 @@ def _replace_image_in_one_shape(slide, student_index: int, shape_index: int, ima
     """
     # Nếu không có URL hình ảnh, giữ nguyên hình ảnh gốc
     if not image_url:
-        log_progress(__name__, ProgressLogLevel.INFO, "keep_original_image", str(shape_index))
+        log_progress(__name__, ProgressLogLevel.INFO, "keep_original_image", num=shape_index)
         return False
     
     # Tải hình ảnh
     image_path = download_image(image_url, student_index)
     if not image_path:
-        log_progress(__name__, ProgressLogLevel.INFO, "keep_original_image", str(shape_index))
+        log_progress(__name__, ProgressLogLevel.INFO, "keep_original_image", num=shape_index)
         return False
     
     # Xử lý hình ảnh
@@ -115,7 +115,7 @@ def _replace_image_in_one_shape(slide, student_index: int, shape_index: int, ima
     _fill_image_into_filler(shape.Fill, processed_image_path, as_texture=False)
     
     # Ghi log
-    log_progress(__name__, ProgressLogLevel.INFO, "replace_image", f"{shape_index}")
+    log_progress(__name__, ProgressLogLevel.INFO, "replace_image", num=shape_index)
     return True
 
 def replace_image(slide, student: dict, student_index: int) -> bool:
@@ -146,4 +146,3 @@ def replace_image(slide, student: dict, student_index: int) -> bool:
             )
     
     return True
-

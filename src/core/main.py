@@ -85,38 +85,13 @@ class CoreWorker(QObject):
         """
         exception_traceback = traceback.format_exc()
         if isinstance(exception, PermissionError):
-            log_progress(
-                __name__,
-                ProgressLogLevel.ERROR,
-                "PermissionError",
-                exception_traceback,
-            )
-            
+            error_message = log_progress(__name__, ProgressLogLevel.ERROR, "permission", error=exception_traceback)
             window_name = get_text("diaglogs.error.window_name")
-            error_message = get_text("progress.log.error.PermissionError")
-            
-            self.show_err_diaglog.emit(
-                window_name,
-                error_message,
-                exception_traceback,
-            )
+            self.show_err_diaglog.emit(window_name, error_message, exception_traceback)
         else:
-            log_progress(
-                __name__,
-                ProgressLogLevel.ERROR,
-                "uncaught_exception",
-                exception_traceback,
-            )
-            
+            error_message = log_progress( __name__, ProgressLogLevel.ERROR, "uncaught_exception", error=exception_traceback)
             window_name = get_text("diaglogs.error.window_name")
-            error_title = get_text("progress.log.error.uncaught_exception")
-            error_message = format_text("errors.uncaught_exception", error=str(exception))
-            
-            self.show_err_diaglog.emit(
-                window_name,
-                f"{error_title}\n\n{error_message}",
-                exception_traceback,
-            )
+            self.show_err_diaglog.emit(window_name, f"{error_message}\n\n{str(exception)}", exception_traceback)
     
     def _prepare(self):
         """
@@ -149,6 +124,7 @@ class CoreWorker(QObject):
         # Thử lưu File
         log_progress(__name__, ProgressLogLevel.INFO, "try_save")
         self.powerpoint.presentation.Save()
+        log_progress(__name__, ProgressLogLevel.INFO, "save_path", path=user_input.save.path)
 
     def _each(self, index: int):
         """
@@ -160,8 +136,8 @@ class CoreWorker(QObject):
         # Cập nhật label trạng thái
         self.progress_label_set_label.emit("replacing", (str(index), f"({self.current}/{self.total})"))
 
-        # Lấy thông tin sinh viên thứ num
-        log_progress(__name__, ProgressLogLevel.INFO, "read_student", str(index))
+        # Lấy thông tin sinh viên thứ index
+        log_progress(__name__, ProgressLogLevel.INFO, "read_student", num=index)
         student = user_input.csv.get(index)[0]
 
         # Nhân bản slide
@@ -247,7 +223,7 @@ class CoreWorker(QObject):
         log_progress(__name__, ProgressLogLevel.INFO, "ended")
 
         # Thông báo vị trí lưu file
-        log_progress(__name__, ProgressLogLevel.INFO, "save_path", user_input.save.path)
+        log_progress(__name__, ProgressLogLevel.INFO, "save_path", path=user_input.save.path)
 
     def run(self):
         """

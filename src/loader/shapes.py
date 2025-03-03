@@ -9,7 +9,7 @@ from src.utils.file import delete_file
 from src.utils.ui.menu.clear import clear_config_image_table
 from src.utils.ui.menu.toggle import toggle_pptx_browse_button, toggle_config_image
 from src.utils.ui.menu.set import set_pptx_loaded_label
-from src.utils import logging
+from src.utils.ui.menu import logging as menu_logging
 from globals import user_input, SHAPES_PATH
 from translations import get_text
 
@@ -186,10 +186,10 @@ def load_shapes(menu: "Menu"):
 
     #? Nối tín hiệu
     # - Kết nối các hàm báo cáo file không phù hợp với signal
-    menu.load_shapes_worker.logging_no_slide.connect(lambda: logging.no_slide(menu.pptx_path))
-    menu.load_shapes_worker.logging_too_much_slide.connect(lambda: logging.too_much_slide(menu.pptx_path))
-    menu.load_shapes_worker.logging_can_not_open.connect(lambda exception: logging.can_not_open(menu.pptx_path, exception))
-    menu.load_shapes_worker.logging_always_read_only.connect(lambda: logging.always_read_only(menu.pptx_path))
+    menu.load_shapes_worker.logging_no_slide.connect(lambda: menu_logging.no_slide(menu.pptx_path))
+    menu.load_shapes_worker.logging_too_much_slide.connect(lambda: menu_logging.too_much_slide(menu.pptx_path))
+    menu.load_shapes_worker.logging_can_not_open.connect(lambda exception: menu_logging.can_not_open(menu.pptx_path, exception))
+    menu.load_shapes_worker.logging_always_read_only.connect(lambda: menu_logging.always_read_only(menu.pptx_path))
     # - Kết nối các hàm xử lý UI với signal
     menu.load_shapes_worker.toggle_browse_button.connect(lambda is_enable: toggle_pptx_browse_button(menu.pptx_browse, is_enable))
     menu.load_shapes_worker.toggle_config_image.connect(lambda is_enable: toggle_config_image(menu, is_enable))

@@ -1,3 +1,4 @@
+from pystache import render as render_text
 from typing import TYPE_CHECKING, Optional, Tuple
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtWidgets import QWidget, QPlainTextEdit, QMessageBox
@@ -87,41 +88,29 @@ class TextEditLogger(QtCore.QObject):
         self.widget.setLineWrapMode(QPlainTextEdit.NoWrap)
         TextEditLogger._instance = self
 
-    def append(self, where: str, level: str, key: Optional[str] = None, content: Optional[any] = "") -> str:
+    def append(self, where: str, level: str, key: Optional[str] = None, **kwargs) -> str:
         """
         Thêm một log vào ProgressLog.
 
         Args:
             where (str): Vị trí thêm log.
             level (str): Mức độ log (info, error).
-            key (Optional[str]): Khóa để lấy tiêu đề từ từ điển dịch. Mặc định là None.
-            content (Optional[any]): Nội dung thông báo log.
+            key (Optional[str]): Khóa để lấy template từ từ điển dịch.
+            **kwargs: Các tham số để render template.
 
         Returns:
-            str: Thông báo log.
+            str: Thông báo log đã được render.
         """
-        # Đảm bảo content không bao giờ là None
-        content = "" if content is None else content
-        
-        if not isinstance(content, str):
-            content = str(content)
-
         match level:
             case ProgressLogLevel.INFO:
-                title = _get_nested_text("progress.log.info", key)
-                # Nếu content đã chứa title, không thêm title vào nữa
-                if content and title and content.startswith(title):
-                    text = content
-                else:
-                    text = title + content
+                text = _get_nested_text("progress.log.info", key)
+                if text:
+                    text = render_text(text, kwargs)
                 console_info(where, text)
             case ProgressLogLevel.ERROR:
-                title = _get_nested_text("progress.log.error", key)
-                # Nếu content đã chứa title, không thêm title vào nữa
-                if content and title and content.startswith(title):
-                    text = content
-                else:
-                    text = title + content
+                text = _get_nested_text("progress.log.error", key)
+                if text:
+                    text = render_text(text, kwargs)
                 console_error(where, text)
 
         self.appendPlainText.emit(text)
@@ -138,44 +127,35 @@ class TextEditLogger(QtCore.QObject):
         return cls._instance
 
 # Hàm tiện ích để ghi log từ bất kỳ đâu
-def log_progress(where: str, level: str, key: Optional[str] = None, content: Optional[str] = "") -> str:
+def log_progress(where: str, level: str, key: Optional[str] = None, **kwargs) -> str:
     """
     Ghi log vào ProgressLog từ bất kỳ đâu trong ứng dụng.
 
     Args:
         where (str): Vị trí thêm log.
         level (str): Mức độ log (info, error).
-        key (Optional[str]): Khóa để lấy tiêu đề từ từ điển dịch. Mặc định là None.
-        content (Optional[str]): Nội dung thông báo log.
+        key (Optional[str]): Khóa để lấy tiêu đề và mẫu từ từ điển dịch.
+        **kwargs: Các tham số để render template.
 
     Returns:
-        str: Thông báo log.
+        str: Thông báo log đã được render.
     """
-    # Đảm bảo content không bao giờ là None
-    content = "" if content is None else content
-    
     instance = TextEditLogger.get_instance()
     if instance:
-        return instance.append(where, level, key, content)
+        return instance.append(where, level, key, **kwargs)
     else:
         # Fallback nếu không có instance
         match level:
             case ProgressLogLevel.INFO:
-                title = _get_nested_text("progress.log.info", key)
-                # Nếu content đã chứa title, không thêm title vào nữa
-                if content and title and content.startswith(title):
-                    text = content
-                else:
-                    text = title + content
+                text = _get_nested_text("progress.log.info", key)
+                if text:
+                    text = render_text(text, kwargs)
                 console_info(where, text)
                 return text
             case ProgressLogLevel.ERROR:
-                title = _get_nested_text("progress.log.error", key)
-                # Nếu content đã chứa title, không thêm title vào nữa
-                if content and title and content.startswith(title):
-                    text = content
-                else:
-                    text = title + content
+                text = _get_nested_text("progress.log.error", key)
+                if text:
+                    text = render_text(text, kwargs)
                 console_error(where, text)
                 return text
         return ""

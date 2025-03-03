@@ -3,6 +3,7 @@ import os
 import re
 from typing import Dict, Any, Optional, List, Callable, Set
 from functools import lru_cache
+from pystache import render as render_text
 from globals import LANG, TRANSLATION_PATH
 
 # Type định nghĩa cho hàm callback khi ngôn ngữ thay đổi
@@ -251,7 +252,7 @@ class TranslationManager:
                 
         text = self.get_text(key_path)
         try:
-            return text.format(**kwargs)
+            return render_text(text, kwargs)
         except (KeyError, ValueError):
             return text
     

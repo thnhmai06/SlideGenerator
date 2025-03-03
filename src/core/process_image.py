@@ -23,7 +23,7 @@ def process_image(image_path: str, shape) -> str:
     Returns:
         str: Đường dẫn đến hình ảnh đã xử lý.
     """
-    log_progress(__name__, ProgressLogLevel.INFO, "process_image.start", image_path)
+    log_progress(__name__, ProgressLogLevel.INFO, "process_image.start", path=image_path)
 
     # Lấy tên file từ đường dẫn
     file_name = os.path.basename(image_path)
@@ -50,18 +50,8 @@ def process_image(image_path: str, shape) -> str:
         
         log_progress(__name__, ProgressLogLevel.INFO, "process_image.success")
         return processed_path
-    except UnidentifiedImageError as e:
-        error_message = format_text("errors.image_processing.unidentified", error=str(e))
-        log_progress(__name__, ProgressLogLevel.ERROR, "process_image.error", error_message)
-        log_progress(__name__, ProgressLogLevel.INFO, "process_image.skip")
-        return image_path
-    except OSError as e:
-        error_message = format_text("errors.image_processing.os_error", error=str(e))
-        log_progress(__name__, ProgressLogLevel.ERROR, "process_image.error", error_message)
-        log_progress(__name__, ProgressLogLevel.INFO, "process_image.skip")
-        return image_path
+    
     except Exception as e:
-        error_message = format_text("errors.image_processing.general", error=str(e))
-        log_progress(__name__, ProgressLogLevel.ERROR, "process_image.error", error_message)
+        log_progress(__name__, ProgressLogLevel.ERROR, "process_image", error=str(e))
         log_progress(__name__, ProgressLogLevel.INFO, "process_image.skip")
         return image_path

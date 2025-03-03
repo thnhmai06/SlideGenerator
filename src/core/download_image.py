@@ -2,15 +2,12 @@ import os
 import re
 from typing import Optional, Union
 from classes.models import ProgressLogLevel
-from src.utils.check_link import (
+from src.utils.validate import (
     local_file as local_check,
     google_drive as GD_check,
     url as url_check
 )
-from src.utils.download import (
-    google_drive as GD_download,
-    url as url_download 
-)
+from src.utils.download import url
 from globals import DOWNLOAD_PATH
 from src.utils.file import copy_file
 from src.ui.progress import log_progress
@@ -30,17 +27,14 @@ def _handle_download_result(result: DownloadResult, link: str) -> bool:
         bool: True nếu tải xuống thành công, False nếu thất bại.
     """
     if result is None:
-        error_message = link
-        log_progress(__name__, ProgressLogLevel.ERROR, "download_image.return_none", error_message)
+        log_progress(__name__, ProgressLogLevel.ERROR, "download_image.failed", url=link)
         return False
     
     if isinstance(result, Exception):
-        error_message = str(result)
-        log_progress(__name__, ProgressLogLevel.ERROR, "download_image.return_exception", error_message)
+        log_progress(__name__, ProgressLogLevel.ERROR, "download_image.return_exception", error=str(result))
         return False
     
-    # Chỉ truyền link vào log_progress để tránh lặp lại thông báo
-    log_progress(__name__, ProgressLogLevel.INFO, "download_image.success", link)
+    log_progress(__name__, ProgressLogLevel.INFO, "download_image.success", path=result)
     return True
 
 def _download_from_url(link: str, num: int) -> Optional[str]:
@@ -54,20 +48,20 @@ def _download_from_url(link: str, num: int) -> Optional[str]:
     Returns:
         Optional[str]: Đường dẫn đến hình ảnh đã tải xuống, None nếu thất bại.
     """
-    log_progress(__name__, ProgressLogLevel.INFO, "download_image.start", link)
     
     # Kiểm tra xem URL có phải là hình ảnh không
     ext = url_check.get_image_extension(link)
     if not ext:
         # Hiển thị thông báo lỗi nếu không phải là hình ảnh
-        log_progress(__name__, ProgressLogLevel.INFO, "download_image.failed", link)
+        log_progress(__name__, ProgressLogLevel.INFO, "download_image.failed", url=link)
         return None
         
     # Tải xuống hình ảnh
+    log_progress(__name__, ProgressLogLevel.INFO, "download_image.start", url=link)
     file_name = f"image_{num}.{ext}"
     file_path = os.path.join(DOWNLOAD_PATH, file_name)
     file_path = os.path.abspath(file_path)
-    result = url_download.download(link, file_path)
+    result = url.download(link, file_path)
     
     # Xử lý kết quả
     if _handle_download_result(result, link):
@@ -90,24 +84,24 @@ def _download_from_google_drive(link: str, num: int) -> Optional[str]:
     file_id = GD_check.get_file_id_from_google_drive_url(link)
     if not file_id:
         # Hiển thị thông báo lỗi nếu không lấy được ID
-        log_progress(__name__, ProgressLogLevel.INFO, "download_image.failed", link)
+        log_progress(__name__, ProgressLogLevel.INFO, "download_image.failed", url=link)
         return None
-        
-    view_link = GD_check.get_view_url(file_id)
+    
     download_link = GD_check.get_download_url(file_id)
     
     # Kiểm tra xem file có phải là hình ảnh không
     ext = url_check.get_image_extension(download_link)
     if not ext:
         # Hiển thị thông báo lỗi nếu không phải là hình ảnh
-        log_progress(__name__, ProgressLogLevel.INFO, "download_image.failed", link)
+        log_progress(__name__, ProgressLogLevel.INFO, "download_image.failed", url=link)
         return None
         
     # Tải xuống hình ảnh
+    log_progress(__name__, ProgressLogLevel.INFO, "download_image.start", url=link)
     file_name = f"image_{num}.{ext}"
     file_path = os.path.join(DOWNLOAD_PATH, file_name)
     file_path = os.path.abspath(file_path)
-    result = GD_download.download(view_link, file_path)
+    result = url.download(download_link, file_path)
     
     # Xử lý kết quả
     if _handle_download_result(result, link):
@@ -128,8 +122,7 @@ def download_image(link: str, num: int) -> Optional[str]:
     """
     # Nếu link trống
     if not link or link.strip() == "":
-        no_link_message = str(num)
-        log_progress(__name__, ProgressLogLevel.INFO, "download_image.no_link", no_link_message)
+        log_progress(__name__, ProgressLogLevel.INFO, "download_image.no_link", student_num=num)
         return None
     
     # Nếu link là đường dẫn file
@@ -142,16 +135,15 @@ def download_image(link: str, num: int) -> Optional[str]:
     
     # Kiểm tra xem URL đã có giao thức chưa
     has_protocol = re.match(r"^[a-zA-Z]+://", link)
-    
     # Thêm giao thức https nếu chưa có giao thức
     if not has_protocol:
         link = "https://" + link
     
+    log_progress(__name__, ProgressLogLevel.INFO, "download_image.check_vaild", url=link)
     # Nếu link không hợp lệ
     if not url_check.is_url(link):
-        log_progress(__name__, ProgressLogLevel.INFO, "download_image.invalid_url", link)
+        log_progress(__name__, ProgressLogLevel.INFO, "download_image.invalid_url", url=link)
         return None
-    
     # Nếu link là Google Drive
     if GD_check.is_google_drive_url(link):
         return _download_from_google_drive(link, num)

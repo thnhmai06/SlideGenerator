@@ -9,7 +9,8 @@ from classes.models import Input
 __CONFIG = ConfigParser()
 __CONFIG.read("./settings.ini")
 LANG = __CONFIG.get("Config", "lang")  # Ngôn ngữ của ứng dụng
-TIMEOUT = __CONFIG.getint("Config", "timeout")  # Thời gian chờ cho các yêu cầu mạng
+TIMEOUT = __CONFIG.getfloat("Config", "timeout")  # Thời gian chờ cho các yêu cầu mạng
+RETRIES = __CONFIG.getint("Config", "retry")  # Số lần thử lại khi có lỗi tải xuống
 DEBUG_MODE = __CONFIG.getboolean("Debug", "debug")  # Chế độ gỡ lỗi có bật hay không
 
 # ? Cấu hình

@@ -25,8 +25,7 @@ def exception_handler(exc_type: Type[BaseException], exc_value: BaseException, e
         exc_value: Giá trị ngoại lệ.
         exc_traceback: Thông tin traceback.
     """
-    error_message = format_text("errors.uncaught_exception", error=str(exc_value))
-    critical(__name__, exc_value, exc_traceback, error_message)
+    critical(__name__, exc_value, exc_traceback, str(exc_value))
 
 def setup_application() -> None:
     """
@@ -64,10 +63,9 @@ def main() -> int:
         # Chạy ứng dụng và trả về mã thoát
         return app.exec_()
     except Exception as e:
-        error_message = format_text("errors.application.general", error=str(e))
         # Lấy traceback hiện tại
         tb = sys.exc_info()[2]
-        critical(__name__, e, tb, error_message)
+        critical(__name__, e, tb, str(e))
         return 1
 
 if __name__ == "__main__":
