@@ -1,6 +1,5 @@
 import sys
-import traceback
-from typing import Type, Optional, Any
+from typing import Type, Any
 from classes.threads import PowerPointCheckThread
 from src.ui.menu import Menu as MenuUI
 from src.logging.critical import critical

@@ -20,5 +20,5 @@ def download(url: str, output_path: str) -> str | None | Exception:
             with open(output_path, 'wb') as f:
                 f.write(response.content)
             return output_path
-    except Exception as e:
+    except Exception:
         return None #TODO: Handle Exception

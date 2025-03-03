@@ -15,5 +15,5 @@ def download(url: str, output_path: str) -> str | None | Exception:
     """
     try:
         return gdown.download(url, output_path, quiet=False)
-    except Exception as e:
+    except Exception:
         return None # TODO: Handle Exception
