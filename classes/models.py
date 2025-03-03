@@ -98,7 +98,7 @@ class Input:
 
         Attributes:
             text (List[str]): Danh sách các Text Config.
-            image (List[Input.Config.ConfigImage]): Danh sách các Image Config.
+            images (List[Input.Config.ConfigImage]): Danh sách các Image Config.
         """
         class ConfigImage:
             """
@@ -114,7 +114,7 @@ class Input:
 
         def __init__(self):
             self.text: List[str] = []
-            self.image: List[Input.Config.ConfigImage] = []
+            self.images: List[Input.Config.ConfigImage] = []
 
         def add_text(self, text: str):
             """
@@ -134,7 +134,7 @@ class Input:
                 placeholder (str): Placeholder của hình ảnh.
             """
             config_image_item = self.ConfigImage(placeholder, shape_index)
-            self.image.append(config_image_item)
+            self.images.append(config_image_item)
 
     def __init__(self):
         self.pptx = self.Path()

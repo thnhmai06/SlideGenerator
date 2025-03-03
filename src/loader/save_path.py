@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QLineEdit
 from src.logging.info import console_info
-from translations import TRANS
+from translations import get_text
 from globals import user_input
 
 def load_save_path(line_widget: QLineEdit) -> str:
@@ -14,6 +14,6 @@ def load_save_path(line_widget: QLineEdit) -> str:
         str: Đường dẫn lưu.
     """
     save_path = line_widget.text()
-    console_info(__name__, TRANS["console"]["info"]["save_load"], save_path)
+    console_info(__name__, get_text("console.info.save_load"), save_path)
     user_input.save.setPath(save_path)
     return save_path

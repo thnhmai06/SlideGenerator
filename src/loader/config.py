@@ -20,7 +20,7 @@ def _load_image_config(config_image: QTableWidget):
     Args:
         config_image (QTableWidget): Widget chứa Image Config.
     """
-    user_input.config.image.clear()  # Xóa image config cũ được lưu trước đó
+    user_input.config.images.clear()  # Xóa image config cũ được lưu trước đó
     for row in range(config_image.rowCount()):
         shape_index = int(config_image.item(row, 0).text())
         placeholder = config_image.item(row, 1).text()

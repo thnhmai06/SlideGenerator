@@ -1,6 +1,7 @@
-import logging
+from typing import Optional
 from src.ui.diaglogs import error as show_error_diaglog
-from translations import TRANS
+from translations import get_text, format_text
+from src.logging import error as log_error
 
 def console_error(where: str, content: str) -> None:
     """
@@ -10,25 +11,38 @@ def console_error(where: str, content: str) -> None:
         where (str): Tên module hoặc vị trí gọi hàm.
         content (str): Nội dung lỗi.
     """
-    logger = logging.getLogger(where)
-    if content:
-        logger.error(content)
+    log_error(where, content)
 
 def default(
     where: str,
-    title_key: str,
-    details: str = None,
-    window_name: str = TRANS["diaglogs"]["error"]["window_name"],
+    key: str,
+    details: Optional[str] = None,
+    window_name: Optional[str] = None,
+    **format_args
 ) -> None:
     """
     Ghi log lỗi mặc định và hiển thị hộp thoại lỗi.
 
     Args:
         where (str): Tên module hoặc vị trí gọi hàm.
-        title_key (str): Khóa tiêu đề trong file dịch.
-        details (str, optional): Chi tiết lỗi. Mặc định là None.
-        window_name (str, optional): Tên cửa sổ. Mặc định như trong file dịch quy định.
+        key (str): Khóa tiêu đề trong file dịch.
+        details (Optional[str], optional): Chi tiết lỗi. Mặc định là None.
+        window_name (Optional[str], optional): Tên cửa sổ. Mặc định lấy từ file dịch.
+        **format_args: Các tham số để định dạng văn bản.
     """
-    title = TRANS["diaglogs"]["error"][title_key]
-    console_error(where, f"{title}{'\n' if details else ''}{details or ''}")
+    # Lấy tiêu đề từ file dịch và định dạng nếu có tham số
+    if format_args:
+        title = format_text(f"diaglogs.error.{key}", **format_args)
+    else:
+        title = get_text(f"diaglogs.error.{key}")
+    
+    # Lấy tên cửa sổ từ file dịch nếu không được cung cấp
+    if window_name is None:
+        window_name = get_text('diaglogs.error.window_name')
+    
+    # Ghi log vào console
+    error_message = f"{title}{'\n' if details else ''}{details or ''}"
+    console_error(where, error_message)
+    
+    # Hiển thị hộp thoại lỗi
     show_error_diaglog(window_name, title, details)

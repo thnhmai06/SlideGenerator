@@ -1,12 +1,11 @@
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Tuple
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtWidgets import QWidget, QPlainTextEdit, QMessageBox
-from functools import reduce
 from classes.models import ProgressLogLevel
 from src.handler import progress as ProgressHandler
 from src.logging.info import console_info
 from src.logging.error import console_error
-from translations import TRANS
+from translations import get_text
 
 if TYPE_CHECKING:
     # Anti-circular import
@@ -14,18 +13,48 @@ if TYPE_CHECKING:
 
 LOGO_PATH = "./assets/logo.png"
 
-def _get_retranslate_window(*args: str) -> str:
+def _get_retranslate_window(key: str, *args: str) -> str:
     """
-    Lấy chuỗi dịch cho cửa sổ từ các khóa trong từ điển dịch: 
-    progress -> window -> *args...
+    Lấy chuỗi dịch cho cửa sổ từ các khóa trong từ điển dịch.
 
     Args:
-        *args (str): Các khóa để truy cập vào từ điển dịch.
+        key (str): Khóa chính để truy cập vào từ điển dịch.
+        *args (str): Các khóa phụ bổ sung để truy cập sâu hơn.
 
     Returns:
         str: Chuỗi dịch tương ứng.
     """
-    return reduce(lambda d, key: d[key], args, TRANS["progress"]["window"])
+    if not args:
+        return get_text(f"progress.window.{key}")
+    
+    # Xây dựng đường dẫn khóa từ tất cả các tham số
+    full_key = f"progress.window.{key}"
+    for arg in args:
+        full_key += f".{arg}"
+    
+    return get_text(full_key)
+
+def _get_nested_text(base_path: str, key: Optional[str]) -> str:
+    """
+    Lấy văn bản từ khóa phân cấp nhiều cấp.
+    
+    Args:
+        base_path (str): Đường dẫn cơ sở trong file dịch (ví dụ: "progress.log.info").
+        key (Optional[str]): Khóa phân cấp (có thể chứa nhiều dấu chấm).
+        
+    Returns:
+        str: Văn bản tương ứng với khóa, hoặc chuỗi rỗng nếu không tìm thấy.
+    """
+    if not key:
+        return ""
+        
+    # Tạo đường dẫn đầy đủ đến khóa trong file dịch
+    full_path = f"{base_path}.{key}"
+    
+    # Thử lấy văn bản từ đường dẫn đầy đủ
+    result = get_text(full_path, "")
+    
+    return result
 
 class TextEditLogger(QtCore.QObject):
     """
@@ -34,53 +63,123 @@ class TextEditLogger(QtCore.QObject):
     Attributes:
         appendPlainText (pyqtSignal): Tín hiệu để thêm văn bản vào TextEdit.
         widget (QPlainTextEdit): Widget TextEdit lưu trữ ProgressLog.
+        _instance (ClassVar): Instance singleton của logger.
     """
     # https://stackoverflow.com/a/60528393/16410937
 
     appendPlainText = QtCore.pyqtSignal(str)
+    _instance = None
 
     def __init__(self, parent):
         """
-        Khởi tạo vùng lưu dạng TextEdit cho ProgressLog.
+        Khởi tạo TextEditLogger.
 
         Args:
             parent: Widget cha.
         """
-        super().__init__()
-        self.widget = QPlainTextEdit(parent)
+        super().__init__(parent)
+        self.widget = QtWidgets.QPlainTextEdit(parent)
         self.widget.setReadOnly(True)
+        self.widget.setObjectName("log")
         self.appendPlainText.connect(self.widget.appendPlainText)
         self.widget.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
         self.widget.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
         self.widget.setLineWrapMode(QPlainTextEdit.NoWrap)
+        TextEditLogger._instance = self
 
-    def append(self, where: str, level: str, title_key: str = None, content: str = "") -> str:
+    def append(self, where: str, level: str, key: Optional[str] = None, content: Optional[any] = "") -> str:
         """
         Thêm một log vào ProgressLog.
 
         Args:
             where (str): Vị trí thêm log.
             level (str): Mức độ log (info, error).
-            title_key (str, optional): Khóa để lấy tiêu đề từ từ điển TRANS. Mặc định là None.
-            content (str): Nội dung thông báo log.
+            key (Optional[str]): Khóa để lấy tiêu đề từ từ điển dịch. Mặc định là None.
+            content (Optional[any]): Nội dung thông báo log.
 
         Returns:
             str: Thông báo log.
         """
+        # Đảm bảo content không bao giờ là None
+        content = "" if content is None else content
+        
         if not isinstance(content, str):
             content = str(content)
 
         match level:
             case ProgressLogLevel.INFO:
-                title = TRANS["progress"]["log"]["info"][title_key] if title_key else ""
-                console_info(where, title + content)
+                title = _get_nested_text("progress.log.info", key)
+                # Nếu content đã chứa title, không thêm title vào nữa
+                if content and title and content.startswith(title):
+                    text = content
+                else:
+                    text = title + content
+                console_info(where, text)
             case ProgressLogLevel.ERROR:
-                title = TRANS["progress"]["log"]["error"][title_key] if title_key else ""
-                console_error(where, title + content)
+                title = _get_nested_text("progress.log.error", key)
+                # Nếu content đã chứa title, không thêm title vào nữa
+                if content and title and content.startswith(title):
+                    text = content
+                else:
+                    text = title + content
+                console_error(where, text)
 
-        text = title + content
         self.appendPlainText.emit(text)
         return text
+
+    @classmethod
+    def get_instance(cls):
+        """
+        Lấy instance singleton của TextEditLogger.
+
+        Returns:
+            TextEditLogger: Instance singleton.
+        """
+        return cls._instance
+
+# Hàm tiện ích để ghi log từ bất kỳ đâu
+def log_progress(where: str, level: str, key: Optional[str] = None, content: Optional[str] = "") -> str:
+    """
+    Ghi log vào ProgressLog từ bất kỳ đâu trong ứng dụng.
+
+    Args:
+        where (str): Vị trí thêm log.
+        level (str): Mức độ log (info, error).
+        key (Optional[str]): Khóa để lấy tiêu đề từ từ điển dịch. Mặc định là None.
+        content (Optional[str]): Nội dung thông báo log.
+
+    Returns:
+        str: Thông báo log.
+    """
+    # Đảm bảo content không bao giờ là None
+    content = "" if content is None else content
+    
+    instance = TextEditLogger.get_instance()
+    if instance:
+        return instance.append(where, level, key, content)
+    else:
+        # Fallback nếu không có instance
+        match level:
+            case ProgressLogLevel.INFO:
+                title = _get_nested_text("progress.log.info", key)
+                # Nếu content đã chứa title, không thêm title vào nữa
+                if content and title and content.startswith(title):
+                    text = content
+                else:
+                    text = title + content
+                console_info(where, text)
+                return text
+            case ProgressLogLevel.ERROR:
+                title = _get_nested_text("progress.log.error", key)
+                # Nếu content đã chứa title, không thêm title vào nữa
+                if content and title and content.startswith(title):
+                    text = content
+                else:
+                    text = title + content
+                console_error(where, text)
+                return text
+        return ""
+
 class CloseConfirmWidget(QMessageBox):
     """
     Lớp quản lý widget hộp thoại xác nhận dừng.
@@ -104,31 +203,30 @@ class CloseConfirmWidget(QMessageBox):
         self.setText(_get_retranslate_window("close", "message"))
         self.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
         self.setDefaultButton(QMessageBox.No)
+
 class StatusLabel(QtWidgets.QLabel):
     """
-    Lớp quản lý label thông báo tiến trình.
-
-    Attributes:
-        parent: Widget cha.
+    Lớp quản lý nhãn thông báo trạng thái tiến trình.
     """
+
     def __init__(self, parent):
         """
-        Khởi tạo label thông báo tiến trình.
+        Khởi tạo nhãn thông báo trạng thái tiến trình.
 
         Args:
             parent: Widget cha.
         """
         super().__init__(parent)
 
-    def set_label(self, title_key: str, content: tuple[str, ...]):
+    def set_label(self, key: str, content: Tuple[str, ...]):
         """
         Đặt trạng thái tiến trình cho label thông báo.
 
         Args:
-            title_key (str): Khóa tiêu đề.
-            content (tuple[str, ...]): Nội dung muốn ghi.
+            key (str): Khóa tiêu đề.
+            content (Tuple[str, ...]): Nội dung muốn ghi.
         """
-        title = TRANS["progress"]["label"][title_key]
+        title = get_text(f"progress.label.{key}")
         self.setText(f"<b>{title + ' '.join(content)}</b>")
 
 class Progress(QWidget):
@@ -136,7 +234,7 @@ class Progress(QWidget):
     Lớp quản lý giao diện tiến trình.
 
     Attributes:
-        core_thread (CoreThread): Thread chính để xử lý tiến trình.
+        core_thread (ControlledPowerPointThread): Thread chính để xử lý tiến trình.
         core_worker (CoreWorker): Worker chính để xử lý tiến trình.
         
         parent_ (Menu): Widget Menu cha.

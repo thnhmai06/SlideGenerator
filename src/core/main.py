@@ -1,14 +1,16 @@
 import traceback
+import os
 from typing import TYPE_CHECKING, List, cast
 from PyQt5.QtCore import QObject, pyqtSignal, QMutex, QWaitCondition
 from classes.models import PowerPoint, ProgressLogLevel
-from classes.threads import CoreThread
+from classes.threads import ControlledPowerPointThread
 from src.logging.error import show_error_diaglog
 from src.core.replace import replace_text, replace_image
 from src.utils.file import copy_file, delete_file
 from src.utils.ui.progress.visible import show_done_button, show_pause_button, disable_controls_button
-from globals import user_input, DOWNLOAD_PATH
-from translations import TRANS
+from globals import user_input, DOWNLOAD_PATH, PROCESSED_PATH, SHAPES_PATH, TEMP_TIME_FOLDER
+from translations import get_text, format_text
+from src.ui.progress import log_progress
 
 if TYPE_CHECKING:
     # Anti-circular import
@@ -83,27 +85,36 @@ class CoreWorker(QObject):
         """
         exception_traceback = traceback.format_exc()
         if isinstance(exception, PermissionError):
-            self.progress.log.append(
+            log_progress(
                 __name__,
                 ProgressLogLevel.ERROR,
                 "PermissionError",
                 exception_traceback,
             )
+            
+            window_name = get_text("diaglogs.error.window_name")
+            error_message = get_text("progress.log.error.PermissionError")
+            
             self.show_err_diaglog.emit(
-                TRANS["diaglogs"]["error"]["window_name"],
-                TRANS["progress"]["log"]["error"]["PermissionError"],
+                window_name,
+                error_message,
                 exception_traceback,
             )
         else:
-            self.progress.log.append(
+            log_progress(
                 __name__,
                 ProgressLogLevel.ERROR,
                 "uncaught_exception",
                 exception_traceback,
             )
+            
+            window_name = get_text("diaglogs.error.window_name")
+            error_title = get_text("progress.log.error.uncaught_exception")
+            error_message = format_text("errors.uncaught_exception", error=str(exception))
+            
             self.show_err_diaglog.emit(
-                f"{TRANS['progress']['log']['error']['uncaught_exception']}\n",
-                f"{TRANS['progress']['log']['error']['uncaught_exception']}\n\n{str(exception)}",
+                window_name,
+                f"{error_title}\n\n{error_message}",
                 exception_traceback,
             )
     
@@ -114,20 +125,29 @@ class CoreWorker(QObject):
         # * Chuẩn bị
         self.progress_label_set_label.emit("preparing", ())
 
+        # Tạo thư mục tạm thời cho phiên làm việc hiện tại
+        if not os.path.exists(TEMP_TIME_FOLDER):
+            os.makedirs(TEMP_TIME_FOLDER)
+            
+        # Tạo các thư mục con
+        os.makedirs(SHAPES_PATH, exist_ok=True)
+        os.makedirs(DOWNLOAD_PATH, exist_ok=True)
+        os.makedirs(PROCESSED_PATH, exist_ok=True)
+
         # Sao chép file gốc sang file lưu
-        self.progress.log.append(__name__, ProgressLogLevel.INFO, "create_file")
+        log_progress(__name__, ProgressLogLevel.INFO, "create_file")
         copy_file(user_input.pptx.path, user_input.save.path)
 
         # Tạo giao thức với PowerPoint
-        self.progress.log.append(__name__, ProgressLogLevel.INFO, "open_instance")
+        log_progress(__name__, ProgressLogLevel.INFO, "open_instance")
         self.powerpoint.open_instance()
 
         # Mở file PowerPoint
-        self.progress.log.append(__name__, ProgressLogLevel.INFO, "open_presentation")
+        log_progress(__name__, ProgressLogLevel.INFO, "open_presentation")
         self.powerpoint.open_presentation(user_input.save.path, read_only=False)
 
         # Thử lưu File
-        self.progress.log.append(__name__, ProgressLogLevel.INFO, "try_save")
+        log_progress(__name__, ProgressLogLevel.INFO, "try_save")
         self.powerpoint.presentation.Save()
 
     def _each(self, index: int):
@@ -141,27 +161,27 @@ class CoreWorker(QObject):
         self.progress_label_set_label.emit("replacing", (str(index), f"({self.current}/{self.total})"))
 
         # Lấy thông tin sinh viên thứ num
-        self.progress.log.append(__name__, ProgressLogLevel.INFO, "read_student", index)
+        log_progress(__name__, ProgressLogLevel.INFO, "read_student", str(index))
         student = user_input.csv.get(index)[0]
 
         # Nhân bản slide
-        self.progress.log.append(__name__, ProgressLogLevel.INFO, "duplicate_slide")
+        log_progress(__name__, ProgressLogLevel.INFO, "duplicate_slide")
         slide = self.powerpoint.presentation.Slides(SAMPLE_SLIDE_INDEX).Duplicate()
 
         # Thay thế Text
         if user_input.config.text:
-            replace_text(slide, student, self.progress.log.append)
+            replace_text(slide, student)
 
         # Thay thế Image
-        if user_input.config.image:
-            replace_image(slide, student, index, self.progress.log.append)
+        if user_input.config.images:
+            replace_image(slide, student, index)
 
         # Lưu file
-        self.progress.log.append(__name__, ProgressLogLevel.INFO, "saving")
+        log_progress(__name__, ProgressLogLevel.INFO, "saving")
         self.powerpoint.presentation.Save()
 
         # Thông báo thay thế sinh viên này thành công, cập nhật thanh progress_bar
-        self.progress.log.append(__name__, ProgressLogLevel.INFO, "finish_replace")
+        log_progress(__name__, ProgressLogLevel.INFO, "finish_replace")
         self.progress_bar_setValue.emit(self.current)
     def _process(self):
         """
@@ -169,7 +189,7 @@ class CoreWorker(QObject):
         """
         # * Bắt đầu
         # Thông báo bắt đầu
-        self.progress.log.append(__name__, ProgressLogLevel.INFO, "started")
+        log_progress(__name__, ProgressLogLevel.INFO, "started")
         
         # For lùi để cho các slide khi tạo sẽ đúng theo thứ tự trong file csv
         for count, index in enumerate(range(self.to_, self.from_ - 1, -1), start=1):
@@ -202,31 +222,32 @@ class CoreWorker(QObject):
         # * Kết thúc
         self.progress_label_set_label.emit("cleaning", ())
 
-        # Xóa các ảnh đã tải xuống
-        self.progress.log.append(__name__, ProgressLogLevel.INFO, "delete_downloaded_image")
+        # Xóa thư mục tạm thời cho phiên làm việc hiện tại
+        log_progress(__name__, ProgressLogLevel.INFO, "delete_image_folder")
         delete_file(DOWNLOAD_PATH)
+        delete_file(PROCESSED_PATH)
 
         # Xóa slide đầu tiên (là slide mẫu)
-        self.progress.log.append(__name__, ProgressLogLevel.INFO, "delete_sample_slide")
+        log_progress(__name__, ProgressLogLevel.INFO, "delete_sample_slide")
         self.powerpoint.presentation.Slides(SAMPLE_SLIDE_INDEX).Delete()
     def _end(self):
         """
         Kết thúc công việc.
         """
         # Đóng file PowerPoint
-        self.progress.log.append(__name__, ProgressLogLevel.INFO, "close_presentation")
+        log_progress(__name__, ProgressLogLevel.INFO, "close_presentation")
         self.powerpoint.close_presentation(save_before_close=True)
 
         # Giải phóng môi trường COM
-        self.progress.log.append(__name__, ProgressLogLevel.INFO, "free_com_environment")
+        log_progress(__name__, ProgressLogLevel.INFO, "free_com_environment")
         self.powerpoint.free_com_environment()
 
         # Thông báo hoàn thành
         self.progress_label_set_label.emit("ended", ())
-        self.progress.log.append(__name__, ProgressLogLevel.INFO, "ended")
+        log_progress(__name__, ProgressLogLevel.INFO, "ended")
 
         # Thông báo vị trí lưu file
-        self.progress.log.append(__name__, ProgressLogLevel.INFO, "save_path", user_input.save.path)
+        log_progress(__name__, ProgressLogLevel.INFO, "save_path", user_input.save.path)
 
     def run(self):
         """
@@ -258,10 +279,10 @@ def work(progress: "Progress", from_: int, to_: int):
     progress.progress_bar.setMaximum(to_ - from_ + 1)
 
     # Tạo thread và worker
-    progress.core_thread = cast(type(CoreThread), CoreThread())
-    assert isinstance(progress.core_thread, CoreThread)
+    progress.core_thread = cast(type(ControlledPowerPointThread), ControlledPowerPointThread()) # type: ignore
+    assert isinstance(progress.core_thread, ControlledPowerPointThread)
 
-    progress.core_worker = cast(type(CoreWorker), CoreWorker(
+    progress.core_worker = cast(type(CoreWorker), CoreWorker( # type: ignore
         powerpoint=progress.core_thread.powerpoint, 
         progress=progress, 
         from_=from_, 

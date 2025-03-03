@@ -36,7 +36,12 @@
             "logo": "Phần mềm tạo Slide tốt nghiệp",
             "github": "GitHub",
             "guide": "Hướng dẫn sử dụng",
-            "about": "About"
+            "about": "About",
+            "language": {
+                "title": "Ngôn ngữ",
+                "change": "Thay đổi ngôn ngữ",
+                "current": "Ngôn ngữ hiện tại: {lang}"
+            }
         }
     },
     "progress": {
@@ -49,31 +54,39 @@
                 "started": "============== Bắt đầu ===============",
                 "read_student": "- Đọc thông tin sinh viên thứ: ",
                 "duplicate_slide": "- Nhân bản slide mẫu",
-                "replace_text": "- Thay thế văn bản: ",
-                "replace_text_original": "[Gốc]\n",
-                "replace_text_new": "[Mới]\n",
-                "download_image_start": "- Đang tải ảnh: ",
-                "download_image_success": "Lưu ở: ",
-                "download_image_not_image": "Không phải là hình ảnh!",
+                "replace_text": "- Thay thế văn bản cho slide",
+                "download_image": {
+                    "start": "- Đang tải ảnh xuống: ",
+                    "success": "Đã tải xuống, lưu ở:",
+                    "failed": "Không tải được hình ảnh từ: ",
+                    "no_link": "Không có liên kết để tải cho sinh viên số ",
+                    "invalid_url": "URL không hợp lệ: "
+                },
                 "keep_original_image": "- Giữ nguyên hình ảnh gốc cho shape ",
-                "process_image": "- Xử lý hình ảnh: ",
-                "process_image_success": "Xử lý xong!",
-                "skip_process_image": "- Bỏ qua việc xử lý hình ảnh",
-                "replace_image": "- Thay thế hình ảnh cho shape ",
+                "process_image": {
+                    "start": "- Đang xử lý hình ảnh: ",
+                    "success": "Đã xử lý xong hình ảnh!",
+                    "skip": "- Bỏ qua việc xử lý hình ảnh!"
+                },
+                "replace_image": "- Thay thế hình ảnh cho shape: ",
                 "saving": "- Lưu lại file",
                 "finish_replace": "---------------------------------",
                 "ended": "============== Kết thúc ==============",
                 "delete_sample_slide": "Xóa slide mẫu trong file",
-                "delete_downloaded_image": "Xóa các hình ảnh đã tải",
+                "delete_image_folder": "Xóa thư mục ảnh vừa tải xuống",
                 "close_presentation": "Đóng file PowerPoint",
                 "free_com_environment": "Giải phóng môi trường giao thức",
                 "save_path": "Vị trí file: "
             },
             "error": {
                 "uncaught_exception": "Đã xảy ra lỗi không mong muốn:",
-                "download_image_return_none": "Không tải được hình ảnh từ URL: ",
-                "download_image_return_exception": "Lỗi khi tải hình ảnh: ",
-                "process_image_error": "Lỗi khi xử lý hình ảnh: ",
+                "download_image": {
+                    "return_none": "Không tải được hình ảnh từ URL: ",
+                    "return_exception": "Lỗi khi tải hình ảnh: "
+                },
+                "process_image": {
+                    "error": "Lỗi khi xử lý hình ảnh: "
+                },
                 "PermissionError": "Thiếu quyền để truy cập đến file lưu!\nHãy đảm bảo file lưu không bị mở bởi ứng dụng khác hoặc bị thiếu quyền để truy cập!\n"
             }
         },
@@ -103,19 +116,29 @@
         "error": {
             "window_name": "Đã xả ra lỗi",
             "exception": "Đã xảy ra lỗi không mong muốn!",
-            "pptx.can_not_open": "Không thể truy cập file PowerPoint!\nHãy đảm bảo file không ở chế độ chỉ đọc, hay đang\n bị mở bởi ứng dụng khác hoặc chương trình bị thiếu quyền để mở!",
-            "pptx.always_read_only": "File PowerPoint đang ở chế độ Luôn mở Chỉ đọc!\n\nHãy đảm bảo file không để ở tùy chọn này!\n1. Mở file lên chọn Edit Anyways, sau đó chọn\n File > Info > Protect Presentation > Bỏ chọn Always Open Read-Only\n2. Shift + Chuột phải vào File > Properties > Bỏ chọn Read-only"
+            "pptx": {
+                "can_not_open": "Không thể truy cập file PowerPoint!\nHãy đảm bảo file không ở chế độ chỉ đọc, hay đang\n bị mở bởi ứng dụng khác hoặc chương trình bị thiếu quyền để mở!",
+                "always_read_only": "File PowerPoint đang ở chế độ Luôn mở Chỉ đọc!\n\nHãy đảm bảo file không để ở tùy chọn này!\n1. Mở file lên chọn Edit Anyways, sau đó chọn\n File > Info > Protect Presentation > Bỏ chọn Always Open Read-Only\n2. Shift + Chuột phải vào File > Properties > Bỏ chọn Read-only"
+            }
         },
         "information": {
             "window_name": "Thông báo",
             "no_powerpoint": "Ứng dụng yêu cầu Microsoft PowerPoint (Office) để tiếp tục!",
-            "pptx.no_slide": "Không tìm thấy slide nào trong file PowerPoint này!",
-            "pptx.too_much_slides": "File chứa nhiều hơn 1 slide!",
-            "csv.no_students": "File DSSV không chứa thông tin sinh viên!",
-            "config.too_much_placeholders": "Số lượng đã nhiều hơn số cột có sẵn!",
-            "config.too_much_shapes": "Số lượng đã nhiều hơn số shapes có sẵn!",
-            "config.no_item_to_remove": "Không có mục nào để xóa cả!",
-            "save_path.coincide_pptx": "File lưu mới không được thay thế file PowerPoint mẫu!"
+            "pptx": {
+                "no_slide": "Không tìm thấy slide nào trong file PowerPoint này!",
+                "too_much_slides": "File chứa nhiều hơn 1 slide!"
+            },
+            "csv": {
+                "no_students": "File DSSV không chứa thông tin sinh viên!"
+            },
+            "config": {
+                "too_much_placeholders": "Số lượng đã nhiều hơn số cột có sẵn!",
+                "too_much_shapes": "Số lượng đã nhiều hơn số shapes có sẵn!",
+                "no_item_to_remove": "Không có mục nào để xóa cả!"
+            },
+            "save_path": {
+                "coincide_pptx": "File lưu mới không được thay thế file PowerPoint mẫu!"
+            }
         }
     },
     "images_table": {
@@ -125,12 +148,75 @@
         "debug": {
             "powerpoint_found": "Phát hiện Microsoft PowerPoint ",
             "open_time": "Thời gian mở chương trình: ",
-            "delete_shapes": "Xóa các shapes lưu trong: "
+            "delete_shapes": "Xóa các shapes lưu trong: ",
+            "language_changed": "Đã thay đổi ngôn ngữ thành: ",
+            "current_language": "Ngôn ngữ hiện tại: "
         },
         "info": {
             "pptx_load": "Tải file Template: ",
             "csv_load": "Tải file DSSV: ",
             "save_load": "Thiết lập Lưu file tại: "
+        }
+    },
+    "errors": {
+        "uncaught_exception": "Đã xảy ra lỗi không mong muốn: {error}",
+        "application": {
+            "general": "Lỗi ứng dụng: {error}",
+            "startup": "Lỗi khi mở ứng dụng: {error}",
+            "shutdown": "Lỗi khi đóng ứng dụng: {error}"
+        },
+        "image_processing": {
+            "file_not_found": "File không tồn tại: {path}",
+            "unsupported_format": "Định dạng ảnh không hỗ trợ: {path}",
+            "unidentified": "Không thể nhận dạng định dạng hình ảnh: {error}",
+            "os_error": "Lỗi hệ thống khi xử lý hình ảnh: {error}",
+            "general": "Lỗi xử lý ảnh: {error}"
+        },
+        "download_image": {
+            "invalid_url": "URL không hợp lệ: {link}",
+            "connection_error": "Lỗi kết nối khi tải: {url}",
+            "timeout": "Quá thời gian chờ khi tải: {url}",
+            "no_link": "Không có liên kết để tải cho sinh viên số {num}",
+            "failed": "Không tải được hình ảnh từ: {link}",
+            "return_none": "Không tải được hình ảnh từ URL: {link}",
+            "return_exception": "Lỗi khi tải hình ảnh: {error}",
+            "general": "Lỗi tải ảnh: {error}"
+        },
+        "file": {
+            "not_found": "Không tìm thấy file: {path}",
+            "permission_denied": "Không có quyền truy cập file: {path}",
+            "general": "Lỗi file: {error}"
+        },
+        "powerpoint": {
+            "not_installed": "Microsoft PowerPoint không được cài đặt",
+            "cannot_open": "Không thể mở file PowerPoint: {path}",
+            "cannot_save": "Không thể lưu file PowerPoint: {path}",
+            "general": "Lỗi PowerPoint: {error}"
+        }
+    },
+    "success": {
+        "image_processing": {
+            "completed": "Xử lý ảnh thành công: {path}"
+        },
+        "download_image": {
+            "completed": "Tải ảnh thành công: {link}"
+        },
+        "file": {
+            "saved": "Đã lưu file: {path}"
+        },
+        "application": {
+            "language_changed": "Đã thay đổi ngôn ngữ thành: {lang}"
+        }
+    },
+    "info": {
+        "processing": "Đang xử lý...",
+        "waiting": "Đang chờ...",
+        "completed": "Hoàn thành",
+        "skipped": "Đã bỏ qua",
+        "language": {
+            "available": "Các ngôn ngữ có sẵn: {langs}",
+            "current": "Ngôn ngữ hiện tại: {lang}",
+            "fallback": "Ngôn ngữ dự phòng: {lang}"
         }
     }
 }

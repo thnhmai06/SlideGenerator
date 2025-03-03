@@ -1,34 +1,45 @@
-import os
-from typing import Callable
 from pystache import render as render_text
 from classes.models import ProgressLogLevel
 from src.core.download_image import download_image
 from src.core.process_image import process_image
-from globals import user_input, DOWNLOAD_PATH
+from globals import user_input
+from src.ui.progress import log_progress
 
 #? Thay thế Text
-def replace_text(slide, student: dict, add_log: Callable[[str, str, str, str], None]) -> bool:
+def replace_text(slide, student: dict) -> bool:
     """
-    Thay thế văn bản trong slide bằng thông tin từ sinh viên.
+    Thay thế văn bản trong slide.
 
     Args:
-        slide: Slide PowerPoint cần thay thế văn bản.
+        slide: Slide cần thay thế văn bản.
         student (dict): Thông tin sinh viên.
-        add_log (Callable[[str, str, str, str], None]): Hàm ghi log.
 
     Returns:
-        bool: Trả về True nếu thay thế thành công.
+        bool: True nếu thay thế thành công, False nếu thất bại.
     """
-    placeholders = {key: student[key] if key in student and student[key] else '' for key in user_input.config.text}
+    # Ghi log
+    log_progress(__name__, ProgressLogLevel.INFO, "replace_text")
+    
+    # Chuẩn bị placeholders cho pystache
+    placeholders = {}
+    for key in user_input.csv.placeholders:
+        value = student.get(key)
+        # Nếu giá trị là None hoặc không tồn tại, sử dụng chuỗi rỗng
+        placeholders[key] = '' if value is None else value
+
+    # Xử lý cho tất cả các shape có text trong slide
     for shape in slide.Shapes:
-        if shape.HasTextFrame and shape.TextFrame.HasText:  # Xác nhận nó là shape text có chứa text
+        if shape.HasTextFrame and shape.TextFrame.HasText:
+            # Lấy văn bản gốc
             original_text = shape.TextFrame.TextRange.Text
+            
+            # Thay thế văn bản sử dụng pystache
             new_text = render_text(original_text, placeholders)
+            
+            # Chỉ cập nhật nếu có sự thay đổi
             if original_text != new_text:
-                add_log(__name__, ProgressLogLevel.INFO, "replace_text")
-                add_log(__name__, ProgressLogLevel.INFO, "replace_text_original", original_text)
                 shape.TextFrame.TextRange.Text = new_text
-                add_log(__name__, ProgressLogLevel.INFO, "replace_text_new", new_text)
+    
     return True
 
 #? Thay thế Image
@@ -72,62 +83,67 @@ def _fill_image_into_filler(fill, image_path: str, as_texture: bool = False):
         # Phục hồi các thiết lập cũ
         fill.Transparency = transparency_before  # Độ trong suốt
 
-def _replace_image_in_one_shape(slide, student_index: int, shape_index: int, image_url: str, add_log: Callable[[str, str, str, str], None]) -> bool:
+def _replace_image_in_one_shape(slide, student_index: int, shape_index: int, image_url: str) -> bool:
     """
-    Thay thế hình ảnh trong một shape của slide.
+    Thay thế hình ảnh trong một shape.
 
     Args:
-        slide: Slide PowerPoint cần thay thế hình ảnh.
-        student_index (int): Chỉ số sinh viên.
-        shape_index (int): Chỉ số shape trong slide.
+        slide: Slide cần thay thế hình ảnh.
+        student_index (int): Chỉ số của sinh viên.
+        shape_index (int): Chỉ số của shape.
         image_url (str): URL của hình ảnh.
-        add_log (Callable[[str, str, str, str], None]): Hàm ghi log.
 
     Returns:
-        bool: Trả về True nếu thay thế thành công.
+        bool: True nếu thay thế thành công, False nếu thất bại.
     """
-    # Tạo folder nếu thư mục lưu không tồn tại
-    if not os.path.exists(DOWNLOAD_PATH):
-        os.makedirs(DOWNLOAD_PATH)
+    # Nếu không có URL hình ảnh, giữ nguyên hình ảnh gốc
+    if not image_url:
+        log_progress(__name__, ProgressLogLevel.INFO, "keep_original_image", str(shape_index))
+        return False
     
-    # Lấy ảnh từ link
-    image_path = download_image(image_url, student_index, add_log)
+    # Tải hình ảnh
+    image_path = download_image(image_url, student_index)
     if not image_path:
-        add_log(__name__, ProgressLogLevel.INFO, "keep_original_image", shape_index)
+        log_progress(__name__, ProgressLogLevel.INFO, "keep_original_image", str(shape_index))
         return False
     
     # Xử lý hình ảnh
     shape = slide.Shapes(shape_index)
-    processed_image_path = process_image(image_path, shape, add_log)
-
-    # Refill
-    _fill_image_into_filler(shape.Fill, processed_image_path)
-
-    # Thông báo đã thay thế ảnh
-    add_log(__name__, ProgressLogLevel.INFO, "replace_image", f"{shape_index}")
+    processed_image_path = process_image(image_path, shape)
+    
+    # Thay thế hình ảnh
+    _fill_image_into_filler(shape.Fill, processed_image_path, as_texture=False)
+    
+    # Ghi log
+    log_progress(__name__, ProgressLogLevel.INFO, "replace_image", f"{shape_index}")
     return True
 
-def replace_image(slide, student: dict, student_index: int, add_log: Callable[[str, str, str, str], None]) -> bool:
+def replace_image(slide, student: dict, student_index: int) -> bool:
     """
-    Thay thế hình ảnh trong slide bằng thông tin từ sinh viên.
+    Thay thế hình ảnh trong slide.
 
     Args:
-        slide: Slide PowerPoint cần thay thế hình ảnh.
+        slide: Slide cần thay thế hình ảnh.
         student (dict): Thông tin sinh viên.
-        student_index (int): Chỉ số sinh viên.
-        add_log (Callable[[str, str, str, str], None]): Hàm ghi log.
+        student_index (int): Chỉ số của sinh viên.
 
     Returns:
-        bool: Trả về True nếu thay thế thành công.
+        bool: True nếu thay thế thành công, False nếu thất bại.
     """
-    for config_image_item in user_input.config.image:
-        shape_index = config_image_item.shape_index
-        image_url = student[config_image_item.placeholder]
-        _replace_image_in_one_shape(
-            slide=slide, 
-            student_index=student_index, 
-            shape_index=shape_index, 
-            image_url=image_url, 
-            add_log=add_log
-        )
+    # Thay thế từng hình ảnh
+    for config_image in user_input.config.images:
+        shape_index = config_image.shape_index
+        placeholder = config_image.placeholder
+        
+        # Nếu placeholder có trong thông tin sinh viên
+        if placeholder in student:
+            image_url = student[placeholder]
+            _replace_image_in_one_shape(
+                slide=slide,
+                student_index=student_index,
+                shape_index=shape_index,
+                image_url=image_url
+            )
+    
+    return True
 

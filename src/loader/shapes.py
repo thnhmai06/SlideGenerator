@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, cast
 from PyQt5.QtWidgets import QLineEdit
 from PyQt5.QtCore import pyqtSignal, QObject
 from classes.models import PowerPoint
-from classes.threads import WorkingThread as LoadShapesThread
+from classes.threads import PowerPointWorkerThread as LoadShapesThread
 from src.logging.info import console_info
 from src.utils.file import delete_file
 from src.utils.ui.menu.clear import clear_config_image_table
@@ -11,7 +11,7 @@ from src.utils.ui.menu.toggle import toggle_pptx_browse_button, toggle_config_im
 from src.utils.ui.menu.set import set_pptx_loaded_label
 from src.utils import logging
 from globals import user_input, SHAPES_PATH
-from translations import TRANS
+from translations import get_text
 
 if TYPE_CHECKING:
     # Anti-circular import
@@ -171,12 +171,12 @@ def load_shapes(menu: "Menu"):
     """
     # Lấy đường dẫn file PowerPoint
     pptx_path = get_pptx_path(menu.pptx_path)
-    console_info(__name__, TRANS["console"]["info"]["pptx_load"], pptx_path)
+    console_info(__name__, get_text("console.info.pptx_load"), pptx_path)
 
     #? Khai báo Worker
-    menu.load_shapes_thread = cast(type(LoadShapesThread), LoadShapesThread())
+    menu.load_shapes_thread = cast(type(LoadShapesThread), LoadShapesThread()) # type: ignore
     assert isinstance(menu.load_shapes_thread, LoadShapesThread)
-    menu.load_shapes_worker = cast(type(LoadShapesWorker), LoadShapesWorker(menu.load_shapes_thread.powerpoint))
+    menu.load_shapes_worker = cast(type(LoadShapesWorker), LoadShapesWorker(menu.load_shapes_thread.powerpoint)) # type: ignore 
     assert isinstance(menu.load_shapes_worker, LoadShapesWorker)
     # https://stackoverflow.com/questions/67704387/vscode-using-nonlocal-causes-variable-type-never
 

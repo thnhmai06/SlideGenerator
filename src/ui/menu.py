@@ -1,4 +1,3 @@
-from functools import reduce
 from typing import Optional
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import (
@@ -19,7 +18,7 @@ from src.handler.menu import config_image, start_button
 from src.handler.menu import broswe_button, config_text
 from src.handler.menu.start_button import check_start_button
 from globals import GITHUB_URL
-from translations import TRANS
+from translations import get_text
 
 LOGO_PATH = "./assets/logo"
 ADD_ICON_PATH = "./assets/button/add"
@@ -28,24 +27,33 @@ GITHUB_ICON_PATH = "./assets/button/github"
 GUIDE_ICON_PATH = "./assets/button/guide"
 ABOUT_ICON_PATH = "./assets/button/about"
 
-def _get_retranslate_window(*args: str) -> str:
+def _get_menu_text(key: str, *args: str) -> str:
     """
     Lấy chuỗi dịch cho cửa sổ từ các khóa trong từ điển dịch.
 
     Args:
-        *args (str): Các khóa để truy cập vào từ điển dịch.
+        key (str): Khóa chính để truy cập vào từ điển dịch.
+        *args (str): Các khóa phụ bổ sung để truy cập sâu hơn.
 
     Returns:
         str: Chuỗi dịch tương ứng.
     """
-    return reduce(lambda d, key: d[key], args, TRANS["menu"]["window"])
+    if not args:
+        return get_text(f"menu.window.{key}")
+    
+    # Xây dựng đường dẫn khóa từ tất cả các tham số
+    full_key = f"menu.window.{key}"
+    for arg in args:
+        full_key += f".{arg}"
+    
+    return get_text(full_key)
 
 class Menu(QMainWindow):
     """
     Lớp quản lý giao diện Menu chính.
 
     Attributes:
-        load_shapes_thread (WorkingThread): Thread để tải các hình ảnh.
+        load_shapes_thread (PowerPointWorkerThread): Thread để tải các hình ảnh.
         load_shapes_worker (WorkingWorker): Worker để tải các hình ảnh.
 
         centralwidget (QWidget): Widget trung tâm.
@@ -360,10 +368,10 @@ class Menu(QMainWindow):
         _translate = QtCore.QCoreApplication.translate
 
         # Tiêu đề cửa sổ
-        self.setWindowTitle(_translate("menu", _get_retranslate_window("title")))
+        self.setWindowTitle(_translate("menu", _get_menu_text("title")))
 
         # Tiêu đề
-        self.title.setText(_translate("menu", _get_retranslate_window("title").upper()))
+        self.title.setText(_translate("menu", _get_menu_text("title").upper()))
 
         # Logo
         self.logo.setText(
@@ -372,7 +380,7 @@ class Menu(QMainWindow):
                 f'<html><head/><body><p><img src="{LOGO_PATH}"></p></body></html>',
             )
         )
-        self.logo.setToolTip(_get_retranslate_window("logo"))
+        self.logo.setToolTip(_get_menu_text("logo"))
 
         # GitHub
         self.github.setText(
@@ -381,7 +389,7 @@ class Menu(QMainWindow):
                 f'<html><head/><body><p><a href="{GITHUB_URL}"><img src="{GITHUB_ICON_PATH}"/></a></p></body></html>',
             )
         )
-        self.github.setToolTip(_get_retranslate_window("github"))
+        self.github.setToolTip(_get_menu_text("github"))
 
         # About
         self.about.setText(
@@ -390,7 +398,7 @@ class Menu(QMainWindow):
                 f'<html><head/><body><p><img src="{ABOUT_ICON_PATH}"/></p></body></html>',
             )
         )
-        self.about.setToolTip(_get_retranslate_window("about"))
+        self.about.setToolTip(_get_menu_text("about"))
 
         # Guide
         self.guide.setText(
@@ -399,37 +407,37 @@ class Menu(QMainWindow):
                 f'<html><head/><body><p><img src="{GUIDE_ICON_PATH}"/></p></body></html>',
             )
         )
-        self.guide.setToolTip(_get_retranslate_window("guide"))
+        self.guide.setToolTip(_get_menu_text("guide"))
 
         # Nhóm PPTX
-        self.pptx.setTitle(_translate("menu", _get_retranslate_window("pptx", "title")))
-        self.pptx_browse.setText(_translate("menu", _get_retranslate_window("broswe")))
+        self.pptx.setTitle(_translate("menu", _get_menu_text("pptx", "title")))
+        self.pptx_browse.setText(_translate("menu", _get_menu_text("broswe")))
         self.pptx_label.setText(
             _translate(
                 "menu",
-                f'<html><head/><body><p><span style=" font-weight:600;">{_get_retranslate_window("pptx", "label")} </span>{_get_retranslate_window("pptx", "extension")}</p></body></html>',
+                f'<html><head/><body><p><span style=" font-weight:600;">{_get_menu_text("pptx", "label")} </span>{_get_menu_text("pptx", "extension")}</p></body></html>',
             )
         )
 
         # Nhóm CSV
-        self.csv.setTitle(_translate("menu", _get_retranslate_window("csv", "title")))
-        self.csv_broswe.setText(_translate("menu", _get_retranslate_window("broswe")))
+        self.csv.setTitle(_translate("menu", _get_menu_text("csv", "title")))
+        self.csv_broswe.setText(_translate("menu", _get_menu_text("broswe")))
         self.csv_label.setText(
             _translate(
                 "menu",
-                f'<html><head/><body><p><span style=" font-weight:600;">{_get_retranslate_window("csv", "label")} </span>{_get_retranslate_window("csv", "extension")}</p></body></html>',
+                f'<html><head/><body><p><span style=" font-weight:600;">{_get_menu_text("csv", "label")} </span>{_get_menu_text("csv", "extension")}</p></body></html>',
             )
         )
 
         # Nhóm Config
         self.config.setTitle(
-            _translate("menu", _get_retranslate_window("config", "title"))
+            _translate("menu", _get_menu_text("config", "title"))
         )
         # - Config Text
         self.config_text_label.setText(
             _translate(
                 "menu",
-                f'<html><head/><body><p align="center"><span style=" font-weight:600;">{_get_retranslate_window("config", "text", "label")}</span></p></body></html>',
+                f'<html><head/><body><p align="center"><span style=" font-weight:600;">{_get_menu_text("config", "text", "label")}</span></p></body></html>',
             )
         )
         self.config_text_list.setSortingEnabled(False)
@@ -437,48 +445,48 @@ class Menu(QMainWindow):
         self.config_image_label.setText(
             _translate(
                 "menu",
-                f'<html><head/><body><p align="center"><span style=" font-weight:600;">{_get_retranslate_window("config", "image", "label")}</span></p></body></html>',
+                f'<html><head/><body><p align="center"><span style=" font-weight:600;">{_get_menu_text("config", "image", "label")}</span></p></body></html>',
             )
         )
         item = self.config_image_table.horizontalHeaderItem(0)
         item.setText(
             _translate(
-                "menu", _get_retranslate_window("config", "image", "shape_index")
+                "menu", _get_menu_text("config", "image", "shape_index")
             )
         )
         item = self.config_image_table.horizontalHeaderItem(1)
         item.setText(
             _translate(
-                "menu", _get_retranslate_window("config", "image", "placeholder")
+                "menu", _get_menu_text("config", "image", "placeholder")
             )
         )
 
         # Nút Xem Shapes
         self.config_image_viewShapes.setText(
             _translate(
-                "menu", _get_retranslate_window("config", "image", "view_shapes")
+                "menu", _get_menu_text("config", "image", "view_shapes")
             )
         )
 
         # Label Tự động tải xuống
         self.config_image_autodownload_label.setText(
             _translate(
-                "menu", _get_retranslate_window("config", "image", "auto_download")
+                "menu", _get_menu_text("config", "image", "auto_download")
             )
         )
 
         # Nhóm Save
-        self.save.setTitle(_translate("menu", _get_retranslate_window("save", "title")))
-        self.save_broswe.setText(_translate("menu", _get_retranslate_window("broswe")))
+        self.save.setTitle(_translate("menu", _get_menu_text("save", "title")))
+        self.save_broswe.setText(_translate("menu", _get_menu_text("broswe")))
         self.save_label.setText(
             _translate(
                 "menu",
-                f'<html><head/><body><p><span style=" font-weight:600;">{_get_retranslate_window("save", "label")}</span></p></body></html>',
+                f'<html><head/><body><p><span style=" font-weight:600;">{_get_menu_text("save", "label")}</span></p></body></html>',
             )
         )
 
         # Nút Start
-        self.start_button.setText(_translate("menu", _get_retranslate_window("start")))
+        self.start_button.setText(_translate("menu", _get_menu_text("start")))
 
     def _handleUI(self):
         """

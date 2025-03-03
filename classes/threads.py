@@ -5,7 +5,7 @@ from classes.models import PowerPoint
 from src.logging.info import default as info
 from src.logging.debug import console_debug
 
-class CheckingThread(QThread):
+class PowerPointCheckThread(QThread):
     """
     Thread kiểm tra PowerPoint đã được cài hay chưa.
 
@@ -54,7 +54,7 @@ class CheckingThread(QThread):
             pythoncom.CoUninitialize() # Giải phóng môi trường COM cho thread
             self.quit()
 
-class WorkingThread(QThread):
+class PowerPointWorkerThread(QThread):
     """
     Thread làm việc với PowerPoint.
 
@@ -65,7 +65,7 @@ class WorkingThread(QThread):
         super().__init__()
         self.powerpoint = PowerPoint()
 
-class CoreThread(WorkingThread):
+class ControlledPowerPointThread(PowerPointWorkerThread):
     """
     Thread làm việc thay thế (là core chương trình), được bổ sung thêm chức năng dừng và tạm dừng.
 
