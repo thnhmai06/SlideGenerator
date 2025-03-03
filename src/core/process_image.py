@@ -1,8 +1,7 @@
 import os
-from PIL import Image, UnidentifiedImageError
+from PIL import Image
 from classes.models import ProgressLogLevel
 from globals import PROCESSED_PATH
-from translations import format_text
 from src.ui.progress import log_progress
 
 #* Đăng ký các định dạng ảnh bổ sung

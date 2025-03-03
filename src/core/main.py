@@ -9,7 +9,7 @@ from src.core.replace import replace_text, replace_image
 from src.utils.file import copy_file, delete_file
 from src.utils.ui.progress.visible import show_done_button, show_pause_button, disable_controls_button
 from globals import user_input, DOWNLOAD_PATH, PROCESSED_PATH, SHAPES_PATH, TEMP_TIME_FOLDER
-from translations import get_text, format_text
+from translations import get_text
 from src.ui.progress import log_progress
 
 if TYPE_CHECKING:

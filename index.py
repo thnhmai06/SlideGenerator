@@ -5,7 +5,7 @@ from src.ui.menu import Menu as MenuUI
 from src.logging.critical import critical
 from src.logging.debug import console_debug
 from globals import app, OPEN_TIME
-from translations import format_text, get_current_language, register_language_change_callback
+from translations import get_current_language, register_language_change_callback
 
 def language_change_handler(new_lang: str) -> None:
     """
