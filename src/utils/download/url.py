@@ -1,7 +1,8 @@
 import requests
 from globals import TIMEOUT
-from src.ui.progress import log_progress
 from classes.models import ProgressLogLevel
+from classes.expections import RateLimitException
+from src.ui.progress import log_progress
 from src.utils.retry import retry_with_exponential_backoff
 
 def _attempt_callback(attempt: int, retries: int):
@@ -23,7 +24,11 @@ def _cooldown_callback(delay: float):
     """
     log_progress(__name__, ProgressLogLevel.INFO, "retry.cooldown", delay=round(delay, 2))
 
-@retry_with_exponential_backoff(on_attempt=_attempt_callback, on_cooldown=_cooldown_callback)
+@retry_with_exponential_backoff(
+    on_attempt=_attempt_callback,
+    on_cooldown=_cooldown_callback,
+    exception_types=(RateLimitException,)
+)
 def download(url: str, output_path: str) -> str | None | Exception:
     """
     Tải hình ảnh từ url xuống.
@@ -39,14 +44,23 @@ def download(url: str, output_path: str) -> str | None | Exception:
     """
     try:
         response = requests.get(url, allow_redirects=True, timeout=TIMEOUT, stream=True)
+        if RateLimitException.is_rate_limited(response):
+            raise RateLimitException
+            
         if response.status_code == 200:
             with open(output_path, 'wb') as f:
                 f.write(response.content)
             return output_path
         return None
+    except RateLimitException:
+        # Re-raise để kích hoạt retry
+        raise
+    except requests.exceptions.Timeout:
+        log_progress(__name__, ProgressLogLevel.ERROR, "download.timeout", time=TIMEOUT)
+        return None
     except requests.RequestException as e:
-        log_progress(__name__, ProgressLogLevel.ERROR, "download_image.connection_error", error=str(e))
+        log_progress(__name__, ProgressLogLevel.ERROR, "download.connection_error")
         return e
     except Exception as e:
-        log_progress(__name__, ProgressLogLevel.ERROR, "download_image.return_exception", error=str(e))
+        log_progress(__name__, ProgressLogLevel.ERROR, "download.exception", error=str(e))
         return e

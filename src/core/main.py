@@ -9,6 +9,7 @@ from src.utils.file import copy_file, delete_file
 from src.utils.ui.progress.visible import show_done_button, show_pause_button, disable_controls_button
 from src.ui.progress import log_progress
 from src.ui.diaglogs import error as show_error_diaglog
+from translations import get_text
 from globals import user_input, DOWNLOAD_PATH, PROCESSED_PATH, TEMP_TIME_FOLDER
 
 if TYPE_CHECKING:
@@ -65,14 +66,16 @@ class CoreWorker(QObject):
         Args:
             exception (Exception): Ngoại lệ cần xử lý.
         """
-        exception_traceback = traceback.format_exc()
+        details = traceback.format_exc()
 
         if isinstance(exception, PermissionError):
-            error_message = log_progress(__name__, ProgressLogLevel.ERROR, "permission", error=exception_traceback)
-            self.show_error_diaglog.emit(error_message, exception_traceback)
+            message = get_text("progress.log.error.permission_error")
+            log_progress(__name__, ProgressLogLevel.ERROR, "permission_error")
+            self.show_error_diaglog.emit(message, details)
         else:
-            error_message = log_progress(__name__, ProgressLogLevel.ERROR, "uncaught_exception", error=exception_traceback)
-            self.show_error_diaglog.emit(f"{error_message}\n\n{str(exception)}", exception_traceback)
+            message = f"{get_text("progress.log.error.uncaught_exception")}\n\n{str(exception)}"
+            log_progress(__name__, ProgressLogLevel.ERROR, "uncaught_exception", error=message)
+            self.show_error_diaglog.emit(message, details)
 
     def _check_pause_and_stop(self) -> bool:
         """

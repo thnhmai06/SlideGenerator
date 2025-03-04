@@ -59,13 +59,12 @@
                     "cooldown": "(Thất bại, thử lại sau {{delay}} giây)",
                     "attempt": "Thử lại lần {{attempt}}/{{retries}}"
                 },
-                "download_image": {
+                "download": {
                     "check_vaild": "- Kiểm tra link ảnh có hợp lệ không: {{url}}",
                     "start": "- Đang tải ảnh xuống: {{url}}",
-                    "success": "Đã tải xuống, lưu ở: {{path}}",
-                    "failed": "Không tải được hình ảnh từ: {{url}}",
                     "no_link": "- Không có link ảnh của sinh viên {{student_num}}",
-                    "invalid_url": "- URL không hợp lệ: {{url}}"
+                    "invalid_url": "URL không hợp lệ!",
+                    "success": "Tải xuống thành công, lưu ở: {{path}}"
                 },
                 "keep_original_image": "- Giữ nguyên hình ảnh gốc cho shape {{num}}",
                 "process_image": {
@@ -81,31 +80,28 @@
                 "delete_image_folder": "Xóa thư mục ảnh vừa tải xuống",
                 "close_presentation": "Đóng file PowerPoint",
                 "free_com_environment": "Giải phóng môi trường giao thức",
-                "save_path": "Vị trí file: {{path}}",
-                "download": {
-                    "start": "Đang tải xuống: {{url}}",
-                    "success": "Đã tải xuống thành công: {{path}}",
-                    "failed": "Không tải được từ: {{url}}"
-                },
-                "google_drive": {
-                    "start": "Đang tải từ Google Drive: {{url}}",
-                    "success": "Đã tải từ Google Drive thành công: {{path}}",
-                    "failed": "Không tải được từ Google Drive: {{url}}"
-                }
+                "save_path": "Vị trí file: {{path}}"
             },
             "error": {
                 "uncaught_exception": "Đã xảy ra lỗi không mong muốn: {{error}}",
-                "download_image": {
-                    "return_exception": "Lỗi khi tải ảnh: {{error}}",
-                    "invalid_url": "URL không hợp lệ: {{link}}",
-                    "connection_error": "Lỗi kết nối khi tải: {{url}}",
-                    "timeout": "Quá thời gian chờ để tải: {{url}}",
-                    "no_link": "Không có liên kết để tải cho sinh viên số {{num}}",
-                    "failed": "Không tải được hình ảnh từ: {{link}}",
-                    "return_none": "Không tải được hình ảnh từ URL: {{link}}"
+                "permission_error": "Thiếu quyền để truy cập đến file lưu!\nHãy đảm bảo file lưu không bị mở bởi ứng dụng khác hoặc bị thiếu quyền để truy cập!\n",
+                "download": {
+                    "failed": "Tải xuống thất bại",
+                    "exception": "Xảy ra lỗi khi tải ảnh: {{error}}",
+                    "not_image": "Đường dẫn không phải là hình ảnh! (có thể đang để Riêng tư?)",
+                    "invalid_url": "URL không hợp lệ",
+                    "timeout": "Quá thời gian chờ ({{time}}s)",
+                    "connection_error": "Lỗi kết nối khi tải xuống",
+                    "no_link": "Không có liên kết cho sinh viên thứ {{num}}",
+                    "google_drive": {
+                        "can_not_get_id": "Không thể lấy ID file Google Drive từ liên kết đã cho"
+                    }
                 },
-                "process_image": "Lỗi khi xử lý hình ảnh: {{error}}",
-                "permission": "Thiếu quyền để truy cập đến file lưu!\nHãy đảm bảo file lưu không bị mở bởi ứng dụng khác hoặc bị thiếu quyền để truy cập!\n"
+                "validate": {
+                    "timeout": "Quá thời gian chờ ({{time}}s)",
+                    "connection_error": "Lỗi kết nối khi kiểm tra"
+                },
+                "process_image": "Lỗi khi xử lý hình ảnh: {{error}}"
             }
         },
         "label": {
