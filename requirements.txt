@@ -5,6 +5,7 @@ colorama # For console color.
 validators # For URL validation.
 pystache # For text replacement.
 pillow # For image processing.
+requests # For HTTP requests.
 
 # Add-ons
 pillow-heif # HEIF Pillow supports.

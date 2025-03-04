@@ -18,7 +18,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: '3.x'
+        python-version: '3.13'
 
     - name: Install dependencies
       run: |
@@ -35,7 +35,7 @@ jobs:
     - name: Add necessary files
       run: |
         xcopy assets tao-slide-tot-nghiep\assets /E /I
-        xcopy translations tao-slide-tot-nghiep\translations /E /I
+        xcopy translations\*.json tao-slide-tot-nghiep\translations\ /Y
         copy settings.ini tao-slide-tot-nghiep\
 
     - name: Compress files into ZIP
