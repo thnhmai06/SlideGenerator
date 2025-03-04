@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, cast
 from PyQt5.QtWidgets import QLineEdit
 from PyQt5.QtCore import pyqtSignal, QObject
 from classes.models import PowerPoint
-from classes.threads import PowerPointWorkerThread as LoadShapesThread
+from classes.threads import WorkingThread as LoadShapesThread
 from src.logging.info import console_info
 from src.utils.file import delete_file
 from src.utils.ui.menu.clear import clear_config_image_table

@@ -5,7 +5,7 @@ from classes.models import PowerPoint
 from src.logging.info import default as info
 from src.logging.debug import console_debug
 
-class PowerPointCheckThread(QThread):
+class CheckingThread(QThread):
     """
     Thread kiểm tra PowerPoint đã được cài hay chưa.
 
@@ -54,7 +54,7 @@ class PowerPointCheckThread(QThread):
             pythoncom.CoUninitialize() # Giải phóng môi trường COM cho thread
             self.quit()
 
-class PowerPointWorkerThread(QThread):
+class WorkingThread(QThread):
     """
     Thread làm việc với PowerPoint.
 
@@ -65,21 +65,21 @@ class PowerPointWorkerThread(QThread):
         super().__init__()
         self.powerpoint = PowerPoint()
 
-class ControlledPowerPointThread(PowerPointWorkerThread):
+class ControllableThread(WorkingThread):
     """
     Thread làm việc thay thế (là core chương trình), được bổ sung thêm chức năng dừng và tạm dừng.
 
     Attributes:
-        is_paused (List[bool]): Trạng thái tạm dừng của thread.
-        is_stopped (List[bool]): Trạng thái dừng của thread.
+        is_paused (bool): Trạng thái tạm dừng của thread.
+        is_stopped (bool): Trạng thái dừng của thread.
         locker (QMutex): Đối tượng khóa để đồng bộ hóa.
         wait_condition (QWaitCondition): Điều kiện chờ để đồng bộ hóa.
     """
     def __init__(self):
         super().__init__()
         # Các biến phục vụ cho việc tạm dừng
-        self.is_paused = [False] # Dùng List để truyền tham chiếu biến này
-        self.is_stopped = [False]
+        self.is_paused = False
+        self.is_stopped = False
         self.locker = QMutex()
         self.wait_condition = QWaitCondition()
     
@@ -92,9 +92,9 @@ class ControlledPowerPointThread(PowerPointWorkerThread):
         khi đến lần lặp tiếp theo sẽ tạm dừng lại và "ngủ".
         """
         self.locker.lock()
-        self.is_paused[0] = True
-        # Tiếp tục trên Worker
+        self.is_paused = True
         self.locker.unlock()
+        # Tiếp tục trên Worker
 
     def resume(self):
         """
@@ -104,10 +104,10 @@ class ControlledPowerPointThread(PowerPointWorkerThread):
         Đặt giá trị is_paused thành False và đánh thức các thread đang "ngủ".
         """
         self.locker.lock()
-        self.is_paused[0] = False
+        self.is_paused = False
         self.wait_condition.wakeAll()
-        # Tiếp tục trên Worker
         self.locker.unlock()
+        # Tiếp tục trên Worker
 
     def stop(self):
         """
@@ -119,10 +119,9 @@ class ControlledPowerPointThread(PowerPointWorkerThread):
         do nó đang là True nên sẽ dừng ngay lại.
         """
         self.locker.lock()
-        self.is_stopped[0] = True
+        self.is_stopped = True
         self.locker.unlock()
         
-        if (self.is_paused[0]):
+        if (self.is_paused):
             self.resume()
-        
         # Tiếp tục trên Worker

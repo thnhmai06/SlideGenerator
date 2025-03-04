@@ -1,5 +1,5 @@
 import traceback
-from typing import Optional, Any
+from typing import Any
 from src.ui.diaglogs import error as show_error_diaglog
 from translations import get_text
 from src.logging import critical as log_critical
@@ -18,8 +18,8 @@ def critical(
     where: str,
     expection: Exception,
     tb: Any,
-    custom_message: Optional[str] = None,
-    window_name: Optional[str] = None,
+    message: str = None,
+    window_name: str = None,
 ) -> None:
     """
     Ghi log lỗi nghiêm trọng (Expection xảy ra) và hiển thị hộp thoại lỗi.
@@ -28,20 +28,16 @@ def critical(
         where (str): Tên module hoặc vị trí gọi hàm.
         expection (Exception): Giá trị Expection.
         tb (Any): Traceback của Expection.
-        custom_message (Optional[str], optional): Thông báo tùy chỉnh. Mặc định là None.
-        window_name (Optional[str], optional): Tên cửa sổ. Mặc định lấy từ file dịch.
+        message (str, optional): Thông báo tùy chỉnh. Mặc định là None.
+        window_name (str, optional): Tên cửa sổ. Mặc định lấy từ file dịch.
     """
     expection_type = expection.__class__.__name__
     
     # Lấy tiêu đề từ file dịch hoặc sử dụng thông báo tùy chỉnh
-    if custom_message:
-        title = custom_message
+    if message:
+        title = message
     else:
         title = f"{get_text('diaglogs.error.exception')}\n\n{expection_type}: {expection}"
-    
-    # Lấy tên cửa sổ từ file dịch nếu không được cung cấp
-    if window_name is None:
-        window_name = get_text('diaglogs.error.window_name')
     
     # Xử lý traceback
     try:

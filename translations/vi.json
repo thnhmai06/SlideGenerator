@@ -132,7 +132,8 @@
     },
     "diaglogs": {
         "error": {
-            "window_name": "Đã xả ra lỗi",
+            "window_name": "Đã xả ra lỗi!",
+            "default": "Đã xảy ra lỗi!",
             "exception": "Đã xảy ra lỗi không mong muốn!",
             "pptx": {
                 "can_not_open": "Không thể truy cập file PowerPoint!\nHãy đảm bảo file không ở chế độ chỉ đọc, hay đang\n bị mở bởi ứng dụng khác hoặc chương trình bị thiếu quyền để mở!",
@@ -141,6 +142,7 @@
         },
         "information": {
             "window_name": "Thông báo",
+            "default": "Thông báo",
             "no_powerpoint": "Ứng dụng yêu cầu Microsoft PowerPoint (Office) để tiếp tục!",
             "pptx": {
                 "no_slide": "Không tìm thấy slide nào trong file PowerPoint này!",

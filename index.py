@@ -1,6 +1,6 @@
 import sys
 from typing import Type, Any
-from classes.threads import PowerPointCheckThread
+from classes.threads import CheckingThread
 from src.ui.menu import Menu as MenuUI
 from src.logging.critical import critical
 from src.logging.debug import console_debug
@@ -53,7 +53,7 @@ def main() -> int:
     
     try:
         # Kiểm tra PowerPoint (thread song song)
-        checking_thread = PowerPointCheckThread()
+        checking_thread = CheckingThread()
         checking_thread.start()
 
         # Hiển thị menu

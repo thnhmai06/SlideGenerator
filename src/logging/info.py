@@ -1,4 +1,4 @@
-from typing import Optional, Any
+from typing import Any
 from src.ui.diaglogs import info as show_info_diaglog
 from translations import get_text, format_text
 from src.logging import info as log_info
@@ -17,7 +17,7 @@ def console_info(where: str, *contents: Any) -> None:
 def default(
     where: str,
     key: str,
-    window_name: Optional[str] = None,
+    window_name: str = None,
     **format_args
 ) -> None:
     """
@@ -26,21 +26,17 @@ def default(
     Args:
         where (str): Tên module hoặc vị trí gọi hàm.
         key (str): Khóa tiêu đề trong file dịch.
-        window_name (Optional[str], optional): Tên cửa sổ. Mặc định lấy từ file dịch.
+        window_name (str, optional): Tên cửa sổ. Mặc định lấy từ file dịch.
         **format_args: Các tham số để định dạng văn bản.
     """
     # Lấy tiêu đề từ file dịch và định dạng nếu có tham số
     if format_args:
-        title = format_text(f"diaglogs.information.{key}", **format_args)
+        contents = format_text(f"diaglogs.information.{key}", **format_args)
     else:
-        title = get_text(f"diaglogs.information.{key}")
-    
-    # Lấy tên cửa sổ từ file dịch nếu không được cung cấp
-    if window_name is None:
-        window_name = get_text('diaglogs.information.window_name')
+        contents = get_text(f"diaglogs.information.{key}")
     
     # Ghi log vào console
-    console_info(where, title)
+    console_info(where, contents)
     
     # Hiển thị hộp thoại thông tin
-    show_info_diaglog(window_name, title)
+    show_info_diaglog(window_name, contents)
