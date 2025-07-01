@@ -3,6 +3,7 @@ from PIL import Image
 from classes.models import ProgressLogLevel
 from globals import PROCESSED_PATH
 from src.ui.progress import log_progress
+from src.utils.image.crop import crop_image_to_aspect_ratio
 
 #* Đăng ký các định dạng ảnh bổ sung
 # AVIF
@@ -42,7 +43,8 @@ def process_image(image_path: str, shape) -> str:
         img = Image.open(image_path)
         
         # Thay đổi kích thước hình ảnh
-        img = img.resize((int(shape_width), int(shape_height)))
+        # img = img.resize((int(shape_width), int(shape_height)))
+        img = crop_image_to_aspect_ratio(img, int(shape_width), int(shape_height))
         
         # Lưu hình ảnh đã xử lý
         img.save(processed_path)
