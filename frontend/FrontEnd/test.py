@@ -1,11 +1,16 @@
 import sys
 from pathlib import Path
-from PySide6.QtWidgets import QApplication, QMainWindow, QListWidget, QStackedWidget, QPushButton
+from PySide6.QtWidgets import (
+    QApplication, QMainWindow, QListWidget,
+    QStackedWidget, QPushButton, QWidget, QHBoxLayout
+)
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtCore import QFile
-import ProgressBar
+
+from ProgressBar import ProgressBarWidget   
 sys.path.append("FrontEnd/Resource")
 import MainResource_rc  # Resource_rc chứa icon, qss, hình ảnh đã biên dịch vào file .qrc
+
 
 
 def load_ui(ui_file: str) -> QMainWindow:
@@ -75,13 +80,25 @@ def setup_navigation(window: QMainWindow) -> None:
         start_btn.clicked.connect(lambda: stackedWidget.setCurrentIndex(3))
 
 
+def add_progress_bar(window: QMainWindow):
+    """Thêm ProgressBarWidget vào progressContainer"""
+    container = window.findChild(QWidget, "progressContainer")
+    if not container:
+        print("Không tìm thấy progressContainer")
+        return
+
+    if container.layout() is None:
+        container.setLayout(QHBoxLayout())
+
+    progress = ProgressBarWidget()
+    container.layout().insertWidget(0, progress)
+
+
 def main():
     app = QApplication(sys.argv)
 
-    # Load giao diện chính
     window = load_ui("FrontEnd/UI/Main.ui")
 
-    # Load style QSS
     qss_files = [
         ":/QSS/QSS/Sidebar.qss",
         ":/QSS/QSS/MainWindow.qss",
@@ -92,11 +109,14 @@ def main():
         ":/QSS/QSS/AboutMenu.qss",
     ]
     apply_stylesheet(window, qss_files)
-
-    # Setup navigation logic
     setup_navigation(window)
 
-    # Hiển thị cửa sổ
+    #"""
+    # test: thêm progress mỗi lần chạy
+    for i in range(5):
+        add_progress_bar(window)
+    #"""
+
     window.show()
     sys.exit(app.exec())
 
