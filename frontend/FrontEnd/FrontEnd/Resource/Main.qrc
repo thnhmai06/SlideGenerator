@@ -1,0 +1,28 @@
+<RCC>
+  <qresource prefix="Icon">
+    <file>Icon/github-logo.png</file>
+    <file>Icon/readme.png</file>
+    <file>Icon/search-selected.png</file>
+    <file>Icon/search.png</file>
+    <file>Icon/about-selected.png</file>
+    <file>Icon/download-selected.png</file>
+    <file>Icon/process-selected.png</file>
+    <file>Icon/setting-selected.png</file>
+    <file>Icon/upload-selected.png</file>
+    <file>Icon/about.png</file>
+    <file>Icon/download.png</file>
+    <file>Icon/setting.png</file>
+    <file>Icon/upload.png</file>
+    <file>Icon/process.png</file>
+    <file>Icon/UET-logo.png</file>
+  </qresource>
+  <qresource prefix="QSS">
+    <file>QSS/AboutMenu.qss</file>
+    <file>QSS/MainWindow.qss</file>
+    <file>QSS/DownloadMenu.qss</file>
+    <file>QSS/ProcessMenu.qss</file>
+    <file>QSS/SettingMenu.qss</file>
+    <file>QSS/InputMenu.qss</file>
+    <file>QSS/Sidebar.qss</file>
+  </qresource>
+</RCC>
