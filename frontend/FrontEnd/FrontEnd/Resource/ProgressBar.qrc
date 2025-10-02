@@ -1,6 +1,0 @@
-<RCC>
-  <qresource prefix="rs">
-    <file>QSS/ProgressBar.qss</file>
-    <file>Icon/log.png</file>
-  </qresource>
-</RCC>
