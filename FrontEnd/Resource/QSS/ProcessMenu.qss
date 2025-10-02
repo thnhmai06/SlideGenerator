@@ -1,0 +1,8 @@
+QScrollArea {
+	background-color: transparent;
+	border: none;
+}
+
+QWidget#progressContainer {
+	background-color: transparent;
+}
