@@ -1,5 +1,6 @@
 <RCC>
-  <qresource prefix="rs">
+  <qresource prefix="ProgressBar">
+    <file>QSS/LogPrintWindow.qss</file>
     <file>QSS/ProgressBar.qss</file>
     <file>Icon/log.png</file>
   </qresource>

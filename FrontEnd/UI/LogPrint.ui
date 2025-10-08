@@ -10,8 +10,24 @@
     <height>480</height>
    </rect>
   </property>
+  <property name="minimumSize">
+   <size>
+    <width>640</width>
+    <height>480</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>640</width>
+    <height>480</height>
+   </size>
+  </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Log</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="../Resource/ProgressBar.qrc">
+    <normaloff>:/ProgressBar/Icon/log.png</normaloff>:/ProgressBar/Icon/log.png</iconset>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="spacing">
@@ -30,10 +46,11 @@
     <number>0</number>
    </property>
    <item>
-    <widget class="QPlainTextEdit" name="plainTextEdit">
+    <widget class="QPlainTextEdit" name="log">
      <property name="font">
       <font>
-       <pointsize>9</pointsize>
+       <family>Liberation Mono</family>
+       <pointsize>12</pointsize>
       </font>
      </property>
      <property name="readOnly">
@@ -46,6 +63,8 @@
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="../Resource/ProgressBar.qrc"/>
+ </resources>
  <connections/>
 </ui>

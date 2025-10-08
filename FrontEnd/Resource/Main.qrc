@@ -1,5 +1,8 @@
 <RCC>
   <qresource prefix="Icon">
+    <file>Icon/UETAPP-icon.png</file>
+    <file>Icon/UETAPP-icon.ico</file>
+    <file>Icon/UETAPP-icon.svg</file>
     <file>Icon/github-logo.png</file>
     <file>Icon/readme.png</file>
     <file>Icon/search-selected.png</file>

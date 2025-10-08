@@ -1,3 +1,6 @@
+/* Dùng cho tab tải xuống */
+/* File này không còn được sử dụng */
+
 QPushButton#start {
     background-color: #235996;
     border: none;  
@@ -14,3 +17,5 @@ QPushButton#start:hover {
 QPushButton#start:pressed {
     background-color: #235996;
 }
+
+
