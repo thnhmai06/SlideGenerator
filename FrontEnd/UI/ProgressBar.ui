@@ -29,7 +29,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>Progress Bar</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_2">
    <property name="spacing">
@@ -102,7 +102,7 @@
        </property>
        <property name="icon">
         <iconset resource="../Resource/ProgressBar.qrc">
-         <normaloff>:/rs/Icon/log.png</normaloff>:/rs/Icon/log.png</iconset>
+         <normaloff>:/ProgressBar/Icon/log.png</normaloff>:/ProgressBar/Icon/log.png</iconset>
        </property>
        <property name="iconSize">
         <size>

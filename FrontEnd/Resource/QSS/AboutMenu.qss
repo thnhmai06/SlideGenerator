@@ -1,4 +1,7 @@
-/*---------Link Btn------*/
+/* Menu About */
+
+
+
 QPushButton[buttonGroup="link"] {
     background-color: #235996;
     border: none;  

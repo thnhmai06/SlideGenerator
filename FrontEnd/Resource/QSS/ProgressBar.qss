@@ -1,3 +1,7 @@
+/* Dùng cho thanh tiến trình ProgressBar.ui */
+
+
+
 QPushButton {
 	background-color: #0090d1;
 	border: none;
@@ -18,10 +22,15 @@ QPushButton:pressed {
 }
 
 
+
+
 QLabel {
     color: #235996;
 }
 
+
+
+/*-------Progress Bar---------*/
 QProgressBar {
     border: none;
     border-top-left-radius: 5px;

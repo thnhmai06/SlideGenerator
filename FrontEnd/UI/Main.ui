@@ -22,6 +22,13 @@
     <height>768</height>
    </size>
   </property>
+  <property name="windowTitle">
+   <string>Phần mềm tạo slide tốt nghiệp</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="../Resource/Main.qrc">
+    <normaloff>:/Icon/Icon/UETAPP-icon.png</normaloff>:/Icon/Icon/UETAPP-icon.png</iconset>
+  </property>
   <property name="styleSheet">
    <string notr="true">QMainWindow {
 	padding: 0px;	
@@ -299,7 +306,7 @@
           </size>
          </property>
          <property name="currentIndex">
-          <number>4</number>
+          <number>2</number>
          </property>
          <widget class="QWidget" name="input">
           <property name="minimumSize">
@@ -829,14 +836,14 @@
           <widget class="QLabel" name="label_4">
            <property name="geometry">
             <rect>
-             <x>260</x>
-             <y>120</y>
-             <width>54</width>
-             <height>17</height>
+             <x>170</x>
+             <y>150</y>
+             <width>211</width>
+             <height>111</height>
             </rect>
            </property>
            <property name="text">
-            <string>setting</string>
+            <string>xóa label này khi bắt đầu chỉnh sửa</string>
            </property>
           </widget>
          </widget>
@@ -861,8 +868,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>580</width>
-                <height>380</height>
+                <width>98</width>
+                <height>28</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_14">

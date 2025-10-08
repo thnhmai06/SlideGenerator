@@ -534,69 +534,142 @@ L\xe9;v\xec\xd8\x0a\xd3}w\xf5\x08\x90\xec\xec\x92\
 WVV\xfei\xce\x9c9\xa5\x93&M:\x11\x15\xe7\
 \xfe\x1f\xb3K!\x17\xf3lt\xbb\x00\x00\x00\x00IE\
 ND\xaeB`\x82\
-\x00\x00\x03_\
-Q\
-PushButton {\x0a\x09ba\
-ckground-color: \
-#0090d1;\x0a\x09border\
-: none;\x0a\x09border-\
-top-left-radius:\
- 0px;\x0a    border\
--bottom-left-rad\
-ius: 0px;\x0a    bo\
-rder-top-right-r\
-adius: 5px;\x0a    \
-border-bottom-ri\
-ght-radius: 5px;\
-\x0a    outline: no\
-ne;\x0a    padding:\
- 0px 10px;\x0a}\x0a\x0aQP\
-ushButton:hover \
-{\x0a    background\
--color: #29B6F6;\
- \x0a}\x0a\x0aQPushButton\
-:pressed {\x0a    b\
-ackground-color:\
- #0288D1;  \x0a}\x0a\x0a\x0a\
-QLabel {\x0a    col\
-or: #235996;\x0a}\x0a\x0a\
-QProgressBar {\x0a \
-   border: none;\
-\x0a    border-top-\
-left-radius: 5px\
+\x00\x00\x03\xba\
+/\
+* D\xc3\xb9ng cho than\
+h ti\xe1\xba\xbfn tr\xc3\xacnh \
+ProgressBar.ui *\
+/\x0a\x0a\x0a\x0aQPushButton\
+ {\x0a\x09background-c\
+olor: #0090d1;\x0a\x09\
+border: none;\x0a\x09b\
+order-top-left-r\
+adius: 0px;\x0a    \
+border-bottom-le\
+ft-radius: 0px;\x0a\
+    border-top-r\
+ight-radius: 5px\
 ;\x0a    border-bot\
-tom-left-radius:\
- 5px;\x0a    border\
--top-right-radiu\
-s: 0px;\x0a    bord\
-er-bottom-right-\
-radius: 0px;\x0a   \
- background-colo\
-r: #f0f0f0;\x0a    \
-height: 16px;\x0a  \
-  text-align: ce\
-nter;\x0a    color:\
- white;\x0a    font\
-: bold;\x0a}\x0a\x0aQProg\
-ressBar::chunk {\
+tom-right-radius\
+: 5px;\x0a    outli\
+ne: none;\x0a    pa\
+dding: 0px 10px;\
+\x0a}\x0a\x0aQPushButton:\
+hover {\x0a    back\
+ground-color: #2\
+9B6F6; \x0a}\x0a\x0aQPush\
+Button:pressed {\
+\x0a    background-\
+color: #0288D1; \
+ \x0a}\x0a\x0a\x0a\x0a\x0aQLabel {\
+\x0a    color: #235\
+996;\x0a}\x0a\x0a\x0a\x0a/*----\
+---Progress Bar-\
+--------*/\x0aQProg\
+ressBar {\x0a    bo\
+rder: none;\x0a    \
+border-top-left-\
+radius: 5px;\x0a   \
+ border-bottom-l\
+eft-radius: 5px;\
 \x0a    border-top-\
-left-radius: 5px\
-;\x0a    border-bot\
-tom-left-radius:\
- 5px;\x0a    border\
--top-right-radiu\
-s: 0px;\x0a    bord\
-er-bottom-right-\
-radius: 0px;\x0a   \
- background-colo\
-r: #0090d1;\x0a}\x0a\
+right-radius: 0p\
+x;\x0a    border-bo\
+ttom-right-radiu\
+s: 0px;\x0a    back\
+ground-color: #f\
+0f0f0;\x0a    heigh\
+t: 16px;\x0a    tex\
+t-align: center;\
+\x0a    color: whit\
+e;\x0a    font: bol\
+d;\x0a}\x0a\x0aQProgressB\
+ar::chunk {\x0a    \
+border-top-left-\
+radius: 5px;\x0a   \
+ border-bottom-l\
+eft-radius: 5px;\
+\x0a    border-top-\
+right-radius: 0p\
+x;\x0a    border-bo\
+ttom-right-radiu\
+s: 0px;\x0a    back\
+ground-color: #0\
+090d1;\x0a}\x0a\
+\x00\x00\x04\x0d\
+/\
+* D\xc3\xb9ng cho LogP\
+rint.ui */\x0a\x0a\x0a\x0a/*\
+------Backgound-\
+--*/\x0aQWidget {\x0a \
+   background-co\
+lor: #1e1e1e;   \
+  \x0a    color: #b\
+ffffe;          \
+       \x0a    bord\
+er: 1px solid #3\
+c3c3c;\x0a    borde\
+r-radius: 6px;\x0a}\
+\x0a\x0a\x0a/*---\xc3\x94 log--\
+-*/\x0aQPlainTextEd\
+it#log {\x0a    bac\
+kground-color: #\
+252526;\x0a    colo\
+r: #bffffe;     \
+           \x0a    \
+font-family: Con\
+solas, monospace\
+;\x0a    font-size:\
+ 12pt;\x0a    borde\
+r: 1px solid #3c\
+3c3c;\x0a    paddin\
+g: 6px;\x0a    sele\
+ction-background\
+-color: #264f78;\
+ \x0a}\x0a\x0a\x0a\x0a/*---Than\
+h cu\xe1\xbb\x99n---*/\x0aQS\
+crollBar:vertica\
+l, QScrollBar:ho\
+rizontal {\x0a    b\
+ackground: #2d2d\
+30;\x0a    border: \
+none;\x0a    margin\
+: 0;\x0a    width: \
+10px;   \x0a    hei\
+ght: 10px; \x0a}\x0a\x0aQ\
+ScrollBar::handl\
+e:vertical, QScr\
+ollBar::handle:h\
+orizontal {\x0a    \
+background: #5a5\
+a5a;\x0a    border-\
+radius: 5px;\x0a}\x0a\x0a\
+QScrollBar::hand\
+le:hover {\x0a    b\
+ackground: #7a7a\
+7a;\x0a}\x0a\x0a\x0a\x0a\x0a/* \xe1\xba\xa8\
+n m\xc5\xa9i t\xc3\xaan tr\xc3\xaa\
+n d\xc6\xb0\xe1\xbb\x9bi / tr\xc3\xa1\
+i ph\xe1\xba\xa3i */\x0aQScr\
+ollBar::add-line\
+, \x0aQScrollBar::s\
+ub-line {\x0a    bo\
+rder: none;\x0a    \
+background: none\
+;\x0a    width: 0px\
+;\x0a    height: 0p\
+x;\x0a}\x0a\x0aQScrollBar\
+::add-page, \x0aQSc\
+rollBar::sub-pag\
+e {\x0a    backgrou\
+nd: none;\x0a}\x0a\
 "
 
 qt_resource_name = b"\
-\x00\x02\
-\x00\x00\x07\x93\
-\x00r\
-\x00s\
+\x00\x0b\
+\x08eSB\
+\x00P\
+\x00r\x00o\x00g\x00r\x00e\x00s\x00s\x00B\x00a\x00r\
 \x00\x03\
 \x00\x00V\x83\
 \x00Q\
@@ -613,6 +686,11 @@ qt_resource_name = b"\
 \x03U\x92\x03\
 \x00P\
 \x00r\x00o\x00g\x00r\x00e\x00s\x00s\x00B\x00a\x00r\x00.\x00q\x00s\x00s\
+\x00\x12\
+\x07\x0e\xfe#\
+\x00L\
+\x00o\x00g\x00P\x00r\x00i\x00n\x00t\x00W\x00i\x00n\x00d\x00o\x00w\x00.\x00q\x00s\
+\x00s\
 "
 
 qt_resource_struct = b"\
@@ -620,14 +698,16 @@ qt_resource_struct = b"\
 \x00\x00\x00\x00\x00\x00\x00\x00\
 \x00\x00\x00\x00\x00\x02\x00\x00\x00\x02\x00\x00\x00\x02\
 \x00\x00\x00\x00\x00\x00\x00\x00\
-\x00\x00\x00\x0a\x00\x02\x00\x00\x00\x01\x00\x00\x00\x05\
+\x00\x00\x00\x1c\x00\x02\x00\x00\x00\x02\x00\x00\x00\x05\
 \x00\x00\x00\x00\x00\x00\x00\x00\
-\x00\x00\x00\x16\x00\x02\x00\x00\x00\x01\x00\x00\x00\x04\
+\x00\x00\x00(\x00\x02\x00\x00\x00\x01\x00\x00\x00\x04\
 \x00\x00\x00\x00\x00\x00\x00\x00\
-\x00\x00\x00$\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\
+\x00\x00\x006\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\
 \x00\x00\x01\x99\x92\x86\xd7\xba\
-\x00\x00\x008\x00\x00\x00\x00\x00\x01\x00\x00 \xdb\
-\x00\x00\x01\x99\x9a\xda\xadJ\
+\x00\x00\x00J\x00\x00\x00\x00\x00\x01\x00\x00 \xdb\
+\x00\x00\x01\x99\xbf\x86\x0c\x85\
+\x00\x00\x00n\x00\x00\x00\x00\x00\x01\x00\x00$\x99\
+\x00\x00\x01\x99\xbf\xf9\xce\xb1\
 "
 
 def qInitResources():
