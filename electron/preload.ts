@@ -1,0 +1,23 @@
+import { contextBridge, ipcRenderer } from 'electron'
+
+export interface ElectronAPI {
+  openFile: (filters?: { name: string; extensions: string[] }[]) => Promise<string | undefined>
+  openFolder: () => Promise<string | undefined>
+  saveFile: (filters?: { name: string; extensions: string[] }[]) => Promise<string | undefined>
+  openUrl: (url: string) => Promise<void>
+  openPath: (path: string) => Promise<void>
+  readSettings: (filename: string) => Promise<string | null>
+  writeSettings: (filename: string, data: string) => Promise<boolean>
+}
+
+const electronAPI: ElectronAPI = {
+  openFile: (filters) => ipcRenderer.invoke('dialog:openFile', filters),
+  openFolder: () => ipcRenderer.invoke('dialog:openFolder'),
+  saveFile: (filters) => ipcRenderer.invoke('dialog:saveFile', filters),
+  openUrl: (url) => ipcRenderer.invoke('dialog:openUrl', url),
+  openPath: (path) => ipcRenderer.invoke('dialog:openPath', path),
+  readSettings: (filename) => ipcRenderer.invoke('settings:read', filename),
+  writeSettings: (filename, data) => ipcRenderer.invoke('settings:write', filename, data),
+}
+
+contextBridge.exposeInMainWorld('electronAPI', electronAPI)
