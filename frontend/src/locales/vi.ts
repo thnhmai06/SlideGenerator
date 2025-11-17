@@ -33,10 +33,10 @@ export const vi = {
   'replacement.add': 'Thêm',
   'replacement.delete': 'Xóa',
   'replacement.regex': 'Regex tìm kiếm',
-  'replacement.column': 'Cột dữ liệu',
+  'replacement.column': 'Cột dữ liệu (hỗ trợ regex)',
   'replacement.shape': 'Shape',
   'replacement.regexPlaceholder': 'Nhập regex...',
-  'replacement.columnPlaceholder': 'Nhập tên cột...',
+  'replacement.columnPlaceholder': 'Nhập tên cột (hỗ trợ regex: ^col.*)',
   'replacement.shapePlaceholder': 'Chọn shape...',
   
   // Settings
