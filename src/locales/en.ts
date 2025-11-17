@@ -33,10 +33,10 @@ export const en = {
   'replacement.add': 'Add',
   'replacement.delete': 'Delete',
   'replacement.regex': 'Search Regex',
-  'replacement.column': 'Data Column',
+  'replacement.column': 'Data Column (supports regex)',
   'replacement.shape': 'Shape',
   'replacement.regexPlaceholder': 'Enter regex...',
-  'replacement.columnPlaceholder': 'Enter column name...',
+  'replacement.columnPlaceholder': 'Enter column name (supports regex: ^col.*)',
   'replacement.shapePlaceholder': 'Select shape...',
   
   // Settings
