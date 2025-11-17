@@ -1,0 +1,142 @@
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.setting-menu {
+  max-width: 700px;
+  margin: 0 auto;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.setting-menu .menu-title {
+  margin-top: 0;
+  margin-bottom: 30px;
+  animation: slideIn 0.3s ease-out;
+}
+
+.setting-section {
+  margin-bottom: 30px;
+  padding: 25px;
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  animation: slideIn 0.3s ease-out;
+  transition: all 0.2s ease;
+}
+
+.setting-section:last-child {
+  margin-bottom: 0;
+}
+
+.setting-section:hover {
+  border-color: var(--accent-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.setting-section h3 {
+  color: var(--text-primary);
+  font-size: 18px;
+  margin: 0 0 24px 0;
+  font-weight: 600;
+  animation: fadeIn 0.3s ease-out;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-secondary);
+}
+
+.setting-item {
+  margin-bottom: 20px;
+  animation: fadeIn 0.4s ease-out;
+  transition: all 0.2s ease;
+}
+
+.setting-item:last-child {
+  margin-bottom: 0;
+}
+
+.setting-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.setting-item-checkbox {
+  padding: 8px 0;
+}
+
+.setting-item:hover {
+  transform: translateX(4px);
+}
+
+.setting-label {
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  flex: 0 0 auto;
+  min-width: 120px;
+}
+
+.setting-item label {
+  color: var(--text-secondary);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.setting-item label span {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.setting-select {
+  padding: 8px 12px;
+  background-color: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 4px;
+  color: var(--input-text);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 200px;
+}
+
+.setting-select:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  transform: translateY(-1px);
+}
+
+.setting-select:hover {
+  border-color: var(--accent-primary);
+}
+
+.setting-item input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.setting-item input[type="checkbox"]:hover {
+  transform: scale(1.1);
+}

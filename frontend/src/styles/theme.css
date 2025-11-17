@@ -1,0 +1,95 @@
+/* Light Theme Variables */
+[data-theme="light"] {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f5f5;
+  --bg-tertiary: #ffffff;
+  --bg-hover: #e8e8e8;
+  --bg-active: #d0d0d0;
+  
+  --text-primary: #1e1e1e;
+  --text-secondary: #424242;
+  --text-tertiary: #757575;
+  
+  --border-primary: #d0d0d0;
+  --border-secondary: #e0e0e0;
+  
+  --accent-primary: #0078d4;
+  --accent-hover: #106ebe;
+  --accent-active: #005a9e;
+  
+  --success-primary: #107c10;
+  --success-hover: #0e6b0e;
+  --success-active: #0a5a0a;
+  
+  --danger-primary: #d13438;
+  --danger-hover: #b52e31;
+  
+  --sidebar-bg: #f5f5f5;
+  --sidebar-border: #e0e0e0;
+  --sidebar-item-hover: #e8e8e8;
+  --sidebar-item-active: #d9ecff;
+  --sidebar-text: #424242;
+  --sidebar-text-active: #0078d4;
+  --sidebar-text-secondary: #757575;
+  
+  --input-bg: #ffffff;
+  --input-border: #c0c0c0;
+  --input-text: #1e1e1e;
+  --input-placeholder: #757575;
+  
+  --scrollbar-track: #f0f0f0;
+  --scrollbar-thumb: #c0c0c0;
+  --scrollbar-thumb-hover: #a0a0a0;
+  
+  --shadow-small: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-medium: 0 4px 8px rgba(0, 0, 0, 0.15);
+  --shadow-large: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Dark Theme Variables (Default) */
+[data-theme="dark"] {
+  --bg-primary: #1e1e1e;
+  --bg-secondary: #252526;
+  --bg-tertiary: #2d2d30;
+  --bg-hover: #2a2d2e;
+  --bg-active: #37373d;
+  
+  --text-primary: #e0e0e0;
+  --text-secondary: #cccccc;
+  --text-tertiary: #888888;
+  
+  --border-primary: #3e3e42;
+  --border-secondary: #555555;
+  
+  --accent-primary: #0e639c;
+  --accent-hover: #1177bb;
+  --accent-active: #0d5a8f;
+  
+  --success-primary: #16825d;
+  --success-hover: #1a9870;
+  --success-active: #13704d;
+  
+  --danger-primary: #c42b1c;
+  --danger-hover: #e81123;
+  
+  --sidebar-bg: #1e1e1e;
+  --sidebar-border: #3e3e42;
+  --sidebar-item-hover: #2a2d2e;
+  --sidebar-item-active: #094771;
+  --sidebar-text: #cccccc;
+  --sidebar-text-active: #4fc3f7;
+  --sidebar-text-secondary: #888888;
+  
+  --input-bg: #3c3c3c;
+  --input-border: #555555;
+  --input-text: #e0e0e0;
+  --input-placeholder: #888888;
+  
+  --scrollbar-track: #1e1e1e;
+  --scrollbar-thumb: #3e3e42;
+  --scrollbar-thumb-hover: #4e4e52;
+  
+  --shadow-small: 0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-medium: 0 4px 8px rgba(0, 0, 0, 0.4);
+  --shadow-large: 0 8px 16px rgba(0, 0, 0, 0.5);
+}

@@ -1,7 +1,0 @@
-QStackedWidget {
-    background-color: transparent;
-}
-
-QWidget#mainMenu {
-    background-color: #ffffff;
-}
