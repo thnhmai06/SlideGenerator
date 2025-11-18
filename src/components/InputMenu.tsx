@@ -94,8 +94,7 @@ const InputMenu: React.FC<InputMenuProps> = ({ onStart }) => {
 
   const handleBrowsePptx = async () => {
     const path = await window.electronAPI.openFile([
-      { name: 'PowerPoint Files', extensions: ['pptx'] },
-      { name: 'All Files', extensions: ['*'] }
+      { name: 'PowerPoint Files', extensions: ['pptx'] }
     ])
     if (path) {
         setPptxPath(path)
@@ -105,7 +104,7 @@ const InputMenu: React.FC<InputMenuProps> = ({ onStart }) => {
 
   const handleBrowseData = async () => {
     const path = await window.electronAPI.openFile([
-      { name: 'Spreadsheets File', extensions: ['xlsx', 'xls', 'xlsm', 'csv'] }
+      { name: 'Spreadsheets Files', extensions: ['xlsx', 'xls', 'xlsm', 'csv'] }
     ])
     
     if (path) {
@@ -121,10 +120,11 @@ const InputMenu: React.FC<InputMenuProps> = ({ onStart }) => {
         const allColumns = await backendApi.getAllColumns([fileId])
         
         setColumns(allColumns)
-        setIsLoadingColumns(false)
       } catch (error) {
         console.error('Error loading file:', error)
         alert(t('input.columnLoadError'))
+        setDataPath('');
+      } finally {
         setIsLoadingColumns(false)
       }
     }
