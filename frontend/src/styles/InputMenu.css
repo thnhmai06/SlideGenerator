@@ -106,13 +106,14 @@
   align-items: start;
   animation: slideIn 0.2s ease-out;
   transition: all 0.2s ease;
-  padding: 4px 0;
+  padding-left: 12px;
+  padding-right: 12px;
 }
 
-.table-row:hover {
+/* .table-row:hover {
   background-color: var(--bg-hover);
   border-radius: 4px;
-}
+} */
 
 
 .shape-select {

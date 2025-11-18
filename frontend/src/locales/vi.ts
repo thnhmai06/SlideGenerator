@@ -14,6 +14,8 @@ export const vi = {
   'input.title': 'Cấu hình',
   'input.import': 'Nhập',
   'input.export': 'Xuất',
+  'input.clearAll': 'Xóa tất cả',
+  'input.confirmClear': 'Bạn có chắc muốn xóa tất cả dữ liệu?',
   'input.importConfig': 'Nhập cấu hình',
   'input.exportConfig': 'Xuất cấu hình',
   'input.pptxFile': 'File mẫu PowerPoint (.pptx):',

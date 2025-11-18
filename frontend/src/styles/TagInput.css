@@ -98,7 +98,7 @@
   min-width: 100px;
   border: none !important;
   outline: none;
-  background: transparent;
+  background: transparent !important;
   padding: 0 !important;
   margin: 0;
   font-size: var(--font-base);
@@ -197,18 +197,9 @@
 }
 
 /* Dark theme adjustments */
-[data-theme="dark"] .tag-input-wrapper {
-  background: var(--bg-tertiary);
-  border-color: var(--border-color);
-}
-
-[data-theme="dark"] .tag-input-wrapper:focus-within {
-  background: var(--bg-secondary);
-}
 
 [data-theme="dark"] .tag-suggestions {
   background: var(--bg-tertiary);
-  border-color: var(--border-color);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 

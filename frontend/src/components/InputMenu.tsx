@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useApp } from '../contexts/AppContext'
 import ShapeSelector from './ShapeSelector'
 import TagInput from './TagInput'
@@ -29,10 +29,26 @@ interface Shape {
 
 const InputMenu: React.FC<InputMenuProps> = ({ onStart }) => {
   const { t } = useApp()
-  const [pptxPath, setPptxPath] = useState('')
-  const [dataPath, setDataPath] = useState('')
-  const [savePath, setSavePath] = useState('')
-  const [columns, setColumns] = useState<string[]>([])
+  
+  // Load saved state from localStorage
+  const loadSavedState = () => {
+    try {
+      const saved = localStorage.getItem('inputMenuState')
+      if (saved) {
+        return JSON.parse(saved)
+      }
+    } catch (error) {
+      console.error('Error loading saved state:', error)
+    }
+    return null
+  }
+  
+  const savedState = loadSavedState()
+  
+  const [pptxPath, setPptxPath] = useState(savedState?.pptxPath || '')
+  const [dataPath, setDataPath] = useState(savedState?.dataPath || '')
+  const [savePath, setSavePath] = useState(savedState?.savePath || '')
+  const [columns, setColumns] = useState<string[]>(savedState?.columns || [])
   const [isLoadingColumns, setIsLoadingColumns] = useState(false)
   
   // Demo shapes - trong thực tế sẽ parse từ file PPTX
@@ -41,12 +57,25 @@ const InputMenu: React.FC<InputMenuProps> = ({ onStart }) => {
     { id: 'Shape2', name: 'Ảnh đại diện', preview: '/assets/UETAPP-icon.png' },
   ])
   
-  const [textReplacements, setTextReplacements] = useState<TextReplacement[]>([
-    { id: 1, searchText: '', columns: [] }
-  ])
-  const [imageReplacements, setImageReplacements] = useState<ImageReplacement[]>([
-    { id: 1, shapeId: '', columns: [] }
-  ])
+  const [textReplacements, setTextReplacements] = useState<TextReplacement[]>(
+    savedState?.textReplacements || [{ id: 1, searchText: '', columns: [] }]
+  )
+  const [imageReplacements, setImageReplacements] = useState<ImageReplacement[]>(
+    savedState?.imageReplacements || [{ id: 1, shapeId: '', columns: [] }]
+  )
+  
+  // Save state to localStorage whenever it changes
+  useEffect(() => {
+    const state = {
+      pptxPath,
+      dataPath,
+      savePath,
+      columns,
+      textReplacements,
+      imageReplacements
+    }
+    localStorage.setItem('inputMenuState', JSON.stringify(state))
+  }, [pptxPath, dataPath, savePath, columns, textReplacements, imageReplacements])
 
   // Resolve relative paths to absolute paths
   const resolvePath = (inputPath: string): string => {
@@ -147,6 +176,7 @@ const InputMenu: React.FC<InputMenuProps> = ({ onStart }) => {
       pptxPath,
       dataPath,
       savePath,
+      columns,
       textReplacements,
       imageReplacements
     }
@@ -180,6 +210,7 @@ const InputMenu: React.FC<InputMenuProps> = ({ onStart }) => {
           setPptxPath(config.pptxPath || '')
           setDataPath(config.dataPath || '')
           setSavePath(config.savePath || '')
+          setColumns(config.columns || [])
           setTextReplacements(config.textReplacements || [{ id: 1, searchText: '', columns: [] }])
           setImageReplacements(config.imageReplacements || [{ id: 1, shapeId: '', columns: [] }])
           alert(t('input.importConfig') + ' ' + t('common.ok'))
@@ -187,6 +218,18 @@ const InputMenu: React.FC<InputMenuProps> = ({ onStart }) => {
       } catch (error) {
         alert(t('input.jsonError'))
       }
+    }
+  }
+  
+  const clearAll = () => {
+    if (confirm(t('input.confirmClear') || 'Bạn có chắc muốn xóa tất cả dữ liệu?')) {
+      setPptxPath('')
+      setDataPath('')
+      setSavePath('')
+      setColumns([])
+      setTextReplacements([{ id: 1, searchText: '', columns: [] }])
+      setImageReplacements([{ id: 1, shapeId: '', columns: [] }])
+      localStorage.removeItem('inputMenuState')
     }
   }
 
@@ -225,6 +268,13 @@ const InputMenu: React.FC<InputMenuProps> = ({ onStart }) => {
           </button>
           <button className="btn btn-secondary" onClick={exportConfig} title={t('input.exportConfig')}>
             📤 {t('input.export')}
+          </button>
+          <button className="btn btn-danger" onClick={clearAll} title={t('input.clearAll')}>
+            <img 
+              src="/assets/remove.png" 
+              alt={t('input.clearAll')}
+              className="btn-icon"
+            /> <span>{t('input.clearAll')}</span>
           </button>
         </div>
       </div>
