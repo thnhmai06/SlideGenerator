@@ -97,17 +97,20 @@ const InputMenu: React.FC<InputMenuProps> = ({ onStart }) => {
       { name: 'PowerPoint Files', extensions: ['pptx'] },
       { name: 'All Files', extensions: ['*'] }
     ])
-    if (path) setPptxPath(path)
+    if (path) {
+        setPptxPath(path)
+        clearReplacements()
+    }
   }
 
   const handleBrowseData = async () => {
     const path = await window.electronAPI.openFile([
-      { name: 'Excel Files', extensions: ['xlsx', 'csv'] },
-      { name: 'All Files', extensions: ['*'] }
+      { name: 'Spreadsheets File', extensions: ['xlsx', 'xls', 'xlsm', 'csv'] }
     ])
     
     if (path) {
       setDataPath(path)
+      clearReplacements()
       setIsLoadingColumns(true)
       try {
         // Load file into backend
@@ -221,14 +224,18 @@ const InputMenu: React.FC<InputMenuProps> = ({ onStart }) => {
     }
   }
   
+  const clearReplacements = () => {
+    setTextReplacements([{ id: 1, searchText: '', columns: [] }])
+    setImageReplacements([{ id: 1, shapeId: '', columns: [] }])
+  }
+
   const clearAll = () => {
     if (confirm(t('input.confirmClear') || 'Bạn có chắc muốn xóa tất cả dữ liệu?')) {
       setPptxPath('')
       setDataPath('')
       setSavePath('')
       setColumns([])
-      setTextReplacements([{ id: 1, searchText: '', columns: [] }])
-      setImageReplacements([{ id: 1, shapeId: '', columns: [] }])
+      clearReplacements()
       localStorage.removeItem('inputMenuState')
     }
   }
