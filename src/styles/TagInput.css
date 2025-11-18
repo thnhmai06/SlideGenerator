@@ -1,0 +1,233 @@
+/* Tag Input Component */
+.tag-input-container {
+  position: relative;
+  width: 100%;
+}
+
+.tag-input-wrapper {
+  /* Layout */
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: var(--spacing-md) var(--spacing-lg);
+  min-height: 38px;
+  width: 100%;
+  
+  /* Appearance */
+  background-color: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
+  color: var(--input-text);
+  
+  /* Typography */
+  font-size: var(--font-base);
+  font-family: inherit;
+  font-weight: var(--font-normal);
+  line-height: 1.5;
+  
+  /* Interaction */
+  transition: all var(--transition-base);
+  cursor: text;
+}
+
+.tag-input-wrapper:focus-within {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: var(--focus-ring);
+  transform: translateY(-1px);
+}
+
+.tag-input-wrapper:hover:not(:focus-within) {
+  border-color: var(--accent-primary);
+}
+
+.tag-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 400;
+  white-space: nowrap;
+  max-width: 180px;
+  flex-shrink: 0;
+  transition: background 0.15s ease;
+}
+
+.tag-item:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.tag-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tag-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  color: var(--text-secondary);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-weight: 400;
+  flex-shrink: 0;
+}
+
+.tag-remove:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.tag-input-field {
+  flex: 1 1 auto;
+  min-width: 100px;
+  border: none !important;
+  outline: none;
+  background: transparent;
+  padding: 0 !important;
+  margin: 0;
+  font-size: var(--font-base);
+  color: var(--input-text);
+  font-family: inherit;
+  line-height: 1.5;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.tag-input-field:focus {
+  border: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+  padding: 0 !important;
+}
+
+.tag-input-field:hover {
+  border: none !important;
+  padding: 0 !important;
+}
+
+.tag-input-field::placeholder {
+  color: var(--text-tertiary);
+}
+
+/* Suggestions Dropdown */
+.tag-suggestions {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    max-height: 280px;
+    overflow-y: auto;
+    background: var(--bg-secondary);
+    border: 2px solid var(--accent-primary);
+    border-radius: var(--radius-md);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    z-index: 1000;
+    animation: dropdownSlide 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes dropdownSlide {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.tag-suggestion-item {
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-secondary);
+  position: relative;
+  overflow: hidden;
+}
+
+.tag-suggestion-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--accent-primary);
+  transform: scaleY(0);
+  transition: transform 0.2s ease;
+}
+
+.tag-suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.tag-suggestion-item:hover,
+.tag-suggestion-item.selected {
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.08) 0%, transparent 100%);
+  color: var(--accent-primary);
+  padding-left: 18px;
+}
+
+.tag-suggestion-item:hover::before,
+.tag-suggestion-item.selected::before {
+  transform: scaleY(1);
+}
+
+.tag-suggestion-item.selected {
+  font-weight: 600;
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.12) 0%, transparent 100%);
+}
+
+/* Dark theme adjustments */
+[data-theme="dark"] .tag-input-wrapper {
+  background: var(--bg-tertiary);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .tag-input-wrapper:focus-within {
+  background: var(--bg-secondary);
+}
+
+[data-theme="dark"] .tag-suggestions {
+  background: var(--bg-tertiary);
+  border-color: var(--border-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Scrollbar styling for suggestions */
+.tag-suggestions::-webkit-scrollbar {
+  width: 10px;
+}
+
+.tag-suggestions::-webkit-scrollbar-track {
+  background: var(--bg-tertiary);
+  border-radius: 5px;
+}
+
+.tag-suggestions::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--accent-primary) 0%, var(--accent-hover) 100%);
+  border-radius: 5px;
+  border: 2px solid var(--bg-secondary);
+}
+
+.tag-suggestions::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--accent-hover) 0%, var(--accent-primary) 100%);
+}

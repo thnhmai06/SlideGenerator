@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer } from 'electron'
 
 export interface ElectronAPI {
   openFile: (filters?: { name: string; extensions: string[] }[]) => Promise<string | undefined>
+  openMultipleFiles: (filters?: { name: string; extensions: string[] }[]) => Promise<string[] | undefined>
   openFolder: () => Promise<string | undefined>
   saveFile: (filters?: { name: string; extensions: string[] }[]) => Promise<string | undefined>
   openUrl: (url: string) => Promise<void>
@@ -12,6 +13,7 @@ export interface ElectronAPI {
 
 const electronAPI: ElectronAPI = {
   openFile: (filters) => ipcRenderer.invoke('dialog:openFile', filters),
+  openMultipleFiles: (filters) => ipcRenderer.invoke('dialog:openMultipleFiles', filters),
   openFolder: () => ipcRenderer.invoke('dialog:openFolder'),
   saveFile: (filters) => ipcRenderer.invoke('dialog:saveFile', filters),
   openUrl: (url) => ipcRenderer.invoke('dialog:openUrl', url),

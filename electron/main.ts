@@ -61,6 +61,14 @@ ipcMain.handle('dialog:openFile', async (_, filters: Electron.FileFilter[]) => {
   return result.filePaths[0]
 })
 
+ipcMain.handle('dialog:openMultipleFiles', async (_, filters: Electron.FileFilter[]) => {
+  const result = await dialog.showOpenDialog({
+    properties: ['openFile', 'multiSelections'],
+    filters: filters || [{ name: 'All Files', extensions: ['*'] }],
+  })
+  return result.filePaths
+})
+
 ipcMain.handle('dialog:openFolder', async () => {
   const result = await dialog.showOpenDialog({
     properties: ['openDirectory'],

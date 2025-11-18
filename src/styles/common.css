@@ -599,7 +599,6 @@ label,
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--spacing-lg);
 }
 
 .section-title,
@@ -609,7 +608,6 @@ label,
   color: var(--text-primary);
   font-size: var(--font-lg);
   font-weight: var(--font-semibold);
-  margin: 0 0 var(--spacing-lg) 0;
   padding-bottom: var(--spacing-md);
   border-bottom: 1px solid var(--border-secondary);
 }

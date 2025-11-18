@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import { useApp } from '../contexts/AppContext'
 import ShapeSelector from './ShapeSelector'
+import TagInput from './TagInput'
+import * as backendApi from '../services/backendApi'
 import '../styles/InputMenu.css'
 
 interface InputMenuProps {
@@ -9,14 +11,14 @@ interface InputMenuProps {
 
 interface TextReplacement {
   id: number
-  regex: string
-  column: string
+  searchText: string
+  columns: string[]
 }
 
 interface ImageReplacement {
   id: number
   shapeId: string
-  column: string
+  columns: string[]
 }
 
 interface Shape {
@@ -30,7 +32,8 @@ const InputMenu: React.FC<InputMenuProps> = ({ onStart }) => {
   const [pptxPath, setPptxPath] = useState('')
   const [dataPath, setDataPath] = useState('')
   const [savePath, setSavePath] = useState('')
-  const [columns, setColumns] = useState<string[]>(['HoTen', 'MSSV', 'NgaySinh', 'AnhDaiDien']) // Demo columns
+  const [columns, setColumns] = useState<string[]>([])
+  const [isLoadingColumns, setIsLoadingColumns] = useState(false)
   
   // Demo shapes - trong thực tế sẽ parse từ file PPTX
   const [shapes, setShapes] = useState<Shape[]>([
@@ -39,10 +42,10 @@ const InputMenu: React.FC<InputMenuProps> = ({ onStart }) => {
   ])
   
   const [textReplacements, setTextReplacements] = useState<TextReplacement[]>([
-    { id: 1, regex: '', column: '' }
+    { id: 1, searchText: '', columns: [] }
   ])
   const [imageReplacements, setImageReplacements] = useState<ImageReplacement[]>([
-    { id: 1, shapeId: '', column: '' }
+    { id: 1, shapeId: '', columns: [] }
   ])
 
   // Resolve relative paths to absolute paths
@@ -73,10 +76,25 @@ const InputMenu: React.FC<InputMenuProps> = ({ onStart }) => {
       { name: 'Excel Files', extensions: ['xlsx', 'csv'] },
       { name: 'All Files', extensions: ['*'] }
     ])
+    
     if (path) {
       setDataPath(path)
-      // TODO: Parse file to extract columns
-      setColumns(prev => prev) // Keep setColumns to avoid warning
+      setIsLoadingColumns(true)
+      try {
+        // Load file into backend
+        const fileId = `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+        await backendApi.loadFile(path, fileId)
+        
+        // Get all unique columns from all sheets in this file
+        const allColumns = await backendApi.getAllColumns([fileId])
+        
+        setColumns(allColumns)
+        setIsLoadingColumns(false)
+      } catch (error) {
+        console.error('Error loading file:', error)
+        alert(t('input.columnLoadError'))
+        setIsLoadingColumns(false)
+      }
     }
   }
 
@@ -90,8 +108,8 @@ const InputMenu: React.FC<InputMenuProps> = ({ onStart }) => {
   const addTextReplacement = () => {
     setTextReplacements([...textReplacements, { 
       id: textReplacements.length + 1, 
-      regex: '', 
-      column: '' 
+      searchText: '', 
+      columns: [] 
     }])
   }
 
@@ -99,7 +117,7 @@ const InputMenu: React.FC<InputMenuProps> = ({ onStart }) => {
     setTextReplacements(textReplacements.filter(item => item.id !== id))
   }
 
-  const updateTextReplacement = (id: number, field: 'regex' | 'column', value: string) => {
+  const updateTextReplacement = (id: number, field: 'searchText' | 'columns', value: string | string[]) => {
     setTextReplacements(textReplacements.map(item => 
       item.id === id ? { ...item, [field]: value } : item
     ))
@@ -109,7 +127,7 @@ const InputMenu: React.FC<InputMenuProps> = ({ onStart }) => {
     setImageReplacements([...imageReplacements, { 
       id: imageReplacements.length + 1, 
       shapeId: '', 
-      column: '' 
+      columns: [] 
     }])
     setShapes(prev => prev) // Keep setShapes to avoid warning
   }
@@ -118,7 +136,7 @@ const InputMenu: React.FC<InputMenuProps> = ({ onStart }) => {
     setImageReplacements(imageReplacements.filter(item => item.id !== id))
   }
 
-  const updateImageReplacement = (id: number, field: 'shapeId' | 'column', value: string) => {
+  const updateImageReplacement = (id: number, field: 'shapeId' | 'columns', value: string | string[]) => {
     setImageReplacements(imageReplacements.map(item => 
       item.id === id ? { ...item, [field]: value } : item
     ))
@@ -162,8 +180,8 @@ const InputMenu: React.FC<InputMenuProps> = ({ onStart }) => {
           setPptxPath(config.pptxPath || '')
           setDataPath(config.dataPath || '')
           setSavePath(config.savePath || '')
-          setTextReplacements(config.textReplacements || [{ id: 1, regex: '', column: '' }])
-          setImageReplacements(config.imageReplacements || [{ id: 1, shapeId: '', column: '' }])
+          setTextReplacements(config.textReplacements || [{ id: 1, searchText: '', columns: [] }])
+          setImageReplacements(config.imageReplacements || [{ id: 1, shapeId: '', columns: [] }])
           alert(t('input.importConfig') + ' ' + t('common.ok'))
         }
       } catch (error) {
@@ -186,7 +204,7 @@ const InputMenu: React.FC<InputMenuProps> = ({ onStart }) => {
       
       localStorage.setItem('config', JSON.stringify({ 
         pptxPath: resolvedPptxPath, 
-        dataPath: resolvedDataPath, 
+        dataPath: resolvedDataPath,
         savePath: resolvedSavePath,
         textReplacements,
         imageReplacements
@@ -238,8 +256,8 @@ const InputMenu: React.FC<InputMenuProps> = ({ onStart }) => {
             onChange={(e) => setDataPath(e.target.value)}
             placeholder={t('input.dataPlaceholder')}
           />
-          <button className="browse-btn" onClick={handleBrowseData}>
-            {t('input.browse')}
+          <button className="browse-btn" onClick={handleBrowseData} disabled={isLoadingColumns}>
+            {isLoadingColumns ? t('input.loadingColumns') : t('input.browse')}
           </button>
         </div>
       </div>
@@ -254,7 +272,7 @@ const InputMenu: React.FC<InputMenuProps> = ({ onStart }) => {
           </div>
           <div className="replacement-table">
             <div className="table-header">
-              <div className="col-uniform">{t('replacement.regex')}</div>
+              <div className="col-uniform">{t('replacement.searchText')}</div>
               <div className="col-uniform">{t('replacement.column')}</div>
               <div className="col-action-fixed">{t('replacement.delete')}</div>
             </div>
@@ -263,16 +281,14 @@ const InputMenu: React.FC<InputMenuProps> = ({ onStart }) => {
                 <input
                   type="text"
                   className="table-input"
-                  value={item.regex}
-                  onChange={(e) => updateTextReplacement(item.id, 'regex', e.target.value)}
-                  placeholder={t('replacement.regexPlaceholder')}
+                  value={item.searchText}
+                  onChange={(e) => updateTextReplacement(item.id, 'searchText', e.target.value)}
+                  placeholder={t('replacement.searchPlaceholder')}
                 />
-                <input
-                  type="text"
-                  className="table-input"
-                  list="columns-datalist"
-                  value={item.column}
-                  onChange={(e) => updateTextReplacement(item.id, 'column', e.target.value)}
+                <TagInput
+                  value={item.columns}
+                  onChange={(tags) => updateTextReplacement(item.id, 'columns', tags)}
+                  suggestions={columns}
                   placeholder={t('replacement.columnPlaceholder')}
                 />
                 <button 
@@ -311,12 +327,10 @@ const InputMenu: React.FC<InputMenuProps> = ({ onStart }) => {
                   onChange={(shapeId) => updateImageReplacement(item.id, 'shapeId', shapeId)}
                   placeholder={t('replacement.shapePlaceholder')}
                 />
-                <input
-                  type="text"
-                  className="table-input"
-                  list="columns-datalist"
-                  value={item.column}
-                  onChange={(e) => updateImageReplacement(item.id, 'column', e.target.value)}
+                <TagInput
+                  value={item.columns}
+                  onChange={(tags) => updateImageReplacement(item.id, 'columns', tags)}
+                  suggestions={columns}
                   placeholder={t('replacement.columnPlaceholder')}
                 />
                 <button 
@@ -335,13 +349,6 @@ const InputMenu: React.FC<InputMenuProps> = ({ onStart }) => {
           </div>
         </div>
       </div>
-
-      {/* Datalist for columns */}
-      <datalist id="columns-datalist">
-        {columns.map(col => (
-          <option key={col} value={col} />
-        ))}
-      </datalist>
 
       <div className="input-section">
         <label className="input-label">{t('input.saveLocation')}</label>

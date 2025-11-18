@@ -103,9 +103,10 @@
   display: grid;
   grid-template-columns: 1fr 1fr 50px;
   gap: 8px;
-  align-items: center;
+  align-items: start;
   animation: slideIn 0.2s ease-out;
   transition: all 0.2s ease;
+  padding: 4px 0;
 }
 
 .table-row:hover {
@@ -162,4 +163,25 @@ input[list]::-webkit-calendar-picker-indicator:hover {
 
 .delete-btn:active {
   transform: scale(0.95);
+}
+
+/* Loaded files list */
+.loaded-files-list {
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 4px;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.loaded-files-list > div {
+  padding: 4px 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.loaded-files-list > div:not(:last-child) {
+  border-bottom: 1px solid var(--border-secondary);
 }
