@@ -1,0 +1,6 @@
+flask
+flask-cors
+polars
+openpyxl
+requests
+pillow

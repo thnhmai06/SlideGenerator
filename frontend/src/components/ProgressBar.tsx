@@ -11,7 +11,7 @@ interface ProgressBarProps {
   onAppendLog: (id: number, text: string) => void
 }
 
-const ProgressBar: React.FC<ProgressBarProps> = ({ id, value, label, log, onAppendLog }) => {
+const ProgressBar: React.FC<ProgressBarProps> = ({ value, label, log }) => {
   const { t } = useApp()
   const [showLog, setShowLog] = useState(false)
 
