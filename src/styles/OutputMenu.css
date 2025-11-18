@@ -1,41 +1,17 @@
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    max-height: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    max-height: 2000px;
-    transform: translateY(0);
-  }
-}
-
-.download-menu {
+.output-menu {
   max-width: 1000px;
   margin: 0 auto;
   animation: fadeIn 0.2s ease-out;
 }
 
-.download-menu .menu-header {
+.output-menu .menu-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 30px;
 }
 
-.download-menu .menu-title {
+.output-menu .menu-title {
   margin: 0;
 }
 

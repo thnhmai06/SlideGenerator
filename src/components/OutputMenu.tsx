@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useApp } from '../contexts/AppContext'
-import '../styles/DownloadMenu.css'
+import '../styles/OutputMenu.css'
 
 interface OutputFile {
   id: number
@@ -27,7 +27,7 @@ interface OutputGroup {
   showLog: boolean
 }
 
-const DownloadMenu: React.FC = () => {
+const OutputMenu: React.FC = () => {
   const { t } = useApp()
   const [outputGroups, setOutputGroups] = useState<OutputGroup[]>([
     { 
@@ -144,7 +144,7 @@ const DownloadMenu: React.FC = () => {
   }
 
   return (
-    <div className="download-menu">
+    <div className="output-menu">
       <div className="menu-header">
         <h1 className="menu-title">{t('output.title')}</h1>
         {outputGroups.length > 0 && (
@@ -309,4 +309,4 @@ const DownloadMenu: React.FC = () => {
   )
 }
 
-export default DownloadMenu
+export default OutputMenu

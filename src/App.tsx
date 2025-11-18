@@ -3,7 +3,7 @@ import Sidebar from './components/Sidebar'
 import InputMenu from './components/InputMenu'
 import SettingMenu from './components/SettingMenu'
 import ProcessMenu from './components/ProcessMenu'
-import DownloadMenu from './components/DownloadMenu'
+import OutputMenu from './components/OutputMenu'
 import AboutMenu from './components/AboutMenu'
 import './styles/App.css'
 
@@ -19,7 +19,7 @@ const App: React.FC = () => {
       case 'setting':
         return <SettingMenu />
       case 'download':
-        return <DownloadMenu />
+        return <OutputMenu />
       case 'process':
         return <ProcessMenu />
       case 'about':
