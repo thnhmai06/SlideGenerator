@@ -4,18 +4,29 @@
 }
 
 .shape-selector-trigger {
+  /* Layout */
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
+  padding: var(--spacing-md) var(--spacing-lg);
+  min-height: 38px;
+  width: 100%;
+  
+  /* Appearance */
   background-color: var(--input-bg);
   border: 1px solid var(--input-border);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   color: var(--input-text);
-  font-size: 13px;
+  
+  /* Typography */
+  font-size: var(--font-base);
+  font-family: inherit;
+  font-weight: var(--font-normal);
+  line-height: 1.5;
+  
+  /* Interaction */
+  transition: all var(--transition-base);
   cursor: pointer;
-  transition: border-color 0.2s;
-  min-height: 36px;
 }
 
 .shape-selector-trigger:hover {
@@ -23,8 +34,10 @@
 }
 
 .shape-selector-trigger:focus-within {
-  border-color: var(--accent-primary);
   outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: var(--focus-ring);
+  transform: translateY(-1px);
 }
 
 .shape-option-content {
