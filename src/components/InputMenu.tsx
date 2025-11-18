@@ -109,6 +109,7 @@ const InputMenu: React.FC<InputMenuProps> = ({ onStart }) => {
     
     if (path) {
       setDataPath(path)
+      setColumns([])
       clearReplacements()
       setIsLoadingColumns(true)
       try {
