@@ -108,12 +108,6 @@ const DownloadMenu: React.FC = () => {
     ))
   }
 
-  const handleToggleGroupLog = (groupId: number) => {
-    setOutputGroups(outputGroups.map(group => 
-      group.id === groupId ? { ...group, showLog: !group.showLog } : group
-    ))
-  }
-
   const handleOpen = async (filePath: string) => {
     await window.electronAPI.openPath(filePath)
   }
@@ -154,7 +148,7 @@ const DownloadMenu: React.FC = () => {
       <div className="menu-header">
         <h1 className="menu-title">{t('output.title')}</h1>
         {outputGroups.length > 0 && (
-          <button className="clear-all-btn" onClick={handleClearAll}>
+          <button className="btn btn-danger" onClick={handleClearAll}>
             <img 
               src="/assets/remove.png" 
               alt="Clear All"

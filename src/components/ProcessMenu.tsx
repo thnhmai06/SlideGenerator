@@ -237,7 +237,7 @@ const ProcessMenu: React.FC = () => {
         <h1 className="menu-title">{t('process.title')}</h1>
         <div className="header-actions">
           <button 
-            className="header-btn header-btn-icon"
+            className="btn btn-primary"
             onClick={handlePauseResumeAll}
             disabled={processGroups.length === 0}
             title={hasProcessing ? t('process.pauseAll') : t('process.resumeAll')}
@@ -250,7 +250,7 @@ const ProcessMenu: React.FC = () => {
             <span>{hasProcessing ? t('process.pauseAll') : t('process.resumeAll')}</span>
           </button>
           <button 
-            className="header-btn header-btn-danger header-btn-icon"
+            className="btn btn-danger"
             onClick={handleStopAll}
             disabled={processGroups.length === 0}
             title={t('process.stopAll')}

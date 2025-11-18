@@ -1,15 +1,13 @@
 {
-  "name": "tao-slide-electron",
+  "name": "tao-slide-tot-nghiep-frontend",
   "version": "1.0.0",
   "description": "Tạo slide tốt nghiệp - Frontend",
   "main": "dist-electron/main.js",
-  "type": "module",
+  "type": "commonjs",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build && electron-builder",
-    "preview": "vite preview",
-    "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\"",
-    "electron:build": "tsc && vite build && electron-builder"
+    "preview": "vite preview"
   },
   "keywords": [
     "electron",
@@ -37,7 +35,7 @@
     "wait-on": "^7.2.0"
   },
   "build": {
-    "appId": "com.thnhmai06.tao-slide",
+    "appId": "com.thnhmai06.tao-slide-tot-nghiep",
     "productName": "Tao Slide Tot Nghiep",
     "directories": {
       "output": "release"

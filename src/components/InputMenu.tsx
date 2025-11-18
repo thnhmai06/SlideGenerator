@@ -124,7 +124,7 @@ const InputMenu: React.FC<InputMenuProps> = ({ onStart }) => {
     ))
   }
 
-  const exportConfig = () => {
+  const exportConfig = async () => {
     const config = {
       pptxPath,
       dataPath,
@@ -132,40 +132,44 @@ const InputMenu: React.FC<InputMenuProps> = ({ onStart }) => {
       textReplacements,
       imageReplacements
     }
-    const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'config.json'
-    a.click()
-    URL.revokeObjectURL(url)
-  }
-
-  const importConfig = () => {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = '.json'
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0]
-      if (file) {
-        const reader = new FileReader()
-        reader.onload = (event) => {
-          try {
-            const config = JSON.parse(event.target?.result as string)
-            setPptxPath(config.pptxPath || '')
-            setDataPath(config.dataPath || '')
-            setSavePath(config.savePath || '')
-            setTextReplacements(config.textReplacements || [{ id: 1, regex: '', column: '' }])
-            setImageReplacements(config.imageReplacements || [{ id: 1, shapeId: '', column: '' }])
-            alert(t('input.importConfig') + ' ' + t('common.ok'))
-          } catch (error) {
-            alert(t('input.jsonError'))
-          }
-        }
-        reader.readAsText(file)
+    
+    const path = await window.electronAPI.saveFile([
+      { name: 'JSON Files', extensions: ['json'] },
+      { name: 'All Files', extensions: ['*'] }
+    ])
+    
+    if (path) {
+      try {
+        await window.electronAPI.writeSettings(path, JSON.stringify(config, null, 2))
+        alert(t('input.exportConfig') + ' ' + t('common.ok'))
+      } catch (error) {
+        alert(t('input.jsonError'))
       }
     }
-    input.click()
+  }
+
+  const importConfig = async () => {
+    const path = await window.electronAPI.openFile([
+      { name: 'JSON Files', extensions: ['json'] },
+      { name: 'All Files', extensions: ['*'] }
+    ])
+    
+    if (path) {
+      try {
+        const data = await window.electronAPI.readSettings(path)
+        if (data) {
+          const config = JSON.parse(data)
+          setPptxPath(config.pptxPath || '')
+          setDataPath(config.dataPath || '')
+          setSavePath(config.savePath || '')
+          setTextReplacements(config.textReplacements || [{ id: 1, regex: '', column: '' }])
+          setImageReplacements(config.imageReplacements || [{ id: 1, shapeId: '', column: '' }])
+          alert(t('input.importConfig') + ' ' + t('common.ok'))
+        }
+      } catch (error) {
+        alert(t('input.jsonError'))
+      }
+    }
   }
 
   const handleStart = () => {
@@ -198,10 +202,10 @@ const InputMenu: React.FC<InputMenuProps> = ({ onStart }) => {
       <div className="menu-header">
         <h1 className="menu-title">{t('input.title')}</h1>
         <div className="config-actions">
-          <button className="config-btn" onClick={importConfig} title={t('input.importConfig')}>
+          <button className="btn btn-secondary" onClick={importConfig} title={t('input.importConfig')}>
             📥 {t('input.import')}
           </button>
-          <button className="config-btn" onClick={exportConfig} title={t('input.exportConfig')}>
+          <button className="btn btn-secondary" onClick={exportConfig} title={t('input.exportConfig')}>
             📤 {t('input.export')}
           </button>
         </div>
@@ -246,7 +250,7 @@ const InputMenu: React.FC<InputMenuProps> = ({ onStart }) => {
         <div className="replacement-full-panel">
           <div className="panel-header">
             <h3>{t('replacement.textTitle')}</h3>
-            <button className="add-btn" onClick={addTextReplacement}>+ {t('replacement.add')}</button>
+            <button className="btn btn-success" onClick={addTextReplacement}>+ {t('replacement.add')}</button>
           </div>
           <div className="replacement-table">
             <div className="table-header">
@@ -291,7 +295,7 @@ const InputMenu: React.FC<InputMenuProps> = ({ onStart }) => {
         <div className="replacement-full-panel">
           <div className="panel-header">
             <h3>{t('replacement.imageTitle')}</h3>
-            <button className="add-btn" onClick={addImageReplacement}>+ {t('replacement.add')}</button>
+            <button className="btn btn-success" onClick={addImageReplacement}>+ {t('replacement.add')}</button>
           </div>
           <div className="replacement-table">
             <div className="table-header">
