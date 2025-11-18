@@ -14,6 +14,8 @@ export const en = {
   'input.title': 'Configuration',
   'input.import': 'Import',
   'input.export': 'Export',
+  'input.clearAll': 'Clear All',
+  'input.confirmClear': 'Are you sure you want to clear all data?',
   'input.importConfig': 'Import configuration',
   'input.exportConfig': 'Export configuration',
   'input.pptxFile': 'PowerPoint Template File (.pptx):',
