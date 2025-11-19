@@ -1,23 +1,76 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+        // Backend
         {
+            "type": "debugpy",
+            "request": "launch",
+            "name": "[Backend] Data",
+            "module": "src.main",
+            "cwd": "${workspaceFolder}/backend/data",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        // Frontend
+        {
+            "name": "[Frontend] Main Process",
             "type": "node",
             "request": "launch",
-            "name": "Debug: Frontend",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
             "cwd": "${workspaceFolder}/frontend",
             "runtimeExecutable": "npm",
             "runtimeArgs": [
                 "run",
                 "dev"
             ],
-            "console": "integratedTerminal"
+            "windows": {
+                "runtimeExecutable": "npm.cmd"
+            },
+            "console": "integratedTerminal",
+            "presentation": {
+                "hidden": true
+            }
+        },
+        {
+            "name": "[Frontend] Renderer",
+            "type": "chrome",
+            "request": "attach",
+            "port": 9222,
+            "webRoot": "${workspaceFolder}/frontend/src",
+            "presentation": {
+                "hidden": true
+            }
+        },
+    ],
+    "compounds": [
+        {
+            "name": "Full Stack",
+            "configurations": [
+                "[Backend] Data",
+                "[Frontend] Main Process",
+                "[Frontend] Renderer"
+            ],
+            "presentation": {
+                "order": 1
+            }
+        },
+        {
+            "name": "[Frontend] All",
+            "configurations": [
+                "[Frontend] Main Process",
+                "[Frontend] Renderer"
+            ],
+            "presentation": {
+                "order": 2
+            }
+        },
+        {
+            "name": "[Backend] All",
+            "configurations": [
+                "[Backend] Data"
+            ],
+            "presentation": {
+                "order": 3
+            }
         }
     ]
 }

@@ -26,7 +26,7 @@ Backend API server for slide generation application with advanced download manag
 
 ## Architecture
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed architecture documentation.
+See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed architecture documentation.
 
 ### Directory Structure
 ```
@@ -53,7 +53,7 @@ backend/
 ## Installation
 
 ```bash
-cd backend
+cd backend/data
 pip install -r requirements.txt
 ```
 
