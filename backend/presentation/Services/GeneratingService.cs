@@ -1,7 +1,7 @@
 ﻿using generator.Models.Classes.Presentations;
 using presentation.Models.Exceptions.Services;
 
-namespace presentation.Models.Classes.Services;
+namespace presentation.Services;
 
 public sealed class GeneratingService : Service
 {
@@ -9,10 +9,10 @@ public sealed class GeneratingService : Service
     private static readonly Lazy<GeneratingService> LazyInstance = new(() => new GeneratingService());
     public static GeneratingService Instance => LazyInstance.Value;
 
-    protected override Presentation OpenPresentation(string filepath, string sourcePath = "")
+    protected override Presentation OpenPresentation(string filepath, string? sourcePath)
     {
-        return sourcePath.Length == 0
-            ? throw new NotEnoughArgumentException(filepath)
+        return sourcePath is null 
+            ? throw new NotEnoughArgumentException(filepath) 
             : new DerivedPresentation(filepath, sourcePath);
     }
 
