@@ -1,8 +1,6 @@
 ﻿using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Presentation;
 using generator.Models.Exceptions.Presentations;
-using PresentationText = DocumentFormat.OpenXml.Presentation.Text;
-using DrawingText = DocumentFormat.OpenXml.Drawing.Text;
 
 namespace generator.Models.Classes.Presentations
 {

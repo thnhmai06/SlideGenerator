@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="DocumentFormat.OpenXml" Version="3.3.0" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
     <PackageReference Include="Stubble.Core" Version="1.10.8" />
     <PackageReference Include="Tomlyn" Version="0.19.0" />
   </ItemGroup>

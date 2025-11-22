@@ -3,7 +3,7 @@ using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Presentation;
 using generator.Models.Exceptions.Presentations;
 using BlipFill = DocumentFormat.OpenXml.Presentation.BlipFill;
-using Picture = DocumentFormat.OpenXml.Presentation.Picture;
+using Picture = DocumentFormat.OpenXml.Drawing.Picture;
 using Shape = DocumentFormat.OpenXml.Presentation.Shape;
 using PresentationText = DocumentFormat.OpenXml.Presentation.Text;
 using DrawingText = DocumentFormat.OpenXml.Drawing.Text;
@@ -74,9 +74,21 @@ namespace generator.Models.Classes.Presentations
             return shapes;
         }
 
+        internal static Shape? GetShapeInSlide(SlidePart slidePart, uint shapeId)
+        {
+            return GetSlideShapes(slidePart)
+                .FirstOrDefault(shape => shape.NonVisualShapeProperties?.NonVisualDrawingProperties?.Id?.Value == shapeId);
+        }
+
         internal static IEnumerable<Picture> GetSlidePictures(SlidePart slidePart)
         {
             return slidePart.Slide.Descendants<Picture>();
+        }
+
+        internal static Picture? GetPictureInSlide(SlidePart slidePart, uint shapeId)
+        {
+            return GetSlidePictures(slidePart)
+                .FirstOrDefault(pic => pic.NonVisualPictureProperties?.NonVisualDrawingProperties?.Id?.Value == shapeId);
         }
     }
 }

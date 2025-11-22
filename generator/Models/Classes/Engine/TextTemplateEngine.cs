@@ -5,7 +5,7 @@ using Stubble.Core.Builders;
 
 namespace generator.Models.Classes.Engine;
 
-public static partial class TextTemplateEngine
+public static partial class TextReplacementEngine
 {
     private const string TemplatePattern = @"\{\{([\w\d\s]+)\}\}";
 
