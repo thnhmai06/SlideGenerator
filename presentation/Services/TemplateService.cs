@@ -1,6 +1,6 @@
 ﻿using generator.Models.Classes.Presentations;
 
-namespace presentation.Models.Classes.Services;
+namespace presentation.Services;
 
 public sealed class TemplateService : Service
 {
@@ -8,7 +8,7 @@ public sealed class TemplateService : Service
     private static readonly Lazy<TemplateService> LazyInstance = new(() => new TemplateService());
     public static TemplateService Instance => LazyInstance.Value;
 
-    protected override Presentation OpenPresentation(string filepath, string sourcePath = "")
+    protected override Presentation OpenPresentation(string filepath, string? sourcePath)
     {
         return new TemplatePresentation(filepath);
     }
