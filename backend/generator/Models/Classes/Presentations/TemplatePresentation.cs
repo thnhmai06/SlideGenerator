@@ -1,12 +1,15 @@
-﻿using DocumentFormat.OpenXml.Presentation;
+﻿using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Presentation;
 using generator.Models.Exceptions.Presentations;
+using PresentationText = DocumentFormat.OpenXml.Presentation.Text;
+using DrawingText = DocumentFormat.OpenXml.Drawing.Text;
 
 namespace generator.Models.Classes.Presentations
 {
     public sealed class TemplatePresentation : Presentation
     {
         private const int FirstSlideIndex = 0;
-        private readonly string _mainSlideRelationshipId;
+        private readonly string _mainSlideRid;
 
         public TemplatePresentation(string filepath) : base(filepath, true)
         {
@@ -15,20 +18,12 @@ namespace generator.Models.Classes.Presentations
                 throw new NotOnlySlidePresentationException(filepath, slideIds.Count);
 
             var slideId = (SlideId)slideIds[FirstSlideIndex];
-            _mainSlideRelationshipId = slideId.RelationshipId?.Value ?? throw new NoRelationshipIdSlideException(filepath, FirstSlideIndex + 1);
+            _mainSlideRid = slideId.RelationshipId?.Value ?? throw new NoRelationshipIdSlideException(filepath, FirstSlideIndex + 1);
         }
 
-        public IEnumerable<Text> GetSlideText()
+        internal SlidePart GetSlidePart()
         {
-            return GetSlideText(_mainSlideRelationshipId);
-        }
-        public IEnumerable<Shape> GetSlideShapes(bool mustFilledByImage = false)
-        {
-            return GetSlideShapes(_mainSlideRelationshipId, mustFilledByImage);
-        }
-        public IEnumerable<Picture> GetSlidePictures()
-        {
-            return GetSlidePictures(_mainSlideRelationshipId);
+            return GetSlidePart(_mainSlideRid);
         }
     }
 }

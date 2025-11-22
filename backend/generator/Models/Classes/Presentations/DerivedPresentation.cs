@@ -12,23 +12,21 @@ public sealed class DerivedPresentation : Presentation
 
     public DerivedPresentation(string destPath, TemplatePresentation srcPresentation) : this(destPath, srcPresentation.Filepath) { }
 
-    public SlidePart CopySlide(string relationshipId, int destination)
+    internal SlidePart CopySlide(string slideRid, int destination)
     {
         var presentationPart = GetPresentationPart();
-        var sourceSlide = GetSlide(relationshipId);
+        var sourceSlide = GetSlidePart(slideRid);
         var newSlide = presentationPart.AddNewPart<SlidePart>();
 
         // Slide XML
         newSlide.FeedData(sourceSlide.GetStream());
-        // Layout
-        if (sourceSlide.SlideLayoutPart != null)
-            newSlide.AddPart(sourceSlide.SlideLayoutPart);
-        // Master part
-        if (sourceSlide.SlideLayoutPart?.SlideMasterPart != null)
-            newSlide.AddPart(sourceSlide.SlideLayoutPart.SlideMasterPart);
-        // Images references
-        foreach (var image in sourceSlide.ImageParts)
-            newSlide.AddImagePart(image.ContentType, sourceSlide.GetIdOfPart(image));
+        // Resource references
+        foreach (var rel in sourceSlide.Parts)
+        {
+            var part = rel.OpenXmlPart;
+            var rid = rel.RelationshipId;
+            newSlide.AddPart(part, rid);
+        }
         // Animations
         if (sourceSlide.Slide.Timing != null)
             newSlide.Slide.Timing = (Timing)sourceSlide.Slide.Timing.CloneNode(true);

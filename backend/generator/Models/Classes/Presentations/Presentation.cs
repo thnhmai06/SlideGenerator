@@ -5,7 +5,8 @@ using generator.Models.Exceptions.Presentations;
 using BlipFill = DocumentFormat.OpenXml.Presentation.BlipFill;
 using Picture = DocumentFormat.OpenXml.Presentation.Picture;
 using Shape = DocumentFormat.OpenXml.Presentation.Shape;
-using Text = DocumentFormat.OpenXml.Presentation.Text;
+using PresentationText = DocumentFormat.OpenXml.Presentation.Text;
+using DrawingText = DocumentFormat.OpenXml.Drawing.Text;
 
 namespace generator.Models.Classes.Presentations
 {
@@ -18,22 +19,50 @@ namespace generator.Models.Classes.Presentations
         {
             return _doc.PresentationPart ?? throw new NoPresentationPartException(Filepath);
         }
-        protected SlideIdList GetSlideIdList()
+        internal SlideIdList GetSlideIdList()
         {
             return GetPresentationPart().Presentation.SlideIdList ?? throw new NoSlideIdListException(Filepath);
         }
 
-        protected SlidePart GetSlide(string relationshipId)
+        internal SlidePart GetSlidePart(string slideRId)
         {
-            return (SlidePart)GetPresentationPart().GetPartById(relationshipId);
+            return (SlidePart)GetPresentationPart().GetPartById(slideRId);
         }
-        protected IEnumerable<Text> GetSlideText(string relationshipId)
+
+        internal static IEnumerable<PresentationText> GetSlidePresentationText(SlidePart slidePart)
         {
-            return GetSlide(relationshipId).Slide.Descendants<Text>();
+            // In Textbox/Placeholder (Slide > Text (box) > Text)
+            return slidePart.Slide.Descendants<PresentationText>();
         }
-        protected IEnumerable<Shape> GetSlideShapes(string relationshipId, bool mustFilledByImage = false)
+
+        internal static IEnumerable<DrawingText> GetSlideDrawingText(SlidePart slidePart)
         {
-            var shapes = GetSlide(relationshipId).Slide.Descendants<Shape>();
+            // In Drawing objects (Shape > TextBody > Paragraph > Run > Text)
+            List<DrawingText> texts = [];
+            var shapes = GetSlideShapes(slidePart);
+            foreach (var shape in shapes)
+            {
+                if (shape.TextBody is null)
+                    continue;
+
+                foreach (var paragraph in shape.TextBody.Descendants<Paragraph>())
+                {
+                    foreach (var run in paragraph.Descendants<Run>())
+                    {
+                        if (run.Text is not null)
+                        {
+                            texts.Add(run.Text);
+                        }
+                    }
+                }
+            }
+
+            return texts;
+        }
+
+        internal static IEnumerable<Shape> GetSlideShapes(SlidePart slidePart, bool mustFilledByImage = false)
+        {
+            var shapes = slidePart.Slide.Descendants<Shape>();
             if (mustFilledByImage)
             {
                 return shapes.Where(shape =>
@@ -44,9 +73,10 @@ namespace generator.Models.Classes.Presentations
             }
             return shapes;
         }
-        protected IEnumerable<Picture> GetSlidePictures(string relationshipId)
+
+        internal static IEnumerable<Picture> GetSlidePictures(SlidePart slidePart)
         {
-            return GetSlide(relationshipId).Slide.Descendants<Picture>();
+            return slidePart.Slide.Descendants<Picture>();
         }
     }
 }
