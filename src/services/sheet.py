@@ -1,17 +1,16 @@
+#! Deprecated soon
+
 from pathlib import Path
 
-from src.models.sheet import Group
-from src.models.service import StorageService
+from src.models.service import TaskBasedService
+from src.models.sheet import SheetGroup
 
-class SheetService(StorageService[Path, Group]):
-    def get(self, file_path: Path) -> Group | None:
-        """Retrieve the Group object for the given file path if it exists."""
-        return self._storage.get(file_path, None)
 
-    def open(self, file_path: Path) -> Group:
+class SheetService(TaskBasedService[Path, SheetGroup]):
+    def open(self, file_path: Path) -> SheetGroup:
         """Open a sheet file and return a Group object representing its contents."""
         if file_path not in self._storage:
-            self._storage[file_path] = Group(file_path)
+            self._storage[file_path] = SheetGroup(file_path)
         return self._storage[file_path]
 
     def close(self, file_path: Path):

@@ -1,5 +1,8 @@
+"""Thread-safe implementation."""
+
 from threading import RLock
 from typing import Dict, Optional
+
 
 class SafeDict[K, V]:
     """

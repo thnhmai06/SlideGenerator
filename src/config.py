@@ -23,7 +23,7 @@ class Config:
             "debug": False,
         },
         "download": {
-            "location": str(Path(tempfile.gettempdir()) / APP_NAME / CATEGORY),
+            "save_folder": str(Path(tempfile.gettempdir()) / APP_NAME / CATEGORY),
             "max_workers": 5,
 
             "retry": {
@@ -111,12 +111,12 @@ class Config:
 
     # Download
     @property
-    def download_location(self):
-        return self._config["download"]["location"]
+    def save_folder(self):
+        return self._config["download"]["save_folder"]
 
-    @download_location.setter
-    def download_location(self, value):
-        self._config["download"]["location"] = value
+    @save_folder.setter
+    def save_folder(self, value):
+        self._config["download"]["save_folder"] = value
 
     @property
     def download_max_workers(self):

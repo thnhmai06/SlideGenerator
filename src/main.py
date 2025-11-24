@@ -4,7 +4,7 @@ from flask_cors import CORS
 from src.config import CONFIG
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS so frontend can call API
+CORS(app)
 
 
 # ============== HEALTH CHECK ==============

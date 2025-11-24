@@ -1,13 +1,14 @@
+"""Module for handling spreadsheet workbooks and sheets."""
+
 from pathlib import Path
 from openpyxl import load_workbook
 from openpyxl.workbook import Workbook
 
 from src.config import SPREADSHEET_EXTENSIONS
-from src.exceptions.file import FileExtensionNotSupported
-from src.exceptions.sheet import IndexOutOfRange
+from src.models.exceptions import FileExtensionNotSupported, IndexOutOfRange
 
 
-class Group:
+class SheetGroup:
     """Represents a workbook file."""
 
     def __init__(self, file_path: Path):
@@ -16,7 +17,7 @@ class Group:
             raise FileExtensionNotSupported(ext)
 
         self._workbook = load_workbook(filename=file_path, read_only=True, data_only=True)
-        self._tables = {sheet_name: Table(self._workbook, sheet_name) for sheet_name in self._workbook.sheetnames}
+        self._tables = {sheet_name: SheetTable(self._workbook, sheet_name) for sheet_name in self._workbook.sheetnames}
 
     @property
     def workbook(self):
@@ -39,7 +40,7 @@ class Group:
         return self._workbook.properties.title
 
 
-class Table:
+class SheetTable:
     """Represents a table in a sheet (in workbook file)."""
 
     def __init__(self, workbook: Workbook, sheet_name: str):

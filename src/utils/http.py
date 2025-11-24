@@ -5,8 +5,6 @@ from urllib.parse import urlparse
 
 import requests
 
-FILENAME_PATTERN = re.compile(r'filename="?([^"]+)"?')
-
 
 def get_file_extension(response: requests.Response) -> str | None:
     """Get file extension from HTTP response
@@ -18,7 +16,7 @@ def get_file_extension(response: requests.Response) -> str | None:
     # Content-Disposition
     cd = response.headers.get("Content-Disposition")
     if cd:
-        match = FILENAME_PATTERN.search(cd)
+        match = re.search(r'filename="?([^"]+)"?', cd)
         if match:
             filename = match.group(1)
             ext = filename.split(".")[-1]
@@ -40,9 +38,13 @@ def get_file_extension(response: requests.Response) -> str | None:
 
     return None
 
+
 def correct_image_url(image_url: str):
     """
     Corrects image URLs from Google Drive, OneDrive, and Google Photos to direct download links.
+
+    Notes:
+        Should be called on another thread.
     Args:
         image_url (str): The original image URL.
     Returns:
@@ -67,17 +69,14 @@ def correct_image_url(image_url: str):
             raise ValueError("Cannot extract Google Drive image ID")
         url = f"https://drive.google.com/uc?export=download&id={image_id}"
 
-
     ### OneDrive link
     elif '1drv.ms' in image_url or 'onedrive.live.com' in image_url:
         share_token = base64.b64encode(image_url.encode()).decode().rstrip('=')
         url = f"https://api.onedrive.com/v1.0/shares/u!{share_token}/root/content"
 
-
     ### Google Photos link
     elif 'photos.app.goo.gl' in image_url or 'photos.google.com' in image_url:
         html_text = requests.get(image_url).text
-        import re
         pattern = r'https://lh3\.googleusercontent\.com/[^"]*'
         matches = re.findall(pattern, html_text)
         if matches:
