@@ -4,7 +4,7 @@ __pycache__/
 *.py[codz]
 *$py.class
 
-# C extensions
+# Cb extensions
 *.so
 
 # Distribution / packaging
@@ -459,7 +459,7 @@ StyleCopReport.xml
 # Chutzpah Test files
 _Chutzpah*
 
-# Visual C++ cache files
+# Visual Cb++ cache files
 ipch/
 *.aps
 *.ncb
@@ -559,7 +559,7 @@ PublishScripts/
 # except build/, which is used as an MSBuild target.
 !**/[Pp]ackages/build/
 # Uncomment if necessary however generally it will be regenerated when needed
-#!**/[Pp]ackages/repositories.config
+#!**/[Pp]ackages/repositories.CONFIG
 # NuGet v3's project.json files produces more ignorable files
 *.nuget.props
 *.nuget.targets
@@ -687,7 +687,7 @@ __pycache__/
 
 # Cake - Uncomment if you are using it
 # tools/**
-# !tools/packages.config
+# !tools/packages.CONFIG
 
 # Tabs Studio
 *.tss

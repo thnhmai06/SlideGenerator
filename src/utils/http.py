@@ -1,65 +1,92 @@
-"""HTTP and download-related utility functions"""
-
-import os
+import base64
 import re
-import uuid
-from urllib.parse import urlparse, unquote
+import mimetypes
+from urllib.parse import urlparse
+
+import requests
+
+FILENAME_PATTERN = re.compile(r'filename="?([^"]+)"?')
 
 
-def get_filename_from_response(response, url: str) -> str:
-    """
-    Get filename from HTTP response or URL
-    
+def get_file_extension(response: requests.Response) -> str | None:
+    """Get file extension from HTTP response
     Args:
-        response: HTTP response object
-        url: Original URL
-        
+        response (Response): The HTTP response
     Returns:
-        str: Extracted or generated filename
+        str | None: The file extension, or None if not found
     """
-    # Try getting from Content-Disposition header
-    if "content-disposition" in response.headers:
-        disposition = response.headers["content-disposition"]
-        matches = re.findall(r'filename="?([^"]+)"?', disposition)
+    # Content-Disposition
+    cd = response.headers.get("Content-Disposition")
+    if cd:
+        match = FILENAME_PATTERN.search(cd)
+        if match:
+            filename = match.group(1)
+            ext = filename.split(".")[-1]
+            return ext
+
+    # Content-Type
+    content_type = response.headers.get("Content-Type")
+    if content_type:
+        mime = content_type.split(";")[0]
+        ext = mimetypes.guess_extension(mime)
+        if ext:
+            return ext
+
+    # URL
+    path = urlparse(response.url).path
+    if '.' in path:
+        ext = path.split('.')[-1]
+        return ext
+
+    return None
+
+def correct_image_url(image_url: str):
+    """
+    Corrects image URLs from Google Drive, OneDrive, and Google Photos to direct download links.
+    Args:
+        image_url (str): The original image URL.
+    Returns:
+        str: The corrected direct download URL.
+    Raises:
+        ValueError: If the URL format is unrecognized or cannot be processed.
+    """
+
+    ### Google Drive link
+    if 'drive.google.com' in image_url:
+        image_id = None
+        if '/file/d/' in image_url:
+            image_id = image_url.split('/file/d/')[1].split('/')[0]
+        elif 'id=' in image_url:
+            image_id = image_url.split('id=')[1].split('&')[0]
+        elif '/folders/' in image_url:
+            # folders_id = image_url.split('/folders/')[1].split('?')[0]
+            html_text = requests.get(image_url).text
+            image_id = html_text.split(r'/file/d/')[1].split('\\')[0]
+
+        if image_id is None:
+            raise ValueError("Cannot extract Google Drive image ID")
+        url = f"https://drive.google.com/uc?export=download&id={image_id}"
+
+
+    ### OneDrive link
+    elif '1drv.ms' in image_url or 'onedrive.live.com' in image_url:
+        share_token = base64.b64encode(image_url.encode()).decode().rstrip('=')
+        url = f"https://api.onedrive.com/v1.0/shares/u!{share_token}/root/content"
+
+
+    ### Google Photos link
+    elif 'photos.app.goo.gl' in image_url or 'photos.google.com' in image_url:
+        html_text = requests.get(image_url).text
+        import re
+        pattern = r'https://lh3\.googleusercontent\.com/[^"]*'
+        matches = re.findall(pattern, html_text)
         if matches:
-            return matches[0]
+            url = matches[0]
+        else:
+            raise ValueError("Cannot extract Google Photos URL")
 
-    # Get from URL
-    path = urlparse(url).path
-    filename = unquote(os.path.basename(path))
+    ### Direct link
+    else:
+        url = image_url
 
-    # If no extension, add .jpg
-    if not os.path.splitext(filename)[1]:
-        filename += ".jpg"
-
-    # If no valid filename, generate random
-    if not filename or filename == ".jpg":
-        filename = f"image_{uuid.uuid4().hex[:8]}.jpg"
-
-    return filename
-
-
-def supports_resume(response) -> bool:
-    """
-    Check if server supports resume (Range requests)
-    
-    Args:
-        response: HTTP response object
-        
-    Returns:
-        bool: True if server supports resume
-    """
-    return response.headers.get("Accept-Ranges") == "bytes"
-
-
-def get_resume_header(downloaded_size: int) -> dict:
-    """
-    Get HTTP header for resuming download
-    
-    Args:
-        downloaded_size: Number of bytes already downloaded
-        
-    Returns:
-        dict: Headers for resume request
-    """
-    return {"Range": f"bytes={downloaded_size}-"}
+    return url

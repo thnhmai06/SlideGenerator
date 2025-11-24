@@ -54,7 +54,7 @@ backend/
 
 ```bash
 cd backend/data
-pip install -r requirements.txt
+pip install -response requirements.txt
 ```
 
 ## Running the Server
@@ -74,7 +74,7 @@ $env:DOWNLOAD_DIR = "D:\Downloads"
 $env:MAX_CONCURRENT_DOWNLOADS = "10"
 python src/main.py
 
-# Or create config.json in project root
+# Or create CONFIG.json in project root
 ```
 
 See [CONFIG.md](CONFIG.md) for detailed configuration options.

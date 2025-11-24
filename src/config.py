@@ -1,16 +1,21 @@
-"""Configuration management for the application"""
+"""Configuration management for the application."""
 
-import os
-import tomli
-import tomli_w
-from typing import Optional
+import yaml
+import tempfile
+
 from pathlib import Path
+import copy
+
+# ? Static constants
+APP_NAME = "tao-slide-tot-nghiep"
+CATEGORY = "data"
+IMAGE_EXTENSIONS: set[str] = {'jpg', 'jpeg', 'jfif', 'jpe', 'png', 'bmp', 'dib', 'gif',
+                              'tif', 'tiff', 'ico', 'heif', 'heic', 'avif', 'webp'}  # Pillow supported formats
+SPREADSHEET_EXTENSIONS = {'xlsx', 'xlsm', 'xltx', 'xltm'}  # openpyxl supported formats
 
 
+# ? Configuration
 class Config:
-    """Application configuration with support for environment variables and TOML config file"""
-    
-    # Default configuration values organized by category
     DEFAULT_CONFIG = {
         "server": {
             "host": "127.0.0.1",
@@ -18,230 +23,173 @@ class Config:
             "debug": False,
         },
         "download": {
-            "download_dir": "./downloads",
-            "max_concurrent_downloads": 5,
-            "max_workers_per_download": 4,
-            "chunk_size": 1024 * 1024,  # 1MB
-            "enable_parallel_chunks": True,
-            "min_file_size_for_parallel": 10 * 1024 * 1024,  # 10MB
+            "location": str(Path(tempfile.gettempdir()) / APP_NAME / CATEGORY),
+            "max_workers": 5,
+
+            "retry": {
+                "max_retries": 3,
+                "initial_delay": 1.0,
+                "max_delay": 10.0,
+                "multiplier": 2.0,
+                "on_status_codes": [408, 429, 500, 502, 503, 504],
+            },
+
+            "timeout": {
+                "connect": 10,
+                "request": 30,
+            }
         },
-        "network": {
-            "max_retries": 3,
-            "initial_retry_delay": 1.0,
-            "max_retry_delay": 60.0,
-            "retry_backoff_multiplier": 2.0,
-            "retry_on_status_codes": [408, 429, 500, 502, 503, 504],
-            "request_timeout": 30,
-            "connect_timeout": 10,
-        },
-        "appearance": {
-            "language": "vi",
-            "theme": "light",
-            "enable_animations": True,
-            "show_notifications": True,
-            "auto_save": True,
-        },
-        "processing": {
-            "default_shape": "rectangle",
-        },
-    }
-    
-    def __init__(self, config_file: Optional[str] = None):
-        """
-        Initialize configuration
-        
-        Args:
-            config_file: Path to TOML config file (optional)
-        """
-        self._config = self._deep_copy_config(self.DEFAULT_CONFIG)
-        # Use shared app.config.toml in project root by default
-        default_path = os.path.join(os.path.dirname(__file__), "..", "..", "app.config.toml")
-        self._config_file = config_file or os.environ.get("CONFIG_FILE", default_path)
-        
-        # Load from file if exists
-        self._load_from_file()
-        
-        # Override with environment variables
-        self._load_from_env()
-    
-    def _deep_copy_config(self, config: dict) -> dict:
-        """Deep copy configuration dictionary"""
-        result = {}
-        for key, value in config.items():
-            if isinstance(value, dict):
-                result[key] = self._deep_copy_config(value)
-            elif isinstance(value, list):
-                result[key] = value.copy()
-            else:
-                result[key] = value
-        return result
-    
-    def _load_from_file(self):
-        """Load configuration from TOML file"""
-        config_path = Path(self._config_file)
-        if config_path.exists():
-            try:
-                with open(config_path, 'rb') as f:
-                    file_config = tomli.load(f)
-                    # Update each section
-                    for section, values in file_config.items():
-                        if section in self._config:
-                            self._config[section].update(values)
-            except Exception as e:
-                print(f"Warning: Failed to load config file {self._config_file}: {e}")
-    
-    def _load_from_env(self):
-        """Load configuration from environment variables"""
-        env_mappings = {
-            "APP_HOST": ("server", "host"),
-            "APP_PORT": ("server", "port"),
-            "APP_DEBUG": ("server", "debug"),
-            "DOWNLOAD_DIR": ("download", "download_dir"),
-            "MAX_CONCURRENT_DOWNLOADS": ("download", "max_concurrent_downloads"),
-            "MAX_WORKERS_PER_DOWNLOAD": ("download", "max_workers_per_download"),
-            "CHUNK_SIZE": ("download", "chunk_size"),
-            "ENABLE_PARALLEL_CHUNKS": ("download", "enable_parallel_chunks"),
-            "MIN_FILE_SIZE_FOR_PARALLEL": ("download", "min_file_size_for_parallel"),
-            "MAX_RETRIES": ("network", "max_retries"),
-            "INITIAL_RETRY_DELAY": ("network", "initial_retry_delay"),
-            "MAX_RETRY_DELAY": ("network", "max_retry_delay"),
-            "RETRY_BACKOFF_MULTIPLIER": ("network", "retry_backoff_multiplier"),
-            "REQUEST_TIMEOUT": ("network", "request_timeout"),
-            "CONNECT_TIMEOUT": ("network", "connect_timeout"),
+        "sheet": {
+            "max_workers": 5
         }
-        
-        for env_key, (section, config_key) in env_mappings.items():
-            env_value = os.environ.get(env_key)
-            if env_value is not None and section in self._config:
-                current_value = self._config[section].get(config_key)
-                # Convert to appropriate type
-                if isinstance(current_value, bool):
-                    self._config[section][config_key] = env_value.lower() in ('true', '1', 'yes')
-                elif isinstance(current_value, int):
-                    self._config[section][config_key] = int(env_value)
-                elif isinstance(current_value, float):
-                    self._config[section][config_key] = float(env_value)
-                else:
-                    self._config[section][config_key] = env_value
-    
-    def get(self, section: str, key: str, default=None):
-        """Get configuration value from a section"""
-        return self._config.get(section, {}).get(key, default)
-    
-    def get_section(self, section: str) -> dict:
-        """Get entire configuration section"""
-        return self._config.get(section, {}).copy()
-    
-    def set(self, section: str, key: str, value):
-        """Set configuration value in a section"""
-        if section in self._config:
-            if key in self._config[section]:
-                self._config[section][key] = value
+    }
+
+    def __init__(self, file_path: Path):
+        self.file_path = Path(file_path)
+        self._config = copy.deepcopy(self.DEFAULT_CONFIG)
+        self.reload()
+
+    def _deep_update(self, dest: dict, src: dict):
+        """Recursively update dest with values from src."""
+        for key, value in src.items():
+            if isinstance(value, dict) and isinstance(dest.get(key), dict):
+                self._deep_update(dest[key], value)
             else:
-                raise KeyError(f"Unknown configuration key: {section}.{key}")
-        else:
-            raise KeyError(f"Unknown configuration section: {section}")
-    
-    def update_section(self, section: str, updates: dict):
-        """Update multiple configuration values in a section"""
-        if section not in self._config:
-            raise KeyError(f"Unknown configuration section: {section}")
-        
-        for key, value in updates.items():
-            if key in self._config[section]:
-                self._config[section][key] = value
-            else:
-                raise KeyError(f"Unknown configuration key: {section}.{key}")
-    
-    def save_to_file(self, file_path: Optional[str] = None):
-        """
-        Save current configuration to TOML file
-        
-        Args:
-            file_path: Path to save config (defaults to current config file)
-        """
-        save_path = file_path or self._config_file
+                dest[key] = value
+
+    def reload(self):
+        """Load configuration from config file, merging with defaults."""
+        if not self.file_path.exists():
+            try:
+                self.save()
+            except Exception:
+                # TODO: Log error
+                pass
+            return
+
         try:
-            with open(save_path, 'wb') as f:
-                tomli_w.dump(self._config, f)
-            return True
-        except Exception as e:
-            print(f"Error saving config to {save_path}: {e}")
-            return False
-    
-    def get_all(self) -> dict:
-        """Get all configuration values"""
-        return self._deep_copy_config(self._config)
-    
-    def reset_to_defaults(self):
-        """Reset configuration to default values"""
-        self._config = self._deep_copy_config(self.DEFAULT_CONFIG)
-    
-    # Property accessors for common settings (backward compatibility)
+            with self.file_path.open("r", encoding="utf-8") as f:
+                data = yaml.safe_load(f)
+            if data:
+                self._deep_update(self._config, data)
+        except Exception:
+            # TODO: Log error
+            pass
+
+    def save(self):
+        """Serialize current config to YAML (convert Paths to strings)."""
+        to_write = copy.deepcopy(self._config)
+
+        self.file_path.parent.mkdir(parents=True, exist_ok=True)
+        with self.file_path.open("w", encoding="utf-8") as f:
+            yaml.safe_dump(to_write, f, allow_unicode=True)
+
+    # Server
     @property
-    def host(self) -> str:
+    def server_host(self):
         return self._config["server"]["host"]
-    
+
+    @server_host.setter
+    def server_host(self, value):
+        self._config["server"]["host"] = value
+
     @property
-    def port(self) -> int:
+    def server_port(self):
         return self._config["server"]["port"]
-    
+
+    @server_port.setter
+    def server_port(self, value):
+        self._config["server"]["port"] = value
+
     @property
-    def debug(self) -> bool:
+    def server_debug(self):
         return self._config["server"]["debug"]
-    
+
+    @server_debug.setter
+    def server_debug(self, value):
+        self._config["server"]["debug"] = value
+
+    # Download
     @property
-    def download_dir(self) -> str:
-        return self._config["download"]["download_dir"]
-    
+    def download_location(self):
+        return self._config["download"]["location"]
+
+    @download_location.setter
+    def download_location(self, value):
+        self._config["download"]["location"] = value
+
     @property
-    def max_concurrent_downloads(self) -> int:
-        return self._config["download"]["max_concurrent_downloads"]
-    
+    def download_max_workers(self):
+        return self._config["download"]["max_workers"]
+
+    @download_max_workers.setter
+    def download_max_workers(self, value):
+        self._config["download"]["max_workers"] = value
+
     @property
-    def max_workers_per_download(self) -> int:
-        return self._config["download"]["max_workers_per_download"]
-    
+    def download_retry_max_retries(self):
+        return self._config["download"]["retry"]["max_retries"]
+
+    @download_retry_max_retries.setter
+    def download_retry_max_retries(self, value):
+        self._config["download"]["retry"]["max_retries"] = value
+
     @property
-    def chunk_size(self) -> int:
-        return self._config["download"]["chunk_size"]
-    
+    def download_retry_initial_delay(self):
+        return self._config["download"]["retry"]["initial_delay"]
+
+    @download_retry_initial_delay.setter
+    def download_retry_initial_delay(self, value):
+        self._config["download"]["retry"]["initial_delay"] = value
+
     @property
-    def max_retries(self) -> int:
-        return self._config["network"]["max_retries"]
-    
+    def download_retry_max_delay(self):
+        return self._config["download"]["retry"]["max_delay"]
+
+    @download_retry_max_delay.setter
+    def download_retry_max_delay(self, value):
+        self._config["download"]["retry"]["max_delay"] = value
+
     @property
-    def initial_retry_delay(self) -> float:
-        return self._config["network"]["initial_retry_delay"]
-    
+    def download_retry_multiplier(self):
+        return self._config["download"]["retry"]["multiplier"]
+
+    @download_retry_multiplier.setter
+    def download_retry_multiplier(self, value):
+        self._config["download"]["retry"]["multiplier"] = value
+
     @property
-    def max_retry_delay(self) -> float:
-        return self._config["network"]["max_retry_delay"]
-    
+    def download_retry_on_status_codes(self):
+        return self._config["download"]["retry"]["on_status_codes"]
+
+    @download_retry_on_status_codes.setter
+    def download_retry_on_status_codes(self, value):
+        self._config["download"]["retry"]["on_status_codes"] = value
+
     @property
-    def retry_backoff_multiplier(self) -> float:
-        return self._config["network"]["retry_backoff_multiplier"]
-    
+    def download_timeout_connect(self):
+        return self._config["download"]["timeout"]["connect"]
+
+    @download_timeout_connect.setter
+    def download_timeout_connect(self, value):
+        self._config["download"]["timeout"]["connect"] = value
+
     @property
-    def retry_on_status_codes(self) -> list:
-        return self._config["network"]["retry_on_status_codes"]
-    
+    def download_timeout_request(self):
+        return self._config["download"]["timeout"]["request"]
+
+    @download_timeout_request.setter
+    def download_timeout_request(self, value):
+        self._config["download"]["timeout"]["request"] = value
+
+    # Sheet
     @property
-    def request_timeout(self) -> int:
-        return self._config["network"]["request_timeout"]
-    
-    @property
-    def connect_timeout(self) -> int:
-        return self._config["network"]["connect_timeout"]
-    
-    @property
-    def enable_parallel_chunks(self) -> bool:
-        return self._config["download"]["enable_parallel_chunks"]
-    
-    @property
-    def min_file_size_for_parallel(self) -> int:
-        return self._config["download"]["min_file_size_for_parallel"]
+    def sheet_max_workers(self):
+        return self._config["sheet"]["max_workers"]
+
+    @sheet_max_workers.setter
+    def sheet_max_workers(self, value):
+        self._config["sheet"]["max_workers"] = value
 
 
-# Global config instance
-config = Config()
+CONFIG = Config(Path('./data.config.yaml'))
