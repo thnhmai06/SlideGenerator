@@ -5,7 +5,7 @@ from openpyxl import load_workbook
 from openpyxl.workbook import Workbook
 
 from src.config import SPREADSHEET_EXTENSIONS
-from src.models.exceptions import FileExtensionNotSupported, IndexOutOfRange
+from src.core.exceptions import FileExtensionNotSupported, IndexOutOfRange
 
 
 class SheetGroup:

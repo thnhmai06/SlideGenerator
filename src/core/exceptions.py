@@ -1,4 +1,4 @@
-"""Custom exceptions for the models module."""
+"""Custom exceptions for the core module."""
 
 class FileExtensionNotSupported(ValueError):
     """Unsupported file extension."""

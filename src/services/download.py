@@ -3,8 +3,8 @@
 from pathlib import Path
 
 from src.config import CONFIG
-from src.models.download import DownloadTask, ImageDownloadTask
-from src.models.service import TaskBasedService
+from src.core.download import DownloadTask, ImageDownloadTask
+from src.core.service import TaskBasedService
 
 
 class DownloadService(TaskBasedService[int, DownloadTask]):

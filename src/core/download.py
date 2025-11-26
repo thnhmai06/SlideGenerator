@@ -9,8 +9,8 @@ import requests
 from requests import Response
 
 from src.config import CONFIG, IMAGE_EXTENSIONS
-from src.models.exceptions import FileExtensionNotSupported
-from src.models.controller import RetryController, FlowController
+from src.core.exceptions import FileExtensionNotSupported
+from src.core.controller import RetryController, FlowController
 from src.utils.http import get_file_extension, correct_image_url
 
 

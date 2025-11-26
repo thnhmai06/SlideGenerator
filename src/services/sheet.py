@@ -2,8 +2,8 @@
 
 from pathlib import Path
 
-from src.models.service import TaskBasedService
-from src.models.sheet import SheetGroup
+from src.core.service import TaskBasedService
+from src.core.sheet import SheetGroup
 
 
 class SheetService(TaskBasedService[Path, SheetGroup]):
