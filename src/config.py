@@ -9,8 +9,19 @@ import copy
 # ? Static constants
 APP_NAME = "tao-slide-tot-nghiep"
 CATEGORY = "data"
-IMAGE_EXTENSIONS: set[str] = {'jpg', 'jpeg', 'jfif', 'jpe', 'png', 'bmp', 'dib', 'gif',
-                              'tif', 'tiff', 'ico', 'heif', 'heic', 'avif', 'webp'}  # Pillow supported formats
+IMAGE_EXTENSIONS: set[str] = {
+    # Common
+    'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'ico',
+    # pillow-heif
+    'heic', 'heif', 'avif',
+    # Tifffile + Scipy
+    'tif', 'tiff', 'psd', 'tga', 'fits', 'mat', 'npz',
+    # Pillow
+    'cur', 'dcx', 'dds', 'fli', 'flc', 'fpx', 'gbr', 'gd',
+    'icns', 'im', 'imt', 'iptc', 'mcidas', 'mic', 'msp',
+    'pcd', 'pcx', 'pixar', 'ppm', 'pgm', 'pbm', 'pnm',
+    'sgi', 'spider', 'wal', 'xbm', 'xpm', 'bw', 'rgb', 'rgba'
+}
 SPREADSHEET_EXTENSIONS = {'xlsx', 'xlsm', 'xltx', 'xltm'}  # openpyxl supported formats
 
 

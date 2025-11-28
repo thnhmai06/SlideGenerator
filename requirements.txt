@@ -2,5 +2,7 @@ flask
 flask-cors
 openpyxl
 requests
-pillow
 pyyaml
+imageio[pillow,tifffile,scipy]
+pillow-heif
+opencv-contrib-python
