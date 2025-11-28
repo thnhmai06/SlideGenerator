@@ -1,12 +1,12 @@
 ﻿using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Presentation;
-using generator.Models.Exceptions.Presentations;
+using presentation.Models.Exceptions.Presentations;
 using Spire.Presentation;
 using Spire.Presentation.Drawing;
 using SpirePresentation = Spire.Presentation.Presentation;
 using ISpireSlide = Spire.Presentation.ISlide;
 
-namespace generator.Models.Classes.Presentations
+namespace presentation.Models.Classes.Presentations
 {
     public sealed class TemplatePresentation : Presentation
     {

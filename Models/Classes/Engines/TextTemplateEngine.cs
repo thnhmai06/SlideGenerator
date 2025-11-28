@@ -1,9 +1,9 @@
-﻿using DocumentFormat.OpenXml.Packaging;
-using System.Text.RegularExpressions;
-using generator.Models.Classes.Presentations;
+﻿using System.Text.RegularExpressions;
+using DocumentFormat.OpenXml.Packaging;
+using presentation.Models.Classes.Presentations;
 using Stubble.Core.Builders;
 
-namespace generator.Models.Classes.Engine;
+namespace presentation.Models.Classes.Engines;
 
 public static partial class TextReplacementEngine
 {

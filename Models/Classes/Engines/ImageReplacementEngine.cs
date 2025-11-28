@@ -1,8 +1,8 @@
 ﻿using DocumentFormat.OpenXml.Drawing;
 using DocumentFormat.OpenXml.Packaging;
-using generator.Models.Exceptions.Presentations;
+using presentation.Models.Exceptions.Presentations;
 
-namespace generator.Models.Classes.Engine;
+namespace presentation.Models.Classes.Engines;
 
 public static class ImageReplacementEngine
 {

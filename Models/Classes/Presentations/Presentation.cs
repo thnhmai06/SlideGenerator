@@ -1,14 +1,14 @@
 ﻿using DocumentFormat.OpenXml.Drawing;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Presentation;
-using generator.Models.Exceptions.Presentations;
+using presentation.Models.Exceptions.Presentations;
 using BlipFill = DocumentFormat.OpenXml.Presentation.BlipFill;
 using Picture = DocumentFormat.OpenXml.Drawing.Picture;
 using Shape = DocumentFormat.OpenXml.Presentation.Shape;
 using PresentationText = DocumentFormat.OpenXml.Presentation.Text;
 using DrawingText = DocumentFormat.OpenXml.Drawing.Text;
 
-namespace generator.Models.Classes.Presentations
+namespace presentation.Models.Classes.Presentations
 {
     public abstract class Presentation(string filepath, bool isEditable)
     {
