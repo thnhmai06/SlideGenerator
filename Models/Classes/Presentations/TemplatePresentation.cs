@@ -32,14 +32,14 @@ namespace presentation.Models.Classes.Presentations
             return GetSlidePart(_mainSlideRid);
         }
 
-        internal Dictionary<uint, Stream> GetAllImageShape()
+        internal Dictionary<uint, (string, Stream)> GetAllImageShape()
         {
-            Dictionary<uint, Stream> images = [];
+            Dictionary<uint, (string, Stream)> images = [];
             foreach (var shape in _spireMainSlide.Shapes.ToArray())
             {
                 if (shape.IsHidden) continue;
                 if (shape is SlidePicture || shape.Fill.FillType == FillFormatType.Picture)
-                    images.Add(shape.Id, shape.SaveAsImage());
+                    images.Add(shape.Id, (shape.Name, shape.SaveAsImage()));
             }
 
             return images;

@@ -15,7 +15,9 @@ public record GenerateSlideCreate(
     string Path, // Save Path
     string[]? CustomSheet) : Request.Create, IPathBased;
 
-public record GenerateSlideGroupControl(string Path, ControlState State) : Request.Control(State), IPathBased;
+public record GenerateSlideGroupControl(string Path, ControlState? State = null) : Request.Control(State), IPathBased;
+
+public record GenerateSlideGroupStatus(string Path) : Request.Status, IPathBased;
 
 // ? Job
-public record GenerateSlideJobControl(string JobId, ControlState State) : Request.Control(State), IJobBased;
+public record GenerateSlideJobControl(string JobId, ControlState? State = null) : Request.Control(State), IJobBased;

@@ -1,6 +1,6 @@
 ﻿namespace presentation.DTOs.Responses;
 
-public record ShapeData(uint Id, string Data); // Data: Base64
+public record ShapeData(uint Id, string Name, string Image); // Image: Base64
 
 public record ScanShapesCreate(string Path) : Response.Create, IPathBased;
 

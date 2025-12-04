@@ -8,14 +8,22 @@ public record GenerateSlideCreate(string Path, Dictionary<string, string> JobIds
 
 public record GenerateSlideGroupFinish(string Path, bool Success) : Response.Finish(Success), IPathBased;
 
-public record GenerateSlideGroupStatus(string Path, float Percent, string Message) : Response.Status(Percent, Message), IPathBased;
+public record GenerateSlideGroupStatus(string Path, float Percent, string? Message = null) : Response.Status(Percent, Message), IPathBased;
 
 public record GenerateSlideGroupControl(string Path, ControlState State) : Response.Control(State), IPathBased;
 
+public record GenerateSlideGroupError : Response.Error, IPathBased
+{
+    public string Path { get; init; }
+    public GenerateSlideGroupError(string path, Exception exception) : base(exception)
+    {
+        Path = path;
+    }
+}
 
 // ? Job
 public record GenerateSlideJobFinish(string JobId, bool Success) : Response.Finish(Success), IJobBased;
-public record GenerateSlideJobStatus(string JobId, float Percent, string Message) : Response.Status(Percent, Message), IJobBased;
+public record GenerateSlideJobStatus(string JobId, float Percent, uint Current, uint Total, string Message) : Response.Status(Percent, Message), IJobBased;
 
 public record GenerateSlideJobControl(string JobId, ControlState State) : Response.Control(State), IJobBased;
 

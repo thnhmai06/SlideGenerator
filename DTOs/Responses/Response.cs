@@ -20,7 +20,7 @@ public abstract record Response
     public abstract record Create() : Response(ResponseType.Create);
 
     public abstract record Control(ControlState State) : Response(ResponseType.Control);
-    public abstract record Status(float Percent, string Message) : Response(ResponseType.Status); // TODO: Make Status
+    public abstract record Status(float Percent, string? Message = null) : Response(ResponseType.Status); // TODO: Make Status
 
     public abstract record Finish(bool Success) : Response(ResponseType.Finish);
 

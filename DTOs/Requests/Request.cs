@@ -16,6 +16,6 @@ public abstract record Request
     private Request(RequestType type) { Type = type; }
 
     public abstract record Create() : Request(RequestType.Create);
-    public abstract record Control(ControlState State) : Request(RequestType.Control);
+    public abstract record Control(ControlState? State = null) : Request(RequestType.Control);
     public abstract record Status() : Request(RequestType.Status);
 }
