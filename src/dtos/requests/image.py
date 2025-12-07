@@ -2,11 +2,13 @@ from enum import Enum
 
 from src.dtos.requests.request import ImageRequest
 
+class ImageRequestType(Enum):
+    Crop = "crop"
 
-class AutoCropImageRequest(ImageRequest):
+class CropImageRequest(ImageRequest):
     class CropMode(Enum):
-        Prominent = "Prominent"
-        Center = "Center"
+        Prominent = "prominent"
+        Center = "center"
 
     def __init__(self, file_path: str, width: int, height: int, mode: CropMode = CropMode.Prominent):
         super().__init__(file_path)

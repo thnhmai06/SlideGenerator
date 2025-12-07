@@ -50,7 +50,7 @@ class Image:
         thresh_map = cv2.threshold(saliency_map.astype("uint8"), 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
         return saliency_map, thresh_map
 
-    def get_best_crop(self, target_w: int, target_h: int):
+    def get_prominent_crop(self, target_w: int, target_h: int):
         """
         Finds the best crop of the image based on saliency sum/mean.
         Args:
@@ -85,6 +85,19 @@ class Image:
         top_left_x = max(0, min(top_left_x, w - t_w))
         top_left_y = max(0, min(top_left_y, h - t_h))
         return (top_left_x, top_left_y), best_saliency_val
+    
+    def get_center_crop(self, target_w: int, target_h: int) -> tuple[int, int]:
+        """Calculates the center crop coordinates for the image.
+        Args:
+            target_w (int): The target width of the crop.
+            target_h (int): The target height of the crop.
+        Returns:
+            tuple[int, int]: (top_left_x, top_left_y)
+        """
+        h, w = self._data.shape[:2]
+        top_left_x = max(0, (w - target_w) // 2)
+        top_left_y = max(0, (h - target_h) // 2)
+        return top_left_x, top_left_y
 
     def crop(self, x: int, y: int, w: int, h: int) -> np.ndarray:
         """Crops image to specified position and size.

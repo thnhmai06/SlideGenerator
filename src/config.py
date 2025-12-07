@@ -2,6 +2,7 @@
 
 import yaml
 import tempfile
+from threading import Lock
 
 from pathlib import Path
 import copy
@@ -10,6 +11,8 @@ import copy
 APP_NAME = "tao-slide-tot-nghiep"
 APP_TYPE = "data"
 APP_DESCRIPTION = "Data processing application for Tao Slide Tot Nghiep"
+APP_DEFAULT_TEMP = Path(tempfile.gettempdir()) / APP_NAME / APP_TYPE
+
 IMAGE_EXTENSIONS: set[str] = {
     # Common
     'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'ico',
@@ -28,10 +31,39 @@ SPREADSHEET_EXTENSIONS = {'xlsx', 'xlsm', 'xltx', 'xltm'}  # openpyxl
 
 # noinspection PyUnresolvedReferences
 class Config:
-    """Application Configuration"""
+    """Application Configuration (Singleton)"""
+    CONFIG_PATH = Path('./data.config.yaml')
+    DEFAULT_CONFIG = {
+        "server": {
+            "host": "127.0.0.1",
+            "port": 5000,
+            "debug": False,
+        },
+        "download": {
+            "save_folder": "",
+            "max_workers": 5,
 
-    _instance: "Config" = None
-    _initialized: bool = False
+            "retry": {
+                "max_retries": 3,
+                "initial_delay": 1.0,
+                "max_delay": 10.0,
+                "multiplier": 2.0,
+                "on_status_codes": [408, 429, 500, 502, 503, 504],
+            },
+
+            "timeout": {
+                "connect": 10,
+                "request": 30,
+            }
+        },
+        "sheet": {
+            "max_workers": 5
+        }
+    }
+
+    _instance = None
+    _initialized = False
+    _lock = Lock()
 
     def __new__(cls):
         if cls._instance is None:
@@ -47,54 +79,55 @@ class Config:
         Config._initialized = True
 
     @classmethod
-    def instance(cls) -> "Config":
-        """Get the singleton instance of Config."""
-        if cls._instance is None:
-            cls._instance = cls()
-        return cls._instance
+    def instance(cls):
+        return cls()
 
-    # === Operational Methods (Actions) ===
+    # ---------------------------------------------------------
+    # Core Methods
+    # ---------------------------------------------------------
 
-    def _deep_update(self, dest: dict, src: dict) -> None:
-        """Recursively update dest with values from src."""
+    def _deep_update(self, dest: dict, src: dict):
         for key, value in src.items():
             if isinstance(value, dict) and isinstance(dest.get(key), dict):
                 self._deep_update(dest[key], value)
             else:
                 dest[key] = value
 
-    def reload(self) -> None:
-        """Load configuration from config file, merging with defaults."""
+    def reload(self):
+        """Load configuration YAML file."""
         if not self.CONFIG_PATH.exists():
-            try:
-                self.save()
-            except Exception:
-                # TODO: Log error
-                pass
+            self.save()
             return
 
-        try:
-            with self.CONFIG_PATH.open("r", encoding="utf-8") as f:
-                data = yaml.safe_load(f)
-            if data:
-                self._deep_update(self._config, data)
-        except Exception:
-            # TODO: Log error
-            pass
+        with Config._lock:
+            try:
+                with self.CONFIG_PATH.open("r", encoding="utf-8") as f:
+                    data = yaml.safe_load(f)
+                if data:
+                    self._deep_update(self._config, data)
+            except Exception:
+                pass  # TODO log
 
-    def save(self) -> None:
-        """Serialize current config to YAML file."""
-        to_write = copy.deepcopy(self._config)
+    def save(self):
+        """Save current config to YAML."""
+        with Config._lock:
+            self.CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
+            with self.CONFIG_PATH.open("w", encoding="utf-8") as f:
+                yaml.safe_dump(
+                    copy.deepcopy(self._config),
+                    f,
+                    allow_unicode=True
+                )
 
-        self.CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
-        with self.CONFIG_PATH.open("w", encoding="utf-8") as f:
-            yaml.safe_dump(to_write, f, allow_unicode=True)
+    def reset_to_defaults(self):
+        """Reset to default configuration."""
+        with Config._lock:
+            self._config = copy.deepcopy(self.DEFAULT_CONFIG)
+        self.save()
 
-    def reset_to_defaults(self) -> None:
-        """Reset configuration to default values."""
-        self._config = copy.deepcopy(self.DEFAULT_CONFIG)
-
-    # === Data Access Methods (Properties) ===
+    # ---------------------------------------------------------
+    # Properties
+    # ---------------------------------------------------------
 
     # Server
     @property
@@ -124,6 +157,8 @@ class Config:
     # Download
     @property
     def save_folder(self) -> str:
+        if not self._config["download"]["save_folder"]:
+            return str(APP_DEFAULT_TEMP)
         return str(self._config["download"]["save_folder"])
 
     @save_folder.setter
@@ -202,33 +237,3 @@ class Config:
     @sheet_max_workers.setter
     def sheet_max_workers(self, value: int) -> None:
         self._config["sheet"]["max_workers"] = value
-
-    CONFIG_PATH = Path('./data.config.yaml')
-
-    DEFAULT_CONFIG = {
-        "server": {
-            "host": "127.0.0.1",
-            "port": 5000,
-            "debug": False,
-        },
-        "download": {
-            "save_folder": str(Path(tempfile.gettempdir()) / APP_NAME / APP_TYPE),
-            "max_workers": 5,
-
-            "retry": {
-                "max_retries": 3,
-                "initial_delay": 1.0,
-                "max_delay": 10.0,
-                "multiplier": 2.0,
-                "on_status_codes": [408, 429, 500, 502, 503, 504],
-            },
-
-            "timeout": {
-                "connect": 10,
-                "request": 30,
-            }
-        },
-        "sheet": {
-            "max_workers": 5
-        }
-    }

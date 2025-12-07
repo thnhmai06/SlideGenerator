@@ -1,6 +1,8 @@
 from abc import ABC
 from enum import Enum
 
+from pydantic import BaseModel
+
 
 class RequestType(Enum):
     Download = "Download"
@@ -8,8 +10,9 @@ class RequestType(Enum):
     Sheet = "Sheet"
 
 
-class Request(ABC):
+class Request(BaseModel, ABC):
     def __init__(self, request_type: RequestType):
+        super().__init__()
         self.request_type = request_type
 
 

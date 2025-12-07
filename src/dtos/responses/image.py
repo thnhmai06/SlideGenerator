@@ -1,7 +1,9 @@
-from src.dtos.requests.image import AutoCropImageRequest
+from src.dtos.requests.image import CropImageRequest
 from src.dtos.responses.response import ImageResponse
 
 
-class AutoCropImageResponse(ImageResponse):
-    def __init__(self, request: AutoCropImageRequest, error: Exception = None):
-        super().__init__(request, error)
+class CropImageResponse(ImageResponse):
+    """Response DTO for cropping an image."""
+
+    def __init__(self, request: CropImageRequest):
+        super().__init__(request)
