@@ -1,9 +1,0 @@
-fastapi
-uvicorn
-openpyxl
-requests
-pyyaml
-imageio[pillow,tifffile,scipy]
-pillow-heif
-opencv-contrib-python
-celery[redis]
