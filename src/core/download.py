@@ -8,7 +8,7 @@ from pathlib import Path
 import requests
 from requests import Response
 
-from src.config import CONFIG, IMAGE_EXTENSIONS
+from src.config import Config, IMAGE_EXTENSIONS
 from src.core.exceptions import FileExtensionNotSupported
 from src.core.controller import RetryController, FlowController
 from src.utils.http import get_file_extension, correct_image_url
@@ -32,10 +32,10 @@ class DownloadRetry(RetryController):
 
     def __init__(self):
         super().__init__(
-            initial_delay=CONFIG.download_retry_initial_delay,
-            multiplier=CONFIG.download_retry_multiplier,
-            max_delay=CONFIG.download_retry_max_delay,
-            max_retries=CONFIG.download_retry_max_retries
+            initial_delay=Config.download_retry_initial_delay,
+            multiplier=Config.download_retry_multiplier,
+            max_delay=Config.download_retry_max_delay,
+            max_retries=Config.download_retry_max_retries
         )
 
     @staticmethod
@@ -43,7 +43,7 @@ class DownloadRetry(RetryController):
         if isinstance(exception, requests.RequestException):
             if hasattr(exception, 'response') and exception.response is not None:
                 status_code = exception.response.status_code
-                return status_code in CONFIG.download_retry_on_status_codes
+                return status_code in Config.download_retry_on_status_codes
             return True  # Network errors are retryable
         return False
 
@@ -102,7 +102,7 @@ class DownloadTask(ABC):
         if self._stopped: return
         with requests.get(
                 self.url, headers=headers, stream=True,
-                timeout=(CONFIG.download_timeout_connect, CONFIG.download_timeout_request)
+                timeout=(Config.download_timeout_connect, Config.download_timeout_request)
         ) as response:
             response.raise_for_status()
             self._check_response(response)

@@ -1,19 +1,18 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+from fastapi import FastAPI, WebSocket
 
-from src.config import CONFIG
+from src.config import Config, APP_NAME, APP_TYPE, APP_DESCRIPTION
+from src.routes.image import router as image_router
 
-app = Flask(__name__)
-CORS(app)
+app = FastAPI(debug=Config.server_debug, title=APP_NAME + "|" + APP_TYPE, description=APP_DESCRIPTION)
 
-
-# ============== HEALTH CHECK ==============
-@app.route("/api/health", methods=["GET"])
-def health_check():
-    """Health check endpoint"""
-    return jsonify({"status": "ok", "message": "API Server is running"}), 200
-
+app.include_router(image_router)
 
 if __name__ == "__main__":
-    # Run server using CONFIG values
-    app.run(host=CONFIG.server_host, port=CONFIG.server_port, debug=CONFIG.server_debug)
+    import uvicorn
+
+    uvicorn.run(
+        "main:app",
+        host=Config.server_host,
+        port=Config.server_port,
+        reload=True
+    )

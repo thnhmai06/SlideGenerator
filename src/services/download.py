@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from src.config import CONFIG
+from src.config import Config
 from src.core.download import DownloadTask, ImageDownloadTask
 from src.core.service import TaskBasedService
 
@@ -23,4 +23,4 @@ class DownloadService(TaskBasedService[int, DownloadTask]):
         self._storage[++self._id_counter] = task
         return self._id_counter
 
-SERVICE = DownloadService(save_folder=CONFIG.save_folder)
+SERVICE = DownloadService(save_folder=Config.save_folder)
