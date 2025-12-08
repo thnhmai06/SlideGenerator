@@ -1,7 +1,0 @@
-flask
-flask-cors
-polars
-openpyxl
-requests
-pillow
-xlsx2csv
