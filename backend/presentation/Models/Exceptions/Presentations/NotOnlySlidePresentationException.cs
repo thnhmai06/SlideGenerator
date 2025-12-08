@@ -1,4 +1,4 @@
-﻿namespace generator.Models.Exceptions.Presentations;
+﻿namespace presentation.Models.Exceptions.Presentations;
 
 public class NotOnlySlidePresentationException(string filepath, int amount) : ArgumentException($"The file '{filepath}' is not a presentation with only slides. (Has {amount} slides)")
 {
