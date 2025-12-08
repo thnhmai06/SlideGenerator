@@ -1,6 +1,6 @@
 ﻿using DocumentFormat.OpenXml.Drawing;
 
-namespace generator.Models.Exceptions.Presentations;
+namespace presentation.Models.Exceptions.Presentations;
 
 public class NoImageInShapeException : InvalidOperationException
 {

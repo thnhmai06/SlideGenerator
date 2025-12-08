@@ -1,7 +1,7 @@
 ﻿using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Presentation;
 
-namespace generator.Models.Classes.Presentations;
+namespace presentation.Models.Classes.Presentations;
 
 public sealed class DerivedPresentation : Presentation
 {
