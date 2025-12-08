@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>TaoSlideTotNghiep</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Magick.NET-Q8-AnyCPU" Version="14.*" />
+    <PackageReference Include="Emgu.CV" Version="4.*" />
+    <PackageReference Include="Emgu.CV.runtime.windows" Version="4.*" />
+    <PackageReference Include="ClosedXML" Version="0.*" />
+    <PackageReference Include="Downloader" Version="4.*" />
+    <PackageReference Include="YamlDotNet" Version="16.*" />
+  </ItemGroup>
+
+</Project>
