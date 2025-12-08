@@ -16,9 +16,9 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
+        policy.AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowAnyOrigin();
     });
 });
 
@@ -32,9 +32,9 @@ app.MapHub<DownloadHub>("/hubs/download");
 app.MapGet("/", () => new
 {
     Name = AppConfig.AppName,
-    Type = AppConfig.AppType,
     Description = AppConfig.AppDescription,
     IsRunning = true
 });
 app.MapGet("/health", () => Results.Ok(new { IsRunning = true }));
+app.Urls.Add($"http://{config.Server.Host}:{config.Server.Port}");
 app.Run();

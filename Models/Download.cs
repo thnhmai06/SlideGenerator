@@ -24,9 +24,13 @@ public abstract class DownloadTask : IDisposable
 
         var downloadOptions = new DownloadConfiguration
         {
-            ChunkCount = config.MaxWorkers,
-            ParallelDownload = config.MaxWorkers > 1,
-            Timeout = config.Timeout.Request * 1000
+            ChunkCount = config.MaxChunks,
+            ParallelDownload = true,
+            MaximumBytesPerSecond = config.LimitBytesPerSecond,
+
+            Timeout = config.Retry.Timeout * 1000,
+            MaxTryAgainOnFailure = config.Retry.MaxRetries,
+            ClearPackageOnCompletionWithFailure = true
         };
 
         _downloader = new DownloadService(downloadOptions);

@@ -1,4 +1,4 @@
-using YamlDotNet.Serialization;
+﻿using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
 namespace TaoSlideTotNghiep.Config;
@@ -10,12 +10,10 @@ public sealed class AppConfig
 {
     #region Constants
 
-    public const string AppName = "tao-slide-tot-nghiep";
-    public const string AppType = "data";
-    public const string AppDescription = "Data processing application for Tao Slide Tot Nghiep";
-    
-    private static readonly string DefaultTempPath = Path.Combine(Path.GetTempPath(), AppName, AppType);
-    private const string ConfigFileName = "data.config.yaml";
+    public static readonly string AppName = "tao-slide-tot-nghiep";
+    public static readonly string AppDescription = "Backend server for Tao Slide Tot Nghiep";
+    private static readonly string DefaultTempPath = Path.Combine(Path.GetTempPath(), AppName);
+    private static readonly string ConfigFileName = "backend.config.yaml";
 
     /// <summary>
     /// Supported image file extensions.
@@ -31,6 +29,7 @@ public sealed class AppConfig
         // Additional formats
         "cur", "dcx", "dds", "icns", "pcx", "ppm", "pgm", "pbm", "pnm",
         "sgi", "xbm", "xpm", "rgb", "rgba"
+        // and more... but not included
     };
 
     /// <summary>
@@ -46,7 +45,7 @@ public sealed class AppConfig
     #region Singleton
 
     private static readonly Lazy<AppConfig> LazyInstance = new(() => new AppConfig());
-    private static readonly object SyncLock = new();
+    private static readonly Lock SyncLock = new();
 
     public static AppConfig Instance => LazyInstance.Value;
 
@@ -54,9 +53,8 @@ public sealed class AppConfig
 
     #region Configuration Properties
 
-    public ServerConfig Server { get; set; } = new();
-    public DownloadConfig Download { get; set; } = new();
-    public SheetConfig Sheet { get; set; } = new();
+    public ServerConfig Server { get; private set; } = new();
+    public DownloadConfig Download { get; private set; } = new();
 
     #endregion
 
@@ -71,35 +69,20 @@ public sealed class AppConfig
 
     public class DownloadConfig
     {
-        public string SaveFolder { get; set; } = string.Empty;
-        public int MaxWorkers { get; set; } = 5;
+        public class RetryConfig
+        {
+            public int Timeout { get; set; } = 30;
+            public int MaxRetries { get; set; } = 3;
+        }
+
+        public int MaxChunks { get; set; } = 5;
+        public int LimitBytesPerSecond { get; set; } = 0;
+        public string SaveFolder
+        {
+            get => string.IsNullOrEmpty(field) ? DefaultTempPath : field;
+            set;
+        } = string.Empty;
         public RetryConfig Retry { get; set; } = new();
-        public TimeoutConfig Timeout { get; set; } = new();
-
-        /// <summary>
-        /// Gets the effective save folder path.
-        /// </summary>
-        public string EffectiveSaveFolder => string.IsNullOrEmpty(SaveFolder) ? DefaultTempPath : SaveFolder;
-    }
-
-    public class RetryConfig
-    {
-        public int MaxRetries { get; set; } = 3;
-        public double InitialDelay { get; set; } = 1.0;
-        public double MaxDelay { get; set; } = 10.0;
-        public double Multiplier { get; set; } = 2.0;
-        public List<int> OnStatusCodes { get; set; } = [408, 429, 500, 502, 503, 504];
-    }
-
-    public class TimeoutConfig
-    {
-        public int Connect { get; set; } = 10;
-        public int Request { get; set; } = 30;
-    }
-
-    public class SheetConfig
-    {
-        public int MaxWorkers { get; set; } = 5;
     }
 
     #endregion
@@ -133,16 +116,12 @@ public sealed class AppConfig
                     .Build();
 
                 var loaded = deserializer.Deserialize<AppConfig>(yaml);
-                if (loaded != null)
-                {
-                    Server = loaded.Server ?? Server;
-                    Download = loaded.Download ?? Download;
-                    Sheet = loaded.Sheet ?? Sheet;
-                }
+                Server = loaded.Server;
+                Download = loaded.Download;
             }
             catch
             {
-                // Log error if needed
+                ResetToDefaults();
             }
         }
     }
@@ -178,7 +157,6 @@ public sealed class AppConfig
         {
             Server = new ServerConfig();
             Download = new DownloadConfig();
-            Sheet = new SheetConfig();
         }
         Save();
     }
