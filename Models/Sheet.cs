@@ -3,7 +3,7 @@ using ClosedXML.Excel;
 using TaoSlideTotNghiep.Config;
 using TaoSlideTotNghiep.Exceptions;
 
-namespace TaoSlideTotNghiep.Logic;
+namespace TaoSlideTotNghiep.Models;
 
 /// <summary>
 /// Represents a workbook file and its sheets.

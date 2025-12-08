@@ -1,16 +1,19 @@
+using System.Drawing;
 using System.Text.Json;
 using Microsoft.AspNetCore.SignalR;
 using TaoSlideTotNghiep.DTOs;
 using TaoSlideTotNghiep.Exceptions;
-using TaoSlideTotNghiep.Logic;
+using TaoSlideTotNghiep.Services;
 
 namespace TaoSlideTotNghiep.Hubs;
 
 /// <summary>
 /// SignalR Hub for image processing operations.
 /// </summary>
-public class ImageHub(ILogger<ImageHub> logger) : Hub
+public class ImageHub(IImageService imageService, ILogger<ImageHub> logger) : Hub
 {
+    private readonly JsonSerializerOptions _serializerOptions = new() { PropertyNameCaseInsensitive = true };
+
     public override async Task OnConnectedAsync()
     {
         logger.LogInformation("Client connected: {ConnectionId}", Context.ConnectionId);
@@ -26,31 +29,23 @@ public class ImageHub(ILogger<ImageHub> logger) : Hub
     /// <summary>
     /// Processes an image request based on type.
     /// </summary>
-    public async Task ProcessRequest(JsonElement message)
+    public async Task ProcessRequestAsync(JsonElement message)
     {
         BaseResponse response;
 
         try
         {
             var typeStr = message.GetProperty("type").GetString()?.ToLowerInvariant();
-            
+
             if (string.IsNullOrEmpty(typeStr))
                 throw new TypeNotIncludedException(typeof(ImageRequestType));
 
-            if (typeStr == "crop")
+            response = typeStr switch
             {
-                var request = JsonSerializer.Deserialize<CropImageRequest>(message.GetRawText(), 
-                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                
-                if (request == null)
-                    throw new ArgumentException("Invalid crop request format");
-
-                response = ExecuteCrop(request);
-            }
-            else
-            {
-                throw new TypeNotIncludedException(typeof(ImageRequestType));
-            }
+                "crop" => ExecuteCrop(JsonSerializer.Deserialize<CropImageRequest>(message.GetRawText(), _serializerOptions)
+                                                    ?? throw new InvalidRequestFormatException(nameof(CropImageRequest))),
+                _ => throw new TypeNotIncludedException(typeof(ImageRequestType)),
+            };
         }
         catch (Exception ex)
         {
@@ -66,37 +61,15 @@ public class ImageHub(ILogger<ImageHub> logger) : Hub
     /// </summary>
     private CropImageResponse ExecuteCrop(CropImageRequest request)
     {
-        using var image = new Image(request.FilePath);
-        
-        int x, y;
-        
-        if (request.Mode == CropMode.Prominent)
-        {
-            var (topLeft, _) = image.GetProminentCrop(request.Width, request.Height);
-            x = topLeft.X;
-            y = topLeft.Y;
-        }
-        else if (request.Mode == CropMode.Center)
-        {
-            var topLeft = image.GetCenterCrop(request.Width, request.Height);
-            x = topLeft.X;
-            y = topLeft.Y;
-        }
-        else
-        {
-            throw new TypeNotIncludedException(typeof(CropMode));
-        }
-
-        image.Crop(x, y, request.Width, request.Height);
-        image.Save();
+        var result = imageService.CropImage(request.FilePath, new Size(request.Width, request.Height), request.Mode);
 
         return new CropImageResponse
         {
             FilePath = request.FilePath,
-            X = x,
-            Y = y,
-            Width = request.Width,
-            Height = request.Height
+            X = result.X,
+            Y = result.Y,
+            Width = result.Width,
+            Height = result.Height
         };
     }
 }

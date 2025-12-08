@@ -3,31 +3,32 @@ using System.Text.Json;
 using Microsoft.AspNetCore.SignalR;
 using TaoSlideTotNghiep.DTOs;
 using TaoSlideTotNghiep.Exceptions;
-using TaoSlideTotNghiep.Logic;
+using TaoSlideTotNghiep.Models;
+using TaoSlideTotNghiep.Services;
 
 namespace TaoSlideTotNghiep.Hubs;
 
 /// <summary>
 /// SignalR Hub for spreadsheet operations.
 /// </summary>
-public class SheetHub(ILogger<SheetHub> logger) : Hub
+public class SheetHub(ISheetService sheetService, ILogger<SheetHub> logger) : Hub
 {
-    // Thread-safe storage for open workbooks per connection
-    private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, Workbook>> ConnectionWorkbooks = new();
+    private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, Workbook>> WorkbooksOfConnections = new();
+    private readonly JsonSerializerOptions _serializerOptions = new() { PropertyNameCaseInsensitive = true };
 
     public override async Task OnConnectedAsync()
     {
-        logger.LogInformation("Sheet client connected: {ConnectionId}", Context.ConnectionId);
-        ConnectionWorkbooks[Context.ConnectionId] = new ConcurrentDictionary<string, Workbook>();
+        logger.LogInformation("[Sheet] Client connected: {ConnectionId}", Context.ConnectionId);
+        WorkbooksOfConnections[Context.ConnectionId] = new ConcurrentDictionary<string, Workbook>();
         await base.OnConnectedAsync();
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        logger.LogInformation("Sheet client disconnected: {ConnectionId}", Context.ConnectionId);
-        
+        logger.LogInformation("[Sheet] Client disconnected: {ConnectionId}", Context.ConnectionId);
+
         // Cleanup open workbooks for this connection
-        if (ConnectionWorkbooks.TryRemove(Context.ConnectionId, out var workbooks))
+        if (WorkbooksOfConnections.TryRemove(Context.ConnectionId, out var workbooks))
         {
             foreach (var key in workbooks.Keys)
             {
@@ -35,9 +36,13 @@ public class SheetHub(ILogger<SheetHub> logger) : Hub
                     wb.Dispose();
             }
         }
-        
+
         await base.OnDisconnectedAsync(exception);
     }
+
+    private ConcurrentDictionary<string, Workbook> Workbooks
+        => WorkbooksOfConnections.GetValueOrDefault(Context.ConnectionId)
+           ?? throw new ConnectionNotFoundException(Context.ConnectionId);
 
     /// <summary>
     /// Processes a sheet request based on type.
@@ -49,24 +54,27 @@ public class SheetHub(ILogger<SheetHub> logger) : Hub
         try
         {
             var typeStr = message.GetProperty("type").GetString()?.ToLowerInvariant();
-            
+
             if (string.IsNullOrEmpty(typeStr))
                 throw new TypeNotIncludedException(typeof(SheetRequestType));
-
-            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
             response = typeStr switch
             {
                 "openfile" => ExecuteOpenFile(
-                    JsonSerializer.Deserialize<OpenFileSheetRequest>(message.GetRawText(), options)!),
+                    JsonSerializer.Deserialize<OpenFileSheetRequest>(message.GetRawText(), _serializerOptions)
+                    ?? throw new InvalidRequestFormatException(nameof(OpenFileSheetRequest))),
                 "closefile" => ExecuteCloseFile(
-                    JsonSerializer.Deserialize<CloseFileSheetRequest>(message.GetRawText(), options)!),
+                    JsonSerializer.Deserialize<CloseFileSheetRequest>(message.GetRawText(), _serializerOptions)
+                    ?? throw new InvalidRequestFormatException(nameof(CloseFileSheetRequest))),
                 "gettables" => ExecuteGetTables(
-                    JsonSerializer.Deserialize<GetTablesSheetRequest>(message.GetRawText(), options)!),
+                    JsonSerializer.Deserialize<GetTablesSheetRequest>(message.GetRawText(), _serializerOptions)
+                    ?? throw new InvalidRequestFormatException(nameof(GetTablesSheetRequest))),
                 "getheaders" => ExecuteGetHeaders(
-                    JsonSerializer.Deserialize<GetTableHeadersSheetRequest>(message.GetRawText(), options)!),
+                    JsonSerializer.Deserialize<GetTableHeadersSheetRequest>(message.GetRawText(), _serializerOptions)
+                    ?? throw new InvalidRequestFormatException(nameof(GetTableHeadersSheetRequest))),
                 "getrow" => ExecuteGetRow(
-                    JsonSerializer.Deserialize<GetTableRowSheetRequest>(message.GetRawText(), options)!),
+                    JsonSerializer.Deserialize<GetTableRowSheetRequest>(message.GetRawText(), _serializerOptions)
+                    ?? throw new InvalidRequestFormatException(nameof(GetTableRowSheetRequest))),
                 _ => throw new TypeNotIncludedException(typeof(SheetRequestType))
             };
         }
@@ -79,29 +87,15 @@ public class SheetHub(ILogger<SheetHub> logger) : Hub
         await Clients.Caller.SendAsync("ReceiveResponse", response);
     }
 
-    private ConcurrentDictionary<string, Workbook> GetWorkbooks()
-    {
-        return ConnectionWorkbooks.GetValueOrDefault(Context.ConnectionId) 
-               ?? throw new InvalidOperationException("Connection not found");
-    }
-
     private OpenFileSheetResponse ExecuteOpenFile(OpenFileSheetRequest request)
     {
-        var workbooks = GetWorkbooks();
-        
-        if (!workbooks.ContainsKey(request.SheetPath))
-        {
-            workbooks[request.SheetPath] = new Workbook(request.SheetPath);
-        }
-
+        GetOrOpenWorkbook(request.SheetPath);
         return new OpenFileSheetResponse { SheetPath = request.SheetPath };
     }
 
     private CloseFileSheetResponse ExecuteCloseFile(CloseFileSheetRequest request)
     {
-        var workbooks = GetWorkbooks();
-        
-        if (workbooks.TryRemove(request.SheetPath, out var wb))
+        if (Workbooks.TryRemove(request.SheetPath, out var wb))
         {
             wb.Dispose();
         }
@@ -111,65 +105,47 @@ public class SheetHub(ILogger<SheetHub> logger) : Hub
 
     private GetTablesSheetResponse ExecuteGetTables(GetTablesSheetRequest request)
     {
-        var workbooks = GetWorkbooks();
-        
-        if (!workbooks.TryGetValue(request.SheetPath, out var group))
-        {
-            group = new Workbook(request.SheetPath);
-            workbooks[request.SheetPath] = group;
-        }
+        var workbook = GetOrOpenWorkbook(request.SheetPath);
 
         return new GetTablesSheetResponse
         {
             SheetPath = request.SheetPath,
-            Tables = group.GetTableInfo()
+            Tables = sheetService.GetTables(workbook)
         };
     }
 
     private GetTableHeadersSheetResponse ExecuteGetHeaders(GetTableHeadersSheetRequest request)
     {
-        var workbooks = GetWorkbooks();
-        
-        if (!workbooks.TryGetValue(request.SheetPath, out var group))
-        {
-            group = new Workbook(request.SheetPath);
-            workbooks[request.SheetPath] = group;
-        }
-
-        if (!group.Sheets.TryGetValue(request.TableName, out var table))
-        {
-            throw new KeyNotFoundException($"Table '{request.TableName}' not found");
-        }
+        var workbook = GetOrOpenWorkbook(request.SheetPath);
 
         return new GetTableHeadersSheetResponse
         {
             SheetPath = request.SheetPath,
             TableName = request.TableName,
-            Headers = table.Headers.ToList()
+            Headers = sheetService.GetHeaders(workbook, request.TableName).ToList()
         };
     }
 
     private GetTableRowSheetResponse ExecuteGetRow(GetTableRowSheetRequest request)
     {
-        var workbooks = GetWorkbooks();
-        
-        if (!workbooks.TryGetValue(request.SheetPath, out var group))
-        {
-            group = new Workbook(request.SheetPath);
-            workbooks[request.SheetPath] = group;
-        }
-
-        if (!group.Sheets.TryGetValue(request.TableName, out var table))
-        {
-            throw new KeyNotFoundException($"Table '{request.TableName}' not found");
-        }
+        var workbook = GetOrOpenWorkbook(request.SheetPath);
 
         return new GetTableRowSheetResponse
         {
             SheetPath = request.SheetPath,
             TableName = request.TableName,
             RowNumber = request.RowNumber,
-            RowData = table.GetRow(request.RowNumber)
+            RowData = sheetService.GetRow(workbook, request.TableName, request.RowNumber)
         };
+    }
+
+    private Workbook GetOrOpenWorkbook(string sheetPath)
+    {
+        if (!Workbooks.TryGetValue(sheetPath, out var workbook))
+        {
+            workbook = sheetService.OpenFile(sheetPath);
+            Workbooks[sheetPath] = workbook;
+        }
+        return workbook;
     }
 }

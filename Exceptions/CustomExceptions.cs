@@ -44,3 +44,42 @@ public class TypeNotIncludedException(Type enumType) : ArgumentException(
 {
     public Type EnumType { get; } = enumType;
 }
+
+/// <summary>
+/// Exception thrown when a connection is not found.
+/// </summary>
+public class ConnectionNotFoundException(string connectionId)
+    : InvalidOperationException($"Connection '{connectionId}' not found.")
+{
+    public string ConnectionId { get; } = connectionId;
+}
+
+/// <summary>
+/// Exception thrown when a table/sheet is not found in a workbook.
+/// </summary>
+public class TableNotFoundException(string tableName, string? workbookPath = null)
+    : KeyNotFoundException($"Table '{tableName}' not found{(workbookPath != null ? $" in workbook '{workbookPath}'" : "")}.")
+{
+    public string TableName { get; } = tableName;
+    public string? WorkbookPath { get; } = workbookPath;
+}
+
+/// <summary>
+/// Exception thrown when a request format is invalid.
+/// </summary>
+public class InvalidRequestFormatException(string requestType, string? details = null)
+    : ArgumentException($"Invalid {requestType} request format{(details != null ? $": {details}" : "")}.")
+{
+    public string RequestTypeName { get; } = requestType;
+    public string? Details { get; } = details;
+}
+
+/// <summary>
+/// Exception thrown when unable to extract URL from cloud storage services.
+/// </summary>
+public class CloudUrlExtractionException(string serviceName, string originalUrl)
+    : ArgumentException($"Cannot extract direct download URL from {serviceName}.")
+{
+    public string ServiceName { get; } = serviceName;
+    public string OriginalUrl { get; } = originalUrl;
+}

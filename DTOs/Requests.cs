@@ -65,7 +65,7 @@ public abstract class BaseRequest
 public abstract class ImageRequestBase : BaseRequest
 {
     public string FilePath { get; init; } = string.Empty;
-    
+
     protected ImageRequestBase()
     {
         RequestType = RequestType.Image;
@@ -78,7 +78,7 @@ public abstract class ImageRequestBase : BaseRequest
 public abstract class SheetRequestBase : BaseRequest
 {
     public string SheetPath { get; init; } = string.Empty;
-    
+
     protected SheetRequestBase()
     {
         RequestType = RequestType.Sheet;
@@ -92,7 +92,7 @@ public abstract class DownloadRequestBase : BaseRequest
 {
     public string Url { get; init; } = string.Empty;
     public string SavePath { get; init; } = string.Empty;
-    
+
     protected DownloadRequestBase()
     {
         RequestType = RequestType.Download;

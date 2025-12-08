@@ -1,4 +1,5 @@
-﻿using TaoSlideTotNghiep.Logic;
+﻿using TaoSlideTotNghiep.Exceptions;
+using TaoSlideTotNghiep.Models;
 
 namespace TaoSlideTotNghiep.Services;
 
@@ -20,7 +21,7 @@ public class SheetService(ILogger<SheetService> logger) : Service(logger), IShee
 {
     public Workbook OpenFile(string filePath)
     {
-        logger.LogInformation("Opening sheet file: {FilePath}", filePath);
+        Logger.LogInformation("Opening sheet file: {FilePath}", filePath);
         return new Workbook(filePath);
     }
 
@@ -32,14 +33,14 @@ public class SheetService(ILogger<SheetService> logger) : Service(logger), IShee
     public IReadOnlyList<string?> GetHeaders(Workbook group, string tableName)
     {
         return !group.Sheets.TryGetValue(tableName, out var table)
-            ? throw new KeyNotFoundException($"Table '{tableName}' not found")
+            ? throw new TableNotFoundException(tableName, group.FilePath)
             : table.Headers;
     }
 
     public Dictionary<string, object?> GetRow(Workbook group, string tableName, int rowNumber)
     {
         return !group.Sheets.TryGetValue(tableName, out var table)
-            ? throw new KeyNotFoundException($"Table '{tableName}' not found")
+            ? throw new TableNotFoundException(tableName, group.FilePath)
             : table.GetRow(rowNumber);
     }
 }

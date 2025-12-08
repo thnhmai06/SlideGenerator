@@ -1,4 +1,4 @@
-using TaoSlideTotNghiep.Logic;
+using TaoSlideTotNghiep.Models;
 
 namespace TaoSlideTotNghiep.Services;
 
@@ -20,13 +20,13 @@ public class DownloadService(ILogger<DownloadService> logger) : Service(logger),
 {
     public ImageDownloadTask CreateDownloadTask(string url, string savePath, HttpClient? httpClient = null)
     {
-        logger.LogInformation("Creating download task: {Url} -> {SavePath}", url, savePath);
-        return new ImageDownloadTask(url, savePath, httpClient);
+        Logger.LogInformation("Creating download task: {Url} -> {SavePath}", url, savePath);
+        return new ImageDownloadTask(url, savePath);
     }
 
     public async Task StartDownloadAsync(ImageDownloadTask task, HttpClient? httpClient = null)
     {
-        logger.LogInformation("Starting download: {Url}", task.Url);
+        Logger.LogInformation("Starting download: {Url}", task.Url);
         await task.StartAsync(httpClient);
     }
 }

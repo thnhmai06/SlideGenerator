@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using System.Web;
+using TaoSlideTotNghiep.Exceptions;
 
 namespace TaoSlideTotNghiep.Utils;
 
@@ -161,7 +162,7 @@ public static partial class HttpUtils
     /// <summary>
     /// Corrects image URLs from Google Drive, OneDrive, and Google Photos to direct download links.
     /// </summary>
-    public static async Task<string> CorrectImageUrl(string imageUrl, HttpClient httpClient)
+    public static async Task<string> CorrectImageUrlAsync(string imageUrl, HttpClient httpClient)
     {
         // Google Drive link
         if (imageUrl.Contains("drive.google.com"))
@@ -187,7 +188,7 @@ public static partial class HttpUtils
             }
 
             return string.IsNullOrEmpty(imageId)
-                ? throw new ArgumentException("Cannot extract Google Drive image ID")
+                ? throw new CloudUrlExtractionException("Google Drive", imageUrl)
                 : $"https://drive.google.com/uc?export=download&id={imageId}";
         }
 
@@ -206,7 +207,7 @@ public static partial class HttpUtils
             var match = GooglePhotosUrlPattern.Match(html);
             return match.Success
                 ? match.Value
-                : throw new ArgumentException("Cannot extract Google Photos URL");
+                : throw new CloudUrlExtractionException("Google Photos", imageUrl);
         }
 
         // Direct link

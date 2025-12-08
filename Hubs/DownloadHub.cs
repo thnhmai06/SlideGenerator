@@ -1,7 +1,9 @@
 using System.Collections.Concurrent;
 using Microsoft.AspNetCore.SignalR;
 using TaoSlideTotNghiep.DTOs;
-using TaoSlideTotNghiep.Logic;
+using TaoSlideTotNghiep.Exceptions;
+using TaoSlideTotNghiep.Models;
+using TaoSlideTotNghiep.Services;
 using TaoSlideTotNghiep.Utils;
 
 namespace TaoSlideTotNghiep.Hubs;
@@ -9,25 +11,23 @@ namespace TaoSlideTotNghiep.Hubs;
 /// <summary>
 /// SignalR Hub for download operations.
 /// </summary>
-public class DownloadHub(ILogger<DownloadHub> logger, IHttpClientFactory httpClientFactory)
+public class DownloadHub(IDownloadService downloadService, ILogger<DownloadHub> logger, IHttpClientFactory httpClientFactory)
     : Hub
 {
-    // Thread-safe storage for active downloads per connection
-    private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, ImageDownloadTask>> ConnectionDownloads = new();
+    private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, ImageDownloadTask>> DownloadTasksOfConnections = new();
 
     public override async Task OnConnectedAsync()
     {
         logger.LogInformation("Download client connected: {ConnectionId}", Context.ConnectionId);
-        ConnectionDownloads[Context.ConnectionId] = new ConcurrentDictionary<string, ImageDownloadTask>();
+        DownloadTasksOfConnections[Context.ConnectionId] = new ConcurrentDictionary<string, ImageDownloadTask>();
         await base.OnConnectedAsync();
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         logger.LogInformation("Download client disconnected: {ConnectionId}", Context.ConnectionId);
-        
-        // Cleanup active downloads for this connection
-        if (ConnectionDownloads.TryRemove(Context.ConnectionId, out var downloads))
+
+        if (DownloadTasksOfConnections.TryRemove(Context.ConnectionId, out var downloads))
         {
             foreach (var key in downloads.Keys)
             {
@@ -38,60 +38,57 @@ public class DownloadHub(ILogger<DownloadHub> logger, IHttpClientFactory httpCli
                 }
             }
         }
-        
+
         await base.OnDisconnectedAsync(exception);
     }
 
-    private ConcurrentDictionary<string, ImageDownloadTask> GetDownloads()
-    {
-        return ConnectionDownloads.GetValueOrDefault(Context.ConnectionId) 
-               ?? throw new InvalidOperationException("Connection not found");
-    }
+    private ConcurrentDictionary<string, ImageDownloadTask> Downloads
+        => DownloadTasksOfConnections.GetValueOrDefault(Context.ConnectionId)
+           ?? throw new ConnectionNotFoundException(Context.ConnectionId);
 
     /// <summary>
     /// Starts a new download.
     /// </summary>
     public async Task StartDownload(string url, string savePath)
     {
-        var downloads = GetDownloads();
         var taskId = Guid.NewGuid().ToString();
 
         try
         {
             var httpClient = httpClientFactory.CreateClient();
-            var correctedUrl = await HttpUtils.CorrectImageUrl(url, httpClient);
-            
-            var task = new ImageDownloadTask(correctedUrl, savePath, httpClient);
-            downloads[taskId] = task;
+            var correctedUrl = await HttpUtils.CorrectImageUrlAsync(url, httpClient);
+
+            var task = downloadService.CreateDownloadTask(correctedUrl, savePath, httpClient);
+            Downloads[taskId] = task;
 
             // Subscribe to progress updates
-            task.ProgressChanged += progress =>
+            task.DownloadProgressChanged += (_, e) =>
             {
-                _ = Clients.Caller.SendAsync("DownloadProgress", new DownloadProgressResponse
+                Clients.Caller.SendAsync("DownloadProgress", new DownloadProgressResponse
                 {
                     Url = url,
                     SavePath = savePath,
-                    Progress = progress,
+                    Progress = e.ProgressPercentage,
                     DownloadedBytes = task.DownloadedSize,
                     TotalBytes = task.TotalSize,
                     Status = task.Status.ToString()
                 });
             };
 
-            task.StatusChanged += status =>
+            task.DownloadFileCompleted += (_, _) =>
             {
-                _ = Clients.Caller.SendAsync("DownloadStatus", new
+                Clients.Caller.SendAsync("DownloadStatus", new
                 {
                     TaskId = taskId,
                     Url = url,
                     SavePath = savePath,
-                    Status = status.ToString()
+                    Status = task.Status.ToString()
                 });
             };
 
-            task.ErrorOccurred += ex =>
+            task.ErrorOccurred += (_, e) =>
             {
-                _ = Clients.Caller.SendAsync("DownloadError", new ErrorResponse(ex, RequestType.Download));
+                Clients.Caller.SendAsync("DownloadError", new ErrorResponse(e.GetException(), RequestType.Download));
             };
 
             await Clients.Caller.SendAsync("DownloadStarted", new
@@ -101,8 +98,8 @@ public class DownloadHub(ILogger<DownloadHub> logger, IHttpClientFactory httpCli
                 SavePath = savePath
             });
 
-            // Start download (fire and forget, progress will be reported via events)
-            _ = task.StartAsync(httpClient);
+            // Start download
+            _ = downloadService.StartDownloadAsync(task, httpClient);
         }
         catch (Exception ex)
         {
@@ -116,9 +113,7 @@ public class DownloadHub(ILogger<DownloadHub> logger, IHttpClientFactory httpCli
     /// </summary>
     public async Task PauseDownload(string taskId)
     {
-        var downloads = GetDownloads();
-        
-        if (downloads.TryGetValue(taskId, out var task))
+        if (Downloads.TryGetValue(taskId, out var task))
         {
             task.Pause();
             await Clients.Caller.SendAsync("DownloadPaused", taskId);
@@ -130,9 +125,7 @@ public class DownloadHub(ILogger<DownloadHub> logger, IHttpClientFactory httpCli
     /// </summary>
     public async Task ResumeDownload(string taskId)
     {
-        var downloads = GetDownloads();
-        
-        if (downloads.TryGetValue(taskId, out var task))
+        if (Downloads.TryGetValue(taskId, out var task))
         {
             task.Resume();
             await Clients.Caller.SendAsync("DownloadResumed", taskId);
@@ -144,9 +137,7 @@ public class DownloadHub(ILogger<DownloadHub> logger, IHttpClientFactory httpCli
     /// </summary>
     public async Task StopDownload(string taskId)
     {
-        var downloads = GetDownloads();
-        
-        if (downloads.TryRemove(taskId, out var task))
+        if (Downloads.TryRemove(taskId, out var task))
         {
             task.Stop();
             task.Dispose();
@@ -155,31 +146,24 @@ public class DownloadHub(ILogger<DownloadHub> logger, IHttpClientFactory httpCli
     }
 
     /// <summary>
-    /// Gets status of all downloads.
+    /// Gets status of a download.
     /// </summary>
-    public async Task GetDownloadStatuses()
+    public async Task DownloadStatus(string taskId)
     {
-        var downloads = GetDownloads();
-        var statuses = new List<object>();
-
-        foreach (var taskId in downloads.Keys)
+        if (Downloads.TryGetValue(taskId, out var task))
         {
-            if (downloads.TryGetValue(taskId, out var task))
+            var status = new
             {
-                statuses.Add(new
-                {
-                    TaskId = taskId,
-                    Url = task.Url,
-                    SavePath = task.SavePath,
-                    Status = task.Status.ToString(),
-                    Progress = task.Progress,
-                    DownloadedBytes = task.DownloadedSize,
-                    TotalBytes = task.TotalSize,
-                    IsPaused = task.IsPaused
-                });
-            }
+                TaskId = taskId,
+                Url = task.Url,
+                SavePath = task.SavePath,
+                Status = task.Status.ToString(),
+                Progress = task.Progress,
+                DownloadedBytes = task.DownloadedSize,
+                TotalBytes = task.TotalSize,
+                IsPaused = task.IsPaused
+            };
+            await Clients.Caller.SendAsync("DownloadStatus", status);
         }
-
-        await Clients.Caller.SendAsync("DownloadStatuses", statuses);
     }
 }

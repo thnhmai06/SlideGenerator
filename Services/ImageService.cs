@@ -1,4 +1,7 @@
-﻿using TaoSlideTotNghiep.Logic;
+﻿using System.Drawing;
+using TaoSlideTotNghiep.DTOs;
+using TaoSlideTotNghiep.Exceptions;
+using TaoSlideTotNghiep.Models;
 
 namespace TaoSlideTotNghiep.Services;
 
@@ -7,7 +10,7 @@ namespace TaoSlideTotNghiep.Services;
 /// </summary>
 public interface IImageService
 {
-    (int X, int Y) CropImage(string filePath, int width, int height, string mode);
+    Rectangle CropImage(string filePath, Size size, CropMode mode);
 }
 
 /// <summary>
@@ -15,31 +18,23 @@ public interface IImageService
 /// </summary>
 public class ImageService(ILogger<ImageService> logger) : Service(logger), IImageService
 {
-    public (int X, int Y) CropImage(string filePath, int width, int height, string mode)
+    public Rectangle CropImage(string filePath, Size size, CropMode mode)
     {
         using var processor = new Image(filePath);
 
-        int x, y;
-
-        if (mode.Equals("prominent", StringComparison.OrdinalIgnoreCase))
+        var roi = mode switch
         {
-            var (topLeft, _) = processor.GetProminentCrop(width, height);
-            x = topLeft.X;
-            y = topLeft.Y;
-        }
-        else
-        {
-            var topLeft = processor.GetCenterCrop(width, height);
-            x = topLeft.X;
-            y = topLeft.Y;
-        }
+            CropMode.Prominent => processor.GetProminentCrop(size).Roi,
+            CropMode.Center => processor.GetCenterCrop(size),
+            _ => throw new TypeNotIncludedException(typeof(CropMode))
+        };
 
-        processor.Crop(x, y, width, height);
+        processor.Crop(roi);
         processor.Save();
 
-        logger.LogInformation("Cropped image {FilePath} at ({X}, {Y}) with size {Width}x{Height}",
-            filePath, x, y, width, height);
+        Logger.LogInformation("Cropped image {FilePath} at ({X}, {Y}) with size {Width}x{Height} using mode {Mode}",
+            filePath, roi.X, roi.Y, roi.Width, roi.Height, mode);
 
-        return (x, y);
+        return roi;
     }
 }
