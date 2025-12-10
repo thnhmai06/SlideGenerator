@@ -1,0 +1,35 @@
+using System.Drawing;
+using Application.Contracts;
+using Application.DTOs.Requests;
+using Application.Exceptions;
+using Domain.Models;
+using Microsoft.Extensions.Logging;
+
+namespace Infrastructure.Services;
+
+/// <summary>
+/// Image processing service implementation.
+/// </summary>
+public class ImageService(ILogger<ImageService> logger) : Service(logger),
+    IImageService
+{
+    public Rectangle CropImage(string filePath, Size size, CropMode mode)
+    {
+        using var processor = new Image(filePath);
+
+        var roi = mode switch
+        {
+            CropMode.Prominent => processor.GetProminentCrop(size).Roi,
+            CropMode.Center => processor.GetCenterCrop(size),
+            _ => throw new TypeNotIncludedException(typeof(CropMode))
+        };
+
+        processor.Crop(roi);
+        processor.Save();
+
+        Logger.LogInformation("Cropped image {FilePath} at ({X}, {Y}) with size {Width}x{Height} using mode {Mode}",
+            filePath, roi.X, roi.Y, roi.Width, roi.Height, mode);
+
+        return roi;
+    }
+}
