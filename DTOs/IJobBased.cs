@@ -1,6 +1,0 @@
-namespace TaoSlideTotNghiep.DTOs;
-
-public interface IJobBased
-{
-    string JobId { get; init; }
-}
