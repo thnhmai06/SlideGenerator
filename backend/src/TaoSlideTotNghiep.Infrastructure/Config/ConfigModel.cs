@@ -7,14 +7,13 @@ namespace TaoSlideTotNghiep.Infrastructure.Config;
 /// </summary>
 public sealed class ConfigModel
 {
-    private static readonly string DefaultTempPath = Path.Combine(Path.GetTempPath(), AppName);
 
-    #region Constants
+    #region Statics
 
     public const string AppName = "tao-slide-tot-nghiep";
     public const string AppDescription = "Backend server for Tao Slide Tot Nghiep";
-
-    public readonly IImmutableSet<string> ImageExtensions =
+    private static readonly string DefaultTempPath = Path.Combine(Path.GetTempPath(), AppName);
+    public static readonly IImmutableSet<string> ImageExtensions =
         ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase,
             // Common
             "jpg", "jpeg", "png", "gif", "webp", "bmp", "ico",
@@ -26,8 +25,7 @@ public sealed class ConfigModel
             "cur", "dcx", "dds", "icns", "pcx", "ppm", "pgm", "pbm", "pnm",
             "sgi", "xbm", "xpm", "rgb", "rgba"
         );
-
-    public readonly IImmutableSet<string> SpreadsheetExtensions =
+    public static readonly IImmutableSet<string> SpreadsheetExtensions =
         ImmutableHashSet.Create<string>(StringComparer.OrdinalIgnoreCase,
             "xlsx", "xlsm", "xltx", "xltm"
         );

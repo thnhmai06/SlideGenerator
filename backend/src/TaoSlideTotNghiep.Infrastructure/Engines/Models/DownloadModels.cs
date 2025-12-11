@@ -157,7 +157,7 @@ public class ImageDownloadTask(string url, string savePath) : DownloadTask(url, 
     protected override Exception? CheckDownload(DownloadStartedEventArgs e)
     {
         var extension = Path.GetExtension(e.FileName).TrimStart('.');
-        if (string.IsNullOrEmpty(extension) || !ConfigManager.Value.ImageExtensions.Contains(extension))
+        if (string.IsNullOrEmpty(extension) || !ConfigModel.ImageExtensions.Contains(extension))
             return new FileExtensionNotSupportedException(extension);
         return null;
     }
