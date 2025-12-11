@@ -1,0 +1,11 @@
+server:
+  host: 127.0.0.1
+  port: 5000
+  debug: false
+download:
+  max_chunks: 6
+  limit_bytes_per_second: 0
+  save_folder: C:\Users\haith\AppData\Local\Temp\TaoSlideTotNghiep
+  retry:
+    timeout: 30
+    max_retries: 3
