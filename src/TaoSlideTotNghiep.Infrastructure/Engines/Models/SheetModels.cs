@@ -25,7 +25,7 @@ public class Workbook : EngineModel
     {
         var ext = Path.GetExtension(filePath).TrimStart('.').ToLowerInvariant();
 
-        if (!ConfigManager.Value.SpreadsheetExtensions.Contains(ext))
+        if (!ConfigModel.SpreadsheetExtensions.Contains(ext))
             throw new FileExtensionNotSupportedException(ext);
 
         FilePath = filePath;

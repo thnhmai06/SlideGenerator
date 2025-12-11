@@ -1,6 +1,6 @@
 using TaoSlideTotNghiep.Application.Contracts;
 using TaoSlideTotNghiep.Infrastructure.Services;
-using TaoSlideTotNghiep.Presentation.Config;
+using TaoSlideTotNghiep.Infrastructure.Config;
 using TaoSlideTotNghiep.Presentation.Hubs;
 
 ConfigManager.Load();
