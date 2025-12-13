@@ -1,7 +1,7 @@
 {
-  "name": "tao-slide-tot-nghiep-frontend",
+  "name": "slide-generator-frontend",
   "version": "1.0.0",
-  "description": "Tạo slide tốt nghiệp - Frontend",
+  "description": "Slide Generator | Frontend",
   "main": "dist-electron/main.js",
   "type": "commonjs",
   "scripts": {
@@ -35,8 +35,8 @@
     "wait-on": "^9.0.3"
   },
   "build": {
-    "appId": "com.thnhmai06.tao-slide-tot-nghiep",
-    "productName": "Tao Slide Tot Nghiep",
+    "appId": "com.thnhmai06.slide-generator",
+    "productName": "Slide Generator",
     "directories": {
       "output": "release"
     },

@@ -5,7 +5,7 @@ import '../styles/AboutMenu.css'
 const AboutMenu: React.FC = () => {
   const { t } = useApp()
   const handleOpenGithub = () => {
-    window.electronAPI.openUrl('https://github.com/thnhmai06/tao-slide-tot-nghiep')
+    window.electronAPI.openUrl('https://github.com/thnhmai06/SlideGenerator')
   }
 
   const handleOpenReadme = async () => {

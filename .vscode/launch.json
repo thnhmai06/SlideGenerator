@@ -1,16 +1,6 @@
 {
     "version": "0.2.0",
     "configurations": [
-        // Backend
-        {
-            "type": "debugpy",
-            "request": "launch",
-            "name": "[Backend] Data",
-            "module": "src.main",
-            "cwd": "${workspaceFolder}/backend/data",
-            "console": "integratedTerminal",
-            "justMyCode": true
-        },
         // Frontend
         {
             "name": "[Frontend] Main Process",
@@ -43,17 +33,6 @@
     ],
     "compounds": [
         {
-            "name": "Full Stack",
-            "configurations": [
-                "[Backend] Data",
-                "[Frontend] Main Process",
-                "[Frontend] Renderer"
-            ],
-            "presentation": {
-                "order": 1
-            }
-        },
-        {
             "name": "[Frontend] All",
             "configurations": [
                 "[Frontend] Main Process",
@@ -63,14 +42,5 @@
                 "order": 2
             }
         },
-        {
-            "name": "[Backend] All",
-            "configurations": [
-                "[Backend] Data"
-            ],
-            "presentation": {
-                "order": 3
-            }
-        }
     ]
 }
