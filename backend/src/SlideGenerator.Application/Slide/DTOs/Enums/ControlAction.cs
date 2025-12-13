@@ -1,0 +1,11 @@
+using System.Text.Json.Serialization;
+
+namespace SlideGenerator.Application.Slide.DTOs.Enums;
+
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum ControlAction
+{
+    Pause,
+    Resume,
+    Cancel
+}

@@ -1,0 +1,3 @@
+[submodule "backend/src/SlideGenerator.Framework"]
+	path = backend/src/SlideGenerator.Framework
+	url = https://github.com/thnhmai06/SlideGenerator.Framework
