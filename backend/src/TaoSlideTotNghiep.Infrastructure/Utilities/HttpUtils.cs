@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 using System.Web;
-using TaoSlideTotNghiep.Infrastructure.Exceptions;
+using TaoSlideTotNghiep.Infrastructure.Exceptions.Download;
 
 namespace TaoSlideTotNghiep.Infrastructure.Utilities;
 
