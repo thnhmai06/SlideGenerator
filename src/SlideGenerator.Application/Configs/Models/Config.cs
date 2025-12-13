@@ -5,8 +5,8 @@ namespace SlideGenerator.Application.Configs.Models;
 public sealed partial class Config
 {
     public const string FileName = "backend.config.yaml";
-    public const string AppName = "tao-slide-tot-nghiep";
-    public const string AppDescription = "Backend server for Tao Slide Tot Nghiep";
+    public const string AppName = "SlideGenerator";
+    public const string AppDescription = "Backend server for SlideGenerator application.";
     private static readonly string DefaultTempPath = Path.Combine(Path.GetTempPath(), AppName);
 
     private static readonly string DefaultOutputPath =

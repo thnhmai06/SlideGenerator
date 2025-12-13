@@ -30,7 +30,7 @@
       },
       "publishAllPorts": true,
       "useSSL": true,
-      "containerName": "TaoSlideTotNghiepBackend"
+      "containerName": "SlideGeneratorBackend"
     }
   },
   "$schema": "https://json.schemastore.org/launchsettings.json"
