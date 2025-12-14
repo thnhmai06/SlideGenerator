@@ -3,7 +3,7 @@
 namespace SlideGenerator.Application.Sheet.DTOs.Responses.Successes.Worksheet;
 
 /// <summary>
-/// Response containing a row of data.
+///     Response containing a row of data.
 /// </summary>
 public record SheetWorksheetGetRowSuccess(
     string FilePath,

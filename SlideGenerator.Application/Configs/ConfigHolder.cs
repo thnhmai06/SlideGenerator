@@ -11,10 +11,12 @@ public static class ConfigHolder
     public static Config Value { get; internal set; } = new();
 
     /// <summary>
-    /// Resets the configuration to its default state by reinitializing the singleton instance.
+    ///     Resets the configuration to its default state by reinitializing the singleton instance.
     /// </summary>
-    /// <remarks>Call this method to discard any changes made to the current configuration and restore the
-    /// default settings. This method is thread-safe.</remarks>
+    /// <remarks>
+    ///     Call this method to discard any changes made to the current configuration and restore the
+    ///     default settings. This method is thread-safe.
+    /// </remarks>
     public static void Reset()
     {
         lock (Locker)

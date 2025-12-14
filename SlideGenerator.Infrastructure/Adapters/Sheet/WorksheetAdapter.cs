@@ -4,7 +4,7 @@ using CoreWorksheet = SlideGenerator.Framework.Sheet.Contracts.IWorksheet;
 namespace SlideGenerator.Infrastructure.Adapters.Sheet;
 
 /// <summary>
-/// Adapter to convert SlideGenerator.Framework.Sheet.Contracts.IWorksheet to Domain.Sheet.Interfaces.ISheet.
+///     Adapter to convert SlideGenerator.Framework.Sheet.Contracts.IWorksheet to Domain.Sheet.Interfaces.ISheet.
 /// </summary>
 internal sealed class WorksheetAdapter(CoreWorksheet worksheet) : ISheet
 {

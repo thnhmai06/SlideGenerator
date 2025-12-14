@@ -9,7 +9,7 @@ using CoreDerivedPresentation = SlideGenerator.Framework.Slide.Models.DerivedPre
 namespace SlideGenerator.Infrastructure.Services.Slide;
 
 /// <summary>
-/// Generating presentation service implementation.
+///     Generating presentation service implementation.
 /// </summary>
 public class SlideGeneratingService(ILogger<SlideGeneratingService> logger) : Service(logger), ISlideGeneratingService
 {
@@ -32,7 +32,7 @@ public class SlideGeneratingService(ILogger<SlideGeneratingService> logger) : Se
     public bool RemoveDerivedPresentation(string filepath)
     {
         filepath = Path.GetFullPath(filepath);
-        
+
         if (_storage.TryGetValue(filepath, out var presentation))
         {
             presentation.Dispose();
@@ -47,10 +47,10 @@ public class SlideGeneratingService(ILogger<SlideGeneratingService> logger) : Se
     public IDerivedPresentation GetDerivedPresentation(string filepath)
     {
         filepath = Path.GetFullPath(filepath);
-        
+
         if (!_storage.TryGetValue(filepath, out var presentation))
             throw new PresentationNotOpenedException(filepath);
-        
+
         return new DerivedPresentationAdapter(presentation);
     }
 }

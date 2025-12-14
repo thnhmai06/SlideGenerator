@@ -7,7 +7,7 @@ namespace SlideGenerator.Infrastructure.Configs;
 public static class ConfigLoader
 {
     /// <summary>
-    /// Loads/Reloads configuration.
+    ///     Loads/Reloads configuration.
     /// </summary>
     /// <param name="lock">A lock object used to synchronize access during the operation.</param>
     public static Config? Load(Lock @lock)
@@ -35,7 +35,7 @@ public static class ConfigLoader
     }
 
     /// <summary>
-    /// Saves current configuration to the YAML file.
+    ///     Saves current configuration to the YAML file.
     /// </summary>
     /// <param name="config">The configuration object to save.</param>
     /// <param name="lock">A lock object used to synchronize access during the operation.</param>

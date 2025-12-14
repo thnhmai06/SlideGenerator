@@ -4,7 +4,8 @@ using CoreDerivedPresentation = SlideGenerator.Framework.Slide.Models.DerivedPre
 namespace SlideGenerator.Infrastructure.Adapters.Slide;
 
 /// <summary>
-/// Adapter to convert SlideGenerator.Framework.Slide.Models.DerivedPresentation to Domain.Slide.Interfaces.IDerivedPresentation.
+///     Adapter to convert SlideGenerator.Framework.Slide.Models.DerivedPresentation to
+///     Domain.Slide.Interfaces.IDerivedPresentation.
 /// </summary>
 internal sealed class DerivedPresentationAdapter(CoreDerivedPresentation presentation) : IDerivedPresentation
 {

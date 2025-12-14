@@ -1,7 +1,7 @@
 namespace SlideGenerator.Infrastructure.Exceptions.Sheet;
 
 /// <summary>
-/// Exception thrown when a table/sheet is not found in a workbook.
+///     Exception thrown when a table/sheet is not found in a workbook.
 /// </summary>
 public class TableNotFoundException(string tableName, string? workbookPath = null)
     : KeyNotFoundException(

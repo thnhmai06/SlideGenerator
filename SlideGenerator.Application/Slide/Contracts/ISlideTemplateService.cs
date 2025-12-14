@@ -3,7 +3,7 @@ using SlideGenerator.Domain.Slide.Interfaces;
 namespace SlideGenerator.Application.Slide.Contracts;
 
 /// <summary>
-/// Interface for template presentation service.
+///     Interface for template presentation service.
 /// </summary>
 public interface ISlideTemplateService
 {

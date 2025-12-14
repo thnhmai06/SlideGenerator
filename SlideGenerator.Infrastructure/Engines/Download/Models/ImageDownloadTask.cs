@@ -4,7 +4,7 @@ using SlideGenerator.Application.Configs.Models;
 namespace SlideGenerator.Infrastructure.Engines.Download.Models;
 
 /// <summary>
-/// Represents an Image download task.
+///     Represents an Image download task.
 /// </summary>
 public class ImageDownloadTask(string url, string savePath) : DownloadTask(url, savePath)
 {

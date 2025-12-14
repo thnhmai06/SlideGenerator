@@ -4,7 +4,7 @@ using SlideGenerator.Application.Slide.DTOs.Enums;
 namespace SlideGenerator.Application.Slide.DTOs.Notifications;
 
 /// <summary>
-/// Notification sent when group progress is updated.
+///     Notification sent when group progress is updated.
 /// </summary>
 public record GroupProgressNotification(GroupProgressData Data)
     : Notification(SlideRequestType.GroupStatus)

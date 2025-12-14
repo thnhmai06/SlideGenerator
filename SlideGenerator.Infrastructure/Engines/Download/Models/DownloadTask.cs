@@ -8,12 +8,12 @@ using DownloadStatus = SlideGenerator.Domain.Download.Enums.DownloadStatus;
 namespace SlideGenerator.Infrastructure.Engines.Download.Models;
 
 /// <summary>
-/// Represents a generic download task wrapping Downloader.DownloadService.
+///     Represents a generic download task wrapping Downloader.DownloadService.
 /// </summary>
 public abstract class DownloadTask : IDownloadTask
 {
-    private readonly DownloadService _downloader;
     private readonly CancellationTokenSource _cts = new();
+    private readonly DownloadService _downloader;
     private bool _disposed;
 
     protected DownloadTask(string url, string savePath)
@@ -69,7 +69,7 @@ public abstract class DownloadTask : IDownloadTask
     public event EventHandler<DownloadCompleted>? Completed;
 
     /// <summary>
-    /// Starts the download process.
+    ///     Starts the download process.
     /// </summary>
     /// <param name="cancellationToken">Optional cancellation token for the download.</param>
     public async Task StartAsync(CancellationToken cancellationToken = default)
@@ -112,8 +112,22 @@ public abstract class DownloadTask : IDownloadTask
         _downloader.CancelAsync();
     }
 
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+
+        _downloader.DownloadStarted -= OnDownloadStarted;
+        _downloader.DownloadProgressChanged -= OnProgressChanged;
+        _downloader.DownloadFileCompleted -= OnCompleted;
+        _downloader.Dispose();
+        _cts.Dispose();
+
+        GC.SuppressFinalize(this);
+    }
+
     /// <summary>
-    /// Checks the download parameters when the download starts.
+    ///     Checks the download parameters when the download starts.
     /// </summary>
     /// <param name="e">Download started event arguments.</param>
     /// <returns>An exception if the download is invalid; otherwise, null.</returns>
@@ -144,19 +158,5 @@ public abstract class DownloadTask : IDownloadTask
             success,
             success ? SavePath : null,
             e.Error));
-    }
-
-    public void Dispose()
-    {
-        if (_disposed) return;
-        _disposed = true;
-
-        _downloader.DownloadStarted -= OnDownloadStarted;
-        _downloader.DownloadProgressChanged -= OnProgressChanged;
-        _downloader.DownloadFileCompleted -= OnCompleted;
-        _downloader.Dispose();
-        _cts.Dispose();
-
-        GC.SuppressFinalize(this);
     }
 }

@@ -5,7 +5,8 @@ using CoreTemplatePresentation = SlideGenerator.Framework.Slide.Models.TemplateP
 namespace SlideGenerator.Infrastructure.Adapters.Slide;
 
 /// <summary>
-/// Adapter to convert SlideGenerator.Framework.Slide.Models.TemplatePresentation to Domain.Slide.Interfaces.ITemplatePresentation.
+///     Adapter to convert SlideGenerator.Framework.Slide.Models.TemplatePresentation to
+///     Domain.Slide.Interfaces.ITemplatePresentation.
 /// </summary>
 internal sealed class TemplatePresentationAdapter(CoreTemplatePresentation presentation) : ITemplatePresentation
 {

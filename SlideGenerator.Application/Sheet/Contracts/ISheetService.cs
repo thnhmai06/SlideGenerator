@@ -3,7 +3,7 @@ using SlideGenerator.Domain.Sheet.Interfaces;
 namespace SlideGenerator.Application.Sheet.Contracts;
 
 /// <summary>
-/// Interface for sheet processing service.
+///     Interface for sheet processing service.
 /// </summary>
 public interface ISheetService
 {

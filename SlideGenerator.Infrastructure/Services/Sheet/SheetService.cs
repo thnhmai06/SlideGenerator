@@ -9,7 +9,7 @@ using CoreWorkbook = SlideGenerator.Framework.Sheet.Models.Workbook;
 namespace SlideGenerator.Infrastructure.Services.Sheet;
 
 /// <summary>
-/// Sheet processing service implementation.
+///     Sheet processing service implementation.
 /// </summary>
 public class SheetService(ILogger<SheetService> logger) : Service(logger),
     ISheetService

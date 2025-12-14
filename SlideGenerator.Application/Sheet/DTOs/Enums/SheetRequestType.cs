@@ -3,7 +3,7 @@
 namespace SlideGenerator.Application.Sheet.DTOs.Enums;
 
 /// <summary>
-/// Types of sheet requests.
+///     Types of sheet requests.
 /// </summary>
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum SheetRequestType
