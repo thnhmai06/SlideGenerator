@@ -1,5 +1,5 @@
-using Microsoft.AspNetCore.SignalR;
 using System.Text.Json;
+using Microsoft.AspNetCore.SignalR;
 using SlideGenerator.Application.Base.DTOs.Responses;
 using SlideGenerator.Application.Configs;
 using SlideGenerator.Application.Configs.DTOs.Components;

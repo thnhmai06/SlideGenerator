@@ -5,6 +5,7 @@ namespace SlideGenerator.Domain.Image.Enums;
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum ImageRoiType
 {
+    Attention,
     Prominent,
     Center
 }

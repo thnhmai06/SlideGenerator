@@ -3,12 +3,12 @@ using SlideGenerator.Domain.Download.Interfaces;
 namespace SlideGenerator.Application.Download.Contracts;
 
 /// <summary>
-/// Interface for download service.
+///     Interface for download service.
 /// </summary>
 public interface IDownloadService
 {
     /// <summary>
-    /// Creates and starts a download task with event callbacks.
+    ///     Creates and starts a download task with event callbacks.
     /// </summary>
     /// <param name="url">The URL to download from.</param>
     /// <param name="savePath">The path to save the downloaded file.</param>

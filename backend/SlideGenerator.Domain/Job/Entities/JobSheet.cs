@@ -10,6 +10,9 @@ public class JobSheet(JobGroup jobGroup, ISheet worksheet, string outputPath) : 
 {
     private readonly Lock _lock = new();
 
+    public string? HangfireJobId { get; set; }
+    public CancellationTokenSource CancellationTokenSource { get; } = new();
+
     public string Id { get; } = Guid.NewGuid().ToString("N");
     public string GroupId => jobGroup.Id;
     public string OutputPath { get; } = outputPath;
@@ -21,9 +24,6 @@ public class JobSheet(JobGroup jobGroup, ISheet worksheet, string outputPath) : 
     public DateTime CreatedAt { get; } = DateTime.UtcNow;
     public DateTime? StartedAt { get; private set; }
     public DateTime? CompletedAt { get; private set; }
-
-    public string? HangfireJobId { get; set; }
-    public CancellationTokenSource CancellationTokenSource { get; } = new();
 
     public ISheet Worksheet { get; } = worksheet;
     public string SheetName => Worksheet.Name;

@@ -5,7 +5,7 @@ using SlideGenerator.Domain.Sheet.Enums;
 namespace SlideGenerator.Application.Slide.DTOs.Notifications;
 
 /// <summary>
-/// Notification sent when group status changes.
+///     Notification sent when group status changes.
 /// </summary>
 public record GroupStatusNotification(GroupStatusData Data)
     : Notification(SlideRequestType.GroupStatus)

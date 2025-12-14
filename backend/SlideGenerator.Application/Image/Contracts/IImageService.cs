@@ -4,7 +4,7 @@ using SlideGenerator.Domain.Image.Enums;
 namespace SlideGenerator.Application.Image.Contracts;
 
 /// <summary>
-/// Interface for image processing service.
+///     Interface for image processing service.
 /// </summary>
 public interface IImageService
 {

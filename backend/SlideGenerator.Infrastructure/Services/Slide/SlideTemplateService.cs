@@ -9,7 +9,7 @@ using CoreTemplatePresentation = SlideGenerator.Framework.Slide.Models.TemplateP
 namespace SlideGenerator.Infrastructure.Services.Slide;
 
 /// <summary>
-/// Template presentation service implementation.
+///     Template presentation service implementation.
 /// </summary>
 public class SlideTemplateService(ILogger<SlideTemplateService> logger) : Service(logger), ISlideTemplateService
 {
@@ -31,7 +31,7 @@ public class SlideTemplateService(ILogger<SlideTemplateService> logger) : Servic
     public bool RemoveTemplate(string filepath)
     {
         filepath = Path.GetFullPath(filepath);
-        
+
         if (_storage.TryGetValue(filepath, out var presentation))
         {
             presentation.Dispose();
@@ -46,10 +46,10 @@ public class SlideTemplateService(ILogger<SlideTemplateService> logger) : Servic
     public ITemplatePresentation GetTemplate(string filepath)
     {
         filepath = Path.GetFullPath(filepath);
-        
+
         if (!_storage.TryGetValue(filepath, out var presentation))
             throw new PresentationNotOpenedException(filepath);
-        
+
         return new TemplatePresentationAdapter(presentation);
     }
 }

@@ -4,12 +4,12 @@ using CoreWorkbook = SlideGenerator.Framework.Sheet.Models.Workbook;
 namespace SlideGenerator.Infrastructure.Adapters.Sheet;
 
 /// <summary>
-/// Adapter to convert SlideGenerator.Framework.Sheet.Models.Workbook to Domain.Sheet.Interfaces.ISheetBook.
+///     Adapter to convert SlideGenerator.Framework.Sheet.Models.Workbook to Domain.Sheet.Interfaces.ISheetBook.
 /// </summary>
 internal sealed class WorkbookAdapter : ISheetBook
 {
-    private readonly CoreWorkbook _workbook;
     private readonly Dictionary<string, ISheet> _sheets;
+    private readonly CoreWorkbook _workbook;
     private bool _disposed;
 
     public WorkbookAdapter(CoreWorkbook workbook)

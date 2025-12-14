@@ -1,6 +1,6 @@
-using Microsoft.AspNetCore.SignalR;
 using System.Collections.Concurrent;
 using System.Text.Json;
+using Microsoft.AspNetCore.SignalR;
 using SlideGenerator.Application.Base.DTOs.Responses;
 using SlideGenerator.Application.Sheet.Contracts;
 using SlideGenerator.Application.Sheet.DTOs.Components;
@@ -15,12 +15,16 @@ using SlideGenerator.Presentation.Exceptions.Hubs;
 namespace SlideGenerator.Presentation.Hubs;
 
 /// <summary>
-/// SignalR Hub for spreadsheet operations.
+///     SignalR Hub for spreadsheet operations.
 /// </summary>
 public class SheetHub(ISheetService sheetService, ILogger<SheetHub> logger) : Hub
 {
     private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, ISheetBook>>
         WorkbooksOfConnections = new();
+
+    private ConcurrentDictionary<string, ISheetBook> Workbooks
+        => WorkbooksOfConnections.GetValueOrDefault(Context.ConnectionId)
+           ?? throw new ConnectionNotFoundException(Context.ConnectionId);
 
     public override async Task OnConnectedAsync()
     {
@@ -42,12 +46,8 @@ public class SheetHub(ISheetService sheetService, ILogger<SheetHub> logger) : Hu
         await base.OnDisconnectedAsync(exception);
     }
 
-    private ConcurrentDictionary<string, ISheetBook> Workbooks
-        => WorkbooksOfConnections.GetValueOrDefault(Context.ConnectionId)
-           ?? throw new ConnectionNotFoundException(Context.ConnectionId);
-
     /// <summary>
-    /// Processes a sheet request based on type.
+    ///     Processes a sheet request based on type.
     /// </summary>
     public async Task ProcessRequest(JsonElement message)
     {

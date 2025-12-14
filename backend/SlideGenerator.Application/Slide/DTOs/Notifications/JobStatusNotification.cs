@@ -5,7 +5,7 @@ using SlideGenerator.Domain.Sheet.Enums;
 namespace SlideGenerator.Application.Slide.DTOs.Notifications;
 
 /// <summary>
-/// Notification sent when job status changes.
+///     Notification sent when job status changes.
 /// </summary>
 public record JobStatusNotification(JobStatusData Data)
     : Notification(SlideRequestType.JobStatus)

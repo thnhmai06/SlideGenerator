@@ -8,7 +8,7 @@ using SlideGenerator.Infrastructure.Services.Base;
 namespace SlideGenerator.Infrastructure.Services.Download;
 
 /// <summary>
-/// Download service implementation using Downloader library.
+///     Download service implementation using Downloader library.
 /// </summary>
 public class DownloadService(ILogger<DownloadService> logger) : Service(logger),
     IDownloadService

@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Concurrent;
 using SlideGenerator.Domain.Job.Interfaces;
 using SlideGenerator.Domain.Sheet.Enums;
@@ -16,6 +17,8 @@ public class JobGroup(
     : IJobGroup
 {
     private readonly ConcurrentDictionary<string, JobSheet> _jobs = new();
+
+    public IReadOnlyDictionary<string, JobSheet> InternalJobs => _jobs;
 
     public string Id { get; } = Guid.NewGuid().ToString("N");
     public ISheetBook Workbook { get; } = workbook;
@@ -36,8 +39,6 @@ public class JobGroup(
 
     public IReadOnlyDictionary<string, IJobSheet> Jobs =>
         field ??= new ReadOnlyJobs(_jobs);
-
-    public IReadOnlyDictionary<string, JobSheet> InternalJobs => _jobs;
 
     public TextConfig[] TextConfigs { get; } = textConfigs;
     public ImageConfig[] ImageConfigs { get; } = imageConfigs;
@@ -109,7 +110,7 @@ public class JobGroup(
             return source.Select(kv => new KeyValuePair<string, IJobSheet>(kv.Key, kv.Value)).GetEnumerator();
         }
 
-        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+        IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
         }

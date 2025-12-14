@@ -38,4 +38,5 @@ public sealed partial class Config
     public ServerConfig Server { get; init; } = new();
     public DownloadConfig Download { get; init; } = new();
     public JobConfig Job { get; init; } = new();
+    public ImageConfig Image { get; init; } = new();
 }

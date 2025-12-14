@@ -4,7 +4,7 @@ using SlideGenerator.Application.Slide.DTOs.Enums;
 namespace SlideGenerator.Application.Slide.DTOs.Notifications;
 
 /// <summary>
-/// Notification sent when job progress is updated.
+///     Notification sent when job progress is updated.
 /// </summary>
 public record JobProgressNotification(JobProgressData Data)
     : Notification(SlideRequestType.JobStatus)
