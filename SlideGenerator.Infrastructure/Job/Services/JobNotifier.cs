@@ -7,6 +7,7 @@ using SlideGenerator.Infrastructure.Base;
 
 namespace SlideGenerator.Infrastructure.Job.Services;
 
+/// <inheritdoc />
 public class JobNotifier<TTHub>(
     ILogger<JobNotifier<TTHub>> logger,
     IHubContext<TTHub> hubContext) : Service(logger), IJobNotifier

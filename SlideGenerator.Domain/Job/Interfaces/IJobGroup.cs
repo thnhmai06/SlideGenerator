@@ -6,26 +6,65 @@ using SlideGenerator.Domain.Slide.Interfaces;
 namespace SlideGenerator.Domain.Job.Interfaces;
 
 /// <summary>
-///     Composite interface: Group contains multiple Sheets
+///     Composite job root.
+///     A group aggregates multiple sheets and exposes group-level status/progress.
 /// </summary>
 public interface IJobGroup
 {
     #region Identity
 
+    /// <summary>
+    ///     Gets the unique identifier of this group.
+    /// </summary>
     string Id { get; }
 
     #endregion
 
     #region Properties
 
+    /// <summary>
+    ///     Gets the source workbook that the group is based on.
+    /// </summary>
     ISheetBook Workbook { get; }
+
+    /// <summary>
+    ///     Gets the PowerPoint template used for sheet processing.
+    /// </summary>
     ITemplatePresentation Template { get; }
+
+    /// <summary>
+    ///     Gets the output folder where generated files are stored.
+    /// </summary>
     DirectoryInfo OutputFolder { get; }
+
+    /// <summary>
+    ///     Gets the current group status.
+    /// </summary>
     GroupStatus Status { get; }
+
+    /// <summary>
+    ///     Gets the overall progress across all sheets (0-100).
+    /// </summary>
     float Progress { get; }
+
+    /// <summary>
+    ///     Gets the UTC time when the group was created.
+    /// </summary>
     DateTime CreatedAt { get; }
+
+    /// <summary>
+    ///     Gets the UTC time when the group finished, if any.
+    /// </summary>
     DateTime? FinishedAt { get; }
+
+    /// <summary>
+    ///     Gets text replacement configs shared by all sheets.
+    /// </summary>
     TextConfig[] TextConfigs { get; }
+
+    /// <summary>
+    ///     Gets image replacement configs shared by all sheets.
+    /// </summary>
     ImageConfig[] ImageConfigs { get; }
 
     #endregion
@@ -33,23 +72,26 @@ public interface IJobGroup
     #region Composite - Sheet Management
 
     /// <summary>
-    ///     All sheets in this group (composite children)
+    ///     Gets all sheets in this group.
     /// </summary>
     IReadOnlyDictionary<string, IJobSheet> Sheets { get; }
 
     /// <summary>
-    ///     Get a specific sheet by ID
+    ///     Gets a sheet by its identifier.
     /// </summary>
+    /// <param name="sheetId">The sheet identifier.</param>
+    /// <returns>The sheet if found; otherwise <c>null</c>.</returns>
     IJobSheet? GetSheet(string sheetId);
 
     /// <summary>
-    ///     Number of sheets in this group
+    ///     Gets the number of sheets in this group.
     /// </summary>
     int SheetCount { get; }
 
     /// <summary>
-    ///     Check if this group contains a sheet
+    ///     Checks whether the group contains a sheet.
     /// </summary>
+    /// <param name="sheetId">The sheet identifier.</param>
     bool ContainsSheet(string sheetId);
 
     #endregion
@@ -57,22 +99,22 @@ public interface IJobGroup
     #region Status Query
 
     /// <summary>
-    ///     Check if all sheets are completed (successful)
+    ///     Gets whether the group finished successfully.
     /// </summary>
     bool IsCompleted { get; }
 
     /// <summary>
-    ///     Check if any sheet has failed
+    ///     Gets whether any sheet failed.
     /// </summary>
     bool HasFailed { get; }
 
     /// <summary>
-    ///     Check if all sheets are cancelled
+    ///     Gets whether the group was cancelled.
     /// </summary>
     bool IsCancelled { get; }
 
     /// <summary>
-    ///     Check if this group is still active (not finished)
+    ///     Gets whether the group is still active (not finished).
     /// </summary>
     bool IsActive { get; }
 

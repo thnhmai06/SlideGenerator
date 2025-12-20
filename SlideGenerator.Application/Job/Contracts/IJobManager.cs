@@ -4,19 +4,20 @@ using SlideGenerator.Domain.Job.Interfaces;
 namespace SlideGenerator.Application.Job.Contracts;
 
 /// <summary>
-///     Main job manager interface that provides access to active and completed job collections
+///     Entry point for job management.
+///     Exposes two separate collections: active jobs and completed jobs.
 /// </summary>
 public interface IJobManager
 {
     #region Collections
 
     /// <summary>
-    ///     Collection of active jobs (pending, running, paused)
+    ///     Gets the collection of active jobs (pending/running/paused).
     /// </summary>
     IActiveJobCollection Active { get; }
 
     /// <summary>
-    ///     Collection of completed jobs (finished, failed, cancelled)
+    ///     Gets the collection of completed jobs (completed/failed/cancelled).
     /// </summary>
     ICompletedJobCollection Completed { get; }
 
@@ -25,18 +26,23 @@ public interface IJobManager
     #region Cross-Collection Query
 
     /// <summary>
-    ///     Get a group from either active or completed collections
+    ///     Finds a group by id in either active or completed collections.
     /// </summary>
+    /// <param name="groupId">The group identifier.</param>
+    /// <returns>The group if found; otherwise <c>null</c>.</returns>
     IJobGroup? GetGroup(string groupId);
 
     /// <summary>
-    ///     Get a sheet from either active or completed collections
+    ///     Finds a sheet by id in either active or completed collections.
     /// </summary>
+    /// <param name="sheetId">The sheet identifier.</param>
+    /// <returns>The sheet if found; otherwise <c>null</c>.</returns>
     IJobSheet? GetSheet(string sheetId);
 
     /// <summary>
-    ///     Get all groups from both collections
+    ///     Gets all groups from both collections.
     /// </summary>
+    /// <returns>A dictionary of group id to group.</returns>
     IReadOnlyDictionary<string, IJobGroup> GetAllGroups();
 
     #endregion

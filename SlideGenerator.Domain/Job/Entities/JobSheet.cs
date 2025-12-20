@@ -6,6 +6,7 @@ using SlideGenerator.Domain.Slide.Interfaces;
 
 namespace SlideGenerator.Domain.Job.Entities;
 
+/// <inheritdoc />
 public class JobSheet(JobGroup jobGroup, ISheet worksheet, string outputPath) : IJobSheet
 {
     private readonly Lock _lock = new();
@@ -35,6 +36,7 @@ public class JobSheet(JobGroup jobGroup, ISheet worksheet, string outputPath) : 
     /// <summary>
     ///     Waits if the job is paused. Returns immediately if not paused.
     /// </summary>
+    /// <param name="cancellationToken">A token used to cancel the wait.</param>
     public void WaitIfPaused(CancellationToken cancellationToken)
     {
         _pauseEvent.Wait(cancellationToken);

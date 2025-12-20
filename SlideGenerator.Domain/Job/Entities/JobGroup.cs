@@ -8,6 +8,7 @@ using SlideGenerator.Domain.Slide.Interfaces;
 
 namespace SlideGenerator.Domain.Job.Entities;
 
+/// <inheritdoc />
 public class JobGroup(
     ISheetBook workbook,
     ITemplatePresentation template,

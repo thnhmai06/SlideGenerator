@@ -11,6 +11,7 @@ using SlideGenerator.Infrastructure.Job.Models;
 
 namespace SlideGenerator.Infrastructure.Job.Services;
 
+/// <inheritdoc />
 public class JobManager : Service, IJobManager
 {
     private readonly ActiveJobCollection _active;

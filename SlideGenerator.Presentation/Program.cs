@@ -1,5 +1,4 @@
 using Hangfire;
-using Hangfire.Storage.SQLite;
 using SlideGenerator.Application.Configs;
 using SlideGenerator.Application.Configs.Models;
 using SlideGenerator.Application.Download.Contracts;
@@ -34,24 +33,19 @@ builder.Services.AddSingleton<IImageService, ImageService>();
 builder.Services.AddSingleton<ISheetService, SheetService>();
 builder.Services.AddSingleton<IDownloadService, DownloadService>();
 builder.Services.AddSingleton<ISlideTemplateManager, SlideTemplateManager>();
-builder.Services.AddSingleton<ISlideWorkingManager, SlideWorkingManager>();
+builder.Services.AddSingleton<SlideWorkingManager>();
 builder.Services.AddSingleton<ISlideServices, SlideServices>();
 
 // Job Services
-builder.Services.AddSingleton<IJobManager, JobManager>();
+builder.Services.AddSingleton<JobManager>();
 builder.Services.AddSingleton<IJobNotifier, JobNotifier<SlideHub>>();
 builder.Services.AddScoped<IJobExecutor, JobExecutor>();
 
 // Hangfire Setup
-var dbPath = ConfigHolder.Value.Job.DatabasePath;
-var dbDir = Path.GetDirectoryName(dbPath);
-if (!string.IsNullOrEmpty(dbDir)) Directory.CreateDirectory(dbDir);
-
 builder.Services.AddHangfire(configuration => configuration
     .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
     .UseSimpleAssemblyNameTypeSerializer()
-    .UseRecommendedSerializerSettings()
-    .UseSQLiteStorage(dbPath));
+    .UseRecommendedSerializerSettings());
 builder.Services.AddHangfireServer(options => { options.WorkerCount = ConfigHolder.Value.Job.MaxConcurrentJobs; });
 
 builder.Services.AddCors(options =>

@@ -13,9 +13,7 @@ using SlideGenerator.Infrastructure.Utilities;
 
 namespace SlideGenerator.Infrastructure.Job.Models;
 
-/// <summary>
-///     Manages active jobs (pending, running, paused)
-/// </summary>
+/// <inheritdoc />
 public class ActiveJobCollection(
     ILogger<ActiveJobCollection> logger,
     ISheetService sheetService,
@@ -35,7 +33,7 @@ public class ActiveJobCollection(
 
     public IReadOnlyDictionary<string, IJobGroup> GetAllGroups()
     {
-        return _groups.ToDictionary(kv => kv.Key, IJobGroup (kv) => kv.Value);
+        return _groups.ToDictionary(kv => kv.Key, kv => (IJobGroup)kv.Value);
     }
 
     public int GroupCount => _groups.Count;
@@ -47,7 +45,7 @@ public class ActiveJobCollection(
 
     public IReadOnlyDictionary<string, IJobSheet> GetAllSheets()
     {
-        return _sheets.ToDictionary(kv => kv.Key, IJobSheet (kv) => kv.Value);
+        return _sheets.ToDictionary(kv => kv.Key, kv => (IJobSheet)kv.Value);
     }
 
     public int SheetCount => _sheets.Count;
@@ -222,19 +220,19 @@ public class ActiveJobCollection(
     public IReadOnlyDictionary<string, IJobGroup> GetRunningGroups()
     {
         return _groups.Where(kv => kv.Value.Status == GroupStatus.Running)
-            .ToDictionary(kv => kv.Key, IJobGroup (kv) => kv.Value);
+            .ToDictionary(kv => kv.Key, kv => (IJobGroup)kv.Value);
     }
 
     public IReadOnlyDictionary<string, IJobGroup> GetPausedGroups()
     {
         return _groups.Where(kv => kv.Value.Status == GroupStatus.Paused)
-            .ToDictionary(kv => kv.Key, IJobGroup (kv) => kv.Value);
+            .ToDictionary(kv => kv.Key, kv => (IJobGroup)kv.Value);
     }
 
     public IReadOnlyDictionary<string, IJobGroup> GetPendingGroups()
     {
         return _groups.Where(kv => kv.Value.Status == GroupStatus.Pending)
-            .ToDictionary(kv => kv.Key, IJobGroup (kv) => kv.Value);
+            .ToDictionary(kv => kv.Key, kv => (IJobGroup)kv.Value);
     }
 
     #endregion
