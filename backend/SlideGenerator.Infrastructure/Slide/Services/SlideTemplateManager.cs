@@ -24,9 +24,15 @@ public class SlideTemplateManager(ILogger<SlideTemplateManager> logger) : Servic
         _storage.GetOrAdd(filepath, path =>
         {
             isAdded = true;
-            return new CoreTemplatePresentation(path);
-        });
+            var corePresentation = new CoreTemplatePresentation(path);
+            if (corePresentation.SlideCount != 1)
+            {
+                corePresentation.Dispose();
+                throw new NotOnlyOneSlidePresentation(path);
+            }
 
+            return corePresentation;
+        });
 
         if (isAdded)
             Logger.LogInformation("Added template presentation: {FilePath}", filepath);

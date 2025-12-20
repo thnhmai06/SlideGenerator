@@ -18,6 +18,8 @@ internal sealed class TemplatePresentationAdapter(CoreTemplatePresentation prese
 
     public string FilePath => presentation.FilePath;
 
+    public int SlideCount => presentation.SlideCount;
+
     public Dictionary<uint, ShapeImagePreview> GetAllImageShapes()
     {
         var coreShapes = presentation.GetAllPreviewImageShapes();

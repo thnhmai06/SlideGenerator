@@ -65,8 +65,8 @@ public class SlideWorkingManager(ILogger<SlideWorkingManager> logger) : Service(
             throw new PresentationNotOpened(filepath);
 
         var slideIdList = presentation.GetSlideIdList();
-        var firstSlideId = slideIdList.ChildElements.OfType<SlideId>().First();
-        var slideRId = firstSlideId.RelationshipId?.Value
+        var firstSlideId = slideIdList?.ChildElements.OfType<SlideId>().First();
+        var slideRId = firstSlideId?.RelationshipId?.Value
                        ?? throw new InvalidOperationException("No slide relationship ID found");
 
         var newPosition = presentation.SlideCount + 1;

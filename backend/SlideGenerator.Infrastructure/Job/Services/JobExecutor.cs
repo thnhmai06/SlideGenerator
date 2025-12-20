@@ -7,6 +7,7 @@ using SlideGenerator.Infrastructure.Base;
 
 namespace SlideGenerator.Infrastructure.Job.Services;
 
+/// <inheritdoc />
 public class JobExecutor(
     ILogger<JobExecutor> logger,
     JobManager jobManager,

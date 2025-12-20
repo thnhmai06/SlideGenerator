@@ -7,6 +7,7 @@ using SlideGenerator.Domain.Sheet.Enums;
 
 namespace SlideGenerator.Infrastructure.Job.Models;
 
+/// <inheritdoc />
 /// <summary>
 ///     Manages completed jobs (finished, failed, cancelled)
 /// </summary>
