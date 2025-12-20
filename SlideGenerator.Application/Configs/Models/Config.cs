@@ -6,13 +6,13 @@ public sealed partial class Config
 {
     public const string FileName = "backend.config.yaml";
     public const string AppName = "SlideGenerator";
-    public const string AppDescription = "Backend server for SlideGenerator application.";
+    public const string AppDescription = "Backend server of SlideGenerator application.";
     private static readonly string DefaultTempPath = Path.Combine(Path.GetTempPath(), AppName);
 
     private static readonly string DefaultOutputPath =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), AppName);
 
-    private static readonly string DefaultHangfireDbPath = Path.Combine(DefaultTempPath, "hangfire.db");
+    private static readonly string DefaultJobsDatabasePath = Path.Combine(DefaultTempPath, "jobs.db");
 
     public static readonly IImmutableSet<string> ImageExtensions =
         ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase,
@@ -26,14 +26,6 @@ public sealed partial class Config
             "cur", "dcx", "dds", "icns", "pcx", "ppm", "pgm", "pbm", "pnm",
             "sgi", "xbm", "xpm", "rgb", "rgba"
         );
-
-    public static readonly IImmutableSet<string> SpreadsheetExtensions =
-        ImmutableHashSet.Create<string>(StringComparer.OrdinalIgnoreCase,
-            "xlsx", "xlsm", "xltx", "xltm"
-        );
-
-    public static readonly IImmutableSet<char> InvalidPathChars =
-        ImmutableHashSet.Create(Path.GetInvalidFileNameChars());
 
     public ServerConfig Server { get; init; } = new();
     public DownloadConfig Download { get; init; } = new();

@@ -11,7 +11,7 @@ namespace SlideGenerator.Domain.Job.Entities;
 public class JobGroup(
     ISheetBook workbook,
     ITemplatePresentation template,
-    string outputFolder,
+    DirectoryInfo outputFolder,
     TextConfig[] textConfigs,
     ImageConfig[] imageConfigs)
     : IJobGroup
@@ -23,7 +23,7 @@ public class JobGroup(
     public string Id { get; } = Guid.NewGuid().ToString("N");
     public ISheetBook Workbook { get; } = workbook;
     public ITemplatePresentation Template { get; } = template;
-    public string OutputFolder { get; } = outputFolder;
+    public DirectoryInfo OutputFolder { get; } = outputFolder;
     public GroupStatus Status { get; private set; } = GroupStatus.Pending;
     public DateTime CreatedAt { get; } = DateTime.UtcNow;
     public DateTime? FinishedAt { get; private set; }
@@ -37,23 +37,15 @@ public class JobGroup(
         }
     }
 
-    public IReadOnlyDictionary<string, IJobSheet> Jobs =>
-        field ??= new ReadOnlyJobs(_jobs);
-
     public TextConfig[] TextConfigs { get; } = textConfigs;
     public ImageConfig[] ImageConfigs { get; } = imageConfigs;
 
     public JobSheet AddJob(string sheetName, string outputPath)
     {
-        var worksheet = Workbook.Sheets[sheetName];
+        var worksheet = Workbook.Worksheets[sheetName];
         var job = new JobSheet(this, worksheet, outputPath);
         _jobs[job.Id] = job;
         return job;
-    }
-
-    public JobSheet? GetJob(string jobId)
-    {
-        return _jobs.GetValueOrDefault(jobId);
     }
 
     public void SetStatus(GroupStatus status)
@@ -115,4 +107,32 @@ public class JobGroup(
             return GetEnumerator();
         }
     }
+
+    #region Composite - Sheet Management
+
+    public IReadOnlyDictionary<string, IJobSheet> Sheets =>
+        field ??= new ReadOnlyJobs(_jobs);
+
+    public IJobSheet? GetSheet(string sheetId)
+    {
+        return _jobs.GetValueOrDefault(sheetId);
+    }
+
+    public int SheetCount => _jobs.Count;
+
+    public bool ContainsSheet(string sheetId)
+    {
+        return _jobs.ContainsKey(sheetId);
+    }
+
+    #endregion
+
+    #region Status Query
+
+    public bool IsCompleted => Status == GroupStatus.Completed;
+    public bool HasFailed => Status == GroupStatus.Failed;
+    public bool IsCancelled => Status == GroupStatus.Cancelled;
+    public bool IsActive => Status is GroupStatus.Pending or GroupStatus.Running or GroupStatus.Paused;
+
+    #endregion
 }

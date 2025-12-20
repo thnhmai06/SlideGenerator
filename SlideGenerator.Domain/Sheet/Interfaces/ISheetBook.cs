@@ -1,9 +1,10 @@
 namespace SlideGenerator.Domain.Sheet.Interfaces;
 
-public interface ISheetBook : IDisposable
+public interface ISheetBook
 {
     string FilePath { get; }
     string? Name { get; }
-    IReadOnlyDictionary<string, ISheet> Sheets { get; }
-    Dictionary<string, int> GetSheetsInfo();
+    IReadOnlyDictionary<string, ISheet> Worksheets { get; }
+    IReadOnlyDictionary<string, int> GetSheetsInfo();
+    void Close();
 }

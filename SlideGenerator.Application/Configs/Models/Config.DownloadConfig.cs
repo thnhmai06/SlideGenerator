@@ -1,4 +1,6 @@
-﻿namespace SlideGenerator.Application.Configs.Models;
+﻿using System.Net;
+
+namespace SlideGenerator.Application.Configs.Models;
 
 public sealed partial class Config
 {
@@ -15,10 +17,33 @@ public sealed partial class Config
 
         public RetryConfig Retry { get; init; } = new();
 
+        public ProxyConfig Proxy { get; init; } = new();
+
         public class RetryConfig
         {
             public int Timeout { get; init; } = 30;
             public int MaxRetries { get; init; } = 3;
+        }
+
+        public class ProxyConfig
+        {
+            public bool UseProxy { get; init; } = false;
+            public string ProxyAddress { get; init; } = string.Empty;
+            public string Username { get; init; } = string.Empty;
+            public string Password { get; init; } = string.Empty;
+            public string Domain { get; init; } = string.Empty;
+
+            public IWebProxy? GetWebProxy()
+            {
+                if (!UseProxy || string.IsNullOrEmpty(ProxyAddress))
+                    return null;
+
+                var proxy = new WebProxy(ProxyAddress)
+                {
+                    Credentials = new NetworkCredential(Username, Password, Domain)
+                };
+                return proxy;
+            }
         }
     }
 }

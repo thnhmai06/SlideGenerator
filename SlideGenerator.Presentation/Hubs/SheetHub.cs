@@ -24,24 +24,24 @@ public class SheetHub(ISheetService sheetService, ILogger<SheetHub> logger) : Hu
 
     private ConcurrentDictionary<string, ISheetBook> Workbooks
         => WorkbooksOfConnections.GetValueOrDefault(Context.ConnectionId)
-           ?? throw new ConnectionNotFoundException(Context.ConnectionId);
+           ?? throw new ConnectionNotFound(Context.ConnectionId);
 
     public override async Task OnConnectedAsync()
     {
-        logger.LogInformation("[Sheet] Client connected: {ConnectionId}", Context.ConnectionId);
+        logger.LogInformation("Client connected: {ConnectionId}", Context.ConnectionId);
         WorkbooksOfConnections[Context.ConnectionId] = new ConcurrentDictionary<string, ISheetBook>();
         await base.OnConnectedAsync();
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        logger.LogInformation("[Sheet] Client disconnected: {ConnectionId}", Context.ConnectionId);
+        logger.LogInformation("Client disconnected: {ConnectionId}", Context.ConnectionId);
 
         // Cleanup open workbooks for this connection
         if (WorkbooksOfConnections.TryRemove(Context.ConnectionId, out var workbooks))
             foreach (var key in workbooks.Keys)
                 if (workbooks.TryRemove(key, out var wb))
-                    wb.Dispose();
+                    wb.Close();
 
         await base.OnDisconnectedAsync(exception);
     }
@@ -88,7 +88,7 @@ public class SheetHub(ISheetService sheetService, ILogger<SheetHub> logger) : Hu
     private T Deserialize<T>(JsonElement message)
     {
         return JsonSerializer.Deserialize<T>(message.GetRawText(), SerializerOptions)
-               ?? throw new InvalidRequestFormatException(typeof(T).Name);
+               ?? throw new InvalidRequestFormat(typeof(T).Name);
     }
 
     private OpenBookSheetSuccess ExecuteOpenFile(SheetWorkbookOpen request)
@@ -99,7 +99,8 @@ public class SheetHub(ISheetService sheetService, ILogger<SheetHub> logger) : Hu
 
     private SheetWorkbookCloseSuccess ExecuteCloseFile(SheetWorkbookClose request)
     {
-        if (Workbooks.TryRemove(request.FilePath, out var wb)) wb.Dispose();
+        if (Workbooks.TryRemove(request.FilePath, out var wb))
+            wb.Close();
 
         return new SheetWorkbookCloseSuccess(request.FilePath);
     }
@@ -111,7 +112,7 @@ public class SheetHub(ISheetService sheetService, ILogger<SheetHub> logger) : Hu
         return new SheetWorkbookGetSheetInfoSuccess
         (
             request.FilePath,
-            sheetService.GetSheets(workbook)
+            sheetService.GetSheetsInfo(workbook)
         );
     }
 
@@ -143,7 +144,7 @@ public class SheetHub(ISheetService sheetService, ILogger<SheetHub> logger) : Hu
     private SheetWorkbookGetInfoSuccess ExecuteGetWorkbookInfo(GetWorkbookInfoRequest request)
     {
         var workbook = GetOrOpenWorkbook(request.FilePath);
-        var sheetsInfo = sheetService.GetSheets(workbook);
+        var sheetsInfo = sheetService.GetSheetsInfo(workbook);
 
         var sheets = new List<SheetWorksheetInfo>();
         foreach (var (sheetName, rowCount) in sheetsInfo)

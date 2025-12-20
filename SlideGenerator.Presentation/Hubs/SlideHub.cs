@@ -21,18 +21,18 @@ namespace SlideGenerator.Presentation.Hubs;
 
 public class SlideHub(
     IJobManager jobManager,
-    ISlideTemplateService slideTemplateService,
+    ISlideTemplateManager slideTemplateManager,
     ILogger<SlideHub> logger) : Hub
 {
     public override async Task OnConnectedAsync()
     {
-        logger.LogInformation("[Presentation] Client connected: {ConnectionId}", Context.ConnectionId);
+        logger.LogInformation("Client connected: {ConnectionId}", Context.ConnectionId);
         await base.OnConnectedAsync();
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        logger.LogInformation("[Presentation] Client disconnected: {ConnectionId}", Context.ConnectionId);
+        logger.LogInformation("Client disconnected: {ConnectionId}", Context.ConnectionId);
         await base.OnDisconnectedAsync(exception);
     }
 
@@ -76,13 +76,13 @@ public class SlideHub(
     private T Deserialize<T>(JsonElement message)
     {
         return JsonSerializer.Deserialize<T>(message.GetRawText(), SerializerOptions)
-               ?? throw new InvalidRequestFormatException(typeof(T).Name);
+               ?? throw new InvalidRequestFormat(typeof(T).Name);
     }
 
     private SlideScanShapesSuccess ExecuteScanShapes(SlideScanShapes request)
     {
-        slideTemplateService.AddTemplate(request.FilePath);
-        var template = slideTemplateService.GetTemplate(request.FilePath);
+        slideTemplateManager.AddTemplate(request.FilePath);
+        var template = slideTemplateManager.GetTemplate(request.FilePath);
 
         var shapes = template.GetAllImageShapes()
             .Select(kv => new ShapeDto(
@@ -96,14 +96,14 @@ public class SlideHub(
 
     private SlideGroupCreateSuccess ExecuteGroupCreate(GenerateSlideGroupCreate request)
     {
-        var group = jobManager.CreateGroup(request);
-        jobManager.StartGroup(group.Id);
+        var group = jobManager.Active.CreateGroup(request);
+        jobManager.Active.StartGroup(group.Id);
 
-        var jobIds = group.Jobs.ToDictionary(
+        var jobIds = group.Sheets.ToDictionary(
             kv => kv.Value.SheetName,
             kv => kv.Key);
 
-        return new SlideGroupCreateSuccess(group.Id, group.OutputFolder, jobIds);
+        return new SlideGroupCreateSuccess(group.Id, group.OutputFolder.FullName, jobIds);
     }
 
     private SlideGroupStatusSuccess ExecuteGroupStatus(GenerateSlideGroupStatus request)
@@ -111,7 +111,7 @@ public class SlideHub(
         var group = jobManager.GetGroup(request.GroupId)
                     ?? throw new InvalidOperationException($"Group {request.GroupId} not found");
 
-        var jobs = group.Jobs.ToDictionary(
+        var jobs = group.Sheets.ToDictionary(
             kv => kv.Key,
             kv => new JobStatusInfo(
                 kv.Key,
@@ -130,13 +130,13 @@ public class SlideHub(
         switch (request.Action)
         {
             case ControlAction.Pause:
-                jobManager.PauseGroup(request.GroupId);
+                jobManager.Active.PauseGroup(request.GroupId);
                 break;
             case ControlAction.Resume:
-                jobManager.ResumeGroup(request.GroupId);
+                jobManager.Active.ResumeGroup(request.GroupId);
                 break;
             case ControlAction.Cancel:
-                jobManager.CancelGroup(request.GroupId);
+                jobManager.Active.CancelGroup(request.GroupId);
                 break;
         }
 
@@ -145,7 +145,7 @@ public class SlideHub(
 
     private SlideJobStatusSuccess ExecuteJobStatus(SlideJobStatus request)
     {
-        var job = jobManager.GetJob(request.JobId)
+        var job = jobManager.GetSheet(request.JobId)
                   ?? throw new InvalidOperationException($"Job {request.JobId} not found");
 
         return new SlideJobStatusSuccess(
@@ -163,13 +163,13 @@ public class SlideHub(
         switch (request.Action)
         {
             case ControlAction.Pause:
-                jobManager.PauseJob(request.JobId);
+                jobManager.Active.PauseSheet(request.JobId);
                 break;
             case ControlAction.Resume:
-                jobManager.ResumeJob(request.JobId);
+                jobManager.Active.ResumeSheet(request.JobId);
                 break;
             case ControlAction.Cancel:
-                jobManager.CancelJob(request.JobId);
+                jobManager.Active.CancelSheet(request.JobId);
                 break;
         }
 
@@ -188,20 +188,20 @@ public class SlideHub(
             if (!isActive) continue;
 
             affectedGroups++;
-            affectedJobs += group.Jobs.Count(j =>
+            affectedJobs += group.Sheets.Count(j =>
                 j.Value.Status is SheetJobStatus.Pending or SheetJobStatus.Running or SheetJobStatus.Paused);
         }
 
         switch (request.Action)
         {
             case ControlAction.Pause:
-                jobManager.PauseAll();
+                jobManager.Active.PauseAll();
                 break;
             case ControlAction.Resume:
-                jobManager.ResumeAll();
+                jobManager.Active.ResumeAll();
                 break;
             case ControlAction.Cancel:
-                jobManager.CancelAll();
+                jobManager.Active.CancelAll();
                 break;
         }
 
@@ -216,8 +216,8 @@ public class SlideHub(
                 kv.Value.Workbook.FilePath,
                 kv.Value.Status,
                 kv.Value.Progress,
-                kv.Value.Jobs.Count,
-                kv.Value.Jobs.Count(j => j.Value.Status == SheetJobStatus.Completed)))
+                kv.Value.SheetCount,
+                kv.Value.Sheets.Count(j => j.Value.Status == SheetJobStatus.Completed)))
             .ToList();
 
         return new SlideGlobalGetGroupsSuccess(groups);

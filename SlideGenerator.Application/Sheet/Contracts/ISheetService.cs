@@ -2,13 +2,15 @@ using SlideGenerator.Domain.Sheet.Interfaces;
 
 namespace SlideGenerator.Application.Sheet.Contracts;
 
+using RowContent = Dictionary<string, string?>;
+
 /// <summary>
 ///     Interface for sheet processing service.
 /// </summary>
 public interface ISheetService
 {
     ISheetBook OpenFile(string filePath);
-    Dictionary<string, int> GetSheets(ISheetBook group);
+    IReadOnlyDictionary<string, int> GetSheetsInfo(ISheetBook group);
     IReadOnlyList<string?> GetHeaders(ISheetBook group, string tableName);
-    Dictionary<string, string?> GetRow(ISheetBook group, string tableName, int rowNumber);
+    RowContent GetRow(ISheetBook group, string tableName, int rowNumber);
 }

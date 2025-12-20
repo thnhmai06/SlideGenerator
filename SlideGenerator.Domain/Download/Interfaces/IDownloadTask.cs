@@ -3,10 +3,12 @@ using SlideGenerator.Domain.Download.Events;
 
 namespace SlideGenerator.Domain.Download.Interfaces;
 
-public interface IDownloadTask : IDisposable
+public interface IDownloadTask
 {
     string Url { get; }
-    string SavePath { get; }
+    DirectoryInfo SaveFolder { get; init; }
+    string FileName { get; }
+    string FilePath { get; }
     DownloadStatus Status { get; }
     long TotalSize { get; }
     long DownloadedSize { get; }
@@ -15,11 +17,13 @@ public interface IDownloadTask : IDisposable
     bool IsPaused { get; }
     bool IsCancelled { get; }
 
-    event EventHandler<Exception>? ErrorOccurred;
-    event EventHandler<DownloadProgressed>? ProgressChanged;
-    event EventHandler<DownloadCompleted>? Completed;
+    event EventHandler<DownloadStartedArgs>? DownloadStartedEvents;
+    event EventHandler<DownloadProgressedArgs>? DownloadProgressedEvents;
+    event EventHandler<DownloadCompletedArgs>? DownloadCompletedEvents;
 
-    Task StartAsync(CancellationToken cancellationToken = default);
+    /// <summary>Starts/Continue the download process.</summary>
+    Task DownloadFileAsync();
+
     void Pause();
     void Resume();
     void Cancel();
