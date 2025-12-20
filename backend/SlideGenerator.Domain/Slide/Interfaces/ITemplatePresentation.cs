@@ -2,8 +2,8 @@ using SlideGenerator.Domain.Slide.Components;
 
 namespace SlideGenerator.Domain.Slide.Interfaces;
 
-public interface ITemplatePresentation : IDisposable
+public interface ITemplatePresentation
 {
     string FilePath { get; }
-    Dictionary<uint, ShapeImageData> GetAllImageShapes();
+    Dictionary<uint, ShapeImagePreview> GetAllImageShapes();
 }

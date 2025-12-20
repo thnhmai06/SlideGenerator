@@ -1,27 +1,43 @@
-using SlideGenerator.Application.Slide.DTOs.Requests.Group;
+using SlideGenerator.Application.Job.Contracts.Collections;
 using SlideGenerator.Domain.Job.Interfaces;
 
 namespace SlideGenerator.Application.Job.Contracts;
 
+/// <summary>
+///     Main job manager interface that provides access to active and completed job collections
+/// </summary>
 public interface IJobManager
 {
-    IJobGroup CreateGroup(GenerateSlideGroupCreate request);
+    #region Collections
+
+    /// <summary>
+    ///     Collection of active jobs (pending, running, paused)
+    /// </summary>
+    IActiveJobCollection Active { get; }
+
+    /// <summary>
+    ///     Collection of completed jobs (finished, failed, cancelled)
+    /// </summary>
+    ICompletedJobCollection Completed { get; }
+
+    #endregion
+
+    #region Cross-Collection Query
+
+    /// <summary>
+    ///     Get a group from either active or completed collections
+    /// </summary>
     IJobGroup? GetGroup(string groupId);
-    IJobSheet? GetJob(string jobId);
+
+    /// <summary>
+    ///     Get a sheet from either active or completed collections
+    /// </summary>
+    IJobSheet? GetSheet(string sheetId);
+
+    /// <summary>
+    ///     Get all groups from both collections
+    /// </summary>
     IReadOnlyDictionary<string, IJobGroup> GetAllGroups();
 
-    void StartGroup(string groupId);
-    void PauseGroup(string groupId);
-    void ResumeGroup(string groupId);
-    void CancelGroup(string groupId);
-
-    void PauseJob(string jobId);
-    void ResumeJob(string jobId);
-    void CancelJob(string jobId);
-
-    void PauseAll();
-    void ResumeAll();
-    void CancelAll();
-
-    bool HasActiveJobs();
+    #endregion
 }

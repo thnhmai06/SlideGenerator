@@ -8,13 +8,12 @@ using SlideGenerator.Application.Job.Contracts;
 using SlideGenerator.Application.Sheet.Contracts;
 using SlideGenerator.Application.Slide.Contracts;
 using SlideGenerator.Infrastructure.Configs;
-using SlideGenerator.Infrastructure.Services.Download;
-using SlideGenerator.Infrastructure.Services.Image;
-using SlideGenerator.Infrastructure.Services.Job;
-using SlideGenerator.Infrastructure.Services.Sheet;
-using SlideGenerator.Infrastructure.Services.Slide;
+using SlideGenerator.Infrastructure.Download.Services;
+using SlideGenerator.Infrastructure.Image.Services;
+using SlideGenerator.Infrastructure.Job.Services;
+using SlideGenerator.Infrastructure.Sheet.Services;
+using SlideGenerator.Infrastructure.Slide.Services;
 using SlideGenerator.Presentation.Hubs;
-using InfraSlideGenerator = SlideGenerator.Infrastructure.Services.Slide.SlideGenerator;
 
 {
     var loaded = ConfigLoader.Load(ConfigHolder.Locker);
@@ -30,28 +29,29 @@ builder.Services.AddSignalR(options => options.EnableDetailedErrors = ConfigHold
 builder.Services.AddHttpClient();
 builder.Services.AddLogging();
 
+// Application Services
 builder.Services.AddSingleton<IImageService, ImageService>();
 builder.Services.AddSingleton<ISheetService, SheetService>();
 builder.Services.AddSingleton<IDownloadService, DownloadService>();
-builder.Services.AddSingleton<ISlideTemplateService, SlideTemplateService>();
-builder.Services.AddSingleton<ISlideGeneratingService, SlideGeneratingService>();
+builder.Services.AddSingleton<ISlideTemplateManager, SlideTemplateManager>();
+builder.Services.AddSingleton<ISlideWorkingManager, SlideWorkingManager>();
+builder.Services.AddSingleton<ISlideServices, SlideServices>();
 
-builder.Services.AddSingleton<JobManager>();
-builder.Services.AddSingleton<IJobManager>(sp => sp.GetRequiredService<JobManager>());
-builder.Services.AddSingleton<ISlideGenerator, InfraSlideGenerator>();
+// Job Services
+builder.Services.AddSingleton<IJobManager, JobManager>();
 builder.Services.AddSingleton<IJobNotifier, JobNotifier<SlideHub>>();
 builder.Services.AddScoped<IJobExecutor, JobExecutor>();
 
-var hangfireDbPath = ConfigHolder.Value.Job.HangfireDbPath;
-var hangfireDbDir = Path.GetDirectoryName(hangfireDbPath);
-if (!string.IsNullOrEmpty(hangfireDbDir)) Directory.CreateDirectory(hangfireDbDir);
+// Hangfire Setup
+var dbPath = ConfigHolder.Value.Job.DatabasePath;
+var dbDir = Path.GetDirectoryName(dbPath);
+if (!string.IsNullOrEmpty(dbDir)) Directory.CreateDirectory(dbDir);
 
 builder.Services.AddHangfire(configuration => configuration
     .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
     .UseSimpleAssemblyNameTypeSerializer()
     .UseRecommendedSerializerSettings()
-    .UseSQLiteStorage(hangfireDbPath));
-
+    .UseSQLiteStorage(dbPath));
 builder.Services.AddHangfireServer(options => { options.WorkerCount = ConfigHolder.Value.Job.MaxConcurrentJobs; });
 
 builder.Services.AddCors(options =>
@@ -73,7 +73,7 @@ app.UseCors();
 app.UseWebSockets();
 
 app.MapHub<SheetHub>("/hubs/sheet");
-app.MapHub<SlideHub>("/hubs/presentation");
+app.MapHub<SlideHub>("/hubs/slide");
 app.MapHub<ConfigHub>("/hubs/config");
 
 app.MapGet("/", () => new

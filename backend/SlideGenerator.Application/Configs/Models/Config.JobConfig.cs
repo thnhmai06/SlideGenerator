@@ -12,9 +12,9 @@ public sealed partial class Config
             init;
         } = string.Empty;
 
-        public string HangfireDbPath
+        public string DatabasePath
         {
-            get => string.IsNullOrEmpty(field) ? DefaultHangfireDbPath : field;
+            get => string.IsNullOrEmpty(field) ? DefaultJobsDatabasePath : field;
             init;
         } = string.Empty;
     }

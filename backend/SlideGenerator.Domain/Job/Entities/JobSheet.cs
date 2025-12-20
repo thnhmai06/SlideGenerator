@@ -9,8 +9,9 @@ namespace SlideGenerator.Domain.Job.Entities;
 public class JobSheet(JobGroup jobGroup, ISheet worksheet, string outputPath) : IJobSheet
 {
     private readonly Lock _lock = new();
+    private readonly ManualResetEventSlim _pauseEvent = new(true); // true = not paused
 
-    public string? HangfireJobId { get; set; }
+    public string? JobId { get; set; }
     public CancellationTokenSource CancellationTokenSource { get; } = new();
 
     public string Id { get; } = Guid.NewGuid().ToString("N");
@@ -31,6 +32,14 @@ public class JobSheet(JobGroup jobGroup, ISheet worksheet, string outputPath) : 
     public TextConfig[] TextConfigs => jobGroup.TextConfigs;
     public ImageConfig[] ImageConfigs => jobGroup.ImageConfigs;
 
+    /// <summary>
+    ///     Waits if the job is paused. Returns immediately if not paused.
+    /// </summary>
+    public void WaitIfPaused(CancellationToken cancellationToken)
+    {
+        _pauseEvent.Wait(cancellationToken);
+    }
+
     public void SetStatus(SheetJobStatus status, string? errorMessage = null)
     {
         lock (_lock)
@@ -42,9 +51,17 @@ public class JobSheet(JobGroup jobGroup, ISheet worksheet, string outputPath) : 
             {
                 case SheetJobStatus.Running when StartedAt == null:
                     StartedAt = DateTime.UtcNow;
+                    _pauseEvent.Set(); // continue
+                    break;
+                case SheetJobStatus.Running:
+                    _pauseEvent.Set(); // continue
+                    break;
+                case SheetJobStatus.Paused:
+                    _pauseEvent.Reset(); // block
                     break;
                 case SheetJobStatus.Completed or SheetJobStatus.Failed or SheetJobStatus.Cancelled:
                     CompletedAt = DateTime.UtcNow;
+                    _pauseEvent.Set(); // continue
                     break;
             }
         }

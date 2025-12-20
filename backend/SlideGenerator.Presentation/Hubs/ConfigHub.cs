@@ -19,13 +19,13 @@ public class ConfigHub(
 {
     public override async Task OnConnectedAsync()
     {
-        logger.LogInformation("[Config] Client connected: {ConnectionId}", Context.ConnectionId);
+        logger.LogInformation("Client connected: {ConnectionId}", Context.ConnectionId);
         await base.OnConnectedAsync();
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        logger.LogInformation("[Config] Client disconnected: {ConnectionId}", Context.ConnectionId);
+        logger.LogInformation("Client disconnected: {ConnectionId}", Context.ConnectionId);
         await base.OnDisconnectedAsync(exception);
     }
 
@@ -58,7 +58,7 @@ public class ConfigHub(
     private T Deserialize<T>(JsonElement message)
     {
         return JsonSerializer.Deserialize<T>(message.GetRawText(), SerializerOptions)
-               ?? throw new InvalidRequestFormatException(typeof(T).Name);
+               ?? throw new InvalidRequestFormat(typeof(T).Name);
     }
 
     private ConfigGetSuccess ExecuteGetConfig()
@@ -75,12 +75,12 @@ public class ConfigHub(
             new JobConfig(
                 config.Job.MaxConcurrentJobs,
                 config.Job.OutputFolder,
-                config.Job.HangfireDbPath));
+                config.Job.DatabasePath));
     }
 
     private ConfigUpdateSuccess ExecuteUpdateConfig(ConfigUpdate request)
     {
-        if (jobManager.HasActiveJobs())
+        if (jobManager.Active.HasActiveJobs)
             throw new InvalidOperationException("Cannot update config while jobs are running. Cancel all jobs first.");
 
         var config = new Config
@@ -111,7 +111,7 @@ public class ConfigHub(
                 {
                     MaxConcurrentJobs = request.Job.MaxConcurrentJobs,
                     OutputFolder = request.Job.OutputFolder,
-                    HangfireDbPath = request.Job.HangfireDbPath
+                    DatabasePath = request.Job.HangfireDbPath
                 }
                 : ConfigHolder.Value.Job
         };
@@ -124,7 +124,7 @@ public class ConfigHub(
 
     private ConfigReloadSuccess ExecuteReloadConfig()
     {
-        if (jobManager.HasActiveJobs())
+        if (jobManager.Active.HasActiveJobs)
             throw new InvalidOperationException("Cannot reload config while jobs are running.");
 
         var loaded = ConfigLoader.Load(ConfigHolder.Locker);
@@ -137,7 +137,7 @@ public class ConfigHub(
 
     private ConfigResetSuccess ExecuteResetConfig()
     {
-        if (jobManager.HasActiveJobs())
+        if (jobManager.Active.HasActiveJobs)
             throw new InvalidOperationException("Cannot reset config while jobs are running.");
 
         ConfigHolder.Reset();
