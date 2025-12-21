@@ -9,44 +9,45 @@ server:
 
 # Download configuration
 download:
+  max_chunks: 5
+  limit_bytes_per_second: 0
   save_folder: ./downloads
-  max_concurrent_downloads: 5
-  max_workers_per_download: 4
-  chunk_size: 1048576  # 1 MB
-  min_file_size_for_parallel: 5242880  # 5 MB
-  enable_parallel_chunks: true
+  retry:
+    timeout: 30
+    max_retries: 3
+  proxy:
+    use_proxy: false
+    proxy_address: ''
+    username: ''
+    password: ''
+    domain: ''
 
 # Job configuration
 job:
   max_concurrent_jobs: 2
-  output_folder: ""  # Empty means use default (MyDocuments/SlideGenerator)
-  hangfire_db_path: ""  # Empty means use default (Temp/SlideGenerator/hangfire.db)
+  output_folder: ''
+  database_path: ''
 
 # Image processing configuration
 image:
   # Face detection settings for Attention mode
   face:
     # Minimum confidence score (0-1) for face detection
-    # Higher values = more strict face detection
     confidence: 0.6
-    
+
     # Padding ratios around detected faces (0-1)
-    # Each side can be configured independently for fine-grained control
-    # Value = ratio of face size to add as padding on that side
-    padding_top: 0.15     # Top padding (15% of face height above face)
-    padding_bottom: 0.15  # Bottom padding (15% of face height below face)
-    padding_left: 0.15    # Left padding (15% of face width to the left)
-    padding_right: 0.15   # Right padding (15% of face width to the right)
-    
+    padding_top: 0.15
+    padding_bottom: 0.15
+    padding_left: 0.15
+    padding_right: 0.15
+
     # If true, union all detected faces; if false, pick the best single face
     union_all: true
-  
+
   # Saliency detection settings
   saliency:
     # Padding ratios around saliency anchor (0-1)
-    # Usually kept at 0.0 for precise cropping, but can be adjusted per side
-    # Value = ratio of crop window size to add as padding on that side
-    padding_top: 0.0     # Top padding around saliency
-    padding_bottom: 0.0  # Bottom padding around saliency
-    padding_left: 0.0    # Left padding around saliency
-    padding_right: 0.0   # Right padding around saliency
+    padding_top: 0.0
+    padding_bottom: 0.0
+    padding_left: 0.0
+    padding_right: 0.0
