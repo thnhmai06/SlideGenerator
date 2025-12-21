@@ -50,4 +50,4 @@ See: [Deployment](docs/en/deployment.md)
 
 The framework used by this backend is documented here:
 
-- [SlideGenerator.Framework](SlideGenerator.Framework/README.md)
+- [SlideGenerator.Framework](src/SlideGenerator.Framework/README.md)
