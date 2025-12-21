@@ -51,20 +51,13 @@ builder.Services.AddScoped<IJobExecutor, JobExecutor>();
 builder.Services.AddSingleton<IJobStateStore, HangfireJobStateStore>();
 builder.Services.AddHostedService<JobRestoreHostedService>();
 
-var dbPath = ConfigHolder.Value.Job.DatabasePath;
-if (!string.IsNullOrWhiteSpace(dbPath))
-{
-    var dbDir = Path.GetDirectoryName(dbPath);
-    if (!string.IsNullOrWhiteSpace(dbDir))
-        Directory.CreateDirectory(dbDir);
-}
-
 // Hangfire Setup
+var dbPath = Path.Combine(AppContext.BaseDirectory, "Jobs.db");
 builder.Services.AddHangfire(configuration => configuration
     .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
     .UseSimpleAssemblyNameTypeSerializer()
     .UseRecommendedSerializerSettings()
-    .UseSQLiteStorage($"Data Source={dbPath};"));
+    .UseSQLiteStorage(dbPath));
 builder.Services.AddHangfireServer(options => { options.WorkerCount = ConfigHolder.Value.Job.MaxConcurrentJobs; });
 
 builder.Services.AddCors(options =>

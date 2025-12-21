@@ -1,0 +1,32 @@
+server:
+  host: 127.0.0.1
+  port: 5000
+  debug: false
+download:
+  max_chunks: 5
+  limit_bytes_per_second: 0
+  save_folder: C:\Users\haith\AppData\Local\Temp\SlideGenerator
+  retry:
+    timeout: 30
+    max_retries: 3
+  proxy:
+    use_proxy: false
+    proxy_address: ''
+    username: ''
+    password: ''
+    domain: ''
+job:
+  max_concurrent_jobs: 5
+image:
+  face:
+    confidence: 0.6
+    padding_top: 0.15
+    padding_bottom: 0.15
+    padding_left: 0.15
+    padding_right: 0.15
+    union_all: true
+  saliency:
+    padding_top: 0
+    padding_bottom: 0
+    padding_left: 0
+    padding_right: 0

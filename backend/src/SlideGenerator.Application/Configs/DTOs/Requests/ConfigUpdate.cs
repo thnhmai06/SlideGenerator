@@ -30,4 +30,4 @@ public sealed record RetryConfigUpdate(int Timeout, int MaxRetries);
 /// <summary>
 ///     Job configuration update.
 /// </summary>
-public sealed record JobConfigUpdate(int MaxConcurrentJobs, string? OutputFolder, string? DatabasePath);
+public sealed record JobConfigUpdate(int MaxConcurrentJobs);

@@ -3,4 +3,4 @@ namespace SlideGenerator.Application.Configs.DTOs.Components;
 /// <summary>
 ///     Job configuration DTO.
 /// </summary>
-public sealed record JobConfig(int MaxConcurrentJobs, string OutputFolder, string DatabasePath);
+public sealed record JobConfig(int MaxConcurrentJobs);
