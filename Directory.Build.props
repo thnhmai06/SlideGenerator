@@ -1,0 +1,5 @@
+<Project>
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);NU1902;NU1903;NETSDK1206</NoWarn>
+  </PropertyGroup>
+</Project>
