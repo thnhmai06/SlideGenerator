@@ -11,4 +11,5 @@ public interface ITemplatePresentation
     int SlideCount { get; }
     Dictionary<uint, ImagePreview> GetAllImageShapes();
     IReadOnlyList<ShapeInfo> GetAllShapes();
+    IReadOnlyCollection<string> GetAllTextPlaceholders();
 }

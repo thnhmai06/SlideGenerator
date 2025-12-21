@@ -1,6 +1,6 @@
-using DocumentFormat.OpenXml.Drawing;
 using SlideGenerator.Domain.Slide;
 using SlideGenerator.Domain.Slide.Components;
+using SlideGenerator.Framework.Slide;
 using CoreTemplatePresentation = SlideGenerator.Framework.Slide.Models.TemplatePresentation;
 using Presentation = SlideGenerator.Framework.Slide.Models.Presentation;
 using Shape = DocumentFormat.OpenXml.Presentation.Shape;
@@ -37,29 +37,37 @@ internal sealed class TemplatePresentationAdapter(CoreTemplatePresentation prese
         var slidePart = presentation.GetSlidePart();
         if (slidePart == null) return [];
 
-        var shapes = new List<ShapeInfo>();
-        foreach (var shape in Presentation.GetShapes(slidePart))
-        {
-            var id = shape.NonVisualShapeProperties?.NonVisualDrawingProperties?.Id?.Value ?? 0;
-            var name = shape.NonVisualShapeProperties?.NonVisualDrawingProperties?.Name?.Value ?? string.Empty;
-            shapes.Add(new ShapeInfo(id, name, nameof(Shape), HasImageFill(shape)));
-        }
+        var previews = presentation.GetAllPreviewImageShapes();
+        var shapes = new List<ShapeInfo>(previews.Count);
 
-        foreach (var picture in Presentation.GetPictures(slidePart))
+        foreach (var (id, preview) in previews)
         {
-            var id = picture.NonVisualPictureProperties?.NonVisualDrawingProperties?.Id?.Value ?? 0;
-            var name = picture.NonVisualPictureProperties?.NonVisualDrawingProperties?.Name?.Value ?? string.Empty;
-            shapes.Add(new ShapeInfo(id, name, nameof(Picture), true));
+            var picture = Presentation.GetPictureById(slidePart, id);
+            if (picture != null)
+            {
+                var name = picture.NonVisualPictureProperties?.NonVisualDrawingProperties?.Name?.Value
+                           ?? preview.Name;
+                shapes.Add(new ShapeInfo(id, name, nameof(Picture), true));
+                continue;
+            }
+
+            var shape = Presentation.GetShapeById(slidePart, id);
+            var shapeName = shape?.NonVisualShapeProperties?.NonVisualDrawingProperties?.Name?.Value
+                            ?? preview.Name;
+            shapes.Add(new ShapeInfo(id, shapeName, nameof(Shape), true));
         }
 
         return shapes;
     }
 
-    private static bool HasImageFill(Shape shape)
+    public IReadOnlyCollection<string> GetAllTextPlaceholders()
     {
-        var shapeProps = shape.ShapeProperties;
-        if (shapeProps == null) return false;
+        var slidePart = presentation.GetSlidePart();
+        if (slidePart == null) return Array.Empty<string>();
 
-        return shapeProps.GetFirstChild<BlipFill>() != null;
+        return TextReplacer.ScanPlaceholders(slidePart)
+            .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
     }
+
 }

@@ -9,5 +9,6 @@ namespace SlideGenerator.Application.Configs.DTOs.Responses.Successes;
 public sealed record ConfigGetSuccess(
     ServerConfig Server,
     DownloadConfig Download,
-    JobConfig Job)
+    JobConfig Job,
+    ImageConfig Image)
     : Response("get");

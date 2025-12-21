@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Hangfire;
 using Hangfire.Storage.SQLite;
 using SlideGenerator.Application.Configs;
@@ -29,7 +30,12 @@ using SlideGenerator.Presentation.Hubs;
 #region Builder
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddSignalR(options => options.EnableDetailedErrors = ConfigHolder.Value.Server.Debug);
+builder.Services.AddSignalR(options => options.EnableDetailedErrors = ConfigHolder.Value.Server.Debug)
+    .AddJsonProtocol(options =>
+    {
+        options.PayloadSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        options.PayloadSerializerOptions.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;
+    });
 builder.Services.AddHttpClient();
 builder.Services.AddLogging();
 
@@ -41,6 +47,7 @@ builder.Services.AddSingleton<IDownloadClient>(sp => (IDownloadClient)sp.GetRequ
 builder.Services.AddSingleton<IFileSystem, FileSystem>();
 builder.Services.AddSingleton<ISlideTemplateManager, SlideTemplateManager>();
 builder.Services.AddSingleton<SlideWorkingManager>();
+builder.Services.AddSingleton<ISlideWorkingManager>(sp => sp.GetRequiredService<SlideWorkingManager>());
 builder.Services.AddSingleton<ISlideServices, SlideServices>();
 
 // Job Services

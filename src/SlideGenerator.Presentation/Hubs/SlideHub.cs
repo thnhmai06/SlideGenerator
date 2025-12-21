@@ -60,6 +60,10 @@ public class SlideHub(
             {
                 "scanshapes" => ExecuteScanShapes(
                     Deserialize<SlideScanShapes>(message)),
+                "scanplaceholders" => ExecuteScanPlaceholders(
+                    Deserialize<SlideScanPlaceholders>(message)),
+                "scantemplate" => ExecuteScanTemplate(
+                    Deserialize<SlideScanTemplate>(message)),
                 "groupcreate" => ExecuteGroupCreate(
                     Deserialize<GenerateSlideGroupCreate>(message)),
                 "groupstatus" => ExecuteGroupStatus(
@@ -93,21 +97,80 @@ public class SlideHub(
 
     private SlideScanShapesSuccess ExecuteScanShapes(SlideScanShapes request)
     {
-        slideTemplateManager.AddTemplate(request.FilePath);
-        var template = slideTemplateManager.GetTemplate(request.FilePath);
+        var added = slideTemplateManager.AddTemplate(request.FilePath);
+        try
+        {
+            var template = slideTemplateManager.GetTemplate(request.FilePath);
 
-        var imageShapes = template.GetAllImageShapes();
-        var shapes = template.GetAllShapes()
-            .Select(shape =>
+            var imageShapes = template.GetAllImageShapes();
+            var shapes = template.GetAllShapes()
+                .Select(shape =>
+                {
+                    var data = imageShapes.TryGetValue(shape.Id, out var preview)
+                        ? Convert.ToBase64String(preview.Image)
+                        : string.Empty;
+                    return new ShapeDto(shape.Id, shape.Name, data, shape.Kind, shape.IsImage);
+                })
+                .ToArray();
+
+            return new SlideScanShapesSuccess(request.FilePath, shapes);
+        }
+        finally
+        {
+            if (added)
             {
-                var data = imageShapes.TryGetValue(shape.Id, out var preview)
-                    ? Convert.ToBase64String(preview.Image)
-                    : string.Empty;
-                return new ShapeDto(shape.Id, shape.Name, data, shape.Kind, shape.IsImage);
-            })
-            .ToArray();
+                slideTemplateManager.RemoveTemplate(request.FilePath);
+            }
+        }
+    }
 
-        return new SlideScanShapesSuccess(request.FilePath, shapes);
+    private SlideScanPlaceholdersSuccess ExecuteScanPlaceholders(SlideScanPlaceholders request)
+    {
+        var added = slideTemplateManager.AddTemplate(request.FilePath);
+        try
+        {
+            var template = slideTemplateManager.GetTemplate(request.FilePath);
+
+            var placeholders = template.GetAllTextPlaceholders().ToArray();
+            return new SlideScanPlaceholdersSuccess(request.FilePath, placeholders);
+        }
+        finally
+        {
+            if (added)
+            {
+                slideTemplateManager.RemoveTemplate(request.FilePath);
+            }
+        }
+    }
+
+    private SlideScanTemplateSuccess ExecuteScanTemplate(SlideScanTemplate request)
+    {
+        var added = slideTemplateManager.AddTemplate(request.FilePath);
+        try
+        {
+            var template = slideTemplateManager.GetTemplate(request.FilePath);
+
+            var imageShapes = template.GetAllImageShapes();
+            var shapes = template.GetAllShapes()
+                .Select(shape =>
+                {
+                    var data = imageShapes.TryGetValue(shape.Id, out var preview)
+                        ? Convert.ToBase64String(preview.Image)
+                        : string.Empty;
+                    return new ShapeDto(shape.Id, shape.Name, data, shape.Kind, shape.IsImage);
+                })
+                .ToArray();
+
+            var placeholders = template.GetAllTextPlaceholders().ToArray();
+            return new SlideScanTemplateSuccess(request.FilePath, shapes, placeholders);
+        }
+        finally
+        {
+            if (added)
+            {
+                slideTemplateManager.RemoveTemplate(request.FilePath);
+            }
+        }
     }
 
     private SlideGroupCreateSuccess ExecuteGroupCreate(GenerateSlideGroupCreate request)
