@@ -7,7 +7,8 @@
 3. [Active vs completed collections](#active-vs-completed-collections)
 4. [Lifecycle operations](#lifecycle-operations)
 5. [Pause/resume behavior](#pauseresume-behavior)
-6. [Cancel and clear](#cancel-and-clear)
+6. [Persistence and resume](#persistence-and-resume)
+7. [Cancel and clear](#cancel-and-clear)
 
 ## Concepts
 
@@ -67,8 +68,14 @@ Sheet execution uses an event-based wait:
 
 Implementation notes:
 
-- Domain: `JobSheet.WaitIfPaused(token)`
-- Executor: calls `WaitIfPaused` inside the processing loop.
+- Domain: `JobSheet.WaitIfPausedAsync(token)`
+- Executor: calls checkpoints before/after row, cloud resolve, download, image processing, slide update, and state save.
+
+## Persistence and resume
+
+- State is persisted via HangfireSQLite.
+- Each sheet stores `NextRowIndex`, status, output path, and error counts.
+- Resume continues from the next record; missing output file during resume fails the sheet.
 
 ## Cancel and clear
 

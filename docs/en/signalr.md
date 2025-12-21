@@ -5,7 +5,8 @@
 1. [Endpoints](#endpoints)
 2. [Request/response pattern](#requestresponse-pattern)
 3. [Slide hub messages](#slide-hub-messages)
-4. [Notifications](#notifications)
+4. [Subscriptions](#subscriptions)
+5. [Notifications](#notifications)
 
 ## Endpoints
 
@@ -37,9 +38,16 @@ Common message types:
 - `GlobalControl`
 - `GetAllGroups`
 
+## Subscriptions
+
+Clients subscribe for realtime updates:
+
+- `SubscribeGroup(groupJobId)`
+- `SubscribeSheet(sheetJobId)`
+
 ## Notifications
 
-Notifications are broadcast to all clients via `ReceiveNotification`.
+Notifications are scoped to subscribers and delivered via `ReceiveNotification`.
 
 Core notifications:
 

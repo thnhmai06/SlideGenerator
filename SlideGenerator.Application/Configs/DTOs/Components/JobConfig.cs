@@ -1,3 +1,0 @@
-namespace SlideGenerator.Application.Configs.DTOs.Components;
-
-public record JobConfig(int MaxConcurrentJobs);

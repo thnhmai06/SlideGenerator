@@ -19,7 +19,7 @@ Relevant code:
 ## Runtime behavior
 
 - Server host/port and debug mode are read from config.
-- Hangfire uses a SQLite storage, using the configured path.
+- Hangfire uses a SQLite storage, using `Job.DatabasePath`.
 - Worker count is controlled by the configured `MaxConcurrentJobs`.
 
 ## Safety rules

@@ -46,16 +46,17 @@ See also: [Job system](job-system.md)
 
 ## Key runtime components
 
-- SignalR hubs: handle UI traffic and broadcast notifications.
-- Hangfire server: runs sheet jobs in background workers.
-- Job manager: tracks active vs completed jobs.
+- SignalR hubs: handle UI traffic and scoped job subscriptions.
+- Hangfire server + HangfireSQLite: schedules sheet execution and persists job state.
+- Job manager: tracks active vs completed jobs and restores unfinished work on startup.
 
 ## Data flow
 
 1. Client sends request to `SlideHub`.
 2. Hub uses `IJobManager.Active` to create a group and start it.
-3. Hangfire enqueues one job per sheet.
-4. `IJobExecutor` processes rows and calls `IJobNotifier`.
-5. When a group finishes, it is moved from Active to Completed.
+3. Hangfire enqueues one job per sheet (identified by stable sheet IDs).
+4. `IJobExecutor` processes rows, checkpoints for pause/resume, and persists state.
+5. `IJobNotifier` publishes updates to subscribed group/sheet listeners only.
+6. When a group finishes, it is moved from Active to Completed.
 
 Next: [Job system](job-system.md)
