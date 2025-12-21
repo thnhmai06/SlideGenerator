@@ -83,7 +83,7 @@ public sealed class JobGroup : IJobGroup
 
     /// <inheritdoc />
     public IReadOnlyDictionary<string, IJobSheet> Sheets
-        => _jobs.ToDictionary(kv => kv.Key, IJobSheet (kv) => kv.Value);
+        => _jobs.ToDictionary(kv => kv.Key, kv => (IJobSheet)kv.Value);
 
     /// <inheritdoc />
     public int SheetCount => _jobs.Count;

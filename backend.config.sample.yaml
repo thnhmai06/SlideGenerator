@@ -25,8 +25,6 @@ download:
 # Job configuration
 job:
   max_concurrent_jobs: 2
-  output_folder: ''
-  database_path: ''
 
 # Image processing configuration
 image:

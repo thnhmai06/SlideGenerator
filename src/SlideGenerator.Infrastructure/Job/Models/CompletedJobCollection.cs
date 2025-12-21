@@ -40,7 +40,7 @@ public class CompletedJobCollection(ILogger<CompletedJobCollection> logger, IJob
 
     public IReadOnlyDictionary<string, IJobGroup> GetAllGroups()
     {
-        return _groups.ToDictionary(kv => kv.Key, IJobGroup (kv) => kv.Value);
+        return _groups.ToDictionary(kv => kv.Key, kv => (IJobGroup)kv.Value);
     }
 
     public int GroupCount => _groups.Count;
@@ -52,7 +52,7 @@ public class CompletedJobCollection(ILogger<CompletedJobCollection> logger, IJob
 
     public IReadOnlyDictionary<string, IJobSheet> GetAllSheets()
     {
-        return _sheets.ToDictionary(kv => kv.Key, IJobSheet (kv) => kv.Value);
+        return _sheets.ToDictionary(kv => kv.Key, kv => (IJobSheet)kv.Value);
     }
 
     public int SheetCount => _sheets.Count;
@@ -117,19 +117,19 @@ public class CompletedJobCollection(ILogger<CompletedJobCollection> logger, IJob
     public IReadOnlyDictionary<string, IJobGroup> GetSuccessfulGroups()
     {
         return _groups.Where(kv => kv.Value.Status == GroupStatus.Completed)
-            .ToDictionary(kv => kv.Key, IJobGroup (kv) => kv.Value);
+            .ToDictionary(kv => kv.Key, kv => (IJobGroup)kv.Value);
     }
 
     public IReadOnlyDictionary<string, IJobGroup> GetFailedGroups()
     {
         return _groups.Where(kv => kv.Value.Status == GroupStatus.Failed)
-            .ToDictionary(kv => kv.Key, IJobGroup (kv) => kv.Value);
+            .ToDictionary(kv => kv.Key, kv => (IJobGroup)kv.Value);
     }
 
     public IReadOnlyDictionary<string, IJobGroup> GetCancelledGroups()
     {
         return _groups.Where(kv => kv.Value.Status == GroupStatus.Cancelled)
-            .ToDictionary(kv => kv.Key, IJobGroup (kv) => kv.Value);
+            .ToDictionary(kv => kv.Key, kv => (IJobGroup)kv.Value);
     }
 
     #endregion

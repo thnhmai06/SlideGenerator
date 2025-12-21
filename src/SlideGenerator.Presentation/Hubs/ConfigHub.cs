@@ -72,7 +72,7 @@ public class ConfigHub(
                 config.Download.LimitBytesPerSecond,
                 config.Download.SaveFolder,
                 new RetryConfig(config.Download.Retry.Timeout, config.Download.Retry.MaxRetries)),
-            new JobConfig(config.Job.MaxConcurrentJobs, config.Job.OutputFolder, config.Job.DatabasePath)
+            new JobConfig(config.Job.MaxConcurrentJobs)
         );
     }
 
@@ -107,9 +107,7 @@ public class ConfigHub(
             Job = request.Job != null
                 ? new Config.JobConfig
                 {
-                    MaxConcurrentJobs = request.Job.MaxConcurrentJobs,
-                    OutputFolder = request.Job.OutputFolder ?? ConfigHolder.Value.Job.OutputFolder,
-                    DatabasePath = request.Job.DatabasePath ?? ConfigHolder.Value.Job.DatabasePath
+                    MaxConcurrentJobs = request.Job.MaxConcurrentJobs
                 }
                 : ConfigHolder.Value.Job
         };

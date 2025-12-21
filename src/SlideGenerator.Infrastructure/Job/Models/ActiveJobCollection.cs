@@ -1,13 +1,13 @@
 using System.Collections.Concurrent;
 using Hangfire;
 using Microsoft.Extensions.Logging;
-using SlideGenerator.Application.Configs;
 using SlideGenerator.Application.Job.Contracts;
 using SlideGenerator.Application.Job.Contracts.Collections;
 using SlideGenerator.Application.Sheet;
 using SlideGenerator.Application.Slide;
 using SlideGenerator.Application.Slide.DTOs.Components;
 using SlideGenerator.Application.Slide.DTOs.Requests.Group;
+using SlideGenerator.Domain.Configs;
 using SlideGenerator.Domain.Image.Enums;
 using SlideGenerator.Domain.IO;
 using SlideGenerator.Domain.Job.Components;
@@ -44,7 +44,7 @@ public class ActiveJobCollection(
 
     public IReadOnlyDictionary<string, IJobGroup> GetAllGroups()
     {
-        return _groups.ToDictionary(kv => kv.Key, IJobGroup (kv) => kv.Value);
+        return _groups.ToDictionary(kv => kv.Key, kv => (IJobGroup)kv.Value);
     }
 
     public int GroupCount => _groups.Count;
@@ -56,7 +56,7 @@ public class ActiveJobCollection(
 
     public IReadOnlyDictionary<string, IJobSheet> GetAllSheets()
     {
-        return _sheets.ToDictionary(kv => kv.Key, IJobSheet (kv) => kv.Value);
+        return _sheets.ToDictionary(kv => kv.Key, kv => (IJobSheet)kv.Value);
     }
 
     public int SheetCount => _sheets.Count;
@@ -92,7 +92,7 @@ public class ActiveJobCollection(
             : sheetsInfo.Keys;
 
         var outputRoot = string.IsNullOrWhiteSpace(request.GetOutputPath())
-            ? ConfigHolder.Value.Job.OutputFolder
+            ? GetDefaultOutputRoot()
             : request.GetOutputPath();
 
         var outputFolderPath = NormalizeOutputFolderPath(outputRoot);
@@ -247,19 +247,19 @@ public class ActiveJobCollection(
     public IReadOnlyDictionary<string, IJobGroup> GetRunningGroups()
     {
         return _groups.Where(kv => kv.Value.Status == GroupStatus.Running)
-            .ToDictionary(kv => kv.Key, IJobGroup (kv) => kv.Value);
+            .ToDictionary(kv => kv.Key, kv => (IJobGroup)kv.Value);
     }
 
     public IReadOnlyDictionary<string, IJobGroup> GetPausedGroups()
     {
         return _groups.Where(kv => kv.Value.Status == GroupStatus.Paused)
-            .ToDictionary(kv => kv.Key, IJobGroup (kv) => kv.Value);
+            .ToDictionary(kv => kv.Key, kv => (IJobGroup)kv.Value);
     }
 
     public IReadOnlyDictionary<string, IJobGroup> GetPendingGroups()
     {
         return _groups.Where(kv => kv.Value.Status == GroupStatus.Pending)
-            .ToDictionary(kv => kv.Key, IJobGroup (kv) => kv.Value);
+            .ToDictionary(kv => kv.Key, kv => (IJobGroup)kv.Value);
     }
 
     #endregion
@@ -420,6 +420,11 @@ public class ActiveJobCollection(
         }
 
         return fullPath;
+    }
+
+    private static string GetDefaultOutputRoot()
+    {
+        return Path.Combine(Path.GetTempPath(), Config.AppName);
     }
 
     #endregion
