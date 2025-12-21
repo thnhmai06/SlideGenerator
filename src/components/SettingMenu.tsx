@@ -1,674 +1,873 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useApp } from '../contexts/AppContext'
+import { useJobs } from '../contexts/JobContext'
+import * as backendApi from '../services/backendApi'
 import '../styles/SettingMenu.css'
 
-type SettingTab = 'appearance' | 'download' | 'network' | 'server'
+type SettingTab = 'appearance' | 'server' | 'download' | 'job' | 'image'
+
+interface ConfigState {
+  server: {
+    host: string
+    port: number
+    debug: boolean
+  }
+  download: {
+    maxChunks: number
+    limitBytesPerSecond: number
+    saveFolder: string
+    retryTimeout: number
+    maxRetries: number
+  }
+  job: {
+    maxConcurrentJobs: number
+  }
+  image: {
+    face: {
+      confidence: number
+      paddingTop: number
+      paddingBottom: number
+      paddingLeft: number
+      paddingRight: number
+      unionAll: boolean
+    }
+    saliency: {
+      paddingTop: number
+      paddingBottom: number
+      paddingLeft: number
+      paddingRight: number
+    }
+  }
+}
 
 const SettingMenu: React.FC = () => {
   const { theme, language, enableAnimations, setTheme, setLanguage, setEnableAnimations, t } = useApp()
+  const { groups } = useJobs()
   const [activeTab, setActiveTab] = useState<SettingTab>('appearance')
-  const [autoSave, setAutoSave] = useState(() => {
-    const saved = localStorage.getItem('autoSave')
-    return saved === 'true'
-  })
-  const [showNotifications, setShowNotifications] = useState(() => {
-    const saved = localStorage.getItem('showNotifications')
-    return saved !== 'false' // default true
-  })
-  
-  // Backend config state organized by section
-  const [serverConfig, setServerConfig] = useState<any>(null)
-  const [downloadConfig, setDownloadConfig] = useState<any>(null)
-  const [networkConfig, setNetworkConfig] = useState<any>(null)
-  
+  const [config, setConfig] = useState<ConfigState | null>(null)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [apiUrl] = useState('http://127.0.0.1:5000')
-  const [message, setMessage] = useState<{ type: 'success' | 'error' | 'warning', text: string } | null>(null)
+  const [message, setMessage] = useState<{ type: 'success' | 'error' | 'warning'; text: string } | null>(null)
 
-  const handleThemeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setTheme(e.target.value as 'dark' | 'light')
+  const getErrorDetail = (error: unknown): string => {
+    if (error instanceof Error && error.message) return error.message
+    if (typeof error === 'string') return error
+    if (error && typeof error === 'object' && 'message' in error) {
+      const value = (error as { message?: string }).message
+      if (value) return value
+    }
+    return ''
   }
 
-  const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setLanguage(e.target.value as 'vi' | 'en')
+  const formatErrorMessage = (key: string, error: unknown) => {
+    const detail = getErrorDetail(error)
+    return detail ? `${t(key)}: ${detail}` : t(key)
   }
 
-  const handleAnimationsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEnableAnimations(e.target.checked)
-  }
-
-  const handleAutoSaveChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.checked
-    setAutoSave(value)
-    localStorage.setItem('autoSave', value.toString())
-  }
-
-  const handleNotificationsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.checked
-    setShowNotifications(value)
-    localStorage.setItem('showNotifications', value.toString())
-  }
-
-  // Backend config functions
   const showMessage = (type: 'success' | 'error' | 'warning', text: string) => {
     setMessage({ type, text })
     setTimeout(() => setMessage(null), 5000)
   }
 
-  useEffect(() => {
-    if (activeTab === 'server' && !serverConfig) {
-      loadConfig('server')
-    } else if (activeTab === 'download' && !downloadConfig) {
-      loadConfig('download')
-    } else if (activeTab === 'network' && !networkConfig) {
-      loadConfig('network')
-    }
-  }, [activeTab, serverConfig, downloadConfig, networkConfig])
+  const storeBackendUrl = (host: string, port: number) => {
+    if (!host || !port) return
+    const trimmedHost = host.trim()
+    if (!trimmedHost) return
 
-  const loadConfig = async (section: string) => {
+    const hasScheme = /^https?:\/\//i.test(trimmedHost)
+    const base = hasScheme ? trimmedHost : `http://${trimmedHost}`
+    const normalizedHost = base.replace(
+      /^(https?:\/\/)localhost(?=[:/]|$)/i,
+      '$1127.0.0.1'
+    )
+    const normalizedBase = normalizedHost.endsWith('/') ? normalizedHost.slice(0, -1) : normalizedHost
+    const hasPort = /:\d+$/.test(normalizedBase)
+    const url = hasPort ? normalizedBase : `${normalizedBase}:${port}`
+    localStorage.setItem('backendUrl', url)
+  }
+
+  const getCaseInsensitive = <T extends Record<string, unknown>>(obj: T | null | undefined, key: string) => {
+    if (!obj) return undefined
+    if (key in obj) return obj[key]
+    const lowered = key.toLowerCase()
+    for (const [entryKey, value] of Object.entries(obj)) {
+      if (entryKey.toLowerCase() === lowered) {
+        return value
+      }
+    }
+    return undefined
+  }
+
+  const loadConfig = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`${apiUrl}/api/config/${section}`)
-      if (response.ok) {
-        const data = await response.json()
-        if (section === 'server') setServerConfig(data)
-        else if (section === 'download') setDownloadConfig(data)
-        else if (section === 'network') setNetworkConfig(data)
-        showMessage('success', `Loaded ${section} configuration`)
-      } else {
-        throw new Error(`Failed to load ${section} configuration`)
+      const response = await backendApi.getConfig()
+      const data = response as backendApi.ConfigGetSuccess
+      const server = getCaseInsensitive(data as Record<string, unknown>, 'Server') as
+        | Record<string, unknown>
+        | undefined
+      const download = getCaseInsensitive(data as Record<string, unknown>, 'Download') as
+        | Record<string, unknown>
+        | undefined
+      const job = getCaseInsensitive(data as Record<string, unknown>, 'Job') as
+        | Record<string, unknown>
+        | undefined
+      const image = getCaseInsensitive(data as Record<string, unknown>, 'Image') as
+        | Record<string, unknown>
+        | undefined
+
+      if (!server || !download || !job || !image) {
+        throw new Error('Invalid config response.')
       }
+
+      const retry = getCaseInsensitive(download, 'Retry') as Record<string, unknown> | undefined
+      const face = getCaseInsensitive(image, 'Face') as Record<string, unknown> | undefined
+      const saliency = getCaseInsensitive(image, 'Saliency') as Record<string, unknown> | undefined
+      if (!retry) {
+        throw new Error('Invalid config response.')
+      }
+      if (!face || !saliency) {
+        throw new Error('Invalid config response.')
+      }
+
+      const host = String(getCaseInsensitive(server, 'Host') ?? '')
+      const port = Number(getCaseInsensitive(server, 'Port') ?? 0)
+      const debug = Boolean(getCaseInsensitive(server, 'Debug'))
+
+      const maxChunks = Number(getCaseInsensitive(download, 'MaxChunks') ?? 0)
+      const limitBytesPerSecond = Number(getCaseInsensitive(download, 'LimitBytesPerSecond') ?? 0)
+      const saveFolder = String(getCaseInsensitive(download, 'SaveFolder') ?? '')
+      const retryTimeout = Number(getCaseInsensitive(retry, 'Timeout') ?? 0)
+      const maxRetries = Number(getCaseInsensitive(retry, 'MaxRetries') ?? 0)
+
+      const maxConcurrentJobs = Number(getCaseInsensitive(job, 'MaxConcurrentJobs') ?? 0)
+      const faceConfidence = Number(getCaseInsensitive(face, 'Confidence') ?? 0)
+      const facePaddingTop = Number(getCaseInsensitive(face, 'PaddingTop') ?? 0)
+      const facePaddingBottom = Number(getCaseInsensitive(face, 'PaddingBottom') ?? 0)
+      const facePaddingLeft = Number(getCaseInsensitive(face, 'PaddingLeft') ?? 0)
+      const facePaddingRight = Number(getCaseInsensitive(face, 'PaddingRight') ?? 0)
+      const faceUnionAll = Boolean(getCaseInsensitive(face, 'UnionAll'))
+
+      const saliencyPaddingTop = Number(getCaseInsensitive(saliency, 'PaddingTop') ?? 0)
+      const saliencyPaddingBottom = Number(getCaseInsensitive(saliency, 'PaddingBottom') ?? 0)
+      const saliencyPaddingLeft = Number(getCaseInsensitive(saliency, 'PaddingLeft') ?? 0)
+      const saliencyPaddingRight = Number(getCaseInsensitive(saliency, 'PaddingRight') ?? 0)
+
+      setConfig({
+        server: {
+          host,
+          port,
+          debug,
+        },
+        download: {
+          maxChunks,
+          limitBytesPerSecond,
+          saveFolder,
+          retryTimeout,
+          maxRetries,
+        },
+        job: {
+          maxConcurrentJobs,
+        },
+        image: {
+          face: {
+            confidence: faceConfidence,
+            paddingTop: facePaddingTop,
+            paddingBottom: facePaddingBottom,
+            paddingLeft: facePaddingLeft,
+            paddingRight: facePaddingRight,
+            unionAll: faceUnionAll,
+          },
+          saliency: {
+            paddingTop: saliencyPaddingTop,
+            paddingBottom: saliencyPaddingBottom,
+            paddingLeft: saliencyPaddingLeft,
+            paddingRight: saliencyPaddingRight,
+          },
+        },
+      })
+      storeBackendUrl(host, port)
     } catch (error) {
-      showMessage('error', `Failed to load ${section} config: ${error}`)
+      console.error('Failed to load config:', error)
+      showMessage('error', formatErrorMessage('settings.loadError', error))
     } finally {
       setLoading(false)
     }
   }
 
-  const saveCurrentSection = async () => {
-    let section: string
-    let sectionConfig: any
+  useEffect(() => {
+    loadConfig().catch(() => undefined)
+  }, [])
 
-    if (activeTab === 'server') {
-      section = 'server'
-      sectionConfig = serverConfig
-    } else if (activeTab === 'download') {
-      section = 'download'
-      sectionConfig = downloadConfig
-    } else if (activeTab === 'network') {
-      section = 'network'
-      sectionConfig = networkConfig
-    } else {
-      return
-    }
-
-    if (!sectionConfig) return
-
+  const saveConfig = async () => {
+    if (!config) return
     try {
       setSaving(true)
-      const response = await fetch(`${apiUrl}/api/config/${section}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(sectionConfig)
+      await backendApi.updateConfig({
+        Server: {
+          Host: config.server.host,
+          Port: config.server.port,
+          Debug: config.server.debug,
+        },
+        Download: {
+          MaxChunks: config.download.maxChunks,
+          LimitBytesPerSecond: config.download.limitBytesPerSecond,
+          SaveFolder: config.download.saveFolder,
+          Retry: {
+            Timeout: config.download.retryTimeout,
+            MaxRetries: config.download.maxRetries,
+          },
+        },
+        Job: {
+          MaxConcurrentJobs: config.job.maxConcurrentJobs,
+        },
+        Image: {
+          Face: {
+            Confidence: config.image.face.confidence,
+            PaddingTop: config.image.face.paddingTop,
+            PaddingBottom: config.image.face.paddingBottom,
+            PaddingLeft: config.image.face.paddingLeft,
+            PaddingRight: config.image.face.paddingRight,
+            UnionAll: config.image.face.unionAll,
+          },
+          Saliency: {
+            PaddingTop: config.image.saliency.paddingTop,
+            PaddingBottom: config.image.saliency.paddingBottom,
+            PaddingLeft: config.image.saliency.paddingLeft,
+            PaddingRight: config.image.saliency.paddingRight,
+          },
+        },
       })
-
-      if (response.ok) {
-        const saveResponse = await fetch(`${apiUrl}/api/config/save`, {
-          method: 'POST'
-        })
-        
-        if (saveResponse.ok) {
-          showMessage('success', 'Configuration saved successfully to TOML file')
-        } else {
-          showMessage('warning', 'Configuration updated but not saved to file')
-        }
-      } else {
-        throw new Error('Failed to save configuration')
-      }
+      storeBackendUrl(config.server.host, config.server.port)
+      showMessage('success', t('settings.saveSuccess'))
     } catch (error) {
-      showMessage('error', `Failed to save configuration: ${error}`)
+      console.error('Failed to save config:', error)
+      showMessage('error', formatErrorMessage('settings.saveError', error))
     } finally {
       setSaving(false)
     }
   }
 
-  const resetConfig = async () => {
-    if (!window.confirm('Are you sure you want to reset to default configuration?')) {
-      return
-    }
-
+  const reloadConfig = async () => {
     try {
-      const response = await fetch(`${apiUrl}/api/config/reset`, {
-        method: 'POST'
-      })
-
-      if (response.ok) {
-        // Reload current section
-        if (activeTab === 'server') {
-          setServerConfig(null)
-          await loadConfig('server')
-        } else if (activeTab === 'download') {
-          setDownloadConfig(null)
-          await loadConfig('download')
-        } else if (activeTab === 'network') {
-          setNetworkConfig(null)
-          await loadConfig('network')
-        }
-        showMessage('success', 'Configuration reset to defaults')
-      } else {
-        throw new Error('Failed to reset configuration')
-      }
+      setLoading(true)
+      await backendApi.reloadConfig()
+      await loadConfig()
+      showMessage('success', t('settings.reloadSuccess'))
     } catch (error) {
-      showMessage('error', `Failed to reset configuration: ${error}`)
+      console.error('Failed to reload config:', error)
+      showMessage('error', formatErrorMessage('settings.reloadError', error))
+    } finally {
+      setLoading(false)
     }
   }
 
-  const formatBytes = (bytes: number): string => {
-    if (bytes === 0) return '0 B'
-    const k = 1024
-    const sizes = ['B', 'KB', 'MB', 'GB']
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+  const resetConfig = async () => {
+    if (!window.confirm(t('settings.confirmReset'))) return
+    try {
+      setLoading(true)
+      await backendApi.resetConfig()
+      await loadConfig()
+      showMessage('success', t('settings.resetSuccess'))
+    } catch (error) {
+      console.error('Failed to reset config:', error)
+      showMessage('error', formatErrorMessage('settings.resetError', error))
+    } finally {
+      setLoading(false)
+    }
   }
 
-  // Render functions for each tab
-  const renderAppearanceTab = () => (
-    <>
-      <div className="setting-section">
-        <h3>{t('settings.appearanceSettings')}</h3>
-        
-        <div className="settings-grid">
-          <div className="setting-item">
-            <label className="setting-label">
-              {t('settings.theme')}
-            </label>
-            <select 
-              className="setting-select" 
-              value={theme}
-              onChange={handleThemeChange}
-            >
-              <option value="dark">{t('settings.themeDark')}</option>
-              <option value="light">{t('settings.themeLight')}</option>
-            </select>
-            <span className="setting-hint">{t('settings.themeHint')}</span>
-          </div>
-          
-          <div className="setting-item">
-            <label className="setting-label">
-              {t('settings.language')}
-            </label>
-            <select 
-              className="setting-select"
-              value={language}
-              onChange={handleLanguageChange}
-            >
-              <option value="vi">{t('settings.languageVi')}</option>
-              <option value="en">{t('settings.languageEn')}</option>
-            </select>
-            <span className="setting-hint">{t('settings.languageHint')}</span>
-          </div>
-        </div>
+  const isActiveStatus = (status: string) =>
+    ['pending', 'running'].includes(status.toLowerCase())
+  const hasActiveJobs = groups.some((group) => {
+    if (isActiveStatus(group.status)) return true
+    return Object.values(group.sheets).some((sheet) => isActiveStatus(sheet.status))
+  })
+  const canEditConfig = !hasActiveJobs
+  const isEditable = !loading && !!config && canEditConfig
 
-        <div className="setting-item setting-item-toggle">
-          <div className="toggle-content">
-            <div className="toggle-label">
-              <div>
-                <div className="label-text">{t('settings.enableAnimations')}</div>
-                <div className="label-description">{t('settings.animationsDesc')}</div>
-              </div>
-            </div>
-            <label className="toggle-switch">
-              <input 
-                type="checkbox" 
-                checked={enableAnimations}
-                onChange={handleAnimationsChange}
-              />
-              <span className="toggle-slider"></span>
-            </label>
-          </div>
-        </div>
-      </div>
-
-      <div className="setting-section">
-        <h3>{t('settings.processingOptions')}</h3>
-        
-        <div className="setting-item setting-item-toggle">
-          <div className="toggle-content">
-            <div className="toggle-label">
-              <div>
-                <div className="label-text">{t('settings.autoSave')}</div>
-                <div className="label-description">{t('settings.autoSaveDesc')}</div>
-              </div>
-            </div>
-            <label className="toggle-switch">
-              <input 
-                type="checkbox" 
-                checked={autoSave}
-                onChange={handleAutoSaveChange}
-              />
-              <span className="toggle-slider"></span>
-            </label>
-          </div>
-        </div>
-        
-        <div className="setting-item setting-item-toggle">
-          <div className="toggle-content">
-            <div className="toggle-label">
-              <div>
-                <div className="label-text">{t('settings.showNotifications')}</div>
-                <div className="label-description">{t('settings.notificationsDesc')}</div>
-              </div>
-            </div>
-            <label className="toggle-switch">
-              <input 
-                type="checkbox" 
-                checked={showNotifications}
-                onChange={handleNotificationsChange}
-              />
-              <span className="toggle-slider"></span>
-            </label>
-          </div>
-        </div>
-      </div>
-    </>
-  )
-
-  const renderServerTab = () => {
-    if (loading) return <div className="loading">{t('settings.loading')}</div>
-    if (!serverConfig) return null
-
-    return (
-      <div className="setting-section">
-        <h3>{t('settings.serverSettings')}</h3>
-        
-        <div className="settings-grid">
-          <div className="setting-item">
-            <label className="setting-label">
-              {t('settings.host')}
-            </label>
-            <input
-              type="text"
-              className="setting-input"
-              value={serverConfig.host}
-              onChange={(e) => setServerConfig({...serverConfig, host: e.target.value})}
-              placeholder="127.0.0.1"
-            />
-            <span className="setting-hint">{t('settings.hostHint')}</span>
-          </div>
-
-          <div className="setting-item">
-            <label className="setting-label">
-              {t('settings.port')}
-            </label>
-            <input
-              type="number"
-              className="setting-input"
-              value={serverConfig.port}
-              onChange={(e) => setServerConfig({...serverConfig, port: parseInt(e.target.value)})}
-              min="1"
-              max="65535"
-              placeholder="5000"
-            />
-            <span className="setting-hint">{t('settings.portHint')}</span>
-          </div>
-        </div>
-
-        <div className="setting-item setting-item-toggle">
-          <div className="toggle-content">
-            <div className="toggle-label">
-              <div>
-                <div className="label-text">{t('settings.debugMode')}</div>
-                <div className="label-description">{t('settings.debugModeDesc')}</div>
-              </div>
-            </div>
-            <label className="toggle-switch">
-              <input
-                type="checkbox"
-                checked={serverConfig.debug}
-                onChange={(e) => setServerConfig({...serverConfig, debug: e.target.checked})}
-              />
-              <span className="toggle-slider"></span>
-            </label>
-          </div>
-        </div>
-      </div>
-    )
+  const updateFace = (patch: Partial<ConfigState['image']['face']>) => {
+    if (!config) return
+    setConfig({
+      ...config,
+      image: {
+        ...config.image,
+        face: { ...config.image.face, ...patch },
+      },
+    })
   }
 
-  const renderDownloadTab = () => {
-    if (loading) return <div className="loading">{t('settings.loading')}</div>
-    if (!downloadConfig) return null
+  const updateSaliency = (patch: Partial<ConfigState['image']['saliency']>) => {
+    if (!config) return
+    setConfig({
+      ...config,
+      image: {
+        ...config.image,
+        saliency: { ...config.image.saliency, ...patch },
+      },
+    })
+  }
 
-    return (
-      <>
+  const createPadStyles = (padding: {
+    paddingTop: number
+    paddingBottom: number
+    paddingLeft: number
+    paddingRight: number
+  }) => {
+    const baseInset = 10
+    const detectInset = 25
+    const range = detectInset - baseInset
+    const clamp01 = (value: number) => Math.min(1, Math.max(0, Number.isFinite(value) ? value : 0))
+    const resolveInset = (value: number) => `${detectInset - range * clamp01(value)}%`
+    return {
+      base: { inset: `${baseInset}%` },
+      detect: { inset: `${detectInset}%` },
+      crop: {
+        top: resolveInset(padding.paddingTop),
+        right: resolveInset(padding.paddingRight),
+        bottom: resolveInset(padding.paddingBottom),
+        left: resolveInset(padding.paddingLeft),
+      },
+    }
+  }
+
+  return (
+    <div className="setting-menu">
+      <h1 className="menu-title">{t('settings.title')}</h1>
+
+      {message && <div className={`message message-${message.type}`}>{message.text}</div>}
+      {activeTab !== 'appearance' && hasActiveJobs && (
+        <div className="message message-warning">{t('settings.locked')}</div>
+      )}
+      <div className="setting-tabs">
+        <button
+          className={`tab-button ${activeTab === 'appearance' ? 'active' : ''}`}
+          onClick={() => setActiveTab('appearance')}
+        >
+          {t('settings.appearance')}
+        </button>
+        <button
+          className={`tab-button ${activeTab === 'server' ? 'active' : ''}`}
+          onClick={() => setActiveTab('server')}
+        >
+          {t('settings.server')}
+        </button>
+        <button
+          className={`tab-button ${activeTab === 'download' ? 'active' : ''}`}
+          onClick={() => setActiveTab('download')}
+        >
+          {t('settings.download')}
+        </button>
+        <button
+          className={`tab-button ${activeTab === 'job' ? 'active' : ''}`}
+          onClick={() => setActiveTab('job')}
+        >
+          {t('settings.job')}
+        </button>
+        <button
+          className={`tab-button ${activeTab === 'image' ? 'active' : ''}`}
+          onClick={() => setActiveTab('image')}
+        >
+          {t('settings.image')}
+        </button>
+      </div>
+
+      {activeTab === 'appearance' && (
         <div className="setting-section">
-          <h3>{t('settings.downloadSettings')}</h3>
+          <h3>{t('settings.appearanceSettings')}</h3>
 
-          <div className="setting-item">
-            <label className="setting-label">
-              {t('settings.downloadDir')}
-            </label>
-            <div className="input-group">
-              <input
-                type="text"
-                className="setting-input"
-                value={downloadConfig.download_dir}
-                onChange={(e) => setDownloadConfig({...downloadConfig, download_dir: e.target.value})}
-                placeholder="./downloads"
-              />
-              <button 
-                className="browse-btn"
-                onClick={async () => {
-                  console.log('Browse button clicked')
-                  if (!window.electronAPI) {
-                    alert('Folder browser is only available in desktop app')
-                    return
-                  }
-                  try {
-                    const result = await window.electronAPI.openFolder()
-                    console.log('Selected folder:', result)
-                    if (result) {
-                      setDownloadConfig({...downloadConfig, download_dir: result})
-                    }
-                  } catch (error) {
-                    console.error('Error opening folder dialog:', error)
-                  }
-                }}
+          <div className="settings-grid">
+            <div className="setting-item">
+              <label className="setting-label">{t('settings.theme')}</label>
+              <select
+                className="setting-select"
+                value={theme}
+                onChange={(e) => setTheme(e.target.value as 'dark' | 'light')}
               >
-                {t('input.browse')}
-              </button>
-            </div>
-            <span className="setting-hint">{t('settings.downloadDirHint')}</span>
-          </div>
-
-          <div className="settings-grid">
-            <div className="setting-item">
-              <label className="setting-label">
-                {t('settings.maxConcurrent')}
-              </label>
-              <input
-                type="number"
-                className="setting-input"
-                value={downloadConfig.max_concurrent_downloads}
-                onChange={(e) => setDownloadConfig({...downloadConfig, max_concurrent_downloads: parseInt(e.target.value)})}
-                min="1"
-                max="50"
-              />
-              <span className="setting-hint">{t('settings.maxConcurrentHint')}</span>
+                <option value="dark">{t('settings.themeDark')}</option>
+                <option value="light">{t('settings.themeLight')}</option>
+              </select>
+              <span className="setting-hint">{t('settings.themeHint')}</span>
             </div>
 
             <div className="setting-item">
-              <label className="setting-label">
-                {t('settings.workersPerDownload')}
-              </label>
-              <input
-                type="number"
-                className="setting-input"
-                value={downloadConfig.max_workers_per_download}
-                onChange={(e) => setDownloadConfig({...downloadConfig, max_workers_per_download: parseInt(e.target.value)})}
-                min="1"
-                max="16"
-              />
-              <span className="setting-hint">{t('settings.workersPerDownloadHint')}</span>
-            </div>
-          </div>
-
-          <div className="settings-grid">
-            <div className="setting-item">
-              <label className="setting-label">
-                {t('settings.chunkSize')}
-              </label>
-              <div className="setting-input-with-display">
-                <input
-                  type="number"
-                  className="setting-input"
-                  value={downloadConfig.chunk_size}
-                  onChange={(e) => setDownloadConfig({...downloadConfig, chunk_size: parseInt(e.target.value)})}
-                  min="65536"
-                  max="10485760"
-                  step="65536"
-                />
-                <span className="setting-display">{formatBytes(downloadConfig.chunk_size)}</span>
-              </div>
-              <span className="setting-hint">{t('settings.chunkSizeHint')}</span>
-            </div>
-
-            <div className="setting-item">
-              <label className="setting-label">
-                {t('settings.minSizeParallel')}
-              </label>
-              <div className="setting-input-with-display">
-                <input
-                  type="number"
-                  className="setting-input"
-                  value={downloadConfig.min_file_size_for_parallel}
-                  onChange={(e) => setDownloadConfig({...downloadConfig, min_file_size_for_parallel: parseInt(e.target.value)})}
-                  min="1048576"
-                  max="104857600"
-                  step="1048576"
-                />
-                <span className="setting-display">{formatBytes(downloadConfig.min_file_size_for_parallel)}</span>
-              </div>
-              <span className="setting-hint">{t('settings.minSizeParallelHint')}</span>
+              <label className="setting-label">{t('settings.language')}</label>
+              <select
+                className="setting-select"
+                value={language}
+                onChange={(e) => setLanguage(e.target.value as 'vi' | 'en')}
+              >
+                <option value="vi">{t('settings.languageVi')}</option>
+                <option value="en">{t('settings.languageEn')}</option>
+              </select>
+              <span className="setting-hint">{t('settings.languageHint')}</span>
             </div>
           </div>
 
           <div className="setting-item setting-item-toggle">
             <div className="toggle-content">
               <div className="toggle-label">
-                <div>
-                  <div className="label-text">{t('settings.enableParallel')}</div>
-                  <div className="label-description">{t('settings.enableParallelDesc')}</div>
-                </div>
+                <div className="label-text">{t('settings.enableAnimations')}</div>
+                <div className="label-description">{t('settings.animationsDesc')}</div>
               </div>
               <label className="toggle-switch">
                 <input
                   type="checkbox"
-                  checked={downloadConfig.enable_parallel_chunks}
-                  onChange={(e) => setDownloadConfig({...downloadConfig, enable_parallel_chunks: e.target.checked})}
+                  checked={enableAnimations}
+                  onChange={(e) => setEnableAnimations(e.target.checked)}
                 />
                 <span className="toggle-slider"></span>
               </label>
             </div>
           </div>
         </div>
-      </>
-    )
-  }
+      )}
 
-  const renderNetworkTab = () => {
-    if (loading) return <div className="loading">{t('settings.loading')}</div>
-    if (!networkConfig) return null
-
-    return (
-      <>
+      {activeTab === 'server' && (
         <div className="setting-section">
-          <h3>{t('settings.retrySettings')}</h3>
+          <h3>{t('settings.serverSettings')}</h3>
+          {loading || !config ? (
+            <div className="loading">{t('settings.loading')}</div>
+          ) : (
+            <>
+              <div className="settings-grid">
+                <div className="setting-item">
+                  <label className="setting-label">{t('settings.host')}</label>
+                  <input
+                    type="text"
+                    className="setting-input"
+                    value={config.server.host}
+                    disabled={!canEditConfig}
+                    onChange={(e) =>
+                      setConfig({ ...config, server: { ...config.server, host: e.target.value } })
+                    }
+                    placeholder="127.0.0.1"
+                  />
+                  <span className="setting-hint">{t('settings.hostHint')}</span>
+                </div>
 
-          <div className="settings-grid">
-            <div className="setting-item">
-              <label className="setting-label">
-                {t('settings.maxRetries')}
-              </label>
-              <input
-                type="number"
-                className="setting-input"
-                value={networkConfig.max_retries}
-                onChange={(e) => setNetworkConfig({...networkConfig, max_retries: parseInt(e.target.value)})}
-                min="0"
-                max="10"
-              />
-              <span className="setting-hint">{t('settings.maxRetriesHint')}</span>
-            </div>
-
-            <div className="setting-item">
-              <label className="setting-label">
-                {t('settings.initialRetryDelay')}
-              </label>
-              <div className="setting-input-with-unit">
-                <input
-                  type="number"
-                  className="setting-input"
-                  value={networkConfig.initial_retry_delay}
-                  onChange={(e) => setNetworkConfig({...networkConfig, initial_retry_delay: parseFloat(e.target.value)})}
-                  min="0.1"
-                  max="60"
-                  step="0.1"
-                />
-                <span className="input-unit">{t('settings.seconds')}</span>
+                <div className="setting-item">
+                  <label className="setting-label">{t('settings.port')}</label>
+                  <input
+                    type="number"
+                    className="setting-input"
+                    value={config.server.port}
+                    disabled={!canEditConfig}
+                    onChange={(e) =>
+                      setConfig({
+                        ...config,
+                        server: { ...config.server, port: Number(e.target.value) },
+                      })
+                    }
+                    min="1"
+                    max="65535"
+                  />
+                  <span className="setting-hint">{t('settings.portHint')}</span>
+                </div>
               </div>
-              <span className="setting-hint">{t('settings.initialRetryDelayHint')}</span>
-            </div>
-          </div>
 
-          <div className="settings-grid">
-            <div className="setting-item">
-              <label className="setting-label">
-                {t('settings.maxRetryDelay')}
-              </label>
-              <div className="setting-input-with-unit">
-                <input
-                  type="number"
-                  className="setting-input"
-                  value={networkConfig.max_retry_delay}
-                  onChange={(e) => setNetworkConfig({...networkConfig, max_retry_delay: parseFloat(e.target.value)})}
-                  min="1"
-                  max="600"
-                />
-                <span className="input-unit">{t('settings.seconds')}</span>
+              <div className="setting-item setting-item-toggle">
+                <div className="toggle-content">
+                  <div className="toggle-label">
+                    <div className="label-text">{t('settings.debugMode')}</div>
+                    <div className="label-description">{t('settings.debugModeDesc')}</div>
+                  </div>
+                  <label className="toggle-switch">
+                    <input
+                      type="checkbox"
+                      checked={config.server.debug}
+                      disabled={!canEditConfig}
+                      onChange={(e) =>
+                        setConfig({
+                          ...config,
+                          server: { ...config.server, debug: e.target.checked },
+                        })
+                      }
+                    />
+                    <span className="toggle-slider"></span>
+                  </label>
+                </div>
               </div>
-              <span className="setting-hint">{t('settings.maxRetryDelayHint')}</span>
-            </div>
-
-            <div className="setting-item">
-              <label className="setting-label">
-                {t('settings.backoffMultiplier')}
-              </label>
-              <input
-                type="number"
-                className="setting-input"
-                value={networkConfig.retry_backoff_multiplier}
-                onChange={(e) => setNetworkConfig({...networkConfig, retry_backoff_multiplier: parseFloat(e.target.value)})}
-                min="1"
-                max="10"
-                step="0.1"
-              />
-              <span className="setting-hint">{t('settings.backoffMultiplierHint')}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="setting-section">
-          <h3>{t('settings.networkSettings')}</h3>
-
-          <div className="settings-grid">
-            <div className="setting-item">
-              <label className="setting-label">
-                {t('settings.requestTimeout')}
-              </label>
-              <div className="setting-input-with-unit">
-                <input
-                  type="number"
-                  className="setting-input"
-                  value={networkConfig.request_timeout}
-                  onChange={(e) => setNetworkConfig({...networkConfig, request_timeout: parseInt(e.target.value)})}
-                  min="5"
-                  max="300"
-                />
-                <span className="input-unit">{t('settings.seconds')}</span>
-              </div>
-              <span className="setting-hint">{t('settings.requestTimeoutHint')}</span>
-            </div>
-
-            <div className="setting-item">
-              <label className="setting-label">
-                {t('settings.connectTimeout')}
-              </label>
-              <div className="setting-input-with-unit">
-                <input
-                  type="number"
-                  className="setting-input"
-                  value={networkConfig.connect_timeout}
-                  onChange={(e) => setNetworkConfig({...networkConfig, connect_timeout: parseInt(e.target.value)})}
-                  min="1"
-                  max="60"
-                />
-                <span className="input-unit">{t('settings.seconds')}</span>
-              </div>
-              <span className="setting-hint">{t('settings.connectTimeoutHint')}</span>
-            </div>
-          </div>
-        </div>
-      </>
-    )
-  }
-
-  return (
-    <div className="setting-menu">
-      <h1 className="menu-title">{t('settings.title')}</h1>
-      
-      {/* Tabs */}
-      <div className="setting-tabs">
-        <button 
-          className={`tab-button ${activeTab === 'appearance' ? 'active' : ''}`}
-          onClick={() => setActiveTab('appearance')}
-        >
-          {t('settings.appearance')}
-        </button>
-        <button 
-          className={`tab-button ${activeTab === 'download' ? 'active' : ''}`}
-          onClick={() => setActiveTab('download')}
-        >
-          {t('settings.download')}
-        </button>
-        <button 
-          className={`tab-button ${activeTab === 'network' ? 'active' : ''}`}
-          onClick={() => setActiveTab('network')}
-        >
-          {t('settings.network')}
-        </button>
-        <button 
-          className={`tab-button ${activeTab === 'server' ? 'active' : ''}`}
-          onClick={() => setActiveTab('server')}
-        >
-          {t('settings.server')}
-        </button>
-      </div>
-
-      {/* Message Display */}
-      {message && (
-        <div className={`message message-${message.type}`}>
-          {message.text}
+            </>
+          )}
         </div>
       )}
 
-      {/* Tab Content */}
-      {activeTab === 'appearance' && renderAppearanceTab()}
-      {activeTab === 'server' && renderServerTab()}
-      {activeTab === 'download' && renderDownloadTab()}
-      {activeTab === 'network' && renderNetworkTab()}
+      {activeTab === 'download' && (
+        <div className="setting-section">
+          <h3>{t('settings.downloadSettings')}</h3>
+          {loading || !config ? (
+            <div className="loading">{t('settings.loading')}</div>
+          ) : (
+            <>
+              <div className="setting-item">
+                <label className="setting-label">{t('settings.saveFolder')}</label>
+                <div className="input-group">
+                  <input
+                    type="text"
+                    className="setting-input"
+                    value={config.download.saveFolder}
+                    disabled={!canEditConfig}
+                    onChange={(e) =>
+                      setConfig({
+                        ...config,
+                        download: { ...config.download, saveFolder: e.target.value },
+                      })
+                    }
+                    placeholder="./downloads"
+                  />
+                  <button
+                    className="browse-btn"
+                    disabled={!canEditConfig}
+                    onClick={async () => {
+                      if (!window.electronAPI) return
+                      const folder = await window.electronAPI.openFolder()
+                      if (folder) {
+                        setConfig({
+                          ...config,
+                          download: { ...config.download, saveFolder: folder },
+                        })
+                      }
+                    }}
+                  >
+                    {t('input.browse')}
+                  </button>
+                </div>
+                <span className="setting-hint">{t('settings.saveFolderHint')}</span>
+              </div>
 
-      {/* Action Buttons (for backend settings tabs) */}
-      {activeTab !== 'appearance' && (serverConfig || downloadConfig || networkConfig) && (
+              <div className="settings-grid">
+                <div className="setting-item">
+                  <label className="setting-label">{t('settings.maxChunks')}</label>
+                  <input
+                    type="number"
+                    className="setting-input"
+                    value={config.download.maxChunks}
+                    disabled={!canEditConfig}
+                    onChange={(e) =>
+                      setConfig({
+                        ...config,
+                        download: { ...config.download, maxChunks: Number(e.target.value) },
+                      })
+                    }
+                    min="1"
+                    max="128"
+                  />
+                  <span className="setting-hint">{t('settings.maxChunksHint')}</span>
+                </div>
+
+                <div className="setting-item">
+                  <label className="setting-label">{t('settings.speedLimit')}</label>
+                  <input
+                    type="number"
+                    className="setting-input"
+                    value={config.download.limitBytesPerSecond}
+                    disabled={!canEditConfig}
+                    onChange={(e) =>
+                      setConfig({
+                        ...config,
+                        download: { ...config.download, limitBytesPerSecond: Number(e.target.value) },
+                      })
+                    }
+                    min="0"
+                  />
+                  <span className="setting-hint">{t('settings.speedLimitHint')}</span>
+                </div>
+              </div>
+
+              <div className="settings-grid">
+                <div className="setting-item">
+                  <label className="setting-label">{t('settings.retryTimeout')}</label>
+                  <input
+                    type="number"
+                    className="setting-input"
+                    value={config.download.retryTimeout}
+                    disabled={!canEditConfig}
+                    onChange={(e) =>
+                      setConfig({
+                        ...config,
+                        download: { ...config.download, retryTimeout: Number(e.target.value) },
+                      })
+                    }
+                    min="1"
+                  />
+                  <span className="setting-hint">{t('settings.retryTimeoutHint')}</span>
+                </div>
+
+                <div className="setting-item">
+                  <label className="setting-label">{t('settings.maxRetries')}</label>
+                  <input
+                    type="number"
+                    className="setting-input"
+                    value={config.download.maxRetries}
+                    disabled={!canEditConfig}
+                    onChange={(e) =>
+                      setConfig({
+                        ...config,
+                        download: { ...config.download, maxRetries: Number(e.target.value) },
+                      })
+                    }
+                    min="0"
+                    max="10"
+                  />
+                  <span className="setting-hint">{t('settings.maxRetriesHint')}</span>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'job' && (
+        <div className="setting-section">
+          <h3>{t('settings.jobSettings')}</h3>
+          {loading || !config ? (
+            <div className="loading">{t('settings.loading')}</div>
+          ) : (
+            <div className="setting-item">
+              <label className="setting-label">{t('settings.maxConcurrentJobs')}</label>
+              <input
+                type="number"
+                className="setting-input"
+                value={config.job.maxConcurrentJobs}
+                disabled={!canEditConfig}
+                onChange={(e) =>
+                  setConfig({
+                    ...config,
+                    job: { maxConcurrentJobs: Number(e.target.value) },
+                  })
+                }
+                min="1"
+                max="32"
+              />
+              <span className="setting-hint">{t('settings.maxConcurrentJobsHint')}</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'image' && (
+        <div className="setting-section">
+          <h3>{t('settings.imageSettings')}</h3>
+          {loading || !config ? (
+            <div className="loading">{t('settings.loading')}</div>
+          ) : (
+            <>
+              <div className="image-config-block">
+                <div className="image-config-header">
+                  <div>
+                    <h4>{t('settings.imageFace')}</h4>
+                    <span className="setting-hint">{t('settings.imageFaceHint')}</span>
+                  </div>
+                </div>
+                <div className="image-config-grid">
+                  <div className="image-padding-layout">
+                    <div className="pad-item pad-top">
+                      <label className="setting-label">{t('settings.paddingTop')}</label>
+                      <input
+                        type="number"
+                        className="setting-input"
+                        value={config.image.face.paddingTop}
+                        disabled={!canEditConfig}
+                        onChange={(e) => updateFace({ paddingTop: Number(e.target.value) })}
+                        min="0"
+                        max="1"
+                        step="0.01"
+                      />
+                      <span className="setting-hint">{t('settings.paddingHint')}</span>
+                    </div>
+                    <div className="pad-item pad-left">
+                      <label className="setting-label">{t('settings.paddingLeft')}</label>
+                      <input
+                        type="number"
+                        className="setting-input"
+                        value={config.image.face.paddingLeft}
+                        disabled={!canEditConfig}
+                        onChange={(e) => updateFace({ paddingLeft: Number(e.target.value) })}
+                        min="0"
+                        max="1"
+                        step="0.01"
+                      />
+                      <span className="setting-hint">{t('settings.paddingHint')}</span>
+                    </div>
+                    <div className="pad-center">
+                      <div className="pad-diagram">
+                        <div
+                          className="pad-box pad-base"
+                          style={createPadStyles(config.image.face).base}
+                        ></div>
+                        <div
+                          className="pad-box pad-detect"
+                          style={createPadStyles(config.image.face).detect}
+                        ></div>
+                        <div
+                          className="pad-box pad-crop"
+                          style={createPadStyles(config.image.face).crop}
+                        ></div>
+                      </div>
+                    </div>
+                    <div className="pad-item pad-right">
+                      <label className="setting-label">{t('settings.paddingRight')}</label>
+                      <input
+                        type="number"
+                        className="setting-input"
+                        value={config.image.face.paddingRight}
+                        disabled={!canEditConfig}
+                        onChange={(e) => updateFace({ paddingRight: Number(e.target.value) })}
+                        min="0"
+                        max="1"
+                        step="0.01"
+                      />
+                      <span className="setting-hint">{t('settings.paddingHint')}</span>
+                    </div>
+                    <div className="pad-item pad-bottom">
+                      <label className="setting-label">{t('settings.paddingBottom')}</label>
+                      <input
+                        type="number"
+                        className="setting-input"
+                        value={config.image.face.paddingBottom}
+                        disabled={!canEditConfig}
+                        onChange={(e) => updateFace({ paddingBottom: Number(e.target.value) })}
+                        min="0"
+                        max="1"
+                        step="0.01"
+                      />
+                      <span className="setting-hint">{t('settings.paddingHint')}</span>
+                    </div>
+                  </div>
+                  <div className="image-config-side">
+                    <div className="setting-item">
+                      <label className="setting-label">{t('settings.imageConfidence')}</label>
+                      <input
+                        type="number"
+                        className="setting-input"
+                        value={config.image.face.confidence}
+                        disabled={!canEditConfig}
+                        onChange={(e) => updateFace({ confidence: Number(e.target.value) })}
+                        min="0"
+                        max="1"
+                        step="0.01"
+                      />
+                      <span className="setting-hint">{t('settings.paddingHint')}</span>
+                    </div>
+                    <div className="setting-item setting-item-toggle">
+                      <div className="toggle-content">
+                        <div className="toggle-label">
+                          <div className="label-text">{t('settings.imageUnionAll')}</div>
+                        </div>
+                        <label className="toggle-switch">
+                          <input
+                            type="checkbox"
+                            checked={config.image.face.unionAll}
+                            disabled={!canEditConfig}
+                            onChange={(e) => updateFace({ unionAll: e.target.checked })}
+                          />
+                          <span className="toggle-slider"></span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="image-config-block">
+                <div className="image-config-header">
+                  <div>
+                    <h4>{t('settings.imageSaliency')}</h4>
+                    <span className="setting-hint">{t('settings.imageSaliencyHint')}</span>
+                  </div>
+                </div>
+                <div className="image-config-grid">
+                  <div className="image-padding-layout">
+                    <div className="pad-item pad-top">
+                      <label className="setting-label">{t('settings.paddingTop')}</label>
+                      <input
+                        type="number"
+                        className="setting-input"
+                        value={config.image.saliency.paddingTop}
+                        disabled={!canEditConfig}
+                        onChange={(e) => updateSaliency({ paddingTop: Number(e.target.value) })}
+                        min="0"
+                        max="1"
+                        step="0.01"
+                      />
+                      <span className="setting-hint">{t('settings.paddingHint')}</span>
+                    </div>
+                    <div className="pad-item pad-left">
+                      <label className="setting-label">{t('settings.paddingLeft')}</label>
+                      <input
+                        type="number"
+                        className="setting-input"
+                        value={config.image.saliency.paddingLeft}
+                        disabled={!canEditConfig}
+                        onChange={(e) => updateSaliency({ paddingLeft: Number(e.target.value) })}
+                        min="0"
+                        max="1"
+                        step="0.01"
+                      />
+                      <span className="setting-hint">{t('settings.paddingHint')}</span>
+                    </div>
+                    <div className="pad-center">
+                      <div className="pad-diagram">
+                        <div
+                          className="pad-box pad-base"
+                          style={createPadStyles(config.image.saliency).base}
+                        ></div>
+                        <div
+                          className="pad-box pad-detect"
+                          style={createPadStyles(config.image.saliency).detect}
+                        ></div>
+                        <div
+                          className="pad-box pad-crop"
+                          style={createPadStyles(config.image.saliency).crop}
+                        ></div>
+                      </div>
+                    </div>
+                    <div className="pad-item pad-right">
+                      <label className="setting-label">{t('settings.paddingRight')}</label>
+                      <input
+                        type="number"
+                        className="setting-input"
+                        value={config.image.saliency.paddingRight}
+                        disabled={!canEditConfig}
+                        onChange={(e) => updateSaliency({ paddingRight: Number(e.target.value) })}
+                        min="0"
+                        max="1"
+                        step="0.01"
+                      />
+                      <span className="setting-hint">{t('settings.paddingHint')}</span>
+                    </div>
+                    <div className="pad-item pad-bottom">
+                      <label className="setting-label">{t('settings.paddingBottom')}</label>
+                      <input
+                        type="number"
+                        className="setting-input"
+                        value={config.image.saliency.paddingBottom}
+                        disabled={!canEditConfig}
+                        onChange={(e) => updateSaliency({ paddingBottom: Number(e.target.value) })}
+                        min="0"
+                        max="1"
+                        step="0.01"
+                      />
+                      <span className="setting-hint">{t('settings.paddingHint')}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {activeTab !== 'appearance' && (
         <div className="setting-actions">
-          <button 
-            className="btn btn-primary" 
-            onClick={saveCurrentSection}
-            disabled={saving}
-          >
-            {saving ? 'Saving...' : t('settings.save')}
+          <button className="btn btn-primary" onClick={saveConfig} disabled={!isEditable || saving}>
+            {saving ? t('settings.saving') : t('settings.save')}
           </button>
-          <button 
-            className="btn btn-secondary" 
-            onClick={() => loadConfig(activeTab)}
-          >
+          <button className="btn btn-secondary" onClick={reloadConfig} disabled={!isEditable}>
             {t('settings.reload')}
           </button>
-          <button 
-            className="btn btn-danger" 
-            onClick={resetConfig}
-          >
+          <button className="btn btn-danger" onClick={resetConfig} disabled={!isEditable}>
             {t('settings.resetToDefaults')}
           </button>
         </div>

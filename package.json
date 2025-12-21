@@ -1,7 +1,7 @@
 {
-  "name": "slide-generator-frontend",
+  "name": "slide-generator",
   "version": "1.0.0",
-  "description": "Slide Generator | Frontend",
+  "description": "Frontend client of SlideGenerator application.",
   "main": "dist-electron/main.js",
   "type": "commonjs",
   "scripts": {
@@ -16,8 +16,8 @@
     "vite"
   ],
   "author": "thnhmai06",
-  "license": "MIT",
   "dependencies": {
+    "@microsoft/signalr": "^8.0.6",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },

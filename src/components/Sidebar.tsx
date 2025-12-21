@@ -13,15 +13,15 @@ const Sidebar: React.FC<SidebarProps> = ({ currentMenu, onMenuChange }) => {
   const { t } = useApp()
   
   const menuItems = [
-    { id: 'input' as MenuType, label: t('menu.input'), icon: '/assets/upload.png', activeIcon: '/assets/upload-selected.png' },
-    { id: 'process' as MenuType, label: t('process.title'), icon: '/assets/process.png', activeIcon: '/assets/process-selected.png' },
-    { id: 'download' as MenuType, label: t('output.title'), icon: '/assets/download.png', activeIcon: '/assets/download-selected.png' },
+    { id: 'input' as MenuType, label: t('menu.input'), icon: '/assets/images/upload.png', activeIcon: '/assets/images/upload-selected.png' },
+    { id: 'process' as MenuType, label: t('process.title'), icon: '/assets/images/process.png', activeIcon: '/assets/images/process-selected.png' },
+    { id: 'download' as MenuType, label: t('output.title'), icon: '/assets/images/download.png', activeIcon: '/assets/images/download-selected.png' },
   ]
 
   return (
     <div className="sidebar">
       <div className="sidebar-header">
-        <img src="/assets/UET-logo.png" alt="UET Logo" className="sidebar-logo" />
+        <img src="/assets/images/uet-logo.png" alt="UET Logo" className="sidebar-logo" />
         <h2>{t('app.title')}</h2>
       </div>
       <ul className="sidebar-menu">
@@ -47,7 +47,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentMenu, onMenuChange }) => {
           title={t('menu.setting')}
         >
           <img 
-            src={currentMenu === 'setting' ? '/assets/setting-selected.png' : '/assets/setting.png'} 
+            src={currentMenu === 'setting' ? '/assets/images/setting-selected.png' : '/assets/images/setting.png'} 
             alt="Setting" 
             className="footer-icon" 
           />
@@ -59,7 +59,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentMenu, onMenuChange }) => {
           title={t('menu.about')}
         >
           <img 
-            src={currentMenu === 'about' ? '/assets/about-selected.png' : '/assets/about.png'} 
+            src={currentMenu === 'about' ? '/assets/images/about-selected.png' : '/assets/images/about.png'} 
             alt="About" 
             className="footer-icon" 
           />
