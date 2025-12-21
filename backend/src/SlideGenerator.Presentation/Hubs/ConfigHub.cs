@@ -8,6 +8,7 @@ using SlideGenerator.Application.Configs.DTOs.Responses.Errors;
 using SlideGenerator.Application.Configs.DTOs.Responses.Successes;
 using SlideGenerator.Application.Job.Contracts;
 using SlideGenerator.Domain.Configs;
+using SlideGenerator.Domain.Job.Enums;
 using SlideGenerator.Infrastructure.Configs;
 using SlideGenerator.Presentation.Exceptions.Hubs;
 
@@ -72,14 +73,27 @@ public class ConfigHub(
                 config.Download.LimitBytesPerSecond,
                 config.Download.SaveFolder,
                 new RetryConfig(config.Download.Retry.Timeout, config.Download.Retry.MaxRetries)),
-            new JobConfig(config.Job.MaxConcurrentJobs)
+            new JobConfig(config.Job.MaxConcurrentJobs),
+            new ImageConfig(
+                new FaceConfig(
+                    config.Image.Face.Confidence,
+                    config.Image.Face.PaddingTop,
+                    config.Image.Face.PaddingBottom,
+                    config.Image.Face.PaddingLeft,
+                    config.Image.Face.PaddingRight,
+                    config.Image.Face.UnionAll),
+                new SaliencyConfig(
+                    config.Image.Saliency.PaddingTop,
+                    config.Image.Saliency.PaddingBottom,
+                    config.Image.Saliency.PaddingLeft,
+                    config.Image.Saliency.PaddingRight))
         );
     }
 
     private ConfigUpdateSuccess ExecuteUpdateConfig(ConfigUpdate request)
     {
-        if (jobManager.Active.HasActiveJobs)
-            throw new InvalidOperationException("Cannot update config while jobs are running. Cancel all jobs first.");
+        if (HasWorkingJobs())
+            throw new InvalidOperationException("Cannot update config while jobs are running. Pause or complete them first.");
 
         var config = new Config
         {
@@ -109,7 +123,28 @@ public class ConfigHub(
                 {
                     MaxConcurrentJobs = request.Job.MaxConcurrentJobs
                 }
-                : ConfigHolder.Value.Job
+                : ConfigHolder.Value.Job,
+            Image = request.Image != null
+                ? new Config.ImageConfig
+                {
+                    Face = new Config.ImageConfig.FaceConfig
+                    {
+                        Confidence = request.Image.Face.Confidence,
+                        PaddingTop = request.Image.Face.PaddingTop,
+                        PaddingBottom = request.Image.Face.PaddingBottom,
+                        PaddingLeft = request.Image.Face.PaddingLeft,
+                        PaddingRight = request.Image.Face.PaddingRight,
+                        UnionAll = request.Image.Face.UnionAll
+                    },
+                    Saliency = new Config.ImageConfig.SaliencyConfig
+                    {
+                        PaddingTop = request.Image.Saliency.PaddingTop,
+                        PaddingBottom = request.Image.Saliency.PaddingBottom,
+                        PaddingLeft = request.Image.Saliency.PaddingLeft,
+                        PaddingRight = request.Image.Saliency.PaddingRight
+                    }
+                }
+                : ConfigHolder.Value.Image
         };
         ConfigHolder.Value = config;
         ConfigLoader.Save(ConfigHolder.Value, ConfigHolder.Locker);
@@ -120,7 +155,7 @@ public class ConfigHub(
 
     private ConfigReloadSuccess ExecuteReloadConfig()
     {
-        if (jobManager.Active.HasActiveJobs)
+        if (HasWorkingJobs())
             throw new InvalidOperationException("Cannot reload config while jobs are running.");
 
         var loaded = ConfigLoader.Load(ConfigHolder.Locker);
@@ -133,7 +168,7 @@ public class ConfigHub(
 
     private ConfigResetSuccess ExecuteResetConfig()
     {
-        if (jobManager.Active.HasActiveJobs)
+        if (HasWorkingJobs())
             throw new InvalidOperationException("Cannot reset config while jobs are running.");
 
         ConfigHolder.Reset();
@@ -141,5 +176,12 @@ public class ConfigHub(
         logger.LogInformation("Configuration reset to defaults by client {ConnectionId}", Context.ConnectionId);
 
         return new ConfigResetSuccess(true, "Configuration reset to defaults");
+    }
+
+    private bool HasWorkingJobs()
+    {
+        return jobManager.Active.GetAllGroups()
+            .Values
+            .Any(group => group.Status is GroupStatus.Pending or GroupStatus.Running);
     }
 }

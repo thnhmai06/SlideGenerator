@@ -30,10 +30,38 @@
                 "hidden": true
             }
         },
+        // Backend
+        {
+            "name": "[Backend]",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "dotnet",
+            "args": [
+                "run",
+                "--project",
+                "${workspaceFolder}/backend/src/SlideGenerator.Presentation/SlideGenerator.Presentation.csproj"
+            ],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            }
+        }
     ],
     "compounds": [
         {
-            "name": "[Frontend] All",
+            "name": "[All] Backend & Frontend",
+            "configurations": [
+                "[Backend]",
+                "[Frontend] Main Process"
+            ],
+            "presentation": {
+                "order": 1
+            }
+        },
+        {
+            "name": "[Frontend]",
             "configurations": [
                 "[Frontend] Main Process",
                 "[Frontend] Renderer"
@@ -41,6 +69,6 @@
             "presentation": {
                 "order": 2
             }
-        },
+        }
     ]
 }

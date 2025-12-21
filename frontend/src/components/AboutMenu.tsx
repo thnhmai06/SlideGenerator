@@ -36,11 +36,11 @@ const AboutMenu: React.FC = () => {
 
         <div className="about-links">
           <button className="link-btn" onClick={handleOpenGithub}>
-            <img src="/assets/github-logo.png" alt="GitHub" className="link-icon" />
+            <img src="/assets/images/github-logo.png" alt="GitHub" className="link-icon" />
             {t('about.githubRepo')}
           </button>
           <button className="link-btn" onClick={handleOpenReadme}>
-            <img src="/assets/readme.png" alt="README" className="link-icon" />
+            <img src="/assets/images/readme.png" alt="README" className="link-icon" />
             {t('about.readDocs')}
           </button>
         </div>

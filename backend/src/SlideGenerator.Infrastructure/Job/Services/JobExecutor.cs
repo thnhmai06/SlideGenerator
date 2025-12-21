@@ -16,6 +16,7 @@ public class JobExecutor(
     ILogger<JobExecutor> logger,
     JobManager jobManager,
     ISlideServices slideServices,
+    ISlideWorkingManager slideWorkingManager,
     IJobNotifier jobNotifier,
     IJobStateStore jobStateStore,
     IFileSystem fileSystem) : Service(logger), IJobExecutor
@@ -60,6 +61,7 @@ public class JobExecutor(
 
             if (sheet.CurrentRow == 0)
             {
+                slideWorkingManager.RemoveWorkingPresentation(sheet.OutputPath);
                 fileSystem.CopyFile(group.Template.FilePath, sheet.OutputPath, true);
             }
             else
@@ -152,6 +154,8 @@ public class JobExecutor(
         finally
         {
             sheet.MarkExecuting(false);
+            if (sheet.Status is SheetJobStatus.Completed or SheetJobStatus.Failed or SheetJobStatus.Cancelled or SheetJobStatus.Paused)
+                slideWorkingManager.RemoveWorkingPresentation(sheet.OutputPath);
         }
     }
 

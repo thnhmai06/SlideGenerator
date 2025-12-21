@@ -7,8 +7,6 @@ interface Settings {
   theme: Theme
   language: Language
   enableAnimations: boolean
-  autoSave: boolean
-  showNotifications: boolean
 }
 
 interface AppContextType {
@@ -66,15 +64,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Auto-save settings whenever they change
   useEffect(() => {
     if (isLoaded) {
-      const autoSave = localStorage.getItem('autoSave') !== 'false'
-      const showNotifications = localStorage.getItem('showNotifications') !== 'false'
-      
       const settings: Settings = {
         theme,
         language,
         enableAnimations,
-        autoSave,
-        showNotifications
       }
       saveSettings(settings)
     }

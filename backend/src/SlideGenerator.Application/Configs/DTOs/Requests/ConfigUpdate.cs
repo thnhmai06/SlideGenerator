@@ -6,7 +6,8 @@ namespace SlideGenerator.Application.Configs.DTOs.Requests;
 public sealed record ConfigUpdate(
     ServerConfigUpdate? Server,
     DownloadConfigUpdate? Download,
-    JobConfigUpdate? Job);
+    JobConfigUpdate? Job,
+    ImageConfigUpdate? Image);
 
 /// <summary>
 ///     Server configuration update.
@@ -31,3 +32,28 @@ public sealed record RetryConfigUpdate(int Timeout, int MaxRetries);
 ///     Job configuration update.
 /// </summary>
 public sealed record JobConfigUpdate(int MaxConcurrentJobs);
+
+/// <summary>
+///     Image configuration update.
+/// </summary>
+public sealed record ImageConfigUpdate(FaceConfigUpdate Face, SaliencyConfigUpdate Saliency);
+
+/// <summary>
+///     Face configuration update.
+/// </summary>
+public sealed record FaceConfigUpdate(
+    float Confidence,
+    float PaddingTop,
+    float PaddingBottom,
+    float PaddingLeft,
+    float PaddingRight,
+    bool UnionAll);
+
+/// <summary>
+///     Saliency configuration update.
+/// </summary>
+public sealed record SaliencyConfigUpdate(
+    float PaddingTop,
+    float PaddingBottom,
+    float PaddingLeft,
+    float PaddingRight);
