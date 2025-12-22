@@ -13,9 +13,9 @@ using SlideGenerator.Framework.Slide;
 using SlideGenerator.Infrastructure.Base;
 using SlideGenerator.Infrastructure.Image.Exceptions;
 using SlideGenerator.Infrastructure.Utilities;
-using DrawingPicture = DocumentFormat.OpenXml.Drawing.Picture;
 using Path = System.IO.Path;
 using Presentation = SlideGenerator.Framework.Slide.Models.Presentation;
+using PresentationPicture = DocumentFormat.OpenXml.Presentation.Picture;
 using PresentationShape = DocumentFormat.OpenXml.Presentation.Shape;
 
 namespace SlideGenerator.Infrastructure.Slide.Services;
@@ -201,17 +201,17 @@ public class SlideServices(
         JobCheckpoint checkpoint,
         CancellationToken cancellationToken)
     {
-        var shape = Presentation.GetShapeById(slidePart, shapeId);
         var picture = Presentation.GetPictureById(slidePart, shapeId);
+        var shape = Presentation.GetShapeById(slidePart, shapeId);
 
         if (shape == null && picture == null)
             throw new InvalidOperationException($"Shape {shapeId} not found in slide.");
 
         await checkpoint(JobCheckpointStage.BeforeImageProcess, cancellationToken);
-        if (shape != null)
-            await ProcessImageAsync(slidePart, shape, imagePath, roiType, cropType, checkpoint, cancellationToken);
-        else if (picture != null)
+        if (picture != null)
             await ProcessImageAsync(slidePart, picture, imagePath, roiType, cropType, checkpoint, cancellationToken);
+        else if (shape != null)
+            await ProcessImageAsync(slidePart, shape, imagePath, roiType, cropType, checkpoint, cancellationToken);
         await checkpoint(JobCheckpointStage.AfterImageProcess, cancellationToken);
     }
 
@@ -235,7 +235,7 @@ public class SlideServices(
 
     private async Task ProcessImageAsync(
         SlidePart slidePart,
-        DrawingPicture picture,
+        PresentationPicture picture,
         string imagePath,
         ImageRoiType roiType,
         ImageCropType cropType,

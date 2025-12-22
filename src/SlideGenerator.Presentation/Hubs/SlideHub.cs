@@ -199,7 +199,8 @@ public class SlideHub(
                 kv.Value.Progress,
                 kv.Value.OutputPath,
                 kv.Value.ErrorMessage,
-                kv.Value.ErrorCount));
+                kv.Value.ErrorCount,
+                kv.Value.HangfireJobId));
 
         return new SlideGroupStatusSuccess(group.Id, group.Status, group.Progress, jobs, group.ErrorCount);
     }
@@ -247,7 +248,8 @@ public class SlideHub(
             job.Progress,
             job.OutputPath,
             job.ErrorMessage,
-            job.ErrorCount);
+            job.ErrorCount,
+            job.HangfireJobId);
     }
 
     private SlideJobControlSuccess ExecuteJobControl(GenerateSlideJobControlRequest request)

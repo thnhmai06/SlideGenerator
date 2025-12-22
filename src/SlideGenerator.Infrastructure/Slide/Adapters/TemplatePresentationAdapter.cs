@@ -2,9 +2,9 @@ using SlideGenerator.Domain.Slide;
 using SlideGenerator.Domain.Slide.Components;
 using SlideGenerator.Framework.Slide;
 using CoreTemplatePresentation = SlideGenerator.Framework.Slide.Models.TemplatePresentation;
+using Picture = DocumentFormat.OpenXml.Drawing.Picture;
 using Presentation = SlideGenerator.Framework.Slide.Models.Presentation;
 using Shape = DocumentFormat.OpenXml.Presentation.Shape;
-using Picture = DocumentFormat.OpenXml.Drawing.Picture;
 
 namespace SlideGenerator.Infrastructure.Slide.Adapters;
 

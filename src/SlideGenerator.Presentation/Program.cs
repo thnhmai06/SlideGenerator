@@ -16,6 +16,7 @@ using SlideGenerator.Infrastructure.Download.Services;
 using SlideGenerator.Infrastructure.Image.Services;
 using SlideGenerator.Infrastructure.IO;
 using SlideGenerator.Infrastructure.Job.Services;
+using SlideGenerator.Infrastructure.Logging;
 using SlideGenerator.Infrastructure.Sheet.Services;
 using SlideGenerator.Infrastructure.Slide.Services;
 using SlideGenerator.Presentation.Hubs;
@@ -30,6 +31,10 @@ using SlideGenerator.Presentation.Hubs;
 #region Builder
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure Serilog from Infrastructure
+builder.AddInfrastructureLogging();
+
 builder.Services.AddSignalR(options => options.EnableDetailedErrors = ConfigHolder.Value.Server.Debug)
     .AddJsonProtocol(options =>
     {
@@ -113,8 +118,15 @@ if (!string.Equals(host, "localhost", StringComparison.OrdinalIgnoreCase)
 
 app.Urls.Clear();
 app.Urls.Add($"http://{host}:{ConfigHolder.Value.Server.Port}");
-await app.RunAsync();
+
+try
+{
+    await app.RunAsync();
+}
+finally
+{
+    ConfigLoader.Save(ConfigHolder.Value, ConfigHolder.Locker);
+    await LoggingExtensions.CloseAndFlushAsync();
+}
 
 #endregion
-
-ConfigLoader.Save(ConfigHolder.Value, ConfigHolder.Locker);

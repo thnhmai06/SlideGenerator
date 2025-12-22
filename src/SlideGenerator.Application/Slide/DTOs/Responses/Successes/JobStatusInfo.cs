@@ -14,4 +14,5 @@ public sealed record JobStatusInfo(
     float Progress,
     string OutputPath,
     string? ErrorMessage,
-    int ErrorCount = 0);
+    int ErrorCount = 0,
+    string? HangfireJobId = null);
