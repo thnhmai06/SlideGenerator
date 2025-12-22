@@ -25,7 +25,6 @@ declare global {
       hideToTray: () => Promise<void>;
       setProgressBar: (value: number) => Promise<void>;
       restartBackend: () => Promise<boolean>;
-      getBackendConfig: () => Promise<string | null>;
     };
   }
 }

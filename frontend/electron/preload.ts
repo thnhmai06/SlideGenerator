@@ -19,7 +19,6 @@ export interface ElectronAPI {
   hideToTray: () => Promise<void>;
   setProgressBar: (value: number) => Promise<void>;
   restartBackend: () => Promise<boolean>;
-  getBackendConfig: () => Promise<string | null>;
 }
 
 const electronAPI: ElectronAPI = {
@@ -37,7 +36,6 @@ const electronAPI: ElectronAPI = {
   hideToTray: () => ipcRenderer.invoke("window:hideToTray"),
   setProgressBar: (value) => ipcRenderer.invoke("window:setProgress", value),
   restartBackend: () => ipcRenderer.invoke("backend:restart"),
-  getBackendConfig: () => ipcRenderer.invoke("backend:getConfig"),
 };
 
 contextBridge.exposeInMainWorld("electronAPI", electronAPI);

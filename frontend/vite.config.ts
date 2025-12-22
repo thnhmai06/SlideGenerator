@@ -39,7 +39,7 @@ export default defineConfig({
   ],
   server: {
     port: 65000,
-    strictPort: false,
+    strictPort: true,
   },
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version ?? "0.0.0"),

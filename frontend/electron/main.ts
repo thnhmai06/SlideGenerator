@@ -10,7 +10,6 @@ import {
 import { spawn, ChildProcess } from "child_process";
 import path from "path";
 import { fileURLToPath } from "url";
-import fs from "fs/promises";
 import fsSync from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -21,7 +20,6 @@ let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let isQuitting = false;
 let backendProcess: ChildProcess | null = null;
-let backendWorkingDir: string | null = null;
 
 const shouldStartBackend = () => process.env.SLIDEGEN_DISABLE_BACKEND !== "1";
 
@@ -77,7 +75,6 @@ const startBackend = () => {
   const launch = resolveBackendCommand();
   if (!launch) return;
 
-  backendWorkingDir = launch.cwd;
   backendProcess = spawn(launch.command, launch.args, {
     cwd: launch.cwd,
     windowsHide: true,
@@ -114,17 +111,6 @@ const restartBackend = () => {
   return Boolean(backendProcess);
 };
 
-const resolveBackendConfigPath = () => {
-  const cwd = backendWorkingDir ?? process.cwd();
-  const candidate = path.join(cwd, "backend.config.yaml");
-  if (fsSync.existsSync(candidate)) return candidate;
-  const fallback = path.join(
-    process.resourcesPath,
-    "backend",
-    "backend.config.yaml",
-  );
-  return fsSync.existsSync(fallback) ? fallback : candidate;
-};
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -145,7 +131,7 @@ function createWindow() {
 
   // Load URL based on dev/prod mode
   if (process.env.NODE_ENV === "development") {
-    mainWindow.loadURL("http://localhost:5173");
+    mainWindow.loadURL("http://localhost:65000");
     mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(path.join(__dirname, "../dist/index.html"));
@@ -296,16 +282,6 @@ ipcMain.handle("backend:restart", async () => {
   return restartBackend();
 });
 
-ipcMain.handle("backend:getConfig", async () => {
-  try {
-    const configPath = resolveBackendConfigPath();
-    const data = await fs.readFile(configPath, "utf-8");
-    return data;
-  } catch (error) {
-    console.error("Error reading backend config:", error);
-    return null;
-  }
-});
 
 ipcMain.handle("settings:read", async (_, filename: string) => {
   try {
