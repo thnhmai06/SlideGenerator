@@ -17,16 +17,16 @@ const AboutMenu: React.FC = () => {
   return (
     <div className="about-menu">
       <h1 className="menu-title">{t('menu.about')}</h1>
-      
+
       <div className="about-content">
         <div className="about-hero-gifs">
           <img
-            src="/assets/images/march-7th-dance.gif"
+            src={window.getAssetPath('images', 'march-7th-dance.gif')}
             alt=""
             className="about-hero-gif"
           />
           <img
-            src="/assets/images/evernight-dance.gif"
+            src={window.getAssetPath('images', 'evernight-dance.gif')}
             alt=""
             className="about-hero-gif"
           />
@@ -67,7 +67,11 @@ const AboutMenu: React.FC = () => {
 
         <div className="about-links">
           <button className="link-btn" onClick={handleOpenGithub}>
-            <img src="/assets/images/github-logo.png" alt="GitHub" className="link-icon" />
+            <img
+              src={window.getAssetPath('images', 'github-logo.png')}
+              alt="GitHub"
+              className="link-icon"
+            />
             {t('about.githubRepo')}
           </button>
         </div>

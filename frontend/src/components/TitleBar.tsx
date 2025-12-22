@@ -1,4 +1,6 @@
 import React from 'react'
+const getAssetPath = (...p: string[]) =>
+  (window as any).getAssetPath ? (window as any).getAssetPath(...p) : `assets/${p.join('/')}`
 import { useApp } from '../contexts/AppContext'
 import '../styles/TitleBar.css'
 
@@ -15,7 +17,11 @@ const TitleBar: React.FC = () => {
   return (
     <div className="title-bar">
       <div className="title-bar-left">
-        <img src="/assets/images/app-icon.png" alt="Slide Generator" className="title-bar-icon" />
+        <img
+          src={getAssetPath('images', 'app-icon.png')}
+          alt="Slide Generator"
+          className="title-bar-icon"
+        />
         <span className="title-bar-title">Slide Generator</span>
       </div>
       <div className="title-bar-controls">
@@ -24,21 +30,21 @@ const TitleBar: React.FC = () => {
           onClick={() => handleAction('minimize')}
           aria-label="Minimize"
         >
-          <img src="/assets/images/window-minimize.png" alt="" />
+          <img src={getAssetPath('images', 'window-minimize.png')} alt="" />
         </button>
         <button
           className="title-bar-btn"
           onClick={() => handleAction('maximize')}
           aria-label="Maximize"
         >
-          <img src="/assets/images/window-maximize.png" alt="" />
+          <img src={getAssetPath('images', 'window-maximize.png')} alt="" />
         </button>
         <button
           className="title-bar-btn title-bar-btn-danger"
           onClick={() => handleAction('close')}
           aria-label="Close"
         >
-          <img src="/assets/images/window-close.png" alt="" />
+          <img src={getAssetPath('images', 'window-close.png')} alt="" />
         </button>
       </div>
     </div>

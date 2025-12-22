@@ -31,6 +31,7 @@ interface SheetJob {
   outputPath?: string
   errorMessage?: string
   logs: LogEntry[]
+  hangfireJobId?: string
 }
 
 interface GroupJob {
@@ -72,8 +73,6 @@ interface JobContextValue {
 
 const JobContext = createContext<JobContextValue | undefined>(undefined)
 
-const MAX_LOGS = 200
-
 const createEmptyGroup = (groupId: string): GroupJob => ({
   id: groupId,
   workbookPath: '',
@@ -93,6 +92,7 @@ const createEmptySheet = (sheetId: string): SheetJob => ({
   progress: 0,
   errorCount: 0,
   logs: [],
+  hangfireJobId: undefined,
 })
 
 export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -101,11 +101,13 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const subscribedGroups = useRef(new Set<string>())
   const subscribedSheets = useRef(new Set<string>())
   const sheetToGroup = useRef<Record<string, string>>({})
+  const removedGroupIds = useRef(new Set<string>())
 
   const applyGroupTimestamps = (prev: GroupJob, next: GroupJob): GroupJob => {
     const createdAt = next.createdAt ?? prev.createdAt ?? new Date().toISOString()
     const isCompleted = ['completed', 'failed', 'cancelled'].includes(next.status.toLowerCase())
-    const completedAt = next.completedAt ?? prev.completedAt ?? (isCompleted ? new Date().toISOString() : undefined)
+    const completedAt =
+      next.completedAt ?? prev.completedAt ?? (isCompleted ? new Date().toISOString() : undefined)
     return { ...next, createdAt, completedAt }
   }
 
@@ -213,26 +215,23 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   }, [])
 
-  const updateSheet = useCallback(
-    (sheetId: string, updater: (sheet: SheetJob) => SheetJob) => {
-      const groupId = sheetToGroup.current[sheetId]
-      if (!groupId) return
+  const updateSheet = useCallback((sheetId: string, updater: (sheet: SheetJob) => SheetJob) => {
+    const groupId = sheetToGroup.current[sheetId]
+    if (!groupId) return
 
-      setGroupsById((prev) => {
-        const group = prev[groupId]
-        if (!group) return prev
+    setGroupsById((prev) => {
+      const group = prev[groupId]
+      if (!group) return prev
 
-        const currentSheet = group.sheets[sheetId] ?? createEmptySheet(sheetId)
-        const updatedSheet = updater(currentSheet)
-        const updatedGroup: GroupJob = {
-          ...group,
-          sheets: { ...group.sheets, [sheetId]: updatedSheet },
-        }
-        return { ...prev, [groupId]: updatedGroup }
-      })
-    },
-    []
-  )
+      const currentSheet = group.sheets[sheetId] ?? createEmptySheet(sheetId)
+      const updatedSheet = updater(currentSheet)
+      const updatedGroup: GroupJob = {
+        ...group,
+        sheets: { ...group.sheets, [sheetId]: updatedSheet },
+      }
+      return { ...prev, [groupId]: updatedGroup }
+    })
+  }, [])
 
   const ensureGroupSubscription = useCallback(async (groupId: string) => {
     if (subscribedGroups.current.has(groupId)) return
@@ -260,7 +259,7 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }
       })
     },
-    [updateGroup]
+    [updateGroup],
   )
 
   const syncGroupStatus = useCallback(
@@ -285,6 +284,7 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             outputPath: job.OutputPath ?? sheets[sheetId]?.outputPath,
             errorMessage: job.ErrorMessage ?? undefined,
             logs: sheets[sheetId]?.logs ?? [],
+            hangfireJobId: job.HangfireJobId ?? sheets[sheetId]?.hangfireJobId,
           }
         })
 
@@ -300,7 +300,7 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       await ensureGroupSubscription(groupId)
       await Promise.all(Object.keys(jobs).map((jobId) => ensureSheetSubscription(jobId)))
     },
-    [ensureGroupSubscription, ensureSheetSubscription, updateGroup]
+    [ensureGroupSubscription, ensureSheetSubscription, updateGroup],
   )
 
   const refreshGroups = useCallback(async () => {
@@ -309,12 +309,21 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const summaries = data.Groups ?? []
 
     summaries.forEach((summary) => {
-      upsertGroupFromSummary(summary)
+      if (!removedGroupIds.current.has(summary.GroupId)) {
+        upsertGroupFromSummary(summary)
+      }
     })
 
     saveGroupMeta(summaries)
 
-    await Promise.allSettled(summaries.map((summary) => syncGroupStatus(summary.GroupId)))
+    await Promise.allSettled(
+      summaries.map((summary) => {
+        if (!removedGroupIds.current.has(summary.GroupId)) {
+          return syncGroupStatus(summary.GroupId)
+        }
+        return Promise.resolve()
+      }),
+    )
   }, [syncGroupStatus, upsertGroupFromSummary, saveGroupMeta])
 
   const createGroup = useCallback(
@@ -331,6 +340,7 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       const data = response as backendApi.SlideGroupCreateSuccess
       const groupId = data.GroupId
+      removedGroupIds.current.delete(groupId)
       saveGroupConfig(groupId, payload)
 
       let createdGroup: GroupJob = createEmptyGroup(groupId)
@@ -360,45 +370,63 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       await ensureGroupSubscription(groupId)
       await Promise.all(
-        Object.values(data.JobIds ?? {}).map((jobId) => ensureSheetSubscription(jobId))
+        Object.values(data.JobIds ?? {}).map((jobId) => ensureSheetSubscription(jobId)),
       )
 
       await syncGroupStatus(groupId)
 
       return createdGroup
     },
-    [ensureGroupSubscription, ensureSheetSubscription, saveGroupConfig, syncGroupStatus, updateGroup]
+    [
+      ensureGroupSubscription,
+      ensureSheetSubscription,
+      saveGroupConfig,
+      syncGroupStatus,
+      updateGroup,
+    ],
   )
 
-  const groupControl = useCallback(async (groupId: string, action: backendApi.ControlAction) => {
-    await backendApi.groupControl({ GroupId: groupId, Action: action })
-    if (action === 'Stop' || action === 'Cancel') {
+  const groupControl = useCallback(
+    async (groupId: string, action: backendApi.ControlAction) => {
+      await backendApi.groupControl({ GroupId: groupId, Action: action })
+      if (action === 'Stop' || action === 'Cancel') {
+        clearGroupMeta([groupId])
+        removeGroupConfig([groupId])
+      }
+      await refreshGroups()
+    },
+    [clearGroupMeta, refreshGroups, removeGroupConfig],
+  )
+
+  const removeGroup = useCallback(
+    async (groupId: string) => {
+      try {
+        await backendApi.removeGroup({ GroupId: groupId })
+      } catch (error) {
+        console.error(`Failed to remove group ${groupId}:`, error)
+      }
+
+      setGroupsById((prev) => {
+        const next = { ...prev }
+        delete next[groupId]
+        return next
+      })
+
+      removedGroupIds.current.add(groupId)
       clearGroupMeta([groupId])
       removeGroupConfig([groupId])
-    }
-    await refreshGroups()
-  }, [clearGroupMeta, refreshGroups, removeGroupConfig])
+      return true
+    },
+    [clearGroupMeta, removeGroupConfig],
+  )
 
-  const removeGroup = useCallback(async (groupId: string) => {
-    const response = await backendApi.removeGroup({ GroupId: groupId })
-    const data = response as backendApi.SlideGroupRemoveSuccess
-    if (!data.Removed) return false
-
-    setGroupsById((prev) => {
-      const next = { ...prev }
-      delete next[groupId]
-      return next
-    })
-
-    clearGroupMeta([groupId])
-    removeGroupConfig([groupId])
-    return true
-  }, [clearGroupMeta, removeGroupConfig])
-
-  const jobControl = useCallback(async (jobId: string, action: backendApi.ControlAction) => {
-    await backendApi.jobControl({ JobId: jobId, Action: action })
-    await refreshGroups()
-  }, [refreshGroups])
+  const jobControl = useCallback(
+    async (jobId: string, action: backendApi.ControlAction) => {
+      await backendApi.jobControl({ JobId: jobId, Action: action })
+      await refreshGroups()
+    },
+    [refreshGroups],
+  )
 
   const loadSheetLogs = useCallback(
     async (jobId: string) => {
@@ -426,7 +454,7 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         console.error('Failed to load job logs:', error)
       }
     },
-    [updateSheet]
+    [updateSheet],
   )
 
   const removeSheet = useCallback(async (jobId: string) => {
@@ -470,11 +498,13 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const removedIds: string[] = []
     for (const groupId of completedIds) {
       try {
-        const response = await backendApi.removeGroup({ GroupId: groupId })
-        const data = response as backendApi.SlideGroupRemoveSuccess
-        if (data.Removed) removedIds.push(groupId)
+        await backendApi.removeGroup({ GroupId: groupId })
+        // Always add to removedIds even if backend says "false" (maybe already gone)
+        removedIds.push(groupId)
       } catch (error) {
         console.error(`Failed to remove group ${groupId}:`, error)
+        // Optionally add to removedIds here too if we want to force clear even on error
+        removedIds.push(groupId)
       }
     }
 
@@ -484,6 +514,7 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const next = { ...prev }
       removedIds.forEach((groupId) => {
         delete next[groupId]
+        removedGroupIds.current.add(groupId)
       })
       return next
     })
@@ -492,40 +523,46 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     removeGroupConfig(removedIds)
   }, [clearGroupMeta, removeGroupConfig])
 
-  const exportGroupConfig = useCallback(async (groupId: string) => {
-    const config = getGroupConfig(groupId)
-    if (!config || !window.electronAPI) return false
-    const exportPayload = {
-      pptxPath: config.templatePath,
-      dataPath: config.spreadsheetPath,
-      savePath: config.outputPath,
-      textReplacements: (config.textConfigs ?? []).map((item, index) => ({
-        id: index + 1,
-        placeholder: item.Pattern,
-        columns: item.Columns,
-      })),
-      imageReplacements: (config.imageConfigs ?? []).map((item, index) => ({
-        id: index + 1,
-        shapeId: String(item.ShapeId),
-        columns: item.Columns,
-        roiType: item.RoiType ?? 'Attention',
-        cropType: item.CropType ?? 'Fit',
-      })),
-    }
+  const exportGroupConfig = useCallback(
+    async (groupId: string) => {
+      const config = getGroupConfig(groupId)
+      if (!config || !window.electronAPI) return false
+      const exportPayload = {
+        pptxPath: config.templatePath,
+        dataPath: config.spreadsheetPath,
+        savePath: config.outputPath,
+        textReplacements: (config.textConfigs ?? []).map((item, index) => ({
+          id: index + 1,
+          placeholder: item.Pattern,
+          columns: item.Columns,
+        })),
+        imageReplacements: (config.imageConfigs ?? []).map((item, index) => ({
+          id: index + 1,
+          shapeId: String(item.ShapeId),
+          columns: item.Columns,
+          roiType: item.RoiType ?? 'Attention',
+          cropType: item.CropType ?? 'Fit',
+        })),
+      }
 
-    const path = await window.electronAPI.saveFile([
-      { name: 'JSON Files', extensions: ['json'] },
-      { name: 'All Files', extensions: ['*'] },
-    ])
-    if (!path) return false
+      const path = await window.electronAPI.saveFile([
+        { name: 'JSON Files', extensions: ['json'] },
+        { name: 'All Files', extensions: ['*'] },
+      ])
+      if (!path) return false
 
-    await window.electronAPI.writeSettings(path, JSON.stringify(exportPayload, null, 2))
-    return true
-  }, [getGroupConfig])
+      await window.electronAPI.writeSettings(path, JSON.stringify(exportPayload, null, 2))
+      return true
+    },
+    [getGroupConfig],
+  )
 
-  const hasGroupConfig = useCallback((groupId: string) => {
-    return Boolean(getGroupConfig(groupId))
-  }, [getGroupConfig])
+  const hasGroupConfig = useCallback(
+    (groupId: string) => {
+      return Boolean(getGroupConfig(groupId))
+    },
+    [getGroupConfig],
+  )
 
   useEffect(() => {
     groupsRef.current = groupsById
@@ -534,7 +571,7 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   useEffect(() => {
     if (!window.electronAPI?.setProgressBar) return
     const activeGroups = Object.values(groupsById).filter((group) =>
-      ['pending', 'running', 'paused'].includes(group.status.toLowerCase())
+      ['pending', 'running', 'paused'].includes(group.status.toLowerCase()),
     )
 
     if (activeGroups.length === 0) {
@@ -554,10 +591,7 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const data = payload as Record<string, unknown>
       const getValue = (key: string) =>
         data[key] ?? data[key.charAt(0).toLowerCase() + key.slice(1)]
-      const getDataValue = (
-        container: Record<string, unknown> | undefined,
-        key: string
-      ) => {
+      const getDataValue = (container: Record<string, unknown> | undefined, key: string) => {
         if (!container) return undefined
         if (key in container) return container[key]
         const lowered = key.toLowerCase()
@@ -575,6 +609,14 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const level = getValue('Level') as string | undefined
       const timestamp = getValue('Timestamp') as string | undefined
       const payloadData = getValue('Data') as Record<string, unknown> | undefined
+
+      if (groupId && removedGroupIds.current.has(groupId)) return
+      if (
+        jobId &&
+        sheetToGroup.current[jobId] &&
+        removedGroupIds.current.has(sheetToGroup.current[jobId])
+      )
+        return
 
       if (groupId && typeof getValue('Progress') === 'number') {
         updateGroup(groupId, (group) => ({
@@ -618,7 +660,7 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }
         updateSheet(jobId, (sheet) => ({
           ...sheet,
-          logs: [...sheet.logs, logEntry].slice(-MAX_LOGS),
+          logs: [...sheet.logs, logEntry],
         }))
         return
       }
@@ -639,12 +681,12 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         if (targetGroupId) {
           updateSheet(jobId, (sheet) => ({
             ...sheet,
-            logs: [...sheet.logs, logEntry].slice(-MAX_LOGS),
+            logs: [...sheet.logs, logEntry],
           }))
         } else if (groupsRef.current[jobId]) {
           updateGroup(jobId, (group) => ({
             ...group,
-            logs: [...group.logs, logEntry].slice(-MAX_LOGS),
+            logs: [...group.logs, logEntry],
           }))
         }
       }
@@ -659,10 +701,7 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     })
   }, [refreshGroups])
 
-  const groups = useMemo(
-    () => Object.values(groupsById),
-    [groupsById]
-  )
+  const groups = useMemo(() => Object.values(groupsById), [groupsById])
 
   const value = useMemo(
     () => ({
@@ -692,7 +731,7 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       loadSheetLogs,
       globalControl,
       refreshGroups,
-    ]
+    ],
   )
 
   return <JobContext.Provider value={value}>{children}</JobContext.Provider>

@@ -10,9 +10,9 @@ public sealed partial class Config
         public sealed class FaceConfig
         {
             /// <summary>
-            ///     Minimum face detection confidence score (0-1). Default is 0.6.
+            ///     Minimum face detection confidence score (0-1). Default is 0.7.
             /// </summary>
-            public float Confidence { get; init; } = 0.6f;
+            public float Confidence { get; init; } = 0.7f;
 
             /// <summary>
             ///     Padding ratio for top side of detected faces (0-1). Default is 0.15.
@@ -37,7 +37,7 @@ public sealed partial class Config
             /// <summary>
             ///     If true, union all detected faces; otherwise use the best single face. Default is true.
             /// </summary>
-            public bool UnionAll { get; init; } = true;
+            public bool UnionAll { get; init; } = false;
         }
 
         public sealed class SaliencyConfig

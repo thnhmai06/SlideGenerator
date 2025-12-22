@@ -1,6 +1,12 @@
 .tag-input-container {
   position: relative;
   width: 100%;
+  z-index: 1;
+}
+
+.tag-input-container:focus-within,
+.tag-input-container.is-active {
+  z-index: 1000;
 }
 
 .tag-input-wrapper {
@@ -83,7 +89,7 @@
   border: 1px solid var(--border-primary);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
-  z-index: 2000;
+  z-index: 9999;
   animation: fadeInUp var(--transition-fast);
 }
 

@@ -1,6 +1,11 @@
 .shape-selector {
   position: relative;
   width: 100%;
+  z-index: 1;
+}
+
+.shape-selector.is-active {
+  z-index: 100;
 }
 
 .shape-selector-trigger {

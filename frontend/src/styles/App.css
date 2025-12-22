@@ -64,15 +64,11 @@
 }
 
 .main-content::before {
-  content: "";
+  content: '';
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(
-    160deg,
-    rgba(255, 255, 255, 0.04),
-    transparent 60%
-  );
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.04), transparent 60%);
   pointer-events: none;
   z-index: 0;
 }

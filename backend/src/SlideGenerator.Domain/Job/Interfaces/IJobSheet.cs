@@ -17,4 +17,5 @@ public interface IJobSheet
     float Progress { get; }
     int ErrorCount { get; }
     string? ErrorMessage { get; }
+    string? HangfireJobId { get; }
 }

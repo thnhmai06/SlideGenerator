@@ -58,7 +58,10 @@ const SettingMenu: React.FC = () => {
   const [initialServer, setInitialServer] = useState<ConfigState['server'] | null>(null)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState<{ type: 'success' | 'error' | 'warning'; text: string } | null>(null)
+  const [message, setMessage] = useState<{
+    type: 'success' | 'error' | 'warning'
+    text: string
+  } | null>(null)
   const [restartRequired, setRestartRequired] = useState(false)
 
   const getErrorDetail = (error: unknown): string => {
@@ -88,17 +91,19 @@ const SettingMenu: React.FC = () => {
 
     const hasScheme = /^https?:\/\//i.test(trimmedHost)
     const base = hasScheme ? trimmedHost : `http://${trimmedHost}`
-    const normalizedHost = base.replace(
-      /^(https?:\/\/)localhost(?=[:/]|$)/i,
-      '$1127.0.0.1'
-    )
-    const normalizedBase = normalizedHost.endsWith('/') ? normalizedHost.slice(0, -1) : normalizedHost
+    const normalizedHost = base.replace(/^(https?:\/\/)localhost(?=[:/]|$)/i, '$1127.0.0.1')
+    const normalizedBase = normalizedHost.endsWith('/')
+      ? normalizedHost.slice(0, -1)
+      : normalizedHost
     const hasPort = /:\d+$/.test(normalizedBase)
     const url = hasPort ? normalizedBase : `${normalizedBase}:${port}`
     localStorage.setItem('slidegen.backend.url', url)
   }
 
-  const getCaseInsensitive = <T extends Record<string, unknown>>(obj: T | null | undefined, key: string) => {
+  const getCaseInsensitive = <T extends Record<string, unknown>>(
+    obj: T | null | undefined,
+    key: string,
+  ) => {
     if (!obj) return undefined
     if (key in obj) return obj[key]
     const lowered = key.toLowerCase()
@@ -118,9 +123,10 @@ const SettingMenu: React.FC = () => {
       const server = getCaseInsensitive(data as unknown as Record<string, unknown>, 'Server') as
         | Record<string, unknown>
         | undefined
-      const download = getCaseInsensitive(data as unknown as Record<string, unknown>, 'Download') as
-        | Record<string, unknown>
-        | undefined
+      const download = getCaseInsensitive(
+        data as unknown as Record<string, unknown>,
+        'Download',
+      ) as Record<string, unknown> | undefined
       const job = getCaseInsensitive(data as unknown as Record<string, unknown>, 'Job') as
         | Record<string, unknown>
         | undefined
@@ -326,8 +332,7 @@ const SettingMenu: React.FC = () => {
     }
   }
 
-  const isActiveStatus = (status: string) =>
-    ['pending', 'running'].includes(status.toLowerCase())
+  const isActiveStatus = (status: string) => ['pending', 'running'].includes(status.toLowerCase())
   const hasActiveJobs = groups.some((group) => {
     if (isActiveStatus(group.status)) return true
     return Object.values(group.sheets).some((sheet) => isActiveStatus(sheet.status))
@@ -633,7 +638,10 @@ const SettingMenu: React.FC = () => {
                     onChange={(e) =>
                       setConfig({
                         ...config,
-                        download: { ...config.download, limitBytesPerSecond: Number(e.target.value) },
+                        download: {
+                          ...config.download,
+                          limitBytesPerSecond: Number(e.target.value),
+                        },
                       })
                     }
                     min="0"

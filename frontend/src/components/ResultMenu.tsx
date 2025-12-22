@@ -1,3 +1,5 @@
+const getAssetPath = (...p: string[]) =>
+  (window as any).getAssetPath ? (window as any).getAssetPath(...p) : `assets/${p.join('/')}`
 import React, { useMemo, useState } from 'react'
 import { useApp } from '../contexts/AppContext'
 import { useJobs } from '../contexts/JobContext'
@@ -20,16 +22,25 @@ type RowLogGroup = {
 
 const ResultMenu: React.FC = () => {
   const { t } = useApp()
-  const { groups, clearCompleted, removeGroup, removeSheet, loadSheetLogs, exportGroupConfig, hasGroupConfig } = useJobs()
+  const {
+    groups,
+    clearCompleted,
+    removeGroup,
+    removeSheet,
+    loadSheetLogs,
+    exportGroupConfig,
+    hasGroupConfig,
+  } = useJobs()
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
   const [expandedLogs, setExpandedLogs] = useState<Record<string, boolean>>({})
   const [collapsedRowGroups, setCollapsedRowGroups] = useState<Record<string, boolean>>({})
 
   const completedGroups = useMemo(
-    () => groups.filter((group) =>
-      ['completed', 'failed', 'cancelled'].includes(group.status.toLowerCase())
-    ),
-    [groups]
+    () =>
+      groups.filter((group) =>
+        ['completed', 'failed', 'cancelled'].includes(group.status.toLowerCase()),
+      ),
+    [groups],
   )
 
   const toggleGroup = (groupId: string) => {
@@ -133,20 +144,20 @@ const ResultMenu: React.FC = () => {
 
   return (
     <div className="output-menu">
-        <div className="menu-header">
-          <h1 className="menu-title">{t('output.title')}</h1>
-          <div className="header-actions">
-            <button
-              className="btn btn-danger"
-              onClick={handleClearAll}
-              disabled={completedGroups.length === 0}
-              title={t('output.clearAll')}
-            >
-              <img src="/assets/images/close.png" alt="Clear" className="btn-icon" />
-              {t('output.clearAll')}
-            </button>
-          </div>
+      <div className="menu-header">
+        <h1 className="menu-title">{t('output.title')}</h1>
+        <div className="header-actions">
+          <button
+            className="btn btn-danger"
+            onClick={handleClearAll}
+            disabled={completedGroups.length === 0}
+            title={t('output.clearAll')}
+          >
+            <img src={getAssetPath('images', 'close.png')} alt="Clear" className="btn-icon" />
+            {t('output.clearAll')}
+          </button>
         </div>
+      </div>
 
       <div className="output-section">
         {completedGroups.length === 0 ? (
@@ -157,7 +168,7 @@ const ResultMenu: React.FC = () => {
               const sheets = Object.values(group.sheets)
               const completed = sheets.filter((sheet) => sheet.status === 'Completed').length
               const failed = sheets.filter((sheet) =>
-                ['Failed', 'Cancelled'].includes(sheet.status)
+                ['Failed', 'Cancelled'].includes(sheet.status),
               ).length
               const groupProgress = sheets.length
                 ? sheets.reduce((sum, sheet) => sum + sheet.progress, 0) / sheets.length
@@ -169,7 +180,9 @@ const ResultMenu: React.FC = () => {
                 <div key={group.id} className="output-group">
                   <div className="group-header" onClick={() => toggleGroup(group.id)}>
                     <div className="group-main-info">
-                      <span className={`expand-icon ${showDetails ? 'expanded' : ''}`}>{showDetails ? 'v' : '>'}</span>
+                      <span className={`expand-icon ${showDetails ? 'expanded' : ''}`}>
+                        {showDetails ? 'v' : '>'}
+                      </span>
                       <div className="group-info">
                         <div className="group-name-row">
                           <div className="group-name">{groupName}</div>
@@ -180,12 +193,20 @@ const ResultMenu: React.FC = () => {
                           )}
                         </div>
                         <div className="group-stats-line">
-                          <span>{completed}/{sheets.length} - {Math.round(groupProgress)}%</span>
-                          <span className="stat-badge stat-success" title={t('process.successSlides')}>
+                          <span>
+                            {completed}/{sheets.length} - {Math.round(groupProgress)}%
+                          </span>
+                          <span
+                            className="stat-badge stat-success"
+                            title={t('process.successSlides')}
+                          >
                             {completed}
                           </span>
                           <span className="stat-divider">|</span>
-                          <span className="stat-badge stat-failed" title={t('process.failedSlides')}>
+                          <span
+                            className="stat-badge stat-failed"
+                            title={t('process.failedSlides')}
+                          >
                             {failed}
                           </span>
                         </div>
@@ -199,21 +220,29 @@ const ResultMenu: React.FC = () => {
                         aria-label={t('output.exportConfig')}
                         title={t('output.exportConfig')}
                       >
-                        <img src="/assets/images/open.png" alt="" className="btn-icon" />
+                        <img src={getAssetPath('images', 'open.png')} alt="" className="btn-icon" />
                       </button>
                       <button
                         className="output-btn"
                         onClick={() => handleOpenFolder(group.outputFolder)}
                         disabled={!group.outputFolder}
                       >
-                        <img src="/assets/images/folder.png" alt="Open Folder" className="btn-icon" />
+                        <img
+                          src={getAssetPath('images', 'folder.png')}
+                          alt="Open Folder"
+                          className="btn-icon"
+                        />
                         <span>{t('output.openFolder')}</span>
                       </button>
                       <button
                         className="output-btn-danger"
                         onClick={() => handleRemoveGroup(group.id)}
                       >
-                        <img src="/assets/images/close.png" alt="Clear Group" className="btn-icon" />
+                        <img
+                          src={getAssetPath('images', 'close.png')}
+                          alt="Clear Group"
+                          className="btn-icon"
+                        />
                         <span>{t('output.removeGroup')}</span>
                       </button>
                     </div>
@@ -232,20 +261,30 @@ const ResultMenu: React.FC = () => {
 
                         return (
                           <div key={sheet.id} className="file-item">
-                            <div className="file-header-clickable" onClick={() => toggleLog(sheet.id)}>
+                            <div
+                              className="file-header-clickable"
+                              onClick={() => toggleLog(sheet.id)}
+                            >
                               <span className="file-expand-icon">{showLog ? 'v' : '>'}</span>
                               <div className="file-info">
                                 <div className="file-name">{sheet.sheetName}</div>
                                 <div className="file-stats">
-                                  <span className="file-stat-badge stat-success" title={t('process.successSlides')}>
+                                  <span
+                                    className="file-stat-badge stat-success"
+                                    title={t('process.successSlides')}
+                                  >
                                     {completedSlides}
                                   </span>
                                   <span className="stat-divider">|</span>
-                                  <span className="file-stat-badge stat-failed" title={t('process.failedSlides')}>
+                                  <span
+                                    className="file-stat-badge stat-failed"
+                                    title={t('process.failedSlides')}
+                                  >
                                     {failedSlides}
                                   </span>
                                   <span className="file-progress-text">
-                                    / {sheet.totalRows} {t('process.slides')} - {Math.round(sheet.progress)}%
+                                    / {sheet.totalRows} {t('process.slides')} -{' '}
+                                    {Math.round(sheet.progress)}%
                                   </span>
                                 </div>
                               </div>
@@ -264,7 +303,11 @@ const ResultMenu: React.FC = () => {
                                     aria-label={t('output.open')}
                                     title={t('output.open')}
                                   >
-                                    <img src="/assets/images/open.png" alt="Open" className="file-btn-icon" />
+                                    <img
+                                      src={getAssetPath('images', 'open.png')}
+                                      alt="Open"
+                                      className="file-btn-icon"
+                                    />
                                   </button>
                                   <button
                                     className="file-action-btn file-action-btn-danger"
@@ -275,7 +318,11 @@ const ResultMenu: React.FC = () => {
                                     aria-label={t('output.remove')}
                                     title={t('output.remove')}
                                   >
-                                    <img src="/assets/images/close.png" alt="Clear" className="file-btn-icon" />
+                                    <img
+                                      src={getAssetPath('images', 'close.png')}
+                                      alt="Clear"
+                                      className="file-btn-icon"
+                                    />
                                   </button>
                                 </div>
                               </div>
@@ -290,12 +337,18 @@ const ResultMenu: React.FC = () => {
                                     onClick={(e) => {
                                       e.stopPropagation()
                                       navigator.clipboard.writeText(
-                                        sheet.logs.map((entry) => formatLogEntry(entry as LogEntry)).join('\n')
+                                        sheet.logs
+                                          .map((entry) => formatLogEntry(entry as LogEntry))
+                                          .join('\n'),
                                       )
                                     }}
                                     title="Copy log"
                                   >
-                                    <img src="/assets/images/clipboard.png" alt="Copy" className="log-icon" />
+                                    <img
+                                      src={getAssetPath('images', 'clipboard.png')}
+                                      alt="Copy"
+                                      className="log-icon"
+                                    />
                                   </button>
                                 </div>
                                 <div className="log-content">
@@ -319,7 +372,9 @@ const ResultMenu: React.FC = () => {
                                               {isCollapsed ? '>' : 'v'}
                                             </span>
                                             <span className="log-row-title">
-                                              {group.row != null ? `Row ${group.row}` : t('process.logGeneral')}
+                                              {group.row != null
+                                                ? `Row ${group.row}`
+                                                : t('process.logGeneral')}
                                             </span>
                                             {group.status && (
                                               <span className="log-row-status">
