@@ -2,6 +2,11 @@ import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import electron from 'vite-plugin-electron'
 import renderer from 'vite-plugin-electron-renderer'
+import { readFileSync } from 'node:fs'
+
+const pkg = JSON.parse(
+  readFileSync(new URL('./package.json', import.meta.url), 'utf-8')
+) as { version?: string }
 
 export default defineConfig({
   plugins: [
@@ -33,7 +38,11 @@ export default defineConfig({
     renderer(),
   ],
   server: {
-    port: 5173,
+    port: 65000,
+    strictPort: false,
+  },
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version ?? '0.0.0'),
   },
   test: {
     environment: 'jsdom',

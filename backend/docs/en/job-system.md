@@ -1,5 +1,7 @@
 # Job system
 
+Vietnamese version: [Vietnamese](../vi/job-system.md)
+
 ## Table of contents
 
 1. [Concepts](#concepts)
@@ -82,8 +84,13 @@ Implementation notes:
 - Cancel active:
   - Per group: `IActiveJobCollection.CancelGroup`
   - All: `IActiveJobCollection.CancelAll`
+- Cancel + remove (Stop in UI):
+  - Per group: `IActiveJobCollection.CancelAndRemoveGroup`
+  - Per sheet: `IActiveJobCollection.CancelAndRemoveSheet`
+  - Deletes output files and removes persisted state.
 - Clear completed:
   - Per group: `ICompletedJobCollection.RemoveGroup`
   - All: `ICompletedJobCollection.ClearAll`
 
 Next: [SignalR API](signalr.md)
+

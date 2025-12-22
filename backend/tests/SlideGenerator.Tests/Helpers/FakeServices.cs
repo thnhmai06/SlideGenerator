@@ -172,10 +172,8 @@ internal sealed class FakeActiveJobCollection : IActiveJobCollection
     public void CancelAndRemoveSheet(string sheetId)
     {
         if (_sheets.Remove(sheetId, out var sheet))
-        {
             if (_groups.TryGetValue(sheet.GroupId, out var group))
                 group.RemoveJob(sheet.Id);
-        }
     }
 
     public void PauseAll()

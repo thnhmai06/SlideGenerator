@@ -1,0 +1,78 @@
+name: Build Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+            electron_arch: x64
+            upload_glob: |
+              frontend/release/**/*.exe
+              frontend/release/**/*.zip
+          - os: macos-latest
+            rid: osx-arm64
+            electron_arch: arm64
+            upload_glob: |
+              frontend/release/**/*.dmg
+              frontend/release/**/*.zip
+          - os: ubuntu-latest
+            rid: linux-x64
+            electron_arch: x64
+            upload_glob: |
+              frontend/release/**/*.AppImage
+              frontend/release/**/*.tar.gz
+          - os: ubuntu-latest
+            rid: linux-arm
+            electron_arch: armv7l
+            upload_glob: |
+              frontend/release/**/*.AppImage
+              frontend/release/**/*.tar.gz
+          - os: ubuntu-latest
+            rid: linux-arm64
+            electron_arch: arm64
+            upload_glob: |
+              frontend/release/**/*.AppImage
+              frontend/release/**/*.tar.gz
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Publish backend
+        run: dotnet publish backend/src/SlideGenerator.Presentation/SlideGenerator.Presentation.csproj -c Release -r ${{ matrix.rid }} -o frontend/backend --self-contained false
+
+      - name: Install frontend deps
+        run: npm ci
+        working-directory: frontend
+
+      - name: Build frontend
+        run: npm run build -- --${{ matrix.electron_arch }}
+        working-directory: frontend
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.upload_glob }}

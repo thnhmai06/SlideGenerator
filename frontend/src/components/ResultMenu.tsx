@@ -74,14 +74,18 @@ const ResultMenu: React.FC = () => {
   }
 
   const handleRemoveSheet = async (sheetId: string) => {
-    if (confirm(`${t('output.remove')}?`)) {
-      await removeSheet(sheetId)
-    }
+    await removeSheet(sheetId)
   }
 
   const handleRemoveGroup = async (groupId: string) => {
     if (confirm(`${t('output.removeGroup')}?`)) {
       await removeGroup(groupId)
+    }
+  }
+
+  const handleClearAll = async () => {
+    if (confirm(`${t('output.clearAll')}?`)) {
+      await clearCompleted()
     }
   }
 
@@ -114,7 +118,10 @@ const ResultMenu: React.FC = () => {
   }
 
   const toggleRowGroup = (key: string) => {
-    setCollapsedRowGroups((prev) => ({ ...prev, [key]: !prev[key] }))
+    setCollapsedRowGroups((prev) => {
+      const current = prev[key] ?? true
+      return { ...prev, [key]: !current }
+    })
   }
 
   const formatTime = (value?: string) => {
@@ -131,7 +138,7 @@ const ResultMenu: React.FC = () => {
           <div className="header-actions">
             <button
               className="btn btn-danger"
-              onClick={() => clearCompleted()}
+              onClick={handleClearAll}
               disabled={completedGroups.length === 0}
               title={t('output.clearAll')}
             >

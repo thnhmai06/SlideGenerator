@@ -15,7 +15,7 @@ const TitleBar: React.FC = () => {
   return (
     <div className="title-bar">
       <div className="title-bar-left">
-        <img src="/assets/images/app.png" alt="Slide Generator" className="title-bar-icon" />
+        <img src="/assets/images/app-icon.png" alt="Slide Generator" className="title-bar-icon" />
         <span className="title-bar-title">Slide Generator</span>
       </div>
       <div className="title-bar-controls">

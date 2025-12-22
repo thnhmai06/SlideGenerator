@@ -12,6 +12,8 @@ export interface ElectronAPI {
   windowControl: (action: 'minimize' | 'maximize' | 'close') => Promise<void>
   hideToTray: () => Promise<void>
   setProgressBar: (value: number) => Promise<void>
+  restartBackend: () => Promise<boolean>
+  getBackendConfig: () => Promise<string | null>
 }
 
 const electronAPI: ElectronAPI = {
@@ -26,6 +28,8 @@ const electronAPI: ElectronAPI = {
   windowControl: (action) => ipcRenderer.invoke('window:control', action),
   hideToTray: () => ipcRenderer.invoke('window:hideToTray'),
   setProgressBar: (value) => ipcRenderer.invoke('window:setProgress', value),
+  restartBackend: () => ipcRenderer.invoke('backend:restart'),
+  getBackendConfig: () => ipcRenderer.invoke('backend:getConfig'),
 }
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI)

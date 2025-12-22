@@ -1,0 +1,75 @@
+name: Build & Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  backend-tests:
+    name: Backend tests
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Restore
+        run: dotnet restore SlideGenerator.slnx
+        working-directory: backend
+      - name: Test
+        run: dotnet test SlideGenerator.slnx --no-restore --logger "trx;LogFileName=backend-tests.trx" --results-directory TestResults
+        working-directory: backend
+      - name: Upload backend test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: backend/TestResults/*.trx
+      - name: Publish backend test report
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: Backend Tests
+          path: backend/TestResults/*.trx
+          reporter: dotnet-trx
+
+  frontend-tests:
+    name: Frontend tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install
+        run: npm ci
+        working-directory: frontend
+      - name: Prepare test output
+        run: mkdir -p test-results
+        working-directory: frontend
+      - name: Test
+        run: npm test -- --reporter=default --reporter=junit --outputFile=./test-results/junit.xml
+        working-directory: frontend
+      - name: Upload frontend test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-test-results
+          path: frontend/test-results/junit.xml
+      - name: Publish frontend test report
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: Frontend Tests
+          path: frontend/test-results/junit.xml
+          reporter: java-junit

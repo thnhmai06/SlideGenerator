@@ -1,0 +1,30 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "test:backend",
+      "type": "shell",
+      "command": "dotnet test SlideGenerator.slnx",
+      "options": {
+        "cwd": "${workspaceFolder}/backend"
+      },
+      "group": "test",
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "test:frontend",
+      "type": "shell",
+      "command": "npm test",
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
+      "group": "test"
+    },
+    {
+      "label": "test:all",
+      "dependsOn": ["test:backend", "test:frontend"],
+      "dependsOrder": "sequence",
+      "group": "test"
+    }
+  ]
+}

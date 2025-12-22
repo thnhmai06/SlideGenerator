@@ -140,6 +140,11 @@ export const vi = {
   'settings.loadError': 'Không tải được cấu hình',
   'settings.saveSuccess': 'Đã lưu cấu hình.',
   'settings.saveError': 'Không lưu được cấu hình',
+  'settings.restartRequired': 'Cần khởi động lại server để áp dụng cấu hình.',
+  'settings.restartServer': 'Khởi động lại server',
+  'settings.restartSuccess': 'Đã khởi động lại server.',
+  'settings.restartError': 'Không thể khởi động lại server',
+  'settings.restartUnavailable': 'Chỉ hỗ trợ Khởi động lại trên ứng dụng desktop.',
   'settings.reloadSuccess': 'Đã tải lại cấu hình.',
   'settings.reloadError': 'Không tải lại được cấu hình',
   'settings.resetSuccess': 'Đã khôi phục mặc định.',
@@ -151,7 +156,7 @@ export const vi = {
   // About
   'about.title': 'Giới thiệu',
   'about.appName': 'Slide Generator',
-  'about.version': 'Phiên bản 1.0.0',
+  'about.version': 'Phiên bản',
   'about.description': 'Phần mềm tạo slide trình chiếu PowerPoint từ dữ liệu bảng tính.',
   'about.details': 'Xây dựng trên ASP.NET, React, Electron với ❤️.',
   'about.developer': 'Nhà phát triển',
@@ -205,6 +210,10 @@ export const vi = {
   'output.clearAll': 'Bỏ tất cả',
   'output.completedAt': 'Hoàn thành lúc',
   'output.empty': 'Trống',
+
+  // Connection
+  'connection.disconnected': 'Không thể kết nối tới server.',
+  'connection.connected': 'Đã kết nối tới server.',
 
   // Common
   'common.close': 'Đóng',

@@ -140,6 +140,11 @@ export const en = {
   'settings.loadError': 'Failed to load configuration',
   'settings.saveSuccess': 'Configuration saved.',
   'settings.saveError': 'Failed to save configuration',
+  'settings.restartRequired': 'Restart the server to apply server settings.',
+  'settings.restartServer': 'Restart server',
+  'settings.restartSuccess': 'Server restarted.',
+  'settings.restartError': 'Failed to restart server',
+  'settings.restartUnavailable': 'Server Restart is only available in the desktop app.',
   'settings.reloadSuccess': 'Configuration reloaded.',
   'settings.reloadError': 'Failed to reload configuration',
   'settings.resetSuccess': 'Defaults restored.',
@@ -151,7 +156,7 @@ export const en = {
   // About
   'about.title': 'About',
   'about.appName': 'Slide Generator',
-  'about.version': 'Version 1.0.0',
+  'about.version': 'Version',
   'about.description': 'Software to generate PowerPoint slides from spreadsheet data.',
   'about.details': 'Made with ASP.NET, React, Electron with ❤️.',
   'about.developer': 'Developer',
@@ -205,6 +210,10 @@ export const en = {
   'output.clearAll': 'Clear all',
   'output.completedAt': 'Completed at',
   'output.empty': 'Empty',
+
+  // Connection
+  'connection.disconnected': 'Cannot connect to the erver',
+  'connection.connected': 'Connected to the server',
 
   // Common
   'common.close': 'Close',

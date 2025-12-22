@@ -1,6 +1,6 @@
 server:
   host: 127.0.0.1
-  port: 5000
+  port: 65550
   debug: true
 download:
   max_chunks: 5

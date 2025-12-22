@@ -21,7 +21,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentMenu, onMenuChange }) => {
   return (
     <div className="sidebar">
       <div className="sidebar-header">
-        <img src="/assets/images/uet-logo.png" alt="UET Logo" className="sidebar-logo" />
+        <img src="/assets/images/app-logo.png" alt="UET Logo" className="sidebar-logo" />
         <h2>{t('app.title')}</h2>
       </div>
       <ul className="sidebar-menu">

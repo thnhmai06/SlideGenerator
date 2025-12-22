@@ -6,7 +6,7 @@ import {
 	LogLevel,
 } from "@microsoft/signalr";
 
-const DEFAULT_BACKEND_URL = "http://127.0.0.1:5000";
+const DEFAULT_BACKEND_URL = "http://127.0.0.1:65550";
 
 const RESPONSE_METHOD = "ReceiveResponse";
 const NOTIFICATION_METHOD = "ReceiveNotification";

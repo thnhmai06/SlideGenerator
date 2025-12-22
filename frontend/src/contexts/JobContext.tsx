@@ -59,7 +59,7 @@ interface JobContextValue {
   groups: GroupJob[]
   createGroup: (payload: CreateGroupPayload) => Promise<GroupJob>
   refreshGroups: () => Promise<void>
-  clearCompleted: () => void
+  clearCompleted: () => Promise<void>
   groupControl: (groupId: string, action: backendApi.ControlAction) => Promise<void>
   jobControl: (jobId: string, action: backendApi.ControlAction) => Promise<void>
   removeGroup: (groupId: string) => Promise<boolean>
@@ -376,7 +376,8 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       clearGroupMeta([groupId])
       removeGroupConfig([groupId])
     }
-  }, [clearGroupMeta, removeGroupConfig])
+    await refreshGroups()
+  }, [clearGroupMeta, refreshGroups, removeGroupConfig])
 
   const removeGroup = useCallback(async (groupId: string) => {
     const response = await backendApi.removeGroup({ GroupId: groupId })
@@ -396,7 +397,8 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const jobControl = useCallback(async (jobId: string, action: backendApi.ControlAction) => {
     await backendApi.jobControl({ JobId: jobId, Action: action })
-  }, [])
+    await refreshGroups()
+  }, [refreshGroups])
 
   const loadSheetLogs = useCallback(
     async (jobId: string) => {
@@ -457,24 +459,37 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     await backendApi.globalControl({ Action: action })
   }, [])
 
-  const clearCompleted = useCallback(() => {
-    setGroupsById((prev) => {
-      const clearedIds: string[] = []
-      const next: Record<string, GroupJob> = {}
-      Object.values(prev).forEach((group) => {
-        const status = group.status.toLowerCase()
-        if (!['completed', 'failed', 'cancelled'].includes(status)) {
-          next[group.id] = group
-        } else {
-          clearedIds.push(group.id)
-        }
-      })
-      if (clearedIds.length > 0) {
-        clearGroupMeta(clearedIds)
-        removeGroupConfig(clearedIds)
+  const clearCompleted = useCallback(async () => {
+    const current = groupsRef.current
+    const completedIds = Object.values(current)
+      .filter((group) => ['completed', 'failed', 'cancelled'].includes(group.status.toLowerCase()))
+      .map((group) => group.id)
+
+    if (completedIds.length === 0) return
+
+    const removedIds: string[] = []
+    for (const groupId of completedIds) {
+      try {
+        const response = await backendApi.removeGroup({ GroupId: groupId })
+        const data = response as backendApi.SlideGroupRemoveSuccess
+        if (data.Removed) removedIds.push(groupId)
+      } catch (error) {
+        console.error(`Failed to remove group ${groupId}:`, error)
       }
+    }
+
+    if (removedIds.length === 0) return
+
+    setGroupsById((prev) => {
+      const next = { ...prev }
+      removedIds.forEach((groupId) => {
+        delete next[groupId]
+      })
       return next
     })
+
+    clearGroupMeta(removedIds)
+    removeGroupConfig(removedIds)
   }, [clearGroupMeta, removeGroupConfig])
 
   const exportGroupConfig = useCallback(async (groupId: string) => {

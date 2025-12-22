@@ -232,6 +232,24 @@
   margin-bottom: var(--spacing-xs);
 }
 
+.process-menu .file-name-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+  margin-bottom: var(--spacing-xs);
+}
+
+.process-menu .file-name-row .file-name {
+  margin-bottom: 0;
+}
+
+.process-menu .file-job-id {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+}
+
 .process-menu .file-stats {
   display: flex;
   align-items: center;

@@ -25,7 +25,24 @@ public sealed record RowProcessResult(
     int TextReplacementCount,
     int ImageReplacementCount,
     int ImageErrorCount,
-    IReadOnlyList<string> Errors);
+    IReadOnlyList<string> Errors,
+    IReadOnlyList<TextReplacementDetail> TextReplacements,
+    IReadOnlyList<ImageReplacementDetail> ImageReplacements);
+
+/// <summary>
+///     Details for a text replacement applied to a shape.
+/// </summary>
+public sealed record TextReplacementDetail(
+    uint ShapeId,
+    string Placeholder,
+    string Value);
+
+/// <summary>
+///     Details for an image replacement applied to a shape.
+/// </summary>
+public sealed record ImageReplacementDetail(
+    uint ShapeId,
+    string Source);
 
 /// <summary>
 ///     Provides cooperative pause checkpoints during processing.
