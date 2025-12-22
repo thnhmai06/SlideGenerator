@@ -1,5 +1,3 @@
-using System.Net;
-using System.Net.Sockets;
 using System.Text.Json;
 using Hangfire;
 using Hangfire.Storage.SQLite;
@@ -113,30 +111,6 @@ if (!string.Equals(host, "localhost", StringComparison.OrdinalIgnoreCase)
     && !string.Equals(host, "127.0.0.1", StringComparison.OrdinalIgnoreCase))
     host = "127.0.0.1";
 
-var requestedPort = ConfigHolder.Value.Server.Port;
-var resolvedPort = FindAvailablePort(host, requestedPort, 20);
-if (resolvedPort != requestedPort)
-{
-    var current = ConfigHolder.Value;
-    ConfigHolder.Value = new Config
-    {
-        Server = new Config.ServerConfig
-        {
-            Host = host,
-            Port = resolvedPort,
-            Debug = current.Server.Debug
-        },
-        Download = current.Download,
-        Job = current.Job,
-        Image = current.Image
-    };
-    ConfigLoader.Save(ConfigHolder.Value, ConfigHolder.Locker);
-    app.Logger.LogWarning(
-        "Port {RequestedPort} is in use. Using {ResolvedPort} instead.",
-        requestedPort,
-        resolvedPort);
-}
-
 app.Urls.Clear();
 app.Urls.Add($"http://{host}:{ConfigHolder.Value.Server.Port}");
 await app.RunAsync();
@@ -144,36 +118,3 @@ await app.RunAsync();
 #endregion
 
 ConfigLoader.Save(ConfigHolder.Value, ConfigHolder.Locker);
-
-static int FindAvailablePort(string host, int startPort, int maxAttempts)
-{
-    for (var i = 0; i < maxAttempts; i++)
-    {
-        var port = startPort + i;
-        if (IsPortAvailable(host, port))
-            return port;
-    }
-
-    return startPort;
-}
-
-static bool IsPortAvailable(string host, int port)
-{
-    IPAddress address;
-    if (string.Equals(host, "localhost", StringComparison.OrdinalIgnoreCase))
-        address = IPAddress.Loopback;
-    else if (!IPAddress.TryParse(host, out address!))
-        address = IPAddress.Loopback;
-
-    try
-    {
-        var listener = new TcpListener(address, port);
-        listener.Start();
-        listener.Stop();
-        return true;
-    }
-    catch (SocketException)
-    {
-        return false;
-    }
-}
