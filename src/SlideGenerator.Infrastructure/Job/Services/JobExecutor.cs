@@ -108,6 +108,37 @@ public class JobExecutor(
                     checkpoint,
                     token);
 
+                foreach (var detail in result.TextReplacements)
+                    await StoreAndNotifyLogAsync(new JobEvent(
+                        sheet.Id,
+                        JobEventScope.Sheet,
+                        DateTimeOffset.UtcNow,
+                        "Info",
+                        $"Row {rowNum} text -> shape {detail.ShapeId}: {detail.Placeholder} = {detail.Value}",
+                        new Dictionary<string, object?>
+                        {
+                            ["row"] = rowNum,
+                            ["shapeId"] = detail.ShapeId,
+                            ["placeholder"] = detail.Placeholder,
+                            ["value"] = detail.Value,
+                            ["kind"] = "text"
+                        }));
+
+                foreach (var detail in result.ImageReplacements)
+                    await StoreAndNotifyLogAsync(new JobEvent(
+                        sheet.Id,
+                        JobEventScope.Sheet,
+                        DateTimeOffset.UtcNow,
+                        "Info",
+                        $"Row {rowNum} image -> shape {detail.ShapeId}: {detail.Source}",
+                        new Dictionary<string, object?>
+                        {
+                            ["row"] = rowNum,
+                            ["shapeId"] = detail.ShapeId,
+                            ["source"] = detail.Source,
+                            ["kind"] = "image"
+                        }));
+
                 await StoreAndNotifyLogAsync(new JobEvent(
                     sheet.Id,
                     JobEventScope.Sheet,

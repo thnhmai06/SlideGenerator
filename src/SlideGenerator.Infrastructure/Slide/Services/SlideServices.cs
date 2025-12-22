@@ -1,3 +1,4 @@
+using DocumentFormat.OpenXml.Drawing;
 using DocumentFormat.OpenXml.Packaging;
 using Microsoft.Extensions.Logging;
 using SlideGenerator.Application.Configs;
@@ -13,6 +14,7 @@ using SlideGenerator.Infrastructure.Base;
 using SlideGenerator.Infrastructure.Image.Exceptions;
 using SlideGenerator.Infrastructure.Utilities;
 using DrawingPicture = DocumentFormat.OpenXml.Drawing.Picture;
+using Path = System.IO.Path;
 using Presentation = SlideGenerator.Framework.Slide.Models.Presentation;
 using PresentationShape = DocumentFormat.OpenXml.Presentation.Shape;
 
@@ -41,7 +43,7 @@ public class SlideServices(
         slideWorkingManager.GetOrAddWorkingPresentation(presentationPath);
         var newSlide = slideWorkingManager.CopyFirstSlideToLast(presentationPath);
 
-        var textReplacementCount =
+        var textResult =
             await ProcessTextReplacementsAsync(newSlide, rowData, textConfigs, checkpoint, cancellationToken);
         var imageResult = await ProcessImageReplacementsAsync(
             newSlide,
@@ -49,7 +51,13 @@ public class SlideServices(
             imageConfigs,
             checkpoint,
             cancellationToken);
-        return imageResult with { TextReplacementCount = textReplacementCount };
+        return new RowProcessResult(
+            textResult.Count,
+            imageResult.Count,
+            imageResult.ErrorCount,
+            imageResult.Errors,
+            textResult.Details,
+            imageResult.Details);
     }
 
     public void RemoveFirstSlide(string presentationPath)
@@ -69,7 +77,7 @@ public class SlideServices(
         Logger.LogInformation("Removed template slide from {FilePath}", presentationPath);
     }
 
-    private static async Task<int> ProcessTextReplacementsAsync(
+    private static async Task<TextReplacementOutcome> ProcessTextReplacementsAsync(
         SlidePart slidePart,
         RowContent rowData,
         JobTextConfig[] textConfigs,
@@ -88,15 +96,16 @@ public class SlideServices(
         }
 
         if (replacements.Count == 0)
-            return 0;
+            return new TextReplacementOutcome(0, []);
 
+        var details = CollectTextReplacementDetails(slidePart, replacements);
         await checkpoint(JobCheckpointStage.BeforeSlideUpdate, cancellationToken);
-        await TextReplacer.ReplaceAsync(slidePart, replacements);
+        var replacedCount = await TextReplacer.ReplaceAsync(slidePart, replacements);
         await checkpoint(JobCheckpointStage.AfterSlideUpdate, cancellationToken);
-        return replacements.Count;
+        return new TextReplacementOutcome((int)replacedCount, details);
     }
 
-    private async Task<RowProcessResult> ProcessImageReplacementsAsync(
+    private async Task<ImageReplacementOutcome> ProcessImageReplacementsAsync(
         SlidePart slidePart,
         RowContent rowData,
         JobImageConfig[] imageConfigs,
@@ -105,6 +114,7 @@ public class SlideServices(
     {
         var errors = new List<string>();
         var imageReplacementCount = 0;
+        var details = new List<ImageReplacementDetail>();
 
         foreach (var config in imageConfigs)
         {
@@ -140,6 +150,7 @@ public class SlideServices(
                     checkpoint,
                     cancellationToken);
                 imageReplacementCount++;
+                details.Add(new ImageReplacementDetail(config.ShapeId, imageSource));
             }
             catch (OperationCanceledException)
             {
@@ -178,7 +189,7 @@ public class SlideServices(
             }
         }
 
-        return new RowProcessResult(0, imageReplacementCount, errors.Count, errors);
+        return new ImageReplacementOutcome(imageReplacementCount, errors.Count, errors, details);
     }
 
     private async Task ProcessSingleImageReplacementAsync(
@@ -282,4 +293,66 @@ public class SlideServices(
                 return value;
         return null;
     }
+
+    private static List<TextReplacementDetail> CollectTextReplacementDetails(
+        SlidePart slidePart,
+        ReplaceInstructions replacements)
+    {
+        var details = new List<TextReplacementDetail>();
+        var replacementIndex = BuildReplacementIndex(replacements);
+
+        foreach (var shape in Presentation.GetShapes(slidePart))
+        {
+            var shapeId = shape.NonVisualShapeProperties?.NonVisualDrawingProperties?.Id?.Value;
+            if (shapeId is null) continue;
+
+            var textBody = shape.TextBody;
+            if (textBody is null) continue;
+
+            var textRuns = textBody.Descendants<Text>().ToList();
+            if (textRuns.Count == 0) continue;
+
+            var original = string.Concat(textRuns.Select(run => run.Text));
+            if (string.IsNullOrEmpty(original) || !original.Contains("{{", StringComparison.Ordinal))
+                continue;
+
+            var placeholders = TextReplacer.ScanPlaceholders(original);
+            foreach (var placeholder in placeholders)
+                if (replacementIndex.TryGetValue(placeholder, out var value))
+                    details.Add(new TextReplacementDetail(shapeId.Value, placeholder, value));
+        }
+
+        return details;
+    }
+
+    private static Dictionary<string, string> BuildReplacementIndex(ReplaceInstructions replacements)
+    {
+        var index = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var (key, value) in replacements)
+        {
+            var normalized = NormalizePlaceholder(key);
+            if (!index.ContainsKey(normalized))
+                index[normalized] = value;
+        }
+
+        return index;
+    }
+
+    private static string NormalizePlaceholder(string key)
+    {
+        var trimmed = key.Trim();
+        if (trimmed.StartsWith("{{", StringComparison.Ordinal)
+            && trimmed.EndsWith("}}", StringComparison.Ordinal)
+            && trimmed.Length > 4)
+            return trimmed[2..^2].Trim();
+        return trimmed;
+    }
+
+    private sealed record TextReplacementOutcome(int Count, List<TextReplacementDetail> Details);
+
+    private sealed record ImageReplacementOutcome(
+        int Count,
+        int ErrorCount,
+        List<string> Errors,
+        List<ImageReplacementDetail> Details);
 }

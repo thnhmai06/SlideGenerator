@@ -9,6 +9,7 @@
   - [Job system](#job-system)
   - [SignalR API](#signalr-api)
   - [Configuration](#configuration)
+  - [Usage](#usage)
   - [Development](#development)
   - [Deployment](#deployment)
   - [Framework library](#framework-library)
@@ -38,6 +39,10 @@ See: [SignalR API](docs/en/signalr.md)
 
 See: [Configuration](docs/en/configuration.md)
 
+## Usage
+
+See: [Usage](docs/en/usage.md)
+
 ## Development
 
 See: [Development](docs/en/development.md)
@@ -51,3 +56,5 @@ See: [Deployment](docs/en/deployment.md)
 The framework used by this backend is documented here:
 
 - [SlideGenerator.Framework](src/SlideGenerator.Framework/README.md)
+
+Vietnamese docs: [docs/vi](docs/vi)

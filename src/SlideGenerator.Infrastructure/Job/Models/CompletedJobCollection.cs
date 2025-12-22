@@ -128,8 +128,8 @@ public class CompletedJobCollection(
     {
         var count = _groups.Count;
         foreach (var group in _groups.Values)
-            foreach (var sheet in group.InternalJobs.Values)
-                TryDeleteOutputFile(sheet.OutputPath);
+        foreach (var sheet in group.InternalJobs.Values)
+            TryDeleteOutputFile(sheet.OutputPath);
         foreach (var groupId in _groups.Keys)
             jobStateStore.RemoveGroupAsync(groupId, CancellationToken.None).GetAwaiter().GetResult();
         _groups.Clear();
