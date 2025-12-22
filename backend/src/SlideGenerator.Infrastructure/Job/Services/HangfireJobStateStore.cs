@@ -15,6 +15,9 @@ public sealed class HangfireJobStateStore(JobStorage storage) : IJobStateStore
     private const string GroupKeyPrefix = "slidegen:group:";
     private const string SheetKeyPrefix = "slidegen:sheet:";
     private const string ActiveGroupsSet = "slidegen:groups:active";
+    private const string AllGroupsSet = "slidegen:groups:all";
+    private const string JobLogKeyPrefix = "slidegen:joblog:";
+    private const int MaxLogEntries = 2000;
 
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {
@@ -31,6 +34,7 @@ public sealed class HangfireJobStateStore(JobStorage storage) : IJobStateStore
         using var connection = storage.GetConnection();
         using var tx = connection.CreateWriteTransaction();
         tx.SetRangeInHash(key, [new KeyValuePair<string, string>("data", json)]);
+        tx.AddToSet(AllGroupsSet, state.Id);
 
         if (IsActive(state.Status))
             tx.AddToSet(ActiveGroupsSet, state.Id);
@@ -97,6 +101,47 @@ public sealed class HangfireJobStateStore(JobStorage storage) : IJobStateStore
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlyList<GroupJobState>> GetAllGroupsAsync(CancellationToken cancellationToken)
+    {
+        using var connection = storage.GetConnection();
+        var ids = connection.GetAllItemsFromSet(AllGroupsSet);
+        var result = new List<GroupJobState>();
+        foreach (var id in ids)
+        {
+            var state = await GetGroupAsync(id, cancellationToken);
+            if (state != null)
+                result.Add(state);
+        }
+
+        return result;
+    }
+
+    /// <inheritdoc />
+    public Task AppendJobLogAsync(JobLogEntry entry, CancellationToken cancellationToken)
+    {
+        var key = JobLogKeyPrefix + entry.JobId;
+        var logs = GetJobLogsInternal(entry.JobId);
+        logs.Add(entry);
+
+        if (logs.Count > MaxLogEntries)
+            logs = logs.Skip(logs.Count - MaxLogEntries).ToList();
+
+        var json = JsonSerializer.Serialize(logs, SerializerOptions);
+        using var connection = storage.GetConnection();
+        using var tx = connection.CreateWriteTransaction();
+        tx.SetRangeInHash(key, [new KeyValuePair<string, string>("data", json)]);
+        tx.Commit();
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc />
+    public Task<IReadOnlyList<JobLogEntry>> GetJobLogsAsync(string jobId, CancellationToken cancellationToken)
+    {
+        var logs = GetJobLogsInternal(jobId);
+        return Task.FromResult<IReadOnlyList<JobLogEntry>>(logs);
+    }
+
+    /// <inheritdoc />
     public async Task<IReadOnlyList<SheetJobState>> GetSheetsByGroupAsync(string groupId,
         CancellationToken cancellationToken)
     {
@@ -123,10 +168,12 @@ public sealed class HangfireJobStateStore(JobStorage storage) : IJobStateStore
         foreach (var sheetId in sheetIds)
         {
             tx.RemoveHash(SheetKeyPrefix + sheetId);
+            tx.RemoveHash(JobLogKeyPrefix + sheetId);
             tx.RemoveFromSet(GroupSheetsSet(groupId), sheetId);
         }
 
         tx.RemoveFromSet(ActiveGroupsSet, groupId);
+        tx.RemoveFromSet(AllGroupsSet, groupId);
         tx.RemoveHash(GroupKeyPrefix + groupId);
         tx.Commit();
         return Task.CompletedTask;
@@ -139,9 +186,21 @@ public sealed class HangfireJobStateStore(JobStorage storage) : IJobStateStore
         using var connection = storage.GetConnection();
         using var tx = connection.CreateWriteTransaction();
         tx.RemoveHash(SheetKeyPrefix + sheetId);
+        tx.RemoveHash(JobLogKeyPrefix + sheetId);
         if (state != null)
             tx.RemoveFromSet(GroupSheetsSet(state.GroupId), sheetId);
         tx.Commit();
+    }
+
+    private List<JobLogEntry> GetJobLogsInternal(string jobId)
+    {
+        using var connection = storage.GetConnection();
+        var entries = connection.GetAllEntriesFromHash(JobLogKeyPrefix + jobId);
+        if (entries == null || !entries.TryGetValue("data", out var json))
+            return [];
+
+        var logs = JsonSerializer.Deserialize<List<JobLogEntry>>(json, SerializerOptions);
+        return logs ?? [];
     }
 
     private static string GroupSheetsSet(string groupId)

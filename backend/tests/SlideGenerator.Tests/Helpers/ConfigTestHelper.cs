@@ -6,7 +6,10 @@ namespace SlideGenerator.Tests.Helpers;
 
 internal static class ConfigTestHelper
 {
-    public static Config GetConfig() => ConfigHolder.Value;
+    public static Config GetConfig()
+    {
+        return ConfigHolder.Value;
+    }
 
     public static void SetConfig(Config config)
     {

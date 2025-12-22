@@ -11,6 +11,9 @@ declare global {
       openPath: (path: string) => Promise<void>
       readSettings: (filename: string) => Promise<string | null>
       writeSettings: (filename: string, data: string) => Promise<boolean>
+      windowControl: (action: 'minimize' | 'maximize' | 'close') => Promise<void>
+      hideToTray: () => Promise<void>
+      setProgressBar: (value: number) => Promise<void>
     }
   }
 }

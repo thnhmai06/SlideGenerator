@@ -4,30 +4,23 @@ using SlideGenerator.Domain.Slide.Components;
 
 namespace SlideGenerator.Tests.Helpers;
 
-internal sealed class TestSheet : ISheet
+internal sealed class TestSheet(
+    string name,
+    int rowCount,
+    IReadOnlyList<string?> headers,
+    List<Dictionary<string, string?>>? rows)
+    : ISheet
 {
-    private readonly List<Dictionary<string, string?>> _rows;
+    private readonly List<Dictionary<string, string?>> _rows = rows ?? [];
 
     public TestSheet(string name, int rowCount)
         : this(name, rowCount, [], null)
     {
     }
 
-    public TestSheet(
-        string name,
-        int rowCount,
-        IReadOnlyList<string?> headers,
-        List<Dictionary<string, string?>>? rows)
-    {
-        Name = name;
-        Headers = headers;
-        _rows = rows ?? [];
-        RowCount = rowCount;
-    }
-
-    public string Name { get; }
-    public IReadOnlyList<string?> Headers { get; }
-    public int RowCount { get; }
+    public string Name { get; } = name;
+    public IReadOnlyList<string?> Headers { get; } = headers;
+    public int RowCount { get; } = rowCount;
 
     public Dictionary<string, string?> GetRow(int rowNumber)
     {
@@ -43,49 +36,56 @@ internal sealed class TestSheet : ISheet
     }
 }
 
-internal sealed class TestSheetBook : ISheetBook
+internal sealed class TestSheetBook(string filePath, params ISheet[] sheets) : ISheetBook
 {
-    public TestSheetBook(string filePath, params ISheet[] sheets)
-    {
-        FilePath = filePath;
-        Name = Path.GetFileNameWithoutExtension(filePath);
-        Worksheets = sheets.ToDictionary(sheet => sheet.Name, sheet => sheet);
-    }
+    public string FilePath { get; } = filePath;
+    public string? Name { get; } = Path.GetFileNameWithoutExtension(filePath);
 
-    public string FilePath { get; }
-    public string? Name { get; }
-    public IReadOnlyDictionary<string, ISheet> Worksheets { get; }
+    public IReadOnlyDictionary<string, ISheet> Worksheets { get; } =
+        sheets.ToDictionary(sheet => sheet.Name, sheet => sheet);
 
     public IReadOnlyDictionary<string, int> GetSheetsInfo()
     {
         return Worksheets.ToDictionary(kv => kv.Key, kv => kv.Value.RowCount);
     }
 
-    public void Close()
+    public void Dispose()
     {
     }
 }
 
-internal sealed class TestTemplatePresentation : ITemplatePresentation
+internal sealed class TestTemplatePresentation(
+    string filePath,
+    int slideCount = 1,
+    IReadOnlyList<ShapeInfo>? shapes = null,
+    Dictionary<uint, ImagePreview>? imageShapes = null,
+    IReadOnlyCollection<string>? placeholders = null)
+    : ITemplatePresentation
 {
-    private readonly Dictionary<uint, ImagePreview> _imageShapes;
-    private readonly IReadOnlyList<ShapeInfo> _shapes;
+    private readonly Dictionary<uint, ImagePreview> _imageShapes = imageShapes ?? new Dictionary<uint, ImagePreview>();
+    private readonly IReadOnlyCollection<string> _placeholders = placeholders ?? Array.Empty<string>();
+    private readonly IReadOnlyList<ShapeInfo> _shapes = shapes ?? [];
 
-    public TestTemplatePresentation(
-        string filePath,
-        int slideCount = 1,
-        IReadOnlyList<ShapeInfo>? shapes = null,
-        Dictionary<uint, ImagePreview>? imageShapes = null)
+    public string FilePath { get; } = filePath;
+    public int SlideCount { get; } = slideCount;
+
+    public Dictionary<uint, ImagePreview> GetAllImageShapes()
     {
-        FilePath = filePath;
-        SlideCount = slideCount;
-        _shapes = shapes ?? [];
-        _imageShapes = imageShapes ?? new Dictionary<uint, ImagePreview>();
+        return new Dictionary<uint, ImagePreview>(_imageShapes);
     }
 
-    public string FilePath { get; }
-    public int SlideCount { get; }
+    public IReadOnlyList<ShapeInfo> GetAllShapes()
+    {
+        return _shapes;
+    }
 
-    public Dictionary<uint, ImagePreview> GetAllImageShapes() => new(_imageShapes);
-    public IReadOnlyList<ShapeInfo> GetAllShapes() => _shapes;
+    public IReadOnlyCollection<string> GetAllTextPlaceholders()
+    {
+        return _placeholders;
+    }
+
+    public void Dispose()
+    {
+        // Nothing to dispose
+    }
 }

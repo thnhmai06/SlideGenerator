@@ -12,6 +12,14 @@ import * as backendApi from '../services/backendApi'
 
 type JobStatus = 'Pending' | 'Running' | 'Paused' | 'Completed' | 'Failed' | 'Cancelled'
 
+interface LogEntry {
+  message: string
+  level?: string
+  timestamp?: string
+  row?: number
+  rowStatus?: string
+}
+
 interface SheetJob {
   id: string
   sheetName: string
@@ -20,8 +28,9 @@ interface SheetJob {
   totalRows: number
   progress: number
   errorCount: number
+  outputPath?: string
   errorMessage?: string
-  logs: string[]
+  logs: LogEntry[]
 }
 
 interface GroupJob {
@@ -32,7 +41,9 @@ interface GroupJob {
   progress: number
   errorCount: number
   sheets: Record<string, SheetJob>
-  logs: string[]
+  logs: LogEntry[]
+  createdAt?: string
+  completedAt?: string
 }
 
 interface CreateGroupPayload {
@@ -51,36 +62,17 @@ interface JobContextValue {
   clearCompleted: () => void
   groupControl: (groupId: string, action: backendApi.ControlAction) => Promise<void>
   jobControl: (jobId: string, action: backendApi.ControlAction) => Promise<void>
+  removeGroup: (groupId: string) => Promise<boolean>
+  removeSheet: (jobId: string) => Promise<boolean>
+  loadSheetLogs: (jobId: string) => Promise<void>
   globalControl: (action: backendApi.ControlAction) => Promise<void>
+  exportGroupConfig: (groupId: string) => Promise<boolean>
+  hasGroupConfig: (groupId: string) => boolean
 }
 
 const JobContext = createContext<JobContextValue | undefined>(undefined)
 
-const GROUP_META_KEY = 'slidegen.groupMeta'
 const MAX_LOGS = 200
-
-type GroupMeta = {
-  outputFolder?: string
-  workbookPath?: string
-}
-
-const loadGroupMeta = (): Record<string, GroupMeta> => {
-  try {
-    const raw = localStorage.getItem(GROUP_META_KEY)
-    return raw ? (JSON.parse(raw) as Record<string, GroupMeta>) : {}
-  } catch (error) {
-    console.error('Failed to load group meta:', error)
-    return {}
-  }
-}
-
-const saveGroupMeta = (meta: Record<string, GroupMeta>) => {
-  try {
-    localStorage.setItem(GROUP_META_KEY, JSON.stringify(meta))
-  } catch (error) {
-    console.error('Failed to save group meta:', error)
-  }
-}
 
 const createEmptyGroup = (groupId: string): GroupJob => ({
   id: groupId,
@@ -106,23 +98,119 @@ const createEmptySheet = (sheetId: string): SheetJob => ({
 export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [groupsById, setGroupsById] = useState<Record<string, GroupJob>>({})
   const groupsRef = useRef<Record<string, GroupJob>>({})
-  const groupMetaRef = useRef<Record<string, GroupMeta>>(loadGroupMeta())
   const subscribedGroups = useRef(new Set<string>())
   const subscribedSheets = useRef(new Set<string>())
   const sheetToGroup = useRef<Record<string, string>>({})
 
-  const rememberGroupMeta = useCallback((groupId: string, meta: GroupMeta) => {
-    const current = groupMetaRef.current
-    current[groupId] = { ...current[groupId], ...meta }
-    saveGroupMeta(current)
-  }, [])
+  const applyGroupTimestamps = (prev: GroupJob, next: GroupJob): GroupJob => {
+    const createdAt = next.createdAt ?? prev.createdAt ?? new Date().toISOString()
+    const isCompleted = ['completed', 'failed', 'cancelled'].includes(next.status.toLowerCase())
+    const completedAt = next.completedAt ?? prev.completedAt ?? (isCompleted ? new Date().toISOString() : undefined)
+    return { ...next, createdAt, completedAt }
+  }
 
   const updateGroup = useCallback((groupId: string, updater: (group: GroupJob) => GroupJob) => {
     setGroupsById((prev) => {
       const current = prev[groupId] ?? createEmptyGroup(groupId)
-      const updated = updater(current)
+      const updated = applyGroupTimestamps(current, updater(current))
       return { ...prev, [groupId]: updated }
     })
+  }, [])
+
+  const GROUP_META_KEY = 'slidegen.group.meta'
+  const GROUP_CONFIG_KEY = 'slidegen.group.config'
+
+  const readGroupConfigs = (): Record<string, CreateGroupPayload> => {
+    try {
+      const raw = sessionStorage.getItem(GROUP_CONFIG_KEY)
+      if (!raw) return {}
+      return JSON.parse(raw) as Record<string, CreateGroupPayload>
+    } catch (error) {
+      console.error('Failed to read group configs:', error)
+      return {}
+    }
+  }
+
+  const saveGroupConfig = useCallback((groupId: string, payload: CreateGroupPayload) => {
+    try {
+      const current = readGroupConfigs()
+      current[groupId] = payload
+      sessionStorage.setItem(GROUP_CONFIG_KEY, JSON.stringify(current))
+    } catch (error) {
+      console.error('Failed to save group config:', error)
+    }
+  }, [])
+
+  const removeGroupConfig = useCallback((groupIds: string[]) => {
+    try {
+      const current = readGroupConfigs()
+      let changed = false
+      groupIds.forEach((groupId) => {
+        if (groupId in current) {
+          delete current[groupId]
+          changed = true
+        }
+      })
+      if (!changed) return
+      if (Object.keys(current).length === 0) {
+        sessionStorage.removeItem(GROUP_CONFIG_KEY)
+      } else {
+        sessionStorage.setItem(GROUP_CONFIG_KEY, JSON.stringify(current))
+      }
+    } catch (error) {
+      console.error('Failed to remove group configs:', error)
+    }
+  }, [])
+
+  const getGroupConfig = useCallback((groupId: string): CreateGroupPayload | null => {
+    const current = readGroupConfigs()
+    return current[groupId] ?? null
+  }, [])
+
+  const clearGroupMeta = useCallback((groupIds: string[]) => {
+    try {
+      const raw = sessionStorage.getItem(GROUP_META_KEY)
+      if (!raw) return
+      const parsed = JSON.parse(raw) as Record<string, unknown>
+      let changed = false
+      groupIds.forEach((groupId) => {
+        if (groupId in parsed) {
+          delete parsed[groupId]
+          changed = true
+        }
+      })
+      if (!changed) return
+      const nextKeys = Object.keys(parsed)
+      if (nextKeys.length === 0) {
+        sessionStorage.removeItem(GROUP_META_KEY)
+      } else {
+        sessionStorage.setItem(GROUP_META_KEY, JSON.stringify(parsed))
+      }
+    } catch (error) {
+      console.error('Failed to clear group meta:', error)
+    }
+  }, [])
+
+  const saveGroupMeta = useCallback((summaries: backendApi.GroupSummary[]) => {
+    try {
+      const metaMap: Record<string, unknown> = {}
+      summaries.forEach((summary) => {
+        metaMap[summary.GroupId] = {
+          groupId: summary.GroupId,
+          workbookPath: summary.WorkbookPath,
+          outputFolder: summary.OutputFolder ?? undefined,
+          status: summary.Status,
+          progress: summary.Progress,
+          sheetCount: summary.SheetCount,
+          completedSheets: summary.CompletedSheets,
+          errorCount: summary.ErrorCount ?? 0,
+          updatedAt: new Date().toISOString(),
+        }
+      })
+      sessionStorage.setItem(GROUP_META_KEY, JSON.stringify(metaMap))
+    } catch (error) {
+      console.error('Failed to save group meta:', error)
+    }
   }, [])
 
   const updateSheet = useCallback(
@@ -161,12 +249,11 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const upsertGroupFromSummary = useCallback(
     (summary: backendApi.GroupSummary) => {
       updateGroup(summary.GroupId, (group) => {
-        const meta = groupMetaRef.current[summary.GroupId] ?? {}
         return {
           ...group,
           id: summary.GroupId,
-          workbookPath: summary.WorkbookPath ?? meta.workbookPath ?? group.workbookPath,
-          outputFolder: meta.outputFolder ?? group.outputFolder,
+          workbookPath: summary.WorkbookPath ?? group.workbookPath,
+          outputFolder: summary.OutputFolder ?? group.outputFolder,
           status: summary.Status as JobStatus,
           progress: summary.Progress ?? group.progress,
           errorCount: summary.ErrorCount ?? group.errorCount,
@@ -195,6 +282,7 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             totalRows: job.TotalRows ?? 0,
             progress: job.Progress ?? 0,
             errorCount: job.ErrorCount ?? 0,
+            outputPath: job.OutputPath ?? sheets[sheetId]?.outputPath,
             errorMessage: job.ErrorMessage ?? undefined,
             logs: sheets[sheetId]?.logs ?? [],
           }
@@ -222,11 +310,12 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     summaries.forEach((summary) => {
       upsertGroupFromSummary(summary)
-      rememberGroupMeta(summary.GroupId, { workbookPath: summary.WorkbookPath })
     })
 
+    saveGroupMeta(summaries)
+
     await Promise.allSettled(summaries.map((summary) => syncGroupStatus(summary.GroupId)))
-  }, [rememberGroupMeta, syncGroupStatus, upsertGroupFromSummary])
+  }, [syncGroupStatus, upsertGroupFromSummary, saveGroupMeta])
 
   const createGroup = useCallback(
     async (payload: CreateGroupPayload) => {
@@ -234,6 +323,7 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         TemplatePath: payload.templatePath,
         SpreadsheetPath: payload.spreadsheetPath,
         OutputPath: payload.outputPath,
+        Path: payload.outputPath,
         TextConfigs: payload.textConfigs,
         ImageConfigs: payload.imageConfigs,
         SheetNames: payload.sheetNames,
@@ -241,6 +331,7 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       const data = response as backendApi.SlideGroupCreateSuccess
       const groupId = data.GroupId
+      saveGroupConfig(groupId, payload)
 
       let createdGroup: GroupJob = createEmptyGroup(groupId)
       updateGroup(groupId, (group) => {
@@ -267,11 +358,6 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         return createdGroup
       })
 
-      rememberGroupMeta(groupId, {
-        outputFolder: data.OutputFolder,
-        workbookPath: payload.spreadsheetPath,
-      })
-
       await ensureGroupSubscription(groupId)
       await Promise.all(
         Object.values(data.JobIds ?? {}).map((jobId) => ensureSheetSubscription(jobId))
@@ -281,15 +367,90 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       return createdGroup
     },
-    [ensureGroupSubscription, ensureSheetSubscription, rememberGroupMeta, syncGroupStatus, updateGroup]
+    [ensureGroupSubscription, ensureSheetSubscription, saveGroupConfig, syncGroupStatus, updateGroup]
   )
 
   const groupControl = useCallback(async (groupId: string, action: backendApi.ControlAction) => {
     await backendApi.groupControl({ GroupId: groupId, Action: action })
-  }, [])
+    if (action === 'Stop' || action === 'Cancel') {
+      clearGroupMeta([groupId])
+      removeGroupConfig([groupId])
+    }
+  }, [clearGroupMeta, removeGroupConfig])
+
+  const removeGroup = useCallback(async (groupId: string) => {
+    const response = await backendApi.removeGroup({ GroupId: groupId })
+    const data = response as backendApi.SlideGroupRemoveSuccess
+    if (!data.Removed) return false
+
+    setGroupsById((prev) => {
+      const next = { ...prev }
+      delete next[groupId]
+      return next
+    })
+
+    clearGroupMeta([groupId])
+    removeGroupConfig([groupId])
+    return true
+  }, [clearGroupMeta, removeGroupConfig])
 
   const jobControl = useCallback(async (jobId: string, action: backendApi.ControlAction) => {
     await backendApi.jobControl({ JobId: jobId, Action: action })
+  }, [])
+
+  const loadSheetLogs = useCallback(
+    async (jobId: string) => {
+      try {
+        const response = await backendApi.getJobLogs({ JobId: jobId })
+        const data = response as backendApi.SlideJobLogsSuccess
+        const logs = data.Logs.map((entry) => {
+          const rowValue = entry.Data ? entry.Data.row : undefined
+          const row = typeof rowValue === 'number' ? rowValue : Number(rowValue)
+          const rowStatusValue = entry.Data ? entry.Data.rowStatus : undefined
+          return {
+            message: entry.Message,
+            level: entry.Level,
+            timestamp: entry.Timestamp,
+            row: Number.isFinite(row) ? row : undefined,
+            rowStatus: typeof rowStatusValue === 'string' ? rowStatusValue : undefined,
+          } satisfies LogEntry
+        })
+
+        updateSheet(jobId, (sheet) => {
+          if (sheet.logs.length > 0) return sheet
+          return { ...sheet, logs }
+        })
+      } catch (error) {
+        console.error('Failed to load job logs:', error)
+      }
+    },
+    [updateSheet]
+  )
+
+  const removeSheet = useCallback(async (jobId: string) => {
+    const response = await backendApi.removeJob({ JobId: jobId })
+    const data = response as backendApi.SlideJobRemoveSuccess
+    if (!data.Removed) return false
+
+    setGroupsById((prev) => {
+      const next: Record<string, GroupJob> = {}
+      Object.values(prev).forEach((group) => {
+        if (!group.sheets[jobId]) {
+          next[group.id] = group
+          return
+        }
+
+        const sheets = { ...group.sheets }
+        delete sheets[jobId]
+        if (Object.keys(sheets).length === 0) return
+
+        next[group.id] = { ...group, sheets }
+      })
+
+      return next
+    })
+
+    return true
   }, [])
 
   const globalControl = useCallback(async (action: backendApi.ControlAction) => {
@@ -298,19 +459,78 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const clearCompleted = useCallback(() => {
     setGroupsById((prev) => {
+      const clearedIds: string[] = []
       const next: Record<string, GroupJob> = {}
       Object.values(prev).forEach((group) => {
         const status = group.status.toLowerCase()
         if (!['completed', 'failed', 'cancelled'].includes(status)) {
           next[group.id] = group
+        } else {
+          clearedIds.push(group.id)
         }
       })
+      if (clearedIds.length > 0) {
+        clearGroupMeta(clearedIds)
+        removeGroupConfig(clearedIds)
+      }
       return next
     })
-  }, [])
+  }, [clearGroupMeta, removeGroupConfig])
+
+  const exportGroupConfig = useCallback(async (groupId: string) => {
+    const config = getGroupConfig(groupId)
+    if (!config || !window.electronAPI) return false
+    const exportPayload = {
+      pptxPath: config.templatePath,
+      dataPath: config.spreadsheetPath,
+      savePath: config.outputPath,
+      textReplacements: (config.textConfigs ?? []).map((item, index) => ({
+        id: index + 1,
+        placeholder: item.Pattern,
+        columns: item.Columns,
+      })),
+      imageReplacements: (config.imageConfigs ?? []).map((item, index) => ({
+        id: index + 1,
+        shapeId: String(item.ShapeId),
+        columns: item.Columns,
+        roiType: item.RoiType ?? 'Attention',
+        cropType: item.CropType ?? 'Fit',
+      })),
+    }
+
+    const path = await window.electronAPI.saveFile([
+      { name: 'JSON Files', extensions: ['json'] },
+      { name: 'All Files', extensions: ['*'] },
+    ])
+    if (!path) return false
+
+    await window.electronAPI.writeSettings(path, JSON.stringify(exportPayload, null, 2))
+    return true
+  }, [getGroupConfig])
+
+  const hasGroupConfig = useCallback((groupId: string) => {
+    return Boolean(getGroupConfig(groupId))
+  }, [getGroupConfig])
 
   useEffect(() => {
     groupsRef.current = groupsById
+  }, [groupsById])
+
+  useEffect(() => {
+    if (!window.electronAPI?.setProgressBar) return
+    const activeGroups = Object.values(groupsById).filter((group) =>
+      ['pending', 'running', 'paused'].includes(group.status.toLowerCase())
+    )
+
+    if (activeGroups.length === 0) {
+      window.electronAPI.setProgressBar(-1)
+      return
+    }
+
+    const avgProgress =
+      activeGroups.reduce((sum, group) => sum + (group.progress ?? 0), 0) / activeGroups.length
+    const normalized = Math.max(0, Math.min(1, avgProgress / 100))
+    window.electronAPI.setProgressBar(normalized)
   }, [groupsById])
 
   useEffect(() => {
@@ -319,6 +539,18 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const data = payload as Record<string, unknown>
       const getValue = (key: string) =>
         data[key] ?? data[key.charAt(0).toLowerCase() + key.slice(1)]
+      const getDataValue = (
+        container: Record<string, unknown> | undefined,
+        key: string
+      ) => {
+        if (!container) return undefined
+        if (key in container) return container[key]
+        const lowered = key.toLowerCase()
+        for (const [entryKey, value] of Object.entries(container)) {
+          if (entryKey.toLowerCase() === lowered) return value
+        }
+        return undefined
+      }
 
       const groupId = getValue('GroupId') as string | undefined
       const jobId = getValue('JobId') as string | undefined
@@ -327,6 +559,7 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const error = getValue('Error') as string | undefined
       const level = getValue('Level') as string | undefined
       const timestamp = getValue('Timestamp') as string | undefined
+      const payloadData = getValue('Data') as Record<string, unknown> | undefined
 
       if (groupId && typeof getValue('Progress') === 'number') {
         updateGroup(groupId, (group) => ({
@@ -363,27 +596,40 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
 
       if (jobId && error) {
+        const logEntry: LogEntry = {
+          message: error,
+          level: 'Error',
+          timestamp,
+        }
         updateSheet(jobId, (sheet) => ({
           ...sheet,
-          logs: [...sheet.logs, error].slice(-MAX_LOGS),
+          logs: [...sheet.logs, logEntry].slice(-MAX_LOGS),
         }))
         return
       }
 
       if (jobId && message) {
-        const logLine = level ? `${level}: ${message}` : message
-        const withTime = timestamp ? `[${new Date(timestamp).toLocaleTimeString()}] ${logLine}` : logLine
+        const rowValue = getDataValue(payloadData, 'row')
+        const row = typeof rowValue === 'number' ? rowValue : Number(rowValue)
+        const rowStatus = getDataValue(payloadData, 'rowStatus')
+        const logEntry: LogEntry = {
+          message,
+          level,
+          timestamp,
+          row: Number.isFinite(row) ? row : undefined,
+          rowStatus: typeof rowStatus === 'string' ? rowStatus : undefined,
+        }
         const targetGroupId = sheetToGroup.current[jobId]
 
         if (targetGroupId) {
           updateSheet(jobId, (sheet) => ({
             ...sheet,
-            logs: [...sheet.logs, withTime].slice(-MAX_LOGS),
+            logs: [...sheet.logs, logEntry].slice(-MAX_LOGS),
           }))
         } else if (groupsRef.current[jobId]) {
           updateGroup(jobId, (group) => ({
             ...group,
-            logs: [...group.logs, withTime].slice(-MAX_LOGS),
+            logs: [...group.logs, logEntry].slice(-MAX_LOGS),
           }))
         }
       }
@@ -411,9 +657,27 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       clearCompleted,
       groupControl,
       jobControl,
+      removeGroup,
+      removeSheet,
+      loadSheetLogs,
       globalControl,
+      exportGroupConfig,
+      hasGroupConfig,
     }),
-    [clearCompleted, createGroup, groupControl, groups, jobControl, globalControl, refreshGroups]
+    [
+      clearCompleted,
+      createGroup,
+      exportGroupConfig,
+      groupControl,
+      groups,
+      hasGroupConfig,
+      jobControl,
+      removeGroup,
+      removeSheet,
+      loadSheetLogs,
+      globalControl,
+      refreshGroups,
+    ]
   )
 
   return <JobContext.Provider value={value}>{children}</JobContext.Provider>

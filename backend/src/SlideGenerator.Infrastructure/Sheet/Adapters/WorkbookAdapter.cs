@@ -26,7 +26,7 @@ internal sealed class WorkbookAdapter : ISheetBook
         return _workbook.GetWorksheetsInfo();
     }
 
-    public void Close()
+    public void Dispose()
     {
         _workbook.Dispose();
     }

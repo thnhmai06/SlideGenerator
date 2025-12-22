@@ -81,7 +81,7 @@
   border: 1px solid var(--border-primary);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
-  z-index: 1000;
+  z-index: 2000;
   animation: fadeInUp var(--transition-fast);
 }
 

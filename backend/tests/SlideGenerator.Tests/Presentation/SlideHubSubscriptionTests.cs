@@ -14,6 +14,7 @@ public sealed class SlideHubSubscriptionTests
         var groupManager = new TestGroupManager();
         var hub = new SlideHub(new FakeJobManager(new FakeActiveJobCollection()),
             new FakeSlideTemplateManager(new TestTemplatePresentation("template.pptx")),
+            new FakeJobStateStore(),
             NullLogger<SlideHub>.Instance);
         HubTestHelper.Attach(hub, "conn-1", groupManager);
 
@@ -29,6 +30,7 @@ public sealed class SlideHubSubscriptionTests
         var groupManager = new TestGroupManager();
         var hub = new SlideHub(new FakeJobManager(new FakeActiveJobCollection()),
             new FakeSlideTemplateManager(new TestTemplatePresentation("template.pptx")),
+            new FakeJobStateStore(),
             NullLogger<SlideHub>.Instance);
         HubTestHelper.Attach(hub, "conn-2", groupManager);
 

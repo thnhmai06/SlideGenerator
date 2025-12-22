@@ -39,6 +39,11 @@ public interface IActiveJobCollection : IJobCollection
     void CancelGroup(string groupId);
 
     /// <summary>
+    ///     Cancels and removes a group job and its persisted state.
+    /// </summary>
+    void CancelAndRemoveGroup(string groupId);
+
+    /// <summary>
     ///     Requests pause for a single sheet.
     /// </summary>
     void PauseSheet(string sheetId);
@@ -52,6 +57,11 @@ public interface IActiveJobCollection : IJobCollection
     ///     Cancels a sheet job.
     /// </summary>
     void CancelSheet(string sheetId);
+
+    /// <summary>
+    ///     Cancels and removes a sheet job and its persisted state.
+    /// </summary>
+    void CancelAndRemoveSheet(string sheetId);
 
     /// <summary>
     ///     Requests pause for all running groups.

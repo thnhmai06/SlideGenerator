@@ -1,0 +1,67 @@
+.title-bar {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px 0 var(--spacing-lg);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-primary);
+  -webkit-app-region: drag;
+}
+
+.title-bar-left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--text-primary);
+  font-weight: var(--font-semibold);
+}
+
+.title-bar-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+.title-bar-title {
+  font-size: var(--font-sm);
+  letter-spacing: 0.02em;
+}
+
+.title-bar-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  -webkit-app-region: no-drag;
+}
+
+.title-bar-btn {
+  width: 42px;
+  height: 34px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: background-color var(--transition-fast);
+}
+
+.title-bar-btn:hover {
+  background-color: rgba(148, 163, 184, 0.2);
+}
+
+.title-bar-btn-danger {
+  color: #ef4444;
+}
+
+.title-bar-btn-danger:hover {
+  background-color: rgba(239, 68, 68, 0.2);
+}
+
+.title-bar-btn img {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+}

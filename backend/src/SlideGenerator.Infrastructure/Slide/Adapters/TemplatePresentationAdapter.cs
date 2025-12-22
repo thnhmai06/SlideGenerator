@@ -13,7 +13,7 @@ namespace SlideGenerator.Infrastructure.Slide.Adapters;
 ///     Domain.Slide.Interfaces.ITemplatePresentation.
 /// </summary>
 internal sealed class TemplatePresentationAdapter(CoreTemplatePresentation presentation)
-    : ITemplatePresentation, IDisposable
+    : ITemplatePresentation
 {
     public void Dispose()
     {
@@ -69,5 +69,4 @@ internal sealed class TemplatePresentationAdapter(CoreTemplatePresentation prese
             .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
             .ToArray();
     }
-
 }

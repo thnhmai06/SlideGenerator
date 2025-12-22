@@ -13,6 +13,7 @@ public sealed record SlideJobStatusSuccess(
     int CurrentRow,
     int TotalRows,
     float Progress,
+    string OutputPath,
     string? ErrorMessage,
     int ErrorCount = 0)
     : Response("jobstatus");

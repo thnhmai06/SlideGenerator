@@ -1,4 +1,3 @@
-using SlideGenerator.Domain.Job.Components;
 using SlideGenerator.Domain.Job.Entities;
 using SlideGenerator.Domain.Job.Enums;
 using SlideGenerator.Tests.Helpers;
@@ -11,7 +10,7 @@ public sealed class JobSheetTests
     [TestMethod]
     public void UpdateProgress_ClampsToRowCount()
     {
-        var sheet = CreateSheet(rowCount: 5);
+        var sheet = CreateSheet(5);
 
         sheet.UpdateProgress(-3);
         Assert.AreEqual(0, sheet.CurrentRow);
@@ -23,7 +22,7 @@ public sealed class JobSheetTests
     [TestMethod]
     public void NextRowIndex_TracksCurrentRow()
     {
-        var sheet = CreateSheet(rowCount: 5);
+        var sheet = CreateSheet(5);
         sheet.UpdateProgress(2);
 
         Assert.AreEqual(3, sheet.NextRowIndex);
@@ -32,7 +31,7 @@ public sealed class JobSheetTests
     [TestMethod]
     public void Pause_SetsStatusPaused()
     {
-        var sheet = CreateSheet(rowCount: 3);
+        var sheet = CreateSheet(3);
 
         sheet.SetStatus(SheetJobStatus.Running);
         sheet.Pause();
@@ -43,7 +42,7 @@ public sealed class JobSheetTests
     [TestMethod]
     public void RegisterRowError_IncrementsErrorCount()
     {
-        var sheet = CreateSheet(rowCount: 3);
+        var sheet = CreateSheet(3);
 
         sheet.RegisterRowError(1, "bad image");
         sheet.RegisterRowError(2, "bad image");

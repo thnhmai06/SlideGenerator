@@ -102,6 +102,14 @@ public sealed class JobGroup : IJobGroup
     }
 
     /// <summary>
+    ///     Removes a sheet job by id.
+    /// </summary>
+    public bool RemoveJob(string sheetId)
+    {
+        return _jobs.TryRemove(sheetId, out _);
+    }
+
+    /// <summary>
     ///     Sets the status of the group.
     /// </summary>
     public void SetStatus(GroupStatus status)
@@ -121,16 +129,16 @@ public sealed class JobGroup : IJobGroup
             return;
         }
 
-        if (jobs.Any(j => j.Status == SheetJobStatus.Failed))
-        {
-            Status = GroupStatus.Failed;
-            return;
-        }
-
         var hasActive = jobs.Any(j =>
             j.Status is SheetJobStatus.Pending or SheetJobStatus.Running or SheetJobStatus.Paused);
         if (!hasActive)
         {
+            if (jobs.Any(j => j.Status == SheetJobStatus.Failed))
+            {
+                Status = GroupStatus.Failed;
+                return;
+            }
+
             Status = jobs.Any(j => j.Status == SheetJobStatus.Cancelled)
                 ? GroupStatus.Cancelled
                 : GroupStatus.Completed;

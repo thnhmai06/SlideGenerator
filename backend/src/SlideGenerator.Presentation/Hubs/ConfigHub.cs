@@ -93,7 +93,8 @@ public class ConfigHub(
     private ConfigUpdateSuccess ExecuteUpdateConfig(ConfigUpdate request)
     {
         if (HasWorkingJobs())
-            throw new InvalidOperationException("Cannot update config while jobs are running. Pause or complete them first.");
+            throw new InvalidOperationException(
+                "Cannot update config while jobs are running. Pause or complete them first.");
 
         var config = new Config
         {

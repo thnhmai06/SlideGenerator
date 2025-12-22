@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog, shell } from "electron";
+import { app, BrowserWindow, ipcMain, dialog, shell, Menu, Tray } from "electron";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs/promises";
@@ -8,6 +8,8 @@ const __dirname = path.dirname(__filename);
 app.commandLine.appendSwitch("remote-debugging-port", "9222");
 
 let mainWindow: BrowserWindow | null = null;
+let tray: Tray | null = null;
+let isQuitting = false;
 
 function createWindow() {
 	mainWindow = new BrowserWindow({
@@ -15,7 +17,8 @@ function createWindow() {
 		height: 800,
 		minWidth: 800,
 		minHeight: 600,
-		icon: path.join(__dirname, "../assets/images/app-icon.png"),
+		icon: path.join(__dirname, "../assets/images/app.png"),
+		frame: false,
 		autoHideMenuBar: true,
 		webPreferences: {
 			preload: path.join(__dirname, "preload.js"),
@@ -38,6 +41,42 @@ function createWindow() {
 	});
 }
 
+function ensureTray() {
+	if (tray || !mainWindow) return;
+
+	tray = new Tray(path.join(__dirname, "../assets/images/app.png"));
+	tray.setToolTip("Slide Generator");
+	tray.setContextMenu(
+		Menu.buildFromTemplate([
+			{
+				label: "Show",
+				click: () => {
+					mainWindow?.show();
+					mainWindow?.focus();
+				},
+			},
+			{
+				label: "Hide",
+				click: () => {
+					mainWindow?.hide();
+				},
+			},
+			{ type: "separator" },
+			{
+				label: "Quit",
+				click: () => {
+					isQuitting = true;
+					app.quit();
+				},
+			},
+		])
+	);
+	tray.on("click", () => {
+		mainWindow?.show();
+		mainWindow?.focus();
+	});
+}
+
 app.whenReady().then(() => {
 	createWindow();
 
@@ -52,6 +91,10 @@ app.on("window-all-closed", () => {
 	if (process.platform !== "darwin") {
 		app.quit();
 	}
+});
+
+app.on("before-quit", () => {
+	isQuitting = true;
 });
 
 // IPC handlers for file dialogs
@@ -84,7 +127,7 @@ ipcMain.handle("dialog:openFolder", async () => {
 ipcMain.handle("dialog:saveFile", async (_, filters: Electron.FileFilter[]) => {
 	const result = await dialog.showSaveDialog({
 		filters: filters || [{ name: "All Files", extensions: ["*"] }],
-		defaultPath: "output.pptx",
+		defaultPath: "task-config.json",
 	});
 	return result.filePath;
 });
@@ -97,9 +140,46 @@ ipcMain.handle("dialog:openPath", async (_, filePath: string) => {
 	await shell.openPath(filePath);
 });
 
+ipcMain.handle("window:control", async (_, action: string) => {
+	if (!mainWindow) return;
+
+	switch (action) {
+		case "minimize":
+			mainWindow.minimize();
+			break;
+		case "maximize":
+			if (mainWindow.isMaximized()) {
+				mainWindow.unmaximize();
+			} else {
+				mainWindow.maximize();
+			}
+			break;
+		case "close":
+			if (isQuitting) {
+				mainWindow.close();
+			} else {
+				mainWindow.close();
+			}
+			break;
+	}
+});
+
+ipcMain.handle("window:hideToTray", async () => {
+	if (!mainWindow) return;
+	ensureTray();
+	mainWindow.hide();
+});
+
+ipcMain.handle("window:setProgress", async (_, value: number) => {
+	if (!mainWindow) return;
+	mainWindow.setProgressBar(value);
+});
+
 ipcMain.handle("settings:read", async (_, filename: string) => {
 	try {
-		const settingsPath = path.join(app.getPath("userData"), filename);
+		const settingsPath = path.isAbsolute(filename)
+			? filename
+			: path.join(app.getPath("userData"), filename);
 		const data = await fs.readFile(settingsPath, "utf-8");
 		return data;
 	} catch (error) {
@@ -110,7 +190,9 @@ ipcMain.handle("settings:read", async (_, filename: string) => {
 
 ipcMain.handle("settings:write", async (_, filename: string, data: string) => {
 	try {
-		const settingsPath = path.join(app.getPath("userData"), filename);
+		const settingsPath = path.isAbsolute(filename)
+			? filename
+			: path.join(app.getPath("userData"), filename);
 		await fs.writeFile(settingsPath, data, "utf-8");
 		return true;
 	} catch (error) {

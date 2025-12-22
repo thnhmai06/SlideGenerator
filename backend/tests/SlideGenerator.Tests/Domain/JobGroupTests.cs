@@ -1,4 +1,3 @@
-using SlideGenerator.Domain.Job.Components;
 using SlideGenerator.Domain.Job.Entities;
 using SlideGenerator.Domain.Job.Enums;
 using SlideGenerator.Tests.Helpers;

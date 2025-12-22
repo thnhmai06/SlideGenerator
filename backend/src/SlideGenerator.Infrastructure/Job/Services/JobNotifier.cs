@@ -9,7 +9,7 @@ using SlideGenerator.Infrastructure.Base;
 
 namespace SlideGenerator.Infrastructure.Job.Services;
 
-/// <inheritdoc />
+/// <inheritdoc cref="IJobNotifier" />
 public class JobNotifier<TTHub>(
     ILogger<JobNotifier<TTHub>> logger,
     IHubContext<TTHub> hubContext) : Service(logger), IJobNotifier

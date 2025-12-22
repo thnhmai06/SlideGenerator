@@ -11,7 +11,7 @@ using SlideGenerator.Infrastructure.Base;
 
 namespace SlideGenerator.Infrastructure.Job.Services;
 
-/// <inheritdoc />
+/// <inheritdoc cref="IJobExecutor" />
 public class JobExecutor(
     ILogger<JobExecutor> logger,
     JobManager jobManager,
@@ -50,6 +50,8 @@ public class JobExecutor(
             ct.ThrowIfCancellationRequested();
         };
 
+        int? activeRow = null;
+
         try
         {
             sheet.SetStatus(SheetJobStatus.Running);
@@ -59,7 +61,7 @@ public class JobExecutor(
             await PersistGroupStateAsync(group);
             await jobNotifier.NotifyGroupStatusChanged(group.Id, group.Status);
 
-            if (sheet.CurrentRow == 0)
+            if (sheet.CurrentRow == 0) // on start
             {
                 slideWorkingManager.RemoveWorkingPresentation(sheet.OutputPath);
                 fileSystem.CopyFile(group.Template.FilePath, sheet.OutputPath, true);
@@ -84,28 +86,60 @@ public class JobExecutor(
             {
                 await checkpoint(JobCheckpointStage.BeforeRow, token);
 
+                activeRow = rowNum;
+                await StoreAndNotifyLogAsync(new JobEvent(
+                    sheet.Id,
+                    JobEventScope.Sheet,
+                    DateTimeOffset.UtcNow,
+                    "Info",
+                    $"Processing row {rowNum}",
+                    new Dictionary<string, object?>
+                    {
+                        ["row"] = rowNum,
+                        ["rowStatus"] = "processing"
+                    }));
+
                 var rowData = sheet.Worksheet.GetRow(rowNum);
                 var result = await slideServices.ProcessRowAsync(
                     sheet.OutputPath,
-                    group.Template.FilePath,
                     sheet.TextConfigs,
                     sheet.ImageConfigs,
                     rowData,
                     checkpoint,
                     token);
 
+                await StoreAndNotifyLogAsync(new JobEvent(
+                    sheet.Id,
+                    JobEventScope.Sheet,
+                    DateTimeOffset.UtcNow,
+                    "Info",
+                    $"Row {rowNum} completed (text: {result.TextReplacementCount}, images: {result.ImageReplacementCount}, image errors: {result.ImageErrorCount})",
+                    new Dictionary<string, object?>
+                    {
+                        ["row"] = rowNum,
+                        ["rowStatus"] = "completed",
+                        ["textReplacements"] = result.TextReplacementCount,
+                        ["imageReplacements"] = result.ImageReplacementCount,
+                        ["imageErrors"] = result.ImageErrorCount
+                    }));
+
                 if (result.ImageErrorCount > 0)
                 {
                     sheet.RegisterRowError(rowNum, string.Join("; ", result.Errors));
-                    await jobNotifier.NotifyLog(new JobEvent(
+                    var detail = string.Join("; ", result.Errors);
+                    var warningMessage = string.IsNullOrWhiteSpace(detail)
+                        ? $"Row {rowNum} completed with {result.ImageErrorCount} image errors"
+                        : $"Row {rowNum} completed with {result.ImageErrorCount} image errors: {detail}";
+                    await StoreAndNotifyLogAsync(new JobEvent(
                         sheet.Id,
                         JobEventScope.Sheet,
                         DateTimeOffset.UtcNow,
                         "Warning",
-                        $"Row {rowNum} completed with {result.ImageErrorCount} image errors",
+                        warningMessage,
                         new Dictionary<string, object?>
                         {
                             ["row"] = rowNum,
+                            ["rowStatus"] = "warning",
                             ["errors"] = result.Errors
                         }));
                 }
@@ -116,6 +150,8 @@ public class JobExecutor(
                 await jobNotifier.NotifyJobProgress(sheetId, rowNum, sheet.TotalRows, sheet.Progress, sheet.ErrorCount);
                 await jobNotifier.NotifyGroupProgress(group.Id, group.Progress, group.ErrorCount);
             }
+
+            slideServices.RemoveFirstSlide(sheet.OutputPath);
 
             sheet.SetStatus(SheetJobStatus.Completed);
             await PersistSheetStateAsync(sheet);
@@ -136,6 +172,13 @@ public class JobExecutor(
             await PersistSheetStateAsync(sheet);
             await jobNotifier.NotifyJobStatusChanged(sheetId, sheet.Status);
             Logger.LogInformation("Job {JobId} was paused/cancelled", sheetId);
+
+            group.UpdateStatus();
+            await PersistGroupStateAsync(group);
+            await jobNotifier.NotifyGroupStatusChanged(group.Id, group.Status);
+
+            if (sheet.Status == SheetJobStatus.Cancelled)
+                jobManager.NotifySheetCompleted(sheetId);
         }
         catch (Exception ex)
         {
@@ -143,6 +186,17 @@ public class JobExecutor(
             await PersistSheetStateAsync(sheet);
             await jobNotifier.NotifyJobError(sheetId, ex.Message);
             await jobNotifier.NotifyJobStatusChanged(sheetId, SheetJobStatus.Failed, ex.Message);
+            await StoreAndNotifyLogAsync(new JobEvent(
+                sheet.Id,
+                JobEventScope.Sheet,
+                DateTimeOffset.UtcNow,
+                "Error",
+                ex.Message,
+                new Dictionary<string, object?>
+                {
+                    ["row"] = activeRow,
+                    ["rowStatus"] = "error"
+                }));
             Logger.LogError(ex, "Job {JobId} failed", sheetId);
 
             group.UpdateStatus();
@@ -154,7 +208,7 @@ public class JobExecutor(
         finally
         {
             sheet.MarkExecuting(false);
-            if (sheet.Status is SheetJobStatus.Completed or SheetJobStatus.Failed or SheetJobStatus.Cancelled or SheetJobStatus.Paused)
+            if (sheet.Status is not SheetJobStatus.Pending and not SheetJobStatus.Running)
                 slideWorkingManager.RemoveWorkingPresentation(sheet.OutputPath);
         }
     }
@@ -190,5 +244,17 @@ public class JobExecutor(
             group.ErrorCount);
 
         await jobStateStore.SaveGroupAsync(state, CancellationToken.None);
+    }
+
+    private async Task StoreAndNotifyLogAsync(JobEvent jobEvent)
+    {
+        var entry = new JobLogEntry(
+            jobEvent.JobId,
+            jobEvent.Timestamp,
+            jobEvent.Level,
+            jobEvent.Message,
+            jobEvent.Data);
+        await jobStateStore.AppendJobLogAsync(entry, CancellationToken.None);
+        await jobNotifier.NotifyLog(jobEvent);
     }
 }

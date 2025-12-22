@@ -59,7 +59,7 @@ builder.Services.AddSingleton<IJobStateStore, HangfireJobStateStore>();
 builder.Services.AddHostedService<JobRestoreHostedService>();
 
 // Hangfire Setup
-var dbPath = Path.Combine(AppContext.BaseDirectory, "Jobs.db");
+var dbPath = Config.DefaultDatabasePath;
 builder.Services.AddHangfire(configuration => configuration
     .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
     .UseSimpleAssemblyNameTypeSerializer()
