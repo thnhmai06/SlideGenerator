@@ -13,9 +13,9 @@ const Sidebar: React.FC<SidebarProps> = ({ currentMenu, onMenuChange }) => {
   const { t } = useApp()
   
   const menuItems = [
-    { id: 'input' as MenuType, label: t('menu.input'), icon: '/assets/images/upload.png', activeIcon: '/assets/images/upload-selected.png' },
+    { id: 'input' as MenuType, label: t('menu.createTask'), icon: '/assets/images/createTask.png', activeIcon: '/assets/images/createTask-selected.png' },
     { id: 'process' as MenuType, label: t('process.title'), icon: '/assets/images/process.png', activeIcon: '/assets/images/process-selected.png' },
-    { id: 'download' as MenuType, label: t('output.title'), icon: '/assets/images/download.png', activeIcon: '/assets/images/download-selected.png' },
+    { id: 'download' as MenuType, label: t('output.title'), icon: '/assets/images/result.png', activeIcon: '/assets/images/result-selected.png' },
   ]
 
   return (

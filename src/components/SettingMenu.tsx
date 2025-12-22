@@ -41,7 +41,17 @@ interface ConfigState {
 }
 
 const SettingMenu: React.FC = () => {
-  const { theme, language, enableAnimations, setTheme, setLanguage, setEnableAnimations, t } = useApp()
+  const {
+    theme,
+    language,
+    enableAnimations,
+    closeToTray,
+    setTheme,
+    setLanguage,
+    setEnableAnimations,
+    setCloseToTray,
+    t,
+  } = useApp()
   const { groups } = useJobs()
   const [activeTab, setActiveTab] = useState<SettingTab>('appearance')
   const [config, setConfig] = useState<ConfigState | null>(null)
@@ -83,7 +93,7 @@ const SettingMenu: React.FC = () => {
     const normalizedBase = normalizedHost.endsWith('/') ? normalizedHost.slice(0, -1) : normalizedHost
     const hasPort = /:\d+$/.test(normalizedBase)
     const url = hasPort ? normalizedBase : `${normalizedBase}:${port}`
-    localStorage.setItem('backendUrl', url)
+    localStorage.setItem('slidegen.backend.url', url)
   }
 
   const getCaseInsensitive = <T extends Record<string, unknown>>(obj: T | null | undefined, key: string) => {
@@ -103,16 +113,16 @@ const SettingMenu: React.FC = () => {
       setLoading(true)
       const response = await backendApi.getConfig()
       const data = response as backendApi.ConfigGetSuccess
-      const server = getCaseInsensitive(data as Record<string, unknown>, 'Server') as
+      const server = getCaseInsensitive(data as unknown as Record<string, unknown>, 'Server') as
         | Record<string, unknown>
         | undefined
-      const download = getCaseInsensitive(data as Record<string, unknown>, 'Download') as
+      const download = getCaseInsensitive(data as unknown as Record<string, unknown>, 'Download') as
         | Record<string, unknown>
         | undefined
-      const job = getCaseInsensitive(data as Record<string, unknown>, 'Job') as
+      const job = getCaseInsensitive(data as unknown as Record<string, unknown>, 'Job') as
         | Record<string, unknown>
         | undefined
-      const image = getCaseInsensitive(data as Record<string, unknown>, 'Image') as
+      const image = getCaseInsensitive(data as unknown as Record<string, unknown>, 'Image') as
         | Record<string, unknown>
         | undefined
 
@@ -382,10 +392,11 @@ const SettingMenu: React.FC = () => {
               <select
                 className="setting-select"
                 value={theme}
-                onChange={(e) => setTheme(e.target.value as 'dark' | 'light')}
+                onChange={(e) => setTheme(e.target.value as 'dark' | 'light' | 'system')}
               >
                 <option value="dark">{t('settings.themeDark')}</option>
                 <option value="light">{t('settings.themeLight')}</option>
+                <option value="system">{t('settings.themeSystem')}</option>
               </select>
               <span className="setting-hint">{t('settings.themeHint')}</span>
             </div>
@@ -415,6 +426,23 @@ const SettingMenu: React.FC = () => {
                   type="checkbox"
                   checked={enableAnimations}
                   onChange={(e) => setEnableAnimations(e.target.checked)}
+                />
+                <span className="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <div className="setting-item setting-item-toggle">
+            <div className="toggle-content">
+              <div className="toggle-label">
+                <div className="label-text">{t('settings.closeToTray')}</div>
+                <div className="label-description">{t('settings.closeToTrayDesc')}</div>
+              </div>
+              <label className="toggle-switch">
+                <input
+                  type="checkbox"
+                  checked={closeToTray}
+                  onChange={(e) => setCloseToTray(e.target.checked)}
                 />
                 <span className="toggle-slider"></span>
               </label>

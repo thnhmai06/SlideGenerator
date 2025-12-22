@@ -4,6 +4,11 @@ import '../styles/AboutMenu.css'
 
 const AboutMenu: React.FC = () => {
   const { t } = useApp()
+  const developers = [
+    { name: 'thnhmai06', url: 'https://github.com/thnhmai06' },
+    { name: 'NAV-adsf23fd', url: 'https://github.com/NAV-adsf23fd' },
+    { name: 'Hair-Nguyeenx', url: 'https://github.com/Hair-Nguyeenx' },
+  ]
   const handleOpenGithub = () => {
     window.electronAPI.openUrl('https://github.com/thnhmai06/SlideGenerator')
   }
@@ -19,19 +24,50 @@ const AboutMenu: React.FC = () => {
       <h1 className="menu-title">{t('menu.about')}</h1>
       
       <div className="about-content">
+        <div className="about-hero-gifs">
+          <img
+            src="/assets/images/march-7th-dance.gif"
+            alt=""
+            className="about-hero-gif"
+          />
+          <img
+            src="/assets/images/evernight-dance.gif"
+            alt=""
+            className="about-hero-gif"
+          />
+        </div>
         <div className="about-section">
           <h2>{t('about.appName')}</h2>
           <p className="version">{t('about.version')}</p>
           <p className="description">
             {t('about.description')}
             <br />
-            {t('about.builtWith')}
+            {t('about.details')}
           </p>
         </div>
 
         <div className="about-section">
           <h3>{t('about.developer')}</h3>
-          <p>thnhmai06</p>
+          <div className="developer-list">
+            {developers.map((dev) => (
+              <button
+                key={dev.name}
+                className="developer-link"
+                onClick={() => window.electronAPI.openUrl(dev.url)}
+              >
+                <img
+                  src={`https://github.com/${dev.name}.png`}
+                  alt=""
+                  className="developer-avatar"
+                  onError={(event) => {
+                    const target = event.currentTarget
+                    target.style.display = 'none'
+                  }}
+                />
+                {dev.name}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="about-links">

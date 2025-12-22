@@ -30,7 +30,7 @@ function normalizeBaseUrl(url: string): string {
 }
 
 export function getBackendBaseUrl(): string {
-	const stored = localStorage.getItem("backendUrl") ?? "";
+	const stored = localStorage.getItem("slidegen.backend.url") ?? "";
 	const normalized = normalizeBaseUrl(stored);
 	return normalized || normalizeBaseUrl(DEFAULT_BACKEND_URL);
 }

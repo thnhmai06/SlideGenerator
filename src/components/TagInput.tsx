@@ -135,7 +135,7 @@ const addTag = (tag: string) => {
       
       {showSuggestions && filteredSuggestions.length > 0 && (
         <div ref={dropdownRef} className="tag-suggestions">
-          {filteredSuggestions.slice(0, 10).map((suggestion, index) => (
+          {filteredSuggestions.map((suggestion, index) => (
             <div
               key={suggestion}
               className={`tag-suggestion-item ${index === selectedSuggestionIndex ? 'selected' : ''}`}

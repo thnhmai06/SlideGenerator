@@ -57,6 +57,7 @@ export interface JobStatusInfo {
   CurrentRow: number
   TotalRows: number
   Progress: number
+  OutputPath?: string
   ErrorMessage?: string | null
   ErrorCount?: number
 }
@@ -70,6 +71,12 @@ export interface SlideGroupStatusSuccess {
   ErrorCount?: number
 }
 
+export interface SlideGroupRemoveSuccess {
+  Type: 'groupremove'
+  GroupId: string
+  Removed: boolean
+}
+
 export interface SlideJobStatusSuccess {
   Type: 'jobstatus'
   JobId: string
@@ -78,13 +85,34 @@ export interface SlideJobStatusSuccess {
   CurrentRow: number
   TotalRows: number
   Progress: number
+  OutputPath?: string
   ErrorMessage?: string | null
   ErrorCount?: number
+}
+
+export interface SlideJobRemoveSuccess {
+  Type: 'jobremove'
+  JobId: string
+  Removed: boolean
+}
+
+export interface JobLogEntry {
+  Level: string
+  Message: string
+  Timestamp: string
+  Data?: Record<string, unknown>
+}
+
+export interface SlideJobLogsSuccess {
+  Type: 'joblogs'
+  JobId: string
+  Logs: JobLogEntry[]
 }
 
 export interface GroupSummary {
   GroupId: string
   WorkbookPath: string
+  OutputFolder?: string
   Status: string
   Progress: number
   SheetCount: number
@@ -195,7 +223,7 @@ interface SheetWorksheetGetRowSuccess {
   Row: Record<string, string | null>
 }
 
-interface SheetWorkbookGetInfoSuccess {
+export interface SheetWorkbookGetInfoSuccess {
   Type: 'getworkbookinfo'
   FilePath: string
   WorkbookName?: string
@@ -307,6 +335,7 @@ function normalizeJobStatusInfo(input: Record<string, unknown>): JobStatusInfo {
     CurrentRow: (getCaseInsensitive<number>(input, 'CurrentRow') ?? 0) as number,
     TotalRows: (getCaseInsensitive<number>(input, 'TotalRows') ?? 0) as number,
     Progress: (getCaseInsensitive<number>(input, 'Progress') ?? 0) as number,
+    OutputPath: getCaseInsensitive<string>(input, 'OutputPath') ?? undefined,
     ErrorMessage: getCaseInsensitive<string | null>(input, 'ErrorMessage') ?? undefined,
     ErrorCount: getCaseInsensitive<number>(input, 'ErrorCount') ?? undefined,
   }
@@ -326,11 +355,23 @@ function normalizeGroupSummary(input: Record<string, unknown>): GroupSummary {
   return {
     GroupId: (getCaseInsensitive<string>(input, 'GroupId') ?? '') as string,
     WorkbookPath: (getCaseInsensitive<string>(input, 'WorkbookPath') ?? '') as string,
+    OutputFolder: getCaseInsensitive<string>(input, 'OutputFolder') ?? undefined,
     Status: (getCaseInsensitive<string>(input, 'Status') ?? '') as string,
     Progress: (getCaseInsensitive<number>(input, 'Progress') ?? 0) as number,
     SheetCount: (getCaseInsensitive<number>(input, 'SheetCount') ?? 0) as number,
     CompletedSheets: (getCaseInsensitive<number>(input, 'CompletedSheets') ?? 0) as number,
     ErrorCount: getCaseInsensitive<number>(input, 'ErrorCount') ?? undefined,
+  }
+}
+
+function normalizeJobLogEntry(input: Record<string, unknown>): JobLogEntry {
+  return {
+    Level: (getCaseInsensitive<string>(input, 'Level') ?? '') as string,
+    Message: (getCaseInsensitive<string>(input, 'Message') ?? '') as string,
+    Timestamp: (getCaseInsensitive<string>(input, 'Timestamp') ?? '') as string,
+    Data: (getCaseInsensitive<Record<string, unknown>>(input, 'Data') ?? undefined) as
+      | Record<string, unknown>
+      | undefined,
   }
 }
 
@@ -542,6 +583,28 @@ export async function getAllColumns(filePaths: string[]): Promise<string[]> {
   return Array.from(allColumns).sort()
 }
 
+export async function getWorkbookInfo(filePath: string): Promise<SheetWorkbookGetInfoSuccess> {
+  const response = await sheetHub.sendRequest<ResponseBase>({
+    type: 'getworkbookinfo',
+    filePath,
+  })
+  const data = assertSuccess<SheetWorkbookGetInfoSuccess>(response)
+  const sheets = (getCaseInsensitive<Array<Record<string, unknown>>>(data, 'Sheets') ??
+    []) as Array<Record<string, unknown>>
+
+  return {
+    Type: getResponseType(data),
+    FilePath: getCaseInsensitive<string>(data, 'FilePath') ?? filePath,
+    WorkbookName: getCaseInsensitive<string>(data, 'WorkbookName') ?? undefined,
+    Sheets: sheets.map((sheet) => ({
+      Name: (getCaseInsensitive<string>(sheet, 'Name') ?? '') as string,
+      Headers:
+        (getCaseInsensitive<Array<string | null>>(sheet, 'Headers') ?? []) as Array<string | null>,
+      RowCount: (getCaseInsensitive<number>(sheet, 'RowCount') ?? 0) as number,
+    })),
+  }
+}
+
 export async function scanShapes(filePath: string): Promise<unknown> {
   const response = await slideHub.sendRequest<ResponseBase>({
     type: 'scanshapes',
@@ -635,6 +698,19 @@ export async function groupControl(request: Record<string, unknown>): Promise<un
   return assertSuccess(response)
 }
 
+export async function removeGroup(request: Record<string, unknown>): Promise<unknown> {
+  const response = await slideHub.sendRequest<ResponseBase>({
+    type: 'groupremove',
+    ...request,
+  })
+  const data = assertSuccess<SlideGroupRemoveSuccess>(response)
+  return {
+    Type: getResponseType(data),
+    GroupId: getCaseInsensitive<string>(data, 'GroupId') ?? '',
+    Removed: getCaseInsensitive<boolean>(data, 'Removed') ?? false,
+  } satisfies SlideGroupRemoveSuccess
+}
+
 export async function jobStatus(request: Record<string, unknown>): Promise<unknown> {
   const response = await slideHub.sendRequest<ResponseBase>({
     type: 'jobstatus',
@@ -649,6 +725,7 @@ export async function jobStatus(request: Record<string, unknown>): Promise<unkno
     CurrentRow: getCaseInsensitive<number>(data, 'CurrentRow') ?? 0,
     TotalRows: getCaseInsensitive<number>(data, 'TotalRows') ?? 0,
     Progress: getCaseInsensitive<number>(data, 'Progress') ?? 0,
+    OutputPath: getCaseInsensitive<string>(data, 'OutputPath') ?? undefined,
     ErrorMessage: getCaseInsensitive<string | null>(data, 'ErrorMessage'),
     ErrorCount: getCaseInsensitive<number>(data, 'ErrorCount'),
   } satisfies SlideJobStatusSuccess
@@ -660,6 +737,36 @@ export async function jobControl(request: Record<string, unknown>): Promise<unkn
     ...request,
   })
   return assertSuccess(response)
+}
+
+export async function removeJob(request: Record<string, unknown>): Promise<unknown> {
+  const response = await slideHub.sendRequest<ResponseBase>({
+    type: 'jobremove',
+    ...request,
+  })
+  const data = assertSuccess<SlideJobRemoveSuccess>(response)
+  return {
+    Type: getResponseType(data),
+    JobId: getCaseInsensitive<string>(data, 'JobId') ?? '',
+    Removed: getCaseInsensitive<boolean>(data, 'Removed') ?? false,
+  } satisfies SlideJobRemoveSuccess
+}
+
+export async function getJobLogs(request: Record<string, unknown>): Promise<unknown> {
+  const response = await slideHub.sendRequest<ResponseBase>({
+    type: 'joblogs',
+    ...request,
+  })
+  const data = assertSuccess<SlideJobLogsSuccess>(response)
+  const logs =
+    (getCaseInsensitive<Array<Record<string, unknown>>>(data, 'Logs') ?? []) as Array<
+      Record<string, unknown>
+    >
+  return {
+    Type: getResponseType(data),
+    JobId: getCaseInsensitive<string>(data, 'JobId') ?? '',
+    Logs: logs.map((entry) => normalizeJobLogEntry(entry)),
+  } satisfies SlideJobLogsSuccess
 }
 
 export async function globalControl(request: Record<string, unknown>): Promise<unknown> {

@@ -4,18 +4,40 @@ import { useJobs } from '../contexts/JobContext'
 import { getBackendBaseUrl } from '../services/signalrClient'
 import '../styles/ProcessMenu.css'
 
+type LogEntry = {
+  message: string
+  level?: string
+  timestamp?: string
+  row?: number
+  rowStatus?: string
+}
+
+type RowLogGroup = {
+  key: string
+  row?: number
+  status?: string
+  entries: LogEntry[]
+}
+
 const ProcessMenu: React.FC = () => {
   const { t } = useApp()
-  const { groups, groupControl, jobControl, globalControl } = useJobs()
+  const { groups, groupControl, jobControl, globalControl, loadSheetLogs, exportGroupConfig, hasGroupConfig } = useJobs()
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
   const [expandedLogs, setExpandedLogs] = useState<Record<string, boolean>>({})
+  const [collapsedRowGroups, setCollapsedRowGroups] = useState<Record<string, boolean>>({})
 
   const toggleGroup = (groupId: string) => {
     setExpandedGroups((prev) => ({ ...prev, [groupId]: !prev[groupId] }))
   }
 
   const toggleLog = (sheetId: string) => {
-    setExpandedLogs((prev) => ({ ...prev, [sheetId]: !prev[sheetId] }))
+    setExpandedLogs((prev) => {
+      const next = !prev[sheetId]
+      if (next) {
+        void loadSheetLogs(sheetId)
+      }
+      return { ...prev, [sheetId]: next }
+    })
   }
 
   const statusKey = (status: string) => {
@@ -26,14 +48,17 @@ const ProcessMenu: React.FC = () => {
   }
 
   const progressColor = (status: string) => {
-    switch (statusKey(status)) {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return '#9ca3af'
+      case 'running':
+        return '#3b82f6'
       case 'paused':
         return '#f59e0b'
       case 'completed':
         return '#10b981'
       case 'error':
       case 'failed':
-        return '#ef4444'
       case 'cancelled':
         return '#ef4444'
       default:
@@ -41,9 +66,16 @@ const ProcessMenu: React.FC = () => {
     }
   }
 
-  const hasProcessing = useMemo(
-    () => groups.some((group) => ['running', 'pending'].includes(group.status.toLowerCase())),
+  const activeGroups = useMemo(
+    () => groups.filter((group) =>
+      !['completed', 'failed', 'cancelled'].includes(group.status.toLowerCase())
+    ),
     [groups]
+  )
+
+  const hasProcessing = useMemo(
+    () => activeGroups.some((group) => ['running', 'pending'].includes(group.status.toLowerCase())),
+    [activeGroups]
   )
 
   const handlePauseResumeAll = async () => {
@@ -83,6 +115,16 @@ const ProcessMenu: React.FC = () => {
     }
   }
 
+  const handleExportGroup = async (groupId: string) => {
+    await exportGroupConfig(groupId)
+  }
+
+  const handleStopSheet = async (sheetId: string) => {
+    if (confirm(`${t('process.stop')}?`)) {
+      await jobControl(sheetId, 'Stop')
+    }
+  }
+
   const handleSheetAction = async (sheetId: string, status: string) => {
     const normalized = status.toLowerCase()
     if (normalized === 'paused') {
@@ -100,6 +142,45 @@ const ProcessMenu: React.FC = () => {
     return parts[parts.length - 1] || fallback
   }
 
+  const formatLogEntry = (entry: LogEntry) => {
+    const time = entry.timestamp ? `[${new Date(entry.timestamp).toLocaleTimeString()}] ` : ''
+    const level = entry.level ? `${entry.level}: ` : ''
+    return `${time}${level}${entry.message}`
+  }
+
+  const groupLogsByRow = (logs: LogEntry[]): RowLogGroup[] => {
+    const groups: RowLogGroup[] = []
+    const map = new Map<string, RowLogGroup>()
+    logs.forEach((entry) => {
+      const key = entry.row != null ? `row:${entry.row}` : 'general'
+      let group = map.get(key)
+      if (!group) {
+        group = {
+          key,
+          row: entry.row,
+          status: entry.rowStatus,
+          entries: [],
+        }
+        map.set(key, group)
+        groups.push(group)
+      }
+      group.entries.push(entry)
+      if (entry.rowStatus) group.status = entry.rowStatus
+    })
+    return groups
+  }
+
+  const toggleRowGroup = (key: string) => {
+    setCollapsedRowGroups((prev) => ({ ...prev, [key]: !prev[key] }))
+  }
+
+  const formatTime = (value?: string) => {
+    if (!value) return ''
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) return ''
+    return date.toLocaleString()
+  }
+
   return (
     <div className="process-menu">
       <div className="menu-header">
@@ -110,13 +191,13 @@ const ProcessMenu: React.FC = () => {
             onClick={handleOpenDashboard}
             title={t('process.viewDetails')}
           >
-            <img src="/assets/images/log.png" alt="Dashboard" className="btn-icon" />
+            <img src="/assets/images/open.png" alt="Dashboard" className="btn-icon" />
             <span>{t('process.viewDetails')}</span>
           </button>
           <button
             className="btn btn-primary"
             onClick={handlePauseResumeAll}
-            disabled={groups.length === 0}
+            disabled={activeGroups.length === 0}
             title={hasProcessing ? t('process.pauseAll') : t('process.resumeAll')}
           >
             <img
@@ -129,7 +210,7 @@ const ProcessMenu: React.FC = () => {
           <button
             className="btn btn-danger"
             onClick={handleStopAll}
-            disabled={groups.length === 0}
+            disabled={activeGroups.length === 0}
             title={t('process.stopAll')}
           >
             <img
@@ -143,11 +224,11 @@ const ProcessMenu: React.FC = () => {
       </div>
 
       <div className="process-section">
-        {groups.length === 0 ? (
+        {activeGroups.length === 0 ? (
           <div className="empty-state">{t('process.empty')}</div>
         ) : (
           <div className="process-list">
-            {groups.map((group) => {
+            {activeGroups.map((group) => {
               const sheets = Object.values(group.sheets)
               const completed = sheets.filter((sheet) => sheet.status === 'Completed').length
               const processing = sheets.filter((sheet) =>
@@ -169,7 +250,14 @@ const ProcessMenu: React.FC = () => {
                     <div className="group-main-info">
                       <span className={`expand-icon ${showDetails ? 'expanded' : ''}`}>{showDetails ? 'v' : '>'}</span>
                       <div className="group-info">
-                        <div className="group-name">{groupName}</div>
+                        <div className="group-name-row">
+                          <div className="group-name">{groupName}</div>
+                          {group.createdAt && (
+                            <span className="group-time">
+                              {t('process.createdAt')}: {formatTime(group.createdAt)}
+                            </span>
+                          )}
+                        </div>
                         <div className="group-stats-line">
                           <span>{completed}/{totalSheets} - {Math.round(groupProgress)}%</span>
                           <span className="stat-badge stat-success" title={t('process.successSlides')}>
@@ -187,6 +275,15 @@ const ProcessMenu: React.FC = () => {
                       </div>
                     </div>
                     <div className="group-actions" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        className="process-btn process-btn-icon-only"
+                        onClick={() => handleExportGroup(group.id)}
+                        disabled={!hasGroupConfig(group.id)}
+                        aria-label={t('output.exportConfig')}
+                        title={t('output.exportConfig')}
+                      >
+                        <img src="/assets/images/open.png" alt="" className="btn-icon" />
+                      </button>
                       <button
                         className="process-btn process-btn-icon"
                         onClick={() => handleGroupAction(group.id, group.status)}
@@ -223,8 +320,17 @@ const ProcessMenu: React.FC = () => {
                       {sheets.map((sheet) => {
                         const showLog = expandedLogs[sheet.id] ?? false
                         const completedSlides = Math.min(sheet.currentRow, sheet.totalRows)
+                        const failedSlides =
+                          sheet.status === 'Failed' || sheet.status === 'Cancelled'
+                            ? Math.max(sheet.totalRows - completedSlides, 0)
+                            : 0
                         const processingSlides =
-                          sheet.status === 'Running' ? Math.max(sheet.totalRows - sheet.currentRow, 0) : 0
+                          sheet.status === 'Running'
+                            ? Math.max(sheet.totalRows - completedSlides, 0)
+                            : sheet.status === 'Pending'
+                              ? sheet.totalRows
+                              : 0
+                        const logGroups = groupLogsByRow(sheet.logs as LogEntry[])
 
                         return (
                           <div key={sheet.id} className="file-item">
@@ -242,7 +348,7 @@ const ProcessMenu: React.FC = () => {
                                   </span>
                                   <span className="stat-divider">|</span>
                                   <span className="file-stat-badge stat-failed" title={t('process.failedSlides')}>
-                                    {sheet.errorCount}
+                                    {failedSlides}
                                   </span>
                                   <span className="file-progress-text">
                                     / {sheet.totalRows} {t('process.slides')} - {Math.round(sheet.progress)}%
@@ -269,6 +375,22 @@ const ProcessMenu: React.FC = () => {
                                     />
                                   </button>
                                 )}
+                                {(sheet.status === 'Running' || sheet.status === 'Paused' || sheet.status === 'Pending') && (
+                                  <button
+                                    className="file-action-btn file-action-btn-danger"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleStopSheet(sheet.id)
+                                    }}
+                                    title={t('process.stop')}
+                                  >
+                                    <img
+                                      src="/assets/images/stop.png"
+                                      alt="Stop"
+                                      className="btn-icon-small"
+                                    />
+                                  </button>
+                                )}
                               </div>
                             </div>
 
@@ -284,29 +406,68 @@ const ProcessMenu: React.FC = () => {
 
                             {showLog && (
                               <div className="file-log-content">
-                                <div className="log-header">
-                                  {t('process.log')}
-                                  <button
-                                    className="copy-log-btn"
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      navigator.clipboard.writeText(sheet.logs.join('\n'))
-                                    }}
-                                    title="Copy log"
-                                  >
-                                    <img src="/assets/images/clipboard.png" alt="Copy" className="log-icon" />
-                                  </button>
-                                </div>
-                                <div className="log-content">
-                                  {sheet.logs.length === 0 ? (
-                                    <div className="log-empty">{t('process.noLogs')}</div>
-                                  ) : (
-                                    sheet.logs.map((entry, index) => (
-                                      <div key={index} className="log-entry">{entry}</div>
-                                    ))
-                                  )}
-                                </div>
+                              <div className="log-header">
+                                {t('process.log')}
+                                <button
+                                  className="copy-log-btn"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    navigator.clipboard.writeText(
+                                      sheet.logs.map((entry) => formatLogEntry(entry as LogEntry)).join('\n')
+                                    )
+                                  }}
+                                  title="Copy log"
+                                >
+                                  <img src="/assets/images/clipboard.png" alt="Copy" className="log-icon" />
+                                </button>
                               </div>
+                              <div className="log-content">
+                                {sheet.logs.length === 0 ? (
+                                  <div className="log-empty">{t('process.noLogs')}</div>
+                                ) : (
+                                  logGroups.map((group) => {
+                                    const rowKey = `${sheet.id}:${group.key}`
+                                    const isCollapsed = collapsedRowGroups[rowKey] ?? true
+                                    return (
+                                    <div
+                                      key={group.key}
+                                      className="log-row-group"
+                                      data-status={(group.status ?? 'info').toLowerCase()}
+                                    >
+                                      <div
+                                        className="log-row-header"
+                                        onClick={() => toggleRowGroup(rowKey)}
+                                      >
+                                        <span className="log-row-toggle">
+                                          {isCollapsed ? '>' : 'v'}
+                                        </span>
+                                        <span className="log-row-title">
+                                          {group.row != null ? `Row ${group.row}` : t('process.logGeneral')}
+                                        </span>
+                                        {group.status && (
+                                          <span className="log-row-status">
+                                            {group.status.toUpperCase()}
+                                          </span>
+                                        )}
+                                      </div>
+                                      {!isCollapsed && (
+                                        <div className="log-row-entries">
+                                          {group.entries.map((entry, index) => (
+                                            <div
+                                              key={`${group.key}-${index}`}
+                                              className={`log-entry log-${(entry.level ?? 'info').toLowerCase()}`}
+                                            >
+                                              {formatLogEntry(entry)}
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                    )
+                                  })
+                                )}
+                              </div>
+                            </div>
                             )}
                           </div>
                         )

@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import electron from 'vite-plugin-electron'
 import renderer from 'vite-plugin-electron-renderer'
@@ -34,5 +34,10 @@ export default defineConfig({
   ],
   server: {
     port: 5173,
+  },
+  test: {
+    environment: 'jsdom',
+    setupFiles: 'test/setup.ts',
+    globals: true,
   },
 })
