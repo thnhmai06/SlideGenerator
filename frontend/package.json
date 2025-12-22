@@ -7,8 +7,7 @@
   "type": "commonjs",
   "scripts": {
     "dev": "vite",
-    "copy:assets": "npx cpy-cli \"assets/**/*\" dist/assets --parents",
-    "build": "tsc && vite build && npm run copy:assets && electron-builder",
+    "build": "tsc && vite build && electron-builder",
     "build:backend": "dotnet publish ..\\backend\\src\\SlideGenerator.Presentation\\SlideGenerator.Presentation.csproj -c Release -o backend",
     "build:full": "npm run build:backend && npm run build",
     "preview": "vite preview",
