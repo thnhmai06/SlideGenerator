@@ -7,7 +7,6 @@ import ResultMenu from './components/ResultMenu'
 import AboutMenu from './components/AboutMenu'
 import TitleBar from './components/TitleBar'
 import { checkHealth } from './services/backendApi'
-import { getBackendBaseUrl } from './services/signalrClient'
 import { useApp } from './contexts/AppContext'
 import './styles/App.css'
 
@@ -26,37 +25,6 @@ const App: React.FC = () => {
         window.clearTimeout(bannerTimeoutRef.current)
         bannerTimeoutRef.current = null
       }
-    }
-
-    const buildBackendUrl = (host: string, port: number) => {
-      if (!host || !port) return
-      const trimmedHost = host.trim()
-      if (!trimmedHost) return
-
-      const hasScheme = /^https?:\/\//i.test(trimmedHost)
-      const base = hasScheme ? trimmedHost : `http://${trimmedHost}`
-      const normalizedHost = base.replace(
-        /^(https?:\/\/)localhost(?=[:/]|$)/i,
-        '$1127.0.0.1'
-      )
-      const normalizedBase = normalizedHost.endsWith('/') ? normalizedHost.slice(0, -1) : normalizedHost
-      const hasPort = /:\d+$/.test(normalizedBase)
-      return hasPort ? normalizedBase : `${normalizedBase}:${port}`
-    }
-
-    const storeBackendUrl = (host: string, port: number) => {
-      const url = buildBackendUrl(host, port)
-      if (url) localStorage.setItem('slidegen.backend.url', url)
-    }
-
-    const parseBackendConfig = (raw: string | null) => {
-      if (!raw) return null
-      const hostMatch = raw.match(/^\s*host:\s*([^\r\n#]+)/im)
-      const portMatch = raw.match(/^\s*port:\s*(\d+)/im)
-      const host = hostMatch?.[1]?.trim() ?? ''
-      const port = portMatch ? Number(portMatch[1]) : 0
-      if (!host || !port) return null
-      return { host, port }
     }
 
     const showConnected = () => {
@@ -82,26 +50,6 @@ const App: React.FC = () => {
           showConnected()
         }
       } catch {
-        const configText = await window.electronAPI?.getBackendConfig?.()
-        const parsed = parseBackendConfig(configText ?? null)
-        const currentUrl = getBackendBaseUrl()
-        if (parsed) {
-          const candidate = buildBackendUrl(parsed.host, parsed.port)
-          if (candidate && candidate !== currentUrl) {
-            storeBackendUrl(parsed.host, parsed.port)
-          }
-          try {
-            await checkHealth()
-            if (connectionRef.current !== 'connected') {
-              connectionRef.current = 'connected'
-              showConnected()
-            }
-            return
-          } catch {
-            // keep falling through to disconnected state
-          }
-        }
-
         if (connectionRef.current !== 'disconnected') {
           connectionRef.current = 'disconnected'
           showDisconnected()
