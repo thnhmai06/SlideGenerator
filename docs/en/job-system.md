@@ -93,4 +93,3 @@ Implementation notes:
   - All: `ICompletedJobCollection.ClearAll`
 
 Next: [SignalR API](signalr.md)
-

@@ -62,4 +62,3 @@ See also: [Job system](job-system.md)
 6. When a group finishes, it is moved from Active to Completed.
 
 Next: [Job system](job-system.md)
-

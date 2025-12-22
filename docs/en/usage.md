@@ -38,4 +38,3 @@ The server binds to the host/port defined in config and exposes SignalR hubs.
 ## API examples
 
 See [SignalR API](signalr.md#examples) for sample requests and subscriptions.
-
