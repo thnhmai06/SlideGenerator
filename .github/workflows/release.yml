@@ -1,16 +1,19 @@
 name: Build Release
 
 on:
+  push:
+    tags:
+      - "v*"
   release:
     types: [published]
 
 permissions:
-  contents: read
+  contents: write
   packages: write
 
 jobs:
   build:
-    name: Build (${{ matrix.os }})
+    name: Build (${{ matrix.os }} - ${{ matrix.rid }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -19,27 +22,25 @@ jobs:
           - os: windows-latest
             rid: win-x64
             electron_arch: x64
-            upload_glob: |
-              frontend/release/**/*.exe
-              frontend/release/**/*.zip
+            upload_glob: "frontend/release/*.exe"
           - os: ubuntu-latest
             rid: linux-x64
             electron_arch: x64
             upload_glob: |
-              frontend/release/**/*.AppImage
-              frontend/release/**/*.tar.gz
+              frontend/release/*.AppImage
+              frontend/release/*.tar.gz
           - os: ubuntu-latest
             rid: linux-arm
             electron_arch: armv7l
             upload_glob: |
-              frontend/release/**/*.AppImage
-              frontend/release/**/*.tar.gz
+              frontend/release/*.AppImage
+              frontend/release/*.tar.gz
           - os: ubuntu-latest
             rid: linux-arm64
             electron_arch: arm64
             upload_glob: |
-              frontend/release/**/*.AppImage
-              frontend/release/**/*.tar.gz
+              frontend/release/*.AppImage
+              frontend/release/*.tar.gz
     steps:
       - uses: actions/checkout@v4
         with:
@@ -70,5 +71,8 @@ jobs:
 
       - name: Upload release assets
         uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'release'
         with:
           files: ${{ matrix.upload_glob }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
