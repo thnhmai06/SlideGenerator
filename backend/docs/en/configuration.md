@@ -44,4 +44,3 @@ See also: [Job system](job-system.md)
 - `face.padding_*`: padding ratios around detected faces (0-1).
 - `face.union_all`: union all detected faces into one ROI.
 - `saliency.padding_*`: padding ratios around saliency ROI (0-1).
-

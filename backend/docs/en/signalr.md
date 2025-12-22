@@ -129,4 +129,3 @@ Subscribe to realtime updates:
 SubscribeGroup("GROUP_ID")
 SubscribeSheet("SHEET_JOB_ID")
 ```
-

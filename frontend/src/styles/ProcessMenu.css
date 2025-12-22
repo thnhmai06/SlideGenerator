@@ -37,7 +37,9 @@
   border: 1px solid var(--border-primary);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
 
 .process-menu .process-group:hover {
@@ -146,7 +148,10 @@
   background-color: var(--bg-tertiary);
   color: var(--text-primary);
   cursor: pointer;
-  transition: border-color var(--transition-fast), transform var(--transition-fast), background-color var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    transform var(--transition-fast),
+    background-color var(--transition-fast);
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
@@ -335,7 +340,9 @@
   display: grid;
   place-items: center;
   cursor: pointer;
-  transition: border-color var(--transition-fast), transform var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    transform var(--transition-fast);
 }
 
 .process-menu .file-action-btn:hover {

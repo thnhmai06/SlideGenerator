@@ -1,4 +1,4 @@
-@import './common.css';
+@import "./common.css";
 
 @font-face {
   font-family: "Space Grotesk";
@@ -65,7 +65,9 @@ body {
   color: var(--text-primary);
   min-height: 100vh;
   overflow: hidden;
-  transition: background-color var(--transition-base), color var(--transition-base);
+  transition:
+    background-color var(--transition-base),
+    color var(--transition-base);
   position: relative;
 }
 
@@ -80,14 +82,30 @@ body::after {
 
 body::before {
   background-image:
-    radial-gradient(700px 500px at 10% 10%, rgba(15, 118, 110, 0.18), transparent 60%),
-    radial-gradient(500px 400px at 90% -10%, rgba(248, 160, 120, 0.16), transparent 60%),
-    radial-gradient(600px 500px at 80% 80%, rgba(45, 212, 191, 0.12), transparent 60%);
+    radial-gradient(
+      700px 500px at 10% 10%,
+      rgba(15, 118, 110, 0.18),
+      transparent 60%
+    ),
+    radial-gradient(
+      500px 400px at 90% -10%,
+      rgba(248, 160, 120, 0.16),
+      transparent 60%
+    ),
+    radial-gradient(
+      600px 500px at 80% 80%,
+      rgba(45, 212, 191, 0.12),
+      transparent 60%
+    );
   opacity: 0.9;
 }
 
 body::after {
-  background-image: linear-gradient(120deg, rgba(255, 255, 255, 0.08), transparent 55%);
+  background-image: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0.08),
+    transparent 55%
+  );
   mix-blend-mode: soft-light;
   opacity: 0.6;
 }

@@ -42,4 +42,3 @@ Environment variables:
 
 - `frontend/backend` is copied into the packaged app as `resources/backend`.
 - Ensure the target machine has the .NET 10 runtime if you ship the DLL.
-

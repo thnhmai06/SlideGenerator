@@ -52,4 +52,3 @@ VS Code tasks are defined in `.vscode/tasks.json`:
 - `test:frontend`
 - `test:backend`
 - `test:all`
-

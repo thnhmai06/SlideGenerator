@@ -85,6 +85,7 @@ Frontend:
 - Build & packaging: [frontend/docs/en/build-and-packaging.md](frontend/docs/en/build-and-packaging.md)
 
 # Contributors
+
 - **PM, Main Developer: [@thnhmai06](https://github.com/thnhmai06)**
 - UI/UX Idea: [@NAV-adsf23fd](https://github.com/NAV-adsf23fd)
 - Framework: [SlideGenerator.Framework](backend/src/SlideGenerator.Framework)

@@ -21,7 +21,10 @@
   color: var(--text-secondary);
   font-weight: var(--font-semibold);
   cursor: pointer;
-  transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast);
 }
 
 .tab-button:hover {
@@ -118,7 +121,9 @@
   background-color: var(--bg-hover);
   border-radius: 999px;
   border: 1px solid var(--border-primary);
-  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast);
   cursor: pointer;
 }
 
@@ -244,7 +249,11 @@
 .pad-box {
   position: absolute;
   border-radius: var(--radius-sm);
-  transition: top 160ms ease, right 160ms ease, bottom 160ms ease, left 160ms ease;
+  transition:
+    top 160ms ease,
+    right 160ms ease,
+    bottom 160ms ease,
+    left 160ms ease;
 }
 
 .pad-base {

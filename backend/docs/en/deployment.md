@@ -26,4 +26,3 @@ See: [Configuration](configuration.md)
 
 - Ensure output folders exist and are writable.
 - Ensure the Hangfire database directory is writable.
-

@@ -42,4 +42,3 @@ See also:
 
 - [Architecture](architecture.md)
 - [SignalR API](signalr.md)
-

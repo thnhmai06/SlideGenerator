@@ -35,4 +35,3 @@ SignalR and treats the backend as the source of truth for job state.
 - Group metadata and group configs are cached in session storage:
   - `slidegen.group.meta`
   - `slidegen.group.config`
-

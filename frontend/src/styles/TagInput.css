@@ -14,7 +14,9 @@
   background-color: var(--input-bg);
   border: 1px solid var(--input-border);
   border-radius: var(--radius-md);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
   cursor: text;
 }
 
@@ -90,7 +92,9 @@
   cursor: pointer;
   font-size: var(--font-base);
   color: var(--text-primary);
-  transition: background-color var(--transition-fast), color var(--transition-fast);
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast);
 }
 
 .tag-suggestion-item:hover,

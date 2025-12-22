@@ -87,7 +87,10 @@
   opacity: 0;
   overflow: hidden;
   transform: translateY(-6px);
-  transition: max-height var(--transition-base), opacity var(--transition-base), transform var(--transition-base);
+  transition:
+    max-height var(--transition-base),
+    opacity var(--transition-base),
+    transform var(--transition-base);
 }
 
 .panel-content.is-open {
@@ -287,7 +290,10 @@
   width: 100%;
   text-align: left;
   cursor: pointer;
-  transition: border-color var(--transition-fast), background-color var(--transition-fast), transform var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    background-color var(--transition-fast),
+    transform var(--transition-fast);
 }
 
 .shape-gallery-item:hover {
@@ -537,11 +543,17 @@
   height: 40px;
   border-radius: var(--radius-md);
   border: none;
-  background: linear-gradient(135deg, var(--danger-primary), var(--danger-hover));
+  background: linear-gradient(
+    135deg,
+    var(--danger-primary),
+    var(--danger-hover)
+  );
   display: grid;
   place-items: center;
   cursor: pointer;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  transition:
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
 
 .delete-btn:hover {

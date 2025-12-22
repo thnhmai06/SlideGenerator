@@ -53,4 +53,3 @@ Open **Result** to:
 - **Create Task** lets you export/import a JSON config file.
 - **Process/Result** provides an icon-only **Export configuration** button per group.
   It saves a JSON config compatible with Create Task import.
-
