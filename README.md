@@ -57,14 +57,13 @@ chmod +x ./build.sh
 ./build.sh linux-x64
 ```
 
-Supported runtimes (from backend Infrastructure csproj):
+Supported runtimes:
 
 - `win-x64`
 - `linux-x64`
 - `linux-arm`
 - `linux-arm64`
-- `osx-x64`
-- `osx-arm64`
+- `osx-x64` and `osx-arm64` (same build)
 
 ## Module docs
 
@@ -88,4 +87,4 @@ Frontend:
 
 - **PM, Main Developer: [@thnhmai06](https://github.com/thnhmai06)**
 - UI/UX Idea: [@NAV-adsf23fd](https://github.com/NAV-adsf23fd)
-- Framework: [SlideGenerator.Framework](backend/src/SlideGenerator.Framework)
+- Framework: [SlideGenerator.Framework](https://github.com/thnhmai06/SlideGenerator.Framework)

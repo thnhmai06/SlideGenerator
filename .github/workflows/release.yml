@@ -48,6 +48,8 @@ jobs:
               frontend/release/**/*.tar.gz
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
