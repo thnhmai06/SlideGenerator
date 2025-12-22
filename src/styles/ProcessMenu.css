@@ -304,29 +304,29 @@
   text-transform: uppercase;
 }
 
-.process-menu .file-status[data-status="processing"] {
+.process-menu .file-status[data-status='processing'] {
   background-color: rgba(59, 130, 246, 0.14);
   color: #3b82f6;
 }
 
-.process-menu .file-status[data-status="pending"] {
+.process-menu .file-status[data-status='pending'] {
   background-color: rgba(148, 163, 184, 0.18);
   color: #94a3b8;
 }
 
-.process-menu .file-status[data-status="paused"] {
+.process-menu .file-status[data-status='paused'] {
   background-color: rgba(245, 158, 11, 0.14);
   color: #f59e0b;
 }
 
-.process-menu .file-status[data-status="completed"] {
+.process-menu .file-status[data-status='completed'] {
   background-color: rgba(16, 185, 129, 0.14);
   color: #10b981;
 }
 
-.process-menu .file-status[data-status="failed"],
-.process-menu .file-status[data-status="error"],
-.process-menu .file-status[data-status="cancelled"] {
+.process-menu .file-status[data-status='failed'],
+.process-menu .file-status[data-status='error'],
+.process-menu .file-status[data-status='cancelled'] {
   background-color: rgba(239, 68, 68, 0.14);
   color: #ef4444;
 }
@@ -402,7 +402,7 @@
   filter: brightness(0) invert(1);
 }
 
-[data-theme="light"] .process-menu .log-icon {
+[data-theme='light'] .process-menu .log-icon {
   filter: none;
 }
 
@@ -445,22 +445,22 @@
   flex: 1;
 }
 
-.process-menu .log-row-group[data-status="processing"] .log-row-header {
+.process-menu .log-row-group[data-status='processing'] .log-row-header {
   background-color: rgba(59, 130, 246, 0.16);
   color: #3b82f6;
 }
 
-.process-menu .log-row-group[data-status="completed"] .log-row-header {
+.process-menu .log-row-group[data-status='completed'] .log-row-header {
   background-color: rgba(16, 185, 129, 0.16);
   color: #10b981;
 }
 
-.process-menu .log-row-group[data-status="warning"] .log-row-header {
+.process-menu .log-row-group[data-status='warning'] .log-row-header {
   background-color: rgba(245, 158, 11, 0.2);
   color: #f59e0b;
 }
 
-.process-menu .log-row-group[data-status="error"] .log-row-header {
+.process-menu .log-row-group[data-status='error'] .log-row-header {
   background-color: rgba(239, 68, 68, 0.2);
   color: #ef4444;
 }

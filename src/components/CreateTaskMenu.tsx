@@ -65,10 +65,13 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
     },
   ]
 
-  const getOptionDescription = (options: { value: string; description: string }[], value: string) => {
+  const getOptionDescription = (
+    options: { value: string; description: string }[],
+    value: string,
+  ) => {
     return options.find((option) => option.value === value)?.description ?? ''
   }
-  
+
   const STORAGE_KEYS = {
     inputMenuState: 'slidegen.ui.inputMenu.state',
   }
@@ -85,9 +88,9 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
     }
     return null
   }
-  
+
   const savedState = loadSavedState()
-  
+
   const [pptxPath, setPptxPath] = useState(savedState?.pptxPath || '')
   const [dataPath, setDataPath] = useState(savedState?.dataPath || '')
   const [savePath, setSavePath] = useState(savedState?.savePath || '')
@@ -113,43 +116,45 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
   const pptxPathRef = useRef(pptxPath)
   const dataErrorAtRef = useRef(0)
   const dataPathRef = useRef(dataPath)
-  const lastLoadedDataPathRef = useRef(
-    savedState?.dataLoaded ? savedState?.dataPath || '' : ''
-  )
+  const lastLoadedDataPathRef = useRef(savedState?.dataLoaded ? savedState?.dataPath || '' : '')
   const lastLoadedTemplatePathRef = useRef(
-    savedState?.templateLoaded ? savedState?.pptxPath || '' : ''
+    savedState?.templateLoaded ? savedState?.pptxPath || '' : '',
   )
-  
+
   const [shapes, setShapes] = useState<Shape[]>(savedState?.shapes || [])
   const [placeholders, setPlaceholders] = useState<string[]>(savedState?.placeholders || [])
   const [sheetCount, setSheetCount] = useState(savedState?.sheetCount || 0)
   const [totalRows, setTotalRows] = useState(savedState?.totalRows || 0)
   const [templateLoaded, setTemplateLoaded] = useState(Boolean(savedState?.templateLoaded))
   const [dataLoaded, setDataLoaded] = useState(Boolean(savedState?.dataLoaded))
-  
+
   const [textReplacements, setTextReplacements] = useState<TextReplacement[]>(
-    savedState?.textReplacements?.map((item: { id: number; searchText?: string; placeholder?: string; columns?: string[] }) => ({
-      id: item.id,
-      placeholder: item.placeholder || item.searchText || '',
-      columns: item.columns || []
-    })) || []
+    savedState?.textReplacements?.map(
+      (item: { id: number; searchText?: string; placeholder?: string; columns?: string[] }) => ({
+        id: item.id,
+        placeholder: item.placeholder || item.searchText || '',
+        columns: item.columns || [],
+      }),
+    ) || [],
   )
   const [imageReplacements, setImageReplacements] = useState<ImageReplacement[]>(
-    (savedState?.imageReplacements ?? []).map((item: {
-      id?: number
-      shapeId?: string
-      columns?: string[]
-      roiType?: string
-      cropType?: string
-    }) => ({
-      id: item.id ?? 1,
-      shapeId: item.shapeId ?? '',
-      columns: item.columns ?? [],
-      roiType: item.roiType ?? 'Attention',
-      cropType: item.cropType ?? 'Fit',
-    }))
+    (savedState?.imageReplacements ?? []).map(
+      (item: {
+        id?: number
+        shapeId?: string
+        columns?: string[]
+        roiType?: string
+        cropType?: string
+      }) => ({
+        id: item.id ?? 1,
+        shapeId: item.shapeId ?? '',
+        columns: item.columns ?? [],
+        roiType: item.roiType ?? 'Attention',
+        cropType: item.cropType ?? 'Fit',
+      }),
+    ),
   )
-  
+
   useEffect(() => {
     localStorage.removeItem('config')
   }, [])
@@ -168,7 +173,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
       sheetCount,
       totalRows,
       templateLoaded,
-      dataLoaded
+      dataLoaded,
     }
     sessionStorage.setItem(STORAGE_KEYS.inputMenuState, JSON.stringify(state))
   }, [
@@ -185,7 +190,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
     templateLoaded,
     dataLoaded,
   ])
-  
+
   useEffect(() => {
     pptxPathRef.current = pptxPath
   }, [pptxPath])
@@ -243,14 +248,14 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
           .map((shape) => ({
             id: String(shape.Id),
             name: shape.Name,
-            preview: shape.Data ? `data:image/png;base64,${shape.Data}` : '/assets/images/app-icon.png',
+            preview: shape.Data
+              ? `data:image/png;base64,${shape.Data}`
+              : window.getAssetPath('images', 'app-icon.png'),
           }))
         nextPlaceholders = (template.Placeholders ?? [])
           .map((item) => item.trim())
           .filter((item) => item.length > 0)
-        nextPlaceholders = Array.from(new Set(nextPlaceholders)).sort((a, b) =>
-          a.localeCompare(b)
-        )
+        nextPlaceholders = Array.from(new Set(nextPlaceholders)).sort((a, b) => a.localeCompare(b))
         setTemplateLoaded(true)
         lastLoadedTemplatePathRef.current = nextPptxPath
       } else {
@@ -281,44 +286,44 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
         (item: { id: number; searchText?: string; placeholder?: string; columns?: string[] }) => ({
           id: item.id ?? 1,
           placeholder: item.placeholder || item.searchText || '',
-          columns: item.columns || []
-        })
+          columns: item.columns || [],
+        }),
       )
       const filteredText = importedText
         .map((item: { placeholder: string; columns: any[] }) => ({
           ...item,
           placeholder: item.placeholder.trim(),
-          columns: item.columns.filter((col: string) => columnSet.has(col))
+          columns: item.columns.filter((col: string) => columnSet.has(col)),
         }))
-        .filter((item: { placeholder: string; columns: string | any[] }) =>
-          item.placeholder &&
-          item.columns.length > 0 &&
-          placeholderSet.has(item.placeholder)
+        .filter(
+          (item: { placeholder: string; columns: string | any[] }) =>
+            item.placeholder && item.columns.length > 0 && placeholderSet.has(item.placeholder),
         )
 
-      const importedImages = (savedState.imageReplacements || []).map((item: {
-        id?: number
-        shapeId?: string
-        columns?: string[]
-        roiType?: string
-        cropType?: string
-      }) => ({
-        id: item.id ?? 1,
-        shapeId: item.shapeId ?? '',
-        columns: item.columns ?? [],
-        roiType: item.roiType ?? 'Attention',
-        cropType: item.cropType ?? 'Fit',
-      }))
+      const importedImages = (savedState.imageReplacements || []).map(
+        (item: {
+          id?: number
+          shapeId?: string
+          columns?: string[]
+          roiType?: string
+          cropType?: string
+        }) => ({
+          id: item.id ?? 1,
+          shapeId: item.shapeId ?? '',
+          columns: item.columns ?? [],
+          roiType: item.roiType ?? 'Attention',
+          cropType: item.cropType ?? 'Fit',
+        }),
+      )
       const filteredImages = importedImages
         .map((item: { shapeId: string; columns: any[] }) => ({
           ...item,
           shapeId: item.shapeId.trim(),
           columns: item.columns.filter((col: string) => columnSet.has(col)),
         }))
-        .filter((item: { shapeId: string; columns: string | any[] }) =>
-          item.shapeId &&
-          item.columns.length > 0 &&
-          shapeIdSet.has(item.shapeId)
+        .filter(
+          (item: { shapeId: string; columns: string | any[] }) =>
+            item.shapeId && item.columns.length > 0 && shapeIdSet.has(item.shapeId),
         )
 
       setShapes(nextShapes)
@@ -391,7 +396,9 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
         .map((shape) => ({
           id: String(shape.Id),
           name: shape.Name,
-          preview: shape.Data ? `data:image/png;base64,${shape.Data}` : '/assets/images/app-icon.png',
+          preview: shape.Data
+            ? `data:image/png;base64,${shape.Data}`
+            : window.getAssetPath('images', 'app-icon.png'),
         }))
       setShapes(mappedShapes)
       lastLoadedTemplatePathRef.current = filePath
@@ -507,12 +514,12 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
   // Resolve relative paths to absolute paths
   const resolvePath = (inputPath: string): string => {
     if (!inputPath) return inputPath
-    
+
     // Check if already absolute path (Windows: starts with drive letter, Unix: starts with /)
     if (/^[a-zA-Z]:[/\\]/.test(inputPath) || inputPath.startsWith('/')) {
       return inputPath
     }
-    
+
     // Convert relative path to absolute using current working directory
     // In Electron, we can use process.cwd() or __dirname
     if (typeof process === 'undefined' || !process.cwd) {
@@ -525,7 +532,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
 
   const handleBrowsePptx = async () => {
     const path = await window.electronAPI.openFile([
-      { name: 'PowerPoint Files', extensions: ['pptx', 'potx'] }
+      { name: 'PowerPoint Files', extensions: ['pptx', 'potx'] },
     ])
     if (path) {
       setPptxPath(path)
@@ -536,9 +543,9 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
 
   const handleBrowseData = async () => {
     const path = await window.electronAPI.openFile([
-      { name: 'Spreadsheets Files', extensions: ['xlsx', 'xlsm'] }
+      { name: 'Spreadsheets Files', extensions: ['xlsx', 'xlsm'] },
     ])
-    
+
     if (path) {
       setDataPath(path)
     }
@@ -550,45 +557,55 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
   }
 
   const addTextReplacement = () => {
-    setTextReplacements([...textReplacements, {
-      id: textReplacements.length + 1,
-      placeholder: '',
-      columns: []
-    }])
+    setTextReplacements([
+      ...textReplacements,
+      {
+        id: textReplacements.length + 1,
+        placeholder: '',
+        columns: [],
+      },
+    ])
   }
 
   const removeTextReplacement = (id: number) => {
-    setTextReplacements(textReplacements.filter(item => item.id !== id))
+    setTextReplacements(textReplacements.filter((item) => item.id !== id))
   }
 
-  const updateTextReplacement = (id: number, field: 'placeholder' | 'columns', value: string | string[]) => {
-    setTextReplacements(textReplacements.map(item => 
-      item.id === id ? { ...item, [field]: value } : item
-    ))
+  const updateTextReplacement = (
+    id: number,
+    field: 'placeholder' | 'columns',
+    value: string | string[],
+  ) => {
+    setTextReplacements(
+      textReplacements.map((item) => (item.id === id ? { ...item, [field]: value } : item)),
+    )
   }
 
   const addImageReplacement = () => {
-    setImageReplacements([...imageReplacements, { 
-      id: imageReplacements.length + 1, 
-      shapeId: '', 
-      columns: [],
-      roiType: 'Attention',
-      cropType: 'Fit',
-    }])
+    setImageReplacements([
+      ...imageReplacements,
+      {
+        id: imageReplacements.length + 1,
+        shapeId: '',
+        columns: [],
+        roiType: 'Attention',
+        cropType: 'Fit',
+      },
+    ])
   }
 
   const removeImageReplacement = (id: number) => {
-    setImageReplacements(imageReplacements.filter(item => item.id !== id))
+    setImageReplacements(imageReplacements.filter((item) => item.id !== id))
   }
 
   const updateImageReplacement = (
     id: number,
     field: 'shapeId' | 'columns' | 'roiType' | 'cropType',
-    value: string | string[]
+    value: string | string[],
   ) => {
-    setImageReplacements(imageReplacements.map(item => 
-      item.id === id ? { ...item, [field]: value } : item
-    ))
+    setImageReplacements(
+      imageReplacements.map((item) => (item.id === id ? { ...item, [field]: value } : item)),
+    )
   }
 
   const exportConfig = async () => {
@@ -598,14 +615,14 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
       savePath,
       columns,
       textReplacements,
-      imageReplacements
+      imageReplacements,
     }
-    
+
     const path = await window.electronAPI.saveFile([
       { name: 'JSON Files', extensions: ['json'] },
-      { name: 'All Files', extensions: ['*'] }
+      { name: 'All Files', extensions: ['*'] },
     ])
-    
+
     if (path) {
       try {
         await window.electronAPI.writeSettings(path, JSON.stringify(config, null, 2))
@@ -619,9 +636,9 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
   const importConfig = async () => {
     const path = await window.electronAPI.openFile([
       { name: 'JSON Files', extensions: ['json'] },
-      { name: 'All Files', extensions: ['*'] }
+      { name: 'All Files', extensions: ['*'] },
     ])
-    
+
     if (path) {
       try {
         const data = await window.electronAPI.readSettings(path)
@@ -659,13 +676,15 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
               .map((shape) => ({
                 id: String(shape.Id),
                 name: shape.Name,
-                preview: shape.Data ? `data:image/png;base64,${shape.Data}` : '/assets/images/app-icon.png',
+                preview: shape.Data
+                  ? `data:image/png;base64,${shape.Data}`
+                  : window.getAssetPath('images', 'app-icon.png'),
               }))
             nextPlaceholders = (template.Placeholders ?? [])
               .map((item) => item.trim())
               .filter((item) => item.length > 0)
             nextPlaceholders = Array.from(new Set(nextPlaceholders)).sort((a, b) =>
-              a.localeCompare(b)
+              a.localeCompare(b),
             )
             setTemplateLoaded(true)
           }
@@ -687,40 +706,53 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
           const columnSet = new Set(nextColumns)
 
           const importedText = (config.textReplacements || []).map(
-            (item: { id: number; searchText?: string; placeholder?: string; columns?: string[] }) => ({
+            (item: {
+              id: number
+              searchText?: string
+              placeholder?: string
+              columns?: string[]
+            }) => ({
               id: item.id ?? 1,
               placeholder: item.placeholder || item.searchText || '',
-              columns: item.columns || []
-            })
+              columns: item.columns || [],
+            }),
           )
           const filteredText = importedText
             .map((item: { placeholder: string; columns: any[] }) => ({
               ...item,
               placeholder: item.placeholder.trim(),
-              columns: item.columns.filter((col: string) => columnSet.has(col))
+              columns: item.columns.filter((col: string) => columnSet.has(col)),
             }))
-            .filter((item: { placeholder: string; columns: string | any[] }) => item.placeholder && item.columns.length > 0 && placeholderSet.has(item.placeholder))
+            .filter(
+              (item: { placeholder: string; columns: string | any[] }) =>
+                item.placeholder && item.columns.length > 0 && placeholderSet.has(item.placeholder),
+            )
 
-          const importedImages = (config.imageReplacements || []).map((item: {
-            id?: number
-            shapeId?: string
-            columns?: string[]
-            roiType?: string
-            cropType?: string
-          }) => ({
-            id: item.id ?? 1,
-            shapeId: item.shapeId ?? '',
-            columns: item.columns ?? [],
-            roiType: item.roiType ?? 'Center',
-            cropType: item.cropType ?? 'Crop',
-          }))
+          const importedImages = (config.imageReplacements || []).map(
+            (item: {
+              id?: number
+              shapeId?: string
+              columns?: string[]
+              roiType?: string
+              cropType?: string
+            }) => ({
+              id: item.id ?? 1,
+              shapeId: item.shapeId ?? '',
+              columns: item.columns ?? [],
+              roiType: item.roiType ?? 'Center',
+              cropType: item.cropType ?? 'Crop',
+            }),
+          )
           const filteredImages = importedImages
             .map((item: { shapeId: string; columns: any[] }) => ({
               ...item,
               shapeId: item.shapeId.trim(),
               columns: item.columns.filter((col: string) => columnSet.has(col)),
             }))
-            .filter((item: { shapeId: string; columns: string | any[] }) => item.shapeId && item.columns.length > 0 && shapeIdSet.has(item.shapeId))
+            .filter(
+              (item: { shapeId: string; columns: string | any[] }) =>
+                item.shapeId && item.columns.length > 0 && shapeIdSet.has(item.shapeId),
+            )
 
           setShapes(nextShapes)
           setPlaceholders(nextPlaceholders)
@@ -741,7 +773,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
       }
     }
   }
-  
+
   const clearReplacements = () => {
     setTextReplacements([])
     setImageReplacements([])
@@ -870,15 +902,14 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
 
   const normalizedTextPlaceholders = textReplacements.map((item) => item.placeholder.trim())
   const usedTextPlaceholders = new Set(
-    normalizedTextPlaceholders.filter((value) => value.length > 0)
+    normalizedTextPlaceholders.filter((value) => value.length > 0),
   )
   const hasDuplicateTextPlaceholders =
-    usedTextPlaceholders.size !== normalizedTextPlaceholders.filter((value) => value.length > 0).length
+    usedTextPlaceholders.size !==
+    normalizedTextPlaceholders.filter((value) => value.length > 0).length
 
   const normalizedShapeIds = imageReplacements.map((item) => item.shapeId.trim())
-  const usedShapeIds = new Set(
-    normalizedShapeIds.filter((value) => value.length > 0)
-  )
+  const usedShapeIds = new Set(normalizedShapeIds.filter((value) => value.length > 0))
   const hasDuplicateShapeIds =
     usedShapeIds.size !== normalizedShapeIds.filter((value) => value.length > 0).length
 
@@ -905,17 +936,13 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
     hasDuplicateShapeIds
 
   const canStart =
-    isTemplateValid &&
-    isDataValid &&
-    isOutputValid &&
-    hasAnyConfig &&
-    !hasInvalidConfig
+    isTemplateValid && isDataValid && isOutputValid && hasAnyConfig && !hasInvalidConfig
 
   const getAvailablePlaceholders = (current: string) => {
     const taken = new Set(
       textReplacements
         .map((item) => item.placeholder.trim())
-        .filter((value) => value && value !== current)
+        .filter((value) => value && value !== current),
     )
     return placeholders.filter((value) => !taken.has(value))
   }
@@ -924,7 +951,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
     const taken = new Set(
       imageReplacements
         .map((item) => item.shapeId.trim())
-        .filter((value) => value && value !== current)
+        .filter((value) => value && value !== current),
     )
     return shapes.filter((shape) => !taken.has(shape.id))
   }
@@ -938,30 +965,30 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
     const resolvedPptxPath = resolvePath(pptxPath)
     const resolvedDataPath = resolvePath(dataPath)
     const resolvedSavePath = resolvePath(savePath)
-    
+
     if (resolvedPptxPath && resolvedDataPath && resolvedSavePath && canStart) {
       const textConfigs: backendApi.SlideTextConfig[] = textReplacements
-        .filter(item => item.placeholder.trim() && item.columns.length > 0)
-        .map(item => ({
+        .filter((item) => item.placeholder.trim() && item.columns.length > 0)
+        .map((item) => ({
           Pattern: item.placeholder.trim(),
-          Columns: item.columns
+          Columns: item.columns,
         }))
 
       const imageConfigs: backendApi.SlideImageConfig[] = imageReplacements
-        .filter(item => item.shapeId && item.columns.length > 0)
-        .map(item => ({
+        .filter((item) => item.shapeId && item.columns.length > 0)
+        .map((item) => ({
           ShapeId: Number(item.shapeId),
           Columns: item.columns,
           RoiType: item.roiType || 'Center',
-          CropType: item.cropType || 'Crop'
+          CropType: item.cropType || 'Crop',
         }))
-        .filter(item => Number.isFinite(item.ShapeId))
+        .filter((item) => Number.isFinite(item.ShapeId))
 
       // Update displayed paths to show resolved absolute paths
       setPptxPath(resolvedPptxPath)
       setDataPath(resolvedDataPath)
       setSavePath(resolvedSavePath)
-      
+
       try {
         setIsStarting(true)
         await createGroup({
@@ -969,7 +996,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
           spreadsheetPath: resolvedDataPath,
           outputPath: resolvedSavePath,
           textConfigs,
-          imageConfigs
+          imageConfigs,
         })
         onStart()
       } catch (error) {
@@ -989,18 +1016,27 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
       <div className="menu-header">
         <h1 className="menu-title">{t('input.title')}</h1>
         <div className="config-actions">
-          <button className="btn btn-secondary" onClick={importConfig} title={t('input.importConfig')}>
+          <button
+            className="btn btn-secondary"
+            onClick={importConfig}
+            title={t('input.importConfig')}
+          >
             {t('input.import')}
           </button>
-          <button className="btn btn-secondary" onClick={exportConfig} title={t('input.exportConfig')}>
+          <button
+            className="btn btn-secondary"
+            onClick={exportConfig}
+            title={t('input.exportConfig')}
+          >
             {t('input.export')}
           </button>
           <button className="btn btn-danger" onClick={clearAll} title={t('input.clearAll')}>
-            <img 
-              src="/assets/images/remove.png" 
+            <img
+              src={window.getAssetPath('images', 'remove.png')}
               alt={t('input.clearAll')}
               className="btn-icon"
-            /> <span>{t('input.clearAll')}</span>
+            />{' '}
+            <span>{t('input.clearAll')}</span>
           </button>
         </div>
       </div>
@@ -1018,14 +1054,14 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
           </button>
         </div>
       )}
-      
+
       {/* File Inputs */}
       <div className="input-section">
         <label className="input-label">{t('input.pptxFile')}</label>
         <div className="input-group">
-          <input 
-            type="text" 
-            className="input-field" 
+          <input
+            type="text"
+            className="input-field"
             value={pptxPath}
             onChange={(e) => setPptxPath(e.target.value)}
             placeholder={t('input.pptxPlaceholder')}
@@ -1037,8 +1073,12 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
         {templateLoaded && !isLoadingShapes && !isLoadingPlaceholders && (
           <div className="input-meta">
             <span className="input-meta-title">{t('input.templateInfoLabel')}</span>
-            <span>{t('input.textShapeCount')}: {textShapeCount}</span>
-            <span>{t('input.imageShapeCount')}: {imageShapeCount}</span>
+            <span>
+              {t('input.textShapeCount')}: {textShapeCount}
+            </span>
+            <span>
+              {t('input.imageShapeCount')}: {imageShapeCount}
+            </span>
           </div>
         )}
       </div>
@@ -1046,9 +1086,9 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
       <div className="input-section">
         <label className="input-label">{t('input.dataFile')}</label>
         <div className="input-group">
-          <input 
-            type="text" 
-            className="input-field" 
+          <input
+            type="text"
+            className="input-field"
             value={dataPath}
             onChange={(e) => setDataPath(e.target.value)}
             placeholder={t('input.dataPlaceholder')}
@@ -1060,9 +1100,15 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
         {dataLoaded && !isLoadingColumns && (
           <div className="input-meta">
             <span className="input-meta-title">{t('input.dataInfoLabel')}</span>
-            <span>{t('input.sheetCount')}: {sheetCount}</span>
-            <span>{t('input.columnCount')}: {uniqueColumnCount}</span>
-            <span>{t('input.rowCount')}: {totalRows}</span>
+            <span>
+              {t('input.sheetCount')}: {sheetCount}
+            </span>
+            <span>
+              {t('input.columnCount')}: {uniqueColumnCount}
+            </span>
+            <span>
+              {t('input.rowCount')}: {totalRows}
+            </span>
           </div>
         )}
       </div>
@@ -1081,7 +1127,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
                 aria-expanded={showTextConfigs}
               >
                 <img
-                  src="/assets/images/chevron-down.png"
+                  src={window.getAssetPath('images', 'chevron-down.png')}
                   alt=""
                   className={`panel-title-icon ${showTextConfigs ? 'expanded' : ''}`}
                 />
@@ -1115,7 +1161,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {textReplacements.map(item => {
+                  {textReplacements.map((item) => {
                     const available = getAvailablePlaceholders(item.placeholder)
                     return (
                       <tr key={item.id}>
@@ -1123,7 +1169,9 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
                           <select
                             className="table-input"
                             value={item.placeholder}
-                            onChange={(e) => updateTextReplacement(item.id, 'placeholder', e.target.value)}
+                            onChange={(e) =>
+                              updateTextReplacement(item.id, 'placeholder', e.target.value)
+                            }
                             disabled={!canConfigure || isLoadingPlaceholders}
                           >
                             <option value="">{t('replacement.searchPlaceholder')}</option>
@@ -1149,7 +1197,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
                             title={t('replacement.delete')}
                           >
                             <img
-                              src="/assets/images/remove.png"
+                              src={window.getAssetPath('images', 'remove.png')}
                               alt="Delete"
                               className="delete-icon"
                             />
@@ -1176,7 +1224,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
                 aria-expanded={showImageConfigs}
               >
                 <img
-                  src="/assets/images/chevron-down.png"
+                  src={window.getAssetPath('images', 'chevron-down.png')}
                   alt=""
                   className={`panel-title-icon ${showImageConfigs ? 'expanded' : ''}`}
                 />
@@ -1198,7 +1246,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
             <div className="replacement-table replacement-table-image">
               <div className="shape-gallery">
                 <div className="shape-gallery-header">{t('replacement.availableShapes')}</div>
-              <div className="shape-gallery-list">
+                <div className="shape-gallery-list">
                   {shapes.length === 0 ? (
                     <div className="shape-gallery-empty">{t('replacement.noShapes')}</div>
                   ) : (
@@ -1241,13 +1289,15 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {imageReplacements.map(item => (
+                  {imageReplacements.map((item) => (
                     <tr key={item.id}>
                       <td>
                         <ShapeSelector
                           shapes={getAvailableShapes(item.shapeId)}
                           value={item.shapeId}
-                          onChange={(shapeId) => updateImageReplacement(item.id, 'shapeId', shapeId)}
+                          onChange={(shapeId) =>
+                            updateImageReplacement(item.id, 'shapeId', shapeId)
+                          }
                           placeholder={t('replacement.shapePlaceholder')}
                         />
                       </td>
@@ -1264,7 +1314,9 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
                           <select
                             className="table-input"
                             value={item.roiType}
-                            onChange={(e) => updateImageReplacement(item.id, 'roiType', e.target.value)}
+                            onChange={(e) =>
+                              updateImageReplacement(item.id, 'roiType', e.target.value)
+                            }
                             title={getOptionDescription(roiOptions, item.roiType)}
                           >
                             {roiOptions.map((option) => (
@@ -1283,7 +1335,9 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
                           <select
                             className="table-input"
                             value={item.cropType}
-                            onChange={(e) => updateImageReplacement(item.id, 'cropType', e.target.value)}
+                            onChange={(e) =>
+                              updateImageReplacement(item.id, 'cropType', e.target.value)
+                            }
                             title={getOptionDescription(cropOptions, item.cropType)}
                           >
                             {cropOptions.map((option) => (
@@ -1304,7 +1358,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
                           title={t('replacement.delete')}
                         >
                           <img
-                            src="/assets/images/remove.png"
+                            src={window.getAssetPath('images', 'remove.png')}
                             alt="Delete"
                             className="delete-icon"
                           />
@@ -1322,9 +1376,9 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
       <div className="input-section">
         <label className="input-label">{t('input.saveLocation')}</label>
         <div className="input-group">
-          <input 
-            type="text" 
-            className="input-field" 
+          <input
+            type="text"
+            className="input-field"
             value={savePath}
             onChange={(e) => setSavePath(e.target.value)}
             placeholder={t('input.savePlaceholder')}
@@ -1349,9 +1403,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
             onClick={(event) => event.stopPropagation()}
           >
             <div className="shape-preview-header">
-              <div className="shape-preview-title">
-                {t('input.previewTitle')}
-              </div>
+              <div className="shape-preview-title">{t('input.previewTitle')}</div>
               <button className="shape-preview-close" onClick={closePreview}>
                 {t('common.close')}
               </button>
@@ -1360,7 +1412,8 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
               <span className="shape-preview-name">{previewShape.name}</span>
               <span className="shape-preview-id">ID: {previewShape.id}</span>
               <span className="shape-preview-size">
-                {t('input.previewSize')}: {previewSize ? `${previewSize.width}x${previewSize.height}px` : '...'}
+                {t('input.previewSize')}:{' '}
+                {previewSize ? `${previewSize.width}x${previewSize.height}px` : '...'}
               </span>
             </div>
             <div className="shape-preview-actions">
@@ -1377,7 +1430,11 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
                 {t('input.previewReset')}
               </button>
               <button className="shape-preview-btn" onClick={handleSavePreview}>
-                <img src="/assets/images/download.png" alt="" className="shape-preview-icon" />
+                <img
+                  src={window.getAssetPath('images', 'download.png')}
+                  alt=""
+                  className="shape-preview-icon"
+                />
                 {t('input.previewSave')}
               </button>
             </div>

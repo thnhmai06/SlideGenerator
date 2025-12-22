@@ -14,16 +14,16 @@ interface ShapeSelectorProps {
   placeholder?: string
 }
 
-const ShapeSelector: React.FC<ShapeSelectorProps> = ({ 
-  shapes, 
-  value, 
-  onChange, 
-  placeholder = 'Chọn shape...' 
+const ShapeSelector: React.FC<ShapeSelectorProps> = ({
+  shapes,
+  value,
+  onChange,
+  placeholder = 'Chọn shape...',
 }) => {
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  const selectedShape = shapes.find(s => s.id === value)
+  const selectedShape = shapes.find((s) => s.id === value)
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -47,15 +47,12 @@ const ShapeSelector: React.FC<ShapeSelectorProps> = ({
   }
 
   return (
-    <div className="shape-selector" ref={dropdownRef}>
-      <div 
-        className="shape-selector-trigger" 
-        onClick={() => setIsOpen(!isOpen)}
-      >
+    <div className={`shape-selector ${isOpen ? 'is-active' : ''}`} ref={dropdownRef}>
+      <div className="shape-selector-trigger" onClick={() => setIsOpen(!isOpen)}>
         {selectedShape ? (
           <div className="shape-option-content">
-            <img 
-              src={selectedShape.preview} 
+            <img
+              src={selectedShape.preview}
               alt={selectedShape.name}
               className="shape-preview-small"
             />
@@ -73,17 +70,13 @@ const ShapeSelector: React.FC<ShapeSelectorProps> = ({
           {shapes.length === 0 ? (
             <div className="shape-option-empty">Không có shape nào</div>
           ) : (
-            shapes.map(shape => (
+            shapes.map((shape) => (
               <div
                 key={shape.id}
                 className={`shape-option ${shape.id === value ? 'selected' : ''}`}
                 onClick={() => handleSelect(shape.id)}
               >
-                <img 
-                  src={shape.preview} 
-                  alt={shape.name}
-                  className="shape-preview"
-                />
+                <img src={shape.preview} alt={shape.name} className="shape-preview" />
                 <span className="shape-name">{shape.name}</span>
                 <span className="shape-id">{shape.id}</span>
               </div>

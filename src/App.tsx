@@ -93,9 +93,7 @@ const App: React.FC = () => {
       </div>
       <div className="app-container">
         <Sidebar currentMenu={currentMenu} onMenuChange={setCurrentMenu} />
-        <div className="main-content">
-          {renderMenu()}
-        </div>
+        <div className="main-content">{renderMenu()}</div>
       </div>
     </div>
   )

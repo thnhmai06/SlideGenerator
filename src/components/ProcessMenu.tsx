@@ -1,3 +1,5 @@
+const getAssetPath = (...p: string[]) =>
+  (window as any).getAssetPath ? (window as any).getAssetPath(...p) : `assets/${p.join('/')}`
 import React, { useMemo, useState } from 'react'
 import { useApp } from '../contexts/AppContext'
 import { useJobs } from '../contexts/JobContext'
@@ -21,7 +23,15 @@ type RowLogGroup = {
 
 const ProcessMenu: React.FC = () => {
   const { t } = useApp()
-  const { groups, groupControl, jobControl, globalControl, loadSheetLogs, exportGroupConfig, hasGroupConfig } = useJobs()
+  const {
+    groups,
+    groupControl,
+    jobControl,
+    globalControl,
+    loadSheetLogs,
+    exportGroupConfig,
+    hasGroupConfig,
+  } = useJobs()
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
   const [expandedLogs, setExpandedLogs] = useState<Record<string, boolean>>({})
   const [collapsedRowGroups, setCollapsedRowGroups] = useState<Record<string, boolean>>({})
@@ -67,15 +77,16 @@ const ProcessMenu: React.FC = () => {
   }
 
   const activeGroups = useMemo(
-    () => groups.filter((group) =>
-      !['completed', 'failed', 'cancelled'].includes(group.status.toLowerCase())
-    ),
-    [groups]
+    () =>
+      groups.filter(
+        (group) => !['completed', 'failed', 'cancelled'].includes(group.status.toLowerCase()),
+      ),
+    [groups],
   )
 
   const hasProcessing = useMemo(
     () => activeGroups.some((group) => ['running', 'pending'].includes(group.status.toLowerCase())),
-    [activeGroups]
+    [activeGroups],
   )
 
   const handlePauseResumeAll = async () => {
@@ -194,7 +205,7 @@ const ProcessMenu: React.FC = () => {
             onClick={handleOpenDashboard}
             title={t('process.viewDetails')}
           >
-            <img src="/assets/images/open.png" alt="Dashboard" className="btn-icon" />
+            <img src={getAssetPath('images', 'open.png')} alt="Dashboard" className="btn-icon" />
             <span>{t('process.viewDetails')}</span>
           </button>
           <button
@@ -204,7 +215,11 @@ const ProcessMenu: React.FC = () => {
             title={hasProcessing ? t('process.pauseAll') : t('process.resumeAll')}
           >
             <img
-              src={hasProcessing ? '/assets/images/pause.png' : '/assets/images/resume.png'}
+              src={
+                hasProcessing
+                  ? getAssetPath('images', 'pause.png')
+                  : getAssetPath('images', 'resume.png')
+              }
               alt={hasProcessing ? 'Pause All' : 'Resume All'}
               className="btn-icon"
             />
@@ -216,11 +231,7 @@ const ProcessMenu: React.FC = () => {
             disabled={activeGroups.length === 0}
             title={t('process.stopAll')}
           >
-            <img
-              src="/assets/images/stop.png"
-              alt="Stop All"
-              className="btn-icon"
-            />
+            <img src={getAssetPath('images', 'stop.png')} alt="Stop All" className="btn-icon" />
             <span>{t('process.stopAll')}</span>
           </button>
         </div>
@@ -235,15 +246,19 @@ const ProcessMenu: React.FC = () => {
               const sheets = Object.values(group.sheets)
               const completed = sheets.filter((sheet) => sheet.status === 'Completed').length
               const processing = sheets.filter((sheet) =>
-                ['Running', 'Pending'].includes(sheet.status)
+                ['Running', 'Pending'].includes(sheet.status),
               ).length
               const failed = sheets.filter((sheet) =>
-                ['Failed', 'Cancelled'].includes(sheet.status)
+                ['Failed', 'Cancelled'].includes(sheet.status),
               ).length
               const totalSheets = sheets.length
-              const groupProgress = totalSheets
-                ? sheets.reduce((sum, sheet) => sum + sheet.progress, 0) / totalSheets
-                : group.progress
+              const totalRows = sheets.reduce((sum, sheet) => sum + (sheet.totalRows ?? 0), 0)
+              const completedRows = sheets.reduce(
+                (sum, sheet) => sum + Math.min(sheet.currentRow ?? 0, sheet.totalRows ?? 0),
+                0,
+              )
+              const groupProgress =
+                totalRows > 0 ? (completedRows / totalRows) * 100 : group.progress
               const groupName = deriveGroupName(group.workbookPath, group.id)
               const showDetails = expandedGroups[group.id] ?? false
 
@@ -251,7 +266,9 @@ const ProcessMenu: React.FC = () => {
                 <div key={group.id} className="process-group">
                   <div className="group-header" onClick={() => toggleGroup(group.id)}>
                     <div className="group-main-info">
-                      <span className={`expand-icon ${showDetails ? 'expanded' : ''}`}>{showDetails ? 'v' : '>'}</span>
+                      <span className={`expand-icon ${showDetails ? 'expanded' : ''}`}>
+                        {showDetails ? 'v' : '>'}
+                      </span>
                       <div className="group-info">
                         <div className="group-name-row">
                           <div className="group-name">{groupName}</div>
@@ -262,16 +279,27 @@ const ProcessMenu: React.FC = () => {
                           )}
                         </div>
                         <div className="group-stats-line">
-                          <span>{completed}/{totalSheets} - {Math.round(groupProgress)}%</span>
-                          <span className="stat-badge stat-success" title={t('process.successSlides')}>
+                          <span>
+                            {completed}/{totalSheets} - {Math.round(groupProgress)}%
+                          </span>
+                          <span
+                            className="stat-badge stat-success"
+                            title={t('process.successSlides')}
+                          >
                             {completed}
                           </span>
                           <span className="stat-divider">|</span>
-                          <span className="stat-badge stat-processing" title={t('process.processingSlides')}>
+                          <span
+                            className="stat-badge stat-processing"
+                            title={t('process.processingSlides')}
+                          >
                             {processing}
                           </span>
                           <span className="stat-divider">|</span>
-                          <span className="stat-badge stat-failed" title={t('process.failedSlides')}>
+                          <span
+                            className="stat-badge stat-failed"
+                            title={t('process.failedSlides')}
+                          >
                             {failed}
                           </span>
                         </div>
@@ -285,7 +313,7 @@ const ProcessMenu: React.FC = () => {
                         aria-label={t('output.exportConfig')}
                         title={t('output.exportConfig')}
                       >
-                        <img src="/assets/images/open.png" alt="" className="btn-icon" />
+                        <img src={getAssetPath('images', 'open.png')} alt="" className="btn-icon" />
                       </button>
                       <button
                         className="process-btn process-btn-icon"
@@ -293,7 +321,11 @@ const ProcessMenu: React.FC = () => {
                         title={group.status === 'Paused' ? t('process.resume') : t('process.pause')}
                       >
                         <img
-                          src={group.status === 'Paused' ? '/assets/images/resume.png' : '/assets/images/pause.png'}
+                          src={
+                            group.status === 'Paused'
+                              ? getAssetPath('images', 'resume.png')
+                              : getAssetPath('images', 'pause.png')
+                          }
                           alt={group.status === 'Paused' ? 'Resume' : 'Pause'}
                           className="btn-icon"
                         />
@@ -303,7 +335,11 @@ const ProcessMenu: React.FC = () => {
                         onClick={() => handleStopGroup(group.id)}
                         title={t('process.stop')}
                       >
-                        <img src="/assets/images/stop.png" alt="Stop" className="btn-icon" />
+                        <img
+                          src={getAssetPath('images', 'stop.png')}
+                          alt="Stop"
+                          className="btn-icon"
+                        />
                       </button>
                     </div>
                   </div>
@@ -337,27 +373,44 @@ const ProcessMenu: React.FC = () => {
 
                         return (
                           <div key={sheet.id} className="file-item">
-                            <div className="file-header-clickable" onClick={() => toggleLog(sheet.id)}>
+                            <div
+                              className="file-header-clickable"
+                              onClick={() => toggleLog(sheet.id)}
+                            >
                               <span className="file-expand-icon">{showLog ? 'v' : '>'}</span>
                               <div className="file-info">
                                 <div className="file-name-row">
                                   <div className="file-name">{sheet.sheetName}</div>
-                                  <span className="file-job-id">ID: {sheet.id}</span>
+                                  <span className="file-job-id">
+                                    {sheet.hangfireJobId
+                                      ? `${t('process.hangfireId')}: ${sheet.hangfireJobId}`
+                                      : `${t('process.jobId')}: ${sheet.id}`}
+                                  </span>
                                 </div>
                                 <div className="file-stats">
-                                  <span className="file-stat-badge stat-success" title={t('process.successSlides')}>
+                                  <span
+                                    className="file-stat-badge stat-success"
+                                    title={t('process.successSlides')}
+                                  >
                                     {completedSlides}
                                   </span>
                                   <span className="stat-divider">|</span>
-                                  <span className="file-stat-badge stat-processing" title={t('process.processingSlides')}>
+                                  <span
+                                    className="file-stat-badge stat-processing"
+                                    title={t('process.processingSlides')}
+                                  >
                                     {processingSlides}
                                   </span>
                                   <span className="stat-divider">|</span>
-                                  <span className="file-stat-badge stat-failed" title={t('process.failedSlides')}>
+                                  <span
+                                    className="file-stat-badge stat-failed"
+                                    title={t('process.failedSlides')}
+                                  >
                                     {failedSlides}
                                   </span>
                                   <span className="file-progress-text">
-                                    / {sheet.totalRows} {t('process.slides')} - {Math.round(sheet.progress)}%
+                                    / {sheet.totalRows} {t('process.slides')} -{' '}
+                                    {Math.round(sheet.progress)}%
                                   </span>
                                 </div>
                               </div>
@@ -365,23 +418,35 @@ const ProcessMenu: React.FC = () => {
                                 <div className="file-status" data-status={statusKey(sheet.status)}>
                                   {t(`process.status.${statusKey(sheet.status)}`)}
                                 </div>
-                                {(sheet.status === 'Running' || sheet.status === 'Paused' || sheet.status === 'Pending') && (
+                                {(sheet.status === 'Running' ||
+                                  sheet.status === 'Paused' ||
+                                  sheet.status === 'Pending') && (
                                   <button
                                     className="file-action-btn"
                                     onClick={(e) => {
                                       e.stopPropagation()
                                       handleSheetAction(sheet.id, sheet.status)
                                     }}
-                                    title={sheet.status === 'Paused' ? t('process.resume') : t('process.pause')}
+                                    title={
+                                      sheet.status === 'Paused'
+                                        ? t('process.resume')
+                                        : t('process.pause')
+                                    }
                                   >
                                     <img
-                                      src={sheet.status === 'Paused' ? '/assets/images/resume.png' : '/assets/images/pause.png'}
+                                      src={
+                                        sheet.status === 'Paused'
+                                          ? getAssetPath('images', 'resume.png')
+                                          : getAssetPath('images', 'pause.png')
+                                      }
                                       alt={sheet.status === 'Paused' ? 'Resume' : 'Pause'}
                                       className="btn-icon-small"
                                     />
                                   </button>
                                 )}
-                                {(sheet.status === 'Running' || sheet.status === 'Paused' || sheet.status === 'Pending') && (
+                                {(sheet.status === 'Running' ||
+                                  sheet.status === 'Paused' ||
+                                  sheet.status === 'Pending') && (
                                   <button
                                     className="file-action-btn file-action-btn-danger"
                                     onClick={(e) => {
@@ -391,7 +456,7 @@ const ProcessMenu: React.FC = () => {
                                     title={t('process.stop')}
                                   >
                                     <img
-                                      src="/assets/images/stop.png"
+                                      src={getAssetPath('images', 'stop.png')}
                                       alt="Stop"
                                       className="btn-icon-small"
                                     />
@@ -412,68 +477,76 @@ const ProcessMenu: React.FC = () => {
 
                             {showLog && (
                               <div className="file-log-content">
-                              <div className="log-header">
-                                {t('process.log')}
-                                <button
-                                  className="copy-log-btn"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    navigator.clipboard.writeText(
-                                      sheet.logs.map((entry) => formatLogEntry(entry as LogEntry)).join('\n')
-                                    )
-                                  }}
-                                  title="Copy log"
-                                >
-                                  <img src="/assets/images/clipboard.png" alt="Copy" className="log-icon" />
-                                </button>
-                              </div>
-                              <div className="log-content">
-                                {sheet.logs.length === 0 ? (
-                                  <div className="log-empty">{t('process.noLogs')}</div>
-                                ) : (
-                                  logGroups.map((group) => {
-                                    const rowKey = `${sheet.id}:${group.key}`
-                                    const isCollapsed = collapsedRowGroups[rowKey] ?? true
-                                    return (
-                                    <div
-                                      key={group.key}
-                                      className="log-row-group"
-                                      data-status={(group.status ?? 'info').toLowerCase()}
-                                    >
-                                      <div
-                                        className="log-row-header"
-                                        onClick={() => toggleRowGroup(rowKey)}
-                                      >
-                                        <span className="log-row-toggle">
-                                          {isCollapsed ? '>' : 'v'}
-                                        </span>
-                                        <span className="log-row-title">
-                                          {group.row != null ? `Row ${group.row}` : t('process.logGeneral')}
-                                        </span>
-                                        {group.status && (
-                                          <span className="log-row-status">
-                                            {group.status.toUpperCase()}
-                                          </span>
-                                        )}
-                                      </div>
-                                      {!isCollapsed && (
-                                        <div className="log-row-entries">
-                                          {group.entries.map((entry, index) => (
-                                            <div
-                                              key={`${group.key}-${index}`}
-                                              className={`log-entry log-${(entry.level ?? 'info').toLowerCase()}`}
-                                            >
-                                              {formatLogEntry(entry)}
+                                <div className="log-header">
+                                  {t('process.log')}
+                                  <button
+                                    className="copy-log-btn"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      navigator.clipboard.writeText(
+                                        sheet.logs
+                                          .map((entry) => formatLogEntry(entry as LogEntry))
+                                          .join('\n'),
+                                      )
+                                    }}
+                                    title="Copy log"
+                                  >
+                                    <img
+                                      src={getAssetPath('images', 'clipboard.png')}
+                                      alt="Copy"
+                                      className="log-icon"
+                                    />
+                                  </button>
+                                </div>
+                                <div className="log-content">
+                                  {sheet.logs.length === 0 ? (
+                                    <div className="log-empty">{t('process.noLogs')}</div>
+                                  ) : (
+                                    logGroups.map((group) => {
+                                      const rowKey = `${sheet.id}:${group.key}`
+                                      const isCollapsed = collapsedRowGroups[rowKey] ?? true
+                                      return (
+                                        <div
+                                          key={group.key}
+                                          className="log-row-group"
+                                          data-status={(group.status ?? 'info').toLowerCase()}
+                                        >
+                                          <div
+                                            className="log-row-header"
+                                            onClick={() => toggleRowGroup(rowKey)}
+                                          >
+                                            <span className="log-row-toggle">
+                                              {isCollapsed ? '>' : 'v'}
+                                            </span>
+                                            <span className="log-row-title">
+                                              {group.row != null
+                                                ? `Row ${group.row}`
+                                                : t('process.logGeneral')}
+                                            </span>
+                                            {group.status && (
+                                              <span className="log-row-status">
+                                                {group.status.toUpperCase()}
+                                              </span>
+                                            )}
+                                          </div>
+                                          {!isCollapsed && (
+                                            <div className="log-row-entries">
+                                              {group.entries.map((entry, index) => (
+                                                <div
+                                                  key={`${group.key}-${index}`}
+                                                  className={`log-entry log-${(entry.level ?? 'info').toLowerCase()}`}
+                                                >
+                                                  {formatLogEntry(entry)}
+                                                </div>
+                                              ))}
                                             </div>
-                                          ))}
+                                          )}
                                         </div>
-                                      )}
-                                    </div>
-                                    )
-                                  })
-                                )}
+                                      )
+                                    })
+                                  )}
+                                </div>
                               </div>
-                            </div>
                             )}
                           </div>
                         )

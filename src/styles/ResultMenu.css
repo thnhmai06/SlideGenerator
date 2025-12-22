@@ -149,19 +149,11 @@
 }
 
 .output-menu .output-btn {
-  background: linear-gradient(
-    135deg,
-    var(--accent-primary),
-    var(--accent-hover)
-  );
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-hover));
 }
 
 .output-menu .output-btn-danger {
-  background: linear-gradient(
-    135deg,
-    var(--danger-primary),
-    var(--danger-hover)
-  );
+  background: linear-gradient(135deg, var(--danger-primary), var(--danger-hover));
 }
 
 .output-menu .output-btn:hover,
@@ -266,19 +258,19 @@
   margin-top: -2px;
 }
 
-.output-menu .file-status[data-status="pending"] {
+.output-menu .file-status[data-status='pending'] {
   background-color: rgba(148, 163, 184, 0.18);
   color: #94a3b8;
 }
 
-.output-menu .file-status[data-status="paused"] {
+.output-menu .file-status[data-status='paused'] {
   background-color: rgba(245, 158, 11, 0.14);
   color: #f59e0b;
 }
 
-.output-menu .file-status[data-status="failed"],
-.output-menu .file-status[data-status="error"],
-.output-menu .file-status[data-status="cancelled"] {
+.output-menu .file-status[data-status='failed'],
+.output-menu .file-status[data-status='error'],
+.output-menu .file-status[data-status='cancelled'] {
   background-color: rgba(239, 68, 68, 0.14);
   color: #ef4444;
 }
@@ -371,7 +363,7 @@
   filter: brightness(0) invert(1);
 }
 
-[data-theme="light"] .output-menu .file-btn-icon {
+[data-theme='light'] .output-menu .file-btn-icon {
   filter: none;
 }
 
@@ -408,7 +400,7 @@
   filter: brightness(0) invert(1);
 }
 
-[data-theme="light"] .output-menu .log-icon {
+[data-theme='light'] .output-menu .log-icon {
   filter: none;
 }
 
@@ -451,22 +443,22 @@
   flex: 1;
 }
 
-.output-menu .log-row-group[data-status="processing"] .log-row-header {
+.output-menu .log-row-group[data-status='processing'] .log-row-header {
   background-color: rgba(59, 130, 246, 0.16);
   color: #3b82f6;
 }
 
-.output-menu .log-row-group[data-status="completed"] .log-row-header {
+.output-menu .log-row-group[data-status='completed'] .log-row-header {
   background-color: rgba(16, 185, 129, 0.16);
   color: #10b981;
 }
 
-.output-menu .log-row-group[data-status="warning"] .log-row-header {
+.output-menu .log-row-group[data-status='warning'] .log-row-header {
   background-color: rgba(245, 158, 11, 0.2);
   color: #f59e0b;
 }
 
-.output-menu .log-row-group[data-status="error"] .log-row-header {
+.output-menu .log-row-group[data-status='error'] .log-row-header {
   background-color: rgba(239, 68, 68, 0.2);
   color: #ef4444;
 }
