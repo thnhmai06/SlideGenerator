@@ -4,7 +4,7 @@ import '../styles/AboutMenu.css'
 
 const AboutMenu: React.FC = () => {
   const { t } = useApp()
-  const version = __APP_VERSION__ || ''
+  const version = typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : ''
   const developers = [
     { name: 'thnhmai06', url: 'https://github.com/thnhmai06' },
     { name: 'NAV-adsf23fd', url: 'https://github.com/NAV-adsf23fd' },

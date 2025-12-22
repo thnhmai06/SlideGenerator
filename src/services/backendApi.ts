@@ -294,14 +294,12 @@ function getResponseType(response: ResponseBase): string {
   return (response.Type ?? response.type ?? "").toLowerCase();
 }
 
-function getCaseInsensitive<
-  T extends Record<string, unknown>,
-  TValue = unknown,
->(obj: T | null | undefined, key: string): TValue | undefined {
-  if (!obj) return undefined;
-  if (key in obj) return obj[key] as TValue;
+function getCaseInsensitive<TValue = unknown>(obj: unknown, key: string): TValue | undefined {
+  if (!obj || typeof obj !== "object") return undefined;
+  const record = obj as Record<string, unknown>;
+  if (key in record) return record[key] as TValue;
   const lowered = key.toLowerCase();
-  for (const [entryKey, value] of Object.entries(obj)) {
+  for (const [entryKey, value] of Object.entries(record)) {
     if (entryKey.toLowerCase() === lowered) {
       return value as TValue;
     }
@@ -329,54 +327,56 @@ function assertSuccess<T>(response: ResponseBase): T {
 
 function normalizeJobStatusInfo(input: Record<string, unknown>): JobStatusInfo {
   return {
-    JobId: (getCaseInsensitive<string>(input, "JobId") ?? "") as string,
-    SheetName: (getCaseInsensitive<string>(input, "SheetName") ?? "") as string,
-    Status: (getCaseInsensitive<string>(input, "Status") ?? "") as string,
-    CurrentRow: (getCaseInsensitive<number>(input, "CurrentRow") ??
-      0) as number,
-    TotalRows: (getCaseInsensitive<number>(input, "TotalRows") ?? 0) as number,
-    Progress: (getCaseInsensitive<number>(input, "Progress") ?? 0) as number,
-    OutputPath: getCaseInsensitive<string>(input, "OutputPath") ?? undefined,
-    ErrorMessage:
-      getCaseInsensitive<string | null>(input, "ErrorMessage") ?? undefined,
-    ErrorCount: getCaseInsensitive<number>(input, "ErrorCount") ?? undefined,
+    JobId: (() => { const val = getCaseInsensitive(input, "JobId"); return typeof val === "string" ? val : ""; })(),
+    SheetName: (() => { const val = getCaseInsensitive(input, "SheetName"); return typeof val === "string" ? val : ""; })(),
+    Status: (() => { const val = getCaseInsensitive(input, "Status"); return typeof val === "string" ? val : ""; })(),
+    CurrentRow: (getCaseInsensitive(input, "CurrentRow") ?? 0) as number,
+    TotalRows: (getCaseInsensitive(input, "TotalRows") ?? 0) as number,
+    Progress: (getCaseInsensitive(input, "Progress") ?? 0) as number,
+    OutputPath: (() => { const val = getCaseInsensitive(input, "OutputPath"); return typeof val === "string" ? val : undefined; })(),
+    ErrorMessage: (() => { const val = getCaseInsensitive(input, "ErrorMessage"); return typeof val === "string" || val === null ? val : undefined; })(),
+    ErrorCount: (getCaseInsensitive(input, "ErrorCount") as number | undefined) ?? undefined,
   };
 }
 
 function normalizeShapeDto(input: Record<string, unknown>): ShapeDto {
   return {
     Id: (getCaseInsensitive<number>(input, "Id") ?? 0) as number,
-    Name: (getCaseInsensitive<string>(input, "Name") ?? "") as string,
-    Data: (getCaseInsensitive<string>(input, "Data") ?? "") as string,
-    Kind: getCaseInsensitive<string>(input, "Kind") ?? undefined,
+    Name: (() => {
+      const val = getCaseInsensitive<string>(input, "Name");
+      return typeof val === "string" ? val : "";
+    })(),
+    Data: (() => {
+      const val = getCaseInsensitive<string>(input, "Data");
+      return typeof val === "string" ? val : "";
+    })(),
+    Kind: (() => {
+      const val = getCaseInsensitive<string>(input, "Kind");
+      return typeof val === "string" ? val : undefined;
+    })(),
     IsImage: getCaseInsensitive<boolean>(input, "IsImage") ?? undefined,
   };
 }
 
 function normalizeGroupSummary(input: Record<string, unknown>): GroupSummary {
   return {
-    GroupId: (getCaseInsensitive<string>(input, "GroupId") ?? "") as string,
-    WorkbookPath: (getCaseInsensitive<string>(input, "WorkbookPath") ??
-      "") as string,
-    OutputFolder:
-      getCaseInsensitive<string>(input, "OutputFolder") ?? undefined,
-    Status: (getCaseInsensitive<string>(input, "Status") ?? "") as string,
-    Progress: (getCaseInsensitive<number>(input, "Progress") ?? 0) as number,
-    SheetCount: (getCaseInsensitive<number>(input, "SheetCount") ??
-      0) as number,
-    CompletedSheets: (getCaseInsensitive<number>(input, "CompletedSheets") ??
-      0) as number,
-    ErrorCount: getCaseInsensitive<number>(input, "ErrorCount") ?? undefined,
+    GroupId: (() => { const val = getCaseInsensitive(input, "GroupId"); return typeof val === "string" ? val : ""; })(),
+    WorkbookPath: (() => { const val = getCaseInsensitive(input, "WorkbookPath"); return typeof val === "string" ? val : ""; })(),
+    OutputFolder: (() => { const val = getCaseInsensitive(input, "OutputFolder"); return typeof val === "string" ? val : undefined; })(),
+    Status: (() => { const val = getCaseInsensitive(input, "Status"); return typeof val === "string" ? val : ""; })(),
+    Progress: (getCaseInsensitive(input, "Progress") ?? 0) as number,
+    SheetCount: (getCaseInsensitive(input, "SheetCount") ?? 0) as number,
+    CompletedSheets: (getCaseInsensitive(input, "CompletedSheets") ?? 0) as number,
+    ErrorCount: (getCaseInsensitive(input, "ErrorCount") as number | undefined) ?? undefined,
   };
 }
 
 function normalizeJobLogEntry(input: Record<string, unknown>): JobLogEntry {
   return {
-    Level: (getCaseInsensitive<string>(input, "Level") ?? "") as string,
-    Message: (getCaseInsensitive<string>(input, "Message") ?? "") as string,
-    Timestamp: (getCaseInsensitive<string>(input, "Timestamp") ?? "") as string,
-    Data: (getCaseInsensitive<Record<string, unknown>>(input, "Data") ??
-      undefined) as Record<string, unknown> | undefined,
+    Level: (() => { const val = getCaseInsensitive(input, "Level"); return typeof val === "string" ? val : ""; })(),
+    Message: (() => { const val = getCaseInsensitive(input, "Message"); return typeof val === "string" ? val : ""; })(),
+    Timestamp: (() => { const val = getCaseInsensitive(input, "Timestamp"); return typeof val === "string" ? val : ""; })(),
+    Data: (getCaseInsensitive(input, "Data") ?? undefined) as Record<string, unknown> | undefined,
   };
 }
 
@@ -392,10 +392,7 @@ export async function loadFile(filePath: string): Promise<LoadFileResponse> {
     filePath,
   });
   const tables = assertSuccess<SheetWorkbookGetSheetInfoSuccess>(info);
-  const sheets = (getCaseInsensitive<Record<string, number>>(
-    tables,
-    "Sheets",
-  ) ?? {}) as Record<string, number>;
+  const sheets = tables.Sheets ?? {};
   const sheetNames = Object.keys(sheets);
 
   return {
@@ -429,7 +426,7 @@ export async function getSheets(filePath: string): Promise<SheetListResponse> {
   });
   const data = assertSuccess<SheetWorkbookGetSheetInfoSuccess>(response);
 
-  const tables = (getCaseInsensitive<Record<string, number>>(data, "Sheets") ??
+  const tables = (getCaseInsensitive<Record<string, number>>(data as unknown, "Sheets") ??
     {}) as Record<string, number>;
   const sheets = Object.entries(tables).map(([name, rows]) => ({
     sheet_id: name,
@@ -617,7 +614,7 @@ export async function getWorkbookInfo(
   ) ?? []) as Array<Record<string, unknown>>;
 
   return {
-    Type: getResponseType(data),
+    Type: "getworkbookinfo",
     FilePath: getCaseInsensitive<string>(data, "FilePath") ?? filePath,
     WorkbookName: getCaseInsensitive<string>(data, "WorkbookName") ?? undefined,
     Sheets: sheets.map((sheet) => ({
@@ -629,14 +626,14 @@ export async function getWorkbookInfo(
   };
 }
 
-export async function scanShapes(filePath: string): Promise<unknown> {
+export async function scanShapes(filePath: string): Promise<SlideScanShapesSuccess> {
   const response = await slideHub.sendRequest<ResponseBase>({
     type: "scanshapes",
     filePath,
   });
   const data = assertSuccess<SlideScanShapesSuccess>(response);
   return {
-    Type: getResponseType(data),
+    Type: "scanshapes",
     FilePath: getCaseInsensitive<string>(data, "FilePath") ?? filePath,
     Shapes: (
       (getCaseInsensitive<Array<Record<string, unknown>>>(data, "Shapes") ??
@@ -645,28 +642,32 @@ export async function scanShapes(filePath: string): Promise<unknown> {
   } satisfies SlideScanShapesSuccess;
 }
 
-export async function scanPlaceholders(filePath: string): Promise<unknown> {
+export async function scanPlaceholders(
+  filePath: string,
+): Promise<SlideScanPlaceholdersSuccess> {
   const response = await slideHub.sendRequest<ResponseBase>({
     type: "scanplaceholders",
     filePath,
   });
   const data = assertSuccess<SlideScanPlaceholdersSuccess>(response);
   return {
-    Type: getResponseType(data),
+    Type: "scanplaceholders",
     FilePath: getCaseInsensitive<string>(data, "FilePath") ?? filePath,
     Placeholders: (getCaseInsensitive<string[]>(data, "Placeholders") ??
       []) as string[],
   } satisfies SlideScanPlaceholdersSuccess;
 }
 
-export async function scanTemplate(filePath: string): Promise<unknown> {
+export async function scanTemplate(
+  filePath: string,
+): Promise<SlideScanTemplateSuccess> {
   const response = await slideHub.sendRequest<ResponseBase>({
     type: "scantemplate",
     filePath,
   });
   const data = assertSuccess<SlideScanTemplateSuccess>(response);
   return {
-    Type: getResponseType(data),
+    Type: "scantemplate",
     FilePath: getCaseInsensitive<string>(data, "FilePath") ?? filePath,
     Shapes: (
       (getCaseInsensitive<Array<Record<string, unknown>>>(data, "Shapes") ??
@@ -679,14 +680,14 @@ export async function scanTemplate(filePath: string): Promise<unknown> {
 
 export async function createGroup(
   request: Record<string, unknown>,
-): Promise<unknown> {
+): Promise<SlideGroupCreateSuccess> {
   const response = await slideHub.sendRequest<ResponseBase>({
     type: "groupcreate",
     ...request,
   });
   const data = assertSuccess<SlideGroupCreateSuccess>(response);
   return {
-    Type: getResponseType(data),
+    Type: "groupcreate",
     GroupId: getCaseInsensitive<string>(data, "GroupId") ?? "",
     OutputFolder: getCaseInsensitive<string>(data, "OutputFolder") ?? "",
     JobIds: (getCaseInsensitive<Record<string, string>>(data, "JobIds") ??
@@ -696,7 +697,7 @@ export async function createGroup(
 
 export async function groupStatus(
   request: Record<string, unknown>,
-): Promise<unknown> {
+): Promise<SlideGroupStatusSuccess> {
   const response = await slideHub.sendRequest<ResponseBase>({
     type: "groupstatus",
     ...request,
@@ -711,7 +712,7 @@ export async function groupStatus(
     normalizedJobs[key] = normalizeJobStatusInfo(value);
   });
   return {
-    Type: getResponseType(data),
+    Type: "groupstatus",
     GroupId: getCaseInsensitive<string>(data, "GroupId") ?? "",
     Status: getCaseInsensitive<string>(data, "Status") ?? "Unknown",
     Progress: getCaseInsensitive<number>(data, "Progress") ?? 0,
@@ -722,7 +723,7 @@ export async function groupStatus(
 
 export async function groupControl(
   request: Record<string, unknown>,
-): Promise<unknown> {
+): Promise<ResponseBase> {
   const response = await slideHub.sendRequest<ResponseBase>({
     type: "groupcontrol",
     ...request,
@@ -732,29 +733,25 @@ export async function groupControl(
 
 export async function removeGroup(
   request: Record<string, unknown>,
-): Promise<unknown> {
+): Promise<SlideGroupRemoveSuccess> {
   const response = await slideHub.sendRequest<ResponseBase>({
     type: "groupremove",
     ...request,
   });
   const data = assertSuccess<SlideGroupRemoveSuccess>(response);
-  return {
-    Type: getResponseType(data),
-    GroupId: getCaseInsensitive<string>(data, "GroupId") ?? "",
-    Removed: getCaseInsensitive<boolean>(data, "Removed") ?? false,
-  } satisfies SlideGroupRemoveSuccess;
+  return data;
 }
 
 export async function jobStatus(
   request: Record<string, unknown>,
-): Promise<unknown> {
+): Promise<SlideJobStatusSuccess> {
   const response = await slideHub.sendRequest<ResponseBase>({
     type: "jobstatus",
     ...request,
   });
   const data = assertSuccess<SlideJobStatusSuccess>(response);
   return {
-    Type: getResponseType(data),
+    Type: "jobstatus",
     JobId: getCaseInsensitive<string>(data, "JobId") ?? "",
     SheetName: getCaseInsensitive<string>(data, "SheetName") ?? "",
     Status: getCaseInsensitive<string>(data, "Status") ?? "Unknown",
@@ -769,7 +766,7 @@ export async function jobStatus(
 
 export async function jobControl(
   request: Record<string, unknown>,
-): Promise<unknown> {
+): Promise<ResponseBase> {
   const response = await slideHub.sendRequest<ResponseBase>({
     type: "jobcontrol",
     ...request,
@@ -779,22 +776,18 @@ export async function jobControl(
 
 export async function removeJob(
   request: Record<string, unknown>,
-): Promise<unknown> {
+): Promise<SlideJobRemoveSuccess> {
   const response = await slideHub.sendRequest<ResponseBase>({
     type: "jobremove",
     ...request,
   });
   const data = assertSuccess<SlideJobRemoveSuccess>(response);
-  return {
-    Type: getResponseType(data),
-    JobId: getCaseInsensitive<string>(data, "JobId") ?? "",
-    Removed: getCaseInsensitive<boolean>(data, "Removed") ?? false,
-  } satisfies SlideJobRemoveSuccess;
+  return data;
 }
 
 export async function getJobLogs(
   request: Record<string, unknown>,
-): Promise<unknown> {
+): Promise<SlideJobLogsSuccess> {
   const response = await slideHub.sendRequest<ResponseBase>({
     type: "joblogs",
     ...request,
@@ -805,7 +798,7 @@ export async function getJobLogs(
     "Logs",
   ) ?? []) as Array<Record<string, unknown>>;
   return {
-    Type: getResponseType(data),
+    Type: "joblogs",
     JobId: getCaseInsensitive<string>(data, "JobId") ?? "",
     Logs: logs.map((entry) => normalizeJobLogEntry(entry)),
   } satisfies SlideJobLogsSuccess;
@@ -821,7 +814,7 @@ export async function globalControl(
   return assertSuccess(response);
 }
 
-export async function getAllGroups(): Promise<unknown> {
+export async function getAllGroups(): Promise<SlideGlobalGetGroupsSuccess> {
   const response = await slideHub.sendRequest<ResponseBase>({
     type: "getallgroups",
   });
@@ -831,7 +824,7 @@ export async function getAllGroups(): Promise<unknown> {
     "Groups",
   ) ?? []) as Array<Record<string, unknown>>;
   return {
-    Type: getResponseType(data),
+    Type: "getallgroups",
     Groups: rawGroups.map((group) => normalizeGroupSummary(group)),
   } satisfies SlideGlobalGetGroupsSuccess;
 }
