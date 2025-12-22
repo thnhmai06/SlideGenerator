@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import CreateTaskMenu from '../CreateTaskMenu'
 import * as backendApi from '../../services/backendApi'
@@ -66,7 +66,13 @@ describe('CreateTaskMenu', () => {
 
     // Test Data selection
     electronAPIMock.openFile.mockResolvedValueOnce('C:\\data.xlsx')
-    vi.mocked(backendApi.loadFile).mockResolvedValue({ success: true, num_sheets: 1, sheets: ['Sheet1'], group_id: 'g1', file_type: 'sheet' })
+    vi.mocked(backendApi.loadFile).mockResolvedValue({
+      success: true,
+      num_sheets: 1,
+      sheets: ['Sheet1'],
+      group_id: 'g1',
+      file_type: 'sheet',
+    })
     vi.mocked(backendApi.getAllColumns).mockResolvedValue(['Name', 'Age'])
     vi.mocked(backendApi.getWorkbookInfo).mockResolvedValue({
       Type: 'getworkbookinfo',
