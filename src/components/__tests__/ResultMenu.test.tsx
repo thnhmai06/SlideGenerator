@@ -55,6 +55,10 @@ vi.mock('../../contexts/JobContext', () => ({
 }))
 
 describe('ResultMenu', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks()
+  })
+
   it('shows row groups and sheet actions', async () => {
     const user = userEvent.setup()
     render(<ResultMenu />)
@@ -65,5 +69,18 @@ describe('ResultMenu', () => {
     expect(screen.getByText('Row 1')).toBeInTheDocument()
     expect(screen.getAllByLabelText('output.open').length).toBeGreaterThan(0)
     expect(screen.getByLabelText('output.remove')).toBeInTheDocument()
+  })
+
+  it('confirms before clearing all and removing groups', async () => {
+    const user = userEvent.setup()
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+    render(<ResultMenu />)
+
+    await user.click(screen.getByText('output.clearAll'))
+    await user.click(screen.getByText('output.removeGroup'))
+
+    expect(confirmSpy).toHaveBeenCalled()
+    expect(clearCompleted).toHaveBeenCalled()
+    expect(removeGroup).toHaveBeenCalled()
   })
 })

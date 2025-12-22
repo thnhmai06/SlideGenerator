@@ -243,7 +243,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
           .map((shape) => ({
             id: String(shape.Id),
             name: shape.Name,
-            preview: shape.Data ? `data:image/png;base64,${shape.Data}` : '/assets/images/app.png',
+            preview: shape.Data ? `data:image/png;base64,${shape.Data}` : '/assets/images/app-icon.png',
           }))
         nextPlaceholders = (template.Placeholders ?? [])
           .map((item) => item.trim())
@@ -391,7 +391,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
         .map((shape) => ({
           id: String(shape.Id),
           name: shape.Name,
-          preview: shape.Data ? `data:image/png;base64,${shape.Data}` : '/assets/images/app.png',
+          preview: shape.Data ? `data:image/png;base64,${shape.Data}` : '/assets/images/app-icon.png',
         }))
       setShapes(mappedShapes)
       lastLoadedTemplatePathRef.current = filePath
@@ -659,7 +659,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
               .map((shape) => ({
                 id: String(shape.Id),
                 name: shape.Name,
-                preview: shape.Data ? `data:image/png;base64,${shape.Data}` : '/assets/images/app.png',
+                preview: shape.Data ? `data:image/png;base64,${shape.Data}` : '/assets/images/app-icon.png',
               }))
             nextPlaceholders = (template.Placeholders ?? [])
               .map((item) => item.trim())

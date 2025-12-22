@@ -5,6 +5,41 @@
   width: 100%;
 }
 
+.connection-banner {
+  height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-100%);
+  transition: height 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
+  background: transparent;
+}
+
+.connection-banner.connected,
+.connection-banner.disconnected {
+  height: 36px;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.connection-banner__content {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--spacing-md);
+  font-size: var(--font-sm);
+  font-weight: var(--font-semibold);
+  color: #fff;
+}
+
+.connection-banner.connected .connection-banner__content {
+  background: linear-gradient(90deg, #10b981, #22c55e);
+}
+
+.connection-banner.disconnected .connection-banner__content {
+  background: linear-gradient(90deg, #ef4444, #f97316);
+}
+
 .app-container {
   flex: 1;
   min-height: 0;

@@ -171,7 +171,10 @@ const ProcessMenu: React.FC = () => {
   }
 
   const toggleRowGroup = (key: string) => {
-    setCollapsedRowGroups((prev) => ({ ...prev, [key]: !prev[key] }))
+    setCollapsedRowGroups((prev) => {
+      const current = prev[key] ?? true
+      return { ...prev, [key]: !current }
+    })
   }
 
   const formatTime = (value?: string) => {
@@ -337,7 +340,10 @@ const ProcessMenu: React.FC = () => {
                             <div className="file-header-clickable" onClick={() => toggleLog(sheet.id)}>
                               <span className="file-expand-icon">{showLog ? 'v' : '>'}</span>
                               <div className="file-info">
-                                <div className="file-name">{sheet.sheetName}</div>
+                                <div className="file-name-row">
+                                  <div className="file-name">{sheet.sheetName}</div>
+                                  <span className="file-job-id">ID: {sheet.id}</span>
+                                </div>
                                 <div className="file-stats">
                                   <span className="file-stat-badge stat-success" title={t('process.successSlides')}>
                                     {completedSlides}

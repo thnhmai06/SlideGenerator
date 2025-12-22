@@ -71,6 +71,7 @@ describe('ProcessMenu', () => {
     await user.click(screen.getByText('book.xlsx'))
     await user.click(screen.getByText('Sheet1'))
 
+    expect(screen.getByText('ID: sheet-1')).toBeInTheDocument()
     expect(screen.getByText('Row 1')).toBeInTheDocument()
     expect(document.querySelector('.file-action-btn-danger')).not.toBeNull()
   })

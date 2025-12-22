@@ -1,5 +1,7 @@
 export {}
 
+declare const __APP_VERSION__: string
+
 declare global {
   interface Window {
     electronAPI: {
@@ -14,6 +16,8 @@ declare global {
       windowControl: (action: 'minimize' | 'maximize' | 'close') => Promise<void>
       hideToTray: () => Promise<void>
       setProgressBar: (value: number) => Promise<void>
+      restartBackend: () => Promise<boolean>
+      getBackendConfig: () => Promise<string | null>
     }
   }
 }

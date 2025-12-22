@@ -55,9 +55,11 @@ const SettingMenu: React.FC = () => {
   const { groups } = useJobs()
   const [activeTab, setActiveTab] = useState<SettingTab>('appearance')
   const [config, setConfig] = useState<ConfigState | null>(null)
+  const [initialServer, setInitialServer] = useState<ConfigState['server'] | null>(null)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error' | 'warning'; text: string } | null>(null)
+  const [restartRequired, setRestartRequired] = useState(false)
 
   const getErrorDetail = (error: unknown): string => {
     if (error instanceof Error && error.message) return error.message
@@ -196,6 +198,8 @@ const SettingMenu: React.FC = () => {
           },
         },
       })
+      setInitialServer({ host, port, debug })
+      setRestartRequired(false)
       storeBackendUrl(host, port)
     } catch (error) {
       console.error('Failed to load config:', error)
@@ -209,10 +213,20 @@ const SettingMenu: React.FC = () => {
     loadConfig().catch(() => undefined)
   }, [])
 
+  const hasServerChanged = (server: ConfigState['server']) => {
+    if (!initialServer) return false
+    return (
+      server.host !== initialServer.host ||
+      server.port !== initialServer.port ||
+      server.debug !== initialServer.debug
+    )
+  }
+
   const saveConfig = async () => {
     if (!config) return
     try {
       setSaving(true)
+      const requiresRestart = hasServerChanged(config.server)
       await backendApi.updateConfig({
         Server: {
           Host: config.server.host,
@@ -248,8 +262,14 @@ const SettingMenu: React.FC = () => {
           },
         },
       })
+      setInitialServer({ ...config.server })
+      setRestartRequired(requiresRestart)
       storeBackendUrl(config.server.host, config.server.port)
-      showMessage('success', t('settings.saveSuccess'))
+      if (requiresRestart) {
+        showMessage('warning', t('settings.restartRequired'))
+      } else {
+        showMessage('success', t('settings.saveSuccess'))
+      }
     } catch (error) {
       console.error('Failed to save config:', error)
       showMessage('error', formatErrorMessage('settings.saveError', error))
@@ -284,6 +304,25 @@ const SettingMenu: React.FC = () => {
       showMessage('error', formatErrorMessage('settings.resetError', error))
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleRestartServer = async () => {
+    if (!window.electronAPI?.restartBackend) {
+      showMessage('warning', t('settings.restartUnavailable'))
+      return
+    }
+    try {
+      const restarted = await window.electronAPI.restartBackend()
+      if (restarted) {
+        setRestartRequired(false)
+        showMessage('success', t('settings.restartSuccess'))
+      } else {
+        showMessage('error', t('settings.restartError'))
+      }
+    } catch (error) {
+      console.error('Failed to restart server:', error)
+      showMessage('error', formatErrorMessage('settings.restartError', error))
     }
   }
 
@@ -892,6 +931,11 @@ const SettingMenu: React.FC = () => {
           <button className="btn btn-primary" onClick={saveConfig} disabled={!isEditable || saving}>
             {saving ? t('settings.saving') : t('settings.save')}
           </button>
+          {restartRequired && (
+            <button className="btn btn-secondary" onClick={handleRestartServer}>
+              {t('settings.restartServer')}
+            </button>
+          )}
           <button className="btn btn-secondary" onClick={reloadConfig} disabled={!isEditable}>
             {t('settings.reload')}
           </button>
