@@ -22,12 +22,6 @@ jobs:
             upload_glob: |
               frontend/release/**/*.exe
               frontend/release/**/*.zip
-          - os: macos-latest
-            rid: osx-arm64
-            electron_arch: arm64
-            upload_glob: |
-              frontend/release/**/*.dmg
-              frontend/release/**/*.zip
           - os: ubuntu-latest
             rid: linux-x64
             electron_arch: x64
