@@ -8,7 +8,7 @@ namespace SlideGenerator.Infrastructure.Slide.Adapters;
 ///     Domain.Slide.Interfaces.IWorkingPresentation.
 /// </summary>
 internal sealed class WorkingPresentationAdapter(CoreWorkingPresentation presentation)
-    : IWorkingPresentation, IDisposable
+    : IWorkingPresentation
 {
     public void Dispose()
     {
@@ -18,6 +18,11 @@ internal sealed class WorkingPresentationAdapter(CoreWorkingPresentation present
     public string FilePath => presentation.FilePath;
 
     public int SlideCount => presentation.SlideCount;
+
+    public void RemoveSlide(int position)
+    {
+        presentation.RemoveSlide(position);
+    }
 
     public void Save()
     {

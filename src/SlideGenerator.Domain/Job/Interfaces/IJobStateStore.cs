@@ -33,6 +33,21 @@ public interface IJobStateStore
     Task<IReadOnlyList<GroupJobState>> GetActiveGroupsAsync(CancellationToken cancellationToken);
 
     /// <summary>
+    ///     Gets all group states (active + completed).
+    /// </summary>
+    Task<IReadOnlyList<GroupJobState>> GetAllGroupsAsync(CancellationToken cancellationToken);
+
+    /// <summary>
+    ///     Appends a log entry for a job.
+    /// </summary>
+    Task AppendJobLogAsync(JobLogEntry entry, CancellationToken cancellationToken);
+
+    /// <summary>
+    ///     Gets all log entries for a job.
+    /// </summary>
+    Task<IReadOnlyList<JobLogEntry>> GetJobLogsAsync(string jobId, CancellationToken cancellationToken);
+
+    /// <summary>
     ///     Gets sheet states for a group.
     /// </summary>
     Task<IReadOnlyList<SheetJobState>> GetSheetsByGroupAsync(string groupId, CancellationToken cancellationToken);

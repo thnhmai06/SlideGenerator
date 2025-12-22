@@ -3,7 +3,7 @@ namespace SlideGenerator.Domain.Slide;
 /// <summary>
 ///     Represents a working presentation for slide generation.
 /// </summary>
-public interface IWorkingPresentation
+public interface IWorkingPresentation : IDisposable
 {
     /// <summary>
     ///     Gets the file path of the presentation.
@@ -19,4 +19,10 @@ public interface IWorkingPresentation
     ///     Saves the presentation.
     /// </summary>
     void Save();
+
+    /// <summary>
+    ///     Removes the slide at the specified position.
+    /// </summary>
+    /// <param name="position">The slide position/index (1-based)</param>
+    void RemoveSlide(int position);
 }

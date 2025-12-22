@@ -11,7 +11,7 @@ public sealed partial class Config
 
         public string SaveFolder
         {
-            get => string.IsNullOrEmpty(field) ? DefaultTempPath : field;
+            get => string.IsNullOrEmpty(field) ? DownloadTempPath : field;
             init;
         } = string.Empty;
 

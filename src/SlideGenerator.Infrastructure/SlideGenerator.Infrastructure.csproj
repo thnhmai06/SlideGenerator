@@ -6,6 +6,7 @@
 		<Nullable>enable</Nullable>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<NoWarn>$(NoWarn);1591</NoWarn>
+		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -21,19 +22,19 @@
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(RuntimeIdentifier)'=='win-x64'">
-		<PackageReference Include="Emgu.CV.runtime.mini.windows" Version="4.12.0.5764" />
+		<PackageReference Include="Emgu.CV.runtime.windows" Version="4.12.0.5764" />
 	</ItemGroup>
 	<ItemGroup Condition="'$(RuntimeIdentifier)'=='linux-x64'">
-		<PackageReference Include="Emgu.CV.runtime.mini.ubuntu-x64" Version="4.12.0.5764" />
+		<PackageReference Include="Emgu.CV.runtime.ubuntu-x64" Version="4.12.0.5764" />
 	</ItemGroup>
 	<ItemGroup Condition="'$(RuntimeIdentifier)'=='linux-arm'">
-		<PackageReference Include="Emgu.CV.runtime.mini.debian-arm" Version="4.12.0.5764" />
+		<PackageReference Include="Emgu.CV.runtime.debian-arm" Version="4.12.0.5764" />
 	</ItemGroup>
 	<ItemGroup Condition="'$(RuntimeIdentifier)'=='linux-arm64'">
-		<PackageReference Include="Emgu.CV.runtime.mini.debian-arm64" Version="4.12.0.5764" />
+		<PackageReference Include="Emgu.CV.runtime.debian-arm64" Version="4.12.0.5764" />
 	</ItemGroup>
 	<ItemGroup Condition="'$(RuntimeIdentifier)'=='osx-x64' Or '$(RuntimeIdentifier)'=='osx-arm64'">
-		<PackageReference Include="Emgu.CV.runtime.mini.macos" Version="4.12.0.5764" />
+		<PackageReference Include="Emgu.CV.runtime.macos" Version="4.12.0.5764" />
 	</ItemGroup>
 
 </Project>

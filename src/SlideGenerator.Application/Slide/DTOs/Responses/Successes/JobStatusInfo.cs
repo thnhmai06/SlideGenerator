@@ -12,5 +12,6 @@ public sealed record JobStatusInfo(
     int CurrentRow,
     int TotalRows,
     float Progress,
+    string OutputPath,
     string? ErrorMessage,
     int ErrorCount = 0);

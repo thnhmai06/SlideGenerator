@@ -15,7 +15,7 @@ public interface ISlideWorkingManager
     ///     <see langword="true" /> if the working presentation was added successfully; otherwise,
     ///     <see langword="false" />.
     /// </returns>
-    bool AddWorkingPresentation(string filepath);
+    bool GetOrAddWorkingPresentation(string filepath);
 
     /// <summary>
     ///     Removes the working presentation file at the specified path.

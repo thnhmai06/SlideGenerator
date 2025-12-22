@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Logging.Abstractions;
-using System.Threading;
 using SlideGenerator.Application.Configs;
 using SlideGenerator.Application.Configs.DTOs.Responses.Successes;
 using SlideGenerator.Domain.Configs;

@@ -59,7 +59,9 @@ public sealed class SheetHubTests
         var hub = CreateHub(out var proxy);
         await hub.OnConnectedAsync();
 
-        var message = JsonHelper.Parse("{\"type\":\"getrow\",\"filePath\":\"book.xlsx\",\"tableName\":\"Sheet1\",\"rowNumber\":1}");
+        var message =
+            JsonHelper.Parse(
+                "{\"type\":\"getrow\",\"filePath\":\"book.xlsx\",\"tableName\":\"Sheet1\",\"rowNumber\":1}");
         await hub.ProcessRequest(message);
 
         var response = proxy.GetPayload<SheetWorksheetGetRowSuccess>();

@@ -3,7 +3,6 @@ using SlideGenerator.Application.Job.Contracts.Collections;
 using SlideGenerator.Application.Sheet;
 using SlideGenerator.Application.Slide;
 using SlideGenerator.Application.Slide.DTOs.Requests.Group;
-using SlideGenerator.Domain.Job.Components;
 using SlideGenerator.Domain.Job.Entities;
 using SlideGenerator.Domain.Job.Enums;
 using SlideGenerator.Domain.Job.Interfaces;
@@ -32,7 +31,10 @@ internal sealed class FakeSheetService : ISheetService
         return created;
     }
 
-    public IReadOnlyDictionary<string, int> GetSheetsInfo(ISheetBook group) => group.GetSheetsInfo();
+    public IReadOnlyDictionary<string, int> GetSheetsInfo(ISheetBook group)
+    {
+        return group.GetSheetsInfo();
+    }
 
     public IReadOnlyList<string?> GetHeaders(ISheetBook group, string tableName)
     {
@@ -141,6 +143,14 @@ internal sealed class FakeActiveJobCollection : IActiveJobCollection
         group.SetStatus(GroupStatus.Cancelled);
     }
 
+    public void CancelAndRemoveGroup(string groupId)
+    {
+        if (!_groups.TryGetValue(groupId, out var group)) return;
+        foreach (var sheet in group.InternalJobs.Values)
+            _sheets.Remove(sheet.Id);
+        _groups.Remove(groupId);
+    }
+
     public void PauseSheet(string sheetId)
     {
         if (_sheets.TryGetValue(sheetId, out var sheet))
@@ -157,6 +167,15 @@ internal sealed class FakeActiveJobCollection : IActiveJobCollection
     {
         if (_sheets.TryGetValue(sheetId, out var sheet))
             sheet.SetStatus(SheetJobStatus.Cancelled);
+    }
+
+    public void CancelAndRemoveSheet(string sheetId)
+    {
+        if (_sheets.Remove(sheetId, out var sheet))
+        {
+            if (_groups.TryGetValue(sheet.GroupId, out var group))
+                group.RemoveJob(sheet.Id);
+        }
     }
 
     public void PauseAll()
@@ -198,16 +217,40 @@ internal sealed class FakeActiveJobCollection : IActiveJobCollection
             .ToDictionary(kv => kv.Key, kv => (IJobGroup)kv.Value);
     }
 
-    public IJobGroup? GetGroup(string groupId) => _groups.GetValueOrDefault(groupId);
-    public IReadOnlyDictionary<string, IJobGroup> GetAllGroups() =>
-        _groups.ToDictionary(kv => kv.Key, kv => (IJobGroup)kv.Value);
+    public IJobGroup? GetGroup(string groupId)
+    {
+        return _groups.GetValueOrDefault(groupId);
+    }
+
+    public IReadOnlyDictionary<string, IJobGroup> GetAllGroups()
+    {
+        return _groups.ToDictionary(kv => kv.Key, kv => (IJobGroup)kv.Value);
+    }
+
     public int GroupCount => _groups.Count;
-    public IJobSheet? GetSheet(string sheetId) => _sheets.GetValueOrDefault(sheetId);
-    public IReadOnlyDictionary<string, IJobSheet> GetAllSheets() =>
-        _sheets.ToDictionary(kv => kv.Key, kv => (IJobSheet)kv.Value);
+
+    public IJobSheet? GetSheet(string sheetId)
+    {
+        return _sheets.GetValueOrDefault(sheetId);
+    }
+
+    public IReadOnlyDictionary<string, IJobSheet> GetAllSheets()
+    {
+        return _sheets.ToDictionary(kv => kv.Key, kv => (IJobSheet)kv.Value);
+    }
+
     public int SheetCount => _sheets.Count;
-    public bool ContainsGroup(string groupId) => _groups.ContainsKey(groupId);
-    public bool ContainsSheet(string sheetId) => _sheets.ContainsKey(sheetId);
+
+    public bool ContainsGroup(string groupId)
+    {
+        return _groups.ContainsKey(groupId);
+    }
+
+    public bool ContainsSheet(string sheetId)
+    {
+        return _sheets.ContainsKey(sheetId);
+    }
+
     public bool IsEmpty => _groups.Count == 0;
 
     private static ISheetBook CreateWorkbook()
@@ -220,35 +263,76 @@ internal sealed class FakeActiveJobCollection : IActiveJobCollection
 
 internal sealed class FakeCompletedJobCollection : ICompletedJobCollection
 {
-    public IJobGroup? GetGroup(string groupId) => null;
-    public IReadOnlyDictionary<string, IJobGroup> GetAllGroups() => new Dictionary<string, IJobGroup>();
+    public IJobGroup? GetGroup(string groupId)
+    {
+        return null;
+    }
+
+    public IReadOnlyDictionary<string, IJobGroup> GetAllGroups()
+    {
+        return new Dictionary<string, IJobGroup>();
+    }
+
     public int GroupCount => 0;
-    public IJobSheet? GetSheet(string sheetId) => null;
-    public IReadOnlyDictionary<string, IJobSheet> GetAllSheets() => new Dictionary<string, IJobSheet>();
+
+    public IJobSheet? GetSheet(string sheetId)
+    {
+        return null;
+    }
+
+    public IReadOnlyDictionary<string, IJobSheet> GetAllSheets()
+    {
+        return new Dictionary<string, IJobSheet>();
+    }
+
     public int SheetCount => 0;
-    public bool ContainsGroup(string groupId) => false;
-    public bool ContainsSheet(string sheetId) => false;
+
+    public bool ContainsGroup(string groupId)
+    {
+        return false;
+    }
+
+    public bool ContainsSheet(string sheetId)
+    {
+        return false;
+    }
+
     public bool IsEmpty => true;
-    public bool RemoveGroup(string groupId) => false;
-    public bool RemoveSheet(string sheetId) => false;
+
+    public bool RemoveGroup(string groupId)
+    {
+        return false;
+    }
+
+    public bool RemoveSheet(string sheetId)
+    {
+        return false;
+    }
+
     public void ClearAll()
     {
     }
-    public IReadOnlyDictionary<string, IJobGroup> GetSuccessfulGroups() => new Dictionary<string, IJobGroup>();
-    public IReadOnlyDictionary<string, IJobGroup> GetFailedGroups() => new Dictionary<string, IJobGroup>();
-    public IReadOnlyDictionary<string, IJobGroup> GetCancelledGroups() => new Dictionary<string, IJobGroup>();
-}
 
-internal sealed class FakeJobManager : IJobManager
-{
-    public FakeJobManager(IActiveJobCollection active)
+    public IReadOnlyDictionary<string, IJobGroup> GetSuccessfulGroups()
     {
-        Active = active;
-        Completed = new FakeCompletedJobCollection();
+        return new Dictionary<string, IJobGroup>();
     }
 
-    public IActiveJobCollection Active { get; }
-    public ICompletedJobCollection Completed { get; }
+    public IReadOnlyDictionary<string, IJobGroup> GetFailedGroups()
+    {
+        return new Dictionary<string, IJobGroup>();
+    }
+
+    public IReadOnlyDictionary<string, IJobGroup> GetCancelledGroups()
+    {
+        return new Dictionary<string, IJobGroup>();
+    }
+}
+
+internal sealed class FakeJobManager(IActiveJobCollection active) : IJobManager
+{
+    public IActiveJobCollection Active { get; } = active;
+    public ICompletedJobCollection Completed { get; } = new FakeCompletedJobCollection();
 
     public IJobGroup? GetGroup(string groupId)
     {

@@ -5,7 +5,7 @@ namespace SlideGenerator.Domain.Slide;
 /// <summary>
 ///     Represents a template presentation.
 /// </summary>
-public interface ITemplatePresentation
+public interface ITemplatePresentation : IDisposable
 {
     string FilePath { get; }
     int SlideCount { get; }

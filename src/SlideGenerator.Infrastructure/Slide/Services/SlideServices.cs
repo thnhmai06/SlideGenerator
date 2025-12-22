@@ -7,17 +7,19 @@ using SlideGenerator.Domain.Download;
 using SlideGenerator.Domain.Image.Enums;
 using SlideGenerator.Domain.Job.Components;
 using SlideGenerator.Framework.Cloud;
+using SlideGenerator.Framework.Cloud.Exceptions;
 using SlideGenerator.Framework.Slide;
 using SlideGenerator.Infrastructure.Base;
+using SlideGenerator.Infrastructure.Image.Exceptions;
 using SlideGenerator.Infrastructure.Utilities;
 using DrawingPicture = DocumentFormat.OpenXml.Drawing.Picture;
-using PresentationShape = DocumentFormat.OpenXml.Presentation.Shape;
 using Presentation = SlideGenerator.Framework.Slide.Models.Presentation;
+using PresentationShape = DocumentFormat.OpenXml.Presentation.Shape;
 
 namespace SlideGenerator.Infrastructure.Slide.Services;
 
-using RowContent = Dictionary<string, string?>;
 using ReplaceInstructions = Dictionary<string, string>;
+using RowContent = Dictionary<string, string?>;
 
 public class SlideServices(
     ILogger<SlideServices> logger,
@@ -27,8 +29,7 @@ public class SlideServices(
     IHttpClientFactory httpClientFactory) : Service(logger), ISlideServices
 {
     public async Task<RowProcessResult> ProcessRowAsync(
-        string outputPath,
-        string templatePath,
+        string presentationPath,
         JobTextConfig[] textConfigs,
         JobImageConfig[] imageConfigs,
         RowContent rowData,
@@ -37,19 +38,38 @@ public class SlideServices(
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        slideWorkingManager.AddWorkingPresentation(outputPath);
-        var newSlide = slideWorkingManager.CopyFirstSlideToLast(outputPath);
+        slideWorkingManager.GetOrAddWorkingPresentation(presentationPath);
+        var newSlide = slideWorkingManager.CopyFirstSlideToLast(presentationPath);
 
-        await ProcessTextReplacementsAsync(newSlide, rowData, textConfigs, checkpoint, cancellationToken);
-        return await ProcessImageReplacementsAsync(
+        var textReplacementCount =
+            await ProcessTextReplacementsAsync(newSlide, rowData, textConfigs, checkpoint, cancellationToken);
+        var imageResult = await ProcessImageReplacementsAsync(
             newSlide,
             rowData,
             imageConfigs,
             checkpoint,
             cancellationToken);
+        return imageResult with { TextReplacementCount = textReplacementCount };
     }
 
-    private static async Task ProcessTextReplacementsAsync(
+    public void RemoveFirstSlide(string presentationPath)
+    {
+        presentationPath = Path.GetFullPath(presentationPath);
+        var presentation = slideWorkingManager.GetWorkingPresentation(presentationPath);
+
+        if (presentation.SlideCount <= 1)
+        {
+            Logger.LogWarning("Skip removing first slide for {FilePath} because slide count is {SlideCount}",
+                presentationPath, presentation.SlideCount);
+            return;
+        }
+
+        presentation.RemoveSlide(1);
+        presentation.Save();
+        Logger.LogInformation("Removed template slide from {FilePath}", presentationPath);
+    }
+
+    private static async Task<int> ProcessTextReplacementsAsync(
         SlidePart slidePart,
         RowContent rowData,
         JobTextConfig[] textConfigs,
@@ -68,11 +88,12 @@ public class SlideServices(
         }
 
         if (replacements.Count == 0)
-            return;
+            return 0;
 
         await checkpoint(JobCheckpointStage.BeforeSlideUpdate, cancellationToken);
         await TextReplacer.ReplaceAsync(slidePart, replacements);
         await checkpoint(JobCheckpointStage.AfterSlideUpdate, cancellationToken);
+        return replacements.Count;
     }
 
     private async Task<RowProcessResult> ProcessImageReplacementsAsync(
@@ -83,6 +104,7 @@ public class SlideServices(
         CancellationToken cancellationToken)
     {
         var errors = new List<string>();
+        var imageReplacementCount = 0;
 
         foreach (var config in imageConfigs)
         {
@@ -92,14 +114,19 @@ public class SlideServices(
             if (string.IsNullOrWhiteSpace(imageSource))
                 continue;
 
+            string? imagePath = null;
+            var isTempDownload = false;
+
             try
             {
-                var imagePath = await ResolveImagePathAsync(imageSource, checkpoint, cancellationToken);
+                imagePath = await ResolveImagePathAsync(imageSource, checkpoint, cancellationToken);
                 if (imagePath == null)
                 {
                     errors.Add($"Failed to resolve image source for shape {config.ShapeId}");
                     continue;
                 }
+
+                isTempDownload = IsTemporaryDownload(imageSource, imagePath);
 
                 var roiType = config.RoiType;
                 var cropType = config.CropType;
@@ -112,9 +139,23 @@ public class SlideServices(
                     cropType,
                     checkpoint,
                     cancellationToken);
-
-                if (IsTemporaryDownload(imageSource, imagePath) && File.Exists(imagePath))
-                    File.Delete(imagePath);
+                imageReplacementCount++;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (CannotExtractUrlException ex)
+            {
+                Logger.LogWarning(ex,
+                    "The provided URL for shape {ShapeId} cannot be extracted, keeping placeholder ({Url})",
+                    config.ShapeId, ex.OriginalUrl);
+            }
+            catch (NotImageFileUrl ex)
+            {
+                Logger.LogWarning(ex,
+                    "The provided URL for shape {ShapeId} cannot be extracted, keeping placeholder ({Url})",
+                    config.ShapeId, ex.Url);
             }
             catch (Exception ex)
             {
@@ -123,9 +164,21 @@ public class SlideServices(
                     config.ShapeId);
                 errors.Add($"Shape {config.ShapeId}: {ex.Message}");
             }
+            finally
+            {
+                if (isTempDownload && !string.IsNullOrWhiteSpace(imagePath) && File.Exists(imagePath))
+                    try
+                    {
+                        File.Delete(imagePath);
+                    }
+                    catch (IOException)
+                    {
+                        // Ignore cleanup failures for temp downloads.
+                    }
+            }
         }
 
-        return new RowProcessResult(errors.Count, errors);
+        return new RowProcessResult(0, imageReplacementCount, errors.Count, errors);
     }
 
     private async Task ProcessSingleImageReplacementAsync(

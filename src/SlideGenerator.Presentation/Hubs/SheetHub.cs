@@ -41,7 +41,7 @@ public class SheetHub(ISheetService sheetService, ILogger<SheetHub> logger) : Hu
         if (WorkbooksOfConnections.TryRemove(Context.ConnectionId, out var workbooks))
             foreach (var key in workbooks.Keys)
                 if (workbooks.TryRemove(key, out var wb))
-                    wb.Close();
+                    wb.Dispose();
 
         await base.OnDisconnectedAsync(exception);
     }
@@ -100,7 +100,7 @@ public class SheetHub(ISheetService sheetService, ILogger<SheetHub> logger) : Hu
     private SheetWorkbookCloseSuccess ExecuteCloseFile(SheetWorkbookClose request)
     {
         if (Workbooks.TryRemove(request.FilePath, out var wb))
-            wb.Close();
+            wb.Dispose();
 
         return new SheetWorkbookCloseSuccess(request.FilePath);
     }

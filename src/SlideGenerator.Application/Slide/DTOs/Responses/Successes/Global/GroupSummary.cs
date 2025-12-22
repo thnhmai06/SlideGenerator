@@ -12,4 +12,5 @@ public sealed record GroupSummary(
     float Progress,
     int SheetCount,
     int CompletedSheets,
-    int ErrorCount = 0);
+    int ErrorCount = 0,
+    string OutputFolder = "");

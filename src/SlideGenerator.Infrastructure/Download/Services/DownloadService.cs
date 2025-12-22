@@ -42,7 +42,7 @@ public class DownloadService(ILogger<DownloadService> logger, ILoggerFactory? lo
         // Hook logging events
         task.DownloadStartedEvents += (_, args) =>
         {
-            Logger.LogInformation("Downloading: {FilePath} | {Url})",
+            Logger.LogInformation("Downloading: {FilePath} ({Url})",
                 args.FilePath, args.Url);
         };
         task.DownloadProgressedEvents += (_, args) =>

@@ -28,16 +28,53 @@ internal sealed class TestHubCallerClients(IClientProxy caller) : IHubCallerClie
 {
     public IClientProxy Caller { get; } = caller;
     public IClientProxy Others => throw new NotSupportedException();
-    public IClientProxy OthersInGroup(string groupName) => throw new NotSupportedException();
+
+    public IClientProxy OthersInGroup(string groupName)
+    {
+        throw new NotSupportedException();
+    }
+
     public IClientProxy All => throw new NotSupportedException();
-    public IClientProxy AllExcept(IReadOnlyList<string> excludedConnectionIds) => throw new NotSupportedException();
-    public IClientProxy Client(string connectionId) => throw new NotSupportedException();
-    public IClientProxy Clients(IReadOnlyList<string> connectionIds) => throw new NotSupportedException();
-    public IClientProxy Group(string groupName) => throw new NotSupportedException();
-    public IClientProxy GroupExcept(string groupName, IReadOnlyList<string> excludedConnectionIds) => throw new NotSupportedException();
-    public IClientProxy Groups(IReadOnlyList<string> groupNames) => throw new NotSupportedException();
-    public IClientProxy User(string userId) => throw new NotSupportedException();
-    public IClientProxy Users(IReadOnlyList<string> userIds) => throw new NotSupportedException();
+
+    public IClientProxy AllExcept(IReadOnlyList<string> excludedConnectionIds)
+    {
+        throw new NotSupportedException();
+    }
+
+    public IClientProxy Client(string connectionId)
+    {
+        throw new NotSupportedException();
+    }
+
+    public IClientProxy Clients(IReadOnlyList<string> connectionIds)
+    {
+        throw new NotSupportedException();
+    }
+
+    public IClientProxy Group(string groupName)
+    {
+        throw new NotSupportedException();
+    }
+
+    public IClientProxy GroupExcept(string groupName, IReadOnlyList<string> excludedConnectionIds)
+    {
+        throw new NotSupportedException();
+    }
+
+    public IClientProxy Groups(IReadOnlyList<string> groupNames)
+    {
+        throw new NotSupportedException();
+    }
+
+    public IClientProxy User(string userId)
+    {
+        throw new NotSupportedException();
+    }
+
+    public IClientProxy Users(IReadOnlyList<string> userIds)
+    {
+        throw new NotSupportedException();
+    }
 }
 
 internal sealed class TestHubCallerContext(string connectionId) : HubCallerContext
@@ -45,10 +82,11 @@ internal sealed class TestHubCallerContext(string connectionId) : HubCallerConte
     public override string ConnectionId { get; } = connectionId;
     public override string? UserIdentifier { get; }
     public override ClaimsPrincipal? User { get; }
-    private readonly IDictionary<object, object?> _items = new Dictionary<object, object?>();
-    public override IDictionary<object, object?> Items => _items;
+    public override IDictionary<object, object?> Items { get; } = new Dictionary<object, object?>();
+
     public override IFeatureCollection Features { get; } = new FeatureCollection();
     public override CancellationToken ConnectionAborted { get; }
+
     public override void Abort()
     {
     }
@@ -65,7 +103,8 @@ internal sealed class TestGroupManager : IGroupManager
         return Task.CompletedTask;
     }
 
-    public Task RemoveFromGroupAsync(string connectionId, string groupName, CancellationToken cancellationToken = default)
+    public Task RemoveFromGroupAsync(string connectionId, string groupName,
+        CancellationToken cancellationToken = default)
     {
         Removed.Add((connectionId, groupName));
         return Task.CompletedTask;
@@ -75,7 +114,7 @@ internal sealed class TestGroupManager : IGroupManager
 internal static class HubTestHelper
 {
     public static CaptureClientProxy Attach(
-        Microsoft.AspNetCore.SignalR.Hub hub,
+        Hub hub,
         string connectionId,
         TestGroupManager? groupManager = null)
     {

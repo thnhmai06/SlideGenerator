@@ -18,7 +18,7 @@ public class SlideWorkingManager(ILogger<SlideWorkingManager> logger) : Service(
 {
     private readonly ConcurrentDictionary<string, CoreWorkingPresentation> _storage = new();
 
-    public bool AddWorkingPresentation(string filepath)
+    public bool GetOrAddWorkingPresentation(string filepath)
     {
         filepath = Path.GetFullPath(filepath);
         var isAdded = false;

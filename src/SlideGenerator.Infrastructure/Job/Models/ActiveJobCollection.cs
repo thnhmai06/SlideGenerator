@@ -7,7 +7,6 @@ using SlideGenerator.Application.Sheet;
 using SlideGenerator.Application.Slide;
 using SlideGenerator.Application.Slide.DTOs.Components;
 using SlideGenerator.Application.Slide.DTOs.Requests.Group;
-using SlideGenerator.Domain.Configs;
 using SlideGenerator.Domain.Image.Enums;
 using SlideGenerator.Domain.IO;
 using SlideGenerator.Domain.Job.Components;
@@ -29,6 +28,7 @@ public class ActiveJobCollection(
     IBackgroundJobClient backgroundJobClient,
     IJobStateStore jobStateStore,
     IFileSystem fileSystem,
+    IJobNotifier jobNotifier,
     Action<JobGroup> onGroupCompleted) : IActiveJobCollection
 {
     private readonly ConcurrentDictionary<string, string> _groupIdByOutputPath = new(StringComparer.OrdinalIgnoreCase);
@@ -91,9 +91,9 @@ public class ActiveJobCollection(
             ? sheetsInfo.Where(s => requestedSheets.Contains(s.Key)).Select(s => s.Key)
             : sheetsInfo.Keys;
 
-        var outputRoot = string.IsNullOrWhiteSpace(request.GetOutputPath())
-            ? GetDefaultOutputRoot()
-            : request.GetOutputPath();
+        var outputRoot = request.GetOutputPath();
+        if (string.IsNullOrWhiteSpace(outputRoot))
+            throw new InvalidOperationException("Output path is required.");
 
         var outputFolderPath = NormalizeOutputFolderPath(outputRoot);
         var outputFolder = new DirectoryInfo(outputFolderPath);
@@ -139,6 +139,7 @@ public class ActiveJobCollection(
 
         group.SetStatus(GroupStatus.Running);
         PersistGroupState(group);
+        jobNotifier.NotifyGroupStatusChanged(group.Id, group.Status).GetAwaiter().GetResult();
 
         foreach (var job in group.InternalJobs.Values.Where(j => j.Status == SheetJobStatus.Pending))
         {
@@ -160,6 +161,7 @@ public class ActiveJobCollection(
 
         group.SetStatus(GroupStatus.Paused);
         PersistGroupState(group);
+        jobNotifier.NotifyGroupStatusChanged(group.Id, group.Status).GetAwaiter().GetResult();
         logger.LogInformation("Paused group {GroupId}", groupId);
     }
 
@@ -172,6 +174,7 @@ public class ActiveJobCollection(
 
         group.SetStatus(GroupStatus.Running);
         PersistGroupState(group);
+        jobNotifier.NotifyGroupStatusChanged(group.Id, group.Status).GetAwaiter().GetResult();
         logger.LogInformation("Resumed group {GroupId}", groupId);
     }
 
@@ -185,9 +188,32 @@ public class ActiveJobCollection(
 
         group.SetStatus(GroupStatus.Cancelled);
         PersistGroupState(group);
+        jobNotifier.NotifyGroupStatusChanged(group.Id, group.Status).GetAwaiter().GetResult();
         logger.LogInformation("Cancelled group {GroupId}", groupId);
 
         MoveToCompletedIfDone(group);
+    }
+
+    public void CancelAndRemoveGroup(string groupId)
+    {
+        if (!_groups.TryRemove(groupId, out var group)) return;
+
+        foreach (var job in group.InternalJobs.Values)
+        {
+            if (job.Status is SheetJobStatus.Pending or SheetJobStatus.Running or SheetJobStatus.Paused)
+                CancelSheetInternal(job);
+
+            TryDeleteOutputFile(job.OutputPath);
+            _sheets.TryRemove(job.Id, out _);
+        }
+
+        group.SetStatus(GroupStatus.Cancelled);
+        jobNotifier.NotifyGroupStatusChanged(group.Id, group.Status).GetAwaiter().GetResult();
+
+        _groupIdByOutputPath.TryRemove(group.OutputFolder.FullName, out _);
+        group.Workbook.Dispose();
+        jobStateStore.RemoveGroupAsync(group.Id, CancellationToken.None).GetAwaiter().GetResult();
+        logger.LogInformation("Cancelled and removed group {GroupId}", group.Id);
     }
 
     #endregion
@@ -213,6 +239,37 @@ public class ActiveJobCollection(
             CancelSheetInternal(job);
             CheckAndMoveGroupIfDone(job.GroupId);
         }
+    }
+
+    public void CancelAndRemoveSheet(string sheetId)
+    {
+        if (!_sheets.TryRemove(sheetId, out var job)) return;
+
+        if (job.Status is SheetJobStatus.Pending or SheetJobStatus.Running or SheetJobStatus.Paused)
+            CancelSheetInternal(job);
+
+        TryDeleteOutputFile(job.OutputPath);
+        jobStateStore.RemoveSheetAsync(job.Id, CancellationToken.None).GetAwaiter().GetResult();
+
+        if (_groups.TryGetValue(job.GroupId, out var group))
+        {
+            group.RemoveJob(job.Id);
+            if (group.InternalJobs.Count == 0)
+            {
+                _groups.TryRemove(group.Id, out _);
+                _groupIdByOutputPath.TryRemove(group.OutputFolder.FullName, out _);
+                group.Workbook.Dispose();
+                jobStateStore.RemoveGroupAsync(group.Id, CancellationToken.None).GetAwaiter().GetResult();
+                logger.LogInformation("Removed group {GroupId} after deleting last sheet", group.Id);
+                return;
+            }
+
+            group.UpdateStatus();
+            PersistGroupState(group);
+            jobNotifier.NotifyGroupStatusChanged(group.Id, group.Status).GetAwaiter().GetResult();
+        }
+
+        logger.LogInformation("Cancelled and removed sheet {SheetId}", job.Id);
     }
 
     #endregion
@@ -302,6 +359,8 @@ public class ActiveJobCollection(
     {
         job.Pause();
         PersistSheetState(job);
+        jobNotifier.NotifyJobStatusChanged(job.Id, job.Status).GetAwaiter().GetResult();
+        UpdateGroupStatus(job.GroupId);
         logger.LogInformation("Paused job {JobId}", job.Id);
     }
 
@@ -321,6 +380,8 @@ public class ActiveJobCollection(
         }
 
         PersistSheetState(job);
+        jobNotifier.NotifyJobStatusChanged(job.Id, job.Status).GetAwaiter().GetResult();
+        UpdateGroupStatus(job.GroupId);
         logger.LogInformation("Resumed job {JobId}", job.Id);
     }
 
@@ -331,6 +392,7 @@ public class ActiveJobCollection(
             backgroundJobClient.Delete(job.HangfireJobId);
         job.SetStatus(SheetJobStatus.Cancelled);
         PersistSheetState(job);
+        jobNotifier.NotifyJobStatusChanged(job.Id, job.Status).GetAwaiter().GetResult();
         logger.LogInformation("Cancelled job {JobId}", job.Id);
     }
 
@@ -340,8 +402,17 @@ public class ActiveJobCollection(
         {
             group.UpdateStatus();
             PersistGroupState(group);
+            jobNotifier.NotifyGroupStatusChanged(group.Id, group.Status).GetAwaiter().GetResult();
             MoveToCompletedIfDone(group);
         }
+    }
+
+    private void UpdateGroupStatus(string groupId)
+    {
+        if (!_groups.TryGetValue(groupId, out var group)) return;
+        group.UpdateStatus();
+        PersistGroupState(group);
+        jobNotifier.NotifyGroupStatusChanged(group.Id, group.Status).GetAwaiter().GetResult();
     }
 
     private void MoveToCompletedIfDone(JobGroup group)
@@ -352,10 +423,23 @@ public class ActiveJobCollection(
                 foreach (var sheet in group.InternalJobs.Values)
                     _sheets.TryRemove(sheet.Id, out _);
 
-                group.Workbook.Close();
+                group.Workbook.Dispose();
                 onGroupCompleted(group);
                 logger.LogInformation("Moved group {GroupId} to completed collection", group.Id);
             }
+    }
+
+    private void TryDeleteOutputFile(string outputPath)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(outputPath)) return;
+            fileSystem.DeleteFile(outputPath);
+        }
+        catch (IOException ex)
+        {
+            logger.LogWarning(ex, "Failed to delete output file {OutputPath}", outputPath);
+        }
     }
 
     private void PersistGroupState(JobGroup group)
@@ -420,11 +504,6 @@ public class ActiveJobCollection(
         }
 
         return fullPath;
-    }
-
-    private static string GetDefaultOutputRoot()
-    {
-        return Path.Combine(Path.GetTempPath(), Config.AppName);
     }
 
     #endregion

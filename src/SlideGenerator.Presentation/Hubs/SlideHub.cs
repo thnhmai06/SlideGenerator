@@ -24,6 +24,7 @@ namespace SlideGenerator.Presentation.Hubs;
 public class SlideHub(
     IJobManager jobManager,
     ISlideTemplateManager slideTemplateManager,
+    IJobStateStore jobStateStore,
     ILogger<SlideHub> logger) : Hub
 {
     public Task SubscribeGroup(string groupJobId)
@@ -70,10 +71,16 @@ public class SlideHub(
                     Deserialize<GenerateSlideGroupStatus>(message)),
                 "groupcontrol" => ExecuteGroupControl(
                     Deserialize<GenerateSlideGroupControlRequest>(message)),
+                "groupremove" => ExecuteGroupRemove(
+                    Deserialize<SlideGroupRemove>(message)),
                 "jobstatus" => ExecuteJobStatus(
                     Deserialize<SlideJobStatus>(message)),
                 "jobcontrol" => ExecuteJobControl(
                     Deserialize<GenerateSlideJobControlRequest>(message)),
+                "jobremove" => ExecuteJobRemove(
+                    Deserialize<SlideJobRemove>(message)),
+                "joblogs" => ExecuteJobLogs(
+                    Deserialize<SlideJobLogs>(message)),
                 "globalcontrol" => ExecuteGlobalControl(
                     Deserialize<SlideGlobalControl>(message)),
                 "getallgroups" => ExecuteGetAllGroups(),
@@ -117,10 +124,7 @@ public class SlideHub(
         }
         finally
         {
-            if (added)
-            {
-                slideTemplateManager.RemoveTemplate(request.FilePath);
-            }
+            if (added) slideTemplateManager.RemoveTemplate(request.FilePath);
         }
     }
 
@@ -136,10 +140,7 @@ public class SlideHub(
         }
         finally
         {
-            if (added)
-            {
-                slideTemplateManager.RemoveTemplate(request.FilePath);
-            }
+            if (added) slideTemplateManager.RemoveTemplate(request.FilePath);
         }
     }
 
@@ -166,10 +167,7 @@ public class SlideHub(
         }
         finally
         {
-            if (added)
-            {
-                slideTemplateManager.RemoveTemplate(request.FilePath);
-            }
+            if (added) slideTemplateManager.RemoveTemplate(request.FilePath);
         }
     }
 
@@ -199,6 +197,7 @@ public class SlideHub(
                 kv.Value.CurrentRow,
                 kv.Value.TotalRows,
                 kv.Value.Progress,
+                kv.Value.OutputPath,
                 kv.Value.ErrorMessage,
                 kv.Value.ErrorCount));
 
@@ -221,11 +220,17 @@ public class SlideHub(
                 break;
             case ControlAction.Cancel:
             case ControlAction.Stop:
-                jobManager.Active.CancelGroup(group.Id);
+                jobManager.Active.CancelAndRemoveGroup(group.Id);
                 break;
         }
 
         return new SlideGroupControlSuccess(group.Id, action);
+    }
+
+    private SlideGroupRemoveSuccess ExecuteGroupRemove(SlideGroupRemove request)
+    {
+        var removed = jobManager.Completed.RemoveGroup(request.GroupId);
+        return new SlideGroupRemoveSuccess(request.GroupId, removed);
     }
 
     private SlideJobStatusSuccess ExecuteJobStatus(SlideJobStatus request)
@@ -240,6 +245,7 @@ public class SlideHub(
             job.CurrentRow,
             job.TotalRows,
             job.Progress,
+            job.OutputPath,
             job.ErrorMessage,
             job.ErrorCount);
     }
@@ -257,11 +263,30 @@ public class SlideHub(
                 break;
             case ControlAction.Cancel:
             case ControlAction.Stop:
-                jobManager.Active.CancelSheet(request.JobId);
+                jobManager.Active.CancelAndRemoveSheet(request.JobId);
                 break;
         }
 
         return new SlideJobControlSuccess(request.JobId, action);
+    }
+
+    private SlideJobRemoveSuccess ExecuteJobRemove(SlideJobRemove request)
+    {
+        var removed = jobManager.Completed.RemoveSheet(request.JobId);
+        return new SlideJobRemoveSuccess(request.JobId, removed);
+    }
+
+    private SlideJobLogsSuccess ExecuteJobLogs(SlideJobLogs request)
+    {
+        var logs = jobStateStore.GetJobLogsAsync(request.JobId, CancellationToken.None)
+            .GetAwaiter().GetResult();
+        var entries = logs.Select(log => new JobLogEntryDto(
+                log.Level,
+                log.Message,
+                log.Timestamp,
+                log.Data))
+            .ToList();
+        return new SlideJobLogsSuccess(request.JobId, entries);
     }
 
     private SlideGlobalControlSuccess ExecuteGlobalControl(SlideGlobalControl request)
@@ -308,7 +333,8 @@ public class SlideHub(
                 kv.Value.Progress,
                 kv.Value.SheetCount,
                 kv.Value.Sheets.Count(j => j.Value.Status == SheetJobStatus.Completed),
-                kv.Value.ErrorCount))
+                kv.Value.ErrorCount,
+                kv.Value.OutputFolder.FullName))
             .ToList();
 
         return new SlideGlobalGetGroupsSuccess(groups);
