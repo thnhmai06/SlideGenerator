@@ -43,13 +43,6 @@ Windows (PowerShell):
 .\build.ps1 -Runtime win-x64
 ```
 
-macOS (zsh/bash):
-
-```
-chmod +x ./build.sh
-./build.sh osx-arm64
-```
-
 Linux (bash):
 
 ```
@@ -63,7 +56,6 @@ Supported runtimes:
 - `linux-x64`
 - `linux-arm`
 - `linux-arm64`
-- `osx-x64` and `osx-arm64` (same build)
 
 ## Module docs
 
