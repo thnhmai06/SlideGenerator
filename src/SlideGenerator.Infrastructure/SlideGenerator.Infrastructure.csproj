@@ -35,8 +35,5 @@
 	<ItemGroup Condition="'$(RuntimeIdentifier)'=='linux-arm64'">
 		<PackageReference Include="Emgu.CV.runtime.debian-arm64" Version="4.12.0.5764" />
 	</ItemGroup>
-	<ItemGroup Condition="'$(RuntimeIdentifier)'=='osx-x64' Or '$(RuntimeIdentifier)'=='osx-arm64'">
-		<PackageReference Include="Emgu.CV.runtime.macos" Version="4.12.0.5764" />
-	</ItemGroup>
 
 </Project>
