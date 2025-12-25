@@ -44,8 +44,7 @@ public class JobManager : Service, IJobManager
 
         _completed = new CompletedJobCollection(
             loggerFactory.CreateLogger<CompletedJobCollection>(),
-            jobStateStore,
-            fileSystem);
+            jobStateStore);
 
         _active = new ActiveJobCollection(
             loggerFactory.CreateLogger<ActiveJobCollection>(),
