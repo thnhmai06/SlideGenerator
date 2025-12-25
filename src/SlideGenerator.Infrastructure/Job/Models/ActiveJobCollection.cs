@@ -203,7 +203,6 @@ public class ActiveJobCollection(
             if (job.Status is SheetJobStatus.Pending or SheetJobStatus.Running or SheetJobStatus.Paused)
                 CancelSheetInternal(job);
 
-            TryDeleteOutputFile(job.OutputPath);
             _sheets.TryRemove(job.Id, out _);
         }
 
@@ -248,7 +247,6 @@ public class ActiveJobCollection(
         if (job.Status is SheetJobStatus.Pending or SheetJobStatus.Running or SheetJobStatus.Paused)
             CancelSheetInternal(job);
 
-        TryDeleteOutputFile(job.OutputPath);
         jobStateStore.RemoveSheetAsync(job.Id, CancellationToken.None).GetAwaiter().GetResult();
 
         if (_groups.TryGetValue(job.GroupId, out var group))
@@ -429,19 +427,6 @@ public class ActiveJobCollection(
             }
     }
 
-    private void TryDeleteOutputFile(string outputPath)
-    {
-        try
-        {
-            if (string.IsNullOrWhiteSpace(outputPath)) return;
-            fileSystem.DeleteFile(outputPath);
-        }
-        catch (IOException ex)
-        {
-            logger.LogWarning(ex, "Failed to delete output file {OutputPath}", outputPath);
-        }
-    }
-
     private void PersistGroupState(JobGroup group)
     {
         var state = new GroupJobState(
@@ -478,7 +463,7 @@ public class ActiveJobCollection(
     private static JobTextConfig[] MapTextConfigs(SlideTextConfig[]? configs)
     {
         if (configs == null || configs.Length == 0) return [];
-        return configs.Select(c => new JobTextConfig(c.Pattern, c.Columns ?? [])).ToArray();
+        return configs.Select(c => new JobTextConfig(c.Pattern, c.Columns)).ToArray();
     }
 
     private static JobImageConfig[] MapImageConfigs(SlideImageConfig[]? configs)
@@ -489,7 +474,7 @@ public class ActiveJobCollection(
             c.ShapeId,
             c.RoiType ?? ImageRoiType.Center,
             c.CropType ?? ImageCropType.Crop,
-            c.Columns ?? [])).ToArray();
+            c.Columns)).ToArray();
     }
 
     private static string NormalizeOutputFolderPath(string outputPath)

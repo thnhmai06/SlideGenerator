@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
 using SlideGenerator.Application.Job.Contracts.Collections;
-using SlideGenerator.Domain.IO;
 using SlideGenerator.Domain.Job.Entities;
 using SlideGenerator.Domain.Job.Enums;
 using SlideGenerator.Domain.Job.Interfaces;
@@ -15,8 +14,7 @@ namespace SlideGenerator.Infrastructure.Job.Models;
 /// </summary>
 public class CompletedJobCollection(
     ILogger<CompletedJobCollection> logger,
-    IJobStateStore jobStateStore,
-    IFileSystem fileSystem)
+    IJobStateStore jobStateStore)
     : ICompletedJobCollection
 {
     private readonly ConcurrentDictionary<string, JobGroup> _groups = new();
@@ -83,8 +81,6 @@ public class CompletedJobCollection(
         if (_groups.TryRemove(groupId, out var group))
         {
             foreach (var sheet in group.InternalJobs.Values)
-                TryDeleteOutputFile(sheet.OutputPath);
-            foreach (var sheet in group.InternalJobs.Values)
                 _sheets.TryRemove(sheet.Id, out _);
 
             jobStateStore.RemoveGroupAsync(groupId, CancellationToken.None).GetAwaiter().GetResult();
@@ -99,7 +95,6 @@ public class CompletedJobCollection(
     {
         if (_sheets.TryRemove(sheetId, out var sheet))
         {
-            TryDeleteOutputFile(sheet.OutputPath);
             if (_groups.TryGetValue(sheet.GroupId, out var group))
             {
                 group.RemoveJob(sheetId);
@@ -127,9 +122,6 @@ public class CompletedJobCollection(
     public void ClearAll()
     {
         var count = _groups.Count;
-        foreach (var group in _groups.Values)
-        foreach (var sheet in group.InternalJobs.Values)
-            TryDeleteOutputFile(sheet.OutputPath);
         foreach (var groupId in _groups.Keys)
             jobStateStore.RemoveGroupAsync(groupId, CancellationToken.None).GetAwaiter().GetResult();
         _groups.Clear();
@@ -150,19 +142,6 @@ public class CompletedJobCollection(
             group.ErrorCount);
 
         jobStateStore.SaveGroupAsync(state, CancellationToken.None).GetAwaiter().GetResult();
-    }
-
-    private void TryDeleteOutputFile(string outputPath)
-    {
-        try
-        {
-            if (string.IsNullOrWhiteSpace(outputPath)) return;
-            fileSystem.DeleteFile(outputPath);
-        }
-        catch (IOException ex)
-        {
-            logger.LogWarning(ex, "Failed to delete output file {OutputPath}", outputPath);
-        }
     }
 
     #endregion
