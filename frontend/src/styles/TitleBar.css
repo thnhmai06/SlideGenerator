@@ -64,4 +64,15 @@
   width: 14px;
   height: 14px;
   object-fit: contain;
+  filter: brightness(0) invert(1);
+  transition: filter var(--transition-fast), opacity var(--transition-fast);
+  opacity: 0.8;
+}
+
+.title-bar-btn:hover img {
+  opacity: 1;
+}
+
+[data-theme='light'] .title-bar-btn img {
+  filter: none;
 }
