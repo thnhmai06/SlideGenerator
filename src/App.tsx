@@ -47,6 +47,7 @@ const App: React.FC = () => {
         await checkHealth()
         if (connectionRef.current !== 'connected') {
           connectionRef.current = 'connected'
+          console.info('Backend connection restored.')
           showConnected()
         }
       } catch {

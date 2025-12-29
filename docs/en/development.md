@@ -36,6 +36,7 @@ Notes:
 - The Electron main process can spawn the backend automatically.
 - To disable auto-start, set `SLIDEGEN_DISABLE_BACKEND=1`.
 - You can also run the backend manually from `backend/` with `dotnet run`.
+- Logs are written to `frontend/logs/<timestamp>/` (process, renderer, backend).
 
 ## Tests
 

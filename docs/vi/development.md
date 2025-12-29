@@ -34,6 +34,7 @@ Lưu ý:
 - Electron main có thể tự khởi chạy backend.
 - Để tắt auto-start, đặt `SLIDEGEN_DISABLE_BACKEND=1`.
 - Bạn cũng có thể chạy backend thủ công trong `backend/` bằng `dotnet run`.
+- Log được ghi trong `frontend/logs/<timestamp>/` (process, renderer, backend).
 
 ## Tests
 

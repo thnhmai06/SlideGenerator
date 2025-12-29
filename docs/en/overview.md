@@ -7,7 +7,8 @@ Vietnamese version: [Vietnamese](../vi/overview.md)
 1. [Architecture](#architecture)
 2. [Key folders](#key-folders)
 3. [Runtime model](#runtime-model)
-4. [State and storage](#state-and-storage)
+4. [Logging](#logging)
+5. [State and storage](#state-and-storage)
 
 ## Architecture
 
@@ -20,14 +21,22 @@ SignalR and treats the backend as the source of truth for job state.
 - `src/contexts`: app state and job state (SignalR subscriptions).
 - `src/services`: backend API wrappers and SignalR client.
 - `src/styles`: global and component styles.
-- `electron`: Electron main/preload processes.
+- `electron/main`: Electron main process modules (window, backend, logging, dialogs, settings).
+- `electron/preload`: Electron preload and API bridge to renderer.
 - `assets`: images, icons, and animations.
 
 ## Runtime model
 
-- `electron/main.ts` creates the window and can spawn the backend as a subprocess.
+- `electron/main.ts` wires the main-process modules and creates the window.
 - The UI uses SignalR hubs (`/hubs/slide`, `/hubs/sheet`, `/hubs/config`).
 - The backend URL is stored in local storage (`slidegen.backend.url`).
+
+## Logging
+
+- Logs are stored under `frontend/logs/<timestamp>/`.
+- `process.log` contains Electron main-process logs.
+- `renderer.log` contains renderer (DevTools) logs forwarded from the UI.
+- `backend.log` is written by the backend when launched by Electron.
 
 ## State and storage
 
