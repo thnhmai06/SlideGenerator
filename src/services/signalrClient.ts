@@ -7,6 +7,9 @@ import {
 } from '@microsoft/signalr'
 
 const DEFAULT_BACKEND_URL = 'http://127.0.0.1:65500'
+const BACKEND_URL_KEY = 'slidegen.backend.url'
+const PENDING_BACKEND_URL_KEY = 'slidegen.backend.url.pending'
+const PENDING_BACKEND_URL_SESSION_KEY = 'slidegen.backend.url.pending.defer'
 
 const RESPONSE_METHOD = 'ReceiveResponse'
 const NOTIFICATION_METHOD = 'ReceiveNotification'
@@ -26,7 +29,20 @@ function normalizeBaseUrl(url: string): string {
 }
 
 export function getBackendBaseUrl(): string {
-  const stored = localStorage.getItem('slidegen.backend.url') ?? ''
+  const pending = localStorage.getItem(PENDING_BACKEND_URL_KEY) ?? ''
+  const canPromote =
+    typeof sessionStorage === 'undefined' ||
+    !sessionStorage.getItem(PENDING_BACKEND_URL_SESSION_KEY)
+
+  if (pending && canPromote) {
+    const normalizedPending = normalizeBaseUrl(pending)
+    if (normalizedPending) {
+      localStorage.setItem(BACKEND_URL_KEY, normalizedPending)
+    }
+    localStorage.removeItem(PENDING_BACKEND_URL_KEY)
+  }
+
+  const stored = localStorage.getItem(BACKEND_URL_KEY) ?? ''
   const normalized = normalizeBaseUrl(stored)
   return normalized || normalizeBaseUrl(DEFAULT_BACKEND_URL)
 }
