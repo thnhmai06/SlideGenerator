@@ -10,7 +10,6 @@ using SlideGenerator.Application.Job.Contracts;
 using SlideGenerator.Domain.Configs;
 using SlideGenerator.Domain.Job.Enums;
 using SlideGenerator.Infrastructure.Configs;
-using SlideGenerator.Presentation.Exceptions.Hubs;
 
 namespace SlideGenerator.Presentation.Hubs;
 
@@ -54,12 +53,6 @@ public class ConfigHub(
         }
 
         await Clients.Caller.SendAsync("ReceiveResponse", response);
-    }
-
-    private T Deserialize<T>(JsonElement message)
-    {
-        return JsonSerializer.Deserialize<T>(message.GetRawText(), SerializerOptions)
-               ?? throw new InvalidRequestFormat(typeof(T).Name);
     }
 
     private ConfigGetSuccess ExecuteGetConfig()
@@ -181,8 +174,7 @@ public class ConfigHub(
 
     private bool HasWorkingJobs()
     {
-        return jobManager.Active.GetAllGroups()
-            .Values
+        return jobManager.Active.EnumerateGroups()
             .Any(group => group.Status is GroupStatus.Pending or GroupStatus.Running);
     }
 }

@@ -7,6 +7,7 @@ using SlideGenerator.Application.Sheet;
 using SlideGenerator.Application.Slide;
 using SlideGenerator.Application.Slide.DTOs.Components;
 using SlideGenerator.Application.Slide.DTOs.Requests.Group;
+using SlideGenerator.Application.Utilities;
 using SlideGenerator.Domain.Image.Enums;
 using SlideGenerator.Domain.IO;
 using SlideGenerator.Domain.Job.Components;
@@ -44,7 +45,15 @@ public class ActiveJobCollection(
 
     public IReadOnlyDictionary<string, IJobGroup> GetAllGroups()
     {
-        return _groups.ToDictionary(kv => kv.Key, kv => (IJobGroup)kv.Value);
+        var result = new Dictionary<string, IJobGroup>(_groups.Count);
+        foreach (var kv in _groups)
+            result.Add(kv.Key, kv.Value);
+        return result;
+    }
+
+    public IEnumerable<IJobGroup> EnumerateGroups()
+    {
+        return _groups.Values;
     }
 
     public int GroupCount => _groups.Count;
@@ -56,7 +65,15 @@ public class ActiveJobCollection(
 
     public IReadOnlyDictionary<string, IJobSheet> GetAllSheets()
     {
-        return _sheets.ToDictionary(kv => kv.Key, kv => (IJobSheet)kv.Value);
+        var result = new Dictionary<string, IJobSheet>(_sheets.Count);
+        foreach (var kv in _sheets)
+            result.Add(kv.Key, kv.Value);
+        return result;
+    }
+
+    public IEnumerable<IJobSheet> EnumerateSheets()
+    {
+        return _sheets.Values;
     }
 
     public int SheetCount => _sheets.Count;
@@ -95,7 +112,7 @@ public class ActiveJobCollection(
         if (string.IsNullOrWhiteSpace(outputRoot))
             throw new InvalidOperationException("Output path is required.");
 
-        var outputFolderPath = NormalizeOutputFolderPath(outputRoot);
+        var outputFolderPath = OutputPathUtils.NormalizeOutputFolderPath(outputRoot);
         var outputFolder = new DirectoryInfo(outputFolderPath);
         fileSystem.EnsureDirectory(outputFolder.FullName);
 
@@ -301,20 +318,37 @@ public class ActiveJobCollection(
 
     public IReadOnlyDictionary<string, IJobGroup> GetRunningGroups()
     {
-        return _groups.Where(kv => kv.Value.Status == GroupStatus.Running)
-            .ToDictionary(kv => kv.Key, kv => (IJobGroup)kv.Value);
+        var result = new Dictionary<string, IJobGroup>();
+        foreach (var kv in _groups)
+            if (kv.Value.Status == GroupStatus.Running)
+                result.Add(kv.Key, kv.Value);
+        return result;
     }
 
     public IReadOnlyDictionary<string, IJobGroup> GetPausedGroups()
     {
-        return _groups.Where(kv => kv.Value.Status == GroupStatus.Paused)
-            .ToDictionary(kv => kv.Key, kv => (IJobGroup)kv.Value);
+        var result = new Dictionary<string, IJobGroup>();
+        foreach (var kv in _groups)
+            if (kv.Value.Status == GroupStatus.Paused)
+                result.Add(kv.Key, kv.Value);
+        return result;
     }
 
     public IReadOnlyDictionary<string, IJobGroup> GetPendingGroups()
     {
-        return _groups.Where(kv => kv.Value.Status == GroupStatus.Pending)
-            .ToDictionary(kv => kv.Key, kv => (IJobGroup)kv.Value);
+        var result = new Dictionary<string, IJobGroup>();
+        foreach (var kv in _groups)
+            if (kv.Value.Status == GroupStatus.Pending)
+                result.Add(kv.Key, kv.Value);
+        return result;
+    }
+
+    public IJobGroup? GetGroupByOutputPath(string outputFolderPath)
+    {
+        var normalizedPath = OutputPathUtils.NormalizeOutputFolderPath(outputFolderPath);
+        if (_groupIdByOutputPath.TryGetValue(normalizedPath, out var groupId))
+            return _groups.GetValueOrDefault(groupId);
+        return null;
     }
 
     #endregion
@@ -333,7 +367,7 @@ public class ActiveJobCollection(
 
     internal JobGroup? GetInternalGroupByOutputPath(string outputFolderPath)
     {
-        var normalizedPath = NormalizeOutputFolderPath(outputFolderPath);
+        var normalizedPath = OutputPathUtils.NormalizeOutputFolderPath(outputFolderPath);
         if (_groupIdByOutputPath.TryGetValue(normalizedPath, out var groupId))
             return _groups.GetValueOrDefault(groupId);
         return null;
@@ -475,20 +509,6 @@ public class ActiveJobCollection(
             c.RoiType ?? ImageRoiType.Center,
             c.CropType ?? ImageCropType.Crop,
             c.Columns)).ToArray();
-    }
-
-    private static string NormalizeOutputFolderPath(string outputPath)
-    {
-        var fullPath = Path.GetFullPath(outputPath);
-        if (Path.HasExtension(fullPath) &&
-            string.Equals(Path.GetExtension(fullPath), ".pptx", StringComparison.OrdinalIgnoreCase))
-        {
-            var directory = Path.GetDirectoryName(fullPath);
-            if (!string.IsNullOrWhiteSpace(directory))
-                return directory;
-        }
-
-        return fullPath;
     }
 
     #endregion

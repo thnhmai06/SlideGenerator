@@ -85,12 +85,6 @@ public class SheetHub(ISheetService sheetService, ILogger<SheetHub> logger) : Hu
         await Clients.Caller.SendAsync("ReceiveResponse", response);
     }
 
-    private T Deserialize<T>(JsonElement message)
-    {
-        return JsonSerializer.Deserialize<T>(message.GetRawText(), SerializerOptions)
-               ?? throw new InvalidRequestFormat(typeof(T).Name);
-    }
-
     private OpenBookSheetSuccess ExecuteOpenFile(SheetWorkbookOpen request)
     {
         GetOrOpenWorkbook(request.FilePath);
@@ -124,7 +118,7 @@ public class SheetHub(ISheetService sheetService, ILogger<SheetHub> logger) : Hu
         (
             request.FilePath,
             request.SheetName,
-            sheetService.GetHeaders(workbook, request.SheetName).ToList()
+            sheetService.GetHeaders(workbook, request.SheetName)
         );
     }
 
@@ -149,7 +143,7 @@ public class SheetHub(ISheetService sheetService, ILogger<SheetHub> logger) : Hu
         var sheets = new List<SheetWorksheetInfo>();
         foreach (var (sheetName, rowCount) in sheetsInfo)
         {
-            var headers = sheetService.GetHeaders(workbook, sheetName).ToList();
+            var headers = sheetService.GetHeaders(workbook, sheetName);
             sheets.Add(new SheetWorksheetInfo(sheetName, headers, rowCount));
         }
 

@@ -43,7 +43,15 @@ public class CompletedJobCollection(
 
     public IReadOnlyDictionary<string, IJobGroup> GetAllGroups()
     {
-        return _groups.ToDictionary(kv => kv.Key, kv => (IJobGroup)kv.Value);
+        var result = new Dictionary<string, IJobGroup>(_groups.Count);
+        foreach (var kv in _groups)
+            result.Add(kv.Key, kv.Value);
+        return result;
+    }
+
+    public IEnumerable<IJobGroup> EnumerateGroups()
+    {
+        return _groups.Values;
     }
 
     public int GroupCount => _groups.Count;
@@ -55,7 +63,15 @@ public class CompletedJobCollection(
 
     public IReadOnlyDictionary<string, IJobSheet> GetAllSheets()
     {
-        return _sheets.ToDictionary(kv => kv.Key, kv => (IJobSheet)kv.Value);
+        var result = new Dictionary<string, IJobSheet>(_sheets.Count);
+        foreach (var kv in _sheets)
+            result.Add(kv.Key, kv.Value);
+        return result;
+    }
+
+    public IEnumerable<IJobSheet> EnumerateSheets()
+    {
+        return _sheets.Values;
     }
 
     public int SheetCount => _sheets.Count;
@@ -150,20 +166,29 @@ public class CompletedJobCollection(
 
     public IReadOnlyDictionary<string, IJobGroup> GetSuccessfulGroups()
     {
-        return _groups.Where(kv => kv.Value.Status == GroupStatus.Completed)
-            .ToDictionary(kv => kv.Key, kv => (IJobGroup)kv.Value);
+        var result = new Dictionary<string, IJobGroup>();
+        foreach (var kv in _groups)
+            if (kv.Value.Status == GroupStatus.Completed)
+                result.Add(kv.Key, kv.Value);
+        return result;
     }
 
     public IReadOnlyDictionary<string, IJobGroup> GetFailedGroups()
     {
-        return _groups.Where(kv => kv.Value.Status == GroupStatus.Failed)
-            .ToDictionary(kv => kv.Key, kv => (IJobGroup)kv.Value);
+        var result = new Dictionary<string, IJobGroup>();
+        foreach (var kv in _groups)
+            if (kv.Value.Status == GroupStatus.Failed)
+                result.Add(kv.Key, kv.Value);
+        return result;
     }
 
     public IReadOnlyDictionary<string, IJobGroup> GetCancelledGroups()
     {
-        return _groups.Where(kv => kv.Value.Status == GroupStatus.Cancelled)
-            .ToDictionary(kv => kv.Key, kv => (IJobGroup)kv.Value);
+        var result = new Dictionary<string, IJobGroup>();
+        foreach (var kv in _groups)
+            if (kv.Value.Status == GroupStatus.Cancelled)
+                result.Add(kv.Key, kv.Value);
+        return result;
     }
 
     #endregion

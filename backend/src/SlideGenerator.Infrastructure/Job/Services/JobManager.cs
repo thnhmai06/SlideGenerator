@@ -64,7 +64,7 @@ public class JobManager : Service, IJobManager
     /// </summary>
     public async Task RestoreAsync(CancellationToken cancellationToken)
     {
-        var groupStates = (await _jobStateStore.GetAllGroupsAsync(cancellationToken));
+        var groupStates = await _jobStateStore.GetAllGroupsAsync(cancellationToken);
         if (groupStates.Count == 0)
             groupStates = [.. await _jobStateStore.GetActiveGroupsAsync(cancellationToken)];
         foreach (var groupState in groupStates)

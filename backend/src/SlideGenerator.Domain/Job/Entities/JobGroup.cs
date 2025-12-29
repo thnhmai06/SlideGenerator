@@ -83,7 +83,15 @@ public sealed class JobGroup : IJobGroup
 
     /// <inheritdoc />
     public IReadOnlyDictionary<string, IJobSheet> Sheets
-        => _jobs.ToDictionary(kv => kv.Key, kv => (IJobSheet)kv.Value);
+    {
+        get
+        {
+            var result = new Dictionary<string, IJobSheet>(_jobs.Count);
+            foreach (var kv in _jobs)
+                result.Add(kv.Key, kv.Value);
+            return result;
+        }
+    }
 
     /// <inheritdoc />
     public int SheetCount => _jobs.Count;
@@ -122,7 +130,7 @@ public sealed class JobGroup : IJobGroup
     /// </summary>
     public void UpdateStatus()
     {
-        var jobs = _jobs.Values.ToList();
+        var jobs = _jobs.Values;
         if (jobs.Count == 0)
         {
             Status = GroupStatus.Pending;

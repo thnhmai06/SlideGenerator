@@ -51,6 +51,7 @@ public class JobExecutor(
         };
 
         int? activeRow = null;
+        List<JobLogEntry>? bufferedLogs = null;
 
         try
         {
@@ -87,6 +88,7 @@ public class JobExecutor(
                 await checkpoint(JobCheckpointStage.BeforeRow, token);
 
                 activeRow = rowNum;
+                bufferedLogs = new List<JobLogEntry>(4);
                 await StoreAndNotifyLogAsync(new JobEvent(
                     sheet.Id,
                     JobEventScope.Sheet,
@@ -97,7 +99,7 @@ public class JobExecutor(
                     {
                         ["row"] = rowNum,
                         ["rowStatus"] = "processing"
-                    }));
+                    }), bufferedLogs);
 
                 var rowData = sheet.Worksheet.GetRow(rowNum);
                 var result = await slideServices.ProcessRowAsync(
@@ -122,7 +124,7 @@ public class JobExecutor(
                             ["placeholder"] = detail.Placeholder,
                             ["value"] = detail.Value,
                             ["kind"] = "text"
-                        }));
+                        }), bufferedLogs);
 
                 foreach (var detail in result.ImageReplacements)
                     await StoreAndNotifyLogAsync(new JobEvent(
@@ -137,7 +139,7 @@ public class JobExecutor(
                             ["shapeId"] = detail.ShapeId,
                             ["source"] = detail.Source,
                             ["kind"] = "image"
-                        }));
+                        }), bufferedLogs);
 
                 await StoreAndNotifyLogAsync(new JobEvent(
                     sheet.Id,
@@ -152,7 +154,7 @@ public class JobExecutor(
                         ["textReplacements"] = result.TextReplacementCount,
                         ["imageReplacements"] = result.ImageReplacementCount,
                         ["imageErrors"] = result.ImageErrorCount
-                    }));
+                    }), bufferedLogs);
 
                 if (result.ImageErrorCount > 0)
                 {
@@ -172,8 +174,11 @@ public class JobExecutor(
                             ["row"] = rowNum,
                             ["rowStatus"] = "warning",
                             ["errors"] = result.Errors
-                        }));
+                        }), bufferedLogs);
                 }
+
+                await FlushLogsAsync(bufferedLogs);
+                bufferedLogs = null;
 
                 sheet.UpdateProgress(rowNum);
                 await checkpoint(JobCheckpointStage.BeforePersistState, token);
@@ -198,6 +203,9 @@ public class JobExecutor(
         }
         catch (OperationCanceledException)
         {
+            await FlushLogsAsync(bufferedLogs);
+            bufferedLogs = null;
+
             if (sheet.Status != SheetJobStatus.Cancelled)
                 sheet.SetStatus(SheetJobStatus.Paused);
             await PersistSheetStateAsync(sheet);
@@ -213,6 +221,9 @@ public class JobExecutor(
         }
         catch (Exception ex)
         {
+            await FlushLogsAsync(bufferedLogs);
+            bufferedLogs = null;
+
             sheet.SetStatus(SheetJobStatus.Failed, ex.Message);
             await PersistSheetStateAsync(sheet);
             await jobNotifier.NotifyJobError(sheetId, ex.Message);
@@ -277,7 +288,7 @@ public class JobExecutor(
         await jobStateStore.SaveGroupAsync(state, CancellationToken.None);
     }
 
-    private async Task StoreAndNotifyLogAsync(JobEvent jobEvent)
+    private async Task StoreAndNotifyLogAsync(JobEvent jobEvent, List<JobLogEntry>? buffer = null)
     {
         var entry = new JobLogEntry(
             jobEvent.JobId,
@@ -285,7 +296,18 @@ public class JobExecutor(
             jobEvent.Level,
             jobEvent.Message,
             jobEvent.Data);
-        await jobStateStore.AppendJobLogAsync(entry, CancellationToken.None);
+        if (buffer == null)
+            await jobStateStore.AppendJobLogAsync(entry, CancellationToken.None);
+        else
+            buffer.Add(entry);
         await jobNotifier.NotifyLog(jobEvent);
+    }
+
+    private Task FlushLogsAsync(List<JobLogEntry>? buffer)
+    {
+        if (buffer == null || buffer.Count == 0)
+            return Task.CompletedTask;
+
+        return jobStateStore.AppendJobLogsAsync(buffer, CancellationToken.None);
     }
 }

@@ -3,6 +3,7 @@ using SlideGenerator.Application.Job.Contracts.Collections;
 using SlideGenerator.Application.Sheet;
 using SlideGenerator.Application.Slide;
 using SlideGenerator.Application.Slide.DTOs.Requests.Group;
+using SlideGenerator.Application.Utilities;
 using SlideGenerator.Domain.Job.Entities;
 using SlideGenerator.Domain.Job.Enums;
 using SlideGenerator.Domain.Job.Interfaces;
@@ -225,6 +226,11 @@ internal sealed class FakeActiveJobCollection : IActiveJobCollection
         return _groups.ToDictionary(kv => kv.Key, kv => (IJobGroup)kv.Value);
     }
 
+    public IEnumerable<IJobGroup> EnumerateGroups()
+    {
+        return _groups.Values;
+    }
+
     public int GroupCount => _groups.Count;
 
     public IJobSheet? GetSheet(string sheetId)
@@ -235,6 +241,11 @@ internal sealed class FakeActiveJobCollection : IActiveJobCollection
     public IReadOnlyDictionary<string, IJobSheet> GetAllSheets()
     {
         return _sheets.ToDictionary(kv => kv.Key, kv => (IJobSheet)kv.Value);
+    }
+
+    public IEnumerable<IJobSheet> EnumerateSheets()
+    {
+        return _sheets.Values;
     }
 
     public int SheetCount => _sheets.Count;
@@ -250,6 +261,13 @@ internal sealed class FakeActiveJobCollection : IActiveJobCollection
     }
 
     public bool IsEmpty => _groups.Count == 0;
+
+    public IJobGroup? GetGroupByOutputPath(string outputFolderPath)
+    {
+        var normalized = OutputPathUtils.NormalizeOutputFolderPath(outputFolderPath);
+        return _groups.Values.FirstOrDefault(group =>
+            string.Equals(group.OutputFolder.FullName, normalized, StringComparison.OrdinalIgnoreCase));
+    }
 
     private static ISheetBook CreateWorkbook()
     {
@@ -271,6 +289,11 @@ internal sealed class FakeCompletedJobCollection : ICompletedJobCollection
         return new Dictionary<string, IJobGroup>();
     }
 
+    public IEnumerable<IJobGroup> EnumerateGroups()
+    {
+        return Array.Empty<IJobGroup>();
+    }
+
     public int GroupCount => 0;
 
     public IJobSheet? GetSheet(string sheetId)
@@ -281,6 +304,11 @@ internal sealed class FakeCompletedJobCollection : ICompletedJobCollection
     public IReadOnlyDictionary<string, IJobSheet> GetAllSheets()
     {
         return new Dictionary<string, IJobSheet>();
+    }
+
+    public IEnumerable<IJobSheet> EnumerateSheets()
+    {
+        return Array.Empty<IJobSheet>();
     }
 
     public int SheetCount => 0;

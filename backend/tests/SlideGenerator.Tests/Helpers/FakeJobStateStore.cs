@@ -47,20 +47,32 @@ internal sealed class FakeJobStateStore : IJobStateStore
 
     public Task AppendJobLogAsync(JobLogEntry entry, CancellationToken cancellationToken)
     {
-        if (!_logs.TryGetValue(entry.JobId, out var list))
+        return AppendJobLogsAsync([entry], cancellationToken);
+    }
+
+    public Task AppendJobLogsAsync(IReadOnlyCollection<JobLogEntry> entries, CancellationToken cancellationToken)
+    {
+        if (entries.Count == 0)
+            return Task.CompletedTask;
+
+        foreach (var entry in entries)
         {
-            list = new List<JobLogEntry>();
-            _logs[entry.JobId] = list;
+            if (!_logs.TryGetValue(entry.JobId, out var list))
+            {
+                list = new List<JobLogEntry>();
+                _logs[entry.JobId] = list;
+            }
+
+            list.Add(entry);
         }
 
-        list.Add(entry);
         return Task.CompletedTask;
     }
 
     public Task<IReadOnlyList<JobLogEntry>> GetJobLogsAsync(string jobId, CancellationToken cancellationToken)
     {
         return Task.FromResult<IReadOnlyList<JobLogEntry>>(
-            _logs.TryGetValue(jobId, out var list) ? list.ToList() : []);
+            _logs.TryGetValue(jobId, out var list) ? list : []);
     }
 
     public Task<IReadOnlyList<SheetJobState>> GetSheetsByGroupAsync(string groupId,
@@ -73,7 +85,7 @@ internal sealed class FakeJobStateStore : IJobStateStore
     public Task RemoveGroupAsync(string groupId, CancellationToken cancellationToken)
     {
         _groups.Remove(groupId);
-        foreach (var sheetId in _sheets.Values.Where(s => s.GroupId == groupId).Select(s => s.Id).ToList())
+        foreach (var sheetId in _sheets.Values.Where(s => s.GroupId == groupId).Select(s => s.Id))
         {
             _sheets.Remove(sheetId);
             _logs.Remove(sheetId);

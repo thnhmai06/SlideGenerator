@@ -374,6 +374,11 @@ public sealed class SlideHubTests
             return _groups.ToDictionary(kv => kv.Key, kv => (IJobGroup)kv.Value);
         }
 
+        public IEnumerable<IJobGroup> EnumerateGroups()
+        {
+            return _groups.Values;
+        }
+
         public int GroupCount => _groups.Count;
 
         public IJobSheet? GetSheet(string sheetId)
@@ -384,6 +389,11 @@ public sealed class SlideHubTests
         public IReadOnlyDictionary<string, IJobSheet> GetAllSheets()
         {
             return _sheets.ToDictionary(kv => kv.Key, kv => (IJobSheet)kv.Value);
+        }
+
+        public IEnumerable<IJobSheet> EnumerateSheets()
+        {
+            return _sheets.Values;
         }
 
         public int SheetCount => _sheets.Count;
