@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import { useApp } from '../contexts/useApp'
 import { useJobs } from '../contexts/useJobs'
-import { getAssetPath } from '../utils/assets'
+import { getAssetPath } from '../utils/paths'
 import '../styles/ResultMenu.css'
 
 type LogEntry = {

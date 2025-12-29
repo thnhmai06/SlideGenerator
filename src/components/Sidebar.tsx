@@ -1,6 +1,6 @@
 import React from 'react'
 import { useApp } from '../contexts/useApp'
-import { getAssetPath } from '../utils/assets'
+import { getAssetPath } from '../utils/paths'
 import '../styles/Sidebar.css'
 
 type MenuType = 'input' | 'setting' | 'download' | 'process' | 'about'

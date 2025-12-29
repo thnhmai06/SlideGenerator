@@ -32,20 +32,16 @@ export function getBackendBaseUrl(): string {
 }
 
 export class SignalRHubClient {
-  private readonly connection: HubConnection
+  private readonly hubPath: string
+  private connection: HubConnection
+  private baseUrl: string
+  private notificationHandlers = new Set<(payload: unknown) => void>()
   private queue: Promise<void> = Promise.resolve()
 
   constructor(hubPath: string) {
-    const baseUrl = getBackendBaseUrl()
-    this.connection = new HubConnectionBuilder()
-      .withUrl(`${baseUrl}${hubPath}`, {
-        withCredentials: false,
-        skipNegotiation: true,
-        transport: HttpTransportType.WebSockets,
-      })
-      .withAutomaticReconnect()
-      .configureLogging(LogLevel.Warning)
-      .build()
+    this.hubPath = hubPath
+    this.baseUrl = getBackendBaseUrl()
+    this.connection = this.buildConnection(this.baseUrl)
   }
 
   async sendRequest<TResponse>(
@@ -66,11 +62,48 @@ export class SignalRHubClient {
   }
 
   onNotification(handler: (payload: unknown) => void): () => void {
+    this.notificationHandlers.add(handler)
     this.connection.on(NOTIFICATION_METHOD, handler)
-    return () => this.connection.off(NOTIFICATION_METHOD, handler)
+    return () => {
+      this.notificationHandlers.delete(handler)
+      this.connection.off(NOTIFICATION_METHOD, handler)
+    }
+  }
+
+  private buildConnection(baseUrl: string): HubConnection {
+    return new HubConnectionBuilder()
+      .withUrl(`${baseUrl}${this.hubPath}`, {
+        withCredentials: false,
+        skipNegotiation: true,
+        transport: HttpTransportType.WebSockets,
+      })
+      .withAutomaticReconnect()
+      .configureLogging(LogLevel.Warning)
+      .build()
+  }
+
+  private async refreshConnectionIfNeeded(): Promise<void> {
+    const currentBaseUrl = getBackendBaseUrl()
+    if (currentBaseUrl === this.baseUrl) return
+
+    this.baseUrl = currentBaseUrl
+    const previous = this.connection
+    if (previous.state !== HubConnectionState.Disconnected) {
+      try {
+        await previous.stop()
+      } catch (error) {
+        console.warn('Failed to stop SignalR connection before reconnect:', error)
+      }
+    }
+
+    this.connection = this.buildConnection(this.baseUrl)
+    this.notificationHandlers.forEach((handler) => {
+      this.connection.on(NOTIFICATION_METHOD, handler)
+    })
   }
 
   private async ensureConnected(): Promise<void> {
+    await this.refreshConnectionIfNeeded()
     const state = this.connection.state
     if (state === HubConnectionState.Connected) return
 

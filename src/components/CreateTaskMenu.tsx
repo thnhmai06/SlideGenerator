@@ -4,7 +4,7 @@ import { useJobs } from '../contexts/useJobs'
 import ShapeSelector from './ShapeSelector'
 import TagInput from './TagInput'
 import * as backendApi from '../services/backendApi'
-import { getAssetPath } from '../utils/assets'
+import { getAssetPath } from '../utils/paths'
 import '../styles/CreateTaskMenu.css'
 
 interface CreateTaskMenuProps {
