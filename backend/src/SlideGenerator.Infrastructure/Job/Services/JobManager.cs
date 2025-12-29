@@ -64,9 +64,9 @@ public class JobManager : Service, IJobManager
     /// </summary>
     public async Task RestoreAsync(CancellationToken cancellationToken)
     {
-        var groupStates = (await _jobStateStore.GetAllGroupsAsync(cancellationToken)).ToList();
+        var groupStates = (await _jobStateStore.GetAllGroupsAsync(cancellationToken));
         if (groupStates.Count == 0)
-            groupStates = (await _jobStateStore.GetActiveGroupsAsync(cancellationToken)).ToList();
+            groupStates = [.. await _jobStateStore.GetActiveGroupsAsync(cancellationToken)];
         foreach (var groupState in groupStates)
         {
             var sheetStates = await _jobStateStore.GetSheetsByGroupAsync(groupState.Id, cancellationToken);
@@ -88,29 +88,26 @@ public class JobManager : Service, IJobManager
 
             var group = new JobGroup(workbook, template, outputFolder, textConfigs, imageConfigs, groupState.CreatedAt,
                 groupState.Id);
-            group.SetStatus(groupState.Status);
+
+            // Force status to Paused if it was Running or Pending
+            group.SetStatus(groupState.Status is GroupStatus.Running or GroupStatus.Pending
+                ? GroupStatus.Paused
+                : groupState.Status);
 
             foreach (var sheetState in sheetStates)
             {
                 var sheet = group.AddJob(sheetState.SheetName, sheetState.OutputPath, sheetState.Id);
                 sheet.UpdateProgress(Math.Max(0, sheetState.NextRowIndex - 1));
                 sheet.RestoreErrorCount(sheetState.ErrorCount);
-                sheet.SetStatus(sheetState.Status, sheetState.ErrorMessage);
 
-                if (sheet.Status == SheetJobStatus.Running)
-                    sheet.SetStatus(SheetJobStatus.Pending);
+                // Force status to Paused if it was Running or Pending
+                sheet.SetStatus(
+                    sheetState.Status is SheetJobStatus.Running or SheetJobStatus.Pending
+                        ? SheetJobStatus.Paused
+                        : sheetState.Status, sheetState.ErrorMessage);
             }
 
-            group.UpdateStatus();
             _active.RestoreGroup(group);
-
-            foreach (var sheet in group.InternalJobs.Values.Where(s =>
-                         s.Status == SheetJobStatus.Pending))
-            {
-                var hangfireJobId = _backgroundJobClient.Enqueue<IJobExecutor>(executor =>
-                    executor.ExecuteJobAsync(sheet.Id, CancellationToken.None));
-                sheet.HangfireJobId = hangfireJobId;
-            }
         }
     }
 
@@ -232,7 +229,7 @@ public class JobManager : Service, IJobManager
     {
         public string Name { get; } = name;
 
-        public IReadOnlyList<string?> Headers { get; } = Array.Empty<string?>();
+        public IReadOnlyList<string?> Headers { get; } = [];
 
         public int RowCount { get; } = rowCount;
 
@@ -243,7 +240,7 @@ public class JobManager : Service, IJobManager
 
         public List<Dictionary<string, string?>> GetAllRows()
         {
-            return new List<Dictionary<string, string?>>();
+            return [];
         }
     }
 
@@ -260,12 +257,12 @@ public class JobManager : Service, IJobManager
 
         public IReadOnlyList<ShapeInfo> GetAllShapes()
         {
-            return Array.Empty<ShapeInfo>();
+            return [];
         }
 
         public IReadOnlyCollection<string> GetAllTextPlaceholders()
         {
-            return Array.Empty<string>();
+            return [];
         }
 
         public void Dispose()
