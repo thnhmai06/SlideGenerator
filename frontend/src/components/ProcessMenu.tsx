@@ -1,9 +1,8 @@
-const getAssetPath = (...p: string[]) =>
-  (window as any).getAssetPath ? (window as any).getAssetPath(...p) : `assets/${p.join('/')}`
 import React, { useMemo, useState } from 'react'
-import { useApp } from '../contexts/AppContext'
-import { useJobs } from '../contexts/JobContext'
+import { useApp } from '../contexts/useApp'
+import { useJobs } from '../contexts/useJobs'
 import { getBackendBaseUrl } from '../services/signalrClient'
+import { getAssetPath } from '../utils/assets'
 import '../styles/ProcessMenu.css'
 
 type LogEntry = {
@@ -181,6 +180,28 @@ const ProcessMenu: React.FC = () => {
     return groups
   }
 
+  const summarizeSheets = (
+    sheets: Array<{ status: string; totalRows?: number; currentRow?: number }>,
+  ) => {
+    let completed = 0
+    let processing = 0
+    let failed = 0
+    let totalRows = 0
+    let completedRows = 0
+
+    sheets.forEach((sheet) => {
+      if (sheet.status === 'Completed') completed += 1
+      if (sheet.status === 'Running' || sheet.status === 'Pending') processing += 1
+      if (sheet.status === 'Failed' || sheet.status === 'Cancelled') failed += 1
+
+      const total = sheet.totalRows ?? 0
+      totalRows += total
+      completedRows += Math.min(sheet.currentRow ?? 0, total)
+    })
+
+    return { completed, processing, failed, totalRows, completedRows }
+  }
+
   const toggleRowGroup = (key: string) => {
     setCollapsedRowGroups((prev) => {
       const current = prev[key] ?? true
@@ -244,19 +265,9 @@ const ProcessMenu: React.FC = () => {
           <div className="process-list">
             {activeGroups.map((group) => {
               const sheets = Object.values(group.sheets)
-              const completed = sheets.filter((sheet) => sheet.status === 'Completed').length
-              const processing = sheets.filter((sheet) =>
-                ['Running', 'Pending'].includes(sheet.status),
-              ).length
-              const failed = sheets.filter((sheet) =>
-                ['Failed', 'Cancelled'].includes(sheet.status),
-              ).length
+              const { completed, processing, failed, totalRows, completedRows } =
+                summarizeSheets(sheets)
               const totalSheets = sheets.length
-              const totalRows = sheets.reduce((sum, sheet) => sum + (sheet.totalRows ?? 0), 0)
-              const completedRows = sheets.reduce(
-                (sum, sheet) => sum + Math.min(sheet.currentRow ?? 0, sheet.totalRows ?? 0),
-                0,
-              )
               const groupProgress =
                 totalRows > 0 ? (completedRows / totalRows) * 100 : group.progress
               const groupName = deriveGroupName(group.workbookPath, group.id)
@@ -369,7 +380,7 @@ const ProcessMenu: React.FC = () => {
                             : sheet.status === 'Pending'
                               ? sheet.totalRows
                               : 0
-                        const logGroups = groupLogsByRow(sheet.logs as LogEntry[])
+                        const logGroups = showLog ? groupLogsByRow(sheet.logs as LogEntry[]) : []
 
                         return (
                           <div key={sheet.id} className="file-item">

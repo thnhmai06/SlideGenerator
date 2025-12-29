@@ -1,28 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import React, { useState, useEffect, ReactNode } from 'react'
 import { translations, Language } from '../locales'
-
-type Theme = 'dark' | 'light' | 'system'
-
-interface Settings {
-  theme: Theme
-  language: Language
-  enableAnimations: boolean
-  closeToTray: boolean
-}
-
-interface AppContextType {
-  theme: Theme
-  language: Language
-  enableAnimations: boolean
-  closeToTray: boolean
-  setTheme: (theme: Theme) => void
-  setLanguage: (language: Language) => void
-  setEnableAnimations: (enable: boolean) => void
-  setCloseToTray: (enable: boolean) => void
-  t: (key: string) => string
-}
-
-const AppContext = createContext<AppContextType | undefined>(undefined)
+import { AppContext, type Theme, type Settings } from './AppContextBase'
 
 const SETTINGS_FILE = 'app-settings.json'
 
@@ -148,12 +126,4 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       {children}
     </AppContext.Provider>
   )
-}
-
-export const useApp = () => {
-  const context = useContext(AppContext)
-  if (!context) {
-    throw new Error('useApp must be used within AppProvider')
-  }
-  return context
 }

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useMemo, useRef, useState } from 'react'
 import '../styles/TagInput.css'
 
 interface TagInputProps {
@@ -10,21 +10,17 @@ interface TagInputProps {
 
 const TagInput: React.FC<TagInputProps> = ({ value, onChange, suggestions, placeholder }) => {
   const [inputValue, setInputValue] = useState('')
-  const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1)
   const inputRef = useRef<HTMLInputElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    const filtered = suggestions.filter((s) => !value.includes(s))
-
-    if (inputValue) {
-      const matched = filtered.filter((s) => s.includes(inputValue))
-      setFilteredSuggestions(matched)
-    } else {
-      setFilteredSuggestions(filtered)
+  const filteredSuggestions = useMemo(() => {
+    const filtered = suggestions.filter((suggestion) => !value.includes(suggestion))
+    if (!inputValue) {
+      return filtered
     }
+    return filtered.filter((suggestion) => suggestion.includes(inputValue))
   }, [inputValue, suggestions, value])
 
   const addTag = (tag: string) => {

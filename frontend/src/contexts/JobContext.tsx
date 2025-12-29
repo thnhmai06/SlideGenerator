@@ -1,77 +1,13 @@
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  ReactNode,
-} from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState, ReactNode } from 'react'
 import * as backendApi from '../services/backendApi'
-
-type JobStatus = 'Pending' | 'Running' | 'Paused' | 'Completed' | 'Failed' | 'Cancelled'
-
-interface LogEntry {
-  message: string
-  level?: string
-  timestamp?: string
-  row?: number
-  rowStatus?: string
-}
-
-interface SheetJob {
-  id: string
-  sheetName: string
-  status: JobStatus
-  currentRow: number
-  totalRows: number
-  progress: number
-  errorCount: number
-  outputPath?: string
-  errorMessage?: string
-  logs: LogEntry[]
-  hangfireJobId?: string
-}
-
-interface GroupJob {
-  id: string
-  workbookPath: string
-  outputFolder?: string
-  status: JobStatus
-  progress: number
-  errorCount: number
-  sheets: Record<string, SheetJob>
-  logs: LogEntry[]
-  createdAt?: string
-  completedAt?: string
-}
-
-interface CreateGroupPayload {
-  templatePath: string
-  spreadsheetPath: string
-  outputPath: string
-  textConfigs: backendApi.SlideTextConfig[]
-  imageConfigs: backendApi.SlideImageConfig[]
-  sheetNames?: string[]
-}
-
-interface JobContextValue {
-  groups: GroupJob[]
-  createGroup: (payload: CreateGroupPayload) => Promise<GroupJob>
-  refreshGroups: () => Promise<void>
-  clearCompleted: () => Promise<void>
-  groupControl: (groupId: string, action: backendApi.ControlAction) => Promise<void>
-  jobControl: (jobId: string, action: backendApi.ControlAction) => Promise<void>
-  removeGroup: (groupId: string) => Promise<boolean>
-  removeSheet: (jobId: string) => Promise<boolean>
-  loadSheetLogs: (jobId: string) => Promise<void>
-  globalControl: (action: backendApi.ControlAction) => Promise<void>
-  exportGroupConfig: (groupId: string) => Promise<boolean>
-  hasGroupConfig: (groupId: string) => boolean
-}
-
-const JobContext = createContext<JobContextValue | undefined>(undefined)
+import {
+  JobContext,
+  type CreateGroupPayload,
+  type GroupJob,
+  type JobStatus,
+  type LogEntry,
+  type SheetJob,
+} from './JobContextBase'
 
 const createEmptyGroup = (groupId: string): GroupJob => ({
   id: groupId,
@@ -94,6 +30,18 @@ const createEmptySheet = (sheetId: string): SheetJob => ({
   logs: [],
   hangfireJobId: undefined,
 })
+
+const MAX_LOG_ENTRIES = 2000
+
+const trimLogs = (logs: LogEntry[]) => {
+  if (logs.length <= MAX_LOG_ENTRIES) return logs
+  return logs.slice(logs.length - MAX_LOG_ENTRIES)
+}
+
+const appendLog = (logs: LogEntry[], entry: LogEntry) => {
+  if (logs.length < MAX_LOG_ENTRIES) return [...logs, entry]
+  return [...logs.slice(logs.length - MAX_LOG_ENTRIES + 1), entry]
+}
 
 export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [groupsById, setGroupsById] = useState<Record<string, GroupJob>>({})
@@ -448,7 +396,7 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
         updateSheet(jobId, (sheet) => {
           if (sheet.logs.length > 0) return sheet
-          return { ...sheet, logs }
+          return { ...sheet, logs: trimLogs(logs) }
         })
       } catch (error) {
         console.error('Failed to load job logs:', error)
@@ -660,7 +608,7 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }
         updateSheet(jobId, (sheet) => ({
           ...sheet,
-          logs: [...sheet.logs, logEntry],
+          logs: appendLog(sheet.logs, logEntry),
         }))
         return
       }
@@ -681,12 +629,12 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         if (targetGroupId) {
           updateSheet(jobId, (sheet) => ({
             ...sheet,
-            logs: [...sheet.logs, logEntry],
+            logs: appendLog(sheet.logs, logEntry),
           }))
         } else if (groupsRef.current[jobId]) {
           updateGroup(jobId, (group) => ({
             ...group,
-            logs: [...group.logs, logEntry],
+            logs: appendLog(group.logs, logEntry),
           }))
         }
       }
@@ -735,12 +683,4 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   )
 
   return <JobContext.Provider value={value}>{children}</JobContext.Provider>
-}
-
-export const useJobs = () => {
-  const context = useContext(JobContext)
-  if (!context) {
-    throw new Error('useJobs must be used within JobProvider')
-  }
-  return context
 }

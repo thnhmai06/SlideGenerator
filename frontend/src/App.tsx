@@ -7,7 +7,7 @@ import ResultMenu from './components/ResultMenu'
 import AboutMenu from './components/AboutMenu'
 import TitleBar from './components/TitleBar'
 import { checkHealth } from './services/backendApi'
-import { useApp } from './contexts/AppContext'
+import { useApp } from './contexts/useApp'
 import './styles/App.css'
 
 type MenuType = 'input' | 'setting' | 'download' | 'process' | 'about'

@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react'
-import { useApp } from '../contexts/AppContext'
-import { useJobs } from '../contexts/JobContext'
+import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react'
+import { useApp } from '../contexts/useApp'
+import { useJobs } from '../contexts/useJobs'
 import ShapeSelector from './ShapeSelector'
 import TagInput from './TagInput'
 import * as backendApi from '../services/backendApi'
+import { getAssetPath } from '../utils/assets'
 import '../styles/CreateTaskMenu.css'
 
 interface CreateTaskMenuProps {
@@ -28,6 +29,22 @@ interface Shape {
   id: string
   name: string
   preview: string
+}
+
+const STORAGE_KEYS = {
+  inputMenuState: 'slidegen.ui.inputMenu.state',
+}
+
+const loadSavedState = () => {
+  try {
+    const saved = sessionStorage.getItem(STORAGE_KEYS.inputMenuState)
+    if (saved) {
+      return JSON.parse(saved)
+    }
+  } catch (error) {
+    console.error('Error loading saved state:', error)
+  }
+  return null
 }
 
 const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
@@ -72,24 +89,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
     return options.find((option) => option.value === value)?.description ?? ''
   }
 
-  const STORAGE_KEYS = {
-    inputMenuState: 'slidegen.ui.inputMenu.state',
-  }
-
-  // Load saved state from sessionStorage
-  const loadSavedState = () => {
-    try {
-      const saved = sessionStorage.getItem(STORAGE_KEYS.inputMenuState)
-      if (saved) {
-        return JSON.parse(saved)
-      }
-    } catch (error) {
-      console.error('Error loading saved state:', error)
-    }
-    return null
-  }
-
-  const savedState = loadSavedState()
+  const savedState = useMemo(() => loadSavedState(), [])
 
   const [pptxPath, setPptxPath] = useState(savedState?.pptxPath || '')
   const [dataPath, setDataPath] = useState(savedState?.dataPath || '')
@@ -199,7 +199,50 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
     dataPathRef.current = dataPath
   }, [dataPath])
 
-  const hydrateFromSavedState = async () => {
+  const getErrorDetail = useCallback((error: unknown): string => {
+    if (error instanceof Error && error.message) return error.message
+    if (typeof error === 'string') return error
+    if (error && typeof error === 'object' && 'message' in error) {
+      const value = (error as { message?: string }).message
+      if (value) return value
+    }
+    return ''
+  }, [])
+
+  const formatErrorMessage = useCallback(
+    (key: string, error: unknown): string => {
+      const detail = getErrorDetail(error)
+      return detail ? `${t(key)}: ${detail}` : t(key)
+    },
+    [getErrorDetail, t],
+  )
+
+  const showBanner = useCallback((type: 'success' | 'error', text: string) => {
+    setBanner({ type, text })
+    setTimeout(() => setBanner(null), 4000)
+  }, [])
+
+  const notifyTemplateError = useCallback(
+    (error: unknown) => {
+      const now = Date.now()
+      if (now - templateErrorAtRef.current < 800) return
+      templateErrorAtRef.current = now
+      showBanner('error', formatErrorMessage('input.templateLoadError', error))
+    },
+    [formatErrorMessage, showBanner],
+  )
+
+  const notifyDataError = useCallback(
+    (error: unknown) => {
+      const now = Date.now()
+      if (now - dataErrorAtRef.current < 800) return
+      dataErrorAtRef.current = now
+      showBanner('error', formatErrorMessage('input.columnLoadError', error))
+    },
+    [formatErrorMessage, showBanner],
+  )
+
+  const hydrateFromSavedState = useCallback(async () => {
     if (!savedState) return
     if (hasHydratedRef.current) return
     hasHydratedRef.current = true
@@ -250,7 +293,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
             name: shape.Name,
             preview: shape.Data
               ? `data:image/png;base64,${shape.Data}`
-              : window.getAssetPath('images', 'app-icon.png'),
+              : getAssetPath('images', 'app-icon.png'),
           }))
         nextPlaceholders = (template.Placeholders ?? [])
           .map((item) => item.trim())
@@ -290,13 +333,13 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
         }),
       )
       const filteredText = importedText
-        .map((item: { placeholder: string; columns: any[] }) => ({
+        .map((item: { placeholder: string; columns: string[] }) => ({
           ...item,
           placeholder: item.placeholder.trim(),
           columns: item.columns.filter((col: string) => columnSet.has(col)),
         }))
         .filter(
-          (item: { placeholder: string; columns: string | any[] }) =>
+          (item: { placeholder: string; columns: string[] }) =>
             item.placeholder && item.columns.length > 0 && placeholderSet.has(item.placeholder),
         )
 
@@ -316,13 +359,13 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
         }),
       )
       const filteredImages = importedImages
-        .map((item: { shapeId: string; columns: any[] }) => ({
+        .map((item: { shapeId: string; columns: string[] }) => ({
           ...item,
           shapeId: item.shapeId.trim(),
           columns: item.columns.filter((col: string) => columnSet.has(col)),
         }))
         .filter(
-          (item: { shapeId: string; columns: string | any[] }) =>
+          (item: { shapeId: string; columns: string[] }) =>
             item.shapeId && item.columns.length > 0 && shapeIdSet.has(item.shapeId),
         )
 
@@ -339,127 +382,99 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
       setIsLoadingColumns(false)
       isHydratingRef.current = false
     }
-  }
+  }, [formatErrorMessage, savedState, showBanner])
 
   useEffect(() => {
     hydrateFromSavedState().catch(() => undefined)
-  }, [])
+  }, [hydrateFromSavedState])
 
-  const getErrorDetail = (error: unknown): string => {
-    if (error instanceof Error && error.message) return error.message
-    if (typeof error === 'string') return error
-    if (error && typeof error === 'object' && 'message' in error) {
-      const value = (error as { message?: string }).message
-      if (value) return value
-    }
-    return ''
-  }
-
-  const formatErrorMessage = (key: string, error: unknown): string => {
-    const detail = getErrorDetail(error)
-    return detail ? `${t(key)}: ${detail}` : t(key)
-  }
-
-  const showBanner = (type: 'success' | 'error', text: string) => {
-    setBanner({ type, text })
-    setTimeout(() => setBanner(null), 4000)
-  }
-
-  const notifyTemplateError = (error: unknown) => {
-    const now = Date.now()
-    if (now - templateErrorAtRef.current < 800) return
-    templateErrorAtRef.current = now
-    showBanner('error', formatErrorMessage('input.templateLoadError', error))
-  }
-
-  const notifyDataError = (error: unknown) => {
-    const now = Date.now()
-    if (now - dataErrorAtRef.current < 800) return
-    dataErrorAtRef.current = now
-    showBanner('error', formatErrorMessage('input.columnLoadError', error))
-  }
-
-  const loadTemplateAssets = async (filePath: string) => {
-    if (!filePath) {
-      setShapes([])
-      setPlaceholders([])
-      setTemplateLoaded(false)
-      return
-    }
-    setIsLoadingShapes(true)
-    setIsLoadingPlaceholders(true)
-    try {
-      const response = await backendApi.scanTemplate(filePath)
-      const data = response as backendApi.SlideScanTemplateSuccess
-      const mappedShapes = (data.Shapes ?? [])
-        .filter((shape) => shape.IsImage === true)
-        .map((shape) => ({
-          id: String(shape.Id),
-          name: shape.Name,
-          preview: shape.Data
-            ? `data:image/png;base64,${shape.Data}`
-            : window.getAssetPath('images', 'app-icon.png'),
-        }))
-      setShapes(mappedShapes)
-      lastLoadedTemplatePathRef.current = filePath
-
-      const items = (data.Placeholders ?? [])
-        .map((item) => item.trim())
-        .filter((item) => item.length > 0)
-      const unique = Array.from(new Set(items))
-      unique.sort((a, b) => a.localeCompare(b))
-      setPlaceholders(unique)
-      setTemplateLoaded(true)
-    } catch (error) {
-      if (!isHydratingRef.current && filePath === pptxPathRef.current) {
-        notifyTemplateError(error)
-        setPptxPath('')
+  const loadTemplateAssets = useCallback(
+    async (filePath: string) => {
+      if (!filePath) {
         setShapes([])
         setPlaceholders([])
         setTemplateLoaded(false)
+        return
       }
-    } finally {
-      setIsLoadingShapes(false)
-      setIsLoadingPlaceholders(false)
-    }
-  }
+      setIsLoadingShapes(true)
+      setIsLoadingPlaceholders(true)
+      try {
+        const response = await backendApi.scanTemplate(filePath)
+        const data = response as backendApi.SlideScanTemplateSuccess
+        const mappedShapes = (data.Shapes ?? [])
+          .filter((shape) => shape.IsImage === true)
+          .map((shape) => ({
+            id: String(shape.Id),
+            name: shape.Name,
+            preview: shape.Data
+              ? `data:image/png;base64,${shape.Data}`
+              : getAssetPath('images', 'app-icon.png'),
+          }))
+        setShapes(mappedShapes)
+        lastLoadedTemplatePathRef.current = filePath
 
-  const loadDataAssets = async (filePath: string) => {
-    if (!filePath) {
-      setColumns([])
-      setSheetCount(0)
-      setTotalRows(0)
-      setDataLoaded(false)
-      return
-    }
+        const items = (data.Placeholders ?? [])
+          .map((item) => item.trim())
+          .filter((item) => item.length > 0)
+        const unique = Array.from(new Set(items))
+        unique.sort((a, b) => a.localeCompare(b))
+        setPlaceholders(unique)
+        setTemplateLoaded(true)
+      } catch (error) {
+        if (!isHydratingRef.current && filePath === pptxPathRef.current) {
+          notifyTemplateError(error)
+          setPptxPath('')
+          setShapes([])
+          setPlaceholders([])
+          setTemplateLoaded(false)
+        }
+      } finally {
+        setIsLoadingShapes(false)
+        setIsLoadingPlaceholders(false)
+      }
+    },
+    [notifyTemplateError],
+  )
 
-    setIsLoadingColumns(true)
-    try {
-      await backendApi.loadFile(filePath)
-      const allColumns = await backendApi.getAllColumns([filePath])
-      const workbookInfo = await backendApi.getWorkbookInfo(filePath)
-      const workbookData = workbookInfo as backendApi.SheetWorkbookGetInfoSuccess
-      const sheetsInfo = workbookData.Sheets ?? []
-      const rowsSum = sheetsInfo.reduce((acc, sheet) => acc + (sheet.RowCount ?? 0), 0)
-
-      setColumns(allColumns)
-      setSheetCount(sheetsInfo.length)
-      setTotalRows(rowsSum)
-      setDataLoaded(true)
-      lastLoadedDataPathRef.current = filePath
-    } catch (error) {
-      if (!isHydratingRef.current && filePath === dataPathRef.current) {
-        notifyDataError(error)
-        setDataPath('')
+  const loadDataAssets = useCallback(
+    async (filePath: string) => {
+      if (!filePath) {
         setColumns([])
         setSheetCount(0)
         setTotalRows(0)
         setDataLoaded(false)
+        return
       }
-    } finally {
-      setIsLoadingColumns(false)
-    }
-  }
+
+      setIsLoadingColumns(true)
+      try {
+        await backendApi.loadFile(filePath)
+        const allColumns = await backendApi.getAllColumns([filePath])
+        const workbookInfo = await backendApi.getWorkbookInfo(filePath)
+        const workbookData = workbookInfo as backendApi.SheetWorkbookGetInfoSuccess
+        const sheetsInfo = workbookData.Sheets ?? []
+        const rowsSum = sheetsInfo.reduce((acc, sheet) => acc + (sheet.RowCount ?? 0), 0)
+
+        setColumns(allColumns)
+        setSheetCount(sheetsInfo.length)
+        setTotalRows(rowsSum)
+        setDataLoaded(true)
+        lastLoadedDataPathRef.current = filePath
+      } catch (error) {
+        if (!isHydratingRef.current && filePath === dataPathRef.current) {
+          notifyDataError(error)
+          setDataPath('')
+          setColumns([])
+          setSheetCount(0)
+          setTotalRows(0)
+          setDataLoaded(false)
+        }
+      } finally {
+        setIsLoadingColumns(false)
+      }
+    },
+    [notifyDataError],
+  )
 
   useEffect(() => {
     if (isHydratingRef.current) return
@@ -483,7 +498,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
     }, 400)
 
     return () => clearTimeout(timer)
-  }, [pptxPath])
+  }, [pptxPath, loadTemplateAssets, shapes.length, templateLoaded])
 
   useEffect(() => {
     if (isHydratingRef.current) return
@@ -509,7 +524,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
     }, 400)
 
     return () => clearTimeout(timer)
-  }, [dataPath])
+  }, [dataPath, dataLoaded, isLoadingColumns, loadDataAssets])
 
   // Resolve relative paths to absolute paths
   const resolvePath = (inputPath: string): string => {
@@ -627,7 +642,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
       try {
         await window.electronAPI.writeSettings(path, JSON.stringify(config, null, 2))
         showBanner('success', t('input.exportSuccess'))
-      } catch (error) {
+      } catch (_error) {
         showBanner('error', t('input.jsonError'))
       }
     }
@@ -678,7 +693,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
                 name: shape.Name,
                 preview: shape.Data
                   ? `data:image/png;base64,${shape.Data}`
-                  : window.getAssetPath('images', 'app-icon.png'),
+                  : getAssetPath('images', 'app-icon.png'),
               }))
             nextPlaceholders = (template.Placeholders ?? [])
               .map((item) => item.trim())
@@ -718,13 +733,13 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
             }),
           )
           const filteredText = importedText
-            .map((item: { placeholder: string; columns: any[] }) => ({
+            .map((item: { placeholder: string; columns: string[] }) => ({
               ...item,
               placeholder: item.placeholder.trim(),
               columns: item.columns.filter((col: string) => columnSet.has(col)),
             }))
             .filter(
-              (item: { placeholder: string; columns: string | any[] }) =>
+              (item: { placeholder: string; columns: string[] }) =>
                 item.placeholder && item.columns.length > 0 && placeholderSet.has(item.placeholder),
             )
 
@@ -744,13 +759,13 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
             }),
           )
           const filteredImages = importedImages
-            .map((item: { shapeId: string; columns: any[] }) => ({
+            .map((item: { shapeId: string; columns: string[] }) => ({
               ...item,
               shapeId: item.shapeId.trim(),
               columns: item.columns.filter((col: string) => columnSet.has(col)),
             }))
             .filter(
-              (item: { shapeId: string; columns: string | any[] }) =>
+              (item: { shapeId: string; columns: string[] }) =>
                 item.shapeId && item.columns.length > 0 && shapeIdSet.has(item.shapeId),
             )
 
@@ -764,7 +779,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
 
           showBanner('success', t('input.importSuccess'))
         }
-      } catch (error) {
+      } catch (_error) {
         showBanner('error', t('input.jsonError'))
       } finally {
         setIsLoadingShapes(false)
@@ -1032,7 +1047,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
           </button>
           <button className="btn btn-danger" onClick={clearAll} title={t('input.clearAll')}>
             <img
-              src={window.getAssetPath('images', 'remove.png')}
+              src={getAssetPath('images', 'remove.png')}
               alt={t('input.clearAll')}
               className="btn-icon"
             />{' '}
@@ -1127,7 +1142,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
                 aria-expanded={showTextConfigs}
               >
                 <img
-                  src={window.getAssetPath('images', 'chevron-down.png')}
+                  src={getAssetPath('images', 'chevron-down.png')}
                   alt=""
                   className={`panel-title-icon ${showTextConfigs ? 'expanded' : ''}`}
                 />
@@ -1197,7 +1212,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
                             title={t('replacement.delete')}
                           >
                             <img
-                              src={window.getAssetPath('images', 'remove.png')}
+                              src={getAssetPath('images', 'remove.png')}
                               alt="Delete"
                               className="delete-icon"
                             />
@@ -1224,7 +1239,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
                 aria-expanded={showImageConfigs}
               >
                 <img
-                  src={window.getAssetPath('images', 'chevron-down.png')}
+                  src={getAssetPath('images', 'chevron-down.png')}
                   alt=""
                   className={`panel-title-icon ${showImageConfigs ? 'expanded' : ''}`}
                 />
@@ -1358,7 +1373,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
                           title={t('replacement.delete')}
                         >
                           <img
-                            src={window.getAssetPath('images', 'remove.png')}
+                            src={getAssetPath('images', 'remove.png')}
                             alt="Delete"
                             className="delete-icon"
                           />
@@ -1431,7 +1446,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
               </button>
               <button className="shape-preview-btn" onClick={handleSavePreview}>
                 <img
-                  src={window.getAssetPath('images', 'download.png')}
+                  src={getAssetPath('images', 'download.png')}
                   alt=""
                   className="shape-preview-icon"
                 />
