@@ -19,6 +19,7 @@ declare global {
       hideToTray: () => Promise<void>
       setProgressBar: (value: number) => Promise<void>
       restartBackend: () => Promise<boolean>
+      logRenderer: (level: 'debug' | 'info' | 'warn' | 'error', message: string) => void
     }
     getAssetPath: (...p: string[]) => string
   }

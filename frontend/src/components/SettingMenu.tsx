@@ -174,10 +174,7 @@ const SettingMenu: React.FC = () => {
     const trimmed = url.trim()
     if (!trimmed) return ''
     const withScheme = /^https?:\/\//i.test(trimmed) ? trimmed : `http://${trimmed}`
-    const normalizedHost = withScheme.replace(
-      /^(https?:\/\/)localhost(?=[:/]|$)/i,
-      '$1127.0.0.1',
-    )
+    const normalizedHost = withScheme.replace(/^(https?:\/\/)localhost(?=[:/]|$)/i, '$1127.0.0.1')
     return normalizedHost.endsWith('/') ? normalizedHost.slice(0, -1) : normalizedHost
   }, [])
 
@@ -525,7 +522,10 @@ const SettingMenu: React.FC = () => {
           }`}
         >
           <span className="restart-banner__text">{t('settings.restartRequired')}</span>
-          <button className="btn btn-secondary restart-banner__action" onClick={handleRestartServer}>
+          <button
+            className="btn btn-secondary restart-banner__action"
+            onClick={handleRestartServer}
+          >
             {t('settings.restartServer')}
           </button>
         </div>
@@ -774,7 +774,9 @@ const SettingMenu: React.FC = () => {
                   <input
                     type="number"
                     className="setting-input"
-                    value={Number.isFinite(config.download.maxChunks) ? config.download.maxChunks : ''}
+                    value={
+                      Number.isFinite(config.download.maxChunks) ? config.download.maxChunks : ''
+                    }
                     disabled={!canEditConfig}
                     onChange={(e) =>
                       handleNumberChange(e.target.value, (next) =>

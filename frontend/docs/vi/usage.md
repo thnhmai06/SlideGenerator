@@ -18,8 +18,9 @@
 ## Kết nối backend
 
 1. Mở **Cài đặt**.
-2. Thiết lập URL backend nếu cần (mặc định là local).
+2. Cập nhật **Host** và **Cổng** nếu cần (mặc định là local).
 3. Lưu cấu hình.
+4. Khởi động lại backend khi được yêu cầu để áp dụng thay đổi.
 
 ## Tạo task
 

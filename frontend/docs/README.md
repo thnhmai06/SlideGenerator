@@ -22,8 +22,8 @@ SignalR hubs:
 - `/hubs/slide`: template scanning, job creation, job status/control, realtime updates
 - `/hubs/config`: server configuration (server, download, job, image)
 
-The default backend URL is `http://127.0.0.1:5000`.
-The current value is stored in `localStorage.backendUrl`.
+The default backend URL is `http://127.0.0.1:65500`.
+The current value is stored in `localStorage.slidegen.backend.url`.
 
 ## Input workflow
 
@@ -66,3 +66,11 @@ Edits are disabled while jobs are running or pending.
 
 - If SignalR negotiation fails, verify CORS and backend host/port.
 - If config fails to load, check the backend log and ensure `/hubs/config` is reachable.
+
+## Logs
+
+Runtime logs are stored under `frontend/logs/<timestamp>/`:
+
+- `process.log`: Electron main process logs.
+- `renderer.log`: renderer (DevTools) logs from the UI.
+- `backend.log`: backend logs when launched by Electron.

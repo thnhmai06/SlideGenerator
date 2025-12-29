@@ -20,8 +20,9 @@ Vietnamese version: [Vietnamese](../vi/usage.md)
 ## Connect to backend
 
 1. Open **Settings**.
-2. Set the backend URL if needed (default is local).
+2. Update **Host** and **Port** if needed (default is local).
 3. Save the configuration.
+4. Restart the backend when prompted to apply changes.
 
 ## Create a task
 
