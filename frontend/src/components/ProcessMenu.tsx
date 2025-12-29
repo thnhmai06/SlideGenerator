@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react'
 import { useApp } from '../contexts/useApp'
 import { useJobs } from '../contexts/useJobs'
 import { getBackendBaseUrl } from '../services/signalrClient'
-import { getAssetPath } from '../utils/assets'
+import { getAssetPath } from '../utils/paths'
 import '../styles/ProcessMenu.css'
 
 type LogEntry = {
