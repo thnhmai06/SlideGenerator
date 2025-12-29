@@ -33,6 +33,11 @@ public interface IJobCollection
     IReadOnlyDictionary<string, IJobGroup> GetAllGroups();
 
     /// <summary>
+    ///     Enumerates all groups in the collection.
+    /// </summary>
+    IEnumerable<IJobGroup> EnumerateGroups();
+
+    /// <summary>
     ///     Gets a sheet by id.
     /// </summary>
     IJobSheet? GetSheet(string sheetId);
@@ -41,6 +46,11 @@ public interface IJobCollection
     ///     Gets all sheets in the collection.
     /// </summary>
     IReadOnlyDictionary<string, IJobSheet> GetAllSheets();
+
+    /// <summary>
+    ///     Enumerates all sheets in the collection.
+    /// </summary>
+    IEnumerable<IJobSheet> EnumerateSheets();
 
     /// <summary>
     ///     Checks if the group id exists in the collection.

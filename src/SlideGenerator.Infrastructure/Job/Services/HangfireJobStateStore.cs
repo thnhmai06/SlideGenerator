@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Hangfire;
+using Hangfire.Storage;
 using SlideGenerator.Domain.Job.Enums;
 using SlideGenerator.Domain.Job.Interfaces;
 using SlideGenerator.Domain.Job.States;
@@ -119,18 +120,34 @@ public sealed class HangfireJobStateStore(JobStorage storage) : IJobStateStore
     /// <inheritdoc />
     public Task AppendJobLogAsync(JobLogEntry entry, CancellationToken cancellationToken)
     {
-        var key = JobLogKeyPrefix + entry.JobId;
-        var logs = GetJobLogsInternal(entry.JobId);
-        logs.Add(entry);
+        return AppendJobLogsAsync([entry], cancellationToken);
+    }
 
-        if (logs.Count > MaxLogEntries)
-            logs = logs.Skip(logs.Count - MaxLogEntries).ToList();
+    /// <inheritdoc />
+    public Task AppendJobLogsAsync(IReadOnlyCollection<JobLogEntry> entries, CancellationToken cancellationToken)
+    {
+        if (entries.Count == 0)
+            return Task.CompletedTask;
 
-        var json = JsonSerializer.Serialize(logs, SerializerOptions);
         using var connection = storage.GetConnection();
-        using var tx = connection.CreateWriteTransaction();
-        tx.SetRangeInHash(key, [new KeyValuePair<string, string>("data", json)]);
-        tx.Commit();
+        if (TryAppendListLogs(connection, entries))
+            return Task.CompletedTask;
+
+        foreach (var group in entries.GroupBy(entry => entry.JobId))
+        {
+            var key = JobLogKeyPrefix + group.Key;
+            var logs = GetLegacyJobLogs(connection, key);
+            logs.AddRange(group);
+
+            if (logs.Count > MaxLogEntries)
+                logs.RemoveRange(0, logs.Count - MaxLogEntries);
+
+            var json = JsonSerializer.Serialize(logs, SerializerOptions);
+            using var tx = connection.CreateWriteTransaction();
+            tx.SetRangeInHash(key, [new KeyValuePair<string, string>("data", json)]);
+            tx.Commit();
+        }
+
         return Task.CompletedTask;
     }
 
@@ -169,6 +186,7 @@ public sealed class HangfireJobStateStore(JobStorage storage) : IJobStateStore
         {
             tx.RemoveHash(SheetKeyPrefix + sheetId);
             tx.RemoveHash(JobLogKeyPrefix + sheetId);
+            tx.TrimList(JobLogKeyPrefix + sheetId, 1, 0);
             tx.RemoveFromSet(GroupSheetsSet(groupId), sheetId);
         }
 
@@ -187,6 +205,7 @@ public sealed class HangfireJobStateStore(JobStorage storage) : IJobStateStore
         using var tx = connection.CreateWriteTransaction();
         tx.RemoveHash(SheetKeyPrefix + sheetId);
         tx.RemoveHash(JobLogKeyPrefix + sheetId);
+        tx.TrimList(JobLogKeyPrefix + sheetId, 1, 0);
         if (state != null)
             tx.RemoveFromSet(GroupSheetsSet(state.GroupId), sheetId);
         tx.Commit();
@@ -195,7 +214,94 @@ public sealed class HangfireJobStateStore(JobStorage storage) : IJobStateStore
     private List<JobLogEntry> GetJobLogsInternal(string jobId)
     {
         using var connection = storage.GetConnection();
-        var entries = connection.GetAllEntriesFromHash(JobLogKeyPrefix + jobId);
+        var key = JobLogKeyPrefix + jobId;
+        if (TryReadListLogs(connection, key, out var logs))
+            return logs;
+
+        return GetLegacyJobLogs(connection, key);
+    }
+
+    private bool TryAppendListLogs(IStorageConnection connection, IReadOnlyCollection<JobLogEntry> entries)
+    {
+        if (connection is not JobStorageConnection jobConnection)
+            return false;
+
+        using var tx = connection.CreateWriteTransaction();
+        foreach (var group in entries.GroupBy(entry => entry.JobId))
+        {
+            var key = JobLogKeyPrefix + group.Key;
+            TryMigrateLegacyLogs(jobConnection, connection, tx, key);
+            foreach (var entry in group)
+                tx.InsertToList(key, JsonSerializer.Serialize(entry, SerializerOptions));
+            tx.TrimList(key, 0, MaxLogEntries - 1);
+        }
+
+        tx.Commit();
+        return true;
+    }
+
+    private void TryMigrateLegacyLogs(
+        JobStorageConnection jobConnection,
+        IStorageConnection connection,
+        IWriteOnlyTransaction tx,
+        string key)
+    {
+        try
+        {
+            if (jobConnection.GetListCount(key) > 0)
+                return;
+        }
+        catch (NotSupportedException)
+        {
+            return;
+        }
+
+        var legacyEntries = GetLegacyJobLogs(connection, key);
+        if (legacyEntries.Count == 0)
+            return;
+
+        foreach (var legacyEntry in legacyEntries)
+            tx.InsertToList(key, JsonSerializer.Serialize(legacyEntry, SerializerOptions));
+
+        tx.RemoveHash(key);
+    }
+
+    private static bool TryReadListLogs(
+        IStorageConnection connection,
+        string key,
+        out List<JobLogEntry> logs)
+    {
+        logs = [];
+        if (connection is not JobStorageConnection jobConnection)
+            return false;
+
+        List<string> entries;
+        try
+        {
+            entries = jobConnection.GetRangeFromList(key, 0, MaxLogEntries - 1);
+        }
+        catch (NotSupportedException)
+        {
+            return false;
+        }
+
+        if (entries.Count == 0)
+            return false;
+
+        logs = new List<JobLogEntry>(entries.Count);
+        for (var i = entries.Count - 1; i >= 0; i--)
+        {
+            var log = JsonSerializer.Deserialize<JobLogEntry>(entries[i], SerializerOptions);
+            if (log != null)
+                logs.Add(log);
+        }
+
+        return true;
+    }
+
+    private static List<JobLogEntry> GetLegacyJobLogs(IStorageConnection connection, string key)
+    {
+        var entries = connection.GetAllEntriesFromHash(key);
         if (entries == null || !entries.TryGetValue("data", out var json))
             return [];
 

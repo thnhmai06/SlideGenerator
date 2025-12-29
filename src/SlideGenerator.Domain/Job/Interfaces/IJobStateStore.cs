@@ -43,6 +43,11 @@ public interface IJobStateStore
     Task AppendJobLogAsync(JobLogEntry entry, CancellationToken cancellationToken);
 
     /// <summary>
+    ///     Appends multiple log entries for a job.
+    /// </summary>
+    Task AppendJobLogsAsync(IReadOnlyCollection<JobLogEntry> entries, CancellationToken cancellationToken);
+
+    /// <summary>
     ///     Gets all log entries for a job.
     /// </summary>
     Task<IReadOnlyList<JobLogEntry>> GetJobLogsAsync(string jobId, CancellationToken cancellationToken);

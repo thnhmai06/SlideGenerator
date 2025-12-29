@@ -92,4 +92,9 @@ public interface IActiveJobCollection : IJobCollection
     ///     Gets pending groups.
     /// </summary>
     IReadOnlyDictionary<string, IJobGroup> GetPendingGroups();
+
+    /// <summary>
+    ///     Gets a group by output folder path, if present.
+    /// </summary>
+    IJobGroup? GetGroupByOutputPath(string outputFolderPath);
 }

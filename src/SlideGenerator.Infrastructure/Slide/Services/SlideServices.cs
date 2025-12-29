@@ -1,3 +1,4 @@
+using System.Text;
 using DocumentFormat.OpenXml.Drawing;
 using DocumentFormat.OpenXml.Packaging;
 using Microsoft.Extensions.Logging;
@@ -309,10 +310,12 @@ public class SlideServices(
             var textBody = shape.TextBody;
             if (textBody is null) continue;
 
-            var textRuns = textBody.Descendants<Text>().ToList();
-            if (textRuns.Count == 0) continue;
+            var builder = new StringBuilder();
+            foreach (var run in textBody.Descendants<Text>())
+                builder.Append(run.Text);
+            if (builder.Length == 0) continue;
 
-            var original = string.Concat(textRuns.Select(run => run.Text));
+            var original = builder.ToString();
             if (string.IsNullOrEmpty(original) || !original.Contains("{{", StringComparison.Ordinal))
                 continue;
 

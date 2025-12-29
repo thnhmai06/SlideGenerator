@@ -15,9 +15,9 @@ using SlideGenerator.Application.Slide.DTOs.Responses.Successes;
 using SlideGenerator.Application.Slide.DTOs.Responses.Successes.Global;
 using SlideGenerator.Application.Slide.DTOs.Responses.Successes.Group;
 using SlideGenerator.Application.Slide.DTOs.Responses.Successes.Job;
+using SlideGenerator.Application.Utilities;
 using SlideGenerator.Domain.Job.Enums;
 using SlideGenerator.Domain.Job.Interfaces;
-using SlideGenerator.Presentation.Exceptions.Hubs;
 
 namespace SlideGenerator.Presentation.Hubs;
 
@@ -96,12 +96,6 @@ public class SlideHub(
         await Clients.Caller.SendAsync("ReceiveResponse", response);
     }
 
-    private T Deserialize<T>(JsonElement message)
-    {
-        return JsonSerializer.Deserialize<T>(message.GetRawText(), SerializerOptions)
-               ?? throw new InvalidRequestFormat(typeof(T).Name);
-    }
-
     private SlideScanShapesSuccess ExecuteScanShapes(SlideScanShapes request)
     {
         var added = slideTemplateManager.AddTemplate(request.FilePath);
@@ -176,9 +170,10 @@ public class SlideHub(
         var group = jobManager.Active.CreateGroup(request);
         jobManager.Active.StartGroup(group.Id);
 
-        var jobIds = group.Sheets.ToDictionary(
-            kv => kv.Value.SheetName,
-            kv => kv.Key);
+        var sheets = group.Sheets;
+        var jobIds = new Dictionary<string, string>(sheets.Count);
+        foreach (var kv in sheets)
+            jobIds.Add(kv.Value.SheetName, kv.Key);
 
         return new SlideGroupCreateSuccess(group.Id, group.OutputFolder.FullName, jobIds);
     }
@@ -188,9 +183,10 @@ public class SlideHub(
         var group = ResolveGroup(request.GroupId, request.GetOutputPath())
                     ?? throw new InvalidOperationException("Group not found");
 
-        var jobs = group.Sheets.ToDictionary(
-            kv => kv.Key,
-            kv => new JobStatusInfo(
+        var sheets = group.Sheets;
+        var jobs = new Dictionary<string, JobStatusInfo>(sheets.Count);
+        foreach (var kv in sheets)
+            jobs.Add(kv.Key, new JobStatusInfo(
                 kv.Key,
                 kv.Value.SheetName,
                 kv.Value.Status,
@@ -282,22 +278,22 @@ public class SlideHub(
     {
         var logs = jobStateStore.GetJobLogsAsync(request.JobId, CancellationToken.None)
             .GetAwaiter().GetResult();
-        var entries = logs.Select(log => new JobLogEntryDto(
+        var entries = new List<JobLogEntryDto>(logs.Count);
+        foreach (var log in logs)
+            entries.Add(new JobLogEntryDto(
                 log.Level,
                 log.Message,
                 log.Timestamp,
-                log.Data))
-            .ToList();
+                log.Data));
         return new SlideJobLogsSuccess(request.JobId, entries);
     }
 
     private SlideGlobalControlSuccess ExecuteGlobalControl(SlideGlobalControl request)
     {
-        var groups = jobManager.GetAllGroups();
         var affectedGroups = 0;
         var affectedJobs = 0;
 
-        foreach (var group in groups.Values)
+        foreach (var group in jobManager.Active.EnumerateGroups())
         {
             var isActive = group.Status is GroupStatus.Pending or GroupStatus.Running or GroupStatus.Paused;
             if (!isActive) continue;
@@ -327,19 +323,13 @@ public class SlideHub(
 
     private SlideGlobalGetGroupsSuccess ExecuteGetAllGroups()
     {
-        var groups = jobManager.GetAllGroups()
-            .Select(kv => new GroupSummary(
-                kv.Key,
-                kv.Value.Workbook.FilePath,
-                kv.Value.Status,
-                kv.Value.Progress,
-                kv.Value.SheetCount,
-                kv.Value.Sheets.Count(j => j.Value.Status == SheetJobStatus.Completed),
-                kv.Value.ErrorCount,
-                kv.Value.OutputFolder.FullName))
-            .ToList();
+        var summaries = new List<GroupSummary>(jobManager.Active.GroupCount + jobManager.Completed.GroupCount);
+        foreach (var group in jobManager.Active.EnumerateGroups())
+            summaries.Add(BuildGroupSummary(group));
+        foreach (var group in jobManager.Completed.EnumerateGroups())
+            summaries.Add(BuildGroupSummary(group));
 
-        return new SlideGlobalGetGroupsSuccess(groups);
+        return new SlideGlobalGetGroupsSuccess(summaries);
     }
 
     private IJobGroup? ResolveGroup(string? groupId, string? outputPath)
@@ -350,22 +340,25 @@ public class SlideHub(
         if (string.IsNullOrWhiteSpace(outputPath))
             return null;
 
-        var normalizedPath = NormalizeOutputFolderPath(outputPath);
-        return jobManager.GetAllGroups().Values.FirstOrDefault(group =>
+        var activeGroup = jobManager.Active.GetGroupByOutputPath(outputPath);
+        if (activeGroup != null)
+            return activeGroup;
+
+        var normalizedPath = OutputPathUtils.NormalizeOutputFolderPath(outputPath);
+        return jobManager.Completed.EnumerateGroups().FirstOrDefault(group =>
             string.Equals(group.OutputFolder.FullName, normalizedPath, StringComparison.OrdinalIgnoreCase));
     }
 
-    private static string NormalizeOutputFolderPath(string outputPath)
+    private static GroupSummary BuildGroupSummary(IJobGroup group)
     {
-        var fullPath = Path.GetFullPath(outputPath);
-        if (Path.HasExtension(fullPath) &&
-            string.Equals(Path.GetExtension(fullPath), ".pptx", StringComparison.OrdinalIgnoreCase))
-        {
-            var directory = Path.GetDirectoryName(fullPath);
-            if (!string.IsNullOrWhiteSpace(directory))
-                return directory;
-        }
-
-        return fullPath;
+        return new GroupSummary(
+            group.Id,
+            group.Workbook.FilePath,
+            group.Status,
+            group.Progress,
+            group.SheetCount,
+            group.Sheets.Count(j => j.Value.Status == SheetJobStatus.Completed),
+            group.ErrorCount,
+            group.OutputFolder.FullName);
     }
 }
