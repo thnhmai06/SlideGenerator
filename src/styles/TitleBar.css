@@ -65,7 +65,9 @@
   height: 14px;
   object-fit: contain;
   filter: brightness(0) invert(1);
-  transition: filter var(--transition-fast), opacity var(--transition-fast);
+  transition:
+    filter var(--transition-fast),
+    opacity var(--transition-fast);
   opacity: 0.8;
 }
 

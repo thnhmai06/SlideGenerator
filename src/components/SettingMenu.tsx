@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react'
-import { useApp } from '../contexts/AppContext'
-import { useJobs } from '../contexts/JobContext'
+import React, { useEffect, useState, useCallback } from 'react'
+import { useApp } from '../contexts/useApp'
+import { useJobs } from '../contexts/useJobs'
 import * as backendApi from '../services/backendApi'
 import '../styles/SettingMenu.css'
 
@@ -40,6 +40,31 @@ interface ConfigState {
   }
 }
 
+const getErrorDetail = (error: unknown): string => {
+  if (error instanceof Error && error.message) return error.message
+  if (typeof error === 'string') return error
+  if (error && typeof error === 'object' && 'message' in error) {
+    const value = (error as { message?: string }).message
+    if (value) return value
+  }
+  return ''
+}
+
+const getCaseInsensitive = <T extends Record<string, unknown>>(
+  obj: T | null | undefined,
+  key: string,
+) => {
+  if (!obj) return undefined
+  if (key in obj) return obj[key]
+  const lowered = key.toLowerCase()
+  for (const [entryKey, value] of Object.entries(obj)) {
+    if (entryKey.toLowerCase() === lowered) {
+      return value
+    }
+  }
+  return undefined
+}
+
 const SettingMenu: React.FC = () => {
   const {
     theme,
@@ -64,27 +89,20 @@ const SettingMenu: React.FC = () => {
   } | null>(null)
   const [restartRequired, setRestartRequired] = useState(false)
 
-  const getErrorDetail = (error: unknown): string => {
-    if (error instanceof Error && error.message) return error.message
-    if (typeof error === 'string') return error
-    if (error && typeof error === 'object' && 'message' in error) {
-      const value = (error as { message?: string }).message
-      if (value) return value
-    }
-    return ''
-  }
+  const formatErrorMessage = useCallback(
+    (key: string, error: unknown) => {
+      const detail = getErrorDetail(error)
+      return detail ? `${t(key)}: ${detail}` : t(key)
+    },
+    [t],
+  )
 
-  const formatErrorMessage = (key: string, error: unknown) => {
-    const detail = getErrorDetail(error)
-    return detail ? `${t(key)}: ${detail}` : t(key)
-  }
-
-  const showMessage = (type: 'success' | 'error' | 'warning', text: string) => {
+  const showMessage = useCallback((type: 'success' | 'error' | 'warning', text: string) => {
     setMessage({ type, text })
     setTimeout(() => setMessage(null), 5000)
-  }
+  }, [])
 
-  const storeBackendUrl = (host: string, port: number) => {
+  const storeBackendUrl = useCallback((host: string, port: number) => {
     if (!host || !port) return
     const trimmedHost = host.trim()
     if (!trimmedHost) return
@@ -98,24 +116,9 @@ const SettingMenu: React.FC = () => {
     const hasPort = /:\d+$/.test(normalizedBase)
     const url = hasPort ? normalizedBase : `${normalizedBase}:${port}`
     localStorage.setItem('slidegen.backend.url', url)
-  }
+  }, [])
 
-  const getCaseInsensitive = <T extends Record<string, unknown>>(
-    obj: T | null | undefined,
-    key: string,
-  ) => {
-    if (!obj) return undefined
-    if (key in obj) return obj[key]
-    const lowered = key.toLowerCase()
-    for (const [entryKey, value] of Object.entries(obj)) {
-      if (entryKey.toLowerCase() === lowered) {
-        return value
-      }
-    }
-    return undefined
-  }
-
-  const loadConfig = async () => {
+  const loadConfig = useCallback(async () => {
     try {
       setLoading(true)
       const response = await backendApi.getConfig()
@@ -213,11 +216,11 @@ const SettingMenu: React.FC = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [formatErrorMessage, showMessage, storeBackendUrl])
 
   useEffect(() => {
     loadConfig().catch(() => undefined)
-  }, [])
+  }, [loadConfig])
 
   const hasServerChanged = (server: ConfigState['server']) => {
     if (!initialServer) return false

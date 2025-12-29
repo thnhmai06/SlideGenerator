@@ -1,8 +1,7 @@
-const getAssetPath = (...p: string[]) =>
-  (window as any).getAssetPath ? (window as any).getAssetPath(...p) : `assets/${p.join('/')}`
 import React, { useMemo, useState } from 'react'
-import { useApp } from '../contexts/AppContext'
-import { useJobs } from '../contexts/JobContext'
+import { useApp } from '../contexts/useApp'
+import { useJobs } from '../contexts/useJobs'
+import { getAssetPath } from '../utils/assets'
 import '../styles/ResultMenu.css'
 
 type LogEntry = {
@@ -128,6 +127,20 @@ const ResultMenu: React.FC = () => {
     return groups
   }
 
+  const summarizeSheets = (sheets: Array<{ status: string; progress: number }>) => {
+    let completed = 0
+    let failed = 0
+    let totalProgress = 0
+
+    sheets.forEach((sheet) => {
+      if (sheet.status === 'Completed') completed += 1
+      if (sheet.status === 'Failed' || sheet.status === 'Cancelled') failed += 1
+      totalProgress += sheet.progress
+    })
+
+    return { completed, failed, totalProgress }
+  }
+
   const toggleRowGroup = (key: string) => {
     setCollapsedRowGroups((prev) => {
       const current = prev[key] ?? true
@@ -166,13 +179,8 @@ const ResultMenu: React.FC = () => {
           <div className="output-list">
             {completedGroups.map((group) => {
               const sheets = Object.values(group.sheets)
-              const completed = sheets.filter((sheet) => sheet.status === 'Completed').length
-              const failed = sheets.filter((sheet) =>
-                ['Failed', 'Cancelled'].includes(sheet.status),
-              ).length
-              const groupProgress = sheets.length
-                ? sheets.reduce((sum, sheet) => sum + sheet.progress, 0) / sheets.length
-                : group.progress
+              const { completed, failed, totalProgress } = summarizeSheets(sheets)
+              const groupProgress = sheets.length ? totalProgress / sheets.length : group.progress
               const groupName = deriveGroupName(group.workbookPath, group.id)
               const showDetails = expandedGroups[group.id] ?? false
 
@@ -257,7 +265,7 @@ const ResultMenu: React.FC = () => {
                           sheet.status === 'Failed' || sheet.status === 'Cancelled'
                             ? Math.max(sheet.totalRows - completedSlides, 0)
                             : 0
-                        const logGroups = groupLogsByRow(sheet.logs as LogEntry[])
+                        const logGroups = showLog ? groupLogsByRow(sheet.logs as LogEntry[]) : []
 
                         return (
                           <div key={sheet.id} className="file-item">

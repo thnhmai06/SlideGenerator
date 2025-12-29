@@ -7,11 +7,11 @@ import * as backendApi from '../../services/backendApi'
 const createGroup = vi.fn()
 const tMock = (key: string) => key
 
-vi.mock('../../contexts/AppContext', () => ({
+vi.mock('../../contexts/useApp', () => ({
   useApp: () => ({ t: tMock }),
 }))
 
-vi.mock('../../contexts/JobContext', () => ({
+vi.mock('../../contexts/useJobs', () => ({
   useJobs: () => ({ createGroup }),
 }))
 

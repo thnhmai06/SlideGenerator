@@ -7,11 +7,11 @@ const removeSheet = vi.fn()
 const removeGroup = vi.fn()
 const exportGroupConfig = vi.fn()
 
-vi.mock('../../contexts/AppContext', () => ({
+vi.mock('../../contexts/useApp', () => ({
   useApp: () => ({ t: (key: string) => key }),
 }))
 
-vi.mock('../../contexts/JobContext', () => ({
+vi.mock('../../contexts/useJobs', () => ({
   useJobs: () => ({
     groups: [
       {

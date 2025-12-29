@@ -1,7 +1,6 @@
 import React from 'react'
-const getAssetPath = (...p: string[]) =>
-  (window as any).getAssetPath ? (window as any).getAssetPath(...p) : `assets/${p.join('/')}`
-import { useApp } from '../contexts/AppContext'
+import { useApp } from '../contexts/useApp'
+import { getAssetPath } from '../utils/assets'
 import '../styles/TitleBar.css'
 
 const TitleBar: React.FC = () => {

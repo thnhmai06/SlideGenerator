@@ -1,5 +1,6 @@
 import React from 'react'
-import { useApp } from '../contexts/AppContext'
+import { useApp } from '../contexts/useApp'
+import { getAssetPath } from '../utils/assets'
 import '../styles/AboutMenu.css'
 
 const AboutMenu: React.FC = () => {
@@ -21,12 +22,12 @@ const AboutMenu: React.FC = () => {
       <div className="about-content">
         <div className="about-hero-gifs">
           <img
-            src={window.getAssetPath('images', 'march-7th-dance.gif')}
+            src={getAssetPath('images', 'march-7th-dance.gif')}
             alt=""
             className="about-hero-gif"
           />
           <img
-            src={window.getAssetPath('images', 'evernight-dance.gif')}
+            src={getAssetPath('images', 'evernight-dance.gif')}
             alt=""
             className="about-hero-gif"
           />
@@ -68,7 +69,7 @@ const AboutMenu: React.FC = () => {
         <div className="about-links">
           <button className="link-btn" onClick={handleOpenGithub}>
             <img
-              src={window.getAssetPath('images', 'github-logo.png')}
+              src={getAssetPath('images', 'github-logo.png')}
               alt="GitHub"
               className="link-icon"
             />

@@ -338,7 +338,7 @@ ipcMain.handle('settings:read', async (_, filename: string) => {
       : path.join(app.getPath('userData'), filename)
     const data = await fs.readFile(settingsPath, 'utf-8')
     return data
-  } catch (error) {
+  } catch (_error) {
     // File doesn't exist or can't be read, return null
     return null
   }

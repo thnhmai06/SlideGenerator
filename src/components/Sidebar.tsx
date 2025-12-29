@@ -1,7 +1,6 @@
-const getAssetPath = (...p: string[]) =>
-  (window as any).getAssetPath ? (window as any).getAssetPath(...p) : `assets/${p.join('/')}`
 import React from 'react'
-import { useApp } from '../contexts/AppContext'
+import { useApp } from '../contexts/useApp'
+import { getAssetPath } from '../utils/assets'
 import '../styles/Sidebar.css'
 
 type MenuType = 'input' | 'setting' | 'download' | 'process' | 'about'
