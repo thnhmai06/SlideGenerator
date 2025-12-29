@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { useApp } from '../contexts/useApp'
 import { useJobs } from '../contexts/useJobs'
 import * as backendApi from '../services/backendApi'
@@ -88,6 +88,12 @@ const SettingMenu: React.FC = () => {
     text: string
   } | null>(null)
   const [restartRequired, setRestartRequired] = useState(false)
+  const [showRestartBanner, setShowRestartBanner] = useState(false)
+  const [isRestartBannerClosing, setIsRestartBannerClosing] = useState(false)
+  const [showStatusBanner, setShowStatusBanner] = useState(false)
+  const [isStatusBannerClosing, setIsStatusBannerClosing] = useState(false)
+  const statusHideTimeoutRef = useRef<number | null>(null)
+  const statusCloseTimeoutRef = useRef<number | null>(null)
 
   const formatErrorMessage = useCallback(
     (key: string, error: unknown) => {
@@ -97,12 +103,59 @@ const SettingMenu: React.FC = () => {
     [t],
   )
 
-  const showMessage = useCallback((type: 'success' | 'error' | 'warning', text: string) => {
-    setMessage({ type, text })
-    setTimeout(() => setMessage(null), 5000)
+  const clearStatusTimeouts = useCallback(() => {
+    if (statusHideTimeoutRef.current) {
+      window.clearTimeout(statusHideTimeoutRef.current)
+      statusHideTimeoutRef.current = null
+    }
+    if (statusCloseTimeoutRef.current) {
+      window.clearTimeout(statusCloseTimeoutRef.current)
+      statusCloseTimeoutRef.current = null
+    }
   }, [])
 
-  const storeBackendUrl = useCallback((host: string, port: number) => {
+  const hideStatusBanner = useCallback(() => {
+    clearStatusTimeouts()
+    setIsStatusBannerClosing(true)
+    statusCloseTimeoutRef.current = window.setTimeout(() => {
+      setShowStatusBanner(false)
+      setIsStatusBannerClosing(false)
+      setMessage(null)
+      statusCloseTimeoutRef.current = null
+    }, 180)
+  }, [clearStatusTimeouts])
+
+  const showMessage = useCallback(
+    (type: 'success' | 'error' | 'warning', text: string) => {
+      clearStatusTimeouts()
+      setMessage({ type, text })
+      setShowStatusBanner(true)
+      setIsStatusBannerClosing(false)
+      statusHideTimeoutRef.current = window.setTimeout(() => {
+        hideStatusBanner()
+        statusHideTimeoutRef.current = null
+      }, 5000)
+    },
+    [clearStatusTimeouts, hideStatusBanner],
+  )
+
+  const handleNumberChange = useCallback((value: string, apply: (next: number) => void) => {
+    const next = value === '' ? Number.NaN : Number(value)
+    apply(next)
+  }, [])
+
+  const handleNumberBlur = useCallback((value: string, apply: (next: number) => void) => {
+    if (value === '') apply(0)
+  }, [])
+
+  const handleNumberFocus = useCallback((event: React.FocusEvent<HTMLInputElement>) => {
+    event.currentTarget.select()
+  }, [])
+
+  const PENDING_BACKEND_URL_KEY = 'slidegen.backend.url.pending'
+  const PENDING_BACKEND_URL_SESSION_KEY = 'slidegen.backend.url.pending.defer'
+
+  const buildBackendUrl = useCallback((host: string, port: number) => {
     if (!host || !port) return
     const trimmedHost = host.trim()
     if (!trimmedHost) return
@@ -114,9 +167,47 @@ const SettingMenu: React.FC = () => {
       ? normalizedHost.slice(0, -1)
       : normalizedHost
     const hasPort = /:\d+$/.test(normalizedBase)
-    const url = hasPort ? normalizedBase : `${normalizedBase}:${port}`
-    localStorage.setItem('slidegen.backend.url', url)
+    return hasPort ? normalizedBase : `${normalizedBase}:${port}`
   }, [])
+
+  const normalizeBackendUrl = useCallback((url: string) => {
+    const trimmed = url.trim()
+    if (!trimmed) return ''
+    const withScheme = /^https?:\/\//i.test(trimmed) ? trimmed : `http://${trimmed}`
+    const normalizedHost = withScheme.replace(
+      /^(https?:\/\/)localhost(?=[:/]|$)/i,
+      '$1127.0.0.1',
+    )
+    return normalizedHost.endsWith('/') ? normalizedHost.slice(0, -1) : normalizedHost
+  }, [])
+
+  const storeBackendUrl = useCallback(
+    (host: string, port: number) => {
+      const url = buildBackendUrl(host, port)
+      if (!url) return
+      localStorage.setItem('slidegen.backend.url', url)
+    },
+    [buildBackendUrl],
+  )
+
+  const storePendingBackendUrl = useCallback(
+    (host: string, port: number) => {
+      const url = buildBackendUrl(host, port)
+      if (!url) return
+      localStorage.setItem(PENDING_BACKEND_URL_KEY, url)
+      sessionStorage.setItem(PENDING_BACKEND_URL_SESSION_KEY, '1')
+    },
+    [PENDING_BACKEND_URL_KEY, PENDING_BACKEND_URL_SESSION_KEY, buildBackendUrl],
+  )
+
+  const clearPendingBackendUrl = useCallback(() => {
+    localStorage.removeItem(PENDING_BACKEND_URL_KEY)
+    sessionStorage.removeItem(PENDING_BACKEND_URL_SESSION_KEY)
+  }, [PENDING_BACKEND_URL_KEY, PENDING_BACKEND_URL_SESSION_KEY])
+
+  const hasPendingBackendUrl = useCallback(() => {
+    return Boolean(localStorage.getItem(PENDING_BACKEND_URL_KEY))
+  }, [PENDING_BACKEND_URL_KEY])
 
   const loadConfig = useCallback(async () => {
     try {
@@ -208,19 +299,38 @@ const SettingMenu: React.FC = () => {
         },
       })
       setInitialServer({ host, port, debug })
-      setRestartRequired(false)
-      storeBackendUrl(host, port)
+      const pendingRestart = hasPendingBackendUrl()
+      setRestartRequired(pendingRestart)
+      if (!pendingRestart) {
+        storeBackendUrl(host, port)
+      }
     } catch (error) {
       console.error('Failed to load config:', error)
       showMessage('error', formatErrorMessage('settings.loadError', error))
     } finally {
       setLoading(false)
     }
-  }, [formatErrorMessage, showMessage, storeBackendUrl])
+  }, [formatErrorMessage, hasPendingBackendUrl, showMessage, storeBackendUrl])
 
   useEffect(() => {
     loadConfig().catch(() => undefined)
   }, [loadConfig])
+
+  useEffect(() => {
+    if (restartRequired) {
+      setShowRestartBanner(true)
+      setIsRestartBannerClosing(false)
+      return undefined
+    }
+
+    if (!showRestartBanner) return undefined
+    setIsRestartBannerClosing(true)
+    const timeoutId = window.setTimeout(() => {
+      setShowRestartBanner(false)
+      setIsRestartBannerClosing(false)
+    }, 180)
+    return () => window.clearTimeout(timeoutId)
+  }, [restartRequired, showRestartBanner])
 
   const hasServerChanged = (server: ConfigState['server']) => {
     if (!initialServer) return false
@@ -235,50 +345,61 @@ const SettingMenu: React.FC = () => {
     if (!config) return
     try {
       setSaving(true)
-      const requiresRestart = hasServerChanged(config.server)
+      let pendingRestart = hasPendingBackendUrl()
+      const serverChanged = hasServerChanged(config.server)
+      const desiredUrl = buildBackendUrl(config.server.host, config.server.port) ?? ''
+      const currentUrl = normalizeBackendUrl(localStorage.getItem('slidegen.backend.url') ?? '')
+      if (pendingRestart && desiredUrl && desiredUrl === currentUrl) {
+        clearPendingBackendUrl()
+        pendingRestart = false
+      }
+      const requiresRestart = pendingRestart || serverChanged
+      const normalizeNumber = (value: number) => (Number.isFinite(value) ? value : 0)
       await backendApi.updateConfig({
         Server: {
           Host: config.server.host,
-          Port: config.server.port,
+          Port: normalizeNumber(config.server.port),
           Debug: config.server.debug,
         },
         Download: {
-          MaxChunks: config.download.maxChunks,
-          LimitBytesPerSecond: config.download.limitBytesPerSecond,
+          MaxChunks: normalizeNumber(config.download.maxChunks),
+          LimitBytesPerSecond: normalizeNumber(config.download.limitBytesPerSecond),
           SaveFolder: config.download.saveFolder,
           Retry: {
-            Timeout: config.download.retryTimeout,
-            MaxRetries: config.download.maxRetries,
+            Timeout: normalizeNumber(config.download.retryTimeout),
+            MaxRetries: normalizeNumber(config.download.maxRetries),
           },
         },
         Job: {
-          MaxConcurrentJobs: config.job.maxConcurrentJobs,
+          MaxConcurrentJobs: normalizeNumber(config.job.maxConcurrentJobs),
         },
         Image: {
           Face: {
-            Confidence: config.image.face.confidence,
-            PaddingTop: config.image.face.paddingTop,
-            PaddingBottom: config.image.face.paddingBottom,
-            PaddingLeft: config.image.face.paddingLeft,
-            PaddingRight: config.image.face.paddingRight,
+            Confidence: normalizeNumber(config.image.face.confidence),
+            PaddingTop: normalizeNumber(config.image.face.paddingTop),
+            PaddingBottom: normalizeNumber(config.image.face.paddingBottom),
+            PaddingLeft: normalizeNumber(config.image.face.paddingLeft),
+            PaddingRight: normalizeNumber(config.image.face.paddingRight),
             UnionAll: config.image.face.unionAll,
           },
           Saliency: {
-            PaddingTop: config.image.saliency.paddingTop,
-            PaddingBottom: config.image.saliency.paddingBottom,
-            PaddingLeft: config.image.saliency.paddingLeft,
-            PaddingRight: config.image.saliency.paddingRight,
+            PaddingTop: normalizeNumber(config.image.saliency.paddingTop),
+            PaddingBottom: normalizeNumber(config.image.saliency.paddingBottom),
+            PaddingLeft: normalizeNumber(config.image.saliency.paddingLeft),
+            PaddingRight: normalizeNumber(config.image.saliency.paddingRight),
           },
         },
       })
-      setInitialServer({ ...config.server })
-      setRestartRequired(requiresRestart)
-      storeBackendUrl(config.server.host, config.server.port)
-      if (requiresRestart) {
-        showMessage('warning', t('settings.restartRequired'))
-      } else {
-        showMessage('success', t('settings.saveSuccess'))
+      if (!serverChanged) {
+        setInitialServer({ ...config.server })
       }
+      setRestartRequired(requiresRestart)
+      if (serverChanged) {
+        storePendingBackendUrl(config.server.host, config.server.port)
+      } else if (!pendingRestart) {
+        storeBackendUrl(config.server.host, config.server.port)
+      }
+      showMessage('success', t('settings.saveSuccess'))
     } catch (error) {
       console.error('Failed to save config:', error)
       showMessage('error', formatErrorMessage('settings.saveError', error))
@@ -325,6 +446,11 @@ const SettingMenu: React.FC = () => {
       const restarted = await window.electronAPI.restartBackend()
       if (restarted) {
         setRestartRequired(false)
+        if (config) {
+          storeBackendUrl(config.server.host, config.server.port)
+          clearPendingBackendUrl()
+          await loadConfig()
+        }
         showMessage('success', t('settings.restartSuccess'))
       } else {
         showMessage('error', t('settings.restartError'))
@@ -392,7 +518,27 @@ const SettingMenu: React.FC = () => {
     <div className="setting-menu">
       <h1 className="menu-title">{t('settings.title')}</h1>
 
-      {message && <div className={`message message-${message.type}`}>{message.text}</div>}
+      {showRestartBanner && (
+        <div
+          className={`message message-warning restart-banner${
+            isRestartBannerClosing ? ' restart-banner--closing' : ''
+          }`}
+        >
+          <span className="restart-banner__text">{t('settings.restartRequired')}</span>
+          <button className="btn btn-secondary restart-banner__action" onClick={handleRestartServer}>
+            {t('settings.restartServer')}
+          </button>
+        </div>
+      )}
+      {message && showStatusBanner && (
+        <div
+          className={`message message-${message.type} status-banner${
+            isStatusBannerClosing ? ' status-banner--closing' : ''
+          }`}
+        >
+          {message.text}
+        </div>
+      )}
       {activeTab !== 'appearance' && hasActiveJobs && (
         <div className="message message-warning">{t('settings.locked')}</div>
       )}
@@ -526,14 +672,25 @@ const SettingMenu: React.FC = () => {
                   <input
                     type="number"
                     className="setting-input"
-                    value={config.server.port}
+                    value={Number.isFinite(config.server.port) ? config.server.port : ''}
                     disabled={!canEditConfig}
                     onChange={(e) =>
-                      setConfig({
-                        ...config,
-                        server: { ...config.server, port: Number(e.target.value) },
-                      })
+                      handleNumberChange(e.target.value, (next) =>
+                        setConfig({
+                          ...config,
+                          server: { ...config.server, port: next },
+                        }),
+                      )
                     }
+                    onBlur={(e) =>
+                      handleNumberBlur(e.target.value, (next) =>
+                        setConfig({
+                          ...config,
+                          server: { ...config.server, port: next },
+                        }),
+                      )
+                    }
+                    onFocus={handleNumberFocus}
                     min="1"
                     max="65535"
                   />
@@ -617,14 +774,25 @@ const SettingMenu: React.FC = () => {
                   <input
                     type="number"
                     className="setting-input"
-                    value={config.download.maxChunks}
+                    value={Number.isFinite(config.download.maxChunks) ? config.download.maxChunks : ''}
                     disabled={!canEditConfig}
                     onChange={(e) =>
-                      setConfig({
-                        ...config,
-                        download: { ...config.download, maxChunks: Number(e.target.value) },
-                      })
+                      handleNumberChange(e.target.value, (next) =>
+                        setConfig({
+                          ...config,
+                          download: { ...config.download, maxChunks: next },
+                        }),
+                      )
                     }
+                    onBlur={(e) =>
+                      handleNumberBlur(e.target.value, (next) =>
+                        setConfig({
+                          ...config,
+                          download: { ...config.download, maxChunks: next },
+                        }),
+                      )
+                    }
+                    onFocus={handleNumberFocus}
                     min="1"
                     max="128"
                   />
@@ -636,17 +804,35 @@ const SettingMenu: React.FC = () => {
                   <input
                     type="number"
                     className="setting-input"
-                    value={config.download.limitBytesPerSecond}
+                    value={
+                      Number.isFinite(config.download.limitBytesPerSecond)
+                        ? config.download.limitBytesPerSecond
+                        : ''
+                    }
                     disabled={!canEditConfig}
                     onChange={(e) =>
-                      setConfig({
-                        ...config,
-                        download: {
-                          ...config.download,
-                          limitBytesPerSecond: Number(e.target.value),
-                        },
-                      })
+                      handleNumberChange(e.target.value, (next) =>
+                        setConfig({
+                          ...config,
+                          download: {
+                            ...config.download,
+                            limitBytesPerSecond: next,
+                          },
+                        }),
+                      )
                     }
+                    onBlur={(e) =>
+                      handleNumberBlur(e.target.value, (next) =>
+                        setConfig({
+                          ...config,
+                          download: {
+                            ...config.download,
+                            limitBytesPerSecond: next,
+                          },
+                        }),
+                      )
+                    }
+                    onFocus={handleNumberFocus}
                     min="0"
                   />
                   <span className="setting-hint">{t('settings.speedLimitHint')}</span>
@@ -659,14 +845,29 @@ const SettingMenu: React.FC = () => {
                   <input
                     type="number"
                     className="setting-input"
-                    value={config.download.retryTimeout}
+                    value={
+                      Number.isFinite(config.download.retryTimeout)
+                        ? config.download.retryTimeout
+                        : ''
+                    }
                     disabled={!canEditConfig}
                     onChange={(e) =>
-                      setConfig({
-                        ...config,
-                        download: { ...config.download, retryTimeout: Number(e.target.value) },
-                      })
+                      handleNumberChange(e.target.value, (next) =>
+                        setConfig({
+                          ...config,
+                          download: { ...config.download, retryTimeout: next },
+                        }),
+                      )
                     }
+                    onBlur={(e) =>
+                      handleNumberBlur(e.target.value, (next) =>
+                        setConfig({
+                          ...config,
+                          download: { ...config.download, retryTimeout: next },
+                        }),
+                      )
+                    }
+                    onFocus={handleNumberFocus}
                     min="1"
                   />
                   <span className="setting-hint">{t('settings.retryTimeoutHint')}</span>
@@ -677,14 +878,27 @@ const SettingMenu: React.FC = () => {
                   <input
                     type="number"
                     className="setting-input"
-                    value={config.download.maxRetries}
+                    value={
+                      Number.isFinite(config.download.maxRetries) ? config.download.maxRetries : ''
+                    }
                     disabled={!canEditConfig}
                     onChange={(e) =>
-                      setConfig({
-                        ...config,
-                        download: { ...config.download, maxRetries: Number(e.target.value) },
-                      })
+                      handleNumberChange(e.target.value, (next) =>
+                        setConfig({
+                          ...config,
+                          download: { ...config.download, maxRetries: next },
+                        }),
+                      )
                     }
+                    onBlur={(e) =>
+                      handleNumberBlur(e.target.value, (next) =>
+                        setConfig({
+                          ...config,
+                          download: { ...config.download, maxRetries: next },
+                        }),
+                      )
+                    }
+                    onFocus={handleNumberFocus}
                     min="0"
                     max="10"
                   />
@@ -707,14 +921,27 @@ const SettingMenu: React.FC = () => {
               <input
                 type="number"
                 className="setting-input"
-                value={config.job.maxConcurrentJobs}
+                value={
+                  Number.isFinite(config.job.maxConcurrentJobs) ? config.job.maxConcurrentJobs : ''
+                }
                 disabled={!canEditConfig}
                 onChange={(e) =>
-                  setConfig({
-                    ...config,
-                    job: { maxConcurrentJobs: Number(e.target.value) },
-                  })
+                  handleNumberChange(e.target.value, (next) =>
+                    setConfig({
+                      ...config,
+                      job: { maxConcurrentJobs: next },
+                    }),
+                  )
                 }
+                onBlur={(e) =>
+                  handleNumberBlur(e.target.value, (next) =>
+                    setConfig({
+                      ...config,
+                      job: { maxConcurrentJobs: next },
+                    }),
+                  )
+                }
+                onFocus={handleNumberFocus}
                 min="1"
                 max="32"
               />
@@ -745,9 +972,23 @@ const SettingMenu: React.FC = () => {
                       <input
                         type="number"
                         className="setting-input"
-                        value={config.image.face.paddingTop}
+                        value={
+                          Number.isFinite(config.image.face.paddingTop)
+                            ? config.image.face.paddingTop
+                            : ''
+                        }
                         disabled={!canEditConfig}
-                        onChange={(e) => updateFace({ paddingTop: Number(e.target.value) })}
+                        onChange={(e) =>
+                          handleNumberChange(e.target.value, (next) =>
+                            updateFace({ paddingTop: next }),
+                          )
+                        }
+                        onBlur={(e) =>
+                          handleNumberBlur(e.target.value, (next) =>
+                            updateFace({ paddingTop: next }),
+                          )
+                        }
+                        onFocus={handleNumberFocus}
                         min="0"
                         max="1"
                         step="0.01"
@@ -759,9 +1000,23 @@ const SettingMenu: React.FC = () => {
                       <input
                         type="number"
                         className="setting-input"
-                        value={config.image.face.paddingLeft}
+                        value={
+                          Number.isFinite(config.image.face.paddingLeft)
+                            ? config.image.face.paddingLeft
+                            : ''
+                        }
                         disabled={!canEditConfig}
-                        onChange={(e) => updateFace({ paddingLeft: Number(e.target.value) })}
+                        onChange={(e) =>
+                          handleNumberChange(e.target.value, (next) =>
+                            updateFace({ paddingLeft: next }),
+                          )
+                        }
+                        onBlur={(e) =>
+                          handleNumberBlur(e.target.value, (next) =>
+                            updateFace({ paddingLeft: next }),
+                          )
+                        }
+                        onFocus={handleNumberFocus}
                         min="0"
                         max="1"
                         step="0.01"
@@ -789,9 +1044,23 @@ const SettingMenu: React.FC = () => {
                       <input
                         type="number"
                         className="setting-input"
-                        value={config.image.face.paddingRight}
+                        value={
+                          Number.isFinite(config.image.face.paddingRight)
+                            ? config.image.face.paddingRight
+                            : ''
+                        }
                         disabled={!canEditConfig}
-                        onChange={(e) => updateFace({ paddingRight: Number(e.target.value) })}
+                        onChange={(e) =>
+                          handleNumberChange(e.target.value, (next) =>
+                            updateFace({ paddingRight: next }),
+                          )
+                        }
+                        onBlur={(e) =>
+                          handleNumberBlur(e.target.value, (next) =>
+                            updateFace({ paddingRight: next }),
+                          )
+                        }
+                        onFocus={handleNumberFocus}
                         min="0"
                         max="1"
                         step="0.01"
@@ -803,9 +1072,23 @@ const SettingMenu: React.FC = () => {
                       <input
                         type="number"
                         className="setting-input"
-                        value={config.image.face.paddingBottom}
+                        value={
+                          Number.isFinite(config.image.face.paddingBottom)
+                            ? config.image.face.paddingBottom
+                            : ''
+                        }
                         disabled={!canEditConfig}
-                        onChange={(e) => updateFace({ paddingBottom: Number(e.target.value) })}
+                        onChange={(e) =>
+                          handleNumberChange(e.target.value, (next) =>
+                            updateFace({ paddingBottom: next }),
+                          )
+                        }
+                        onBlur={(e) =>
+                          handleNumberBlur(e.target.value, (next) =>
+                            updateFace({ paddingBottom: next }),
+                          )
+                        }
+                        onFocus={handleNumberFocus}
                         min="0"
                         max="1"
                         step="0.01"
@@ -819,9 +1102,23 @@ const SettingMenu: React.FC = () => {
                       <input
                         type="number"
                         className="setting-input"
-                        value={config.image.face.confidence}
+                        value={
+                          Number.isFinite(config.image.face.confidence)
+                            ? config.image.face.confidence
+                            : ''
+                        }
                         disabled={!canEditConfig}
-                        onChange={(e) => updateFace({ confidence: Number(e.target.value) })}
+                        onChange={(e) =>
+                          handleNumberChange(e.target.value, (next) =>
+                            updateFace({ confidence: next }),
+                          )
+                        }
+                        onBlur={(e) =>
+                          handleNumberBlur(e.target.value, (next) =>
+                            updateFace({ confidence: next }),
+                          )
+                        }
+                        onFocus={handleNumberFocus}
                         min="0"
                         max="1"
                         step="0.01"
@@ -862,9 +1159,23 @@ const SettingMenu: React.FC = () => {
                       <input
                         type="number"
                         className="setting-input"
-                        value={config.image.saliency.paddingTop}
+                        value={
+                          Number.isFinite(config.image.saliency.paddingTop)
+                            ? config.image.saliency.paddingTop
+                            : ''
+                        }
                         disabled={!canEditConfig}
-                        onChange={(e) => updateSaliency({ paddingTop: Number(e.target.value) })}
+                        onChange={(e) =>
+                          handleNumberChange(e.target.value, (next) =>
+                            updateSaliency({ paddingTop: next }),
+                          )
+                        }
+                        onBlur={(e) =>
+                          handleNumberBlur(e.target.value, (next) =>
+                            updateSaliency({ paddingTop: next }),
+                          )
+                        }
+                        onFocus={handleNumberFocus}
                         min="0"
                         max="1"
                         step="0.01"
@@ -876,9 +1187,23 @@ const SettingMenu: React.FC = () => {
                       <input
                         type="number"
                         className="setting-input"
-                        value={config.image.saliency.paddingLeft}
+                        value={
+                          Number.isFinite(config.image.saliency.paddingLeft)
+                            ? config.image.saliency.paddingLeft
+                            : ''
+                        }
                         disabled={!canEditConfig}
-                        onChange={(e) => updateSaliency({ paddingLeft: Number(e.target.value) })}
+                        onChange={(e) =>
+                          handleNumberChange(e.target.value, (next) =>
+                            updateSaliency({ paddingLeft: next }),
+                          )
+                        }
+                        onBlur={(e) =>
+                          handleNumberBlur(e.target.value, (next) =>
+                            updateSaliency({ paddingLeft: next }),
+                          )
+                        }
+                        onFocus={handleNumberFocus}
                         min="0"
                         max="1"
                         step="0.01"
@@ -906,9 +1231,23 @@ const SettingMenu: React.FC = () => {
                       <input
                         type="number"
                         className="setting-input"
-                        value={config.image.saliency.paddingRight}
+                        value={
+                          Number.isFinite(config.image.saliency.paddingRight)
+                            ? config.image.saliency.paddingRight
+                            : ''
+                        }
                         disabled={!canEditConfig}
-                        onChange={(e) => updateSaliency({ paddingRight: Number(e.target.value) })}
+                        onChange={(e) =>
+                          handleNumberChange(e.target.value, (next) =>
+                            updateSaliency({ paddingRight: next }),
+                          )
+                        }
+                        onBlur={(e) =>
+                          handleNumberBlur(e.target.value, (next) =>
+                            updateSaliency({ paddingRight: next }),
+                          )
+                        }
+                        onFocus={handleNumberFocus}
                         min="0"
                         max="1"
                         step="0.01"
@@ -920,9 +1259,23 @@ const SettingMenu: React.FC = () => {
                       <input
                         type="number"
                         className="setting-input"
-                        value={config.image.saliency.paddingBottom}
+                        value={
+                          Number.isFinite(config.image.saliency.paddingBottom)
+                            ? config.image.saliency.paddingBottom
+                            : ''
+                        }
                         disabled={!canEditConfig}
-                        onChange={(e) => updateSaliency({ paddingBottom: Number(e.target.value) })}
+                        onChange={(e) =>
+                          handleNumberChange(e.target.value, (next) =>
+                            updateSaliency({ paddingBottom: next }),
+                          )
+                        }
+                        onBlur={(e) =>
+                          handleNumberBlur(e.target.value, (next) =>
+                            updateSaliency({ paddingBottom: next }),
+                          )
+                        }
+                        onFocus={handleNumberFocus}
                         min="0"
                         max="1"
                         step="0.01"
@@ -942,11 +1295,6 @@ const SettingMenu: React.FC = () => {
           <button className="btn btn-primary" onClick={saveConfig} disabled={!isEditable || saving}>
             {saving ? t('settings.saving') : t('settings.save')}
           </button>
-          {restartRequired && (
-            <button className="btn btn-secondary" onClick={handleRestartServer}>
-              {t('settings.restartServer')}
-            </button>
-          )}
           <button className="btn btn-secondary" onClick={reloadConfig} disabled={!isEditable}>
             {t('settings.reload')}
           </button>
