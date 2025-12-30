@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import { useApp } from '../contexts/useApp'
 import { useJobs } from '../contexts/useJobs'
+import type { SheetJob } from '../contexts/JobContextBase'
 import { getBackendBaseUrl } from '../services/signalrClient'
 import { getAssetPath } from '../utils/paths'
 import '../styles/ProcessMenu.css'
@@ -18,6 +19,188 @@ type RowLogGroup = {
   row?: number
   status?: string
   entries: LogEntry[]
+}
+
+type SheetItemProps = {
+  sheet: SheetJob
+  showLog: boolean
+  logGroups: RowLogGroup[]
+  collapsedRowGroups: Record<string, boolean>
+  statusKey: (status: string) => string
+  progressColor: (status: string) => string
+  formatLogEntry: (entry: LogEntry) => string
+  onToggleLog: () => void
+  onToggleRowGroup: (key: string) => void
+  onSheetAction: () => void
+  onStopSheet: () => void
+  onCopyLogs: () => void
+  t: (key: string) => string
+}
+
+const getSheetStats = (sheet: SheetJob) => {
+  const completedSlides = Math.min(sheet.currentRow, sheet.totalRows)
+  const failedSlides =
+    sheet.status === 'Failed' || sheet.status === 'Cancelled'
+      ? Math.max(sheet.totalRows - completedSlides, 0)
+      : 0
+  const processingSlides =
+    sheet.status === 'Running'
+      ? Math.max(sheet.totalRows - completedSlides, 0)
+      : sheet.status === 'Pending'
+        ? sheet.totalRows
+        : 0
+  return { completedSlides, failedSlides, processingSlides }
+}
+
+const SheetItem: React.FC<SheetItemProps> = ({
+  sheet,
+  showLog,
+  logGroups,
+  collapsedRowGroups,
+  statusKey,
+  progressColor,
+  formatLogEntry,
+  onToggleLog,
+  onToggleRowGroup,
+  onSheetAction,
+  onStopSheet,
+  onCopyLogs,
+  t,
+}) => {
+  const { completedSlides, failedSlides, processingSlides } = getSheetStats(sheet)
+  const isPaused = sheet.status === 'Paused'
+  const canControl = ['Running', 'Paused', 'Pending'].includes(sheet.status)
+
+  return (
+    <div className="file-item">
+      <div className="file-header-clickable" onClick={onToggleLog}>
+        <span className="file-expand-icon">{showLog ? 'v' : '>'}</span>
+        <div className="file-info">
+          <div className="file-name-row">
+            <div className="file-name">{sheet.sheetName}</div>
+            <span className="file-job-id">
+              {sheet.hangfireJobId
+                ? `${t('process.hangfireId')}: ${sheet.hangfireJobId}`
+                : `${t('process.jobId')}: ${sheet.id}`}
+            </span>
+          </div>
+          <div className="file-stats">
+            <span className="file-stat-badge stat-success" title={t('process.successSlides')}>
+              {completedSlides}
+            </span>
+            <span className="stat-divider">|</span>
+            <span className="file-stat-badge stat-processing" title={t('process.processingSlides')}>
+              {processingSlides}
+            </span>
+            <span className="stat-divider">|</span>
+            <span className="file-stat-badge stat-failed" title={t('process.failedSlides')}>
+              {failedSlides}
+            </span>
+            <span className="file-progress-text">
+              / {sheet.totalRows} {t('process.slides')} - {Math.round(sheet.progress)}%
+            </span>
+          </div>
+        </div>
+        <div className="file-status-and-actions">
+          <div className="file-status" data-status={statusKey(sheet.status)}>
+            {t(`process.status.${statusKey(sheet.status)}`)}
+          </div>
+          {canControl && (
+            <button
+              className="file-action-btn"
+              onClick={(e) => {
+                e.stopPropagation()
+                onSheetAction()
+              }}
+              title={isPaused ? t('process.resume') : t('process.pause')}
+            >
+              <img
+                src={
+                  isPaused
+                    ? getAssetPath('images', 'resume.png')
+                    : getAssetPath('images', 'pause.png')
+                }
+                alt={isPaused ? 'Resume' : 'Pause'}
+                className="btn-icon-small"
+              />
+            </button>
+          )}
+          {canControl && (
+            <button
+              className="file-action-btn file-action-btn-danger"
+              onClick={(e) => {
+                e.stopPropagation()
+                onStopSheet()
+              }}
+              title={t('process.stop')}
+            >
+              <img src={getAssetPath('images', 'stop.png')} alt="Stop" className="btn-icon-small" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="file-progress-bar">
+        <div
+          className="file-progress-fill"
+          style={{
+            width: `${Math.round(sheet.progress)}%`,
+            backgroundColor: progressColor(sheet.status),
+          }}
+        />
+      </div>
+
+      {showLog && (
+        <div className="file-log-content">
+          <div className="log-header">
+            {t('process.log')}
+            <button className="copy-log-btn" onClick={onCopyLogs} title="Copy log">
+              <img src={getAssetPath('images', 'clipboard.png')} alt="Copy" className="log-icon" />
+            </button>
+          </div>
+          <div className="log-content">
+            {sheet.logs.length === 0 ? (
+              <div className="log-empty">{t('process.noLogs')}</div>
+            ) : (
+              logGroups.map((group) => {
+                const rowKey = `${sheet.id}:${group.key}`
+                const isCollapsed = collapsedRowGroups[rowKey] ?? true
+                return (
+                  <div
+                    key={group.key}
+                    className="log-row-group"
+                    data-status={(group.status ?? 'info').toLowerCase()}
+                  >
+                    <div className="log-row-header" onClick={() => onToggleRowGroup(rowKey)}>
+                      <span className="log-row-toggle">{isCollapsed ? '>' : 'v'}</span>
+                      <span className="log-row-title">
+                        {group.row != null ? `Row ${group.row}` : t('process.logGeneral')}
+                      </span>
+                      {group.status && (
+                        <span className="log-row-status">{group.status.toUpperCase()}</span>
+                      )}
+                    </div>
+                    {!isCollapsed && (
+                      <div className="log-row-entries">
+                        {group.entries.map((entry, index) => (
+                          <div
+                            key={`${group.key}-${index}`}
+                            className={`log-entry log-${(entry.level ?? 'info').toLowerCase()}`}
+                          >
+                            {formatLogEntry(entry)}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 const ProcessMenu: React.FC = () => {
@@ -369,197 +552,31 @@ const ProcessMenu: React.FC = () => {
                     <div className="files-list">
                       {sheets.map((sheet) => {
                         const showLog = expandedLogs[sheet.id] ?? false
-                        const completedSlides = Math.min(sheet.currentRow, sheet.totalRows)
-                        const failedSlides =
-                          sheet.status === 'Failed' || sheet.status === 'Cancelled'
-                            ? Math.max(sheet.totalRows - completedSlides, 0)
-                            : 0
-                        const processingSlides =
-                          sheet.status === 'Running'
-                            ? Math.max(sheet.totalRows - completedSlides, 0)
-                            : sheet.status === 'Pending'
-                              ? sheet.totalRows
-                              : 0
                         const logGroups = showLog ? groupLogsByRow(sheet.logs as LogEntry[]) : []
 
                         return (
-                          <div key={sheet.id} className="file-item">
-                            <div
-                              className="file-header-clickable"
-                              onClick={() => toggleLog(sheet.id)}
-                            >
-                              <span className="file-expand-icon">{showLog ? 'v' : '>'}</span>
-                              <div className="file-info">
-                                <div className="file-name-row">
-                                  <div className="file-name">{sheet.sheetName}</div>
-                                  <span className="file-job-id">
-                                    {sheet.hangfireJobId
-                                      ? `${t('process.hangfireId')}: ${sheet.hangfireJobId}`
-                                      : `${t('process.jobId')}: ${sheet.id}`}
-                                  </span>
-                                </div>
-                                <div className="file-stats">
-                                  <span
-                                    className="file-stat-badge stat-success"
-                                    title={t('process.successSlides')}
-                                  >
-                                    {completedSlides}
-                                  </span>
-                                  <span className="stat-divider">|</span>
-                                  <span
-                                    className="file-stat-badge stat-processing"
-                                    title={t('process.processingSlides')}
-                                  >
-                                    {processingSlides}
-                                  </span>
-                                  <span className="stat-divider">|</span>
-                                  <span
-                                    className="file-stat-badge stat-failed"
-                                    title={t('process.failedSlides')}
-                                  >
-                                    {failedSlides}
-                                  </span>
-                                  <span className="file-progress-text">
-                                    / {sheet.totalRows} {t('process.slides')} -{' '}
-                                    {Math.round(sheet.progress)}%
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="file-status-and-actions">
-                                <div className="file-status" data-status={statusKey(sheet.status)}>
-                                  {t(`process.status.${statusKey(sheet.status)}`)}
-                                </div>
-                                {(sheet.status === 'Running' ||
-                                  sheet.status === 'Paused' ||
-                                  sheet.status === 'Pending') && (
-                                  <button
-                                    className="file-action-btn"
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      handleSheetAction(sheet.id, sheet.status)
-                                    }}
-                                    title={
-                                      sheet.status === 'Paused'
-                                        ? t('process.resume')
-                                        : t('process.pause')
-                                    }
-                                  >
-                                    <img
-                                      src={
-                                        sheet.status === 'Paused'
-                                          ? getAssetPath('images', 'resume.png')
-                                          : getAssetPath('images', 'pause.png')
-                                      }
-                                      alt={sheet.status === 'Paused' ? 'Resume' : 'Pause'}
-                                      className="btn-icon-small"
-                                    />
-                                  </button>
-                                )}
-                                {(sheet.status === 'Running' ||
-                                  sheet.status === 'Paused' ||
-                                  sheet.status === 'Pending') && (
-                                  <button
-                                    className="file-action-btn file-action-btn-danger"
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      handleStopSheet(sheet.id)
-                                    }}
-                                    title={t('process.stop')}
-                                  >
-                                    <img
-                                      src={getAssetPath('images', 'stop.png')}
-                                      alt="Stop"
-                                      className="btn-icon-small"
-                                    />
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-
-                            <div className="file-progress-bar">
-                              <div
-                                className="file-progress-fill"
-                                style={{
-                                  width: `${Math.round(sheet.progress)}%`,
-                                  backgroundColor: progressColor(sheet.status),
-                                }}
-                              />
-                            </div>
-
-                            {showLog && (
-                              <div className="file-log-content">
-                                <div className="log-header">
-                                  {t('process.log')}
-                                  <button
-                                    className="copy-log-btn"
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      navigator.clipboard.writeText(
-                                        sheet.logs
-                                          .map((entry) => formatLogEntry(entry as LogEntry))
-                                          .join('\n'),
-                                      )
-                                    }}
-                                    title="Copy log"
-                                  >
-                                    <img
-                                      src={getAssetPath('images', 'clipboard.png')}
-                                      alt="Copy"
-                                      className="log-icon"
-                                    />
-                                  </button>
-                                </div>
-                                <div className="log-content">
-                                  {sheet.logs.length === 0 ? (
-                                    <div className="log-empty">{t('process.noLogs')}</div>
-                                  ) : (
-                                    logGroups.map((group) => {
-                                      const rowKey = `${sheet.id}:${group.key}`
-                                      const isCollapsed = collapsedRowGroups[rowKey] ?? true
-                                      return (
-                                        <div
-                                          key={group.key}
-                                          className="log-row-group"
-                                          data-status={(group.status ?? 'info').toLowerCase()}
-                                        >
-                                          <div
-                                            className="log-row-header"
-                                            onClick={() => toggleRowGroup(rowKey)}
-                                          >
-                                            <span className="log-row-toggle">
-                                              {isCollapsed ? '>' : 'v'}
-                                            </span>
-                                            <span className="log-row-title">
-                                              {group.row != null
-                                                ? `Row ${group.row}`
-                                                : t('process.logGeneral')}
-                                            </span>
-                                            {group.status && (
-                                              <span className="log-row-status">
-                                                {group.status.toUpperCase()}
-                                              </span>
-                                            )}
-                                          </div>
-                                          {!isCollapsed && (
-                                            <div className="log-row-entries">
-                                              {group.entries.map((entry, index) => (
-                                                <div
-                                                  key={`${group.key}-${index}`}
-                                                  className={`log-entry log-${(entry.level ?? 'info').toLowerCase()}`}
-                                                >
-                                                  {formatLogEntry(entry)}
-                                                </div>
-                                              ))}
-                                            </div>
-                                          )}
-                                        </div>
-                                      )
-                                    })
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                          </div>
+                          <SheetItem
+                            key={sheet.id}
+                            sheet={sheet}
+                            showLog={showLog}
+                            logGroups={logGroups}
+                            collapsedRowGroups={collapsedRowGroups}
+                            statusKey={statusKey}
+                            progressColor={progressColor}
+                            formatLogEntry={formatLogEntry}
+                            onToggleLog={() => toggleLog(sheet.id)}
+                            onToggleRowGroup={toggleRowGroup}
+                            onSheetAction={() => handleSheetAction(sheet.id, sheet.status)}
+                            onStopSheet={() => handleStopSheet(sheet.id)}
+                            onCopyLogs={() =>
+                              navigator.clipboard.writeText(
+                                sheet.logs
+                                  .map((entry) => formatLogEntry(entry as LogEntry))
+                                  .join('\n'),
+                              )
+                            }
+                            t={t}
+                          />
                         )
                       })}
                     </div>

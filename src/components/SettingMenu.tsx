@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { useApp } from '../contexts/useApp'
 import { useJobs } from '../contexts/useJobs'
+import type { Theme } from '../contexts/AppContextBase'
+import type { Language } from '../locales'
 import * as backendApi from '../services/backendApi'
 import '../styles/SettingMenu.css'
 
@@ -63,6 +65,926 @@ const getCaseInsensitive = <T extends Record<string, unknown>>(
     }
   }
   return undefined
+}
+
+const getSectionOrThrow = (root: Record<string, unknown>, key: string): Record<string, unknown> => {
+  const section = getCaseInsensitive(root, key) as Record<string, unknown> | undefined
+  if (!section) throw new Error('Invalid config response.')
+  return section
+}
+
+const parseServerConfig = (server: Record<string, unknown>) => {
+  return {
+    host: String(getCaseInsensitive(server, 'Host') ?? ''),
+    port: Number(getCaseInsensitive(server, 'Port') ?? 0),
+    debug: Boolean(getCaseInsensitive(server, 'Debug')),
+  }
+}
+
+const parseDownloadConfig = (download: Record<string, unknown>) => {
+  const retry = getSectionOrThrow(download, 'Retry')
+  return {
+    maxChunks: Number(getCaseInsensitive(download, 'MaxChunks') ?? 0),
+    limitBytesPerSecond: Number(getCaseInsensitive(download, 'LimitBytesPerSecond') ?? 0),
+    saveFolder: String(getCaseInsensitive(download, 'SaveFolder') ?? ''),
+    retryTimeout: Number(getCaseInsensitive(retry, 'Timeout') ?? 0),
+    maxRetries: Number(getCaseInsensitive(retry, 'MaxRetries') ?? 0),
+  }
+}
+
+const parseJobConfig = (job: Record<string, unknown>) => {
+  return {
+    maxConcurrentJobs: Number(getCaseInsensitive(job, 'MaxConcurrentJobs') ?? 0),
+  }
+}
+
+const parseImageConfig = (image: Record<string, unknown>) => {
+  const face = getSectionOrThrow(image, 'Face')
+  const saliency = getSectionOrThrow(image, 'Saliency')
+  return {
+    face: {
+      confidence: Number(getCaseInsensitive(face, 'Confidence') ?? 0),
+      paddingTop: Number(getCaseInsensitive(face, 'PaddingTop') ?? 0),
+      paddingBottom: Number(getCaseInsensitive(face, 'PaddingBottom') ?? 0),
+      paddingLeft: Number(getCaseInsensitive(face, 'PaddingLeft') ?? 0),
+      paddingRight: Number(getCaseInsensitive(face, 'PaddingRight') ?? 0),
+      unionAll: Boolean(getCaseInsensitive(face, 'UnionAll')),
+    },
+    saliency: {
+      paddingTop: Number(getCaseInsensitive(saliency, 'PaddingTop') ?? 0),
+      paddingBottom: Number(getCaseInsensitive(saliency, 'PaddingBottom') ?? 0),
+      paddingLeft: Number(getCaseInsensitive(saliency, 'PaddingLeft') ?? 0),
+      paddingRight: Number(getCaseInsensitive(saliency, 'PaddingRight') ?? 0),
+    },
+  }
+}
+
+const parseConfigResponse = (data: backendApi.ConfigGetSuccess) => {
+  const root = data as unknown as Record<string, unknown>
+  const server = parseServerConfig(getSectionOrThrow(root, 'Server'))
+  const download = parseDownloadConfig(getSectionOrThrow(root, 'Download'))
+  const job = parseJobConfig(getSectionOrThrow(root, 'Job'))
+  const image = parseImageConfig(getSectionOrThrow(root, 'Image'))
+
+  const config: ConfigState = {
+    server,
+    download,
+    job,
+    image,
+  }
+
+  return {
+    config,
+    server,
+  }
+}
+
+type TranslationFn = (key: string) => string
+
+type NumberChangeHandler = (value: string, apply: (next: number) => void) => void
+type NumberBlurHandler = (value: string, apply: (next: number) => void) => void
+type NumberFocusHandler = (event: React.FocusEvent<HTMLInputElement>) => void
+
+type SettingsBannersProps = {
+  showRestartBanner: boolean
+  isRestartBannerClosing: boolean
+  onRestart: () => void
+  message: { type: 'success' | 'error' | 'warning'; text: string } | null
+  showStatusBanner: boolean
+  isStatusBannerClosing: boolean
+  showLockedBanner: boolean
+  t: TranslationFn
+}
+
+const SettingsBanners: React.FC<SettingsBannersProps> = ({
+  showRestartBanner,
+  isRestartBannerClosing,
+  onRestart,
+  message,
+  showStatusBanner,
+  isStatusBannerClosing,
+  showLockedBanner,
+  t,
+}) => (
+  <>
+    {showRestartBanner && (
+      <div
+        className={`message message-warning restart-banner${
+          isRestartBannerClosing ? ' restart-banner--closing' : ''
+        }`}
+      >
+        <span className="restart-banner__text">{t('settings.restartRequired')}</span>
+        <button className="btn btn-secondary restart-banner__action" onClick={onRestart}>
+          {t('settings.restartServer')}
+        </button>
+      </div>
+    )}
+    {message && showStatusBanner && (
+      <div
+        className={`message message-${message.type} status-banner${
+          isStatusBannerClosing ? ' status-banner--closing' : ''
+        }`}
+      >
+        {message.text}
+      </div>
+    )}
+    {showLockedBanner && <div className="message message-warning">{t('settings.locked')}</div>}
+  </>
+)
+
+type SettingsTabsProps = {
+  activeTab: SettingTab
+  onSelectTab: (tab: SettingTab) => void
+  t: TranslationFn
+}
+
+const SettingsTabs: React.FC<SettingsTabsProps> = ({ activeTab, onSelectTab, t }) => (
+  <div className="setting-tabs">
+    <button
+      className={`tab-button ${activeTab === 'appearance' ? 'active' : ''}`}
+      onClick={() => onSelectTab('appearance')}
+    >
+      {t('settings.appearance')}
+    </button>
+    <button
+      className={`tab-button ${activeTab === 'server' ? 'active' : ''}`}
+      onClick={() => onSelectTab('server')}
+    >
+      {t('settings.server')}
+    </button>
+    <button
+      className={`tab-button ${activeTab === 'download' ? 'active' : ''}`}
+      onClick={() => onSelectTab('download')}
+    >
+      {t('settings.download')}
+    </button>
+    <button
+      className={`tab-button ${activeTab === 'job' ? 'active' : ''}`}
+      onClick={() => onSelectTab('job')}
+    >
+      {t('settings.job')}
+    </button>
+    <button
+      className={`tab-button ${activeTab === 'image' ? 'active' : ''}`}
+      onClick={() => onSelectTab('image')}
+    >
+      {t('settings.image')}
+    </button>
+  </div>
+)
+
+type AppearanceTabProps = {
+  theme: Theme
+  language: Language
+  enableAnimations: boolean
+  closeToTray: boolean
+  setTheme: (value: Theme) => void
+  setLanguage: (value: Language) => void
+  setEnableAnimations: (value: boolean) => void
+  setCloseToTray: (value: boolean) => void
+  t: TranslationFn
+}
+
+const AppearanceTab: React.FC<AppearanceTabProps> = ({
+  theme,
+  language,
+  enableAnimations,
+  closeToTray,
+  setTheme,
+  setLanguage,
+  setEnableAnimations,
+  setCloseToTray,
+  t,
+}) => (
+  <div className="setting-section">
+    <h3>{t('settings.appearanceSettings')}</h3>
+
+    <div className="settings-grid">
+      <div className="setting-item">
+        <label className="setting-label">{t('settings.theme')}</label>
+        <select
+          className="setting-select"
+          value={theme}
+          onChange={(e) => setTheme(e.target.value as Theme)}
+        >
+          <option value="dark">{t('settings.themeDark')}</option>
+          <option value="light">{t('settings.themeLight')}</option>
+          <option value="system">{t('settings.themeSystem')}</option>
+        </select>
+        <span className="setting-hint">{t('settings.themeHint')}</span>
+      </div>
+
+      <div className="setting-item">
+        <label className="setting-label">{t('settings.language')}</label>
+        <select
+          className="setting-select"
+          value={language}
+          onChange={(e) => setLanguage(e.target.value as Language)}
+        >
+          <option value="vi">{t('settings.languageVi')}</option>
+          <option value="en">{t('settings.languageEn')}</option>
+        </select>
+        <span className="setting-hint">{t('settings.languageHint')}</span>
+      </div>
+    </div>
+
+    <div className="setting-item setting-item-toggle">
+      <div className="toggle-content">
+        <div className="toggle-label">
+          <div className="label-text">{t('settings.enableAnimations')}</div>
+          <div className="label-description">{t('settings.animationsDesc')}</div>
+        </div>
+        <label className="toggle-switch">
+          <input
+            type="checkbox"
+            checked={enableAnimations}
+            onChange={(e) => setEnableAnimations(e.target.checked)}
+          />
+          <span className="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <div className="setting-item setting-item-toggle">
+      <div className="toggle-content">
+        <div className="toggle-label">
+          <div className="label-text">{t('settings.closeToTray')}</div>
+          <div className="label-description">{t('settings.closeToTrayDesc')}</div>
+        </div>
+        <label className="toggle-switch">
+          <input
+            type="checkbox"
+            checked={closeToTray}
+            onChange={(e) => setCloseToTray(e.target.checked)}
+          />
+          <span className="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+  </div>
+)
+
+type ServerTabProps = {
+  loading: boolean
+  config: ConfigState | null
+  canEditConfig: boolean
+  updateServer: (patch: Partial<ConfigState['server']>) => void
+  handleNumberChange: NumberChangeHandler
+  handleNumberBlur: NumberBlurHandler
+  handleNumberFocus: NumberFocusHandler
+  t: TranslationFn
+}
+
+const ServerTab: React.FC<ServerTabProps> = ({
+  loading,
+  config,
+  canEditConfig,
+  updateServer,
+  handleNumberChange,
+  handleNumberBlur,
+  handleNumberFocus,
+  t,
+}) => (
+  <div className="setting-section">
+    <h3>{t('settings.serverSettings')}</h3>
+    {loading || !config ? (
+      <div className="loading">{t('settings.loading')}</div>
+    ) : (
+      <>
+        <div className="settings-grid">
+          <div className="setting-item">
+            <label className="setting-label">{t('settings.host')}</label>
+            <input
+              type="text"
+              className="setting-input"
+              value={config.server.host}
+              disabled={!canEditConfig}
+              onChange={(e) => updateServer({ host: e.target.value })}
+              placeholder="127.0.0.1"
+            />
+            <span className="setting-hint">{t('settings.hostHint')}</span>
+          </div>
+
+          <div className="setting-item">
+            <label className="setting-label">{t('settings.port')}</label>
+            <input
+              type="number"
+              className="setting-input"
+              value={Number.isFinite(config.server.port) ? config.server.port : ''}
+              disabled={!canEditConfig}
+              onChange={(e) =>
+                handleNumberChange(e.target.value, (next) => updateServer({ port: next }))
+              }
+              onBlur={(e) =>
+                handleNumberBlur(e.target.value, (next) => updateServer({ port: next }))
+              }
+              onFocus={handleNumberFocus}
+              min="1"
+              max="65535"
+            />
+            <span className="setting-hint">{t('settings.portHint')}</span>
+          </div>
+        </div>
+
+        <div className="setting-item setting-item-toggle">
+          <div className="toggle-content">
+            <div className="toggle-label">
+              <div className="label-text">{t('settings.debugMode')}</div>
+              <div className="label-description">{t('settings.debugModeDesc')}</div>
+            </div>
+            <label className="toggle-switch">
+              <input
+                type="checkbox"
+                checked={config.server.debug}
+                disabled={!canEditConfig}
+                onChange={(e) => updateServer({ debug: e.target.checked })}
+              />
+              <span className="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </>
+    )}
+  </div>
+)
+
+type DownloadTabProps = {
+  loading: boolean
+  config: ConfigState | null
+  canEditConfig: boolean
+  updateDownload: (patch: Partial<ConfigState['download']>) => void
+  handleNumberChange: NumberChangeHandler
+  handleNumberBlur: NumberBlurHandler
+  handleNumberFocus: NumberFocusHandler
+  onSelectFolder: () => Promise<void>
+  t: TranslationFn
+}
+
+const DownloadTab: React.FC<DownloadTabProps> = ({
+  loading,
+  config,
+  canEditConfig,
+  updateDownload,
+  handleNumberChange,
+  handleNumberBlur,
+  handleNumberFocus,
+  onSelectFolder,
+  t,
+}) => (
+  <div className="setting-section">
+    <h3>{t('settings.downloadSettings')}</h3>
+    {loading || !config ? (
+      <div className="loading">{t('settings.loading')}</div>
+    ) : (
+      <>
+        <div className="setting-item">
+          <label className="setting-label">{t('settings.saveFolder')}</label>
+          <div className="input-group">
+            <input
+              type="text"
+              className="setting-input"
+              value={config.download.saveFolder}
+              disabled={!canEditConfig}
+              onChange={(e) => updateDownload({ saveFolder: e.target.value })}
+              placeholder="./downloads"
+            />
+            <button className="browse-btn" disabled={!canEditConfig} onClick={onSelectFolder}>
+              {t('input.browse')}
+            </button>
+          </div>
+          <span className="setting-hint">{t('settings.saveFolderHint')}</span>
+        </div>
+
+        <div className="settings-grid">
+          <div className="setting-item">
+            <label className="setting-label">{t('settings.maxChunks')}</label>
+            <input
+              type="number"
+              className="setting-input"
+              value={Number.isFinite(config.download.maxChunks) ? config.download.maxChunks : ''}
+              disabled={!canEditConfig}
+              onChange={(e) =>
+                handleNumberChange(e.target.value, (next) => updateDownload({ maxChunks: next }))
+              }
+              onBlur={(e) =>
+                handleNumberBlur(e.target.value, (next) => updateDownload({ maxChunks: next }))
+              }
+              onFocus={handleNumberFocus}
+              min="1"
+              max="128"
+            />
+            <span className="setting-hint">{t('settings.maxChunksHint')}</span>
+          </div>
+
+          <div className="setting-item">
+            <label className="setting-label">{t('settings.speedLimit')}</label>
+            <input
+              type="number"
+              className="setting-input"
+              value={
+                Number.isFinite(config.download.limitBytesPerSecond)
+                  ? config.download.limitBytesPerSecond
+                  : ''
+              }
+              disabled={!canEditConfig}
+              onChange={(e) =>
+                handleNumberChange(e.target.value, (next) =>
+                  updateDownload({ limitBytesPerSecond: next }),
+                )
+              }
+              onBlur={(e) =>
+                handleNumberBlur(e.target.value, (next) =>
+                  updateDownload({ limitBytesPerSecond: next }),
+                )
+              }
+              onFocus={handleNumberFocus}
+              min="0"
+            />
+            <span className="setting-hint">{t('settings.speedLimitHint')}</span>
+          </div>
+        </div>
+
+        <div className="settings-grid">
+          <div className="setting-item">
+            <label className="setting-label">{t('settings.retryTimeout')}</label>
+            <input
+              type="number"
+              className="setting-input"
+              value={
+                Number.isFinite(config.download.retryTimeout) ? config.download.retryTimeout : ''
+              }
+              disabled={!canEditConfig}
+              onChange={(e) =>
+                handleNumberChange(e.target.value, (next) => updateDownload({ retryTimeout: next }))
+              }
+              onBlur={(e) =>
+                handleNumberBlur(e.target.value, (next) => updateDownload({ retryTimeout: next }))
+              }
+              onFocus={handleNumberFocus}
+              min="1"
+            />
+            <span className="setting-hint">{t('settings.retryTimeoutHint')}</span>
+          </div>
+
+          <div className="setting-item">
+            <label className="setting-label">{t('settings.maxRetries')}</label>
+            <input
+              type="number"
+              className="setting-input"
+              value={Number.isFinite(config.download.maxRetries) ? config.download.maxRetries : ''}
+              disabled={!canEditConfig}
+              onChange={(e) =>
+                handleNumberChange(e.target.value, (next) => updateDownload({ maxRetries: next }))
+              }
+              onBlur={(e) =>
+                handleNumberBlur(e.target.value, (next) => updateDownload({ maxRetries: next }))
+              }
+              onFocus={handleNumberFocus}
+              min="0"
+              max="10"
+            />
+            <span className="setting-hint">{t('settings.maxRetriesHint')}</span>
+          </div>
+        </div>
+      </>
+    )}
+  </div>
+)
+
+type JobTabProps = {
+  loading: boolean
+  config: ConfigState | null
+  canEditConfig: boolean
+  updateJob: (patch: Partial<ConfigState['job']>) => void
+  handleNumberChange: NumberChangeHandler
+  handleNumberBlur: NumberBlurHandler
+  handleNumberFocus: NumberFocusHandler
+  t: TranslationFn
+}
+
+const JobTab: React.FC<JobTabProps> = ({
+  loading,
+  config,
+  canEditConfig,
+  updateJob,
+  handleNumberChange,
+  handleNumberBlur,
+  handleNumberFocus,
+  t,
+}) => (
+  <div className="setting-section">
+    <h3>{t('settings.jobSettings')}</h3>
+    {loading || !config ? (
+      <div className="loading">{t('settings.loading')}</div>
+    ) : (
+      <div className="setting-item">
+        <label className="setting-label">{t('settings.maxConcurrentJobs')}</label>
+        <input
+          type="number"
+          className="setting-input"
+          value={Number.isFinite(config.job.maxConcurrentJobs) ? config.job.maxConcurrentJobs : ''}
+          disabled={!canEditConfig}
+          onChange={(e) =>
+            handleNumberChange(e.target.value, (next) => updateJob({ maxConcurrentJobs: next }))
+          }
+          onBlur={(e) =>
+            handleNumberBlur(e.target.value, (next) => updateJob({ maxConcurrentJobs: next }))
+          }
+          onFocus={handleNumberFocus}
+          min="1"
+          max="32"
+        />
+        <span className="setting-hint">{t('settings.maxConcurrentJobsHint')}</span>
+      </div>
+    )}
+  </div>
+)
+
+type ImageTabProps = {
+  loading: boolean
+  config: ConfigState | null
+  canEditConfig: boolean
+  updateFace: (patch: Partial<ConfigState['image']['face']>) => void
+  updateSaliency: (patch: Partial<ConfigState['image']['saliency']>) => void
+  createPadStyles: (padding: {
+    paddingTop: number
+    paddingBottom: number
+    paddingLeft: number
+    paddingRight: number
+  }) => {
+    base: { inset: string }
+    detect: { inset: string }
+    crop: { top: string; right: string; bottom: string; left: string }
+  }
+  handleNumberChange: NumberChangeHandler
+  handleNumberBlur: NumberBlurHandler
+  handleNumberFocus: NumberFocusHandler
+  t: TranslationFn
+}
+
+const ImageTab: React.FC<ImageTabProps> = ({
+  loading,
+  config,
+  canEditConfig,
+  updateFace,
+  updateSaliency,
+  createPadStyles,
+  handleNumberChange,
+  handleNumberBlur,
+  handleNumberFocus,
+  t,
+}) => (
+  <div className="setting-section">
+    <h3>{t('settings.imageSettings')}</h3>
+    {loading || !config ? (
+      <div className="loading">{t('settings.loading')}</div>
+    ) : (
+      <>
+        <div className="image-config-block">
+          <div className="image-config-header">
+            <div>
+              <h4>{t('settings.imageFace')}</h4>
+              <span className="setting-hint">{t('settings.imageFaceHint')}</span>
+            </div>
+          </div>
+          <div className="image-config-grid">
+            <div className="image-padding-layout">
+              <div className="pad-item pad-top">
+                <label className="setting-label">{t('settings.paddingTop')}</label>
+                <input
+                  type="number"
+                  className="setting-input"
+                  value={
+                    Number.isFinite(config.image.face.paddingTop)
+                      ? config.image.face.paddingTop
+                      : ''
+                  }
+                  disabled={!canEditConfig}
+                  onChange={(e) =>
+                    handleNumberChange(e.target.value, (next) => updateFace({ paddingTop: next }))
+                  }
+                  onBlur={(e) =>
+                    handleNumberBlur(e.target.value, (next) => updateFace({ paddingTop: next }))
+                  }
+                  onFocus={handleNumberFocus}
+                  min="0"
+                  max="1"
+                  step="0.01"
+                />
+                <span className="setting-hint">{t('settings.paddingHint')}</span>
+              </div>
+              <div className="pad-item pad-left">
+                <label className="setting-label">{t('settings.paddingLeft')}</label>
+                <input
+                  type="number"
+                  className="setting-input"
+                  value={
+                    Number.isFinite(config.image.face.paddingLeft)
+                      ? config.image.face.paddingLeft
+                      : ''
+                  }
+                  disabled={!canEditConfig}
+                  onChange={(e) =>
+                    handleNumberChange(e.target.value, (next) => updateFace({ paddingLeft: next }))
+                  }
+                  onBlur={(e) =>
+                    handleNumberBlur(e.target.value, (next) => updateFace({ paddingLeft: next }))
+                  }
+                  onFocus={handleNumberFocus}
+                  min="0"
+                  max="1"
+                  step="0.01"
+                />
+                <span className="setting-hint">{t('settings.paddingHint')}</span>
+              </div>
+              <div className="pad-center">
+                <div className="pad-diagram">
+                  <div
+                    className="pad-box pad-base"
+                    style={createPadStyles(config.image.face).base}
+                  ></div>
+                  <div
+                    className="pad-box pad-detect"
+                    style={createPadStyles(config.image.face).detect}
+                  ></div>
+                  <div
+                    className="pad-box pad-crop"
+                    style={createPadStyles(config.image.face).crop}
+                  ></div>
+                </div>
+              </div>
+              <div className="pad-item pad-right">
+                <label className="setting-label">{t('settings.paddingRight')}</label>
+                <input
+                  type="number"
+                  className="setting-input"
+                  value={
+                    Number.isFinite(config.image.face.paddingRight)
+                      ? config.image.face.paddingRight
+                      : ''
+                  }
+                  disabled={!canEditConfig}
+                  onChange={(e) =>
+                    handleNumberChange(e.target.value, (next) => updateFace({ paddingRight: next }))
+                  }
+                  onBlur={(e) =>
+                    handleNumberBlur(e.target.value, (next) => updateFace({ paddingRight: next }))
+                  }
+                  onFocus={handleNumberFocus}
+                  min="0"
+                  max="1"
+                  step="0.01"
+                />
+                <span className="setting-hint">{t('settings.paddingHint')}</span>
+              </div>
+              <div className="pad-item pad-bottom">
+                <label className="setting-label">{t('settings.paddingBottom')}</label>
+                <input
+                  type="number"
+                  className="setting-input"
+                  value={
+                    Number.isFinite(config.image.face.paddingBottom)
+                      ? config.image.face.paddingBottom
+                      : ''
+                  }
+                  disabled={!canEditConfig}
+                  onChange={(e) =>
+                    handleNumberChange(e.target.value, (next) =>
+                      updateFace({ paddingBottom: next }),
+                    )
+                  }
+                  onBlur={(e) =>
+                    handleNumberBlur(e.target.value, (next) => updateFace({ paddingBottom: next }))
+                  }
+                  onFocus={handleNumberFocus}
+                  min="0"
+                  max="1"
+                  step="0.01"
+                />
+                <span className="setting-hint">{t('settings.paddingHint')}</span>
+              </div>
+            </div>
+            <div className="image-config-side">
+              <div className="setting-item">
+                <label className="setting-label">{t('settings.imageConfidence')}</label>
+                <input
+                  type="number"
+                  className="setting-input"
+                  value={
+                    Number.isFinite(config.image.face.confidence)
+                      ? config.image.face.confidence
+                      : ''
+                  }
+                  disabled={!canEditConfig}
+                  onChange={(e) =>
+                    handleNumberChange(e.target.value, (next) => updateFace({ confidence: next }))
+                  }
+                  onBlur={(e) =>
+                    handleNumberBlur(e.target.value, (next) => updateFace({ confidence: next }))
+                  }
+                  onFocus={handleNumberFocus}
+                  min="0"
+                  max="1"
+                  step="0.01"
+                />
+                <span className="setting-hint">{t('settings.paddingHint')}</span>
+              </div>
+              <div className="setting-item setting-item-toggle">
+                <div className="toggle-content">
+                  <div className="toggle-label">
+                    <div className="label-text">{t('settings.imageUnionAll')}</div>
+                  </div>
+                  <label className="toggle-switch">
+                    <input
+                      type="checkbox"
+                      checked={config.image.face.unionAll}
+                      disabled={!canEditConfig}
+                      onChange={(e) => updateFace({ unionAll: e.target.checked })}
+                    />
+                    <span className="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="image-config-block">
+          <div className="image-config-header">
+            <div>
+              <h4>{t('settings.imageSaliency')}</h4>
+              <span className="setting-hint">{t('settings.imageSaliencyHint')}</span>
+            </div>
+          </div>
+          <div className="image-config-grid">
+            <div className="image-padding-layout">
+              <div className="pad-item pad-top">
+                <label className="setting-label">{t('settings.paddingTop')}</label>
+                <input
+                  type="number"
+                  className="setting-input"
+                  value={
+                    Number.isFinite(config.image.saliency.paddingTop)
+                      ? config.image.saliency.paddingTop
+                      : ''
+                  }
+                  disabled={!canEditConfig}
+                  onChange={(e) =>
+                    handleNumberChange(e.target.value, (next) =>
+                      updateSaliency({ paddingTop: next }),
+                    )
+                  }
+                  onBlur={(e) =>
+                    handleNumberBlur(e.target.value, (next) => updateSaliency({ paddingTop: next }))
+                  }
+                  onFocus={handleNumberFocus}
+                  min="0"
+                  max="1"
+                  step="0.01"
+                />
+                <span className="setting-hint">{t('settings.paddingHint')}</span>
+              </div>
+              <div className="pad-item pad-left">
+                <label className="setting-label">{t('settings.paddingLeft')}</label>
+                <input
+                  type="number"
+                  className="setting-input"
+                  value={
+                    Number.isFinite(config.image.saliency.paddingLeft)
+                      ? config.image.saliency.paddingLeft
+                      : ''
+                  }
+                  disabled={!canEditConfig}
+                  onChange={(e) =>
+                    handleNumberChange(e.target.value, (next) =>
+                      updateSaliency({ paddingLeft: next }),
+                    )
+                  }
+                  onBlur={(e) =>
+                    handleNumberBlur(e.target.value, (next) =>
+                      updateSaliency({ paddingLeft: next }),
+                    )
+                  }
+                  onFocus={handleNumberFocus}
+                  min="0"
+                  max="1"
+                  step="0.01"
+                />
+                <span className="setting-hint">{t('settings.paddingHint')}</span>
+              </div>
+              <div className="pad-center">
+                <div className="pad-diagram">
+                  <div
+                    className="pad-box pad-base"
+                    style={createPadStyles(config.image.saliency).base}
+                  ></div>
+                  <div
+                    className="pad-box pad-detect"
+                    style={createPadStyles(config.image.saliency).detect}
+                  ></div>
+                  <div
+                    className="pad-box pad-crop"
+                    style={createPadStyles(config.image.saliency).crop}
+                  ></div>
+                </div>
+              </div>
+              <div className="pad-item pad-right">
+                <label className="setting-label">{t('settings.paddingRight')}</label>
+                <input
+                  type="number"
+                  className="setting-input"
+                  value={
+                    Number.isFinite(config.image.saliency.paddingRight)
+                      ? config.image.saliency.paddingRight
+                      : ''
+                  }
+                  disabled={!canEditConfig}
+                  onChange={(e) =>
+                    handleNumberChange(e.target.value, (next) =>
+                      updateSaliency({ paddingRight: next }),
+                    )
+                  }
+                  onBlur={(e) =>
+                    handleNumberBlur(e.target.value, (next) =>
+                      updateSaliency({ paddingRight: next }),
+                    )
+                  }
+                  onFocus={handleNumberFocus}
+                  min="0"
+                  max="1"
+                  step="0.01"
+                />
+                <span className="setting-hint">{t('settings.paddingHint')}</span>
+              </div>
+              <div className="pad-item pad-bottom">
+                <label className="setting-label">{t('settings.paddingBottom')}</label>
+                <input
+                  type="number"
+                  className="setting-input"
+                  value={
+                    Number.isFinite(config.image.saliency.paddingBottom)
+                      ? config.image.saliency.paddingBottom
+                      : ''
+                  }
+                  disabled={!canEditConfig}
+                  onChange={(e) =>
+                    handleNumberChange(e.target.value, (next) =>
+                      updateSaliency({ paddingBottom: next }),
+                    )
+                  }
+                  onBlur={(e) =>
+                    handleNumberBlur(e.target.value, (next) =>
+                      updateSaliency({ paddingBottom: next }),
+                    )
+                  }
+                  onFocus={handleNumberFocus}
+                  min="0"
+                  max="1"
+                  step="0.01"
+                />
+                <span className="setting-hint">{t('settings.paddingHint')}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
+    )}
+  </div>
+)
+
+type SettingActionsProps = {
+  saving: boolean
+  isEditable: boolean
+  showActions: boolean
+  onSave: () => void
+  onReload: () => void
+  onReset: () => void
+  t: TranslationFn
+}
+
+const SettingActions: React.FC<SettingActionsProps> = ({
+  saving,
+  isEditable,
+  showActions,
+  onSave,
+  onReload,
+  onReset,
+  t,
+}) => {
+  if (!showActions) return null
+  return (
+    <div className="setting-actions">
+      <button className="btn btn-primary" onClick={onSave} disabled={!isEditable || saving}>
+        {saving ? t('settings.saving') : t('settings.save')}
+      </button>
+      <button className="btn btn-secondary" onClick={onReload} disabled={!isEditable}>
+        {t('settings.reload')}
+      </button>
+      <button className="btn btn-danger" onClick={onReset} disabled={!isEditable}>
+        {t('settings.resetToDefaults')}
+      </button>
+    </div>
+  )
 }
 
 const SettingMenu: React.FC = () => {
@@ -211,95 +1133,13 @@ const SettingMenu: React.FC = () => {
       setLoading(true)
       const response = await backendApi.getConfig()
       const data = response as backendApi.ConfigGetSuccess
-      const server = getCaseInsensitive(data as unknown as Record<string, unknown>, 'Server') as
-        | Record<string, unknown>
-        | undefined
-      const download = getCaseInsensitive(
-        data as unknown as Record<string, unknown>,
-        'Download',
-      ) as Record<string, unknown> | undefined
-      const job = getCaseInsensitive(data as unknown as Record<string, unknown>, 'Job') as
-        | Record<string, unknown>
-        | undefined
-      const image = getCaseInsensitive(data as unknown as Record<string, unknown>, 'Image') as
-        | Record<string, unknown>
-        | undefined
-
-      if (!server || !download || !job || !image) {
-        throw new Error('Invalid config response.')
-      }
-
-      const retry = getCaseInsensitive(download, 'Retry') as Record<string, unknown> | undefined
-      const face = getCaseInsensitive(image, 'Face') as Record<string, unknown> | undefined
-      const saliency = getCaseInsensitive(image, 'Saliency') as Record<string, unknown> | undefined
-      if (!retry) {
-        throw new Error('Invalid config response.')
-      }
-      if (!face || !saliency) {
-        throw new Error('Invalid config response.')
-      }
-
-      const host = String(getCaseInsensitive(server, 'Host') ?? '')
-      const port = Number(getCaseInsensitive(server, 'Port') ?? 0)
-      const debug = Boolean(getCaseInsensitive(server, 'Debug'))
-
-      const maxChunks = Number(getCaseInsensitive(download, 'MaxChunks') ?? 0)
-      const limitBytesPerSecond = Number(getCaseInsensitive(download, 'LimitBytesPerSecond') ?? 0)
-      const saveFolder = String(getCaseInsensitive(download, 'SaveFolder') ?? '')
-      const retryTimeout = Number(getCaseInsensitive(retry, 'Timeout') ?? 0)
-      const maxRetries = Number(getCaseInsensitive(retry, 'MaxRetries') ?? 0)
-
-      const maxConcurrentJobs = Number(getCaseInsensitive(job, 'MaxConcurrentJobs') ?? 0)
-      const faceConfidence = Number(getCaseInsensitive(face, 'Confidence') ?? 0)
-      const facePaddingTop = Number(getCaseInsensitive(face, 'PaddingTop') ?? 0)
-      const facePaddingBottom = Number(getCaseInsensitive(face, 'PaddingBottom') ?? 0)
-      const facePaddingLeft = Number(getCaseInsensitive(face, 'PaddingLeft') ?? 0)
-      const facePaddingRight = Number(getCaseInsensitive(face, 'PaddingRight') ?? 0)
-      const faceUnionAll = Boolean(getCaseInsensitive(face, 'UnionAll'))
-
-      const saliencyPaddingTop = Number(getCaseInsensitive(saliency, 'PaddingTop') ?? 0)
-      const saliencyPaddingBottom = Number(getCaseInsensitive(saliency, 'PaddingBottom') ?? 0)
-      const saliencyPaddingLeft = Number(getCaseInsensitive(saliency, 'PaddingLeft') ?? 0)
-      const saliencyPaddingRight = Number(getCaseInsensitive(saliency, 'PaddingRight') ?? 0)
-
-      setConfig({
-        server: {
-          host,
-          port,
-          debug,
-        },
-        download: {
-          maxChunks,
-          limitBytesPerSecond,
-          saveFolder,
-          retryTimeout,
-          maxRetries,
-        },
-        job: {
-          maxConcurrentJobs,
-        },
-        image: {
-          face: {
-            confidence: faceConfidence,
-            paddingTop: facePaddingTop,
-            paddingBottom: facePaddingBottom,
-            paddingLeft: facePaddingLeft,
-            paddingRight: facePaddingRight,
-            unionAll: faceUnionAll,
-          },
-          saliency: {
-            paddingTop: saliencyPaddingTop,
-            paddingBottom: saliencyPaddingBottom,
-            paddingLeft: saliencyPaddingLeft,
-            paddingRight: saliencyPaddingRight,
-          },
-        },
-      })
-      setInitialServer({ host, port, debug })
+      const { config: nextConfig, server } = parseConfigResponse(data)
+      setConfig(nextConfig)
+      setInitialServer(server)
       const pendingRestart = hasPendingBackendUrl()
       setRestartRequired(pendingRestart)
       if (!pendingRestart) {
-        storeBackendUrl(host, port)
+        storeBackendUrl(server.host, server.port)
       }
     } catch (error) {
       console.error('Failed to load config:', error)
@@ -466,6 +1306,30 @@ const SettingMenu: React.FC = () => {
   const canEditConfig = !hasActiveJobs
   const isEditable = !loading && !!config && canEditConfig
 
+  const updateServer = (patch: Partial<ConfigState['server']>) => {
+    if (!config) return
+    setConfig({
+      ...config,
+      server: { ...config.server, ...patch },
+    })
+  }
+
+  const updateDownload = (patch: Partial<ConfigState['download']>) => {
+    if (!config) return
+    setConfig({
+      ...config,
+      download: { ...config.download, ...patch },
+    })
+  }
+
+  const updateJob = (patch: Partial<ConfigState['job']>) => {
+    if (!config) return
+    setConfig({
+      ...config,
+      job: { ...config.job, ...patch },
+    })
+  }
+
   const updateFace = (patch: Partial<ConfigState['image']['face']>) => {
     if (!config) return
     setConfig({
@@ -486,6 +1350,14 @@ const SettingMenu: React.FC = () => {
         saliency: { ...config.image.saliency, ...patch },
       },
     })
+  }
+
+  const handleSelectDownloadFolder = async () => {
+    if (!config || !window.electronAPI) return
+    const folder = await window.electronAPI.openFolder()
+    if (folder) {
+      updateDownload({ saveFolder: folder })
+    }
   }
 
   const createPadStyles = (padding: {
@@ -515,796 +1387,97 @@ const SettingMenu: React.FC = () => {
     <div className="setting-menu">
       <h1 className="menu-title">{t('settings.title')}</h1>
 
-      {showRestartBanner && (
-        <div
-          className={`message message-warning restart-banner${
-            isRestartBannerClosing ? ' restart-banner--closing' : ''
-          }`}
-        >
-          <span className="restart-banner__text">{t('settings.restartRequired')}</span>
-          <button
-            className="btn btn-secondary restart-banner__action"
-            onClick={handleRestartServer}
-          >
-            {t('settings.restartServer')}
-          </button>
-        </div>
-      )}
-      {message && showStatusBanner && (
-        <div
-          className={`message message-${message.type} status-banner${
-            isStatusBannerClosing ? ' status-banner--closing' : ''
-          }`}
-        >
-          {message.text}
-        </div>
-      )}
-      {activeTab !== 'appearance' && hasActiveJobs && (
-        <div className="message message-warning">{t('settings.locked')}</div>
-      )}
-      <div className="setting-tabs">
-        <button
-          className={`tab-button ${activeTab === 'appearance' ? 'active' : ''}`}
-          onClick={() => setActiveTab('appearance')}
-        >
-          {t('settings.appearance')}
-        </button>
-        <button
-          className={`tab-button ${activeTab === 'server' ? 'active' : ''}`}
-          onClick={() => setActiveTab('server')}
-        >
-          {t('settings.server')}
-        </button>
-        <button
-          className={`tab-button ${activeTab === 'download' ? 'active' : ''}`}
-          onClick={() => setActiveTab('download')}
-        >
-          {t('settings.download')}
-        </button>
-        <button
-          className={`tab-button ${activeTab === 'job' ? 'active' : ''}`}
-          onClick={() => setActiveTab('job')}
-        >
-          {t('settings.job')}
-        </button>
-        <button
-          className={`tab-button ${activeTab === 'image' ? 'active' : ''}`}
-          onClick={() => setActiveTab('image')}
-        >
-          {t('settings.image')}
-        </button>
-      </div>
+      <SettingsBanners
+        showRestartBanner={showRestartBanner}
+        isRestartBannerClosing={isRestartBannerClosing}
+        onRestart={handleRestartServer}
+        message={message}
+        showStatusBanner={showStatusBanner}
+        isStatusBannerClosing={isStatusBannerClosing}
+        showLockedBanner={activeTab !== 'appearance' && hasActiveJobs}
+        t={t}
+      />
+
+      <SettingsTabs activeTab={activeTab} onSelectTab={setActiveTab} t={t} />
 
       {activeTab === 'appearance' && (
-        <div className="setting-section">
-          <h3>{t('settings.appearanceSettings')}</h3>
-
-          <div className="settings-grid">
-            <div className="setting-item">
-              <label className="setting-label">{t('settings.theme')}</label>
-              <select
-                className="setting-select"
-                value={theme}
-                onChange={(e) => setTheme(e.target.value as 'dark' | 'light' | 'system')}
-              >
-                <option value="dark">{t('settings.themeDark')}</option>
-                <option value="light">{t('settings.themeLight')}</option>
-                <option value="system">{t('settings.themeSystem')}</option>
-              </select>
-              <span className="setting-hint">{t('settings.themeHint')}</span>
-            </div>
-
-            <div className="setting-item">
-              <label className="setting-label">{t('settings.language')}</label>
-              <select
-                className="setting-select"
-                value={language}
-                onChange={(e) => setLanguage(e.target.value as 'vi' | 'en')}
-              >
-                <option value="vi">{t('settings.languageVi')}</option>
-                <option value="en">{t('settings.languageEn')}</option>
-              </select>
-              <span className="setting-hint">{t('settings.languageHint')}</span>
-            </div>
-          </div>
-
-          <div className="setting-item setting-item-toggle">
-            <div className="toggle-content">
-              <div className="toggle-label">
-                <div className="label-text">{t('settings.enableAnimations')}</div>
-                <div className="label-description">{t('settings.animationsDesc')}</div>
-              </div>
-              <label className="toggle-switch">
-                <input
-                  type="checkbox"
-                  checked={enableAnimations}
-                  onChange={(e) => setEnableAnimations(e.target.checked)}
-                />
-                <span className="toggle-slider"></span>
-              </label>
-            </div>
-          </div>
-
-          <div className="setting-item setting-item-toggle">
-            <div className="toggle-content">
-              <div className="toggle-label">
-                <div className="label-text">{t('settings.closeToTray')}</div>
-                <div className="label-description">{t('settings.closeToTrayDesc')}</div>
-              </div>
-              <label className="toggle-switch">
-                <input
-                  type="checkbox"
-                  checked={closeToTray}
-                  onChange={(e) => setCloseToTray(e.target.checked)}
-                />
-                <span className="toggle-slider"></span>
-              </label>
-            </div>
-          </div>
-        </div>
+        <AppearanceTab
+          theme={theme}
+          language={language}
+          enableAnimations={enableAnimations}
+          closeToTray={closeToTray}
+          setTheme={setTheme}
+          setLanguage={setLanguage}
+          setEnableAnimations={setEnableAnimations}
+          setCloseToTray={setCloseToTray}
+          t={t}
+        />
       )}
 
       {activeTab === 'server' && (
-        <div className="setting-section">
-          <h3>{t('settings.serverSettings')}</h3>
-          {loading || !config ? (
-            <div className="loading">{t('settings.loading')}</div>
-          ) : (
-            <>
-              <div className="settings-grid">
-                <div className="setting-item">
-                  <label className="setting-label">{t('settings.host')}</label>
-                  <input
-                    type="text"
-                    className="setting-input"
-                    value={config.server.host}
-                    disabled={!canEditConfig}
-                    onChange={(e) =>
-                      setConfig({ ...config, server: { ...config.server, host: e.target.value } })
-                    }
-                    placeholder="127.0.0.1"
-                  />
-                  <span className="setting-hint">{t('settings.hostHint')}</span>
-                </div>
-
-                <div className="setting-item">
-                  <label className="setting-label">{t('settings.port')}</label>
-                  <input
-                    type="number"
-                    className="setting-input"
-                    value={Number.isFinite(config.server.port) ? config.server.port : ''}
-                    disabled={!canEditConfig}
-                    onChange={(e) =>
-                      handleNumberChange(e.target.value, (next) =>
-                        setConfig({
-                          ...config,
-                          server: { ...config.server, port: next },
-                        }),
-                      )
-                    }
-                    onBlur={(e) =>
-                      handleNumberBlur(e.target.value, (next) =>
-                        setConfig({
-                          ...config,
-                          server: { ...config.server, port: next },
-                        }),
-                      )
-                    }
-                    onFocus={handleNumberFocus}
-                    min="1"
-                    max="65535"
-                  />
-                  <span className="setting-hint">{t('settings.portHint')}</span>
-                </div>
-              </div>
-
-              <div className="setting-item setting-item-toggle">
-                <div className="toggle-content">
-                  <div className="toggle-label">
-                    <div className="label-text">{t('settings.debugMode')}</div>
-                    <div className="label-description">{t('settings.debugModeDesc')}</div>
-                  </div>
-                  <label className="toggle-switch">
-                    <input
-                      type="checkbox"
-                      checked={config.server.debug}
-                      disabled={!canEditConfig}
-                      onChange={(e) =>
-                        setConfig({
-                          ...config,
-                          server: { ...config.server, debug: e.target.checked },
-                        })
-                      }
-                    />
-                    <span className="toggle-slider"></span>
-                  </label>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
+        <ServerTab
+          loading={loading}
+          config={config}
+          canEditConfig={canEditConfig}
+          updateServer={updateServer}
+          handleNumberChange={handleNumberChange}
+          handleNumberBlur={handleNumberBlur}
+          handleNumberFocus={handleNumberFocus}
+          t={t}
+        />
       )}
 
       {activeTab === 'download' && (
-        <div className="setting-section">
-          <h3>{t('settings.downloadSettings')}</h3>
-          {loading || !config ? (
-            <div className="loading">{t('settings.loading')}</div>
-          ) : (
-            <>
-              <div className="setting-item">
-                <label className="setting-label">{t('settings.saveFolder')}</label>
-                <div className="input-group">
-                  <input
-                    type="text"
-                    className="setting-input"
-                    value={config.download.saveFolder}
-                    disabled={!canEditConfig}
-                    onChange={(e) =>
-                      setConfig({
-                        ...config,
-                        download: { ...config.download, saveFolder: e.target.value },
-                      })
-                    }
-                    placeholder="./downloads"
-                  />
-                  <button
-                    className="browse-btn"
-                    disabled={!canEditConfig}
-                    onClick={async () => {
-                      if (!window.electronAPI) return
-                      const folder = await window.electronAPI.openFolder()
-                      if (folder) {
-                        setConfig({
-                          ...config,
-                          download: { ...config.download, saveFolder: folder },
-                        })
-                      }
-                    }}
-                  >
-                    {t('input.browse')}
-                  </button>
-                </div>
-                <span className="setting-hint">{t('settings.saveFolderHint')}</span>
-              </div>
-
-              <div className="settings-grid">
-                <div className="setting-item">
-                  <label className="setting-label">{t('settings.maxChunks')}</label>
-                  <input
-                    type="number"
-                    className="setting-input"
-                    value={
-                      Number.isFinite(config.download.maxChunks) ? config.download.maxChunks : ''
-                    }
-                    disabled={!canEditConfig}
-                    onChange={(e) =>
-                      handleNumberChange(e.target.value, (next) =>
-                        setConfig({
-                          ...config,
-                          download: { ...config.download, maxChunks: next },
-                        }),
-                      )
-                    }
-                    onBlur={(e) =>
-                      handleNumberBlur(e.target.value, (next) =>
-                        setConfig({
-                          ...config,
-                          download: { ...config.download, maxChunks: next },
-                        }),
-                      )
-                    }
-                    onFocus={handleNumberFocus}
-                    min="1"
-                    max="128"
-                  />
-                  <span className="setting-hint">{t('settings.maxChunksHint')}</span>
-                </div>
-
-                <div className="setting-item">
-                  <label className="setting-label">{t('settings.speedLimit')}</label>
-                  <input
-                    type="number"
-                    className="setting-input"
-                    value={
-                      Number.isFinite(config.download.limitBytesPerSecond)
-                        ? config.download.limitBytesPerSecond
-                        : ''
-                    }
-                    disabled={!canEditConfig}
-                    onChange={(e) =>
-                      handleNumberChange(e.target.value, (next) =>
-                        setConfig({
-                          ...config,
-                          download: {
-                            ...config.download,
-                            limitBytesPerSecond: next,
-                          },
-                        }),
-                      )
-                    }
-                    onBlur={(e) =>
-                      handleNumberBlur(e.target.value, (next) =>
-                        setConfig({
-                          ...config,
-                          download: {
-                            ...config.download,
-                            limitBytesPerSecond: next,
-                          },
-                        }),
-                      )
-                    }
-                    onFocus={handleNumberFocus}
-                    min="0"
-                  />
-                  <span className="setting-hint">{t('settings.speedLimitHint')}</span>
-                </div>
-              </div>
-
-              <div className="settings-grid">
-                <div className="setting-item">
-                  <label className="setting-label">{t('settings.retryTimeout')}</label>
-                  <input
-                    type="number"
-                    className="setting-input"
-                    value={
-                      Number.isFinite(config.download.retryTimeout)
-                        ? config.download.retryTimeout
-                        : ''
-                    }
-                    disabled={!canEditConfig}
-                    onChange={(e) =>
-                      handleNumberChange(e.target.value, (next) =>
-                        setConfig({
-                          ...config,
-                          download: { ...config.download, retryTimeout: next },
-                        }),
-                      )
-                    }
-                    onBlur={(e) =>
-                      handleNumberBlur(e.target.value, (next) =>
-                        setConfig({
-                          ...config,
-                          download: { ...config.download, retryTimeout: next },
-                        }),
-                      )
-                    }
-                    onFocus={handleNumberFocus}
-                    min="1"
-                  />
-                  <span className="setting-hint">{t('settings.retryTimeoutHint')}</span>
-                </div>
-
-                <div className="setting-item">
-                  <label className="setting-label">{t('settings.maxRetries')}</label>
-                  <input
-                    type="number"
-                    className="setting-input"
-                    value={
-                      Number.isFinite(config.download.maxRetries) ? config.download.maxRetries : ''
-                    }
-                    disabled={!canEditConfig}
-                    onChange={(e) =>
-                      handleNumberChange(e.target.value, (next) =>
-                        setConfig({
-                          ...config,
-                          download: { ...config.download, maxRetries: next },
-                        }),
-                      )
-                    }
-                    onBlur={(e) =>
-                      handleNumberBlur(e.target.value, (next) =>
-                        setConfig({
-                          ...config,
-                          download: { ...config.download, maxRetries: next },
-                        }),
-                      )
-                    }
-                    onFocus={handleNumberFocus}
-                    min="0"
-                    max="10"
-                  />
-                  <span className="setting-hint">{t('settings.maxRetriesHint')}</span>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
+        <DownloadTab
+          loading={loading}
+          config={config}
+          canEditConfig={canEditConfig}
+          updateDownload={updateDownload}
+          handleNumberChange={handleNumberChange}
+          handleNumberBlur={handleNumberBlur}
+          handleNumberFocus={handleNumberFocus}
+          onSelectFolder={handleSelectDownloadFolder}
+          t={t}
+        />
       )}
 
       {activeTab === 'job' && (
-        <div className="setting-section">
-          <h3>{t('settings.jobSettings')}</h3>
-          {loading || !config ? (
-            <div className="loading">{t('settings.loading')}</div>
-          ) : (
-            <div className="setting-item">
-              <label className="setting-label">{t('settings.maxConcurrentJobs')}</label>
-              <input
-                type="number"
-                className="setting-input"
-                value={
-                  Number.isFinite(config.job.maxConcurrentJobs) ? config.job.maxConcurrentJobs : ''
-                }
-                disabled={!canEditConfig}
-                onChange={(e) =>
-                  handleNumberChange(e.target.value, (next) =>
-                    setConfig({
-                      ...config,
-                      job: { maxConcurrentJobs: next },
-                    }),
-                  )
-                }
-                onBlur={(e) =>
-                  handleNumberBlur(e.target.value, (next) =>
-                    setConfig({
-                      ...config,
-                      job: { maxConcurrentJobs: next },
-                    }),
-                  )
-                }
-                onFocus={handleNumberFocus}
-                min="1"
-                max="32"
-              />
-              <span className="setting-hint">{t('settings.maxConcurrentJobsHint')}</span>
-            </div>
-          )}
-        </div>
+        <JobTab
+          loading={loading}
+          config={config}
+          canEditConfig={canEditConfig}
+          updateJob={updateJob}
+          handleNumberChange={handleNumberChange}
+          handleNumberBlur={handleNumberBlur}
+          handleNumberFocus={handleNumberFocus}
+          t={t}
+        />
       )}
 
       {activeTab === 'image' && (
-        <div className="setting-section">
-          <h3>{t('settings.imageSettings')}</h3>
-          {loading || !config ? (
-            <div className="loading">{t('settings.loading')}</div>
-          ) : (
-            <>
-              <div className="image-config-block">
-                <div className="image-config-header">
-                  <div>
-                    <h4>{t('settings.imageFace')}</h4>
-                    <span className="setting-hint">{t('settings.imageFaceHint')}</span>
-                  </div>
-                </div>
-                <div className="image-config-grid">
-                  <div className="image-padding-layout">
-                    <div className="pad-item pad-top">
-                      <label className="setting-label">{t('settings.paddingTop')}</label>
-                      <input
-                        type="number"
-                        className="setting-input"
-                        value={
-                          Number.isFinite(config.image.face.paddingTop)
-                            ? config.image.face.paddingTop
-                            : ''
-                        }
-                        disabled={!canEditConfig}
-                        onChange={(e) =>
-                          handleNumberChange(e.target.value, (next) =>
-                            updateFace({ paddingTop: next }),
-                          )
-                        }
-                        onBlur={(e) =>
-                          handleNumberBlur(e.target.value, (next) =>
-                            updateFace({ paddingTop: next }),
-                          )
-                        }
-                        onFocus={handleNumberFocus}
-                        min="0"
-                        max="1"
-                        step="0.01"
-                      />
-                      <span className="setting-hint">{t('settings.paddingHint')}</span>
-                    </div>
-                    <div className="pad-item pad-left">
-                      <label className="setting-label">{t('settings.paddingLeft')}</label>
-                      <input
-                        type="number"
-                        className="setting-input"
-                        value={
-                          Number.isFinite(config.image.face.paddingLeft)
-                            ? config.image.face.paddingLeft
-                            : ''
-                        }
-                        disabled={!canEditConfig}
-                        onChange={(e) =>
-                          handleNumberChange(e.target.value, (next) =>
-                            updateFace({ paddingLeft: next }),
-                          )
-                        }
-                        onBlur={(e) =>
-                          handleNumberBlur(e.target.value, (next) =>
-                            updateFace({ paddingLeft: next }),
-                          )
-                        }
-                        onFocus={handleNumberFocus}
-                        min="0"
-                        max="1"
-                        step="0.01"
-                      />
-                      <span className="setting-hint">{t('settings.paddingHint')}</span>
-                    </div>
-                    <div className="pad-center">
-                      <div className="pad-diagram">
-                        <div
-                          className="pad-box pad-base"
-                          style={createPadStyles(config.image.face).base}
-                        ></div>
-                        <div
-                          className="pad-box pad-detect"
-                          style={createPadStyles(config.image.face).detect}
-                        ></div>
-                        <div
-                          className="pad-box pad-crop"
-                          style={createPadStyles(config.image.face).crop}
-                        ></div>
-                      </div>
-                    </div>
-                    <div className="pad-item pad-right">
-                      <label className="setting-label">{t('settings.paddingRight')}</label>
-                      <input
-                        type="number"
-                        className="setting-input"
-                        value={
-                          Number.isFinite(config.image.face.paddingRight)
-                            ? config.image.face.paddingRight
-                            : ''
-                        }
-                        disabled={!canEditConfig}
-                        onChange={(e) =>
-                          handleNumberChange(e.target.value, (next) =>
-                            updateFace({ paddingRight: next }),
-                          )
-                        }
-                        onBlur={(e) =>
-                          handleNumberBlur(e.target.value, (next) =>
-                            updateFace({ paddingRight: next }),
-                          )
-                        }
-                        onFocus={handleNumberFocus}
-                        min="0"
-                        max="1"
-                        step="0.01"
-                      />
-                      <span className="setting-hint">{t('settings.paddingHint')}</span>
-                    </div>
-                    <div className="pad-item pad-bottom">
-                      <label className="setting-label">{t('settings.paddingBottom')}</label>
-                      <input
-                        type="number"
-                        className="setting-input"
-                        value={
-                          Number.isFinite(config.image.face.paddingBottom)
-                            ? config.image.face.paddingBottom
-                            : ''
-                        }
-                        disabled={!canEditConfig}
-                        onChange={(e) =>
-                          handleNumberChange(e.target.value, (next) =>
-                            updateFace({ paddingBottom: next }),
-                          )
-                        }
-                        onBlur={(e) =>
-                          handleNumberBlur(e.target.value, (next) =>
-                            updateFace({ paddingBottom: next }),
-                          )
-                        }
-                        onFocus={handleNumberFocus}
-                        min="0"
-                        max="1"
-                        step="0.01"
-                      />
-                      <span className="setting-hint">{t('settings.paddingHint')}</span>
-                    </div>
-                  </div>
-                  <div className="image-config-side">
-                    <div className="setting-item">
-                      <label className="setting-label">{t('settings.imageConfidence')}</label>
-                      <input
-                        type="number"
-                        className="setting-input"
-                        value={
-                          Number.isFinite(config.image.face.confidence)
-                            ? config.image.face.confidence
-                            : ''
-                        }
-                        disabled={!canEditConfig}
-                        onChange={(e) =>
-                          handleNumberChange(e.target.value, (next) =>
-                            updateFace({ confidence: next }),
-                          )
-                        }
-                        onBlur={(e) =>
-                          handleNumberBlur(e.target.value, (next) =>
-                            updateFace({ confidence: next }),
-                          )
-                        }
-                        onFocus={handleNumberFocus}
-                        min="0"
-                        max="1"
-                        step="0.01"
-                      />
-                      <span className="setting-hint">{t('settings.paddingHint')}</span>
-                    </div>
-                    <div className="setting-item setting-item-toggle">
-                      <div className="toggle-content">
-                        <div className="toggle-label">
-                          <div className="label-text">{t('settings.imageUnionAll')}</div>
-                        </div>
-                        <label className="toggle-switch">
-                          <input
-                            type="checkbox"
-                            checked={config.image.face.unionAll}
-                            disabled={!canEditConfig}
-                            onChange={(e) => updateFace({ unionAll: e.target.checked })}
-                          />
-                          <span className="toggle-slider"></span>
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="image-config-block">
-                <div className="image-config-header">
-                  <div>
-                    <h4>{t('settings.imageSaliency')}</h4>
-                    <span className="setting-hint">{t('settings.imageSaliencyHint')}</span>
-                  </div>
-                </div>
-                <div className="image-config-grid">
-                  <div className="image-padding-layout">
-                    <div className="pad-item pad-top">
-                      <label className="setting-label">{t('settings.paddingTop')}</label>
-                      <input
-                        type="number"
-                        className="setting-input"
-                        value={
-                          Number.isFinite(config.image.saliency.paddingTop)
-                            ? config.image.saliency.paddingTop
-                            : ''
-                        }
-                        disabled={!canEditConfig}
-                        onChange={(e) =>
-                          handleNumberChange(e.target.value, (next) =>
-                            updateSaliency({ paddingTop: next }),
-                          )
-                        }
-                        onBlur={(e) =>
-                          handleNumberBlur(e.target.value, (next) =>
-                            updateSaliency({ paddingTop: next }),
-                          )
-                        }
-                        onFocus={handleNumberFocus}
-                        min="0"
-                        max="1"
-                        step="0.01"
-                      />
-                      <span className="setting-hint">{t('settings.paddingHint')}</span>
-                    </div>
-                    <div className="pad-item pad-left">
-                      <label className="setting-label">{t('settings.paddingLeft')}</label>
-                      <input
-                        type="number"
-                        className="setting-input"
-                        value={
-                          Number.isFinite(config.image.saliency.paddingLeft)
-                            ? config.image.saliency.paddingLeft
-                            : ''
-                        }
-                        disabled={!canEditConfig}
-                        onChange={(e) =>
-                          handleNumberChange(e.target.value, (next) =>
-                            updateSaliency({ paddingLeft: next }),
-                          )
-                        }
-                        onBlur={(e) =>
-                          handleNumberBlur(e.target.value, (next) =>
-                            updateSaliency({ paddingLeft: next }),
-                          )
-                        }
-                        onFocus={handleNumberFocus}
-                        min="0"
-                        max="1"
-                        step="0.01"
-                      />
-                      <span className="setting-hint">{t('settings.paddingHint')}</span>
-                    </div>
-                    <div className="pad-center">
-                      <div className="pad-diagram">
-                        <div
-                          className="pad-box pad-base"
-                          style={createPadStyles(config.image.saliency).base}
-                        ></div>
-                        <div
-                          className="pad-box pad-detect"
-                          style={createPadStyles(config.image.saliency).detect}
-                        ></div>
-                        <div
-                          className="pad-box pad-crop"
-                          style={createPadStyles(config.image.saliency).crop}
-                        ></div>
-                      </div>
-                    </div>
-                    <div className="pad-item pad-right">
-                      <label className="setting-label">{t('settings.paddingRight')}</label>
-                      <input
-                        type="number"
-                        className="setting-input"
-                        value={
-                          Number.isFinite(config.image.saliency.paddingRight)
-                            ? config.image.saliency.paddingRight
-                            : ''
-                        }
-                        disabled={!canEditConfig}
-                        onChange={(e) =>
-                          handleNumberChange(e.target.value, (next) =>
-                            updateSaliency({ paddingRight: next }),
-                          )
-                        }
-                        onBlur={(e) =>
-                          handleNumberBlur(e.target.value, (next) =>
-                            updateSaliency({ paddingRight: next }),
-                          )
-                        }
-                        onFocus={handleNumberFocus}
-                        min="0"
-                        max="1"
-                        step="0.01"
-                      />
-                      <span className="setting-hint">{t('settings.paddingHint')}</span>
-                    </div>
-                    <div className="pad-item pad-bottom">
-                      <label className="setting-label">{t('settings.paddingBottom')}</label>
-                      <input
-                        type="number"
-                        className="setting-input"
-                        value={
-                          Number.isFinite(config.image.saliency.paddingBottom)
-                            ? config.image.saliency.paddingBottom
-                            : ''
-                        }
-                        disabled={!canEditConfig}
-                        onChange={(e) =>
-                          handleNumberChange(e.target.value, (next) =>
-                            updateSaliency({ paddingBottom: next }),
-                          )
-                        }
-                        onBlur={(e) =>
-                          handleNumberBlur(e.target.value, (next) =>
-                            updateSaliency({ paddingBottom: next }),
-                          )
-                        }
-                        onFocus={handleNumberFocus}
-                        min="0"
-                        max="1"
-                        step="0.01"
-                      />
-                      <span className="setting-hint">{t('settings.paddingHint')}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
+        <ImageTab
+          loading={loading}
+          config={config}
+          canEditConfig={canEditConfig}
+          updateFace={updateFace}
+          updateSaliency={updateSaliency}
+          createPadStyles={createPadStyles}
+          handleNumberChange={handleNumberChange}
+          handleNumberBlur={handleNumberBlur}
+          handleNumberFocus={handleNumberFocus}
+          t={t}
+        />
       )}
 
-      {activeTab !== 'appearance' && (
-        <div className="setting-actions">
-          <button className="btn btn-primary" onClick={saveConfig} disabled={!isEditable || saving}>
-            {saving ? t('settings.saving') : t('settings.save')}
-          </button>
-          <button className="btn btn-secondary" onClick={reloadConfig} disabled={!isEditable}>
-            {t('settings.reload')}
-          </button>
-          <button className="btn btn-danger" onClick={resetConfig} disabled={!isEditable}>
-            {t('settings.resetToDefaults')}
-          </button>
-        </div>
-      )}
+      <SettingActions
+        saving={saving}
+        isEditable={isEditable}
+        showActions={activeTab !== 'appearance'}
+        onSave={saveConfig}
+        onReload={reloadConfig}
+        onReset={resetConfig}
+        t={t}
+      />
     </div>
   )
 }
