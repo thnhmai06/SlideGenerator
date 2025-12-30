@@ -43,6 +43,233 @@ const appendLog = (logs: LogEntry[], entry: LogEntry) => {
   return [...logs.slice(logs.length - MAX_LOG_ENTRIES + 1), entry]
 }
 
+const getPayloadValue = (data: Record<string, unknown>, key: string) => {
+  return data[key] ?? data[key.charAt(0).toLowerCase() + key.slice(1)]
+}
+
+const getPayloadDataValue = (container: Record<string, unknown> | undefined, key: string) => {
+  if (!container) return undefined
+  if (key in container) return container[key]
+  const lowered = key.toLowerCase()
+  for (const [entryKey, value] of Object.entries(container)) {
+    if (entryKey.toLowerCase() === lowered) return value
+  }
+  return undefined
+}
+
+const handleGroupProgressNotification = (
+  groupId: string,
+  data: Record<string, unknown>,
+  updateGroup: (groupId: string, updater: (group: GroupJob) => GroupJob) => void,
+) => {
+  if (typeof getPayloadValue(data, 'Progress') !== 'number') return false
+  updateGroup(groupId, (group) => ({
+    ...group,
+    progress: getPayloadValue(data, 'Progress') as number,
+    errorCount: (getPayloadValue(data, 'ErrorCount') as number) ?? group.errorCount,
+  }))
+  return true
+}
+
+const handleGroupStatusNotification = (
+  groupId: string,
+  status: string,
+  updateGroup: (groupId: string, updater: (group: GroupJob) => GroupJob) => void,
+) => {
+  updateGroup(groupId, (group) => ({ ...group, status: status as JobStatus }))
+  return true
+}
+
+const handleSheetProgressNotification = (
+  jobId: string,
+  data: Record<string, unknown>,
+  updateSheet: (sheetId: string, updater: (sheet: SheetJob) => SheetJob) => void,
+) => {
+  if (typeof getPayloadValue(data, 'CurrentRow') !== 'number') return false
+  updateSheet(jobId, (sheet) => ({
+    ...sheet,
+    currentRow: getPayloadValue(data, 'CurrentRow') as number,
+    totalRows: (getPayloadValue(data, 'TotalRows') as number) ?? sheet.totalRows,
+    progress: (getPayloadValue(data, 'Progress') as number) ?? sheet.progress,
+    errorCount: (getPayloadValue(data, 'ErrorCount') as number) ?? sheet.errorCount,
+  }))
+  return true
+}
+
+const handleSheetStatusNotification = (
+  jobId: string,
+  status: string,
+  message: string | undefined,
+  updateSheet: (sheetId: string, updater: (sheet: SheetJob) => SheetJob) => void,
+) => {
+  updateSheet(jobId, (sheet) => ({
+    ...sheet,
+    status: status as JobStatus,
+    errorMessage: message ?? sheet.errorMessage,
+  }))
+  return true
+}
+
+const handleSheetErrorNotification = (
+  jobId: string,
+  error: string,
+  timestamp: string | undefined,
+  updateSheet: (sheetId: string, updater: (sheet: SheetJob) => SheetJob) => void,
+) => {
+  const logEntry: LogEntry = {
+    message: error,
+    level: 'Error',
+    timestamp,
+  }
+  updateSheet(jobId, (sheet) => ({
+    ...sheet,
+    logs: appendLog(sheet.logs, logEntry),
+  }))
+  return true
+}
+
+const createLogEntryFromPayload = (
+  message: string,
+  level: string | undefined,
+  timestamp: string | undefined,
+  payloadData: Record<string, unknown> | undefined,
+): LogEntry => {
+  const rowValue = getPayloadDataValue(payloadData, 'row')
+  const row = typeof rowValue === 'number' ? rowValue : Number(rowValue)
+  const rowStatusValue = getPayloadDataValue(payloadData, 'rowStatus')
+  return {
+    message,
+    level: level ?? 'Info',
+    timestamp,
+    row: Number.isFinite(row) ? row : undefined,
+    rowStatus: typeof rowStatusValue === 'string' ? rowStatusValue : undefined,
+  }
+}
+
+type RefLike<T> = { current: T }
+
+type SlideNotificationContext = {
+  updateGroup: (groupId: string, updater: (group: GroupJob) => GroupJob) => void
+  updateSheet: (sheetId: string, updater: (sheet: SheetJob) => SheetJob) => void
+  removedGroupIds: RefLike<Set<string>>
+  sheetToGroup: RefLike<Record<string, string>>
+  groupsRef: RefLike<Record<string, GroupJob>>
+}
+
+type SlideNotificationPayload = {
+  data: Record<string, unknown>
+  groupId?: string
+  jobId?: string
+  status?: string
+  message?: string
+  error?: string
+  level?: string
+  timestamp?: string
+  payloadData?: Record<string, unknown>
+}
+
+const parseSlideNotificationPayload = (payload: unknown): SlideNotificationPayload | null => {
+  if (!payload || typeof payload !== 'object') return null
+  const data = payload as Record<string, unknown>
+  return {
+    data,
+    groupId: getPayloadValue(data, 'GroupId') as string | undefined,
+    jobId: getPayloadValue(data, 'JobId') as string | undefined,
+    status: getPayloadValue(data, 'Status') as string | undefined,
+    message: getPayloadValue(data, 'Message') as string | undefined,
+    error: getPayloadValue(data, 'Error') as string | undefined,
+    level: getPayloadValue(data, 'Level') as string | undefined,
+    timestamp: getPayloadValue(data, 'Timestamp') as string | undefined,
+    payloadData: getPayloadValue(data, 'Data') as Record<string, unknown> | undefined,
+  }
+}
+
+const shouldIgnoreNotification = (
+  payload: SlideNotificationPayload,
+  context: SlideNotificationContext,
+) => {
+  if (payload.groupId && context.removedGroupIds.current.has(payload.groupId)) return true
+  if (!payload.jobId) return false
+  const parentGroupId = context.sheetToGroup.current[payload.jobId]
+  return Boolean(parentGroupId && context.removedGroupIds.current.has(parentGroupId))
+}
+
+const handleGroupNotifications = (
+  payload: SlideNotificationPayload,
+  context: SlideNotificationContext,
+) => {
+  if (!payload.groupId) return false
+  if (handleGroupProgressNotification(payload.groupId, payload.data, context.updateGroup)) {
+    return true
+  }
+  if (!payload.status) return false
+  handleGroupStatusNotification(payload.groupId, payload.status, context.updateGroup)
+  return true
+}
+
+const handleSheetNotifications = (
+  payload: SlideNotificationPayload,
+  context: SlideNotificationContext,
+) => {
+  if (!payload.jobId) return false
+  if (handleSheetProgressNotification(payload.jobId, payload.data, context.updateSheet)) return true
+  if (payload.status) {
+    handleSheetStatusNotification(
+      payload.jobId,
+      payload.status,
+      payload.message,
+      context.updateSheet,
+    )
+    return true
+  }
+  if (payload.error) {
+    handleSheetErrorNotification(
+      payload.jobId,
+      payload.error,
+      payload.timestamp,
+      context.updateSheet,
+    )
+    return true
+  }
+  return false
+}
+
+const handleLogNotification = (
+  payload: SlideNotificationPayload,
+  context: SlideNotificationContext,
+) => {
+  if (!payload.jobId || !payload.message) return
+  const logEntry = createLogEntryFromPayload(
+    payload.message,
+    payload.level,
+    payload.timestamp,
+    payload.payloadData,
+  )
+  const targetGroupId = context.sheetToGroup.current[payload.jobId]
+  if (targetGroupId) {
+    context.updateSheet(payload.jobId, (sheet) => ({
+      ...sheet,
+      logs: appendLog(sheet.logs, logEntry),
+    }))
+    return
+  }
+  if (context.groupsRef.current[payload.jobId]) {
+    context.updateGroup(payload.jobId, (group) => ({
+      ...group,
+      logs: appendLog(group.logs, logEntry),
+    }))
+  }
+}
+
+const handleSlideNotification = (payload: unknown, context: SlideNotificationContext) => {
+  const parsed = parseSlideNotificationPayload(payload)
+  if (!parsed) return
+  if (shouldIgnoreNotification(parsed, context)) return
+  if (handleGroupNotifications(parsed, context)) return
+  if (handleSheetNotifications(parsed, context)) return
+  handleLogNotification(parsed, context)
+}
+
 export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [groupsById, setGroupsById] = useState<Record<string, GroupJob>>({})
   const groupsRef = useRef<Record<string, GroupJob>>({})
@@ -534,111 +761,16 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   }, [groupsById])
 
   useEffect(() => {
-    const unsubscribe = backendApi.onSlideNotification((payload) => {
-      if (!payload || typeof payload !== 'object') return
-      const data = payload as Record<string, unknown>
-      const getValue = (key: string) =>
-        data[key] ?? data[key.charAt(0).toLowerCase() + key.slice(1)]
-      const getDataValue = (container: Record<string, unknown> | undefined, key: string) => {
-        if (!container) return undefined
-        if (key in container) return container[key]
-        const lowered = key.toLowerCase()
-        for (const [entryKey, value] of Object.entries(container)) {
-          if (entryKey.toLowerCase() === lowered) return value
-        }
-        return undefined
-      }
-
-      const groupId = getValue('GroupId') as string | undefined
-      const jobId = getValue('JobId') as string | undefined
-      const status = getValue('Status') as string | undefined
-      const message = getValue('Message') as string | undefined
-      const error = getValue('Error') as string | undefined
-      const level = getValue('Level') as string | undefined
-      const timestamp = getValue('Timestamp') as string | undefined
-      const payloadData = getValue('Data') as Record<string, unknown> | undefined
-
-      if (groupId && removedGroupIds.current.has(groupId)) return
-      if (
-        jobId &&
-        sheetToGroup.current[jobId] &&
-        removedGroupIds.current.has(sheetToGroup.current[jobId])
-      )
-        return
-
-      if (groupId && typeof getValue('Progress') === 'number') {
-        updateGroup(groupId, (group) => ({
-          ...group,
-          progress: getValue('Progress') as number,
-          errorCount: (getValue('ErrorCount') as number) ?? group.errorCount,
-        }))
-        return
-      }
-
-      if (groupId && status) {
-        updateGroup(groupId, (group) => ({ ...group, status: status as JobStatus }))
-        return
-      }
-
-      if (jobId && typeof getValue('CurrentRow') === 'number') {
-        updateSheet(jobId, (sheet) => ({
-          ...sheet,
-          currentRow: getValue('CurrentRow') as number,
-          totalRows: (getValue('TotalRows') as number) ?? sheet.totalRows,
-          progress: (getValue('Progress') as number) ?? sheet.progress,
-          errorCount: (getValue('ErrorCount') as number) ?? sheet.errorCount,
-        }))
-        return
-      }
-
-      if (jobId && status) {
-        updateSheet(jobId, (sheet) => ({
-          ...sheet,
-          status: status as JobStatus,
-          errorMessage: message ?? sheet.errorMessage,
-        }))
-        return
-      }
-
-      if (jobId && error) {
-        const logEntry: LogEntry = {
-          message: error,
-          level: 'Error',
-          timestamp,
-        }
-        updateSheet(jobId, (sheet) => ({
-          ...sheet,
-          logs: appendLog(sheet.logs, logEntry),
-        }))
-        return
-      }
-
-      if (jobId && message) {
-        const rowValue = getDataValue(payloadData, 'row')
-        const row = typeof rowValue === 'number' ? rowValue : Number(rowValue)
-        const rowStatus = getDataValue(payloadData, 'rowStatus')
-        const logEntry: LogEntry = {
-          message,
-          level,
-          timestamp,
-          row: Number.isFinite(row) ? row : undefined,
-          rowStatus: typeof rowStatus === 'string' ? rowStatus : undefined,
-        }
-        const targetGroupId = sheetToGroup.current[jobId]
-
-        if (targetGroupId) {
-          updateSheet(jobId, (sheet) => ({
-            ...sheet,
-            logs: appendLog(sheet.logs, logEntry),
-          }))
-        } else if (groupsRef.current[jobId]) {
-          updateGroup(jobId, (group) => ({
-            ...group,
-            logs: appendLog(group.logs, logEntry),
-          }))
-        }
-      }
-    })
+    const context: SlideNotificationContext = {
+      updateGroup,
+      updateSheet,
+      removedGroupIds,
+      sheetToGroup,
+      groupsRef,
+    }
+    const unsubscribe = backendApi.onSlideNotification((payload) =>
+      handleSlideNotification(payload, context),
+    )
 
     return unsubscribe
   }, [updateGroup, updateSheet])

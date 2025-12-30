@@ -1,92 +1,92 @@
 {
-    "name": "slide-generator",
-    "productName": "Slide Generator",
-    "version": "1.0.0-dev",
-    "description": "Generate presentation slides from predefined template",
-    "main": "dist-electron/main.js",
-    "type": "commonjs",
-    "scripts": {
-        "dev": "vite",
-        "build": "tsc && vite build && electron-builder",
-        "build:backend": "dotnet publish ..\\backend\\src\\SlideGenerator.Presentation\\SlideGenerator.Presentation.csproj -c Release -o backend",
-        "build:full": "npm run build:backend && npm run build",
-        "preview": "vite preview",
-        "test": "vitest run",
-        "test:watch": "vitest",
-        "format": "prettier --write ."
+  "name": "slide-generator",
+  "productName": "Slide Generator",
+  "version": "1.0.0-dev",
+  "description": "Generate presentation slides from predefined template",
+  "main": "dist-electron/main.js",
+  "type": "commonjs",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build && electron-builder",
+    "build:backend": "dotnet publish ..\\backend\\src\\SlideGenerator.Presentation\\SlideGenerator.Presentation.csproj -c Release -o backend",
+    "build:full": "npm run build:backend && npm run build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "format": "prettier --write ."
+  },
+  "private": true,
+  "keywords": [
+    "electron",
+    "react",
+    "typescript",
+    "vite"
+  ],
+  "author": "thnhmai06",
+  "dependencies": {
+    "@microsoft/signalr": "^8.0.6",
+    "electron-log": "^5.4.3",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.0",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/react": "^19.2.6",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.1",
+    "concurrently": "^9.2.1",
+    "electron": "^39.2.3",
+    "electron-builder": "^26.0.12",
+    "jsdom": "^26.1.0",
+    "prettier": "^3.7.4",
+    "typescript": "^5.9.3",
+    "vite": "^7.2.4",
+    "vite-plugin-electron": "^0.29.0",
+    "vite-plugin-electron-renderer": "^0.14.6",
+    "vitest": "^3.2.0",
+    "wait-on": "^9.0.3"
+  },
+  "build": {
+    "appId": "com.thnhmai06.slide-generator",
+    "directories": {
+      "output": "release"
     },
-    "private": true,
-    "keywords": [
-        "electron",
-        "react",
-        "typescript",
-        "vite"
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "package.json",
+      "assets/**/*"
     ],
-    "author": "thnhmai06",
-    "dependencies": {
-        "@microsoft/signalr": "^8.0.6",
-        "electron-log": "^5.4.3",
-        "react": "^19.2.0",
-        "react-dom": "^19.2.0"
+    "extraResources": [
+      {
+        "from": "backend",
+        "to": "backend"
+      }
+    ],
+    "win": {
+      "icon": "assets/images/app-icon.ico",
+      "target": [
+        "nsis",
+        "portable"
+      ]
     },
-    "devDependencies": {
-        "@testing-library/jest-dom": "^6.9.0",
-        "@testing-library/react": "^16.3.0",
-        "@testing-library/user-event": "^14.6.1",
-        "@types/react": "^19.2.6",
-        "@types/react-dom": "^19.2.3",
-        "@vitejs/plugin-react": "^5.1.1",
-        "concurrently": "^9.2.1",
-        "electron": "^39.2.3",
-        "electron-builder": "^26.0.12",
-        "jsdom": "^26.1.0",
-        "prettier": "^3.7.4",
-        "typescript": "^5.9.3",
-        "vite": "^7.2.4",
-        "vite-plugin-electron": "^0.29.0",
-        "vite-plugin-electron-renderer": "^0.14.6",
-        "vitest": "^3.2.0",
-        "wait-on": "^9.0.3"
+    "mac": {
+      "icon": "assets/images/app-icon.icns",
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.productivity"
     },
-    "build": {
-        "appId": "com.thnhmai06.slide-generator",
-        "directories": {
-            "output": "release"
-        },
-        "files": [
-            "dist/**/*",
-            "dist-electron/**/*",
-            "package.json",
-            "assets/**/*"
-        ],
-        "extraResources": [
-            {
-                "from": "backend",
-                "to": "backend"
-            }
-        ],
-        "win": {
-            "icon": "assets/images/app-icon.ico",
-            "target": [
-                "nsis",
-                "portable"
-            ]
-        },
-        "mac": {
-            "icon": "assets/images/app-icon.icns",
-            "target": [
-                "dmg",
-                "zip"
-            ],
-            "category": "public.app-category.productivity"
-        },
-        "linux": {
-            "icon": "assets/images/app-icon.png",
-            "target": [
-                "AppImage",
-                "tar.gz"
-            ],
-            "category": "Utility"
-        }
+    "linux": {
+      "icon": "assets/images/app-icon.png",
+      "target": [
+        "AppImage",
+        "tar.gz"
+      ],
+      "category": "Utility"
     }
+  }
 }

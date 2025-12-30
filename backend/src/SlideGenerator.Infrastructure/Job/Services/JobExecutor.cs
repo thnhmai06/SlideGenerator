@@ -24,228 +24,38 @@ public class JobExecutor(
     /// <inheritdoc />
     public async Task ExecuteJobAsync(string sheetId, CancellationToken cancellationToken)
     {
-        var sheet = jobManager.GetInternalSheet(sheetId);
-        if (sheet == null)
-        {
-            Logger.LogWarning("Sheet {SheetId} not found", sheetId);
+        if (!TryGetSheetAndGroup(sheetId, out var sheet, out var group) || sheet == null || group == null)
             return;
-        }
-
-        var group = jobManager.GetInternalGroup(sheet.GroupId);
-        if (group == null)
-        {
-            Logger.LogWarning("Group {GroupId} not found for job {JobId}", sheet.GroupId, sheetId);
-            return;
-        }
 
         sheet.MarkExecuting(true);
+        var executionContext = new JobExecutionContext();
 
         using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
             cancellationToken, sheet.CancellationTokenSource.Token);
         var token = linkedCts.Token;
 
-        JobCheckpoint checkpoint = async (_, ct) =>
-        {
-            await sheet.WaitIfPausedAsync(ct);
-            ct.ThrowIfCancellationRequested();
-        };
+        var checkpoint = CreateCheckpoint(sheet);
 
-        int? activeRow = null;
-        List<JobLogEntry>? bufferedLogs = null;
+        List<JobLogEntry>? bufferedLogs;
 
         try
         {
-            sheet.SetStatus(SheetJobStatus.Running);
-            await jobNotifier.NotifyJobStatusChanged(sheetId, SheetJobStatus.Running);
-            await PersistSheetStateAsync(sheet);
-            group.UpdateStatus();
-            await PersistGroupStateAsync(group);
-            await jobNotifier.NotifyGroupStatusChanged(group.Id, group.Status);
-
-            if (sheet.CurrentRow == 0) // on start
-            {
-                slideWorkingManager.RemoveWorkingPresentation(sheet.OutputPath);
-                fileSystem.CopyFile(group.Template.FilePath, sheet.OutputPath, true);
-            }
-            else
-            {
-                if (!fileSystem.FileExists(sheet.OutputPath))
-                {
-                    sheet.SetStatus(SheetJobStatus.Failed, "Output file missing during resume.");
-                    await jobNotifier.NotifyJobStatusChanged(sheetId, sheet.Status, sheet.ErrorMessage);
-                    await PersistSheetStateAsync(sheet);
-                    group.UpdateStatus();
-                    await PersistGroupStateAsync(group);
-                    await jobNotifier.NotifyGroupStatusChanged(group.Id, group.Status);
-                    jobManager.NotifySheetCompleted(sheetId);
-                    return;
-                }
-            }
-
-            var startRow = sheet.NextRowIndex;
-            for (var rowNum = startRow; rowNum <= sheet.TotalRows; rowNum++)
-            {
-                await checkpoint(JobCheckpointStage.BeforeRow, token);
-
-                activeRow = rowNum;
-                bufferedLogs = new List<JobLogEntry>(4);
-                await StoreAndNotifyLogAsync(new JobEvent(
-                    sheet.Id,
-                    JobEventScope.Sheet,
-                    DateTimeOffset.UtcNow,
-                    "Info",
-                    $"Processing row {rowNum}",
-                    new Dictionary<string, object?>
-                    {
-                        ["row"] = rowNum,
-                        ["rowStatus"] = "processing"
-                    }), bufferedLogs);
-
-                var rowData = sheet.Worksheet.GetRow(rowNum);
-                var result = await slideServices.ProcessRowAsync(
-                    sheet.OutputPath,
-                    sheet.TextConfigs,
-                    sheet.ImageConfigs,
-                    rowData,
-                    checkpoint,
-                    token);
-
-                foreach (var detail in result.TextReplacements)
-                    await StoreAndNotifyLogAsync(new JobEvent(
-                        sheet.Id,
-                        JobEventScope.Sheet,
-                        DateTimeOffset.UtcNow,
-                        "Info",
-                        $"Row {rowNum} text -> shape {detail.ShapeId}: {detail.Placeholder} = {detail.Value}",
-                        new Dictionary<string, object?>
-                        {
-                            ["row"] = rowNum,
-                            ["shapeId"] = detail.ShapeId,
-                            ["placeholder"] = detail.Placeholder,
-                            ["value"] = detail.Value,
-                            ["kind"] = "text"
-                        }), bufferedLogs);
-
-                foreach (var detail in result.ImageReplacements)
-                    await StoreAndNotifyLogAsync(new JobEvent(
-                        sheet.Id,
-                        JobEventScope.Sheet,
-                        DateTimeOffset.UtcNow,
-                        "Info",
-                        $"Row {rowNum} image -> shape {detail.ShapeId}: {detail.Source}",
-                        new Dictionary<string, object?>
-                        {
-                            ["row"] = rowNum,
-                            ["shapeId"] = detail.ShapeId,
-                            ["source"] = detail.Source,
-                            ["kind"] = "image"
-                        }), bufferedLogs);
-
-                await StoreAndNotifyLogAsync(new JobEvent(
-                    sheet.Id,
-                    JobEventScope.Sheet,
-                    DateTimeOffset.UtcNow,
-                    "Info",
-                    $"Row {rowNum} completed (text: {result.TextReplacementCount}, images: {result.ImageReplacementCount}, image errors: {result.ImageErrorCount})",
-                    new Dictionary<string, object?>
-                    {
-                        ["row"] = rowNum,
-                        ["rowStatus"] = "completed",
-                        ["textReplacements"] = result.TextReplacementCount,
-                        ["imageReplacements"] = result.ImageReplacementCount,
-                        ["imageErrors"] = result.ImageErrorCount
-                    }), bufferedLogs);
-
-                if (result.ImageErrorCount > 0)
-                {
-                    sheet.RegisterRowError(rowNum, string.Join("; ", result.Errors));
-                    var detail = string.Join("; ", result.Errors);
-                    var warningMessage = string.IsNullOrWhiteSpace(detail)
-                        ? $"Row {rowNum} completed with {result.ImageErrorCount} image errors"
-                        : $"Row {rowNum} completed with {result.ImageErrorCount} image errors: {detail}";
-                    await StoreAndNotifyLogAsync(new JobEvent(
-                        sheet.Id,
-                        JobEventScope.Sheet,
-                        DateTimeOffset.UtcNow,
-                        "Warning",
-                        warningMessage,
-                        new Dictionary<string, object?>
-                        {
-                            ["row"] = rowNum,
-                            ["rowStatus"] = "warning",
-                            ["errors"] = result.Errors
-                        }), bufferedLogs);
-                }
-
-                await FlushLogsAsync(bufferedLogs);
-                bufferedLogs = null;
-
-                sheet.UpdateProgress(rowNum);
-                await checkpoint(JobCheckpointStage.BeforePersistState, token);
-                await PersistSheetStateAsync(sheet);
-                await jobNotifier.NotifyJobProgress(sheetId, rowNum, sheet.TotalRows, sheet.Progress, sheet.ErrorCount);
-                await jobNotifier.NotifyGroupProgress(group.Id, group.Progress, group.ErrorCount);
-            }
-
-            slideServices.RemoveFirstSlide(sheet.OutputPath);
-
-            sheet.SetStatus(SheetJobStatus.Completed);
-            await PersistSheetStateAsync(sheet);
-            await jobNotifier.NotifyJobStatusChanged(sheetId, SheetJobStatus.Completed);
-            Logger.LogInformation("Job {JobId} completed successfully", sheetId);
-
-            group.UpdateStatus();
-            await PersistGroupStateAsync(group);
-            await jobNotifier.NotifyGroupProgress(group.Id, group.Progress, group.ErrorCount);
-            await jobNotifier.NotifyGroupStatusChanged(group.Id, group.Status);
-
-            jobManager.NotifySheetCompleted(sheetId);
+            await StartJobAsync(sheet, group, sheetId);
+            if (!await EnsureOutputFileReadyAsync(sheet, group, sheetId))
+                return;
+            await ProcessRowsAsync(sheet, group, sheetId, checkpoint, token, executionContext);
+            await CompleteJobAsync(sheet, group, sheetId);
         }
         catch (OperationCanceledException)
         {
-            await FlushLogsAsync(bufferedLogs);
-            bufferedLogs = null;
-
-            if (sheet.Status != SheetJobStatus.Cancelled)
-                sheet.SetStatus(SheetJobStatus.Paused);
-            await PersistSheetStateAsync(sheet);
-            await jobNotifier.NotifyJobStatusChanged(sheetId, sheet.Status);
-            Logger.LogInformation("Job {JobId} was paused/cancelled", sheetId);
-
-            group.UpdateStatus();
-            await PersistGroupStateAsync(group);
-            await jobNotifier.NotifyGroupStatusChanged(group.Id, group.Status);
-
-            if (sheet.Status == SheetJobStatus.Cancelled)
-                jobManager.NotifySheetCompleted(sheetId);
+            bufferedLogs = executionContext.BufferedLogs;
+            await HandleCancellationAsync(sheet, group, sheetId, bufferedLogs);
         }
         catch (Exception ex)
         {
-            await FlushLogsAsync(bufferedLogs);
-            bufferedLogs = null;
-
-            sheet.SetStatus(SheetJobStatus.Failed, ex.Message);
-            await PersistSheetStateAsync(sheet);
-            await jobNotifier.NotifyJobError(sheetId, ex.Message);
-            await jobNotifier.NotifyJobStatusChanged(sheetId, SheetJobStatus.Failed, ex.Message);
-            await StoreAndNotifyLogAsync(new JobEvent(
-                sheet.Id,
-                JobEventScope.Sheet,
-                DateTimeOffset.UtcNow,
-                "Error",
-                ex.Message,
-                new Dictionary<string, object?>
-                {
-                    ["row"] = activeRow,
-                    ["rowStatus"] = "error"
-                }));
-            Logger.LogError(ex, "Job {JobId} failed", sheetId);
-
-            group.UpdateStatus();
-            await PersistGroupStateAsync(group);
-            await jobNotifier.NotifyGroupStatusChanged(group.Id, group.Status);
-
-            jobManager.NotifySheetCompleted(sheetId);
+            bufferedLogs = executionContext.BufferedLogs;
+            var activeRow = executionContext.ActiveRow;
+            await HandleFailureAsync(sheet, group, sheetId, ex, activeRow, bufferedLogs);
         }
         finally
         {
@@ -253,6 +63,292 @@ public class JobExecutor(
             if (sheet.Status is not SheetJobStatus.Pending and not SheetJobStatus.Running)
                 slideWorkingManager.RemoveWorkingPresentation(sheet.OutputPath);
         }
+    }
+
+    private bool TryGetSheetAndGroup(string sheetId, out JobSheet? sheet, out JobGroup? group)
+    {
+        sheet = jobManager.GetInternalSheet(sheetId);
+        if (sheet == null)
+        {
+            Logger.LogWarning("Sheet {SheetId} not found", sheetId);
+            group = null;
+            return false;
+        }
+
+        group = jobManager.GetInternalGroup(sheet.GroupId);
+        if (group == null)
+        {
+            Logger.LogWarning("Group {GroupId} not found for job {JobId}", sheet.GroupId, sheetId);
+            return false;
+        }
+
+        return true;
+    }
+
+    private static JobCheckpoint CreateCheckpoint(JobSheet sheet)
+    {
+        return async (_, ct) =>
+        {
+            await sheet.WaitIfPausedAsync(ct);
+            ct.ThrowIfCancellationRequested();
+        };
+    }
+
+    private async Task StartJobAsync(JobSheet sheet, JobGroup group, string sheetId)
+    {
+        sheet.SetStatus(SheetJobStatus.Running);
+        await jobNotifier.NotifyJobStatusChanged(sheetId, SheetJobStatus.Running);
+        await PersistSheetStateAsync(sheet);
+        group.UpdateStatus();
+        await PersistGroupStateAsync(group);
+        await jobNotifier.NotifyGroupStatusChanged(group.Id, group.Status);
+    }
+
+    private async Task<bool> EnsureOutputFileReadyAsync(JobSheet sheet, JobGroup group, string sheetId)
+    {
+        if (sheet.CurrentRow == 0)
+        {
+            slideWorkingManager.RemoveWorkingPresentation(sheet.OutputPath);
+            fileSystem.CopyFile(group.Template.FilePath, sheet.OutputPath, true);
+            return true;
+        }
+
+        if (fileSystem.FileExists(sheet.OutputPath))
+            return true;
+
+        sheet.SetStatus(SheetJobStatus.Failed, "Output file missing during resume.");
+        await jobNotifier.NotifyJobStatusChanged(sheetId, sheet.Status, sheet.ErrorMessage);
+        await PersistSheetStateAsync(sheet);
+        group.UpdateStatus();
+        await PersistGroupStateAsync(group);
+        await jobNotifier.NotifyGroupStatusChanged(group.Id, group.Status);
+        jobManager.NotifySheetCompleted(sheetId);
+        return false;
+    }
+
+    private async Task ProcessRowsAsync(
+        JobSheet sheet,
+        JobGroup group,
+        string sheetId,
+        JobCheckpoint checkpoint,
+        CancellationToken token,
+        JobExecutionContext context)
+    {
+        var startRow = sheet.NextRowIndex;
+        for (var rowNum = startRow; rowNum <= sheet.TotalRows; rowNum++)
+        {
+            await checkpoint(JobCheckpointStage.BeforeRow, token);
+
+            context.ActiveRow = rowNum;
+            var buffer = new List<JobLogEntry>(4);
+            context.BufferedLogs = buffer;
+            await LogRowStartedAsync(sheet, rowNum, buffer);
+
+            var rowData = sheet.Worksheet.GetRow(rowNum);
+            var result = await slideServices.ProcessRowAsync(
+                sheet.OutputPath,
+                sheet.TextConfigs,
+                sheet.ImageConfigs,
+                rowData,
+                checkpoint,
+                token);
+
+            await LogTextReplacementsAsync(sheet, rowNum, result.TextReplacements, buffer);
+            await LogImageReplacementsAsync(sheet, rowNum, result.ImageReplacements, buffer);
+            await LogRowCompletedAsync(sheet, rowNum, result, buffer);
+
+            if (result.ImageErrorCount > 0)
+                await LogRowWarningsAsync(sheet, rowNum, result, buffer);
+
+            await FlushLogsAsync(context.BufferedLogs);
+            context.BufferedLogs = null;
+
+            sheet.UpdateProgress(rowNum);
+            await checkpoint(JobCheckpointStage.BeforePersistState, token);
+            await PersistSheetStateAsync(sheet);
+            await jobNotifier.NotifyJobProgress(sheetId, rowNum, sheet.TotalRows, sheet.Progress, sheet.ErrorCount);
+            await jobNotifier.NotifyGroupProgress(group.Id, group.Progress, group.ErrorCount);
+        }
+    }
+
+    private async Task LogRowStartedAsync(JobSheet sheet, int rowNum, List<JobLogEntry> buffer)
+    {
+        await StoreAndNotifyLogAsync(new JobEvent(
+            sheet.Id,
+            JobEventScope.Sheet,
+            DateTimeOffset.UtcNow,
+            "Info",
+            $"Processing row {rowNum}",
+            new Dictionary<string, object?>
+            {
+                ["row"] = rowNum,
+                ["rowStatus"] = "processing"
+            }), buffer);
+    }
+
+    private async Task LogTextReplacementsAsync(
+        JobSheet sheet,
+        int rowNum,
+        IReadOnlyCollection<TextReplacementDetail> details,
+        List<JobLogEntry> buffer)
+    {
+        foreach (var detail in details)
+            await StoreAndNotifyLogAsync(new JobEvent(
+                sheet.Id,
+                JobEventScope.Sheet,
+                DateTimeOffset.UtcNow,
+                "Info",
+                $"Row {rowNum} text -> shape {detail.ShapeId}: {detail.Placeholder} = {detail.Value}",
+                new Dictionary<string, object?>
+                {
+                    ["row"] = rowNum,
+                    ["shapeId"] = detail.ShapeId,
+                    ["placeholder"] = detail.Placeholder,
+                    ["value"] = detail.Value,
+                    ["kind"] = "text"
+                }), buffer);
+    }
+
+    private async Task LogImageReplacementsAsync(
+        JobSheet sheet,
+        int rowNum,
+        IReadOnlyCollection<ImageReplacementDetail> details,
+        List<JobLogEntry> buffer)
+    {
+        foreach (var detail in details)
+            await StoreAndNotifyLogAsync(new JobEvent(
+                sheet.Id,
+                JobEventScope.Sheet,
+                DateTimeOffset.UtcNow,
+                "Info",
+                $"Row {rowNum} image -> shape {detail.ShapeId}: {detail.Source}",
+                new Dictionary<string, object?>
+                {
+                    ["row"] = rowNum,
+                    ["shapeId"] = detail.ShapeId,
+                    ["source"] = detail.Source,
+                    ["kind"] = "image"
+                }), buffer);
+    }
+
+    private async Task LogRowCompletedAsync(
+        JobSheet sheet,
+        int rowNum,
+        RowProcessResult result,
+        List<JobLogEntry> buffer)
+    {
+        await StoreAndNotifyLogAsync(new JobEvent(
+            sheet.Id,
+            JobEventScope.Sheet,
+            DateTimeOffset.UtcNow,
+            "Info",
+            $"Row {rowNum} completed (text: {result.TextReplacementCount}, images: {result.ImageReplacementCount}, image errors: {result.ImageErrorCount})",
+            new Dictionary<string, object?>
+            {
+                ["row"] = rowNum,
+                ["rowStatus"] = "completed",
+                ["textReplacements"] = result.TextReplacementCount,
+                ["imageReplacements"] = result.ImageReplacementCount,
+                ["imageErrors"] = result.ImageErrorCount
+            }), buffer);
+    }
+
+    private async Task LogRowWarningsAsync(
+        JobSheet sheet,
+        int rowNum,
+        RowProcessResult result,
+        List<JobLogEntry> buffer)
+    {
+        sheet.RegisterRowError(rowNum, string.Join("; ", result.Errors));
+        var detail = string.Join("; ", result.Errors);
+        var warningMessage = string.IsNullOrWhiteSpace(detail)
+            ? $"Row {rowNum} completed with {result.ImageErrorCount} image errors"
+            : $"Row {rowNum} completed with {result.ImageErrorCount} image errors: {detail}";
+        await StoreAndNotifyLogAsync(new JobEvent(
+            sheet.Id,
+            JobEventScope.Sheet,
+            DateTimeOffset.UtcNow,
+            "Warning",
+            warningMessage,
+            new Dictionary<string, object?>
+            {
+                ["row"] = rowNum,
+                ["rowStatus"] = "warning",
+                ["errors"] = result.Errors
+            }), buffer);
+    }
+
+    private async Task CompleteJobAsync(JobSheet sheet, JobGroup group, string sheetId)
+    {
+        slideServices.RemoveFirstSlide(sheet.OutputPath);
+
+        sheet.SetStatus(SheetJobStatus.Completed);
+        await PersistSheetStateAsync(sheet);
+        await jobNotifier.NotifyJobStatusChanged(sheetId, SheetJobStatus.Completed);
+        Logger.LogInformation("Job {JobId} completed successfully", sheetId);
+
+        group.UpdateStatus();
+        await PersistGroupStateAsync(group);
+        await jobNotifier.NotifyGroupProgress(group.Id, group.Progress, group.ErrorCount);
+        await jobNotifier.NotifyGroupStatusChanged(group.Id, group.Status);
+
+        jobManager.NotifySheetCompleted(sheetId);
+    }
+
+    private async Task HandleCancellationAsync(
+        JobSheet sheet,
+        JobGroup group,
+        string sheetId,
+        List<JobLogEntry>? bufferedLogs)
+    {
+        await FlushLogsAsync(bufferedLogs);
+
+        if (sheet.Status != SheetJobStatus.Cancelled)
+            sheet.SetStatus(SheetJobStatus.Paused);
+        await PersistSheetStateAsync(sheet);
+        await jobNotifier.NotifyJobStatusChanged(sheetId, sheet.Status);
+        Logger.LogInformation("Job {JobId} was paused/cancelled", sheetId);
+
+        group.UpdateStatus();
+        await PersistGroupStateAsync(group);
+        await jobNotifier.NotifyGroupStatusChanged(group.Id, group.Status);
+
+        if (sheet.Status == SheetJobStatus.Cancelled)
+            jobManager.NotifySheetCompleted(sheetId);
+    }
+
+    private async Task HandleFailureAsync(
+        JobSheet sheet,
+        JobGroup group,
+        string sheetId,
+        Exception ex,
+        int? activeRow,
+        List<JobLogEntry>? bufferedLogs)
+    {
+        await FlushLogsAsync(bufferedLogs);
+
+        sheet.SetStatus(SheetJobStatus.Failed, ex.Message);
+        await PersistSheetStateAsync(sheet);
+        await jobNotifier.NotifyJobError(sheetId, ex.Message);
+        await jobNotifier.NotifyJobStatusChanged(sheetId, SheetJobStatus.Failed, ex.Message);
+        await StoreAndNotifyLogAsync(new JobEvent(
+            sheet.Id,
+            JobEventScope.Sheet,
+            DateTimeOffset.UtcNow,
+            "Error",
+            ex.Message,
+            new Dictionary<string, object?>
+            {
+                ["row"] = activeRow,
+                ["rowStatus"] = "error"
+            }));
+        Logger.LogError(ex, "Job {JobId} failed", sheetId);
+
+        group.UpdateStatus();
+        await PersistGroupStateAsync(group);
+        await jobNotifier.NotifyGroupStatusChanged(group.Id, group.Status);
+
+        jobManager.NotifySheetCompleted(sheetId);
     }
 
     private async Task PersistSheetStateAsync(JobSheet sheet)
@@ -309,5 +405,11 @@ public class JobExecutor(
             return Task.CompletedTask;
 
         return jobStateStore.AppendJobLogsAsync(buffer, CancellationToken.None);
+    }
+
+    private sealed class JobExecutionContext
+    {
+        public int? ActiveRow { get; set; }
+        public List<JobLogEntry>? BufferedLogs { get; set; }
     }
 }
