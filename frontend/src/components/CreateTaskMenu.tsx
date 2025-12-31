@@ -57,7 +57,7 @@ interface SavedInputState {
   }>
 }
 
-type BannerState = {
+type NotificationState = {
   type: 'success' | 'error'
   text: string
 }
@@ -327,7 +327,7 @@ const startJob = async (args: {
   setIsStarting: React.Dispatch<React.SetStateAction<boolean>>
   createGroup: ReturnType<typeof useJobs>['createGroup']
   onStart: () => void
-  showBanner: (type: 'success' | 'error', text: string) => void
+  showNotification: (type: 'success' | 'error', text: string) => void
   t: (key: string) => string
 }) => {
   const resolvedPptxPath = resolvePath(args.pptxPath)
@@ -335,7 +335,7 @@ const startJob = async (args: {
   const resolvedSavePath = resolvePath(args.savePath)
 
   if (!resolvedPptxPath || !resolvedDataPath || !resolvedSavePath || !args.canStart) {
-    args.showBanner('error', args.t('input.error'))
+    args.showNotification('error', args.t('input.error'))
     return
   }
 
@@ -359,7 +359,7 @@ const startJob = async (args: {
   } catch (error) {
     console.error('Failed to start job:', error)
     const message = error instanceof Error ? error.message : args.t('input.error')
-    args.showBanner('error', message)
+    args.showNotification('error', message)
   } finally {
     args.setIsStarting(false)
   }
@@ -372,7 +372,7 @@ const exportConfigToFile = async (args: {
   columns: string[]
   textReplacements: TextReplacement[]
   imageReplacements: ImageReplacement[]
-  showBanner: (type: 'success' | 'error', text: string) => void
+  showNotification: (type: 'success' | 'error', text: string) => void
   t: (key: string) => string
 }) => {
   const config = {
@@ -393,9 +393,9 @@ const exportConfigToFile = async (args: {
 
   try {
     await window.electronAPI.writeSettings(path, JSON.stringify(config, null, 2))
-    args.showBanner('success', args.t('input.exportSuccess'))
+    args.showNotification('success', args.t('input.exportSuccess'))
   } catch (_error) {
-    args.showBanner('error', args.t('input.jsonError'))
+    args.showNotification('error', args.t('input.exportError'))
   }
 }
 
@@ -416,7 +416,7 @@ const importConfigFromFile = async (args: {
   setIsLoadingShapes: React.Dispatch<React.SetStateAction<boolean>>
   setIsLoadingPlaceholders: React.Dispatch<React.SetStateAction<boolean>>
   setIsLoadingColumns: React.Dispatch<React.SetStateAction<boolean>>
-  showBanner: (type: 'success' | 'error', text: string) => void
+  showNotification: (type: 'success' | 'error', text: string) => void
   t: (key: string) => string
 }) => {
   const path = await window.electronAPI.openFile([
@@ -483,9 +483,9 @@ const importConfigFromFile = async (args: {
     args.setColumns(dataAssets.columns)
     args.setTextReplacements(filteredText)
     args.setImageReplacements(filteredImages)
-    args.showBanner('success', args.t('input.importSuccess'))
+    args.showNotification('success', args.t('input.importSuccess'))
   } catch (_error) {
-    args.showBanner('error', args.t('input.jsonError'))
+    args.showNotification('error', args.t('input.importError'))
   } finally {
     args.setIsLoadingShapes(false)
     args.setIsLoadingPlaceholders(false)
@@ -568,24 +568,48 @@ const scheduleDataLoad = (args: {
   return () => clearTimeout(timer)
 }
 
-type InputBannerProps = {
-  banner: BannerState | null
+type InputNotificationProps = {
+  notification: NotificationState | null
+  isClosing: boolean
   onClose: () => void
   t: (key: string) => string
 }
 
-const InputBanner: React.FC<InputBannerProps> = ({ banner, onClose, t }) => {
-  if (!banner) return null
+const splitNotificationText = (text: string) => {
+  const idx = text.indexOf(':')
+  if (idx <= 0 || idx === text.length - 1) {
+    return { title: text.trim(), detail: '' }
+  }
+  return {
+    title: text.slice(0, idx).trim(),
+    detail: text.slice(idx + 1).trim(),
+  }
+}
+
+const InputNotification: React.FC<InputNotificationProps> = ({ notification, isClosing, onClose, t }) => {
+  if (!notification) return null
   return (
-    <div className={`import-banner${banner.type === 'error' ? ' import-banner-error' : ''}`}>
-      <span>{banner.text}</span>
+    <div
+      className={`app-notification message ${
+        notification.type === 'error' ? 'message-error' : 'message-success'
+      }${isClosing ? ' app-notification--closing' : ''}`}
+    >
+      {(() => {
+        const { title, detail } = splitNotificationText(notification.text)
+        return (
+          <span className="notification-text">
+            <span className="notification-title">{title}</span>
+            {detail ? <span className="notification-detail">{detail}</span> : null}
+          </span>
+        )
+      })()}
       <button
         type="button"
-        className="banner-close"
+        className="notification-close"
         onClick={onClose}
         aria-label={t('common.close')}
       >
-        ×
+        <img src={getAssetPath('images', 'close.png')} alt="" className="notification-close__icon" />
       </button>
     </div>
   )
@@ -1083,7 +1107,10 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
   const isDraggingRef = useRef(false)
   const dragStartRef = useRef({ x: 0, y: 0 })
   const dragMovedRef = useRef(false)
-  const [banner, setBanner] = useState<BannerState | null>(null)
+  const [notification, setNotification] = useState<NotificationState | null>(null)
+  const [isNotificationClosing, setIsBannerClosing] = useState(false)
+  const notificationHideTimeoutRef = useRef<number | null>(null)
+  const notificationCloseTimeoutRef = useRef<number | null>(null)
   const isHydratingRef = useRef(false)
   const hasHydratedRef = useRef(false)
   const templateErrorAtRef = useRef(0)
@@ -1191,19 +1218,48 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
     [getErrorDetail, t],
   )
 
-  const showBanner = useCallback((type: 'success' | 'error', text: string) => {
-    setBanner({ type, text })
-    setTimeout(() => setBanner(null), 4000)
+  const clearNotificationTimeouts = useCallback(() => {
+    if (notificationHideTimeoutRef.current) {
+      window.clearTimeout(notificationHideTimeoutRef.current)
+      notificationHideTimeoutRef.current = null
+    }
+    if (notificationCloseTimeoutRef.current) {
+      window.clearTimeout(notificationCloseTimeoutRef.current)
+      notificationCloseTimeoutRef.current = null
+    }
   }, [])
+
+  const hideNotification = useCallback(() => {
+    clearNotificationTimeouts()
+    setIsBannerClosing(true)
+    notificationCloseTimeoutRef.current = window.setTimeout(() => {
+      setNotification(null)
+      setIsBannerClosing(false)
+      notificationCloseTimeoutRef.current = null
+    }, 180)
+  }, [clearNotificationTimeouts])
+
+  const showNotification = useCallback(
+    (type: 'success' | 'error', text: string) => {
+      clearNotificationTimeouts()
+      setNotification({ type, text })
+      setIsBannerClosing(false)
+      notificationHideTimeoutRef.current = window.setTimeout(() => {
+        hideNotification()
+        notificationHideTimeoutRef.current = null
+      }, 4000)
+    },
+    [clearNotificationTimeouts, hideNotification],
+  )
 
   const notifyTemplateError = useCallback(
     (error: unknown) => {
       const now = Date.now()
       if (now - templateErrorAtRef.current < 800) return
       templateErrorAtRef.current = now
-      showBanner('error', formatErrorMessage('input.templateLoadError', error))
+      showNotification('error', formatErrorMessage('input.templateLoadError', error))
     },
-    [formatErrorMessage, showBanner],
+    [formatErrorMessage, showNotification],
   )
 
   const notifyDataError = useCallback(
@@ -1211,9 +1267,9 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
       const now = Date.now()
       if (now - dataErrorAtRef.current < 800) return
       dataErrorAtRef.current = now
-      showBanner('error', formatErrorMessage('input.columnLoadError', error))
+      showNotification('error', formatErrorMessage('input.columnLoadError', error))
     },
-    [formatErrorMessage, showBanner],
+    [formatErrorMessage, showNotification],
   )
 
   const applySavedStateBasics = (state: SavedInputState) => {
@@ -1318,14 +1374,14 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
       setTextReplacements(filteredText)
       setImageReplacements(filteredImages)
     } catch (error) {
-      showBanner('error', formatErrorMessage('input.jsonError', error))
+      showNotification('error', formatErrorMessage('input.restoreError', error))
     } finally {
       setIsLoadingShapes(false)
       setIsLoadingPlaceholders(false)
       setIsLoadingColumns(false)
       isHydratingRef.current = false
     }
-  }, [applySavedStateBasics, formatErrorMessage, resolveHydrationAssets, savedState, showBanner])
+  }, [applySavedStateBasics, formatErrorMessage, resolveHydrationAssets, savedState, showNotification])
 
   useEffect(() => {
     hydrateFromSavedState().catch(() => undefined)
@@ -1544,10 +1600,10 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
         columns,
         textReplacements,
         imageReplacements,
-        showBanner,
+        showNotification,
         t,
       }),
-    [pptxPath, dataPath, savePath, columns, textReplacements, imageReplacements, showBanner, t],
+    [pptxPath, dataPath, savePath, columns, textReplacements, imageReplacements, showNotification, t],
   )
 
   const importConfig = useCallback(
@@ -1569,7 +1625,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
         setIsLoadingShapes,
         setIsLoadingPlaceholders,
         setIsLoadingColumns,
-        showBanner,
+        showNotification,
         t,
       }),
     [
@@ -1589,7 +1645,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
       setIsLoadingShapes,
       setIsLoadingPlaceholders,
       setIsLoadingColumns,
-      showBanner,
+      showNotification,
       t,
     ],
   )
@@ -1755,7 +1811,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
         setIsStarting,
         createGroup,
         onStart,
-        showBanner,
+        showNotification,
         t,
       }),
     [
@@ -1771,7 +1827,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
       setIsStarting,
       createGroup,
       onStart,
-      showBanner,
+      showNotification,
       t,
     ],
   )
@@ -1780,7 +1836,12 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
     <div className="input-menu">
       <MenuHeader onImport={importConfig} onExport={exportConfig} onClear={clearAll} t={t} />
 
-      <InputBanner banner={banner} onClose={() => setBanner(null)} t={t} />
+      <InputNotification
+        notification={notification}
+        isClosing={isNotificationClosing}
+        onClose={hideNotification}
+        t={t}
+      />
 
       {/* File Inputs */}
       <TemplateInputSection
@@ -2060,3 +2121,6 @@ const StartButtonSection: React.FC<StartButtonSectionProps> = ({
 )
 
 export default CreateTaskMenu
+
+
+
