@@ -775,6 +775,24 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return unsubscribe
   }, [updateGroup, updateSheet])
 
+  const handleSlideConnected = useCallback(() => {
+    subscribedGroups.current.clear()
+    subscribedSheets.current.clear()
+    refreshGroups().catch((error) => {
+      console.error('Failed to refresh jobs after reconnect:', error)
+    })
+  }, [refreshGroups])
+
+  useEffect(() => {
+    const unsubscribeConnected = backendApi.onSlideConnected(handleSlideConnected)
+    const unsubscribeReconnected = backendApi.onSlideReconnected(handleSlideConnected)
+
+    return () => {
+      unsubscribeConnected()
+      unsubscribeReconnected()
+    }
+  }, [handleSlideConnected])
+
   useEffect(() => {
     refreshGroups().catch((error) => {
       console.error('Failed to refresh jobs:', error)

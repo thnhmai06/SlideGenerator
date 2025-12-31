@@ -847,6 +847,14 @@ export function onSlideNotification(handler: (payload: unknown) => void): () => 
   return slideHub.onNotification(handler)
 }
 
+export function onSlideReconnected(handler: (connectionId?: string) => void): () => void {
+  return slideHub.onReconnected(handler)
+}
+
+export function onSlideConnected(handler: (connectionId?: string) => void): () => void {
+  return slideHub.onConnected(handler)
+}
+
 export async function getConfig(): Promise<unknown> {
   const response = await configHub.sendRequest<ResponseBase>({
     type: 'get',
