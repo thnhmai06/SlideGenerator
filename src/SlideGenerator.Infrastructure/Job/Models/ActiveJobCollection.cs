@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using Hangfire;
 using Microsoft.Extensions.Logging;
+using SlideGenerator.Application.Configs;
 using SlideGenerator.Application.Job.Contracts;
 using SlideGenerator.Application.Job.Contracts.Collections;
 using SlideGenerator.Application.Sheet;
@@ -173,7 +174,8 @@ public class ActiveJobCollection(
     {
         if (!_groups.TryGetValue(groupId, out var group)) return;
 
-        foreach (var job in group.InternalJobs.Values.Where(j => j.Status == SheetJobStatus.Running))
+        foreach (var job in group.InternalJobs.Values.Where(j =>
+                     j.Status is SheetJobStatus.Pending or SheetJobStatus.Running))
             PauseSheetInternal(job);
 
         group.SetStatus(GroupStatus.Paused);
@@ -186,13 +188,44 @@ public class ActiveJobCollection(
     {
         if (!_groups.TryGetValue(groupId, out var group)) return;
 
-        foreach (var job in group.InternalJobs.Values.Where(j => j.Status == SheetJobStatus.Paused))
-            ResumeSheetInternal(job);
+        var pausedJobs = group.InternalJobs.Values
+            .Where(j => j.Status == SheetJobStatus.Paused)
+            .ToList();
+        var availableSlots = GetAvailableResumeSlots();
+        var resumedCount = 0;
+        var pendingCount = 0;
 
-        group.SetStatus(GroupStatus.Running);
-        PersistGroupState(group);
-        jobNotifier.NotifyGroupStatusChanged(group.Id, group.Status).GetAwaiter().GetResult();
-        logger.LogInformation("Resumed group {GroupId}", groupId);
+        foreach (var job in pausedJobs)
+        {
+            if (job.IsExecuting)
+            {
+                ResumeSheetInternal(job);
+                resumedCount++;
+                continue;
+            }
+
+            if (availableSlots > 0)
+            {
+                ResumeSheetInternal(job);
+                availableSlots--;
+                resumedCount++;
+                continue;
+            }
+
+            job.Resume();
+            QueueJobIfNeeded(job);
+            job.SetStatus(SheetJobStatus.Pending);
+            PersistSheetState(job);
+            jobNotifier.NotifyJobStatusChanged(job.Id, job.Status).GetAwaiter().GetResult();
+            pendingCount++;
+        }
+
+        UpdateGroupStatus(group.Id);
+        logger.LogInformation(
+            "Resumed group {GroupId} with {ResumedCount} jobs, {PendingCount} pending",
+            groupId,
+            resumedCount,
+            pendingCount);
     }
 
     public void CancelGroup(string groupId)
@@ -403,13 +436,7 @@ public class ActiveJobCollection(
         job.Resume();
         job.SetStatus(SheetJobStatus.Running);
 
-        if (!job.IsExecuting)
-        {
-            var hangfireJobId =
-                backgroundJobClient.Enqueue<IJobExecutor>(executor =>
-                    executor.ExecuteJobAsync(job.Id, CancellationToken.None));
-            job.HangfireJobId = hangfireJobId;
-        }
+        QueueJobIfNeeded(job);
 
         PersistSheetState(job);
         jobNotifier.NotifyJobStatusChanged(job.Id, job.Status).GetAwaiter().GetResult();
@@ -459,6 +486,22 @@ public class ActiveJobCollection(
                 onGroupCompleted(group);
                 logger.LogInformation("Moved group {GroupId} to completed collection", group.Id);
             }
+    }
+
+    private int GetAvailableResumeSlots()
+    {
+        var maxConcurrentJobs = ConfigHolder.Value.Job.MaxConcurrentJobs;
+        var executingJobs = _sheets.Values.Count(job => job.IsExecuting);
+        return Math.Max(0, maxConcurrentJobs - executingJobs);
+    }
+
+    private void QueueJobIfNeeded(JobSheet job)
+    {
+        if (job.IsExecuting || job.HangfireJobId != null) return;
+        var hangfireJobId =
+            backgroundJobClient.Enqueue<IJobExecutor>(executor =>
+                executor.ExecuteJobAsync(job.Id, CancellationToken.None));
+        job.HangfireJobId = hangfireJobId;
     }
 
     private void PersistGroupState(JobGroup group)

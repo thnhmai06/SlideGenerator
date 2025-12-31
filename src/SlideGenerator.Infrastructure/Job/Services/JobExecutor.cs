@@ -40,6 +40,11 @@ public class JobExecutor(
 
         try
         {
+            if (sheet.Status == SheetJobStatus.Paused)
+            {
+                await sheet.WaitIfPausedAsync(token);
+                token.ThrowIfCancellationRequested();
+            }
             await StartJobAsync(sheet, group, sheetId);
             if (!await EnsureOutputFileReadyAsync(sheet, group, sheetId))
                 return;
