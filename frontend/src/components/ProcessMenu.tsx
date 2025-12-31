@@ -4,7 +4,7 @@ import { useJobs } from '../contexts/useJobs'
 import type { SheetJob } from '../contexts/JobContextBase'
 import { getBackendBaseUrl } from '../services/signalrClient'
 import { getAssetPath } from '../utils/paths'
-import '../styles/ProcessMenu.css'
+import '../styles/ProcesssideBar.css'
 
 type LogEntry = {
   message: string
@@ -504,8 +504,8 @@ const ProcessMenu: React.FC = () => {
                         className="process-btn process-btn-icon-only"
                         onClick={() => handleExportGroup(group.id)}
                         disabled={!hasGroupConfig(group.id)}
-                        aria-label={t('output.exportConfig')}
-                        title={t('output.exportConfig')}
+                        aria-label={t('results.exportConfig')}
+                        title={t('results.exportConfig')}
                       >
                         <img src={getAssetPath('images', 'open.png')} alt="" className="btn-icon" />
                       </button>

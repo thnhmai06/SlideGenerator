@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react'
 import { useApp } from '../contexts/useApp'
 import { useJobs } from '../contexts/useJobs'
 import { getAssetPath } from '../utils/paths'
-import '../styles/ResultMenu.css'
+import '../styles/ResultsideBar.css'
 
 type LogEntry = {
   message: string
@@ -88,13 +88,13 @@ const ResultMenu: React.FC = () => {
   }
 
   const handleRemoveGroup = async (groupId: string) => {
-    if (confirm(`${t('output.removeGroup')}?`)) {
+    if (confirm(`${t('results.removeGroup')}?`)) {
       await removeGroup(groupId)
     }
   }
 
   const handleClearAll = async () => {
-    if (confirm(`${t('output.clearAll')}?`)) {
+    if (confirm(`${t('results.clearAll')}?`)) {
       await clearCompleted()
     }
   }
@@ -158,23 +158,23 @@ const ResultMenu: React.FC = () => {
   return (
     <div className="output-menu">
       <div className="menu-header">
-        <h1 className="menu-title">{t('output.title')}</h1>
+        <h1 className="menu-title">{t('results.title')}</h1>
         <div className="header-actions">
           <button
             className="btn btn-danger"
             onClick={handleClearAll}
             disabled={completedGroups.length === 0}
-            title={t('output.clearAll')}
+            title={t('results.clearAll')}
           >
             <img src={getAssetPath('images', 'close.png')} alt="Clear" className="btn-icon" />
-            {t('output.clearAll')}
+            {t('results.clearAll')}
           </button>
         </div>
       </div>
 
       <div className="output-section">
         {completedGroups.length === 0 ? (
-          <div className="empty-state">{t('output.empty')}</div>
+          <div className="empty-state">{t('results.empty')}</div>
         ) : (
           <div className="output-list">
             {completedGroups.map((group) => {
@@ -196,7 +196,7 @@ const ResultMenu: React.FC = () => {
                           <div className="group-name">{groupName}</div>
                           {group.completedAt && (
                             <span className="group-time">
-                              {t('output.completedAt')}: {formatTime(group.completedAt)}
+                              {t('results.completedAt')}: {formatTime(group.completedAt)}
                             </span>
                           )}
                         </div>
@@ -225,8 +225,8 @@ const ResultMenu: React.FC = () => {
                         className="output-btn output-btn-icon-only"
                         onClick={() => handleExportGroup(group.id)}
                         disabled={!hasGroupConfig(group.id)}
-                        aria-label={t('output.exportConfig')}
-                        title={t('output.exportConfig')}
+                        aria-label={t('results.exportConfig')}
+                        title={t('results.exportConfig')}
                       >
                         <img src={getAssetPath('images', 'open.png')} alt="" className="btn-icon" />
                       </button>
@@ -240,7 +240,7 @@ const ResultMenu: React.FC = () => {
                           alt="Open Folder"
                           className="btn-icon"
                         />
-                        <span>{t('output.openFolder')}</span>
+                        <span>{t('results.openFolder')}</span>
                       </button>
                       <button
                         className="output-btn-danger"
@@ -251,7 +251,7 @@ const ResultMenu: React.FC = () => {
                           alt="Clear Group"
                           className="btn-icon"
                         />
-                        <span>{t('output.removeGroup')}</span>
+                        <span>{t('results.removeGroup')}</span>
                       </button>
                     </div>
                   </div>
@@ -308,8 +308,8 @@ const ResultMenu: React.FC = () => {
                                       handleOpenFile(sheet.outputPath)
                                     }}
                                     disabled={!sheet.outputPath}
-                                    aria-label={t('output.open')}
-                                    title={t('output.open')}
+                                    aria-label={t('results.open')}
+                                    title={t('results.open')}
                                   >
                                     <img
                                       src={getAssetPath('images', 'open.png')}
@@ -323,8 +323,8 @@ const ResultMenu: React.FC = () => {
                                       e.stopPropagation()
                                       handleRemoveSheet(sheet.id)
                                     }}
-                                    aria-label={t('output.remove')}
-                                    title={t('output.remove')}
+                                    aria-label={t('results.remove')}
+                                    title={t('results.remove')}
                                   >
                                     <img
                                       src={getAssetPath('images', 'close.png')}

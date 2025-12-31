@@ -67,8 +67,8 @@ describe('ResultMenu', () => {
     await user.click(screen.getByText('Sheet2'))
 
     expect(screen.getByText('Row 1')).toBeInTheDocument()
-    expect(screen.getAllByLabelText('output.open').length).toBeGreaterThan(0)
-    expect(screen.getByLabelText('output.remove')).toBeInTheDocument()
+    expect(screen.getAllByLabelText('results.open').length).toBeGreaterThan(0)
+    expect(screen.getByLabelText('results.remove')).toBeInTheDocument()
   })
 
   it('confirms before clearing all and removing groups', async () => {
@@ -76,8 +76,8 @@ describe('ResultMenu', () => {
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
     render(<ResultMenu />)
 
-    await user.click(screen.getByText('output.clearAll'))
-    await user.click(screen.getByText('output.removeGroup'))
+    await user.click(screen.getByText('results.clearAll'))
+    await user.click(screen.getByText('results.removeGroup'))
 
     expect(confirmSpy).toHaveBeenCalled()
     expect(clearCompleted).toHaveBeenCalled()

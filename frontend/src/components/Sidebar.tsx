@@ -16,7 +16,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentMenu, onMenuChange }) => {
   const menuItems = [
     {
       id: 'input' as MenuType,
-      label: t('menu.createTask'),
+      label: t('sideBar.createTask'),
       icon: getAssetPath('images', 'createTask.png'),
       activeIcon: getAssetPath('images', 'createTask-selected.png'),
     },
@@ -28,7 +28,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentMenu, onMenuChange }) => {
     },
     {
       id: 'download' as MenuType,
-      label: t('output.title'),
+      label: t('results.title'),
       icon: getAssetPath('images', 'result.png'),
       activeIcon: getAssetPath('images', 'result-selected.png'),
     },
@@ -60,7 +60,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentMenu, onMenuChange }) => {
         <button
           className={`sidebar-icon-btn ${currentMenu === 'setting' ? 'active' : ''}`}
           onClick={() => onMenuChange('setting')}
-          title={t('menu.setting')}
+          title={t('sideBar.setting')}
         >
           <img
             src={
@@ -76,7 +76,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentMenu, onMenuChange }) => {
         <button
           className={`sidebar-icon-btn ${currentMenu === 'about' ? 'active' : ''}`}
           onClick={() => onMenuChange('about')}
-          title={t('menu.about')}
+          title={t('sideBar.about')}
         >
           <img
             src={

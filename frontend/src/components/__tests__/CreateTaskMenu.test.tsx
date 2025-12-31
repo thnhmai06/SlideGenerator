@@ -45,7 +45,7 @@ describe('CreateTaskMenu', () => {
     const user = userEvent.setup()
     render(<CreateTaskMenu onStart={vi.fn()} />)
 
-    expect(screen.getByText('input.title')).toBeInTheDocument()
+    expect(screen.getByText('createTask.title')).toBeInTheDocument()
 
     // Test PPTX selection
     electronAPIMock.openFile.mockResolvedValueOnce('C:\\template.pptx')
@@ -56,7 +56,7 @@ describe('CreateTaskMenu', () => {
       Placeholders: ['{{Name}}'],
     })
 
-    const pptxButton = screen.getAllByText('input.browse')[0]
+    const pptxButton = screen.getAllByText('createTask.browse')[0]
     await user.click(pptxButton)
 
     await waitFor(() => {
@@ -80,7 +80,7 @@ describe('CreateTaskMenu', () => {
       Sheets: [{ Name: 'Sheet1', Headers: ['Name', 'Age'], RowCount: 10 }],
     })
 
-    const dataButton = screen.getAllByText('input.browse')[1]
+    const dataButton = screen.getAllByText('createTask.browse')[1]
     await user.click(dataButton)
 
     await waitFor(() => {
@@ -93,7 +93,7 @@ describe('CreateTaskMenu', () => {
     const user = userEvent.setup()
     render(<CreateTaskMenu onStart={vi.fn()} />)
 
-    const startBtn = screen.getByText('input.start')
+    const startBtn = screen.getByText('createTask.start')
     expect(startBtn).toBeDisabled()
 
     // Simulate filled state via direct input changes to bypass file dialogs logic for speed

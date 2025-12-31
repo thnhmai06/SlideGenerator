@@ -5,7 +5,7 @@ import type { Theme } from '../contexts/AppContextBase'
 import type { Language } from '../locales'
 import * as backendApi from '../services/backendApi'
 import { getAssetPath } from '../utils/paths'
-import '../styles/SettingMenu.css'
+import '../styles/SettingsideBar.css'
 
 type SettingTab = 'appearance' | 'server' | 'download' | 'job' | 'image'
 
@@ -489,7 +489,7 @@ const DownloadTab: React.FC<DownloadTabProps> = ({
               placeholder="./downloads"
             />
             <button className="browse-btn" disabled={!canEditConfig} onClick={onSelectFolder}>
-              {t('input.browse')}
+              {t('createTask.browse')}
             </button>
           </div>
           <span className="setting-hint">{t('settings.saveFolderHint')}</span>
