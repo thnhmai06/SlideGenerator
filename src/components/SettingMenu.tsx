@@ -4,6 +4,7 @@ import { useJobs } from '../contexts/useJobs'
 import type { Theme } from '../contexts/AppContextBase'
 import type { Language } from '../locales'
 import * as backendApi from '../services/backendApi'
+import { getAssetPath } from '../utils/paths'
 import '../styles/SettingMenu.css'
 
 type SettingTab = 'appearance' | 'server' | 'download' | 'job' | 'image'
@@ -141,54 +142,89 @@ const parseConfigResponse = (data: backendApi.ConfigGetSuccess) => {
 
 type TranslationFn = (key: string) => string
 
+const splitNotificationText = (text: string) => {
+  const idx = text.indexOf(':')
+  if (idx <= 0 || idx === text.length - 1) {
+    return { title: text.trim(), detail: '' }
+  }
+  return {
+    title: text.slice(0, idx).trim(),
+    detail: text.slice(idx + 1).trim(),
+  }
+}
+
 type NumberChangeHandler = (value: string, apply: (next: number) => void) => void
 type NumberBlurHandler = (value: string, apply: (next: number) => void) => void
 type NumberFocusHandler = (event: React.FocusEvent<HTMLInputElement>) => void
 
-type SettingsBannersProps = {
-  showRestartBanner: boolean
-  isRestartBannerClosing: boolean
+type SettingsNotificationsProps = {
+  showRestartNotification: boolean
+  isRestartNotificationClosing: boolean
   onRestart: () => void
   message: { type: 'success' | 'error' | 'warning'; text: string } | null
-  showStatusBanner: boolean
-  isStatusBannerClosing: boolean
-  showLockedBanner: boolean
+  showStatusNotification: boolean
+  isStatusNotificationClosing: boolean
+  onCloseStatus: () => void
+  showLockedNotification: boolean
   t: TranslationFn
 }
 
-const SettingsBanners: React.FC<SettingsBannersProps> = ({
-  showRestartBanner,
-  isRestartBannerClosing,
+const SettingsNotifications: React.FC<SettingsNotificationsProps> = ({
+  showRestartNotification,
+  isRestartNotificationClosing,
   onRestart,
   message,
-  showStatusBanner,
-  isStatusBannerClosing,
-  showLockedBanner,
+  showStatusNotification,
+  isStatusNotificationClosing,
+  onCloseStatus,
+  showLockedNotification,
   t,
 }) => (
   <>
-    {showRestartBanner && (
+    {showRestartNotification && (
       <div
-        className={`message message-warning restart-banner${
-          isRestartBannerClosing ? ' restart-banner--closing' : ''
+        className={`message app-notification message-warning restart-notification${
+          isRestartNotificationClosing ? ' restart-notification--closing' : ''
         }`}
       >
-        <span className="restart-banner__text">{t('settings.restartRequired')}</span>
-        <button className="btn btn-secondary restart-banner__action" onClick={onRestart}>
+        <span className="restart-notification__text">{t('settings.restartRequired')}</span>
+        <button className="btn btn-secondary restart-notification__action" onClick={onRestart}>
           {t('settings.restartServer')}
         </button>
       </div>
     )}
-    {message && showStatusBanner && (
+    {message && showStatusNotification && (
       <div
-        className={`message message-${message.type} status-banner${
-          isStatusBannerClosing ? ' status-banner--closing' : ''
+        className={`message app-notification message-${message.type} status-notification${
+          isStatusNotificationClosing ? ' status-notification--closing app-notification--closing' : ''
         }`}
       >
-        {message.text}
+        {(() => {
+          const { title, detail } = splitNotificationText(message.text)
+          return (
+            <span className="notification-text">
+              <span className="notification-title">{title}</span>
+              {detail ? <span className="notification-detail">{detail}</span> : null}
+            </span>
+          )
+        })()}
+        <button
+          type="button"
+          className="notification-close"
+          onClick={onCloseStatus}
+          aria-label={t('common.close')}
+        >
+          <img
+            src={getAssetPath('images', 'close.png')}
+            alt=""
+            className="notification-close__icon"
+          />
+        </button>
       </div>
     )}
-    {showLockedBanner && <div className="message message-warning">{t('settings.locked')}</div>}
+    {showLockedNotification && (
+      <div className="message app-notification message-warning">{t('settings.locked')}</div>
+    )}
   </>
 )
 
@@ -1010,10 +1046,10 @@ const SettingMenu: React.FC = () => {
     text: string
   } | null>(null)
   const [restartRequired, setRestartRequired] = useState(false)
-  const [showRestartBanner, setShowRestartBanner] = useState(false)
-  const [isRestartBannerClosing, setIsRestartBannerClosing] = useState(false)
-  const [showStatusBanner, setShowStatusBanner] = useState(false)
-  const [isStatusBannerClosing, setIsStatusBannerClosing] = useState(false)
+  const [showRestartNotification, setShowRestartNotification] = useState(false)
+  const [isRestartNotificationClosing, setIsRestartNotificationClosing] = useState(false)
+  const [showStatusNotification, setShowStatusNotification] = useState(false)
+  const [isStatusNotificationClosing, setIsStatusNotificationClosing] = useState(false)
   const statusHideTimeoutRef = useRef<number | null>(null)
   const statusCloseTimeoutRef = useRef<number | null>(null)
 
@@ -1036,12 +1072,12 @@ const SettingMenu: React.FC = () => {
     }
   }, [])
 
-  const hideStatusBanner = useCallback(() => {
+  const hideStatusNotification = useCallback(() => {
     clearStatusTimeouts()
-    setIsStatusBannerClosing(true)
+    setIsStatusNotificationClosing(true)
     statusCloseTimeoutRef.current = window.setTimeout(() => {
-      setShowStatusBanner(false)
-      setIsStatusBannerClosing(false)
+      setShowStatusNotification(false)
+      setIsStatusNotificationClosing(false)
       setMessage(null)
       statusCloseTimeoutRef.current = null
     }, 180)
@@ -1051,14 +1087,14 @@ const SettingMenu: React.FC = () => {
     (type: 'success' | 'error' | 'warning', text: string) => {
       clearStatusTimeouts()
       setMessage({ type, text })
-      setShowStatusBanner(true)
-      setIsStatusBannerClosing(false)
+      setShowStatusNotification(true)
+      setIsStatusNotificationClosing(false)
       statusHideTimeoutRef.current = window.setTimeout(() => {
-        hideStatusBanner()
+        hideStatusNotification()
         statusHideTimeoutRef.current = null
       }, 5000)
     },
-    [clearStatusTimeouts, hideStatusBanner],
+    [clearStatusTimeouts, hideStatusNotification],
   )
 
   const handleNumberChange = useCallback((value: string, apply: (next: number) => void) => {
@@ -1155,19 +1191,19 @@ const SettingMenu: React.FC = () => {
 
   useEffect(() => {
     if (restartRequired) {
-      setShowRestartBanner(true)
-      setIsRestartBannerClosing(false)
+      setShowRestartNotification(true)
+      setIsRestartNotificationClosing(false)
       return undefined
     }
 
-    if (!showRestartBanner) return undefined
-    setIsRestartBannerClosing(true)
+    if (!showRestartNotification) return undefined
+    setIsRestartNotificationClosing(true)
     const timeoutId = window.setTimeout(() => {
-      setShowRestartBanner(false)
-      setIsRestartBannerClosing(false)
+      setShowRestartNotification(false)
+      setIsRestartNotificationClosing(false)
     }, 180)
     return () => window.clearTimeout(timeoutId)
-  }, [restartRequired, showRestartBanner])
+  }, [restartRequired, showRestartNotification])
 
   const hasServerChanged = (server: ConfigState['server']) => {
     if (!initialServer) return false
@@ -1387,14 +1423,15 @@ const SettingMenu: React.FC = () => {
     <div className="setting-menu">
       <h1 className="menu-title">{t('settings.title')}</h1>
 
-      <SettingsBanners
-        showRestartBanner={showRestartBanner}
-        isRestartBannerClosing={isRestartBannerClosing}
+      <SettingsNotifications
+        showRestartNotification={showRestartNotification}
+        isRestartNotificationClosing={isRestartNotificationClosing}
         onRestart={handleRestartServer}
         message={message}
-        showStatusBanner={showStatusBanner}
-        isStatusBannerClosing={isStatusBannerClosing}
-        showLockedBanner={activeTab !== 'appearance' && hasActiveJobs}
+        showStatusNotification={showStatusNotification}
+        isStatusNotificationClosing={isStatusNotificationClosing}
+        onCloseStatus={hideStatusNotification}
+        showLockedNotification={activeTab !== 'appearance' && hasActiveJobs}
         t={t}
       />
 
@@ -1483,3 +1520,6 @@ const SettingMenu: React.FC = () => {
 }
 
 export default SettingMenu
+
+
+

@@ -7,81 +7,23 @@
   animation: fadeInUp var(--transition-base);
 }
 
-.restart-banner {
-  justify-content: space-between;
-  gap: var(--spacing-lg);
-  padding: 14px 18px;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-primary);
-  background: var(--bg-tertiary);
-  box-shadow: var(--shadow-sm);
-  font-weight: var(--font-semibold);
-  animation: restartBannerIn 220ms ease;
-  will-change: transform, opacity;
+.status-notification--closing {
+  animation: notificationOut 180ms ease forwards;
 }
 
-.status-banner {
-  padding: 14px 18px;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-primary);
-  background: var(--bg-tertiary);
-  box-shadow: var(--shadow-sm);
-  font-weight: var(--font-semibold);
-  animation: restartBannerIn 220ms ease;
-  will-change: transform, opacity;
-}
-
-.status-banner--closing {
-  animation: restartBannerOut 180ms ease forwards;
-}
-
-.status-banner.message-success {
-  border-left: 4px solid var(--success-primary);
-}
-
-.status-banner.message-warning {
-  border-left: 4px solid #b45309;
-}
-
-.status-banner.message-error {
-  border-left: 4px solid var(--danger-primary);
-}
-
-.restart-banner__text {
+.restart-notification__text {
   color: var(--text-primary);
 }
 
-.restart-banner__action {
+.restart-notification__action {
   margin-left: auto;
   background-color: var(--bg-secondary);
   border-color: var(--border-primary);
   color: var(--text-primary);
 }
 
-.restart-banner--closing {
-  animation: restartBannerOut 180ms ease forwards;
-}
-
-@keyframes restartBannerIn {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes restartBannerOut {
-  from {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
+.restart-notification--closing {
+  animation: notificationOut 180ms ease forwards;
 }
 
 .setting-tabs {
