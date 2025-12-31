@@ -5,7 +5,7 @@ import type { Theme } from '../contexts/AppContextBase'
 import type { Language } from '../locales'
 import * as backendApi from '../services/backendApi'
 import { getAssetPath } from '../utils/paths'
-import '../styles/SettingsideBar.css'
+import '../styles/SettingMenu.css'
 
 type SettingTab = 'appearance' | 'server' | 'download' | 'job' | 'image'
 

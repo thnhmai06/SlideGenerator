@@ -1,7 +1,7 @@
 import React from 'react'
 import { useApp } from '../contexts/useApp'
 import { getAssetPath } from '../utils/paths'
-import '../styles/AboutsideBar.css'
+import '../styles/AboutMenu.css'
 
 const AboutMenu: React.FC = () => {
   const { t } = useApp()

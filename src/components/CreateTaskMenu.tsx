@@ -5,7 +5,7 @@ import ShapeSelector from './ShapeSelector'
 import TagInput from './TagInput'
 import * as backendApi from '../services/backendApi'
 import { getAssetPath } from '../utils/paths'
-import '../styles/CreateTasksideBar.css'
+import '../styles/CreateTaskMenu.css'
 
 interface CreateTaskMenuProps {
   onStart: () => void

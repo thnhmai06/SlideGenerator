@@ -4,7 +4,7 @@ import { useJobs } from '../contexts/useJobs'
 import type { SheetJob } from '../contexts/JobContextBase'
 import { getBackendBaseUrl } from '../services/signalrClient'
 import { getAssetPath } from '../utils/paths'
-import '../styles/ProcesssideBar.css'
+import '../styles/ProcessMenu.css'
 
 type LogEntry = {
   message: string
