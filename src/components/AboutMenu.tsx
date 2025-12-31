@@ -1,7 +1,7 @@
 import React from 'react'
 import { useApp } from '../contexts/useApp'
 import { getAssetPath } from '../utils/paths'
-import '../styles/AboutMenu.css'
+import '../styles/AboutsideBar.css'
 
 const AboutMenu: React.FC = () => {
   const { t } = useApp()
@@ -17,7 +17,7 @@ const AboutMenu: React.FC = () => {
 
   return (
     <div className="about-menu">
-      <h1 className="menu-title">{t('menu.about')}</h1>
+      <h1 className="menu-title">{t('sideBar.about')}</h1>
 
       <div className="about-content">
         <div className="about-hero-gifs">

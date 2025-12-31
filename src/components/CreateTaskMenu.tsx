@@ -5,7 +5,7 @@ import ShapeSelector from './ShapeSelector'
 import TagInput from './TagInput'
 import * as backendApi from '../services/backendApi'
 import { getAssetPath } from '../utils/paths'
-import '../styles/CreateTaskMenu.css'
+import '../styles/CreateTasksideBar.css'
 
 interface CreateTaskMenuProps {
   onStart: () => void
@@ -63,7 +63,7 @@ type NotificationState = {
 }
 
 const STORAGE_KEYS = {
-  inputMenuState: 'slidegen.ui.inputMenu.state',
+  inputMenuState: 'slidegen.ui.inputsideBar.state',
 }
 
 const loadSavedState = (): SavedInputState | null => {
@@ -335,7 +335,7 @@ const startJob = async (args: {
   const resolvedSavePath = resolvePath(args.savePath)
 
   if (!resolvedPptxPath || !resolvedDataPath || !resolvedSavePath || !args.canStart) {
-    args.showNotification('error', args.t('input.error'))
+    args.showNotification('error', args.t('createTask.error'))
     return
   }
 
@@ -358,7 +358,7 @@ const startJob = async (args: {
     args.onStart()
   } catch (error) {
     console.error('Failed to start job:', error)
-    const message = error instanceof Error ? error.message : args.t('input.error')
+    const message = error instanceof Error ? error.message : args.t('createTask.error')
     args.showNotification('error', message)
   } finally {
     args.setIsStarting(false)
@@ -393,9 +393,9 @@ const exportConfigToFile = async (args: {
 
   try {
     await window.electronAPI.writeSettings(path, JSON.stringify(config, null, 2))
-    args.showNotification('success', args.t('input.exportSuccess'))
+    args.showNotification('success', args.t('createTask.exportSuccess'))
   } catch (_error) {
-    args.showNotification('error', args.t('input.exportError'))
+    args.showNotification('error', args.t('createTask.exportError'))
   }
 }
 
@@ -483,9 +483,9 @@ const importConfigFromFile = async (args: {
     args.setColumns(dataAssets.columns)
     args.setTextReplacements(filteredText)
     args.setImageReplacements(filteredImages)
-    args.showNotification('success', args.t('input.importSuccess'))
+    args.showNotification('success', args.t('createTask.importSuccess'))
   } catch (_error) {
-    args.showNotification('error', args.t('input.importError'))
+    args.showNotification('error', args.t('createTask.importError'))
   } finally {
     args.setIsLoadingShapes(false)
     args.setIsLoadingPlaceholders(false)
@@ -982,7 +982,7 @@ const PreviewModal: React.FC<PreviewModalProps> = ({
       onClick={(event) => event.stopPropagation()}
     >
       <div className="shape-preview-header">
-        <div className="shape-preview-title">{t('input.previewTitle')}</div>
+        <div className="shape-preview-title">{t('createTask.previewTitle')}</div>
         <button className="shape-preview-close" onClick={closePreview}>
           {t('common.close')}
         </button>
@@ -991,7 +991,7 @@ const PreviewModal: React.FC<PreviewModalProps> = ({
         <span className="shape-preview-name">{previewShape.name}</span>
         <span className="shape-preview-id">ID: {previewShape.id}</span>
         <span className="shape-preview-size">
-          {t('input.previewSize')}:{' '}
+          {t('createTask.previewSize')}:{' '}
           {previewSize ? `${previewSize.width}x${previewSize.height}px` : '...'}
         </span>
       </div>
@@ -1000,17 +1000,17 @@ const PreviewModal: React.FC<PreviewModalProps> = ({
           -
         </button>
         <span className="shape-preview-zoom">
-          {t('input.previewZoom')}: {Math.round(previewZoom * 100)}%
+          {t('createTask.previewZoom')}: {Math.round(previewZoom * 100)}%
         </span>
         <button className="shape-preview-btn" onClick={() => adjustPreviewZoom(0.1)}>
           +
         </button>
         <button className="shape-preview-btn" onClick={() => setPreviewZoom(1)}>
-          {t('input.previewReset')}
+          {t('createTask.previewReset')}
         </button>
         <button className="shape-preview-btn" onClick={handleSavePreview}>
           <img src={getAssetPath('images', 'download.png')} alt="" className="shape-preview-icon" />
-          {t('input.previewSave')}
+          {t('createTask.previewSave')}
         </button>
       </div>
       <div className="shape-preview-body">
@@ -1257,7 +1257,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
       const now = Date.now()
       if (now - templateErrorAtRef.current < 800) return
       templateErrorAtRef.current = now
-      showNotification('error', formatErrorMessage('input.templateLoadError', error))
+      showNotification('error', formatErrorMessage('createTask.templateLoadError', error))
     },
     [formatErrorMessage, showNotification],
   )
@@ -1267,7 +1267,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
       const now = Date.now()
       if (now - dataErrorAtRef.current < 800) return
       dataErrorAtRef.current = now
-      showNotification('error', formatErrorMessage('input.columnLoadError', error))
+      showNotification('error', formatErrorMessage('createTask.columnLoadError', error))
     },
     [formatErrorMessage, showNotification],
   )
@@ -1374,7 +1374,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
       setTextReplacements(filteredText)
       setImageReplacements(filteredImages)
     } catch (error) {
-      showNotification('error', formatErrorMessage('input.restoreError', error))
+      showNotification('error', formatErrorMessage('createTask.restoreError', error))
     } finally {
       setIsLoadingShapes(false)
       setIsLoadingPlaceholders(false)
@@ -1651,7 +1651,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
   )
 
   const clearAll = () => {
-    if (confirm(t('input.confirmClear') || 'Clear all data?')) {
+    if (confirm(t('createTask.confirmClear') || 'Clear all data?')) {
       setPptxPath('')
       setDataPath('')
       setSavePath('')
@@ -1947,21 +1947,21 @@ type MenuHeaderProps = {
 
 const MenuHeader: React.FC<MenuHeaderProps> = ({ onImport, onExport, onClear, t }) => (
   <div className="menu-header">
-    <h1 className="menu-title">{t('input.title')}</h1>
+    <h1 className="menu-title">{t('createTask.title')}</h1>
     <div className="config-actions">
-      <button className="btn btn-secondary" onClick={onImport} title={t('input.importConfig')}>
-        {t('input.import')}
+      <button className="btn btn-secondary" onClick={onImport} title={t('createTask.importConfig')}>
+        {t('createTask.import')}
       </button>
-      <button className="btn btn-secondary" onClick={onExport} title={t('input.exportConfig')}>
-        {t('input.export')}
+      <button className="btn btn-secondary" onClick={onExport} title={t('createTask.exportConfig')}>
+        {t('createTask.export')}
       </button>
-      <button className="btn btn-danger" onClick={onClear} title={t('input.clearAll')}>
+      <button className="btn btn-danger" onClick={onClear} title={t('createTask.clearAll')}>
         <img
           src={getAssetPath('images', 'remove.png')}
-          alt={t('input.clearAll')}
+          alt={t('createTask.clearAll')}
           className="btn-icon"
         />{' '}
-        <span>{t('input.clearAll')}</span>
+        <span>{t('createTask.clearAll')}</span>
       </button>
     </div>
   </div>
@@ -1991,27 +1991,27 @@ const TemplateInputSection: React.FC<TemplateInputSectionProps> = ({
   t,
 }) => (
   <div className="input-section">
-    <label className="input-label">{t('input.pptxFile')}</label>
+    <label className="input-label">{t('createTask.pptxFile')}</label>
     <div className="input-group">
       <input
         type="text"
         className="input-field"
         value={pptxPath}
         onChange={(e) => onChangePath(e.target.value)}
-        placeholder={t('input.pptxPlaceholder')}
+        placeholder={t('createTask.pptxPlaceholder')}
       />
       <button className="browse-btn" onClick={onBrowse} disabled={isLoadingShapes}>
-        {isLoadingShapes ? t('input.loadingShapes') : t('input.browse')}
+        {isLoadingShapes ? t('createTask.loadingShapes') : t('createTask.browse')}
       </button>
     </div>
     {templateLoaded && !isLoadingShapes && !isLoadingPlaceholders && (
       <div className="input-meta">
-        <span className="input-meta-title">{t('input.templateInfoLabel')}</span>
+        <span className="input-meta-title">{t('createTask.templateInfoLabel')}</span>
         <span>
-          {t('input.textShapeCount')}: {textShapeCount}
+          {t('createTask.textShapeCount')}: {textShapeCount}
         </span>
         <span>
-          {t('input.imageShapeCount')}: {imageShapeCount}
+          {t('createTask.imageShapeCount')}: {imageShapeCount}
         </span>
       </div>
     )}
@@ -2042,30 +2042,30 @@ const DataInputSection: React.FC<DataInputSectionProps> = ({
   t,
 }) => (
   <div className="input-section">
-    <label className="input-label">{t('input.dataFile')}</label>
+    <label className="input-label">{t('createTask.dataFile')}</label>
     <div className="input-group">
       <input
         type="text"
         className="input-field"
         value={dataPath}
         onChange={(e) => onChangePath(e.target.value)}
-        placeholder={t('input.dataPlaceholder')}
+        placeholder={t('createTask.dataPlaceholder')}
       />
       <button className="browse-btn" onClick={onBrowse} disabled={isLoadingColumns}>
-        {isLoadingColumns ? t('input.loadingColumns') : t('input.browse')}
+        {isLoadingColumns ? t('createTask.loadingColumns') : t('createTask.browse')}
       </button>
     </div>
     {dataLoaded && !isLoadingColumns && (
       <div className="input-meta">
-        <span className="input-meta-title">{t('input.dataInfoLabel')}</span>
+        <span className="input-meta-title">{t('createTask.dataInfoLabel')}</span>
         <span>
-          {t('input.sheetCount')}: {sheetCount}
+          {t('createTask.sheetCount')}: {sheetCount}
         </span>
         <span>
-          {t('input.columnCount')}: {uniqueColumnCount}
+          {t('createTask.columnCount')}: {uniqueColumnCount}
         </span>
         <span>
-          {t('input.rowCount')}: {totalRows}
+          {t('createTask.rowCount')}: {totalRows}
         </span>
       </div>
     )}
@@ -2086,17 +2086,17 @@ const SaveLocationSection: React.FC<SaveLocationSectionProps> = ({
   t,
 }) => (
   <div className="input-section">
-    <label className="input-label">{t('input.saveLocation')}</label>
+    <label className="input-label">{t('createTask.saveLocation')}</label>
     <div className="input-group">
       <input
         type="text"
         className="input-field"
         value={savePath}
         onChange={(e) => onChangePath(e.target.value)}
-        placeholder={t('input.savePlaceholder')}
+        placeholder={t('createTask.savePlaceholder')}
       />
       <button className="browse-btn" onClick={onBrowse}>
-        {t('input.browse')}
+        {t('createTask.browse')}
       </button>
     </div>
   </div>
@@ -2116,7 +2116,7 @@ const StartButtonSection: React.FC<StartButtonSectionProps> = ({
   t,
 }) => (
   <button className="start-btn" onClick={onStart} disabled={isStarting || !canStart}>
-    {isStarting ? t('process.processing') : t('input.start')}
+    {isStarting ? t('process.processing') : t('createTask.start')}
   </button>
 )
 
