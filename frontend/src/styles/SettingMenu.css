@@ -68,6 +68,11 @@
   gap: var(--spacing-lg);
 }
 
+.setting-section--locked {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
 .setting-section h3 {
   font-size: var(--font-xl);
   font-weight: var(--font-semibold);

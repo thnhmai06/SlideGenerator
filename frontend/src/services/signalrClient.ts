@@ -52,6 +52,8 @@ export class SignalRHubClient {
   private connection: HubConnection
   private baseUrl: string
   private notificationHandlers = new Set<(payload: unknown) => void>()
+  private reconnectHandlers = new Set<(connectionId?: string) => void>()
+  private connectedHandlers = new Set<(connectionId?: string) => void>()
   private queue: Promise<void> = Promise.resolve()
 
   constructor(hubPath: string) {
@@ -86,8 +88,22 @@ export class SignalRHubClient {
     }
   }
 
+  onReconnected(handler: (connectionId?: string) => void): () => void {
+    this.reconnectHandlers.add(handler)
+    return () => {
+      this.reconnectHandlers.delete(handler)
+    }
+  }
+
+  onConnected(handler: (connectionId?: string) => void): () => void {
+    this.connectedHandlers.add(handler)
+    return () => {
+      this.connectedHandlers.delete(handler)
+    }
+  }
+
   private buildConnection(baseUrl: string): HubConnection {
-    return new HubConnectionBuilder()
+    const connection = new HubConnectionBuilder()
       .withUrl(`${baseUrl}${this.hubPath}`, {
         withCredentials: false,
         skipNegotiation: true,
@@ -96,6 +112,12 @@ export class SignalRHubClient {
       .withAutomaticReconnect()
       .configureLogging(LogLevel.Warning)
       .build()
+
+    connection.onreconnected((connectionId) => {
+      this.reconnectHandlers.forEach((handler) => handler(connectionId ?? undefined))
+    })
+
+    return connection
   }
 
   private async refreshConnectionIfNeeded(): Promise<void> {
@@ -129,6 +151,7 @@ export class SignalRHubClient {
     }
 
     await this.connection.start()
+    this.connectedHandlers.forEach((handler) => handler(this.connection.connectionId ?? undefined))
   }
 
   private waitForConnected(): Promise<void> {

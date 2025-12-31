@@ -100,11 +100,15 @@ public class JobManager : Service, IJobManager
                 sheet.UpdateProgress(Math.Max(0, sheetState.NextRowIndex - 1));
                 sheet.RestoreErrorCount(sheetState.ErrorCount);
 
-                // Force status to Paused if it was Running or Pending
-                sheet.SetStatus(
-                    sheetState.Status is SheetJobStatus.Running or SheetJobStatus.Pending
-                        ? SheetJobStatus.Paused
-                        : sheetState.Status, sheetState.ErrorMessage);
+                // Force status to Paused if it was Running/Pending/Paused (ensure pause signal is set).
+                if (sheetState.Status is SheetJobStatus.Running or SheetJobStatus.Pending or SheetJobStatus.Paused)
+                {
+                    sheet.Pause();
+                }
+                else
+                {
+                    sheet.SetStatus(sheetState.Status, sheetState.ErrorMessage);
+                }
             }
 
             _active.RestoreGroup(group);

@@ -364,6 +364,7 @@ type ServerTabProps = {
   loading: boolean
   config: ConfigState | null
   canEditConfig: boolean
+  isLocked: boolean
   updateServer: (patch: Partial<ConfigState['server']>) => void
   handleNumberChange: NumberChangeHandler
   handleNumberBlur: NumberBlurHandler
@@ -375,13 +376,14 @@ const ServerTab: React.FC<ServerTabProps> = ({
   loading,
   config,
   canEditConfig,
+  isLocked,
   updateServer,
   handleNumberChange,
   handleNumberBlur,
   handleNumberFocus,
   t,
 }) => (
-  <div className="setting-section">
+  <div className={`setting-section${isLocked ? ' setting-section--locked' : ''}`}>
     <h3>{t('settings.serverSettings')}</h3>
     {loading || !config ? (
       <div className="loading">{t('settings.loading')}</div>
@@ -448,6 +450,7 @@ type DownloadTabProps = {
   loading: boolean
   config: ConfigState | null
   canEditConfig: boolean
+  isLocked: boolean
   updateDownload: (patch: Partial<ConfigState['download']>) => void
   handleNumberChange: NumberChangeHandler
   handleNumberBlur: NumberBlurHandler
@@ -460,6 +463,7 @@ const DownloadTab: React.FC<DownloadTabProps> = ({
   loading,
   config,
   canEditConfig,
+  isLocked,
   updateDownload,
   handleNumberChange,
   handleNumberBlur,
@@ -467,7 +471,7 @@ const DownloadTab: React.FC<DownloadTabProps> = ({
   onSelectFolder,
   t,
 }) => (
-  <div className="setting-section">
+  <div className={`setting-section${isLocked ? ' setting-section--locked' : ''}`}>
     <h3>{t('settings.downloadSettings')}</h3>
     {loading || !config ? (
       <div className="loading">{t('settings.loading')}</div>
@@ -591,6 +595,7 @@ type JobTabProps = {
   loading: boolean
   config: ConfigState | null
   canEditConfig: boolean
+  isLocked: boolean
   updateJob: (patch: Partial<ConfigState['job']>) => void
   handleNumberChange: NumberChangeHandler
   handleNumberBlur: NumberBlurHandler
@@ -602,13 +607,14 @@ const JobTab: React.FC<JobTabProps> = ({
   loading,
   config,
   canEditConfig,
+  isLocked,
   updateJob,
   handleNumberChange,
   handleNumberBlur,
   handleNumberFocus,
   t,
 }) => (
-  <div className="setting-section">
+  <div className={`setting-section${isLocked ? ' setting-section--locked' : ''}`}>
     <h3>{t('settings.jobSettings')}</h3>
     {loading || !config ? (
       <div className="loading">{t('settings.loading')}</div>
@@ -640,6 +646,7 @@ type ImageTabProps = {
   loading: boolean
   config: ConfigState | null
   canEditConfig: boolean
+  isLocked: boolean
   updateFace: (patch: Partial<ConfigState['image']['face']>) => void
   updateSaliency: (patch: Partial<ConfigState['image']['saliency']>) => void
   createPadStyles: (padding: {
@@ -662,6 +669,7 @@ const ImageTab: React.FC<ImageTabProps> = ({
   loading,
   config,
   canEditConfig,
+  isLocked,
   updateFace,
   updateSaliency,
   createPadStyles,
@@ -670,7 +678,7 @@ const ImageTab: React.FC<ImageTabProps> = ({
   handleNumberFocus,
   t,
 }) => (
-  <div className="setting-section">
+  <div className={`setting-section${isLocked ? ' setting-section--locked' : ''}`}>
     <h3>{t('settings.imageSettings')}</h3>
     {loading || !config ? (
       <div className="loading">{t('settings.loading')}</div>
@@ -1339,6 +1347,7 @@ const SettingMenu: React.FC = () => {
     if (isActiveStatus(group.status)) return true
     return Object.values(group.sheets).some((sheet) => isActiveStatus(sheet.status))
   })
+  const isLocked = activeTab !== 'appearance' && hasActiveJobs
   const canEditConfig = !hasActiveJobs
   const isEditable = !loading && !!config && canEditConfig
 
@@ -1431,7 +1440,7 @@ const SettingMenu: React.FC = () => {
         showStatusNotification={showStatusNotification}
         isStatusNotificationClosing={isStatusNotificationClosing}
         onCloseStatus={hideStatusNotification}
-        showLockedNotification={activeTab !== 'appearance' && hasActiveJobs}
+        showLockedNotification={isLocked}
         t={t}
       />
 
@@ -1456,6 +1465,7 @@ const SettingMenu: React.FC = () => {
           loading={loading}
           config={config}
           canEditConfig={canEditConfig}
+          isLocked={isLocked}
           updateServer={updateServer}
           handleNumberChange={handleNumberChange}
           handleNumberBlur={handleNumberBlur}
@@ -1469,6 +1479,7 @@ const SettingMenu: React.FC = () => {
           loading={loading}
           config={config}
           canEditConfig={canEditConfig}
+          isLocked={isLocked}
           updateDownload={updateDownload}
           handleNumberChange={handleNumberChange}
           handleNumberBlur={handleNumberBlur}
@@ -1483,6 +1494,7 @@ const SettingMenu: React.FC = () => {
           loading={loading}
           config={config}
           canEditConfig={canEditConfig}
+          isLocked={isLocked}
           updateJob={updateJob}
           handleNumberChange={handleNumberChange}
           handleNumberBlur={handleNumberBlur}
@@ -1496,6 +1508,7 @@ const SettingMenu: React.FC = () => {
           loading={loading}
           config={config}
           canEditConfig={canEditConfig}
+          isLocked={isLocked}
           updateFace={updateFace}
           updateSaliency={updateSaliency}
           createPadStyles={createPadStyles}
