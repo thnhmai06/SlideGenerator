@@ -76,7 +76,24 @@ public sealed class JobGroup : IJobGroup
     public GroupStatus Status { get; private set; } = GroupStatus.Pending;
 
     /// <inheritdoc />
-    public float Progress => _jobs.IsEmpty ? 0 : _jobs.Values.Average(j => j.Progress);
+    public float Progress
+    {
+        get
+        {
+            if (_jobs.IsEmpty) return 0;
+
+            long totalRows = 0;
+            long completedRows = 0;
+            foreach (var job in _jobs.Values)
+            {
+                var total = job.TotalRows;
+                totalRows += total;
+                completedRows += Math.Min(job.CurrentRow, total);
+            }
+
+            return totalRows == 0 ? 0 : (float)completedRows / totalRows * 100.0f;
+        }
+    }
 
     /// <inheritdoc />
     public int ErrorCount => _jobs.Values.Sum(j => j.ErrorCount);
