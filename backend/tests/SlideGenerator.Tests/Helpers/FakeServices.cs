@@ -1,6 +1,7 @@
 using SlideGenerator.Application.Common.Utilities;
 using SlideGenerator.Application.Features.Jobs.Contracts;
 using SlideGenerator.Application.Features.Jobs.Contracts.Collections;
+using SlideGenerator.Application.Features.Jobs.DTOs.Requests;
 using SlideGenerator.Application.Features.Sheets;
 using SlideGenerator.Application.Features.Slides;
 using SlideGenerator.Domain.Features.Jobs.Entities;
@@ -239,7 +240,7 @@ internal sealed class FakeActiveJobCollection : IActiveJobCollection
             string.Equals(group.OutputFolder.FullName, normalized, StringComparison.OrdinalIgnoreCase));
     }
 
-    public IJobGroup CreateGroup(TaskCreate request)
+    public IJobGroup CreateGroup(JobCreate request)
     {
         var workbook = CreateWorkbook();
         var template = new TestTemplatePresentation(request.TemplatePath);
@@ -252,10 +253,10 @@ internal sealed class FakeActiveJobCollection : IActiveJobCollection
         var group = new JobGroup(workbook, template, outputFolder, [], []);
 
         string[] sheetNames;
-        if (request.TaskType == TaskType.Sheet)
+        if (request.JobType == JobType.Sheet)
         {
             if (string.IsNullOrWhiteSpace(request.SheetName))
-                throw new InvalidOperationException("SheetName is required for sheet tasks.");
+                throw new InvalidOperationException("SheetName is required for sheet jobs.");
             sheetNames = [request.SheetName];
         }
         else

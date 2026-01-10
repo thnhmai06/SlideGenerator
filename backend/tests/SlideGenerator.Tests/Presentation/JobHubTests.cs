@@ -1,14 +1,16 @@
 using Microsoft.Extensions.Logging.Abstractions;
+using SlideGenerator.Application.Features.Jobs.DTOs.Responses.Successes;
 using SlideGenerator.Application.Features.Slides.DTOs.Enums;
 using SlideGenerator.Application.Features.Slides.DTOs.Responses.Successes;
 using SlideGenerator.Domain.Features.Jobs.Enums;
 using SlideGenerator.Domain.Features.Slides.Components;
+using SlideGenerator.Presentation.Features.Jobs;
 using SlideGenerator.Tests.Helpers;
 
 namespace SlideGenerator.Tests.Presentation;
 
 [TestClass]
-public sealed class TaskHubTests
+public sealed class JobHubTests
 {
     [TestMethod]
     public async Task ProcessRequest_ScanShapes_ReturnsShapes()
@@ -26,7 +28,7 @@ public sealed class TaskHubTests
         var templateManager = new FakeSlideTemplateManager(template);
         var jobManager = new FakeJobManager(new FakeActiveJobCollection());
 
-        var hub = new TaskHub(jobManager, templateManager, new FakeJobStateStore(), NullLogger<TaskHub>.Instance);
+        var hub = new JobHub(jobManager, templateManager, new FakeJobStateStore(), NullLogger<JobHub>.Instance);
         var proxy = HubTestHelper.Attach(hub, "conn-1");
 
         var message = JsonHelper.Parse("{\"type\":\"scanshapes\",\"filePath\":\"template.pptx\"}");
@@ -48,7 +50,7 @@ public sealed class TaskHubTests
         var templateManager = new FakeSlideTemplateManager(template);
         var jobManager = new FakeJobManager(new FakeActiveJobCollection());
 
-        var hub = new TaskHub(jobManager, templateManager, new FakeJobStateStore(), NullLogger<TaskHub>.Instance);
+        var hub = new JobHub(jobManager, templateManager, new FakeJobStateStore(), NullLogger<JobHub>.Instance);
         var proxy = HubTestHelper.Attach(hub, "conn-1b");
 
         var message = JsonHelper.Parse("{\"type\":\"scanplaceholders\",\"filePath\":\"template.pptx\"}");
@@ -79,7 +81,7 @@ public sealed class TaskHubTests
         var templateManager = new FakeSlideTemplateManager(template);
         var jobManager = new FakeJobManager(new FakeActiveJobCollection());
 
-        var hub = new TaskHub(jobManager, templateManager, new FakeJobStateStore(), NullLogger<TaskHub>.Instance);
+        var hub = new JobHub(jobManager, templateManager, new FakeJobStateStore(), NullLogger<JobHub>.Instance);
         var proxy = HubTestHelper.Attach(hub, "conn-1c");
 
         var message = JsonHelper.Parse("{\"type\":\"scantemplate\",\"filePath\":\"template.pptx\"}");
@@ -93,91 +95,112 @@ public sealed class TaskHubTests
     }
 
     [TestMethod]
-    public async Task ProcessRequest_TaskCreate_Group_ReturnsSummaryAndSheetIds()
+    public async Task ProcessRequest_JobCreate_Group_ReturnsSummaryAndSheetIds()
     {
         var hub = CreateHub(out var proxy, out _);
 
         var json =
-            "{\"type\":\"taskcreate\",\"taskType\":\"Group\",\"templatePath\":\"template.pptx\",\"spreadsheetPath\":\"book.xlsx\",\"outputPath\":\"C:\\\\out\",\"sheetNames\":[\"Sheet1\"]}";
+            "{\"type\":\"jobcreate\",\"taskType\":\"Group\",\"templatePath\":\"template.pptx\",\"spreadsheetPath\":\"book.xlsx\",\"outputPath\":\"C:\\\\out\",\"sheetNames\":[\"Sheet1\"]}";
         await hub.ProcessRequest(JsonHelper.Parse(json));
 
-        var response = proxy.GetPayload<TaskCreateSuccess>();
+        var response = proxy.GetPayload<JobCreateSuccess>();
         Assert.IsNotNull(response);
-        Assert.AreEqual(TaskType.Group, response.Task.TaskType);
-        Assert.AreEqual(TaskState.Processing, response.Task.Status);
-        Assert.IsNotNull(response.SheetTaskIds);
-        Assert.HasCount(1, response.SheetTaskIds);
-        Assert.AreEqual(Path.GetFullPath("C:\\out"), response.Task.OutputPath);
+        Assert.AreEqual(JobType.Group, response.Job.JobType);
+        Assert.AreEqual(JobState.Processing, response.Job.Status);
+        Assert.IsNotNull(response.SheetJobIds);
+        Assert.HasCount(1, response.SheetJobIds);
+        Assert.AreEqual(Path.GetFullPath("C:\\out"), response.Job.OutputPath);
     }
 
     [TestMethod]
-    public async Task ProcessRequest_TaskCreate_Sheet_ReturnsSheetSummary()
+    public async Task ProcessRequest_JobCreate_Sheet_ReturnsSheetSummary()
     {
         var hub = CreateHub(out var proxy, out var jobManager);
 
         var json =
-            "{\"type\":\"taskcreate\",\"taskType\":\"Sheet\",\"templatePath\":\"template.pptx\",\"spreadsheetPath\":\"book.xlsx\",\"outputPath\":\"C:\\\\out\",\"sheetName\":\"Sheet2\"}";
+            "{\"type\":\"jobcreate\",\"taskType\":\"Sheet\",\"templatePath\":\"template.pptx\",\"spreadsheetPath\":\"book.xlsx\",\"outputPath\":\"C:\\\\out\",\"sheetName\":\"Sheet2\"}";
         await hub.ProcessRequest(JsonHelper.Parse(json));
 
-        var response = proxy.GetPayload<TaskCreateSuccess>();
+        var response = proxy.GetPayload<JobCreateSuccess>();
         Assert.IsNotNull(response);
-        Assert.AreEqual(TaskType.Sheet, response.Task.TaskType);
-        Assert.AreEqual("Sheet2", response.Task.SheetName);
-        Assert.IsNull(response.SheetTaskIds);
-        Assert.IsNotNull(jobManager.GetSheet(response.Task.TaskId));
+        Assert.AreEqual(JobType.Sheet, response.Job.JobType);
+        Assert.AreEqual("Sheet2", response.Job.SheetName);
+        Assert.IsNull(response.SheetJobIds);
+        Assert.IsNotNull(jobManager.GetSheet(response.Job.JobId));
     }
 
     [TestMethod]
-    public async Task ProcessRequest_TaskQuery_ReturnsDetailWithSheets()
+    public async Task ProcessRequest_JobQuery_ReturnsDetailWithSheets()
     {
         var hub = CreateHub(out var proxy, out _);
 
         var createJson =
-            "{\"type\":\"taskcreate\",\"taskType\":\"Group\",\"templatePath\":\"template.pptx\",\"spreadsheetPath\":\"book.xlsx\",\"outputPath\":\"C:\\\\out\",\"sheetNames\":[\"Sheet1\"]}";
+            "{\"type\":\"jobcreate\",\"taskType\":\"Group\",\"templatePath\":\"template.pptx\",\"spreadsheetPath\":\"book.xlsx\",\"outputPath\":\"C:\\\\out\",\"sheetNames\":[\"Sheet1\"]}";
         await hub.ProcessRequest(JsonHelper.Parse(createJson));
-        var created = proxy.GetPayload<TaskCreateSuccess>();
+        var created = proxy.GetPayload<JobCreateSuccess>();
         Assert.IsNotNull(created);
 
         var queryJson =
-            $"{{\"type\":\"taskquery\",\"taskId\":\"{created.Task.TaskId}\",\"taskType\":\"Group\",\"includeSheets\":true}}";
+            $"{{\"type\":\"jobquery\",\"taskId\":\"{created.Job.JobId}\",\"taskType\":\"Group\",\"includeSheets\":true}}";
         await hub.ProcessRequest(JsonHelper.Parse(queryJson));
 
-        var response = proxy.GetPayload<TaskQuerySuccess>();
+        var response = proxy.GetPayload<JobQuerySuccess>();
         Assert.IsNotNull(response);
-        Assert.IsNotNull(response.Task);
-        Assert.AreEqual(created.Task.TaskId, response.Task.TaskId);
-        Assert.IsNotNull(response.Task.Sheets);
-        Assert.HasCount(1, response.Task.Sheets);
+        Assert.IsNotNull(response.Job);
+        Assert.AreEqual(created.Job.JobId, response.Job.JobId);
+        Assert.IsNotNull(response.Job.Sheets);
+        Assert.HasCount(1, response.Job.Sheets);
     }
 
     [TestMethod]
-    public async Task ProcessRequest_TaskControl_PausesGroup()
+    public async Task ProcessRequest_JobControl_PausesGroup()
     {
         var hub = CreateHub(out var proxy, out var jobManager);
 
         var createJson =
-            "{\"type\":\"taskcreate\",\"taskType\":\"Group\",\"templatePath\":\"template.pptx\",\"spreadsheetPath\":\"book.xlsx\",\"outputPath\":\"C:\\\\out\"}";
+            "{\"type\":\"jobcreate\",\"taskType\":\"Group\",\"templatePath\":\"template.pptx\",\"spreadsheetPath\":\"book.xlsx\",\"outputPath\":\"C:\\\\out\"}";
         await hub.ProcessRequest(JsonHelper.Parse(createJson));
-        var created = proxy.GetPayload<TaskCreateSuccess>();
+        var created = proxy.GetPayload<JobCreateSuccess>();
         Assert.IsNotNull(created);
 
         var controlJson =
-            $"{{\"type\":\"taskcontrol\",\"taskId\":\"{created.Task.TaskId}\",\"taskType\":\"Group\",\"action\":\"Pause\"}}";
+            $"{{\"type\":\"jobcontrol\",\"taskId\":\"{created.Job.JobId}\",\"taskType\":\"Group\",\"action\":\"Pause\"}}";
         await hub.ProcessRequest(JsonHelper.Parse(controlJson));
 
-        var response = proxy.GetPayload<TaskControlSuccess>();
+        var response = proxy.GetPayload<JobControlSuccess>();
         Assert.IsNotNull(response);
         Assert.AreEqual(ControlAction.Pause, response.Action);
-        Assert.AreEqual(GroupStatus.Paused, jobManager.GetGroup(created.Task.TaskId)!.Status);
+        Assert.AreEqual(GroupStatus.Paused, jobManager.GetGroup(created.Job.JobId)!.Status);
     }
 
-    private static TaskHub CreateHub(out CaptureClientProxy proxy, out FakeJobManager jobManager)
+    [TestMethod]
+    public async Task ProcessRequest_JobControl_RemoveGroup_RemovesFromActive()
+    {
+        var hub = CreateHub(out var proxy, out var jobManager);
+
+        var createJson =
+            "{\"type\":\"jobcreate\",\"taskType\":\"Group\",\"templatePath\":\"template.pptx\",\"spreadsheetPath\":\"book.xlsx\",\"outputPath\":\"C:\\\\out\"}";
+        await hub.ProcessRequest(JsonHelper.Parse(createJson));
+        var created = proxy.GetPayload<JobCreateSuccess>();
+        Assert.IsNotNull(created);
+
+        var controlJson =
+            $"{{\"type\":\"jobcontrol\",\"taskId\":\"{created.Job.JobId}\",\"taskType\":\"Group\",\"action\":\"Remove\"}}";
+        await hub.ProcessRequest(JsonHelper.Parse(controlJson));
+
+        var response = proxy.GetPayload<JobControlSuccess>();
+        Assert.IsNotNull(response);
+        Assert.AreEqual(ControlAction.Remove, response.Action);
+        Assert.IsFalse(jobManager.Active.ContainsGroup(created.Job.JobId));
+    }
+
+    private static JobHub CreateHub(out CaptureClientProxy proxy, out FakeJobManager jobManager)
     {
         var active = new FakeActiveJobCollection();
         jobManager = new FakeJobManager(active);
         var templateManager = new FakeSlideTemplateManager(new TestTemplatePresentation("template.pptx"));
 
-        var hub = new TaskHub(jobManager, templateManager, new FakeJobStateStore(), NullLogger<TaskHub>.Instance);
+        var hub = new JobHub(jobManager, templateManager, new FakeJobStateStore(), NullLogger<JobHub>.Instance);
         proxy = HubTestHelper.Attach(hub, "conn-2");
         return hub;
     }

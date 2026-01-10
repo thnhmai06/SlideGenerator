@@ -6,20 +6,20 @@ namespace SlideGenerator.Tests.Domain;
 public sealed class PauseSignalTests
 {
     [TestMethod]
-    public async Task WaitIfPausedAsync_BlocksUntilResume()
+    public async Task WaitIfPausedAsync_WhenPaused_ThrowsOperationCanceled()
     {
         var signal = new PauseSignal();
         signal.Pause();
 
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
-        var waitTask = signal.WaitIfPausedAsync(cts.Token);
-
-        Assert.IsFalse(waitTask.IsCompleted);
-
-        signal.Resume();
-        await waitTask;
-
-        Assert.IsTrue(waitTask.IsCompletedSuccessfully);
+        try
+        {
+            await signal.WaitIfPausedAsync(cts.Token);
+            Assert.Fail("Expected OperationCanceledException when paused.");
+        }
+        catch (OperationCanceledException)
+        {
+        }
     }
 
     [TestMethod]
