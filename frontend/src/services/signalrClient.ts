@@ -1,2 +1,2 @@
-export { getBackendBaseUrl, normalizeBaseUrl } from './signalr/baseUrl'
-export { SignalRHubClient } from './signalr/client'
+export { getBackendBaseUrl, normalizeBaseUrl } from './signalr/baseUrl';
+export { SignalRHubClient } from './signalr/client';

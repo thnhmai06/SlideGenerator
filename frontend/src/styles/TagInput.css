@@ -1,123 +1,123 @@
 .tag-input-container {
-  position: relative;
-  width: 100%;
-  z-index: 1;
+	position: relative;
+	width: 100%;
+	z-index: 1;
 }
 
 .tag-input-container:focus-within,
 .tag-input-container.is-active {
-  z-index: 1000;
+	z-index: 1000;
 }
 
 .tag-input-wrapper {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: 8px 12px;
-  min-height: 42px;
-  width: 100%;
-  background-color: var(--input-bg);
-  border: 1px solid var(--input-border);
-  border-radius: var(--radius-md);
-  transition:
-    border-color var(--transition-fast),
-    box-shadow var(--transition-fast);
-  cursor: text;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--spacing-sm);
+	padding: 8px 12px;
+	min-height: 42px;
+	width: 100%;
+	background-color: var(--input-bg);
+	border: 1px solid var(--input-border);
+	border-radius: var(--radius-md);
+	transition:
+		border-color var(--transition-fast),
+		box-shadow var(--transition-fast);
+	cursor: text;
 }
 
 .tag-input-wrapper:focus-within {
-  border-color: var(--accent-primary);
-  box-shadow: var(--focus-ring);
+	border-color: var(--accent-primary);
+	box-shadow: var(--focus-ring);
 }
 
 .tag-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  background: var(--accent-soft);
-  color: var(--text-primary);
-  border-radius: var(--radius-full);
-  font-size: var(--font-sm);
-  font-weight: var(--font-semibold);
-  max-width: 180px;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 10px;
+	background: var(--accent-soft);
+	color: var(--text-primary);
+	border-radius: var(--radius-full);
+	font-size: var(--font-sm);
+	font-weight: var(--font-semibold);
+	max-width: 180px;
 }
 
 .tag-text {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .tag-remove {
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  font-size: 14px;
+	border: none;
+	background: transparent;
+	color: var(--text-secondary);
+	cursor: pointer;
+	font-size: 14px;
 }
 
 .tag-remove:hover {
-  color: var(--text-primary);
+	color: var(--text-primary);
 }
 
 .tag-input-field {
-  flex: 1 1 auto;
-  min-width: 120px;
-  border: none !important;
-  background: transparent !important;
-  color: var(--input-text);
-  font-size: var(--font-base);
-  font-family: inherit;
-  outline: none;
-  padding: 4px 0 !important;
+	flex: 1 1 auto;
+	min-width: 120px;
+	border: none !important;
+	background: transparent !important;
+	color: var(--input-text);
+	font-size: var(--font-base);
+	font-family: inherit;
+	outline: none;
+	padding: 4px 0 !important;
 }
 
 .tag-input-field::placeholder {
-  color: var(--input-placeholder);
+	color: var(--input-placeholder);
 }
 
 .tag-suggestions {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  right: 0;
-  max-height: 260px;
-  overflow-y: auto;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
-  z-index: 9999;
-  animation: fadeInUp var(--transition-fast);
+	position: absolute;
+	top: calc(100% + 6px);
+	left: 0;
+	right: 0;
+	max-height: 260px;
+	overflow-y: auto;
+	background: var(--bg-tertiary);
+	border: 1px solid var(--border-primary);
+	border-radius: var(--radius-md);
+	box-shadow: var(--shadow-md);
+	z-index: 9999;
+	animation: fadeInUp var(--transition-fast);
 }
 
 .tag-suggestion-item {
-  padding: 10px 12px;
-  cursor: pointer;
-  font-size: var(--font-base);
-  color: var(--text-primary);
-  transition:
-    background-color var(--transition-fast),
-    color var(--transition-fast);
+	padding: 10px 12px;
+	cursor: pointer;
+	font-size: var(--font-base);
+	color: var(--text-primary);
+	transition:
+		background-color var(--transition-fast),
+		color var(--transition-fast);
 }
 
 .tag-suggestion-item:hover,
 .tag-suggestion-item.selected {
-  background-color: var(--bg-hover);
-  color: var(--accent-primary);
+	background-color: var(--bg-hover);
+	color: var(--accent-primary);
 }
 
 .tag-suggestions::-webkit-scrollbar {
-  width: 8px;
+	width: 8px;
 }
 
 .tag-suggestions::-webkit-scrollbar-track {
-  background: var(--scrollbar-track);
+	background: var(--scrollbar-track);
 }
 
 .tag-suggestions::-webkit-scrollbar-thumb {
-  background: var(--scrollbar-thumb);
-  border-radius: 8px;
+	background: var(--scrollbar-thumb);
+	border-radius: 8px;
 }

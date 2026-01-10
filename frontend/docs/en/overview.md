@@ -23,8 +23,8 @@ The frontend is a desktop Electron app that hosts a React UI. It connects to the
 - Backend URL: `localStorage.slidegen.backend.url`.
 - Create Task input cache: `sessionStorage.slidegen.ui.inputMenu.state`.
 - Group metadata/config cache:
-  - `sessionStorage.slidegen.group.meta`
-  - `sessionStorage.slidegen.group.config`
+    - `sessionStorage.slidegen.group.meta`
+    - `sessionStorage.slidegen.group.config`
 
 ## Logs
 

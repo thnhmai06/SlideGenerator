@@ -1,164 +1,164 @@
 .about-menu {
-  max-width: 840px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-2xl);
-  animation: fadeInUp var(--transition-base);
+	max-width: 840px;
+	margin: 0 auto;
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-2xl);
+	animation: fadeInUp var(--transition-base);
 }
 
 .about-menu .menu-title {
-  font-size: var(--font-3xl);
-  font-weight: var(--font-bold);
+	font-size: var(--font-3xl);
+	font-weight: var(--font-bold);
 }
 
 .about-content {
-  padding: var(--spacing-3xl);
-  background-color: var(--bg-tertiary);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-primary);
-  box-shadow: var(--shadow-sm);
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-2xl);
-  position: relative;
+	padding: var(--spacing-3xl);
+	background-color: var(--bg-tertiary);
+	border-radius: var(--radius-lg);
+	border: 1px solid var(--border-primary);
+	box-shadow: var(--shadow-sm);
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-2xl);
+	position: relative;
 }
 
 .about-section h2 {
-  font-size: var(--font-2xl);
-  font-weight: var(--font-bold);
-  color: var(--accent-primary);
-  margin-bottom: var(--spacing-sm);
+	font-size: var(--font-2xl);
+	font-weight: var(--font-bold);
+	color: var(--accent-primary);
+	margin-bottom: var(--spacing-sm);
 }
 
 .about-section h3 {
-  font-size: var(--font-lg);
-  font-weight: var(--font-semibold);
-  color: var(--text-primary);
-  margin-bottom: var(--spacing-sm);
+	font-size: var(--font-lg);
+	font-weight: var(--font-semibold);
+	color: var(--text-primary);
+	margin-bottom: var(--spacing-sm);
 }
 
 .version {
-  color: var(--text-tertiary);
-  font-size: var(--font-sm);
+	color: var(--text-tertiary);
+	font-size: var(--font-sm);
 }
 
 .description {
-  color: var(--text-secondary);
-  font-size: var(--font-base);
-  line-height: 1.6;
+	color: var(--text-secondary);
+	font-size: var(--font-base);
+	line-height: 1.6;
 }
 
 .about-links {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--spacing-md);
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: var(--spacing-md);
 }
 
 .developer-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--spacing-sm);
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--spacing-sm);
 }
 
 .developer-link {
-  border: 1px solid var(--border-primary);
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  padding: 6px 12px;
-  border-radius: var(--radius-full);
-  font-size: var(--font-sm);
-  font-weight: var(--font-semibold);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  transition:
-    border-color var(--transition-fast),
-    transform var(--transition-fast),
-    box-shadow var(--transition-fast);
+	border: 1px solid var(--border-primary);
+	background: var(--bg-secondary);
+	color: var(--text-primary);
+	padding: 6px 12px;
+	border-radius: var(--radius-full);
+	font-size: var(--font-sm);
+	font-weight: var(--font-semibold);
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-sm);
+	transition:
+		border-color var(--transition-fast),
+		transform var(--transition-fast),
+		box-shadow var(--transition-fast);
 }
 
 .developer-link:hover {
-  border-color: var(--accent-primary);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
+	border-color: var(--accent-primary);
+	transform: translateY(-1px);
+	box-shadow: var(--shadow-sm);
 }
 
 .developer-avatar {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 1px solid var(--border-secondary);
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	object-fit: cover;
+	border: 1px solid var(--border-secondary);
 }
 
 .link-btn {
-  padding: 12px 16px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-primary);
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  cursor: pointer;
-  font-weight: var(--font-semibold);
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  transition:
-    border-color var(--transition-fast),
-    transform var(--transition-fast),
-    box-shadow var(--transition-fast);
+	padding: 12px 16px;
+	border-radius: var(--radius-md);
+	border: 1px solid var(--border-primary);
+	background: var(--bg-secondary);
+	color: var(--text-primary);
+	cursor: pointer;
+	font-weight: var(--font-semibold);
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-sm);
+	transition:
+		border-color var(--transition-fast),
+		transform var(--transition-fast),
+		box-shadow var(--transition-fast);
 }
 
 .link-btn:hover {
-  border-color: var(--accent-primary);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
+	border-color: var(--accent-primary);
+	transform: translateY(-1px);
+	box-shadow: var(--shadow-sm);
 }
 
 .link-icon {
-  width: 18px;
-  height: 18px;
-  object-fit: contain;
-  filter: brightness(0.7);
+	width: 18px;
+	height: 18px;
+	object-fit: contain;
+	filter: brightness(0.7);
 }
 
 [data-theme='light'] .link-icon {
-  filter: brightness(0.6);
+	filter: brightness(0.6);
 }
 
 .about-footer {
-  text-align: center;
-  color: var(--text-tertiary);
-  font-size: var(--font-sm);
-  border-top: 1px solid var(--border-primary);
-  padding-top: var(--spacing-lg);
+	text-align: center;
+	color: var(--text-tertiary);
+	font-size: var(--font-sm);
+	border-top: 1px solid var(--border-primary);
+	padding-top: var(--spacing-lg);
 }
 
 .about-hero-gifs {
-  position: absolute;
-  top: 0;
-  right: 24px;
-  display: flex;
-  align-items: center;
-  gap: 0;
-  pointer-events: none;
-  z-index: 2;
-  transform: translateY(-100%);
+	position: absolute;
+	top: 0;
+	right: 24px;
+	display: flex;
+	align-items: center;
+	gap: 0;
+	pointer-events: none;
+	z-index: 2;
+	transform: translateY(-100%);
 }
 
 .about-hero-gif {
-  height: 64px;
-  width: auto;
+	height: 64px;
+	width: auto;
 }
 
 @media (max-width: 720px) {
-  .about-hero-gifs {
-    right: 16px;
-    gap: 0;
-  }
+	.about-hero-gifs {
+		right: 16px;
+		gap: 0;
+	}
 
-  .about-hero-gif {
-    height: 52px;
-  }
+	.about-hero-gif {
+		height: 52px;
+	}
 }
