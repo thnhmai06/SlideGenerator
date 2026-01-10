@@ -66,6 +66,22 @@ const App: React.FC = () => {
     }
   }, [])
 
+  useEffect(() => {
+    const allowedMenus: MenuType[] = ['input', 'setting', 'download', 'process', 'about']
+    const isMenuType = (value: string): value is MenuType => allowedMenus.includes(value as MenuType)
+    const unsubscribe = window.electronAPI?.onNavigate?.((menu) => {
+      if (isMenuType(menu)) {
+        setCurrentMenu(menu)
+      }
+    })
+
+    return () => {
+      if (typeof unsubscribe === 'function') {
+        unsubscribe()
+      }
+    }
+  }, [])
+
   const renderMenu = () => {
     switch (currentMenu) {
       case 'input':
