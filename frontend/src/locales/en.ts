@@ -218,8 +218,13 @@ export const en = {
   'results.empty': 'Empty',
 
   // Connection
-  'connection.disconnected': 'Cannot connect to the erver',
+  'connection.disconnected': 'Cannot connect to the server',
   'connection.connected': 'Connected to the server',
+
+  // Tray
+  'tray.show': 'Show',
+  'tray.hideToTray': 'Minimize to tray',
+  'tray.quit': 'Quit',
 
   // Common
   'common.close': 'Close',

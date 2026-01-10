@@ -20,6 +20,8 @@ declare global {
       setProgressBar: (value: number) => Promise<void>
       restartBackend: () => Promise<boolean>
       logRenderer: (level: 'debug' | 'info' | 'warn' | 'error', message: string) => void
+      onNavigate: (handler: (menu: 'input' | 'process' | 'download' | 'setting' | 'about') => void) => () => void
+      setTrayLocale: (locale: 'vi' | 'en') => Promise<void>
     }
     getAssetPath: (...p: string[]) => string
   }

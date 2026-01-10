@@ -60,6 +60,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   }, [theme, language, enableAnimations, closeToTray, isLoaded])
 
   useEffect(() => {
+    if (!isLoaded) return
+    window.electronAPI?.setTrayLocale?.(language)
+  }, [language, isLoaded])
+
+  useEffect(() => {
     if (typeof window === 'undefined' || !window.matchMedia) {
       setResolvedTheme(theme === 'system' ? 'dark' : theme)
       return

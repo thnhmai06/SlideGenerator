@@ -1,4 +1,4 @@
-import type { IpcRenderer } from 'electron'
+import type { IpcRenderer, IpcRendererEvent } from 'electron'
 
 export interface ElectronAPI {
   openFile: (filters?: { name: string; extensions: string[] }[]) => Promise<string | undefined>
@@ -16,6 +16,8 @@ export interface ElectronAPI {
   setProgressBar: (value: number) => Promise<void>
   restartBackend: () => Promise<boolean>
   logRenderer: (level: 'debug' | 'info' | 'warn' | 'error', message: string) => void
+  onNavigate: (handler: (menu: 'input' | 'process' | 'download' | 'setting' | 'about') => void) => () => void
+  setTrayLocale: (locale: 'vi' | 'en') => Promise<void>
 }
 
 export const createElectronAPI = (ipcRenderer: IpcRenderer): ElectronAPI => {
@@ -33,5 +35,13 @@ export const createElectronAPI = (ipcRenderer: IpcRenderer): ElectronAPI => {
     setProgressBar: (value) => ipcRenderer.invoke('window:setProgress', value),
     restartBackend: () => ipcRenderer.invoke('backend:restart'),
     logRenderer: (level, message) => ipcRenderer.send('logs:renderer', { level, message }),
+    onNavigate: (handler) => {
+      const listener = (_: IpcRendererEvent, menu: string) => {
+        handler(menu as 'input' | 'process' | 'download' | 'setting' | 'about')
+      }
+      ipcRenderer.on('app:navigate', listener)
+      return () => ipcRenderer.removeListener('app:navigate', listener)
+    },
+    setTrayLocale: (locale) => ipcRenderer.invoke('tray:setLocale', locale),
   }
 }

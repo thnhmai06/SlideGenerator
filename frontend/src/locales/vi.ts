@@ -220,6 +220,11 @@ export const vi = {
   'connection.disconnected': 'Không thể kết nối tới server.',
   'connection.connected': 'Đã kết nối tới server.',
 
+  // Tray
+  'tray.show': 'Hiển thị',
+  'tray.hideToTray': 'Thu nhỏ xuống khay',
+  'tray.quit': 'Thoát',
+
   // Common
   'common.close': 'Đóng',
   'common.cancel': 'Hủy',
