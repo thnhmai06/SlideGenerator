@@ -7,7 +7,7 @@ import {
   type JobStatus,
   type LogEntry,
   type SheetJob,
-} from './JobContextBase'
+} from './JobContextType'
 
 const createEmptyGroup = (groupId: string): GroupJob => ({
   id: groupId,
@@ -566,11 +566,10 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       await backendApi.groupControl({ GroupId: groupId, Action: action })
       if (action === 'Stop' || action === 'Cancel') {
         clearGroupMeta([groupId])
-        removeGroupConfig([groupId])
       }
       await refreshGroups()
     },
-    [clearGroupMeta, refreshGroups, removeGroupConfig],
+    [clearGroupMeta, refreshGroups],
   )
 
   const removeGroup = useCallback(
@@ -702,10 +701,27 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     async (groupId: string) => {
       const config = getGroupConfig(groupId)
       if (!config || !window.electronAPI) return false
+      const columns: string[] = []
+      const seen = new Set<string>()
+      const addColumns = (values: string[] | undefined) => {
+        values?.forEach((value) => {
+          if (!seen.has(value)) {
+            seen.add(value)
+            columns.push(value)
+          }
+        })
+      }
+      for (const item of config.textConfigs ?? []) {
+        addColumns(item.Columns)
+      }
+      for (const item of config.imageConfigs ?? []) {
+        addColumns(item.Columns)
+      }
       const exportPayload = {
         pptxPath: config.templatePath,
         dataPath: config.spreadsheetPath,
         savePath: config.outputPath,
+        columns,
         textReplacements: (config.textConfigs ?? []).map((item, index) => ({
           id: index + 1,
           placeholder: item.Pattern,

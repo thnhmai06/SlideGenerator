@@ -29,6 +29,7 @@ vi.mock('../../contexts/useJobs', () => ({
             totalRows: 3,
             progress: 33,
             errorCount: 0,
+            hangfireJobId: '32',
             logs: [
               {
                 message: 'Processing row 1',
@@ -71,7 +72,7 @@ describe('ProcessMenu', () => {
     await user.click(screen.getByText('book.xlsx'))
     await user.click(screen.getByText('Sheet1'))
 
-    expect(screen.getByText('process.jobId: sheet-1')).toBeInTheDocument()
+    expect(screen.getByText('process.jobId: #32')).toBeInTheDocument()
     expect(screen.getByText('Row 1')).toBeInTheDocument()
     expect(document.querySelector('.file-action-btn-danger')).not.toBeNull()
   })

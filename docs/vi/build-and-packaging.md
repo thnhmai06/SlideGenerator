@@ -1,23 +1,19 @@
 # Build và đóng gói
 
-## Mục lục
+English version: [English](../en/build-and-packaging.md)
 
-1. [Script build](#script-build)
-2. [Backend subprocess](#backend-subprocess)
-3. [Lưu ý đóng gói](#lưu-ý-đóng-gói)
-
-## Script build
+## Build
 
 Trong `frontend/`:
 
-```
+```bash
 npm run build:backend
 npm run build
 ```
 
-Hoặc dùng script gộp:
+Hoặc chạy một lệnh:
 
-```
+```bash
 npm run build:full
 ```
 
@@ -25,18 +21,17 @@ npm run build:full
 
 ## Backend subprocess
 
-Electron main sẽ khởi chạy backend:
+Electron chạy backend:
 
 - Development: `dotnet run --project backend/src/SlideGenerator.Presentation/...`
-- Production: chạy `SlideGenerator.Presentation.exe` trong `resources/backend`
-  (hoặc `dotnet SlideGenerator.Presentation.dll` nếu chỉ có DLL).
+- Production: `SlideGenerator.Presentation.exe` (hoặc `dotnet SlideGenerator.Presentation.dll`)
 
 Biến môi trường:
 
-- `SLIDEGEN_DISABLE_BACKEND=1` để tắt auto-start.
-- `SLIDEGEN_BACKEND_PATH` để override đường dẫn backend (exe hoặc DLL).
+- `SLIDEGEN_DISABLE_BACKEND=1` tắt auto-start.
+- `SLIDEGEN_BACKEND_PATH` override đường dẫn exe/DLL.
 
-## Lưu ý đóng gói
+## Ghi chú đóng gói
 
-- Thư mục `frontend/backend` được copy vào `resources/backend`.
+- `frontend/backend` được bundle vào app dưới `resources/backend`.
 - Nếu chỉ ship DLL, máy đích cần .NET 10 runtime.

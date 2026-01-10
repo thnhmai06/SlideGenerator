@@ -375,11 +375,24 @@ const exportConfigToFile = async (args: {
   showNotification: (type: 'success' | 'error', text: string) => void
   t: (key: string) => string
 }) => {
+  const usedColumns: string[] = []
+  const seen = new Set<string>()
+  const addColumns = (values: string[]) => {
+    values.forEach((value) => {
+      if (!seen.has(value)) {
+        seen.add(value)
+        usedColumns.push(value)
+      }
+    })
+  }
+  args.textReplacements.forEach((item) => addColumns(item.columns))
+  args.imageReplacements.forEach((item) => addColumns(item.columns))
+
   const config = {
     pptxPath: args.pptxPath,
     dataPath: args.dataPath,
     savePath: args.savePath,
-    columns: args.columns,
+    columns: usedColumns,
     textReplacements: args.textReplacements,
     imageReplacements: args.imageReplacements,
   }
@@ -586,7 +599,12 @@ const splitNotificationText = (text: string) => {
   }
 }
 
-const InputNotification: React.FC<InputNotificationProps> = ({ notification, isClosing, onClose, t }) => {
+const InputNotification: React.FC<InputNotificationProps> = ({
+  notification,
+  isClosing,
+  onClose,
+  t,
+}) => {
   if (!notification) return null
   return (
     <div
@@ -609,7 +627,11 @@ const InputNotification: React.FC<InputNotificationProps> = ({ notification, isC
         onClick={onClose}
         aria-label={t('common.close')}
       >
-        <img src={getAssetPath('images', 'close.png')} alt="" className="notification-close__icon" />
+        <img
+          src={getAssetPath('images', 'close.png')}
+          alt=""
+          className="notification-close__icon"
+        />
       </button>
     </div>
   )
@@ -1381,7 +1403,13 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
       setIsLoadingColumns(false)
       isHydratingRef.current = false
     }
-  }, [applySavedStateBasics, formatErrorMessage, resolveHydrationAssets, savedState, showNotification])
+  }, [
+    applySavedStateBasics,
+    formatErrorMessage,
+    resolveHydrationAssets,
+    savedState,
+    showNotification,
+  ])
 
   useEffect(() => {
     hydrateFromSavedState().catch(() => undefined)
@@ -1603,7 +1631,16 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
         showNotification,
         t,
       }),
-    [pptxPath, dataPath, savePath, columns, textReplacements, imageReplacements, showNotification, t],
+    [
+      pptxPath,
+      dataPath,
+      savePath,
+      columns,
+      textReplacements,
+      imageReplacements,
+      showNotification,
+      t,
+    ],
   )
 
   const importConfig = useCallback(
@@ -2121,6 +2158,3 @@ const StartButtonSection: React.FC<StartButtonSectionProps> = ({
 )
 
 export default CreateTaskMenu
-
-
-
