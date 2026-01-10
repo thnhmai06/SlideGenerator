@@ -10,10 +10,10 @@ The repository is split into two main parts:
 
 Docs are split by module and language:
 
-- Backend English: [backend/docs/en](backend/docs/en)
-- Backend Vietnamese: [backend/docs/vi](backend/docs/vi)
-- Frontend English: [frontend/docs/en](frontend/docs/en)
-- Frontend Vietnamese: [frontend/docs/vi](frontend/docs/vi)
+- [Backend English](backend/docs/en)
+- [Backend Vietnamese](backend/docs/vi)
+- [Frontend English](frontend/docs/en)
+- [Frontend Vietnamese](frontend/docs/vi)
 
 ## Quick start
 
@@ -61,19 +61,19 @@ Supported runtimes:
 
 Backend:
 
-- Overview: [backend/README.md](backend/README.md)
-- Architecture: [backend/docs/en/architecture.md](backend/docs/en/architecture.md)
-- Job system: [backend/docs/en/job-system.md](backend/docs/en/job-system.md)
-- SignalR API: [backend/docs/en/signalr.md](backend/docs/en/signalr.md)
-- Configuration: [backend/docs/en/configuration.md](backend/docs/en/configuration.md)
-- Usage: [backend/docs/en/usage.md](backend/docs/en/usage.md)
+- [Overview](backend/README.md)
+- [Architecture](backend/docs/en/architecture.md)
+- [Job system](backend/docs/en/job-system.md)
+- [SignalR API](backend/docs/en/signalr.md)
+- [Configuration](backend/docs/en/configuration.md)
+- [Usage](backend/docs/en/usage.md)
 
 Frontend:
 
-- Overview: [frontend/docs/en/overview.md](frontend/docs/en/overview.md)
-- Usage: [frontend/docs/en/usage.md](frontend/docs/en/usage.md)
-- Development: [frontend/docs/en/development.md](frontend/docs/en/development.md)
-- Build & packaging: [frontend/docs/en/build-and-packaging.md](frontend/docs/en/build-and-packaging.md)
+- [Overview](frontend/docs/en/overview.md)
+- [Usage](frontend/docs/en/usage.md)
+- [Development](frontend/docs/en/development.md)
+- [Build & packaging](frontend/docs/en/build-and-packaging.md)
 
 ## Contributors
 

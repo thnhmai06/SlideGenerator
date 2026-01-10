@@ -1,5 +1,5 @@
 using System.Reflection;
-using SlideGenerator.Application.Configs;
+using SlideGenerator.Application.Features.Configs;
 using SlideGenerator.Domain.Configs;
 
 namespace SlideGenerator.Tests.Helpers;

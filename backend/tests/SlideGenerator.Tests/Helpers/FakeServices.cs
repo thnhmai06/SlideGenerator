@@ -1,14 +1,13 @@
-using SlideGenerator.Application.Job.Contracts;
-using SlideGenerator.Application.Job.Contracts.Collections;
-using SlideGenerator.Application.Sheet;
-using SlideGenerator.Application.Slide;
-using SlideGenerator.Application.Slide.DTOs.Requests.Group;
-using SlideGenerator.Application.Utilities;
-using SlideGenerator.Domain.Job.Entities;
-using SlideGenerator.Domain.Job.Enums;
-using SlideGenerator.Domain.Job.Interfaces;
-using SlideGenerator.Domain.Sheet.Interfaces;
-using SlideGenerator.Domain.Slide;
+using SlideGenerator.Application.Common.Utilities;
+using SlideGenerator.Application.Features.Jobs.Contracts;
+using SlideGenerator.Application.Features.Jobs.Contracts.Collections;
+using SlideGenerator.Application.Features.Sheets;
+using SlideGenerator.Application.Features.Slides;
+using SlideGenerator.Domain.Features.Jobs.Entities;
+using SlideGenerator.Domain.Features.Jobs.Enums;
+using SlideGenerator.Domain.Features.Jobs.Interfaces;
+using SlideGenerator.Domain.Features.Sheets.Interfaces;
+using SlideGenerator.Domain.Features.Slides;
 
 namespace SlideGenerator.Tests.Helpers;
 
@@ -84,35 +83,6 @@ internal sealed class FakeActiveJobCollection : IActiveJobCollection
 {
     private readonly Dictionary<string, JobGroup> _groups = new();
     private readonly Dictionary<string, JobSheet> _sheets = new();
-
-    public IJobGroup CreateGroup(GenerateSlideGroupCreate request)
-    {
-        var workbook = CreateWorkbook();
-        var template = new TestTemplatePresentation(request.GetTemplatePath());
-        var outputRoot = string.IsNullOrWhiteSpace(request.GetOutputPath())
-            ? Path.GetTempPath()
-            : request.GetOutputPath();
-        var outputFolder = new DirectoryInfo(outputRoot);
-        var group = new JobGroup(workbook, template, outputFolder, [], []);
-
-        var requestedSheets = request.SheetNames ?? request.CustomSheet;
-        var sheetNames = requestedSheets?.Length > 0
-            ? requestedSheets
-            : workbook.Worksheets.Keys.ToArray();
-
-        foreach (var sheetName in sheetNames)
-        {
-            if (!workbook.Worksheets.ContainsKey(sheetName))
-                continue;
-
-            var outputPath = Path.Combine(outputFolder.FullName, $"{sheetName}.pptx");
-            var sheet = group.AddJob(sheetName, outputPath);
-            _sheets[sheet.Id] = sheet;
-        }
-
-        _groups[group.Id] = group;
-        return group;
-    }
 
     public void StartGroup(string groupId)
     {
@@ -269,11 +239,62 @@ internal sealed class FakeActiveJobCollection : IActiveJobCollection
             string.Equals(group.OutputFolder.FullName, normalized, StringComparison.OrdinalIgnoreCase));
     }
 
+    public IJobGroup CreateGroup(TaskCreate request)
+    {
+        var workbook = CreateWorkbook();
+        var template = new TestTemplatePresentation(request.TemplatePath);
+        var outputRoot = string.IsNullOrWhiteSpace(request.OutputPath)
+            ? Path.GetTempPath()
+            : request.OutputPath;
+        var fullOutputPath = Path.GetFullPath(outputRoot);
+        var outputFolderPath = OutputPathUtils.NormalizeOutputFolderPath(fullOutputPath);
+        var outputFolder = new DirectoryInfo(outputFolderPath);
+        var group = new JobGroup(workbook, template, outputFolder, [], []);
+
+        string[] sheetNames;
+        if (request.TaskType == TaskType.Sheet)
+        {
+            if (string.IsNullOrWhiteSpace(request.SheetName))
+                throw new InvalidOperationException("SheetName is required for sheet tasks.");
+            sheetNames = [request.SheetName];
+        }
+        else
+        {
+            sheetNames = request.SheetNames?.Length > 0
+                ? request.SheetNames
+                : workbook.Worksheets.Keys.ToArray();
+        }
+
+        var outputOverrides = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        if (HasPptxExtension(fullOutputPath) && sheetNames.Length == 1)
+            outputOverrides[sheetNames[0]] = fullOutputPath;
+
+        foreach (var sheetName in sheetNames)
+        {
+            if (!workbook.Worksheets.ContainsKey(sheetName))
+                continue;
+
+            var outputPath = outputOverrides.TryGetValue(sheetName, out var overridePath)
+                ? overridePath
+                : Path.Combine(outputFolder.FullName, $"{sheetName}.pptx");
+            var sheet = group.AddJob(sheetName, outputPath);
+            _sheets[sheet.Id] = sheet;
+        }
+
+        _groups[group.Id] = group;
+        return group;
+    }
+
     private static ISheetBook CreateWorkbook()
     {
         var sheet1 = new TestSheet("Sheet1", 3);
         var sheet2 = new TestSheet("Sheet2", 2);
         return new TestSheetBook("book.xlsx", sheet1, sheet2);
+    }
+
+    private static bool HasPptxExtension(string path)
+    {
+        return string.Equals(Path.GetExtension(path), ".pptx", StringComparison.OrdinalIgnoreCase);
     }
 }
 

@@ -2,45 +2,27 @@
 
 Vietnamese version: [Vietnamese](../vi/configuration.md)
 
-## Table of contents
+## Where config lives
 
-1. [Config source](#config-source)
-2. [Runtime behavior](#runtime-behavior)
-3. [Safety rules](#safety-rules)
-4. [Image config](#image-config)
+- The backend loads `backend.config.yaml` from the working directory.
+- If the file is missing, defaults are saved on first run.
+- A sample file is provided as `backend.config.sample.yaml`.
 
-## Config source
+## Key settings
 
-Configuration is loaded on startup and persisted on disk.
-
-Relevant code:
-
-- `SlideGenerator.Application/Configs/ConfigHolder.cs`
-- `SlideGenerator.Infrastructure/Configs/ConfigLoader.cs`
-- `SlideGenerator.Presentation/Hubs/ConfigHub.cs`
+- `server`: host, port, debug.
+- `job`: `maxConcurrentJobs` controls how many sheet jobs run in parallel.
+- `image`: face/saliency padding and confidence.
+- `download`: bandwidth limits and retry policy (used when downloading images).
 
 ## Runtime behavior
 
-- Server host/port and debug mode are read from config.
-- Hangfire uses a SQLite storage at `jobs.db` next to the running executable.
-- Worker count is controlled by the configured `MaxConcurrentJobs`.
-- Image processing defaults (face/saliency padding) are read from config.
+- Hangfire persists job state in a SQLite database (`jobs.db` by default).
+- Worker count is derived from `job.maxConcurrentJobs`.
 
 ## Safety rules
 
-Config changes are blocked while jobs are running or pending:
+- Config updates are blocked while any group is Pending or Running.
+- Paused tasks do not block configuration changes.
 
-- `ConfigHub` checks for `GroupStatus.Pending` or `GroupStatus.Running`.
-
-Paused jobs are allowed to keep configuration editable.
-
-See also: [Job system](job-system.md)
-
-## Image config
-
-`image` config is split into `face` and `saliency` sections:
-
-- `face.confidence`: minimum face detection confidence (0-1).
-- `face.padding_*`: padding ratios around detected faces (0-1).
-- `face.union_all`: union all detected faces into one ROI.
-- `saliency.padding_*`: padding ratios around saliency ROI (0-1).
+Next: [Job system](job-system.md)

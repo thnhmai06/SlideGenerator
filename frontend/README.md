@@ -1,21 +1,21 @@
 # SlideGenerator Frontend
 
-## Overview
+Electron + React client for SlideGenerator. It talks to the backend via SignalR and is optimized for local/offline usage.
 
-This folder contains the Electron + React frontend for SlideGenerator.
+## Quick start
 
-Tech stack:
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-- Electron (desktop shell)
-- React + TypeScript (UI)
-- Vite (build/dev server)
-- SignalR client (`@microsoft/signalr`)
+The Electron main process can start the backend automatically. You can also run the backend manually from `backend/`.
 
-Documentation is split into topic files:
+## Docs
 
 - [Overview](docs/en/overview.md)
-- [Usage guide](docs/en/usage.md)
+- [Usage](docs/en/usage.md)
 - [Development](docs/en/development.md)
 - [Build & packaging](docs/en/build-and-packaging.md)
-
-Vietnamese docs: [docs/vi](docs/vi)
+- [Vietnamese](docs/vi/)

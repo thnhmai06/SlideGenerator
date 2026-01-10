@@ -2,63 +2,32 @@
 
 Vietnamese version: [Vietnamese](../vi/architecture.md)
 
-## Table of contents
+## Overview
 
-1. [High-level overview](#high-level-overview)
-2. [Projects and responsibilities](#projects-and-responsibilities)
-3. [Key runtime components](#key-runtime-components)
-4. [Data flow](#data-flow)
+The backend follows Clean Architecture with feature-based slices. SignalR hubs expose a minimal task API, while job execution runs in background workers and persists state for crash recovery.
 
-## High-level overview
+## Layers
 
-The backend follows a layered architecture:
-
-- `SlideGenerator.Presentation`: ASP.NET Core host, SignalR hubs.
-- `SlideGenerator.Infrastructure`: implementations (Hangfire, file IO, notifications).
-- `SlideGenerator.Application`: public contracts (services, DTOs, requests/responses).
-- `SlideGenerator.Domain`: core business entities and domain interfaces.
-
-## Projects and responsibilities
-
-### `SlideGenerator.Presentation`
-
-- Exposes SignalR endpoints.
-- Validates/dispatches incoming requests.
-- Returns typed success/error responses.
-
-See also: [SignalR API](signalr.md)
-
-### `SlideGenerator.Infrastructure`
-
-- Implements job execution using Hangfire.
-- Provides concrete job manager and collections.
-- Publishes notifications via SignalR.
-
-See also: [Job system](job-system.md)
-
-### `SlideGenerator.Application`
-
-- Defines contracts used by presentation/infrastructure.
-- Defines DTOs for requests, responses, and notifications.
-
-### `SlideGenerator.Domain`
-
-- Defines composite job model: group as composite root, sheet as leaf.
-- Defines statuses, progress calculation rules, and entity invariants.
+- Presentation: ASP.NET Core host and SignalR hubs (Task/Sheet/Config).
+- Application: contracts, DTOs, and feature orchestration.
+- Domain: core job entities, states, and invariants.
+- Infrastructure: Hangfire + SQLite state store, IO, logging, and background execution.
 
 ## Key runtime components
 
-- SignalR hubs: handle UI traffic and scoped job subscriptions.
-- Hangfire server + HangfireSQLite: schedules sheet execution and persists job state.
-- Job manager: tracks active vs completed jobs and restores unfinished work on startup.
+- TaskHub: validates requests and maps them to task operations.
+- JobManager: owns Active and Completed collections.
+- ActiveJobCollection: in-memory concurrent dictionaries for active tasks.
+- JobExecutor: processes rows, checkpoints, and persists state.
+- HangfireJobStateStore: persists group/sheet state in SQLite.
+- JobNotifier: pushes scoped notifications to subscribers.
 
 ## Data flow
 
-1. Client sends request to `SlideHub`.
-2. Hub uses `IJobManager.Active` to create a group and start it.
-3. Hangfire enqueues one job per sheet (identified by stable sheet IDs).
-4. `IJobExecutor` processes rows, checkpoints for pause/resume, and persists state.
-5. `IJobNotifier` publishes updates to subscribed group/sheet listeners only.
-6. When a group finishes, it is moved from Active to Completed.
+1. Client sends JSON to TaskHub (`ProcessRequest`).
+2. TaskHub creates a group or sheet task via JobManager.Active.
+3. ActiveJobCollection persists state and queues Hangfire jobs (if auto-start).
+4. JobExecutor processes rows and updates state/notifications.
+5. When all sheets finish, the group moves to Completed.
 
-Next: [Job system](job-system.md)
+Next: [SignalR API](signalr.md)

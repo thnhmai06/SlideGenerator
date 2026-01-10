@@ -2,43 +2,29 @@
 
 Vietnamese version: [Vietnamese](../vi/development.md)
 
-## Table of contents
-
-1. [Prerequisites](#prerequisites)
-2. [Build](#build)
-3. [Run](#run)
-4. [Code structure](#code-structure)
-
-## Prerequisites
-
-- .NET 10 SDK
-
-## Build
+## Build and run
 
 From `backend/`:
 
-- `dotnet build`
-
-## Run
-
-From `backend/SlideGenerator.Presentation/`:
-
-- `dotnet run`
-
-SignalR hubs are hosted by the presentation project.
+- Build: `dotnet build`
+- Run: `dotnet run --project src/SlideGenerator.Presentation`
 
 ## Code structure
 
-Start from:
+Feature-based slices live across layers:
 
-- `SlideGenerator.Presentation/Program.cs`
-- `SlideGenerator.Presentation/Hubs/*.cs`
+- Presentation: `src/SlideGenerator.Presentation/Features/*/*Hub.cs`
+- Application: `src/SlideGenerator.Application/Features/*`
+- Domain: `src/SlideGenerator.Domain/Features/*`
+- Infrastructure: `src/SlideGenerator.Infrastructure/Features/*`
 
-Then follow contracts:
+## Key entry points
 
-- `SlideGenerator.Application/*/Contracts/*.cs`
+- `SlideGenerator.Presentation/Program.cs`: host setup and DI wiring.
+- `Presentation/Features/Tasks/TaskHub.cs`: task API entry.
+- `Infrastructure/Features/Jobs`: Hangfire executor, state store, collections.
 
-See also:
+## Testing
 
-- [Architecture](architecture.md)
-- [SignalR API](signalr.md)
+- Tests live under `backend/tests`.
+- Use `dotnet test` to run the suite.

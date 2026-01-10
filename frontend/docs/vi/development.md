@@ -1,53 +1,37 @@
 # Phát triển
 
-## Mục lục
-
-1. [Yêu cầu](#yêu-cầu)
-2. [Cài đặt](#cài-đặt)
-3. [Chạy dev](#chạy-dev)
-4. [Tests](#tests)
-5. [Tác vụ hữu ích](#tác-vụ-hữu-ích)
+English version: [English](../en/development.md)
 
 ## Yêu cầu
 
 - Node.js + npm
-- .NET 10 SDK (để chạy backend trong môi trường dev)
+- .NET 10 SDK (để chạy backend khi dev)
 
 ## Cài đặt
 
-Trong `frontend/`:
-
-```
+```bash
+cd frontend
 npm install
 ```
 
 ## Chạy dev
 
-Trong `frontend/`:
-
-```
+```bash
 npm run dev
 ```
 
-Lưu ý:
+Ghi chú:
 
-- Electron main có thể tự khởi chạy backend.
-- Để tắt auto-start, đặt `SLIDEGEN_DISABLE_BACKEND=1`.
-- Bạn cũng có thể chạy backend thủ công trong `backend/` bằng `dotnet run`.
-- Log được ghi trong `frontend/logs/<timestamp>/` (process, renderer, backend).
+- Electron có thể tự start backend.
+- Tắt auto-start bằng `SLIDEGEN_DISABLE_BACKEND=1`.
+- Override đường dẫn backend bằng `SLIDEGEN_BACKEND_PATH`.
 
-## Tests
+## Test
 
-Trong `frontend/`:
-
-```
+```bash
 npm test
 ```
 
-## Tác vụ hữu ích
+## Logs
 
-Các VS Code task có trong `.vscode/tasks.json`:
-
-- `test:frontend`
-- `test:backend`
-- `test:all`
+Xem `frontend/logs/<timestamp>/` cho process/renderer/backend logs.

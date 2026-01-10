@@ -1,44 +1,28 @@
 # Cấu hình
 
-## Mục lục
+English version: [English](../en/configuration.md)
 
-1. [Nguồn cấu hình](#nguồn-cấu-hình)
-2. [Hành vi runtime](#hành-vi-runtime)
-3. [Quy tắc an toàn](#quy-tắc-an-toàn)
-4. [Cấu hình ảnh](#cấu-hình-ảnh)
+## Vị trí file cấu hình
 
-## Nguồn cấu hình
+- Backend đọc `backend.config.yaml` tại thư mục làm việc.
+- Nếu chưa có, hệ thống sẽ tạo file mặc định khi chạy lần đầu.
+- File mẫu: `backend.config.sample.yaml`.
 
-Cấu hình được nạp khi khởi động và lưu xuống đĩa.
+## Các thiết lập chính
 
-Code liên quan:
-
-- `SlideGenerator.Application/Configs/ConfigHolder.cs`
-- `SlideGenerator.Infrastructure/Configs/ConfigLoader.cs`
-- `SlideGenerator.Presentation/Hubs/ConfigHub.cs`
+- `server`: host, port, debug.
+- `job`: `maxConcurrentJobs` giới hạn số sheet chạy song song.
+- `image`: padding và confidence cho face/saliency.
+- `download`: giới hạn băng thông và retry (khi tải ảnh).
 
 ## Hành vi runtime
 
-- Host/port và debug mode đọc từ config.
-- Hangfire dùng SQLite tại `jobs.db` cạnh file chạy.
-- Số worker theo `MaxConcurrentJobs`.
-- Mặc định xử lý ảnh (padding face/saliency) đọc từ config.
+- Hangfire lưu trạng thái vào SQLite (`jobs.db` mặc định).
+- Số worker = `job.maxConcurrentJobs`.
 
 ## Quy tắc an toàn
 
-Không cho đổi config khi job đang chạy hoặc pending:
+- Không cho phép cập nhật config khi còn group ở trạng thái Pending hoặc Running.
+- Task đang Paused không chặn cập nhật.
 
-- `ConfigHub` kiểm tra `GroupStatus.Pending` hoặc `GroupStatus.Running`.
-
-Job ở trạng thái paused vẫn cho phép chỉnh.
-
-Xem thêm: [Job system](../en/job-system.md)
-
-## Cấu hình ảnh
-
-`image` chia thành `face` và `saliency`:
-
-- `face.confidence`: ngưỡng độ tin cậy (0-1).
-- `face.padding_*`: tỉ lệ padding quanh khuôn mặt (0-1).
-- `face.union_all`: gộp tất cả khuôn mặt thành một ROI.
-- `saliency.padding_*`: tỉ lệ padding quanh vùng saliency (0-1).
+Tiếp theo: [Hệ thống job](job-system.md)

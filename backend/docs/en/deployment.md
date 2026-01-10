@@ -2,27 +2,21 @@
 
 Vietnamese version: [Vietnamese](../vi/deployment.md)
 
-## Table of contents
-
-1. [Overview](#overview)
-2. [Configuration](#configuration)
-3. [Notes](#notes)
-
-## Overview
+## Summary
 
 The backend is an ASP.NET Core app hosted by `SlideGenerator.Presentation`.
 
-## Configuration
+## Steps
 
-Before deploying, configure:
-
-- Server host/port
-- Hangfire SQLite database path
-- Hangfire worker count (max concurrent jobs)
-
-See: [Configuration](configuration.md)
+1. Prepare `backend.config.yaml` (host, port, maxConcurrentJobs).
+2. Ensure write access for:
+   - the config file location,
+   - the Hangfire SQLite path,
+   - output folders.
+3. Run the server (local or published build).
 
 ## Notes
 
-- Ensure output folders exist and are writable.
-- Ensure the Hangfire database directory is writable.
+- Default health check: `/health`.
+- Hangfire dashboard: `/hangfire` (read-only).
+- The server is designed for local/offline usage.

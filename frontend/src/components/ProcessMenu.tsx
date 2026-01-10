@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import { useApp } from '../contexts/useApp'
 import { useJobs } from '../contexts/useJobs'
-import type { SheetJob } from '../contexts/JobContextBase'
+import type { SheetJob } from '../contexts/JobContextType'
 import { getBackendBaseUrl } from '../services/signalrClient'
 import { getAssetPath } from '../utils/paths'
 import '../styles/ProcessMenu.css'
@@ -28,7 +28,7 @@ type SheetItemProps = {
   collapsedRowGroups: Record<string, boolean>
   statusKey: (status: string) => string
   progressColor: (status: string) => string
-  formatLogEntry: (entry: LogEntry) => string
+  formatLogEntry: (entry: LogEntry, jobLabel?: string) => string
   onToggleLog: () => void
   onToggleRowGroup: (key: string) => void
   onSheetAction: () => void
@@ -70,6 +70,8 @@ const SheetItem: React.FC<SheetItemProps> = ({
   const { completedSlides, failedSlides, processingSlides } = getSheetStats(sheet)
   const isPaused = sheet.status === 'Paused'
   const canControl = ['Running', 'Paused', 'Pending'].includes(sheet.status)
+  const jobIdLabel = sheet.hangfireJobId ? `#${sheet.hangfireJobId}` : '-'
+  const logJobLabel = sheet.hangfireJobId ? `#${sheet.hangfireJobId}` : sheet.id
 
   return (
     <div className="file-item">
@@ -79,9 +81,7 @@ const SheetItem: React.FC<SheetItemProps> = ({
           <div className="file-name-row">
             <div className="file-name">{sheet.sheetName}</div>
             <span className="file-job-id">
-              {sheet.hangfireJobId
-                ? `${t('process.hangfireId')}: ${sheet.hangfireJobId}`
-                : `${t('process.jobId')}: ${sheet.id}`}
+              {t('process.jobId')}: {jobIdLabel}
             </span>
           </div>
           <div className="file-stats">
@@ -187,7 +187,7 @@ const SheetItem: React.FC<SheetItemProps> = ({
                             key={`${group.key}-${index}`}
                             className={`log-entry log-${(entry.level ?? 'info').toLowerCase()}`}
                           >
-                            {formatLogEntry(entry)}
+                            {formatLogEntry(entry, logJobLabel)}
                           </div>
                         ))}
                       </div>
@@ -335,10 +335,11 @@ const ProcessMenu: React.FC = () => {
     return parts[parts.length - 1] || fallback
   }
 
-  const formatLogEntry = (entry: LogEntry) => {
+  const formatLogEntry = (entry: LogEntry, jobLabel?: string) => {
     const time = entry.timestamp ? `[${new Date(entry.timestamp).toLocaleTimeString()}] ` : ''
     const level = entry.level ? `${entry.level}: ` : ''
-    return `${time}${level}${entry.message}`
+    const job = jobLabel ? `${jobLabel}: ` : ''
+    return `${time}${level}${job}${entry.message}`
   }
 
   const groupLogsByRow = (logs: LogEntry[]): RowLogGroup[] => {
@@ -507,7 +508,11 @@ const ProcessMenu: React.FC = () => {
                         aria-label={t('results.exportConfig')}
                         title={t('results.exportConfig')}
                       >
-                        <img src={getAssetPath('images', 'open.png')} alt="" className="btn-icon" />
+                        <img
+                          src={getAssetPath('images', 'export-settings.png')}
+                          alt=""
+                          className="btn-icon"
+                        />
                       </button>
                       <button
                         className="process-btn process-btn-icon"
@@ -568,13 +573,16 @@ const ProcessMenu: React.FC = () => {
                             onToggleRowGroup={toggleRowGroup}
                             onSheetAction={() => handleSheetAction(sheet.id, sheet.status)}
                             onStopSheet={() => handleStopSheet(sheet.id)}
-                            onCopyLogs={() =>
+                            onCopyLogs={() => {
+                              const logJobLabel = sheet.hangfireJobId
+                                ? `#${sheet.hangfireJobId}`
+                                : sheet.id
                               navigator.clipboard.writeText(
                                 sheet.logs
-                                  .map((entry) => formatLogEntry(entry as LogEntry))
+                                  .map((entry) => formatLogEntry(entry as LogEntry, logJobLabel))
                                   .join('\n'),
                               )
-                            }
+                            }}
                             t={t}
                           />
                         )

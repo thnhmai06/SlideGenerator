@@ -1,54 +1,50 @@
 # Hướng dẫn sử dụng
 
-## Mục lục
+English version: [English](../en/usage.md)
 
-1. [Yêu cầu](#yêu-cầu)
-2. [Kết nối backend](#kết-nối-backend)
-3. [Tạo task](#tạo-task)
-4. [Theo dõi xử lý](#theo-dõi-xử-lý)
-5. [Kết quả](#kết-quả)
-6. [Xuất và nhập cấu hình](#xuất-và-nhập-cấu-hình)
+## Điều kiện
 
-## Yêu cầu
-
-- Backend phải đang chạy (Electron có thể tự khởi chạy như subprocess).
-- File template: `.pptx` hoặc `.potx`
-- File dữ liệu: `.xlsx` hoặc `.xlsm`
+- Backend đang chạy (Electron có thể tự start).
+- Template: `.pptx` hoặc `.potx`.
+- Spreadsheet: `.xlsx` hoặc `.xlsm`.
 
 ## Kết nối backend
 
-1. Mở **Cài đặt**.
-2. Cập nhật **Host** và **Cổng** nếu cần (mặc định là local).
-3. Lưu cấu hình.
-4. Khởi động lại backend khi được yêu cầu để áp dụng thay đổi.
+1. Mở **Settings**.
+2. Kiểm tra host/port (mặc định local).
+3. Lưu thay đổi và restart backend nếu được yêu cầu.
 
 ## Tạo task
 
-1. Trong **Tạo task**, chọn file template và file dữ liệu.
-2. Chờ tải headers và placeholders.
-3. Thêm cấu hình thay thế text và ảnh:
-   - Placeholder phải trùng placeholder đọc từ template.
-   - Cột dữ liệu phải trùng header trong sheet.
-4. Chọn thư mục output và nhấn **Tạo task**.
+1. Chọn file template và file spreadsheet.
+2. Chờ load shapes/placeholders và headers.
+3. Thêm mapping text và image.
+4. Chọn output path.
+5. Bấm **Create Task**.
+
+Ghi chú:
+
+- Group task = một workbook + một template + thư mục output.
+- Sheet task = một sheet → một file output.
 
 ## Theo dõi xử lý
 
-Mở **Xử lý** để:
+Mở **Process** để:
 
 - Pause/Resume group hoặc sheet.
-- Dừng job (hủy và xóa khỏi backend, đồng thời xóa file output).
-- Xem log theo từng dòng.
+- Cancel task.
+- Xem progress và log theo dòng.
 
 ## Kết quả
 
-Mở **Kết quả** để:
+Mở **Result** để:
 
-- Xem group đã hoàn thành/thất bại/đã hủy.
-- Mở thư mục output hoặc file output.
-- Clear dữ liệu kết quả (xóa khỏi backend).
+- Xem nhóm đã hoàn thành/lỗi/hủy.
+- Mở thư mục hoặc file output.
+- Clear kết quả (xóa state phía backend).
+- Remove group/sheet cũng xóa state backend.
 
-## Xuất và nhập cấu hình
+## Export/Import cấu hình
 
-- **Tạo task** cho phép xuất/nhập file JSON.
-- **Xử lý/Kết quả** có nút **Xuất cấu hình** dạng icon cho từng group.
-  File JSON tương thích với thao tác nhập trong Create Task.
+- **Create Task** hỗ trợ export/import JSON.
+- Mỗi group có nút export nhanh.

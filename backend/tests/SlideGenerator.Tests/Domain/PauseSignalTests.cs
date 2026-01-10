@@ -1,4 +1,4 @@
-using SlideGenerator.Domain.Job.Components;
+using SlideGenerator.Domain.Features.Jobs.Components;
 
 namespace SlideGenerator.Tests.Domain;
 

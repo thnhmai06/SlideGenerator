@@ -51,7 +51,7 @@ const ensureTray = (getAssetPath: (...parts: string[]) => string) => {
   tray = new Tray(getAssetPath('images', 'app-icon.png'))
   tray.setToolTip('Slide Generator')
   tray.setContextMenu(
-    sideBar.buildFromTemplate([
+    Menu.buildFromTemplate([
       {
         label: 'Show',
         click: () => {

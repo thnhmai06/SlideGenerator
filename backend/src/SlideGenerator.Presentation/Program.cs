@@ -1,30 +1,34 @@
 using System.Text.Json;
 using Hangfire;
 using Hangfire.Storage.SQLite;
-using SlideGenerator.Application.Configs;
-using SlideGenerator.Application.Download;
-using SlideGenerator.Application.Image;
-using SlideGenerator.Application.Job.Contracts;
-using SlideGenerator.Application.Sheet;
-using SlideGenerator.Application.Slide;
+using SlideGenerator.Application.Features.Configs;
+using SlideGenerator.Application.Features.Downloads;
+using SlideGenerator.Application.Features.Images;
+using SlideGenerator.Application.Features.Jobs.Contracts;
+using SlideGenerator.Application.Features.Sheets;
+using SlideGenerator.Application.Features.Slides;
 using SlideGenerator.Domain.Configs;
-using SlideGenerator.Domain.Download;
-using SlideGenerator.Domain.IO;
-using SlideGenerator.Domain.Job.Interfaces;
-using SlideGenerator.Infrastructure.Configs;
-using SlideGenerator.Infrastructure.Download.Services;
-using SlideGenerator.Infrastructure.Image.Services;
-using SlideGenerator.Infrastructure.IO;
-using SlideGenerator.Infrastructure.Job.Services;
-using SlideGenerator.Infrastructure.Logging;
-using SlideGenerator.Infrastructure.Sheet.Services;
-using SlideGenerator.Infrastructure.Slide.Services;
-using SlideGenerator.Presentation.Hubs;
+using SlideGenerator.Domain.Features.Downloads;
+using SlideGenerator.Domain.Features.IO;
+using SlideGenerator.Domain.Features.Jobs.Interfaces;
+using SlideGenerator.Infrastructure.Common.Logging;
+using SlideGenerator.Infrastructure.Features.Configs;
+using SlideGenerator.Infrastructure.Features.Downloads.Services;
+using SlideGenerator.Infrastructure.Features.Images.Services;
+using SlideGenerator.Infrastructure.Features.IO;
+using SlideGenerator.Infrastructure.Features.Jobs.Services;
+using SlideGenerator.Infrastructure.Features.Sheets.Services;
+using SlideGenerator.Infrastructure.Features.Slides.Services;
+using SlideGenerator.Presentation.Features.Configs;
+using SlideGenerator.Presentation.Features.Jobs;
+using SlideGenerator.Presentation.Features.Sheets;
+
+namespace SlideGenerator.Presentation;
 
 /// <summary>
-/// The main class of SlideGenerator Presentation layer.
+///     The main class of SlideGenerator Presentation layer.
 /// </summary>
-public partial class Program
+public static class Program
 {
     private static void LoadConfig()
     {
@@ -64,7 +68,7 @@ public partial class Program
         // Job Services
         builder.Services.AddSingleton<JobManager>();
         builder.Services.AddSingleton<IJobManager>(sp => sp.GetRequiredService<JobManager>());
-        builder.Services.AddSingleton<IJobNotifier, JobNotifier<SlideHub>>();
+        builder.Services.AddSingleton<IJobNotifier, JobNotifier<JobHub>>();
         builder.Services.AddScoped<IJobExecutor, JobExecutor>();
         builder.Services.AddSingleton<IJobStateStore, HangfireJobStateStore>();
         builder.Services.AddHostedService<JobRestoreHostedService>();
@@ -76,7 +80,10 @@ public partial class Program
             .UseSimpleAssemblyNameTypeSerializer()
             .UseRecommendedSerializerSettings()
             .UseSQLiteStorage(dbPath));
-        builder.Services.AddHangfireServer(options => { options.WorkerCount = ConfigHolder.Value.Job.MaxConcurrentJobs; });
+        builder.Services.AddHangfireServer(options =>
+        {
+            options.WorkerCount = ConfigHolder.Value.Job.MaxConcurrentJobs;
+        });
 
         builder.Services.AddCors(options =>
         {
@@ -98,7 +105,8 @@ public partial class Program
         app.UseWebSockets();
 
         app.MapHub<SheetHub>("/hubs/sheet");
-        app.MapHub<SlideHub>("/hubs/slide");
+        app.MapHub<JobHub>("/hubs/job");
+        app.MapHub<JobHub>("/hubs/task");
         app.MapHub<ConfigHub>("/hubs/config");
 
         app.MapGet("/", () => new
@@ -120,8 +128,10 @@ public partial class Program
         app.Urls.Add($"http://{host}:{ConfigHolder.Value.Server.Port}");
 
         // On Application Stopping
-        app.Lifetime.ApplicationStopping.Register(
-            () => { ConfigLoader.Save(ConfigHolder.Value, ConfigHolder.Locker); });
+        app.Lifetime.ApplicationStopping.Register(() =>
+        {
+            ConfigLoader.Save(ConfigHolder.Value, ConfigHolder.Locker);
+        });
 
         return app;
     }
@@ -129,7 +139,7 @@ public partial class Program
     private static async Task Main(string[] args)
     {
         LoadConfig();
-        
+
         try
         {
             var builder = InitializeBuilder(args);

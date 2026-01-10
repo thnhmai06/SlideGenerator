@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { useApp } from '../contexts/useApp'
 import { useJobs } from '../contexts/useJobs'
-import type { Theme } from '../contexts/AppContextBase'
+import type { Theme } from '../contexts/AppContextType'
 import type { Language } from '../locales'
 import * as backendApi from '../services/backendApi'
 import { getAssetPath } from '../utils/paths'
@@ -196,7 +196,9 @@ const SettingsNotifications: React.FC<SettingsNotificationsProps> = ({
     {message && showStatusNotification && (
       <div
         className={`message app-notification message-${message.type} status-notification${
-          isStatusNotificationClosing ? ' status-notification--closing app-notification--closing' : ''
+          isStatusNotificationClosing
+            ? ' status-notification--closing app-notification--closing'
+            : ''
         }`}
       >
         {(() => {
@@ -1533,6 +1535,3 @@ const SettingMenu: React.FC = () => {
 }
 
 export default SettingMenu
-
-
-

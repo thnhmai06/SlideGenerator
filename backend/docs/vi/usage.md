@@ -1,38 +1,56 @@
-# Huong dan su dung
+# Sử dụng
 
-## Muc luc
+English version: [English](../en/usage.md)
 
-1. [Yeu cau](#yeu-cau)
-2. [Chay backend](#chay-backend)
-3. [Kiem tra](#kiem-tra)
-4. [Ket noi tu frontend](#ket-noi-tu-frontend)
-5. [Vi du API](#vi-du-api)
+## Chạy backend
 
-## Yeu cau
-
-- .NET 10 SDK hoac runtime
-- File cau hinh hop le (`backend.config.yaml`)
-
-## Chay backend
-
-Trong `backend/SlideGenerator.Presentation/`:
+Từ thư mục `backend/`:
 
 ```
-dotnet run
+dotnet run --project src/SlideGenerator.Presentation
 ```
 
-Server bind theo host/port trong config va mo SignalR hubs.
+## Kiểm tra
 
-## Kiem tra
+- Health check: `GET /health`
+- Hangfire dashboard: `/hangfire`
 
-- Mo `/hangfire` tren localhost de xem job.
-- Backend chay offline va chi lang nghe localhost/127.0.0.1.
+## Kết nối từ client
 
-## Ket noi tu frontend
+- Job hub: `/hubs/job` (alias: `/hubs/task`)
+- Sheet hub: `/hubs/sheet`
+- Config hub: `/hubs/config`
 
-- Thiet lap URL backend trong trang Cai dat cua frontend.
-- Frontend ket noi toi `/hubs/slide`, `/hubs/sheet`, va `/hubs/config`.
+## Ví dụ nhanh
 
-## Vi du API
+Tạo group job:
 
-Xem [SignalR API](signalr.md#vi-du) de tham khao request va subscribe.
+```json
+{
+  "type": "JobCreate",
+  "taskType": "Group",
+  "templatePath": "C:\\slides\\template.pptx",
+  "spreadsheetPath": "C:\\data\\book.xlsx",
+  "outputPath": "C:\\output",
+  "sheetNames": ["Sheet1"]
+}
+```
+
+Tạm dừng job:
+
+```json
+{ "type": "JobControl", "taskId": "TASK_ID", "taskType": "Group", "action": "Pause" }
+```
+
+Xóa group (xóa cả backend state):
+
+```json
+{ "type": "JobControl", "taskId": "TASK_ID", "taskType": "Group", "action": "Remove" }
+```
+
+Query job đang chạy:
+
+```json
+{ "type": "JobQuery", "scope": "Active" }
+```
+

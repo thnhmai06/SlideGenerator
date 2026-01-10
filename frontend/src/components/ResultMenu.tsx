@@ -99,10 +99,11 @@ const ResultMenu: React.FC = () => {
     }
   }
 
-  const formatLogEntry = (entry: LogEntry) => {
+  const formatLogEntry = (entry: LogEntry, jobLabel?: string) => {
     const time = entry.timestamp ? `[${new Date(entry.timestamp).toLocaleTimeString()}] ` : ''
     const level = entry.level ? `${entry.level}: ` : ''
-    return `${time}${level}${entry.message}`
+    const job = jobLabel ? `${jobLabel}: ` : ''
+    return `${time}${level}${job}${entry.message}`
   }
 
   const groupLogsByRow = (logs: LogEntry[]): RowLogGroup[] => {
@@ -228,7 +229,11 @@ const ResultMenu: React.FC = () => {
                         aria-label={t('results.exportConfig')}
                         title={t('results.exportConfig')}
                       >
-                        <img src={getAssetPath('images', 'open.png')} alt="" className="btn-icon" />
+                        <img
+                          src={getAssetPath('images', 'export-settings.png')}
+                          alt=""
+                          className="btn-icon"
+                        />
                       </button>
                       <button
                         className="output-btn"
@@ -266,6 +271,9 @@ const ResultMenu: React.FC = () => {
                             ? Math.max(sheet.totalRows - completedSlides, 0)
                             : 0
                         const logGroups = showLog ? groupLogsByRow(sheet.logs as LogEntry[]) : []
+                        const logJobLabel = sheet.hangfireJobId
+                          ? `#${sheet.hangfireJobId}`
+                          : sheet.id
 
                         return (
                           <div key={sheet.id} className="file-item">
@@ -346,7 +354,9 @@ const ResultMenu: React.FC = () => {
                                       e.stopPropagation()
                                       navigator.clipboard.writeText(
                                         sheet.logs
-                                          .map((entry) => formatLogEntry(entry as LogEntry))
+                                          .map((entry) =>
+                                            formatLogEntry(entry as LogEntry, logJobLabel),
+                                          )
                                           .join('\n'),
                                       )
                                     }}
@@ -397,7 +407,7 @@ const ResultMenu: React.FC = () => {
                                                   key={`${group.key}-${index}`}
                                                   className={`log-entry log-${(entry.level ?? 'info').toLowerCase()}`}
                                                 >
-                                                  {formatLogEntry(entry)}
+                                                  {formatLogEntry(entry, logJobLabel)}
                                                 </div>
                                               ))}
                                             </div>

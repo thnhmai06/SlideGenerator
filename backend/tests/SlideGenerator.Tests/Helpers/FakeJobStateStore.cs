@@ -1,6 +1,6 @@
-using SlideGenerator.Domain.Job.Enums;
-using SlideGenerator.Domain.Job.Interfaces;
-using SlideGenerator.Domain.Job.States;
+using SlideGenerator.Domain.Features.Jobs.Enums;
+using SlideGenerator.Domain.Features.Jobs.Interfaces;
+using SlideGenerator.Domain.Features.Jobs.States;
 
 namespace SlideGenerator.Tests.Helpers;
 

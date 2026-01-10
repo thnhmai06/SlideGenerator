@@ -1,129 +1,90 @@
 # SignalR API
 
-## Muc luc
-
-1. [Endpoint](#endpoint)
-2. [Mo hinh requestresponse](#mo-hinh-requestresponse)
-3. [Thong diep Slide hub](#thong-diep-slide-hub)
-4. [Dang ky nhan su kien](#dang-ky-nhan-su-kien)
-5. [Thong bao realtime](#thong-bao-realtime)
-6. [Vi du](#vi-du)
+English version: [English](../en/signalr.md)
 
 ## Endpoint
 
-Backend mo cac SignalR hub:
+- `/hubs/job`: tao/dieu khien/truy van job + scan template.
+- `/hubs/task`: legacy alias cua `/hubs/job`.
+- `/hubs/sheet`: đọc workbook (header/row).
+- `/hubs/config`: cấu hình backend.
 
-- `/hubs/slide`
-- `/hubs/sheet`
-- `/hubs/config`
+## Mô hình request/response
 
-## Mo hinh requestresponse
+- Client gửi JSON vào `ProcessRequest`.
+- Bắt buộc có `type` (không phân biệt hoa thường).
+- Phản hồi trả qua `ReceiveResponse`.
+- Lỗi trả về `type = error` kèm message.
 
-Client gui JSON vao `ProcessRequest`.
+## Job hub messages
 
-- Message co truong `type`.
-- Hub tra phan hoi qua `ReceiveResponse`.
+### Scan dữ liệu template
 
-## Thong diep Slide hub
+- `ScanShapes` / `ScanPlaceholders` / `ScanTemplate`
+- Payload: `{ "filePath": "..." }`
 
-Xem code: `SlideGenerator.Presentation/Hubs/SlideHub.cs`.
+### JobCreate
 
-Type pho bien:
-
-- `ScanShapes`
-- `GroupCreate`
-- `GroupStatus`
-- `GroupControl`
-- `JobStatus`
-- `JobControl`
-- `GlobalControl`
-- `GetAllGroups`
-
-## Dang ky nhan su kien
-
-Client subscribe de nhan realtime:
-
-- `SubscribeGroup(groupJobId)`
-- `SubscribeSheet(sheetJobId)`
-
-## Thong bao realtime
-
-Thong bao chi gui cho subscriber va qua `ReceiveNotification`.
-
-Loai chinh:
-
-- Tien do job
-- Trang thai job
-- Loi job
-- Tien do group
-- Trang thai group
-
-Xem them:
-
-- [Job system](../en/job-system.md)
-- [Architecture](../en/architecture.md)
-
-## Vi du
-
-Tat ca request gui vao `ProcessRequest` va nhan response tu `ReceiveResponse`.
-
-Scan template (shape + placeholder):
+TaskCreate van duoc ho tro de tuong thich nguoc.
 
 ```json
 {
-  "type": "ScanTemplate",
-  "filePath": "C:\\slides\\template.pptx"
-}
-```
-
-Tao group job:
-
-```json
-{
-  "type": "GroupCreate",
+  "type": "JobCreate",
+  "taskType": "Group",
   "templatePath": "C:\\slides\\template.pptx",
-  "spreadsheetPath": "C:\\data\\workbook.xlsx",
+  "spreadsheetPath": "C:\\data\\book.xlsx",
   "outputPath": "C:\\output",
-  "textConfigs": [
-    {
-      "pattern": "FullName",
-      "columns": ["FullName"]
-    }
-  ],
-  "imageConfigs": [
-    {
-      "shapeId": 4,
-      "columns": ["PhotoUrl"],
-      "roiType": "Attention",
-      "cropType": "Fit"
-    }
-  ],
-  "sheetNames": ["Sheet1"]
+  "sheetNames": ["Sheet1"],
+  "textConfigs": [{ "pattern": "FullName", "columns": ["FullName"] }],
+  "imageConfigs": [{ "shapeId": 4, "columns": ["Photo"], "roiType": "Attention", "cropType": "Fit" }],
+  "autoStart": true
 }
 ```
 
-Tam dung/choi lai group:
+Sheet job:
 
 ```json
 {
-  "type": "GroupControl",
-  "groupId": "GROUP_ID",
-  "action": "Pause"
+  "type": "JobCreate",
+  "taskType": "Sheet",
+  "templatePath": "C:\\slides\\template.pptx",
+  "spreadsheetPath": "C:\\data\\book.xlsx",
+  "outputPath": "C:\\output\\Sheet1.pptx",
+  "sheetName": "Sheet1"
 }
 ```
 
-Lay log job:
+### JobQuery
+
+- `scope`: `Active`, `Completed`, hoặc `All`.
+- `includePayload` trả về payload được dựng lại từ state.
 
 ```json
-{
-  "type": "JobLogs",
-  "jobId": "SHEET_JOB_ID"
-}
+{ "type": "JobQuery", "taskId": "TASK_ID", "taskType": "Group", "includeSheets": true }
 ```
 
-Subscribe realtime:
+```json
+{ "type": "JobQuery", "scope": "Active", "taskType": "Sheet" }
+```
 
+### JobControl
+
+- `action`: `Pause`, `Resume`, `Cancel`, `Stop` (duoc hieu la Cancel), hoac `Remove` (xoa state backend).
+
+```json
+{ "type": "JobControl", "taskId": "TASK_ID", "taskType": "Group", "action": "Pause" }
 ```
-SubscribeGroup("GROUP_ID")
-SubscribeSheet("SHEET_JOB_ID")
-```
+
+## Subscriptions
+
+- `SubscribeGroup(groupId)`
+- `SubscribeSheet(sheetId)`
+
+## Notifications
+
+Notification được gửi qua `ReceiveNotification` cho client đã subscribe:
+
+- Progress/status của group
+- Progress/status/error của sheet
+- Log sự kiện
+

@@ -1,6 +1,6 @@
-using SlideGenerator.Domain.Sheet.Interfaces;
-using SlideGenerator.Domain.Slide;
-using SlideGenerator.Domain.Slide.Components;
+using SlideGenerator.Domain.Features.Sheets.Interfaces;
+using SlideGenerator.Domain.Features.Slides;
+using SlideGenerator.Domain.Features.Slides.Components;
 
 namespace SlideGenerator.Tests.Helpers;
 

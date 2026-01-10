@@ -2,45 +2,34 @@
 
 Vietnamese version: [Vietnamese](../vi/overview.md)
 
-## Table of contents
+## Purpose
 
-1. [Architecture](#architecture)
-2. [Key folders](#key-folders)
-3. [Runtime model](#runtime-model)
-4. [Logging](#logging)
-5. [State and storage](#state-and-storage)
+The frontend is a desktop Electron app that hosts a React UI. It connects to the backend via SignalR and treats the backend as the source of truth for job state.
 
 ## Architecture
 
-The frontend is a desktop Electron app that hosts a React UI. It connects to the backend via
-SignalR and treats the backend as the source of truth for job state.
-
-## Key folders
-
-- `src/components`: UI views (Create Task, Process, Result, Settings, About).
-- `src/contexts`: app state and job state (SignalR subscriptions).
-- `src/services`: backend API wrappers and SignalR client.
-- `src/styles`: global and component styles.
-- `electron/main`: Electron main process modules (window, backend, logging, dialogs, settings).
-- `electron/preload`: Electron preload and API bridge to renderer.
-- `assets`: images, icons, and animations.
+- UI layer: React + TypeScript.
+- Desktop shell: Electron (main + preload).
+- Backend bridge: SignalR client wrappers in `src/services`.
 
 ## Runtime model
 
-- `electron/main.ts` wires the main-process modules and creates the window.
-- The UI uses SignalR hubs (`/hubs/slide`, `/hubs/sheet`, `/hubs/config`).
-- The backend URL is stored in local storage (`slidegen.backend.url`).
+1. Electron main process starts the window and (optionally) the backend.
+2. The UI connects to `/hubs/job` (alias: `/hubs/task`), `/hubs/sheet`, and `/hubs/config`.
+3. Job data and notifications stream over SignalR.
 
-## Logging
+## Storage
 
-- Logs are stored under `frontend/logs/<timestamp>/`.
-- `process.log` contains Electron main-process logs.
-- `renderer.log` contains renderer (DevTools) logs forwarded from the UI.
-- `backend.log` is written by the backend when launched by Electron.
+- Backend URL: `localStorage.slidegen.backend.url`.
+- Create Task input cache: `sessionStorage.slidegen.ui.inputMenu.state`.
+- Group metadata/config cache:
+  - `sessionStorage.slidegen.group.meta`
+  - `sessionStorage.slidegen.group.config`
 
-## State and storage
+## Logs
 
-- Input state for Create Task is cached in session storage (`slidegen.ui.inputMenu.state`).
-- Group metadata and group configs are cached in session storage:
-  - `slidegen.group.meta`
-  - `slidegen.group.config`
+Logs are stored under `frontend/logs/<timestamp>/`:
+
+- `process.log`: Electron main process.
+- `renderer.log`: renderer (DevTools) logs.
+- `backend.log`: backend output (when launched by Electron).

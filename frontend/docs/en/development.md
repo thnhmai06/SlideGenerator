@@ -2,54 +2,36 @@
 
 Vietnamese version: [Vietnamese](../vi/development.md)
 
-## Table of contents
-
-1. [Prerequisites](#prerequisites)
-2. [Install](#install)
-3. [Run in development](#run-in-development)
-4. [Tests](#tests)
-5. [Useful tasks](#useful-tasks)
-
 ## Prerequisites
 
 - Node.js + npm
-- .NET 10 SDK (for running the backend in dev)
+- .NET 10 SDK (for backend in dev)
 
 ## Install
 
-From `frontend/`:
-
-```
+```bash
+cd frontend
 npm install
 ```
 
 ## Run in development
 
-From `frontend/`:
-
-```
+```bash
 npm run dev
 ```
 
 Notes:
 
-- The Electron main process can spawn the backend automatically.
-- To disable auto-start, set `SLIDEGEN_DISABLE_BACKEND=1`.
-- You can also run the backend manually from `backend/` with `dotnet run`.
-- Logs are written to `frontend/logs/<timestamp>/` (process, renderer, backend).
+- Electron can auto-start the backend.
+- Disable auto-start with `SLIDEGEN_DISABLE_BACKEND=1`.
+- Override backend path with `SLIDEGEN_BACKEND_PATH`.
 
 ## Tests
 
-From `frontend/`:
-
-```
+```bash
 npm test
 ```
 
-## Useful tasks
+## Logs
 
-VS Code tasks are defined in `.vscode/tasks.json`:
-
-- `test:frontend`
-- `test:backend`
-- `test:all`
+See `frontend/logs/<timestamp>/` for process/renderer/backend logs.

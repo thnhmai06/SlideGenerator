@@ -1,6 +1,6 @@
 import React, { useState, useEffect, ReactNode } from 'react'
 import { translations, Language } from '../locales'
-import { AppContext, type Theme, type Settings } from './AppContextBase'
+import { AppContext, type Theme, type Settings } from './AppContextType'
 
 const SETTINGS_FILE = 'app-settings.json'
 
