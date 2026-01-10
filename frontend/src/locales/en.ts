@@ -198,7 +198,7 @@ export const en = {
 	'process.files': 'files',
 	'process.slides': 'slides',
 	'process.successSlides': 'Successful slides',
-	'process.processingSlides': 'Slides in progress',
+	'process.processingSlides': 'Pending/Processing slides',
 	'process.failedSlides': 'Failed slides',
 	'process.createdAt': 'Created at',
 	'process.jobId': 'Job ID',

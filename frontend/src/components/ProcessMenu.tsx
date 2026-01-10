@@ -76,7 +76,12 @@ const SheetItem: React.FC<SheetItemProps> = ({
 	return (
 		<div className="file-item">
 			<div className="file-header-clickable" onClick={onToggleLog}>
-				<span className="file-expand-icon">{showLog ? 'v' : '>'}</span>
+				<img
+					src={getAssetPath('images', 'chevron-down.png')}
+					alt=""
+					aria-hidden="true"
+					className={`file-expand-icon ${showLog ? 'expanded' : ''}`}
+				/>
 				<div className="file-info">
 					<div className="file-name-row">
 						<div className="file-name">{sheet.sheetName}</div>
@@ -193,9 +198,12 @@ const SheetItem: React.FC<SheetItemProps> = ({
 											className="log-row-header"
 											onClick={() => onToggleRowGroup(rowKey)}
 										>
-											<span className="log-row-toggle">
-												{isCollapsed ? '>' : 'v'}
-											</span>
+											<img
+												src={getAssetPath('images', 'chevron-down.png')}
+												alt=""
+												aria-hidden="true"
+												className={`log-row-toggle ${isCollapsed ? '' : 'expanded'}`}
+											/>
 											<span className="log-row-title">
 												{group.row != null
 													? `Row ${group.row}`
@@ -395,26 +403,40 @@ const ProcessMenu: React.FC = () => {
 		return groups;
 	};
 
-	const summarizeSheets = (
-		sheets: Array<{ status: string; totalRows?: number; currentRow?: number }>,
-	) => {
-		let completed = 0;
-		let processing = 0;
-		let failed = 0;
-		let totalRows = 0;
-		let completedRows = 0;
+	const summarizeSheets = (sheets: SheetJob[]) => {
+		let completedJobs = 0;
+		let processingJobs = 0;
+		let failedJobs = 0;
+		let totalSlides = 0;
+		let completedSlides = 0;
+		let processingSlides = 0;
+		let failedSlides = 0;
 
 		sheets.forEach((sheet) => {
-			if (sheet.status === 'Completed') completed += 1;
-			if (sheet.status === 'Running' || sheet.status === 'Pending') processing += 1;
-			if (sheet.status === 'Failed' || sheet.status === 'Cancelled') failed += 1;
+			if (sheet.status === 'Completed') completedJobs += 1;
+			if (sheet.status === 'Running' || sheet.status === 'Pending') processingJobs += 1;
+			if (sheet.status === 'Failed' || sheet.status === 'Cancelled') failedJobs += 1;
 
-			const total = sheet.totalRows ?? 0;
-			totalRows += total;
-			completedRows += Math.min(sheet.currentRow ?? 0, total);
+			const {
+				completedSlides: doneSlides,
+				processingSlides: activeSlides,
+				failedSlides: errorSlides,
+			} = getSheetStats(sheet);
+			completedSlides += doneSlides;
+			processingSlides += activeSlides;
+			failedSlides += errorSlides;
+			totalSlides += sheet.totalRows ?? 0;
 		});
 
-		return { completed, processing, failed, totalRows, completedRows };
+		return {
+			completedJobs,
+			processingJobs,
+			failedJobs,
+			totalSlides,
+			completedSlides,
+			processingSlides,
+			failedSlides,
+		};
 	};
 
 	const toggleRowGroup = (key: string) => {
@@ -490,11 +512,17 @@ const ProcessMenu: React.FC = () => {
 					<div className="process-list">
 						{activeGroups.map((group) => {
 							const sheets = Object.values(group.sheets);
-							const { completed, processing, failed, totalRows, completedRows } =
-								summarizeSheets(sheets);
+							const {
+								completedJobs,
+								processingJobs,
+								failedJobs,
+								totalSlides,
+								completedSlides,
+								processingSlides,
+								failedSlides,
+							} = summarizeSheets(sheets);
 							const totalSheets = sheets.length;
-							const groupProgress =
-								totalRows > 0 ? (completedRows / totalRows) * 100 : group.progress;
+							const groupProgress = group.progress;
 							const groupName = deriveGroupName(group.workbookPath, group.id);
 							const showDetails = expandedGroups[group.id] ?? false;
 
@@ -505,11 +533,12 @@ const ProcessMenu: React.FC = () => {
 										onClick={() => toggleGroup(group.id)}
 									>
 										<div className="group-main-info">
-											<span
+											<img
+												src={getAssetPath('images', 'chevron-down.png')}
+												alt=""
+												aria-hidden="true"
 												className={`expand-icon ${showDetails ? 'expanded' : ''}`}
-											>
-												{showDetails ? 'v' : '>'}
-											</span>
+											/>
 											<div className="group-info">
 												<div className="group-name-row">
 													<div className="group-name">{groupName}</div>
@@ -522,28 +551,30 @@ const ProcessMenu: React.FC = () => {
 												</div>
 												<div className="group-stats-line">
 													<span>
-														{completed}/{totalSheets} -{' '}
-														{Math.round(groupProgress)}%
+														{completedSlides}/{totalSlides}{' '}
+														{t('process.slides')} ({completedJobs}/
+														{totalSheets}) - {Math.round(groupProgress)}
+														%
 													</span>
 													<span
 														className="stat-badge stat-success"
 														title={t('process.successSlides')}
 													>
-														{completed}
+														{completedSlides}
 													</span>
 													<span className="stat-divider">|</span>
 													<span
 														className="stat-badge stat-processing"
 														title={t('process.processingSlides')}
 													>
-														{processing}
+														{processingSlides}
 													</span>
 													<span className="stat-divider">|</span>
 													<span
 														className="stat-badge stat-failed"
 														title={t('process.failedSlides')}
 													>
-														{failed}
+														{failedSlides}
 													</span>
 												</div>
 											</div>

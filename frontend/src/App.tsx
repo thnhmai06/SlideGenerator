@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Sidebar from './components/Sidebar';
 import CreateTaskMenu from './components/CreateTaskMenu';
 import SettingMenu from './components/SettingMenu';
@@ -8,12 +8,14 @@ import AboutMenu from './components/AboutMenu';
 import TitleBar from './components/TitleBar';
 import { checkHealth } from './services/backendApi';
 import { useApp } from './contexts/useApp';
+import { useJobs } from './contexts/useJobs';
 import './styles/App.css';
 
 type MenuType = 'input' | 'setting' | 'download' | 'process' | 'about';
 
 const App: React.FC = () => {
 	const { t } = useApp();
+	const { groups } = useJobs();
 	const [currentMenu, setCurrentMenu] = useState<MenuType>('input');
 	const [bannerState, setBannerState] = useState<'hidden' | 'connected' | 'disconnected'>(
 		'hidden',
@@ -85,6 +87,31 @@ const App: React.FC = () => {
 		};
 	}, []);
 
+	const appTitle = t('app.title');
+	const windowTitle = useMemo(() => {
+		const activeGroups = groups.filter((group) =>
+			['pending', 'running', 'paused'].includes(group.status.toLowerCase()),
+		);
+		if (activeGroups.length === 0) return appTitle;
+
+		let totalSlides = 0;
+		let completedSlides = 0;
+		activeGroups.forEach((group) => {
+			Object.values(group.sheets).forEach((sheet) => {
+				const total = sheet.totalRows ?? 0;
+				totalSlides += total;
+				completedSlides += Math.min(sheet.currentRow ?? 0, total);
+			});
+		});
+
+		const percent = totalSlides > 0 ? Math.round((completedSlides / totalSlides) * 100) : 0;
+		return `${appTitle} - ${completedSlides}/${totalSlides} ${t('process.slides')} (${percent}%)`;
+	}, [appTitle, groups, t]);
+
+	useEffect(() => {
+		document.title = windowTitle;
+	}, [windowTitle]);
+
 	const renderMenu = () => {
 		switch (currentMenu) {
 			case 'input':
@@ -104,7 +131,7 @@ const App: React.FC = () => {
 
 	return (
 		<div className="app-shell">
-			<TitleBar />
+			<TitleBar title={windowTitle} />
 			<div className={`connection-banner ${bannerState}`}>
 				<div className="connection-banner__content">
 					{bannerState === 'disconnected' && t('connection.disconnected')}

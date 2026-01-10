@@ -318,6 +318,16 @@ export async function getJobLogs(request: Record<string, unknown>): Promise<Slid
   } satisfies SlideJobLogsSuccess
 }
 
+export async function getGroupPayload(groupId: string): Promise<JobExportPayload | null> {
+  if (!groupId) return null
+  try {
+    const detail = await fetchJobDetail(groupId, 'Group', false, true)
+    return parseJobPayload(detail?.PayloadJson ?? null)
+  } catch {
+    return null
+  }
+}
+
 export async function globalControl(request: Record<string, unknown>): Promise<unknown> {
   const action =
     (getCaseInsensitive<ControlAction>(request, 'Action') ??

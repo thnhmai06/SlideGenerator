@@ -34,6 +34,7 @@ Open **Process** to:
 - Pause/Resume group or sheet jobs.
 - Cancel jobs.
 - Watch progress and row-level logs.
+- Group progress shows slides completed/total (jobs completed/total), and % is based on slides.
 
 ## Results
 

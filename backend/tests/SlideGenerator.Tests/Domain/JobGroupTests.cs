@@ -68,21 +68,21 @@ public sealed class JobGroupTests
     }
 
     [TestMethod]
-    public void Progress_IsAverageOfSheets()
+    public void Progress_UsesTotalRowsAcrossSheets()
     {
         var group = CreateGroup(out var sheet1, out var sheet2);
 
         sheet1.UpdateProgress(5); // 50% of 10
-        sheet2.UpdateProgress(10); // 100% of 10
+        sheet2.UpdateProgress(5); // 25% of 20
 
-        Assert.AreEqual(75f, group.Progress, 0.01f);
+        Assert.AreEqual(33.33f, group.Progress, 0.05f);
     }
 
     private static JobGroup CreateGroup(out JobSheet sheet1, out JobSheet sheet2)
     {
         var workbook = new TestSheetBook("book.xlsx",
             new TestSheet("Sheet1", 10),
-            new TestSheet("Sheet2", 10));
+            new TestSheet("Sheet2", 20));
         var template = new TestTemplatePresentation("template.pptx");
 
         var group = new JobGroup(
