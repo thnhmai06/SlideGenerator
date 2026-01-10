@@ -68,13 +68,30 @@
 }
 
 .process-menu .expand-icon {
-	color: var(--text-tertiary);
-	font-size: 12px;
-	transition: transform var(--transition-fast);
+	width: 12px;
+	height: 12px;
 }
 
-.process-menu .expand-icon.expanded {
-	transform: none;
+.process-menu .file-expand-icon,
+.process-menu .log-row-toggle {
+	width: 10px;
+	height: 10px;
+}
+
+.process-menu .expand-icon,
+.process-menu .file-expand-icon,
+.process-menu .log-row-toggle {
+	object-fit: contain;
+	display: inline-block;
+	filter: brightness(0) invert(1);
+	transition: transform var(--transition-fast);
+	transform: rotate(-90deg);
+}
+
+.process-menu .expand-icon.expanded,
+.process-menu .file-expand-icon.expanded,
+.process-menu .log-row-toggle.expanded {
+	transform: rotate(0deg);
 }
 
 .process-menu .group-info {
@@ -218,11 +235,6 @@
 	align-items: center;
 	gap: var(--spacing-md);
 	cursor: pointer;
-}
-
-.process-menu .file-expand-icon {
-	color: var(--text-tertiary);
-	font-size: 10px;
 }
 
 .process-menu .file-info {
@@ -436,9 +448,10 @@
 	gap: var(--spacing-sm);
 }
 
-.process-menu .log-row-toggle {
-	font-size: 10px;
-	color: var(--text-tertiary);
+[data-theme='light'] .process-menu .expand-icon,
+[data-theme='light'] .process-menu .file-expand-icon,
+[data-theme='light'] .process-menu .log-row-toggle {
+	filter: none;
 }
 
 .process-menu .log-row-title {

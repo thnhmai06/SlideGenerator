@@ -34,6 +34,7 @@ Mở **Process** để:
 - Pause/Resume group hoặc sheet.
 - Cancel task.
 - Xem progress và log theo dòng.
+- Tiến độ nhóm hiển thị slide hoàn thành/tổng slide (job hoàn thành/tổng job) và % theo số slide.
 
 ## Kết quả
 

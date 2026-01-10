@@ -3,8 +3,12 @@ import { useApp } from '../contexts/useApp';
 import { getAssetPath } from '../utils/paths';
 import '../styles/TitleBar.css';
 
-const TitleBar: React.FC = () => {
-	const { closeToTray } = useApp();
+type TitleBarProps = {
+	title: string;
+};
+
+const TitleBar: React.FC<TitleBarProps> = ({ title }) => {
+	const { closeToTray, t } = useApp();
 	const handleAction = (action: 'minimize' | 'maximize' | 'close') => {
 		if (action === 'close' && closeToTray) {
 			window.electronAPI?.hideToTray();
@@ -18,10 +22,10 @@ const TitleBar: React.FC = () => {
 			<div className="title-bar-left">
 				<img
 					src={getAssetPath('images', 'app-icon.png')}
-					alt="Slide Generator"
+					alt={t('app.title')}
 					className="title-bar-icon"
 				/>
-				<span className="title-bar-title">Slide Generator</span>
+				<span className="title-bar-title">{title}</span>
 			</div>
 			<div className="title-bar-controls">
 				<button

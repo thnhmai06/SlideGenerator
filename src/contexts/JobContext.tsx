@@ -349,6 +349,28 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 		return current[groupId] ?? null;
 	}, []);
 
+	const resolveGroupConfig = useCallback(
+		async (groupId: string): Promise<CreateGroupPayload | null> => {
+			const stored = getGroupConfig(groupId);
+			if (stored) return stored;
+
+			const payload = await backendApi.getGroupPayload(groupId);
+			if (!payload) return null;
+
+			const resolved: CreateGroupPayload = {
+				templatePath: payload.templatePath,
+				spreadsheetPath: payload.spreadsheetPath,
+				outputPath: payload.outputPath,
+				textConfigs: payload.textConfigs ?? [],
+				imageConfigs: payload.imageConfigs ?? [],
+				sheetNames: payload.sheetNames,
+			};
+			saveGroupConfig(groupId, resolved);
+			return resolved;
+		},
+		[getGroupConfig, saveGroupConfig],
+	);
+
 	const clearGroupMeta = useCallback((groupIds: string[]) => {
 		try {
 			const raw = sessionStorage.getItem(GROUP_META_KEY);
@@ -706,8 +728,9 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
 	const exportGroupConfig = useCallback(
 		async (groupId: string) => {
-			const config = getGroupConfig(groupId);
-			if (!config || !window.electronAPI) return false;
+			if (!window.electronAPI) return false;
+			const config = await resolveGroupConfig(groupId);
+			if (!config) return false;
 			const columns: string[] = [];
 			const seen = new Set<string>();
 			const addColumns = (values: string[] | undefined) => {
@@ -752,12 +775,13 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 			await window.electronAPI.writeSettings(path, JSON.stringify(exportPayload, null, 2));
 			return true;
 		},
-		[getGroupConfig],
+		[resolveGroupConfig],
 	);
 
 	const hasGroupConfig = useCallback(
 		(groupId: string) => {
-			return Boolean(getGroupConfig(groupId));
+			if (getGroupConfig(groupId)) return true;
+			return Boolean(groupsRef.current[groupId]);
 		},
 		[getGroupConfig],
 	);

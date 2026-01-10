@@ -197,7 +197,7 @@ export const vi = {
 	'process.files': 'tệp',
 	'process.slides': 'slide',
 	'process.successSlides': 'Slide thành công',
-	'process.processingSlides': 'Slide đang xử lý',
+	'process.processingSlides': 'Slide đang chờ/đang xử lý',
 	'process.failedSlides': 'Slide thất bại',
 	'process.createdAt': 'Tạo lúc',
 	'process.jobId': 'ID Job',

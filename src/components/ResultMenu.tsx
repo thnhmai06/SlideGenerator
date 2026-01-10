@@ -198,11 +198,12 @@ const ResultMenu: React.FC = () => {
 										onClick={() => toggleGroup(group.id)}
 									>
 										<div className="group-main-info">
-											<span
+											<img
+												src={getAssetPath('images', 'chevron-down.png')}
+												alt=""
+												aria-hidden="true"
 												className={`expand-icon ${showDetails ? 'expanded' : ''}`}
-											>
-												{showDetails ? 'v' : '>'}
-											</span>
+											/>
 											<div className="group-info">
 												<div className="group-name-row">
 													<div className="group-name">{groupName}</div>
@@ -309,9 +310,15 @@ const ResultMenu: React.FC = () => {
 															className="file-header-clickable"
 															onClick={() => toggleLog(sheet.id)}
 														>
-															<span className="file-expand-icon">
-																{showLog ? 'v' : '>'}
-															</span>
+															<img
+																src={getAssetPath(
+																	'images',
+																	'chevron-down.png',
+																)}
+																alt=""
+																aria-hidden="true"
+																className={`file-expand-icon ${showLog ? 'expanded' : ''}`}
+															/>
 															<div className="file-info">
 																<div className="file-name">
 																	{sheet.sheetName}
@@ -465,11 +472,19 @@ const ResultMenu: React.FC = () => {
 																							)
 																						}
 																					>
-																						<span className="log-row-toggle">
-																							{isCollapsed
-																								? '>'
-																								: 'v'}
-																						</span>
+																						<img
+																							src={getAssetPath(
+																								'images',
+																								'chevron-down.png',
+																							)}
+																							alt=""
+																							aria-hidden="true"
+																							className={`log-row-toggle ${
+																								isCollapsed
+																									? ''
+																									: 'expanded'
+																							}`}
+																						/>
 																						<span className="log-row-title">
 																							{group.row !=
 																							null

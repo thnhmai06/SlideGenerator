@@ -45,6 +45,7 @@ export type {
 export {
 	createGroup,
 	getAllGroups,
+	getGroupPayload,
 	getJobLogs,
 	globalControl,
 	groupControl,
