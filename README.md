@@ -57,4 +57,4 @@ The framework used by this backend is documented here:
 
 - [SlideGenerator.Framework](src/SlideGenerator.Framework/README.md)
 
-Vietnamese docs: [docs/vi](docs/vi)
+[Vietnamese docs](docs/vi)

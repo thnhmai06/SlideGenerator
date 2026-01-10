@@ -1,5 +1,5 @@
-using SlideGenerator.Domain.Job.Entities;
-using SlideGenerator.Domain.Job.Enums;
+using SlideGenerator.Domain.Features.Jobs.Entities;
+using SlideGenerator.Domain.Features.Jobs.Enums;
 using SlideGenerator.Tests.Helpers;
 
 namespace SlideGenerator.Tests.Domain;

@@ -1,26 +1,22 @@
 # Triển khai
 
-## Mục lục
+English version: [English](../en/deployment.md)
 
-1. [Tổng quan](#tổng-quan)
-2. [Cấu hình](#cấu-hình)
-3. [Lưu ý](#lưu-ý)
-
-## Tổng quan
+## Tóm tắt
 
 Backend là ứng dụng ASP.NET Core chạy từ `SlideGenerator.Presentation`.
 
-## Cấu hình
+## Các bước
 
-Trước khi deploy, cấu hình:
+1. Chuẩn bị `backend.config.yaml` (host, port, maxConcurrentJobs).
+2. Đảm bảo quyền ghi cho:
+   - vị trí file config,
+   - file SQLite của Hangfire,
+   - thư mục output.
+3. Chạy server (local hoặc bản publish).
 
-- Host/port server
-- Đường dẫn database SQLite của Hangfire
-- Số worker của Hangfire (tối đa job song song)
+## Ghi chú
 
-Xem: [Configuration](../en/configuration.md)
-
-## Lưu ý
-
-- Đảm bảo thư mục output tồn tại và có quyền ghi.
-- Đảm bảo thư mục chứa database Hangfire có quyền ghi.
+- Health check: `/health`.
+- Hangfire dashboard: `/hangfire` (read-only).
+- Thiết kế ưu tiên chạy local/offline.

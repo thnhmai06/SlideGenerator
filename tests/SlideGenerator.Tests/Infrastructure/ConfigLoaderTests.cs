@@ -1,5 +1,5 @@
 using SlideGenerator.Domain.Configs;
-using SlideGenerator.Infrastructure.Configs;
+using SlideGenerator.Infrastructure.Features.Configs;
 
 namespace SlideGenerator.Tests.Infrastructure;
 

@@ -1,91 +1,43 @@
-# Hệ thống Job
+# Hệ thống job
 
-## Mục lục
-
-1. [Khái niệm](#khái-niệm)
-2. [Mô hình composite](#mô-hình-composite)
-3. [Active và completed](#active-và-completed)
-4. [Vòng đời](#vòng-đời)
-5. [Pause/Resume](#pause-resume)
-6. [Lưu trạng thái và resume](#lưu-trạng-thái-và-resume)
-7. [Cancel và clear](#cancel-và-clear)
+English version: [English](../en/job-system.md)
 
 ## Khái niệm
 
-- **Group**: một lô tạo từ 1 workbook + 1 template.
-- **Sheet**: job cho một worksheet, sinh một file output.
-- **Active jobs**: pending/running/paused.
-- **Completed jobs**: completed/failed/cancelled.
+- Loai job:
+  - Group job: một workbook + một template + thư mục output.
+  - Sheet job: một sheet xuất ra một file.
+- Mô hình nội bộ:
+  - `JobGroup` (gốc)
+  - `JobSheet` (lá)
+- Trang thai job:
+  - Pending → Processing → Done
+  - Paused, Cancelled, Error
 
-## Mô hình composite
+## Collection
 
-Domain dùng composite:
-
-- `IJobGroup` là composite root.
-- `IJobSheet` là leaf.
-- `IJobGroup.Sheets` trả về danh sách con.
-
-## Active và completed
-
-`IJobManager` chia quản lý thành hai collection:
-
-- `IJobManager.Active` (`IActiveJobCollection`)
-  - Tạo group.
-  - Điều khiển job đang chạy (start/pause/resume/cancel).
-- `IJobManager.Completed` (`ICompletedJobCollection`)
-  - Lưu nhóm đã xong.
-  - Hỗ trợ remove/clear.
-
-### Tự động chuyển
-
-Khi toàn bộ sheet trong group ở trạng thái Completed/Failed/Cancelled, group được chuyển sang Completed.
+- Active: lưu Pending/Processing/Paused bằng ConcurrentDictionary.
+- Completed: lưu Done/Failed/Cancelled.
+- JobManager truy vấn cả hai.
 
 ## Vòng đời
 
-### Tạo và start
+- Tạo: `JobCreate` → `IActiveJobCollection.CreateGroup`.
+- Start: auto-start mặc định; có thể Pause/Resume.
+- Dieu khien: Pause/Resume/Cancel (Stop duoc hieu la Cancel), Remove xoa state backend.
+- Hoàn tất: khi mọi sheet xong, group chuyển sang Completed.
 
-- Create: `IActiveJobCollection.CreateGroup(request)`
-- Start: `IActiveJobCollection.StartGroup(groupId)`
+## Song song
 
-### Điều khiển group
+- `job.maxConcurrentJobs` giới hạn số sheet chạy đồng thời.
+- Resume ưu tiên slot trống; còn lại giữ Paused/Pending.
 
-- Pause: `PauseGroup(groupId)`
-- Resume: `ResumeGroup(groupId)`
-- Cancel: `CancelGroup(groupId)`
+## Lưu state và khôi phục
 
-### Điều khiển sheet
+- State lưu bằng Hangfire SQLite (`HangfireJobStateStore`).
+- Lưu path, status, progress, text/image configs.
+- Khi khởi động lại: Pending/Processing bị chuyển về Paused.
+- Payload JSON không lưu; hệ thống dựng lại từ state khi cần.
 
-- Pause: `PauseSheet(sheetId)`
-- Resume: `ResumeSheet(sheetId)`
-- Cancel: `CancelSheet(sheetId)`
+Tiếp theo: [SignalR API](signalr.md)
 
-## Pause/Resume
-
-Sheet dùng cơ chế wait theo sự kiện:
-
-- Pause sẽ chặn gần như ngay lập tức.
-- Resume tiếp tục ngay (không polling).
-
-Ghi chú triển khai:
-
-- Domain: `JobSheet.WaitIfPausedAsync(token)`
-- Executor: đặt checkpoint trước/sau row, resolve cloud, download, xử lý ảnh, cập nhật slide, lưu state.
-
-## Lưu trạng thái và resume
-
-- State được lưu bằng HangfireSQLite.
-- Mỗi sheet lưu `NextRowIndex`, status, output path, error count.
-- Resume chạy tiếp row kế tiếp; nếu thiếu output file khi resume thì fail sheet.
-
-## Cancel và clear
-
-- Cancel active:
-  - Theo group: `IActiveJobCollection.CancelGroup`
-  - Toàn bộ: `IActiveJobCollection.CancelAll`
-- Cancel + remove (Stop trên UI):
-  - Theo group: `IActiveJobCollection.CancelAndRemoveGroup`
-  - Theo sheet: `IActiveJobCollection.CancelAndRemoveSheet`
-  - Xóa file output và xóa state đã lưu.
-- Clear completed:
-  - Theo group: `ICompletedJobCollection.RemoveGroup`
-  - Toàn bộ: `ICompletedJobCollection.ClearAll`

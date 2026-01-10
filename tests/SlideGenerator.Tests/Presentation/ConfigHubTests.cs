@@ -1,9 +1,9 @@
 using Microsoft.Extensions.Logging.Abstractions;
-using SlideGenerator.Application.Configs;
-using SlideGenerator.Application.Configs.DTOs.Responses.Successes;
+using SlideGenerator.Application.Features.Configs;
+using SlideGenerator.Application.Features.Configs.DTOs.Responses.Successes;
 using SlideGenerator.Domain.Configs;
-using SlideGenerator.Infrastructure.Configs;
-using SlideGenerator.Presentation.Hubs;
+using SlideGenerator.Infrastructure.Features.Configs;
+using SlideGenerator.Presentation.Features.Configs;
 using SlideGenerator.Tests.Helpers;
 
 namespace SlideGenerator.Tests.Presentation;

@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Logging.Abstractions;
-using SlideGenerator.Application.Sheet.DTOs.Responses.Successes.Workbook;
-using SlideGenerator.Application.Sheet.DTOs.Responses.Successes.Worksheet;
-using SlideGenerator.Presentation.Hubs;
+using SlideGenerator.Application.Features.Sheets.DTOs.Responses.Successes.Workbook;
+using SlideGenerator.Application.Features.Sheets.DTOs.Responses.Successes.Worksheet;
+using SlideGenerator.Presentation.Features.Sheets;
 using SlideGenerator.Tests.Helpers;
 
 namespace SlideGenerator.Tests.Presentation;

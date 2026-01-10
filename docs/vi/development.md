@@ -1,42 +1,30 @@
 # Phát triển
 
-## Mục lục
+English version: [English](../en/development.md)
 
-1. [Yêu cầu](#yêu-cầu)
-2. [Build](#build)
-3. [Run](#run)
-4. [Cấu trúc code](#cấu-trúc-code)
+## Build và chạy
 
-## Yêu cầu
+Từ thư mục `backend/`:
 
-- .NET 10 SDK
-
-## Build
-
-Trong `backend/`:
-
-- `dotnet build`
-
-## Run
-
-Trong `backend/SlideGenerator.Presentation/`:
-
-- `dotnet run`
-
-SignalR hubs được host trong project Presentation.
+- Build: `dotnet build`
+- Run: `dotnet run --project src/SlideGenerator.Presentation`
 
 ## Cấu trúc code
 
-Bắt đầu từ:
+Code chia theo feature ở các layer:
 
-- `SlideGenerator.Presentation/Program.cs`
-- `SlideGenerator.Presentation/Hubs/*.cs`
+- Presentation: `src/SlideGenerator.Presentation/Features/*/*Hub.cs`
+- Application: `src/SlideGenerator.Application/Features/*`
+- Domain: `src/SlideGenerator.Domain/Features/*`
+- Infrastructure: `src/SlideGenerator.Infrastructure/Features/*`
 
-Sau đó theo contract:
+## Điểm vào chính
 
-- `SlideGenerator.Application/*/Contracts/*.cs`
+- `SlideGenerator.Presentation/Program.cs`: host và DI.
+- `Presentation/Features/Tasks/TaskHub.cs`: API task.
+- `Infrastructure/Features/Jobs`: executor, state store, collections.
 
-Xem thêm:
+## Testing
 
-- [Architecture](../en/architecture.md)
-- [SignalR API](../en/signalr.md)
+- Test nằm trong `backend/tests`.
+- Chạy bằng `dotnet test`.
