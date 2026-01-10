@@ -23,8 +23,8 @@ Frontend là ứng dụng Electron desktop với UI React. Ứng dụng kết n�
 - URL backend: `localStorage.slidegen.backend.url`.
 - Cache input Create Task: `sessionStorage.slidegen.ui.inputMenu.state`.
 - Cache metadata/config group:
-  - `sessionStorage.slidegen.group.meta`
-  - `sessionStorage.slidegen.group.config`
+    - `sessionStorage.slidegen.group.meta`
+    - `sessionStorage.slidegen.group.config`
 
 ## Logs
 

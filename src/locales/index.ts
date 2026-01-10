@@ -1,9 +1,9 @@
-import { vi } from './vi'
-import { en } from './en'
+import { vi } from './vi';
+import { en } from './en';
 
 export const translations = {
-  vi,
-  en,
-}
+	vi,
+	en,
+};
 
-export type Language = 'vi' | 'en'
+export type Language = 'vi' | 'en';
