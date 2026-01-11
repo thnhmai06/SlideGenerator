@@ -12,6 +12,7 @@ permissions:
 
 jobs:
   backend-tests:
+    if: ${{ !((github.event_name == 'push' && startsWith(github.event.head_commit.message || '', '[skip ci]')) || (github.event_name == 'pull_request' && startsWith(github.event.pull_request.title || '', '[skip ci]'))) }}
     name: Backend tests
     runs-on: windows-latest
     steps:
@@ -43,6 +44,7 @@ jobs:
           reporter: dotnet-trx
 
   frontend-tests:
+    if: ${{ !((github.event_name == 'push' && startsWith(github.event.head_commit.message || '', '[skip ci]')) || (github.event_name == 'pull_request' && startsWith(github.event.pull_request.title || '', '[skip ci]'))) }}
     name: Frontend tests
     runs-on: ubuntu-latest
     steps:
