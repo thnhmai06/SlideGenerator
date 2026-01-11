@@ -7,7 +7,8 @@
 	"type": "commonjs",
 	"scripts": {
 		"dev": "vite",
-		"build": "tsc && vite build && electron-builder",
+		"build:types": "tsc -p tsconfig.node.json",
+		"build": "npm run build:types && tsc && vite build && electron-builder",
 		"build:backend": "dotnet publish ..\\backend\\src\\SlideGenerator.Presentation\\SlideGenerator.Presentation.csproj -c Release -o backend",
 		"build:full": "npm run build:backend && npm run build",
 		"preview": "vite preview",
