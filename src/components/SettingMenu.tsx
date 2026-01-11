@@ -1124,6 +1124,7 @@ const SettingMenu: React.FC = () => {
 	const [activeTab, setActiveTab] = useState<SettingTab>('appearance');
 	const [config, setConfig] = useState<ConfigState | null>(null);
 	const [initialServer, setInitialServer] = useState<ConfigState['server'] | null>(null);
+	const [initialJob, setInitialJob] = useState<ConfigState['job'] | null>(null);
 	const [loading, setLoading] = useState(false);
 	const [saving, setSaving] = useState(false);
 	const [message, setMessage] = useState<{
@@ -1260,6 +1261,7 @@ const SettingMenu: React.FC = () => {
 			const { config: nextConfig, server } = parseConfigResponse(data);
 			setConfig(nextConfig);
 			setInitialServer(server);
+			setInitialJob(nextConfig.job);
 			const pendingRestart = hasPendingBackendUrl();
 			setRestartRequired(pendingRestart);
 			if (!pendingRestart) {
@@ -1302,12 +1304,18 @@ const SettingMenu: React.FC = () => {
 		);
 	};
 
+	const hasJobChanged = (job: ConfigState['job']) => {
+		if (!initialJob) return false;
+		return job.maxConcurrentJobs !== initialJob.maxConcurrentJobs;
+	};
+
 	const saveConfig = async () => {
 		if (!config) return;
 		try {
 			setSaving(true);
 			let pendingRestart = hasPendingBackendUrl();
 			const serverChanged = hasServerChanged(config.server);
+			const jobChanged = hasJobChanged(config.job);
 			const desiredUrl = buildBackendUrl(config.server.host, config.server.port) ?? '';
 			const currentUrl = normalizeBackendUrl(
 				localStorage.getItem('slidegen.backend.url') ?? '',
@@ -1316,7 +1324,7 @@ const SettingMenu: React.FC = () => {
 				clearPendingBackendUrl();
 				pendingRestart = false;
 			}
-			const requiresRestart = pendingRestart || serverChanged;
+			const requiresRestart = pendingRestart || serverChanged || jobChanged;
 			const normalizeNumber = (value: number) => (Number.isFinite(value) ? value : 0);
 			await backendApi.updateConfig({
 				Server: {
@@ -1355,6 +1363,9 @@ const SettingMenu: React.FC = () => {
 			});
 			if (!serverChanged) {
 				setInitialServer({ ...config.server });
+			}
+			if (!jobChanged) {
+				setInitialJob({ ...config.job });
 			}
 			setRestartRequired(requiresRestart);
 			if (serverChanged) {
