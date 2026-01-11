@@ -175,6 +175,8 @@ export const vi = {
 	'process.pauseAll': 'Tạm dừng tất cả',
 	'process.resumeAll': 'Tiếp tục tất cả',
 	'process.stopAll': 'Dừng tất cả',
+	'process.confirmStop': 'Bạn có chắc muốn dừng?',
+	'process.confirmStopAll': 'Bạn có chắc muốn dừng tất cả?',
 	'process.viewDetails': 'Xem chi tiết',
 	'process.viewLog': 'Xem log',
 	'process.log': 'Log',
@@ -213,6 +215,8 @@ export const vi = {
 	'results.remove': 'Bỏ khỏi danh sách',
 	'results.removeGroup': 'Bỏ nhóm',
 	'results.clearAll': 'Bỏ tất cả',
+	'results.confirmRemoveGroup': 'Bạn có chắc muốn bỏ nhóm này?',
+	'results.confirmClearAll': 'Bạn có chắc muốn bỏ tất cả?',
 	'results.completedAt': 'Hoàn thành lúc',
 	'results.empty': 'Trống',
 

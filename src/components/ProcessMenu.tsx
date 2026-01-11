@@ -316,7 +316,7 @@ const ProcessMenu: React.FC = () => {
 	};
 
 	const handleStopAll = async () => {
-		if (confirm(`${t('process.stopAll')}?`)) {
+		if (confirm(t('process.confirmStopAll'))) {
 			await globalControl('Stop');
 		}
 	};
@@ -342,7 +342,7 @@ const ProcessMenu: React.FC = () => {
 	};
 
 	const handleStopGroup = async (groupId: string) => {
-		if (confirm(`${t('process.stop')}?`)) {
+		if (confirm(t('process.confirmStop'))) {
 			await groupControl(groupId, 'Stop');
 		}
 	};
@@ -352,7 +352,7 @@ const ProcessMenu: React.FC = () => {
 	};
 
 	const handleStopSheet = async (sheetId: string) => {
-		if (confirm(`${t('process.stop')}?`)) {
+		if (confirm(t('process.confirmStop'))) {
 			await jobControl(sheetId, 'Stop');
 		}
 	};
