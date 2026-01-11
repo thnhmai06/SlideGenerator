@@ -566,15 +566,17 @@ const importConfigFromFile = async (args: {
 			args.setLastLoadedTemplatePath(nextPptxPath);
 		}
 		if (nextDataPath) {
-			const hasExplicitSelection = Array.isArray(config.selectedSheets);
-			const requestedSheets = (
-				hasExplicitSelection ? config.selectedSheets : (config.sheetNames ?? [])
-			).filter((name): name is string => typeof name === 'string');
+			const explicitSelectedSheets = Array.isArray(config.selectedSheets)
+				? config.selectedSheets
+				: undefined;
+			const requestedSheets = (explicitSelectedSheets ?? config.sheetNames ?? []).filter(
+				(name): name is string => typeof name === 'string',
+			);
 			const availableSheets = dataAssets.sheetNames;
 			const resolvedSelection = resolveRequestedSheets(
 				availableSheets,
 				requestedSheets,
-				!hasExplicitSelection,
+				!explicitSelectedSheets,
 			);
 			args.setSheetNames(availableSheets);
 			args.setSelectedSheets(resolvedSelection);
@@ -1616,15 +1618,17 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
 				nextDataPath,
 				cached,
 			);
-			const hasExplicitSelection = Array.isArray(savedState.selectedSheets);
-			const requestedSheets = (
-				hasExplicitSelection ? savedState.selectedSheets : (savedState.sheetNames ?? [])
-			).filter((name): name is string => typeof name === 'string');
+			const explicitSelectedSheets = Array.isArray(savedState.selectedSheets)
+				? savedState.selectedSheets
+				: undefined;
+			const requestedSheets = (explicitSelectedSheets ?? savedState.sheetNames ?? []).filter(
+				(name): name is string => typeof name === 'string',
+			);
 			const availableSheets = dataAssets.sheetNames ?? [];
 			const resolvedSelection = resolveRequestedSheets(
 				availableSheets,
 				requestedSheets,
-				!hasExplicitSelection,
+				!explicitSelectedSheets,
 			);
 			const filteredText = mapTextReplacements(
 				savedState,

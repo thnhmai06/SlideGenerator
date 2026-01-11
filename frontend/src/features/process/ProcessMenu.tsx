@@ -514,8 +514,6 @@ const ProcessMenu: React.FC = () => {
 							const sheets = Object.values(group.sheets);
 							const {
 								completedJobs,
-								processingJobs,
-								failedJobs,
 								totalSlides,
 								completedSlides,
 								processingSlides,

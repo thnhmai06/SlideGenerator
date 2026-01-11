@@ -1,6 +1,9 @@
 {
 	"compilerOptions": {
 		"composite": true,
+		"emitDeclarationOnly": true,
+		"declarationDir": "dist-types",
+		"outDir": "dist-types",
 		"skipLibCheck": true,
 		"module": "ESNext",
 		"moduleResolution": "bundler",

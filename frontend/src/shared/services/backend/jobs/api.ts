@@ -21,6 +21,7 @@ import type {
   SlideScanPlaceholdersSuccess,
   SlideScanShapesSuccess,
   SlideScanTemplateSuccess,
+  JobExportPayload,
   JobDetail,
   JobSummary,
   JobType,
