@@ -117,7 +117,6 @@
 .toggle-content {
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
 	gap: var(--spacing-lg);
 }
 
@@ -126,6 +125,8 @@
 	flex-direction: column;
 	gap: var(--spacing-xs);
 	color: var(--text-secondary);
+	flex: 1 1 auto;
+	min-width: 0;
 }
 
 .label-text {
@@ -142,6 +143,10 @@
 	position: relative;
 	width: 52px;
 	height: 28px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	margin-left: auto;
 }
 
 .toggle-switch input {
@@ -160,6 +165,7 @@
 		background-color var(--transition-fast),
 		border-color var(--transition-fast);
 	cursor: pointer;
+	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
 }
 
 .toggle-slider::before {
@@ -172,7 +178,12 @@
 	background: #fff;
 	border-radius: 50%;
 	transition: transform var(--transition-fast);
-	box-shadow: var(--shadow-xs);
+	box-shadow: var(--shadow-sm);
+}
+
+.toggle-switch input:focus-visible + .toggle-slider {
+	outline: 2px solid var(--accent-primary);
+	outline-offset: 2px;
 }
 
 .toggle-switch input:checked + .toggle-slider {

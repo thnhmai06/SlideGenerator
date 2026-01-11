@@ -38,6 +38,9 @@ interface SavedInputState {
 	columns?: string[];
 	shapes?: Shape[];
 	placeholders?: string[];
+	sheetNames?: string[];
+	selectedSheets?: string[];
+	sheetRowCounts?: Record<string, number>;
 	sheetCount?: number;
 	totalRows?: number;
 	templateLoaded?: boolean;
@@ -78,6 +81,62 @@ const loadSavedState = (): SavedInputState | null => {
 	return null;
 };
 
+const normalizeSheetNames = (names?: string[]) => {
+	const unique: string[] = [];
+	const seen = new Set<string>();
+	(names ?? []).forEach((name) => {
+		if (typeof name !== 'string') return;
+		if (!name || seen.has(name)) return;
+		seen.add(name);
+		unique.push(name);
+	});
+	return unique;
+};
+
+const normalizeSheetRowCounts = (counts?: Record<string, number>) => {
+	const normalized: Record<string, number> = {};
+	Object.entries(counts ?? {}).forEach(([key, value]) => {
+		if (!key) return;
+		normalized[key] = Number.isFinite(value) ? value : 0;
+	});
+	return normalized;
+};
+
+const buildSheetInfo = (
+	sheetsInfo: Array<{ Name?: string | null; RowCount?: number | null }>,
+) => {
+	const sheetNames: string[] = [];
+	const sheetRowCounts: Record<string, number> = {};
+	const seen = new Set<string>();
+
+	for (const sheet of sheetsInfo) {
+		const originalName = sheet.Name ?? '';
+		if (!originalName) continue;
+		if (!seen.has(originalName)) {
+			sheetNames.push(originalName);
+			seen.add(originalName);
+		}
+		sheetRowCounts[originalName] = sheet.RowCount ?? 0;
+	}
+
+	return {
+		sheetNames,
+		sheetRowCounts,
+	};
+};
+
+const resolveRequestedSheets = (availableSheets: string[], requestedSheets?: string[]) => {
+	if (availableSheets.length === 0) return [];
+	if (!requestedSheets || requestedSheets.length === 0) return availableSheets;
+	const availableSet = new Set(availableSheets);
+	const resolved: string[] = [];
+	requestedSheets.forEach((name) => {
+		if (!availableSet.has(name)) return;
+		resolved.push(name);
+	});
+	return resolved.length > 0 ? resolved : availableSheets;
+};
+
 const mapTemplateShapes = (template: backendApi.SlideScanTemplateSuccess): Shape[] => {
 	return (template.Shapes ?? [])
 		.filter((shape) => shape.IsImage === true)
@@ -110,14 +169,27 @@ const loadTemplateAssets = async (
 
 const loadDataAssets = async (
 	filePath: string,
-): Promise<{ columns: string[]; sheetCount: number; totalRows: number }> => {
+): Promise<{
+	columns: string[];
+	sheetCount: number;
+	totalRows: number;
+	sheetNames: string[];
+	sheetRowCounts: Record<string, number>;
+}> => {
 	await backendApi.loadFile(filePath);
 	const columns = await backendApi.getAllColumns([filePath]);
 	const workbookInfo = await backendApi.getWorkbookInfo(filePath);
 	const workbookData = workbookInfo as backendApi.SheetWorkbookGetInfoSuccess;
 	const sheetsInfo = workbookData.Sheets ?? [];
 	const rowsSum = sheetsInfo.reduce((acc, sheet) => acc + (sheet.RowCount ?? 0), 0);
-	return { columns, sheetCount: sheetsInfo.length, totalRows: rowsSum };
+	const sheetInfo = buildSheetInfo(sheetsInfo);
+	return {
+		columns,
+		sheetCount: sheetsInfo.length,
+		totalRows: rowsSum,
+		sheetNames: sheetInfo.sheetNames,
+		sheetRowCounts: sheetInfo.sheetRowCounts,
+	};
 };
 
 const mapTextReplacements = (
@@ -251,6 +323,9 @@ const computeValidationState = (args: {
 	columns: string[];
 	textReplacements: TextReplacement[];
 	imageReplacements: ImageReplacement[];
+	sheetNames: string[];
+	selectedSheets: string[];
+	sheetRowCounts: Record<string, number>;
 }): ValidationState => {
 	const templateExtPattern = /\.(pptx|potx)$/i;
 	const sheetExtPattern = /\.(xlsx|xlsm)$/i;
@@ -303,8 +378,23 @@ const computeValidationState = (args: {
 		hasDuplicateTextPlaceholders ||
 		hasDuplicateShapeIds;
 
+	const hasSelectedSheets =
+		args.sheetNames.length === 0 || args.selectedSheets.length > 0;
+	const hasSelectedRows =
+		args.sheetNames.length > 0 &&
+		args.selectedSheets.reduce(
+			(sum, sheet) => sum + (args.sheetRowCounts[sheet] ?? 0),
+			0,
+		) > 0;
+
 	const canStart =
-		isTemplateValid && isDataValid && isOutputValid && hasAnyConfig && !hasInvalidConfig;
+		isTemplateValid &&
+		isDataValid &&
+		isOutputValid &&
+		hasAnyConfig &&
+		!hasInvalidConfig &&
+		hasSelectedSheets &&
+		hasSelectedRows;
 
 	return {
 		canConfigure,
@@ -322,6 +412,7 @@ const startJob = async (args: {
 	canStart: boolean;
 	textReplacements: TextReplacement[];
 	imageReplacements: ImageReplacement[];
+	sheetNames: string[];
 	setPptxPath: React.Dispatch<React.SetStateAction<string>>;
 	setDataPath: React.Dispatch<React.SetStateAction<string>>;
 	setSavePath: React.Dispatch<React.SetStateAction<string>>;
@@ -355,6 +446,7 @@ const startJob = async (args: {
 			outputPath: resolvedSavePath,
 			textConfigs,
 			imageConfigs,
+			sheetNames: args.sheetNames.length > 0 ? args.sheetNames : undefined,
 		});
 		args.onStart();
 	} catch (error) {
@@ -370,30 +462,17 @@ const exportConfigToFile = async (args: {
 	pptxPath: string;
 	dataPath: string;
 	savePath: string;
-	columns: string[];
 	textReplacements: TextReplacement[];
 	imageReplacements: ImageReplacement[];
+	selectedSheets: string[];
 	showNotification: (type: 'success' | 'error', text: string) => void;
 	t: (key: string) => string;
 }) => {
-	const usedColumns: string[] = [];
-	const seen = new Set<string>();
-	const addColumns = (values: string[]) => {
-		values.forEach((value) => {
-			if (!seen.has(value)) {
-				seen.add(value);
-				usedColumns.push(value);
-			}
-		});
-	};
-	args.textReplacements.forEach((item) => addColumns(item.columns));
-	args.imageReplacements.forEach((item) => addColumns(item.columns));
-
 	const config = {
 		pptxPath: args.pptxPath,
 		dataPath: args.dataPath,
 		savePath: args.savePath,
-		columns: usedColumns,
+		selectedSheets: args.selectedSheets,
 		textReplacements: args.textReplacements,
 		imageReplacements: args.imageReplacements,
 	};
@@ -421,6 +500,9 @@ const importConfigFromFile = async (args: {
 	setColumns: React.Dispatch<React.SetStateAction<string[]>>;
 	setShapes: React.Dispatch<React.SetStateAction<Shape[]>>;
 	setPlaceholders: React.Dispatch<React.SetStateAction<string[]>>;
+	setSheetNames: React.Dispatch<React.SetStateAction<string[]>>;
+	setSelectedSheets: React.Dispatch<React.SetStateAction<string[]>>;
+	setSheetRowCounts: React.Dispatch<React.SetStateAction<Record<string, number>>>;
 	setSheetCount: React.Dispatch<React.SetStateAction<number>>;
 	setTotalRows: React.Dispatch<React.SetStateAction<number>>;
 	setTemplateLoaded: React.Dispatch<React.SetStateAction<boolean>>;
@@ -459,6 +541,9 @@ const importConfigFromFile = async (args: {
 		args.setShapes([]);
 		args.setPlaceholders([]);
 		args.setColumns([]);
+		args.setSheetNames([]);
+		args.setSelectedSheets([]);
+		args.setSheetRowCounts({});
 		args.setSheetCount(0);
 		args.setTotalRows(0);
 		args.setTemplateLoaded(false);
@@ -470,12 +555,26 @@ const importConfigFromFile = async (args: {
 			: { shapes: [], placeholders: [] };
 		const dataAssets = nextDataPath
 			? await loadDataAssets(nextDataPath)
-			: { columns: [], sheetCount: 0, totalRows: 0 };
+			: {
+					columns: [],
+					sheetCount: 0,
+					totalRows: 0,
+					sheetNames: [],
+					sheetRowCounts: {},
+				};
 
 		if (nextPptxPath) {
 			args.setTemplateLoaded(true);
 		}
 		if (nextDataPath) {
+			const requestedSheets = (config.selectedSheets ?? config.sheetNames ?? []).filter(
+				(name): name is string => typeof name === 'string',
+			);
+			const availableSheets = dataAssets.sheetNames;
+			const resolvedSelection = resolveRequestedSheets(availableSheets, requestedSheets);
+			args.setSheetNames(availableSheets);
+			args.setSelectedSheets(resolvedSelection);
+			args.setSheetRowCounts(normalizeSheetRowCounts(dataAssets.sheetRowCounts));
 			args.setSheetCount(dataAssets.sheetCount);
 			args.setTotalRows(dataAssets.totalRows);
 			args.setDataLoaded(true);
@@ -497,6 +596,11 @@ const importConfigFromFile = async (args: {
 		args.setColumns(dataAssets.columns);
 		args.setTextReplacements(filteredText);
 		args.setImageReplacements(filteredImages);
+		if (!nextDataPath) {
+			args.setSheetNames([]);
+			args.setSelectedSheets([]);
+			args.setSheetRowCounts({});
+		}
 		args.showNotification('success', args.t('createTask.importSuccess'));
 	} catch (_error) {
 		args.showNotification('error', args.t('createTask.importError'));
@@ -552,6 +656,9 @@ const scheduleDataLoad = (args: {
 	dataLoaded: boolean;
 	lastLoadedDataPath: string;
 	setColumns: React.Dispatch<React.SetStateAction<string[]>>;
+	setSheetNames: React.Dispatch<React.SetStateAction<string[]>>;
+	setSelectedSheets: React.Dispatch<React.SetStateAction<string[]>>;
+	setSheetRowCounts: React.Dispatch<React.SetStateAction<Record<string, number>>>;
 	setSheetCount: React.Dispatch<React.SetStateAction<number>>;
 	setTotalRows: React.Dispatch<React.SetStateAction<number>>;
 	setDataLoaded: React.Dispatch<React.SetStateAction<boolean>>;
@@ -560,6 +667,9 @@ const scheduleDataLoad = (args: {
 	if (args.isHydrating) return undefined;
 	if (!args.dataPath) {
 		args.setColumns([]);
+		args.setSheetNames([]);
+		args.setSelectedSheets([]);
+		args.setSheetRowCounts({});
 		args.setSheetCount(0);
 		args.setTotalRows(0);
 		args.setDataLoaded(false);
@@ -571,6 +681,9 @@ const scheduleDataLoad = (args: {
 	}
 
 	args.setColumns([]);
+	args.setSheetNames([]);
+	args.setSelectedSheets([]);
+	args.setSheetRowCounts({});
 	args.setSheetCount(0);
 	args.setTotalRows(0);
 	args.setDataLoaded(false);
@@ -644,6 +757,7 @@ type TextReplacementPanelProps = {
 	setShowTextConfigs: React.Dispatch<React.SetStateAction<boolean>>;
 	addTextReplacement: () => void;
 	textReplacements: TextReplacement[];
+	maxTextConfigs: number;
 	getAvailablePlaceholders: (current: string) => string[];
 	updateTextReplacement: (
 		id: number,
@@ -663,6 +777,7 @@ const TextReplacementPanel: React.FC<TextReplacementPanelProps> = ({
 	setShowTextConfigs,
 	addTextReplacement,
 	textReplacements,
+	maxTextConfigs,
 	getAvailablePlaceholders,
 	updateTextReplacement,
 	removeTextReplacement,
@@ -670,111 +785,123 @@ const TextReplacementPanel: React.FC<TextReplacementPanelProps> = ({
 	placeholders,
 	columns,
 	t,
-}) => (
-	<div className={`replacement-full-panel ${canConfigure ? '' : 'replacement-disabled'}`}>
-		<div className="panel-header">
-			<div className="panel-title">
+}) => {
+	const isAtLimit = maxTextConfigs > 0 && textReplacements.length >= maxTextConfigs;
+
+	return (
+		<div className={`replacement-full-panel ${canConfigure ? '' : 'replacement-disabled'}`}>
+			<div className="panel-header">
+				<div className="panel-title">
+					<button
+						type="button"
+						className="panel-title-toggle"
+						onClick={() => setShowTextConfigs((prev) => !prev)}
+						disabled={!canConfigure}
+						aria-expanded={showTextConfigs}
+					>
+						<img
+							src={getAssetPath('images', 'chevron-down.png')}
+							alt=""
+							className={`panel-title-icon ${showTextConfigs ? 'expanded' : ''}`}
+						/>
+						<h3>
+							{t('replacement.textTitle')}{' '}
+							<span className="panel-count">
+								({textReplacements.length}
+								{maxTextConfigs > 0 ? `/${maxTextConfigs}` : ''})
+							</span>
+						</h3>
+					</button>
+				</div>
 				<button
-					type="button"
-					className="panel-title-toggle"
-					onClick={() => setShowTextConfigs((prev) => !prev)}
-					disabled={!canConfigure}
-					aria-expanded={showTextConfigs}
+					className="btn btn-success"
+					onClick={addTextReplacement}
+					disabled={
+						!canConfigure || placeholders.length === 0 || textReplacements.length >= maxTextConfigs
+					}
+					title={
+						isAtLimit ? `${t('replacement.limitReached')}: ${maxTextConfigs}` : undefined
+					}
 				>
-					<img
-						src={getAssetPath('images', 'chevron-down.png')}
-						alt=""
-						className={`panel-title-icon ${showTextConfigs ? 'expanded' : ''}`}
-					/>
-					<h3>
-						{t('replacement.textTitle')}{' '}
-						<span className="panel-count">({textReplacements.length})</span>
-					</h3>
+					+ {t('replacement.add')}
 				</button>
 			</div>
-			<button
-				className="btn btn-success"
-				onClick={addTextReplacement}
-				disabled={!canConfigure || placeholders.length === 0}
-			>
-				+ {t('replacement.add')}
-			</button>
-		</div>
-		<div className={`panel-content ${showTextConfigs ? 'is-open' : ''}`}>
-			<div className="replacement-table replacement-table-text">
-				<table className="replacement-table-grid">
-					<colgroup>
-						<col className="col-main" />
-						<col className="col-main" />
-						<col className="col-action" />
-					</colgroup>
-					<thead>
-						<tr>
-							<th>{t('replacement.searchText')}</th>
-							<th>{t('replacement.column')}</th>
-							<th className="cell-action">{t('replacement.delete')}</th>
-						</tr>
-					</thead>
-					<tbody>
-						{textReplacements.map((item) => {
-							const available = getAvailablePlaceholders(item.placeholder);
-							return (
-								<tr key={item.id}>
-									<td>
-										<select
-											className="table-input"
-											value={item.placeholder}
-											onChange={(e) =>
-												updateTextReplacement(
-													item.id,
-													'placeholder',
-													e.target.value,
-												)
-											}
-											disabled={!canConfigure || isLoadingPlaceholders}
-										>
-											<option value="">
-												{t('replacement.searchPlaceholder')}
-											</option>
-											{available.map((placeholder) => (
-												<option key={placeholder} value={placeholder}>
-													{placeholder}
+			<div className={`panel-content ${showTextConfigs ? 'is-open' : ''}`}>
+				<div className="replacement-table replacement-table-text">
+					<table className="replacement-table-grid">
+						<colgroup>
+							<col className="col-main" />
+							<col className="col-main" />
+							<col className="col-action" />
+						</colgroup>
+						<thead>
+							<tr>
+								<th>{t('replacement.searchText')}</th>
+								<th>{t('replacement.column')}</th>
+								<th className="cell-action">{t('replacement.delete')}</th>
+							</tr>
+						</thead>
+						<tbody>
+							{textReplacements.map((item) => {
+								const available = getAvailablePlaceholders(item.placeholder);
+								return (
+									<tr key={item.id}>
+										<td>
+											<select
+												className="table-input"
+												value={item.placeholder}
+												onChange={(e) =>
+													updateTextReplacement(
+														item.id,
+														'placeholder',
+														e.target.value,
+													)
+												}
+												disabled={!canConfigure || isLoadingPlaceholders}
+											>
+												<option value="">
+													{t('replacement.searchPlaceholder')}
 												</option>
-											))}
-										</select>
-									</td>
-									<td>
-										<TagInput
-											value={item.columns}
-											onChange={(tags) =>
-												updateTextReplacement(item.id, 'columns', tags)
-											}
-											suggestions={columns}
-											placeholder={t('replacement.columnPlaceholder')}
-										/>
-									</td>
-									<td className="cell-action">
-										<button
-											className="delete-btn"
-											onClick={() => removeTextReplacement(item.id)}
-											title={t('replacement.delete')}
-										>
-											<img
-												src={getAssetPath('images', 'remove.png')}
-												alt="Delete"
-												className="delete-icon"
+												{available.map((placeholder) => (
+													<option key={placeholder} value={placeholder}>
+														{placeholder}
+													</option>
+												))}
+											</select>
+										</td>
+										<td>
+											<TagInput
+												value={item.columns}
+												onChange={(tags) =>
+													updateTextReplacement(item.id, 'columns', tags)
+												}
+												suggestions={columns}
+												placeholder={t('replacement.columnPlaceholder')}
 											/>
-										</button>
-									</td>
-								</tr>
-							);
-						})}
-					</tbody>
-				</table>
+										</td>
+										<td className="cell-action">
+											<button
+												className="delete-btn"
+												onClick={() => removeTextReplacement(item.id)}
+												title={t('replacement.delete')}
+											>
+												<img
+													src={getAssetPath('images', 'remove.png')}
+													alt="Delete"
+													className="delete-icon"
+												/>
+											</button>
+										</td>
+									</tr>
+								);
+							})}
+						</tbody>
+					</table>
+				</div>
 			</div>
 		</div>
-	</div>
-);
+	);
+};
 
 type ImageReplacementPanelProps = {
 	canConfigure: boolean;
@@ -782,6 +909,7 @@ type ImageReplacementPanelProps = {
 	setShowImageConfigs: React.Dispatch<React.SetStateAction<boolean>>;
 	addImageReplacement: () => void;
 	imageReplacements: ImageReplacement[];
+	maxImageConfigs: number;
 	shapes: Shape[];
 	getAvailableShapes: (current: string) => Shape[];
 	updateImageReplacement: (
@@ -807,6 +935,7 @@ const ImageReplacementPanel: React.FC<ImageReplacementPanelProps> = ({
 	setShowImageConfigs,
 	addImageReplacement,
 	imageReplacements,
+	maxImageConfigs,
 	shapes,
 	getAvailableShapes,
 	updateImageReplacement,
@@ -817,8 +946,11 @@ const ImageReplacementPanel: React.FC<ImageReplacementPanelProps> = ({
 	columns,
 	openPreview,
 	t,
-}) => (
-	<div className={`replacement-full-panel ${canConfigure ? '' : 'replacement-disabled'}`}>
+}) => {
+	const isAtLimit = maxImageConfigs > 0 && imageReplacements.length >= maxImageConfigs;
+
+	return (
+		<div className={`replacement-full-panel ${canConfigure ? '' : 'replacement-disabled'}`}>
 		<div className="panel-header">
 			<div className="panel-title">
 				<button
@@ -835,14 +967,20 @@ const ImageReplacementPanel: React.FC<ImageReplacementPanelProps> = ({
 					/>
 					<h3>
 						{t('replacement.imageTitle')}{' '}
-						<span className="panel-count">({imageReplacements.length})</span>
+						<span className="panel-count">
+							({imageReplacements.length}
+							{maxImageConfigs > 0 ? `/${maxImageConfigs}` : ''})
+						</span>
 					</h3>
 				</button>
 			</div>
 			<button
 				className="btn btn-success"
 				onClick={addImageReplacement}
-				disabled={!canConfigure || shapes.length === 0}
+				disabled={
+					!canConfigure || shapes.length === 0 || imageReplacements.length >= maxImageConfigs
+				}
+				title={isAtLimit ? `${t('replacement.limitReached')}: ${maxImageConfigs}` : undefined}
 			>
 				+ {t('replacement.add')}
 			</button>
@@ -987,6 +1125,7 @@ const ImageReplacementPanel: React.FC<ImageReplacementPanelProps> = ({
 		</div>
 	</div>
 );
+};
 
 type PreviewModalProps = {
 	previewShape: Shape;
@@ -1154,6 +1293,14 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
 	const [dataPath, setDataPath] = useState(savedState?.dataPath || '');
 	const [savePath, setSavePath] = useState(savedState?.savePath || '');
 	const [columns, setColumns] = useState<string[]>(savedState?.columns || []);
+	const initialSheetNames = normalizeSheetNames(savedState?.sheetNames);
+	const [sheetNames, setSheetNames] = useState<string[]>(initialSheetNames);
+	const [selectedSheets, setSelectedSheets] = useState<string[]>(
+		normalizeSheetNames(savedState?.selectedSheets ?? initialSheetNames),
+	);
+	const [sheetRowCounts, setSheetRowCounts] = useState<Record<string, number>>(
+		normalizeSheetRowCounts(savedState?.sheetRowCounts),
+	);
 	const [isLoadingColumns, setIsLoadingColumns] = useState(false);
 	const [isLoadingShapes, setIsLoadingShapes] = useState(false);
 	const [isLoadingPlaceholders, setIsLoadingPlaceholders] = useState(false);
@@ -1237,6 +1384,9 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
 			shapes,
 			placeholders,
 			columns,
+			sheetNames,
+			selectedSheets,
+			sheetRowCounts,
 			sheetCount,
 			totalRows,
 			templateLoaded,
@@ -1252,6 +1402,9 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
 		shapes,
 		placeholders,
 		columns,
+		sheetNames,
+		selectedSheets,
+		sheetRowCounts,
 		sheetCount,
 		totalRows,
 		templateLoaded,
@@ -1351,6 +1504,9 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
 			shapes: state.shapes || [],
 			placeholders: state.placeholders || [],
 			columns: state.columns || [],
+			sheetNames: normalizeSheetNames(state.sheetNames),
+			selectedSheets: normalizeSheetNames(state.selectedSheets ?? state.sheetNames),
+			sheetRowCounts: normalizeSheetRowCounts(state.sheetRowCounts),
 			sheetCount: state.sheetCount || 0,
 			totalRows: state.totalRows || 0,
 			templateLoaded: state.templateLoaded || false,
@@ -1360,6 +1516,9 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
 		setShapes(cached.shapes);
 		setPlaceholders(cached.placeholders);
 		setColumns(cached.columns);
+		setSheetNames(cached.sheetNames);
+		setSelectedSheets(cached.selectedSheets);
+		setSheetRowCounts(cached.sheetRowCounts);
 		setSheetCount(cached.sheetCount);
 		setTotalRows(cached.totalRows);
 		setTemplateLoaded(cached.templateLoaded);
@@ -1377,6 +1536,9 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
 			shapes: Shape[];
 			placeholders: string[];
 			columns: string[];
+			sheetNames: string[];
+			selectedSheets: string[];
+			sheetRowCounts: Record<string, number>;
 			sheetCount: number;
 			totalRows: number;
 			templateLoaded: boolean;
@@ -1392,6 +1554,8 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
 				? await loadDataAssets(nextDataPath)
 				: {
 						columns: cached.columns,
+						sheetNames: cached.sheetNames,
+						sheetRowCounts: cached.sheetRowCounts,
 						sheetCount: cached.sheetCount,
 						totalRows: cached.totalRows,
 					};
@@ -1427,6 +1591,11 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
 				nextDataPath,
 				cached,
 			);
+			const requestedSheets = (savedState.selectedSheets ?? savedState.sheetNames ?? []).filter(
+				(name): name is string => typeof name === 'string',
+			);
+			const availableSheets = dataAssets.sheetNames ?? [];
+			const resolvedSelection = resolveRequestedSheets(availableSheets, requestedSheets);
 			const filteredText = mapTextReplacements(
 				savedState,
 				templateAssets.placeholders,
@@ -1441,6 +1610,9 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
 			setShapes(templateAssets.shapes);
 			setPlaceholders(templateAssets.placeholders);
 			setColumns(dataAssets.columns);
+			setSheetNames(availableSheets);
+			setSelectedSheets(resolvedSelection);
+			setSheetRowCounts(normalizeSheetRowCounts(dataAssets.sheetRowCounts));
 			setTextReplacements(filteredText);
 			setImageReplacements(filteredImages);
 		} catch (error) {
@@ -1515,6 +1687,9 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
 		async (filePath: string) => {
 			if (!filePath) {
 				setColumns([]);
+				setSheetNames([]);
+				setSelectedSheets([]);
+				setSheetRowCounts({});
 				setSheetCount(0);
 				setTotalRows(0);
 				setDataLoaded(false);
@@ -1529,8 +1704,12 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
 				const workbookData = workbookInfo as backendApi.SheetWorkbookGetInfoSuccess;
 				const sheetsInfo = workbookData.Sheets ?? [];
 				const rowsSum = sheetsInfo.reduce((acc, sheet) => acc + (sheet.RowCount ?? 0), 0);
+				const sheetInfo = buildSheetInfo(sheetsInfo);
 
 				setColumns(allColumns);
+				setSheetNames(sheetInfo.sheetNames);
+				setSelectedSheets(sheetInfo.sheetNames);
+				setSheetRowCounts(normalizeSheetRowCounts(sheetInfo.sheetRowCounts));
 				setSheetCount(sheetsInfo.length);
 				setTotalRows(rowsSum);
 				setDataLoaded(true);
@@ -1540,6 +1719,9 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
 					notifyDataError(error);
 					setDataPath('');
 					setColumns([]);
+					setSheetNames([]);
+					setSelectedSheets([]);
+					setSheetRowCounts({});
 					setSheetCount(0);
 					setTotalRows(0);
 					setDataLoaded(false);
@@ -1576,6 +1758,9 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
 				dataLoaded,
 				lastLoadedDataPath: lastLoadedDataPathRef.current,
 				setColumns,
+				setSheetNames,
+				setSelectedSheets,
+				setSheetRowCounts,
 				setSheetCount,
 				setTotalRows,
 				setDataLoaded,
@@ -1610,7 +1795,11 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
 		if (path) setSavePath(path);
 	};
 
+	const maxTextConfigs = Math.min(placeholders.length, columns.length);
+	const maxImageConfigs = Math.min(shapes.length, columns.length);
+
 	const addTextReplacement = () => {
+		if (textReplacements.length >= maxTextConfigs) return;
 		setTextReplacements([
 			...textReplacements,
 			{
@@ -1636,6 +1825,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
 	};
 
 	const addImageReplacement = () => {
+		if (imageReplacements.length >= maxImageConfigs) return;
 		setImageReplacements([
 			...imageReplacements,
 			{
@@ -1673,9 +1863,9 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
 				pptxPath,
 				dataPath,
 				savePath,
-				columns,
 				textReplacements,
 				imageReplacements,
+				selectedSheets,
 				showNotification,
 				t,
 			}),
@@ -1683,9 +1873,9 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
 			pptxPath,
 			dataPath,
 			savePath,
-			columns,
 			textReplacements,
 			imageReplacements,
+			selectedSheets,
 			showNotification,
 			t,
 		],
@@ -1701,6 +1891,9 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
 				setColumns,
 				setShapes,
 				setPlaceholders,
+				setSheetNames,
+				setSelectedSheets,
+				setSheetRowCounts,
 				setSheetCount,
 				setTotalRows,
 				setTemplateLoaded,
@@ -1721,6 +1914,9 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
 			setColumns,
 			setShapes,
 			setPlaceholders,
+			setSheetNames,
+			setSelectedSheets,
+			setSheetRowCounts,
 			setSheetCount,
 			setTotalRows,
 			setTemplateLoaded,
@@ -1741,8 +1937,15 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
 			setDataPath('');
 			setSavePath('');
 			setColumns([]);
+			setSheetNames([]);
+			setSelectedSheets([]);
+			setSheetRowCounts({});
 			setShapes([]);
 			setPlaceholders([]);
+			setSheetCount(0);
+			setTotalRows(0);
+			setTemplateLoaded(false);
+			setDataLoaded(false);
 			clearReplacements();
 			lastLoadedTemplatePathRef.current = '';
 			lastLoadedDataPathRef.current = '';
@@ -1855,6 +2058,9 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
 				columns,
 				textReplacements,
 				imageReplacements,
+				sheetNames,
+				selectedSheets,
+				sheetRowCounts,
 			}),
 		[
 			pptxPath,
@@ -1868,7 +2074,34 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
 			columns,
 			textReplacements,
 			imageReplacements,
+			sheetNames,
+			selectedSheets,
+			sheetRowCounts,
 		],
+	);
+
+	const allSheetsSelected =
+		sheetNames.length > 0 && selectedSheets.length === sheetNames.length;
+	const someSheetsSelected =
+		selectedSheets.length > 0 && selectedSheets.length < sheetNames.length;
+
+	const toggleAllSheets = useCallback(() => {
+		setSelectedSheets(allSheetsSelected ? [] : sheetNames);
+	}, [allSheetsSelected, sheetNames]);
+
+	const toggleSheet = useCallback(
+		(sheetName: string) => {
+			setSelectedSheets((prev) => {
+				const next = new Set(prev);
+				if (next.has(sheetName)) {
+					next.delete(sheetName);
+				} else {
+					next.add(sheetName);
+				}
+				return sheetNames.filter((name) => next.has(name));
+			});
+		},
+		[sheetNames],
 	);
 
 	const getAvailablePlaceholders = useCallback(
@@ -1890,6 +2123,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
 				canStart,
 				textReplacements,
 				imageReplacements,
+				sheetNames: selectedSheets,
 				setPptxPath,
 				setDataPath,
 				setSavePath,
@@ -1906,6 +2140,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
 			canStart,
 			textReplacements,
 			imageReplacements,
+			selectedSheets,
 			setPptxPath,
 			setDataPath,
 			setSavePath,
@@ -1950,6 +2185,13 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
 				sheetCount={sheetCount}
 				uniqueColumnCount={uniqueColumnCount}
 				totalRows={totalRows}
+				sheetNames={sheetNames}
+				selectedSheets={selectedSheets}
+				sheetRowCounts={sheetRowCounts}
+				allSheetsSelected={allSheetsSelected}
+				someSheetsSelected={someSheetsSelected}
+				onToggleAllSheets={toggleAllSheets}
+				onToggleSheet={toggleSheet}
 				t={t}
 			/>
 
@@ -1961,6 +2203,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
 					setShowTextConfigs={setShowTextConfigs}
 					addTextReplacement={addTextReplacement}
 					textReplacements={textReplacements}
+					maxTextConfigs={maxTextConfigs}
 					getAvailablePlaceholders={getAvailablePlaceholders}
 					updateTextReplacement={updateTextReplacement}
 					removeTextReplacement={removeTextReplacement}
@@ -1976,6 +2219,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
 					setShowImageConfigs={setShowImageConfigs}
 					addImageReplacement={addImageReplacement}
 					imageReplacements={imageReplacements}
+					maxImageConfigs={maxImageConfigs}
 					shapes={shapes}
 					getAvailableShapes={getAvailableShapes}
 					updateImageReplacement={updateImageReplacement}
@@ -2125,6 +2369,13 @@ type DataInputSectionProps = {
 	sheetCount: number;
 	uniqueColumnCount: number;
 	totalRows: number;
+	sheetNames: string[];
+	selectedSheets: string[];
+	sheetRowCounts: Record<string, number>;
+	allSheetsSelected: boolean;
+	someSheetsSelected: boolean;
+	onToggleAllSheets: () => void;
+	onToggleSheet: (sheetName: string) => void;
 	t: (key: string) => string;
 };
 
@@ -2137,38 +2388,123 @@ const DataInputSection: React.FC<DataInputSectionProps> = ({
 	sheetCount,
 	uniqueColumnCount,
 	totalRows,
+	sheetNames,
+	selectedSheets,
+	sheetRowCounts,
+	allSheetsSelected,
+	someSheetsSelected,
+	onToggleAllSheets,
+	onToggleSheet,
 	t,
-}) => (
-	<div className="input-section">
-		<label className="input-label">{t('createTask.dataFile')}</label>
-		<div className="input-group">
-			<input
-				type="text"
-				className="input-field"
-				value={dataPath}
-				onChange={(e) => onChangePath(e.target.value)}
-				placeholder={t('createTask.dataPlaceholder')}
-			/>
-			<button className="browse-btn" onClick={onBrowse} disabled={isLoadingColumns}>
-				{isLoadingColumns ? t('createTask.loadingColumns') : t('createTask.browse')}
-			</button>
-		</div>
-		{dataLoaded && !isLoadingColumns && (
-			<div className="input-meta">
-				<span className="input-meta-title">{t('createTask.dataInfoLabel')}</span>
-				<span>
-					{t('createTask.sheetCount')}: {sheetCount}
-				</span>
-				<span>
-					{t('createTask.columnCount')}: {uniqueColumnCount}
-				</span>
-				<span>
-					{t('createTask.rowCount')}: {totalRows}
-				</span>
+}) => {
+	const selectAllRef = useRef<HTMLInputElement>(null);
+	const [isSheetListOpen, setIsSheetListOpen] = useState(true);
+	const selectedRowCount = selectedSheets.reduce(
+		(sum, sheet) => sum + (sheetRowCounts[sheet] ?? 0),
+		0,
+	);
+
+	useEffect(() => {
+		if (selectAllRef.current) {
+			selectAllRef.current.indeterminate = someSheetsSelected;
+		}
+	}, [someSheetsSelected]);
+
+	return (
+		<div className="input-section">
+			<label className="input-label">{t('createTask.dataFile')}</label>
+			<div className="input-group">
+				<input
+					type="text"
+					className="input-field"
+					value={dataPath}
+					onChange={(e) => onChangePath(e.target.value)}
+					placeholder={t('createTask.dataPlaceholder')}
+				/>
+				<button className="browse-btn" onClick={onBrowse} disabled={isLoadingColumns}>
+					{isLoadingColumns ? t('createTask.loadingColumns') : t('createTask.browse')}
+				</button>
 			</div>
-		)}
-	</div>
-);
+			{dataLoaded && !isLoadingColumns && (
+				<div className="input-meta">
+					<span className="input-meta-title">{t('createTask.dataInfoLabel')}</span>
+					<span>
+						{t('createTask.sheetCount')}: {sheetCount}
+					</span>
+					<span>
+						{t('createTask.columnCount')}: {uniqueColumnCount}
+					</span>
+					<span>
+						{t('createTask.rowCount')}: {totalRows}
+					</span>
+				</div>
+			)}
+			{dataLoaded && !isLoadingColumns && sheetNames.length > 0 && (
+				<div className="sheet-selector">
+					<div className="sheet-selector-header">
+						<button
+							type="button"
+							className="sheet-selector-toggle"
+							onClick={() => setIsSheetListOpen((prev) => !prev)}
+							aria-label={
+								isSheetListOpen
+									? t('createTask.sheetToggleCollapse')
+									: t('createTask.sheetToggleExpand')
+							}
+							title={
+								isSheetListOpen
+									? t('createTask.sheetToggleCollapse')
+									: t('createTask.sheetToggleExpand')
+							}
+						>
+							<img
+								src={getAssetPath('images', 'chevron-down.png')}
+								alt=""
+								className={`sheet-toggle-icon${
+									isSheetListOpen ? ' is-open' : ''
+								}`}
+							/>
+							<span className="sheet-selector-title">
+								{t('createTask.sheetSelectTitle')}
+							</span>
+							<span className="sheet-selector-total">
+								{t('createTask.selectedRowCount')}: {selectedRowCount}
+							</span>
+						</button>
+						<label className="sheet-selector-all">
+							<input
+								ref={selectAllRef}
+								type="checkbox"
+								checked={allSheetsSelected}
+								onChange={onToggleAllSheets}
+							/>
+							<span>{t('createTask.sheetSelectAll')}</span>
+						</label>
+						<span className="sheet-selector-count">
+							{t('createTask.sheetSelected')}: {selectedSheets.length}/{sheetNames.length}
+						</span>
+					</div>
+					<div
+						className={`sheet-selector-list${
+							isSheetListOpen ? ' is-open' : ' is-collapsed'
+						}`}
+					>
+						{sheetNames.map((sheet) => (
+							<label key={sheet} className="sheet-selector-item" title={sheet}>
+								<input
+									type="checkbox"
+									checked={selectedSheets.includes(sheet)}
+									onChange={() => onToggleSheet(sheet)}
+								/>
+								<span className="sheet-selector-name">{sheet}</span>
+							</label>
+						))}
+					</div>
+				</div>
+			)}
+		</div>
+	);
+};
 
 type SaveLocationSectionProps = {
 	savePath: string;
