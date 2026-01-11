@@ -88,13 +88,13 @@ const ResultMenu: React.FC = () => {
 	};
 
 	const handleRemoveGroup = async (groupId: string) => {
-		if (confirm(`${t('results.removeGroup')}?`)) {
+		if (confirm(t('results.confirmRemoveGroup'))) {
 			await removeGroup(groupId);
 		}
 	};
 
 	const handleClearAll = async () => {
-		if (confirm(`${t('results.clearAll')}?`)) {
+		if (confirm(t('results.confirmClearAll'))) {
 			await clearCompleted();
 		}
 	};

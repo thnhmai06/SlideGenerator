@@ -1736,7 +1736,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
 	);
 
 	const clearAll = () => {
-		if (confirm(t('createTask.confirmClear') || 'Clear all data?')) {
+		if (confirm(t('createTask.confirmClear') || 'Are you sure you want to clear all data?')) {
 			setPptxPath('');
 			setDataPath('');
 			setSavePath('');
