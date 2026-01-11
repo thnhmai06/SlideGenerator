@@ -4,6 +4,7 @@ import { useJobs } from '../contexts/useJobs';
 import type { SheetJob } from '../contexts/JobContextType';
 import { getBackendBaseUrl } from '../services/signalrClient';
 import { getAssetPath } from '../utils/paths';
+import { formatUserDateTime, formatUserTime } from '../utils/time';
 import '../styles/ProcessMenu.css';
 
 type LogEntry = {
@@ -239,7 +240,7 @@ const SheetItem: React.FC<SheetItemProps> = ({
 };
 
 const ProcessMenu: React.FC = () => {
-	const { t } = useApp();
+	const { t, language } = useApp();
 	const {
 		groups,
 		groupControl,
@@ -375,7 +376,8 @@ const ProcessMenu: React.FC = () => {
 	};
 
 	const formatLogEntry = (entry: LogEntry, jobLabel?: string) => {
-		const time = entry.timestamp ? `[${new Date(entry.timestamp).toLocaleTimeString()}] ` : '';
+		const timeValue = formatUserTime(entry.timestamp, language);
+		const time = timeValue ? `[${timeValue}] ` : '';
 		const level = entry.level ? `${entry.level}: ` : '';
 		const job = jobLabel ? `${jobLabel}: ` : '';
 		return `${time}${level}${job}${entry.message}`;
@@ -448,9 +450,7 @@ const ProcessMenu: React.FC = () => {
 
 	const formatTime = (value?: string) => {
 		if (!value) return '';
-		const date = new Date(value);
-		if (Number.isNaN(date.getTime())) return '';
-		return date.toLocaleString();
+		return formatUserDateTime(value, language);
 	};
 
 	return (
