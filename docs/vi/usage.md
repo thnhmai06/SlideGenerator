@@ -1,51 +1,51 @@
 # Hướng dẫn sử dụng
 
-English version: [English](../en/usage.md)
+[English](../en/usage.md)
 
 ## Điều kiện
 
-- Backend đang chạy (Electron có thể tự start).
+- Backend đang chạy (Electron có thể tự khởi động).
 - Template: `.pptx` hoặc `.potx`.
 - Spreadsheet: `.xlsx` hoặc `.xlsm`.
 
 ## Kết nối backend
 
 1. Mở **Settings**.
-2. Kiểm tra host/port (mặc định local).
-3. Lưu thay đổi và restart backend nếu được yêu cầu.
+2. Kiểm tra host/port (mặc định là local).
+3. Lưu và restart backend nếu được yêu cầu.
 
-## Tạo task
+## Tạo task (group job)
 
-1. Chọn file template và file spreadsheet.
-2. Chờ load shapes/placeholders và headers.
-3. Thêm mapping text và image.
-4. Chọn output path.
-5. Bấm **Create Task**.
+1. Chọn template PowerPoint.
+2. Chọn file Excel và chờ tải cột/sheet.
+3. Thiết lập text/image replacements.
+4. Chọn sheet cần xử lý (tuỳ chọn).
+5. Chọn thư mục output.
+6. Nhấn **Create Task**.
 
 Ghi chú:
 
-- Group task = một workbook + một template + thư mục output.
-- Sheet task = một sheet → một file output.
+- Group job đại diện một template + một workbook + một thư mục output.
+- Sheet job là từng sheet nằm trong group.
+- Progress và thống kê dựa trên số row/slide, không dựa trên số job.
 
-## Theo dõi xử lý
+## Xử lý
 
-Mở **Process** để:
+Trong **Processing** bạn có thể:
 
 - Pause/Resume group hoặc sheet.
-- Cancel task.
-- Xem progress và log theo dòng.
-- Tiến độ nhóm hiển thị slide hoàn thành/tổng slide (job hoàn thành/tổng job) và % theo số slide.
+- Cancel job.
+- Xem log theo từng row.
 
 ## Kết quả
 
-Mở **Result** để:
+Trong **Results** bạn có thể:
 
-- Xem nhóm đã hoàn thành/lỗi/hủy.
+- Xem nhóm hoàn thành/lỗi/huỷ.
 - Mở thư mục hoặc file output.
-- Clear kết quả (xóa state phía backend).
-- Remove group/sheet cũng xóa state backend.
+- Xoá group/sheet (đồng thời xoá state trên backend).
 
-## Export/Import cấu hình
+## Export/import config
 
 - **Create Task** hỗ trợ export/import JSON.
-- Mỗi group có nút export nhanh.
+- Mỗi group có chức năng export config nhanh.

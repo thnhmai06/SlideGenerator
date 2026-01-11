@@ -1,35 +1,39 @@
 # Tổng quan Frontend
 
-English version: [English](../en/overview.md)
+[English](../en/overview.md)
 
 ## Mục tiêu
 
-Frontend là ứng dụng Electron desktop với UI React. Ứng dụng kết nối backend qua SignalR và coi backend là nguồn dữ liệu chuẩn cho trạng thái job.
+- Ứng dụng desktop để tạo và theo dõi job tạo slide.
+- Backend là nguồn dữ liệu chính; UI kết nối qua SignalR.
+- Ưu tiên chạy local: settings và trạng thái UI được lưu trên máy.
 
 ## Kiến trúc
 
-- UI: React + TypeScript.
-- Desktop shell: Electron (main + preload).
-- Kết nối backend: các wrapper SignalR trong `src/services`.
+- [src/app](../../src/app): app shell và providers.
+- [src/features](../../src/features): các màn hình theo feature (create-task, process, results, settings, about).
+- [src/shared](../../src/shared): UI chung, contexts, services, utils, locales, styles.
+- [electron](../../electron): main/preload và tray.
 
-## Mô hình runtime
+## Luồng chạy
 
-1. Electron tạo cửa sổ và (tùy chọn) khởi chạy backend.
-2. UI ket noi `/hubs/job` (alias: `/hubs/task`), `/hubs/sheet`, `/hubs/config`.
-3. Du lieu job va notification duoc stream qua SignalR.
+1. Electron main mở renderer và (tuỳ chọn) khởi chạy backend.
+2. Renderer kết nối `/hubs/job`, `/hubs/sheet`, `/hubs/config`.
+3. UI cập nhật từ notification và truy vấn trực tiếp.
 
-## Lưu trữ
+## Storage keys
 
-- URL backend: `localStorage.slidegen.backend.url`.
-- Cache input Create Task: `sessionStorage.slidegen.ui.inputMenu.state`.
-- Cache metadata/config group:
-    - `sessionStorage.slidegen.group.meta`
-    - `sessionStorage.slidegen.group.config`
+- `localStorage.slidegen.backend.url`: base URL backend đang dùng.
+- `localStorage.slidegen.backend.url.pending`: URL pending (được promote một lần).
+- `sessionStorage.slidegen.backend.url.pending.defer`: trì hoãn promote trong session.
+- `sessionStorage.slidegen.ui.inputsideBar.state`: bản nháp Create Task.
+- `sessionStorage.slidegen.group.meta`: cache group meta.
+- `sessionStorage.slidegen.group.config`: cache group config.
 
 ## Logs
 
-Log nằm ở `frontend/logs/<timestamp>/`:
+`frontend/logs/<timestamp>/`:
 
-- `process.log`: Electron main process.
-- `renderer.log`: log renderer (DevTools).
-- `backend.log`: log backend (khi Electron start).
+- `process.log`: Electron main.
+- `renderer.log`: renderer (DevTools).
+- `backend.log`: backend khi chạy qua Electron.
