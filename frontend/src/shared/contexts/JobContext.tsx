@@ -731,27 +731,11 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 			if (!window.electronAPI) return false;
 			const config = await resolveGroupConfig(groupId);
 			if (!config) return false;
-			const columns: string[] = [];
-			const seen = new Set<string>();
-			const addColumns = (values: string[] | undefined) => {
-				values?.forEach((value) => {
-					if (!seen.has(value)) {
-						seen.add(value);
-						columns.push(value);
-					}
-				});
-			};
-			for (const item of config.textConfigs ?? []) {
-				addColumns(item.Columns);
-			}
-			for (const item of config.imageConfigs ?? []) {
-				addColumns(item.Columns);
-			}
 			const exportPayload = {
 				pptxPath: config.templatePath,
 				dataPath: config.spreadsheetPath,
 				savePath: config.outputPath,
-				columns,
+				selectedSheets: config.sheetNames,
 				textReplacements: (config.textConfigs ?? []).map((item, index) => ({
 					id: index + 1,
 					placeholder: item.Pattern,
