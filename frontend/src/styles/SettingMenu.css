@@ -70,7 +70,18 @@
 
 .setting-section--locked {
 	opacity: 0.4;
-	pointer-events: none;
+	cursor: not-allowed;
+}
+
+.setting-menu input:disabled,
+.setting-menu select:disabled,
+.setting-menu textarea:disabled,
+.setting-menu button:disabled {
+	cursor: not-allowed;
+}
+
+.toggle-switch input:disabled + .toggle-slider {
+	cursor: not-allowed;
 }
 
 .setting-section h3 {
