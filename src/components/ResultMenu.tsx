@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useApp } from '../contexts/useApp';
 import { useJobs } from '../contexts/useJobs';
 import { getAssetPath } from '../utils/paths';
+import { formatUserDateTime, formatUserTime } from '../utils/time';
 import '../styles/ResultMenu.css';
 
 type LogEntry = {
@@ -20,7 +21,7 @@ type RowLogGroup = {
 };
 
 const ResultMenu: React.FC = () => {
-	const { t } = useApp();
+	const { t, language } = useApp();
 	const {
 		groups,
 		clearCompleted,
@@ -100,7 +101,8 @@ const ResultMenu: React.FC = () => {
 	};
 
 	const formatLogEntry = (entry: LogEntry, jobLabel?: string) => {
-		const time = entry.timestamp ? `[${new Date(entry.timestamp).toLocaleTimeString()}] ` : '';
+		const timeValue = formatUserTime(entry.timestamp, language);
+		const time = timeValue ? `[${timeValue}] ` : '';
 		const level = entry.level ? `${entry.level}: ` : '';
 		const job = jobLabel ? `${jobLabel}: ` : '';
 		return `${time}${level}${job}${entry.message}`;
@@ -128,18 +130,24 @@ const ResultMenu: React.FC = () => {
 		return groups;
 	};
 
-	const summarizeSheets = (sheets: Array<{ status: string; progress: number }>) => {
-		let completed = 0;
-		let failed = 0;
-		let totalProgress = 0;
+	const summarizeSheets = (
+		sheets: Array<{ status: string; currentRow: number; totalRows: number }>,
+	) => {
+		let completedSlides = 0;
+		let failedSlides = 0;
+		let totalSlides = 0;
 
 		sheets.forEach((sheet) => {
-			if (sheet.status === 'Completed') completed += 1;
-			if (sheet.status === 'Failed' || sheet.status === 'Cancelled') failed += 1;
-			totalProgress += sheet.progress;
+			const total = sheet.totalRows ?? 0;
+			const done = Math.min(sheet.currentRow ?? 0, total);
+			totalSlides += total;
+			completedSlides += done;
+			if (sheet.status === 'Failed' || sheet.status === 'Cancelled') {
+				failedSlides += Math.max(total - done, 0);
+			}
 		});
 
-		return { completed, failed, totalProgress };
+		return { completedSlides, failedSlides, totalSlides };
 	};
 
 	const toggleRowGroup = (key: string) => {
@@ -151,9 +159,7 @@ const ResultMenu: React.FC = () => {
 
 	const formatTime = (value?: string) => {
 		if (!value) return '';
-		const date = new Date(value);
-		if (Number.isNaN(date.getTime())) return '';
-		return date.toLocaleString();
+		return formatUserDateTime(value, language);
 	};
 
 	return (
@@ -184,10 +190,9 @@ const ResultMenu: React.FC = () => {
 					<div className="output-list">
 						{completedGroups.map((group) => {
 							const sheets = Object.values(group.sheets);
-							const { completed, failed, totalProgress } = summarizeSheets(sheets);
-							const groupProgress = sheets.length
-								? totalProgress / sheets.length
-								: group.progress;
+							const { completedSlides, failedSlides, totalSlides } =
+								summarizeSheets(sheets);
+							const groupProgress = group.progress;
 							const groupName = deriveGroupName(group.workbookPath, group.id);
 							const showDetails = expandedGroups[group.id] ?? false;
 
@@ -216,21 +221,22 @@ const ResultMenu: React.FC = () => {
 												</div>
 												<div className="group-stats-line">
 													<span>
-														{completed}/{sheets.length} -{' '}
+														{completedSlides}/{totalSlides}{' '}
+														{t('process.slides')} -{' '}
 														{Math.round(groupProgress)}%
 													</span>
 													<span
 														className="stat-badge stat-success"
 														title={t('process.successSlides')}
 													>
-														{completed}
+														{completedSlides}
 													</span>
 													<span className="stat-divider">|</span>
 													<span
 														className="stat-badge stat-failed"
 														title={t('process.failedSlides')}
 													>
-														{failed}
+														{failedSlides}
 													</span>
 												</div>
 											</div>
