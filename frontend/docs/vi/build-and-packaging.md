@@ -1,6 +1,6 @@
 # Build và đóng gói
 
-English version: [English](../en/build-and-packaging.md)
+[English](../en/build-and-packaging.md)
 
 ## Build
 
@@ -11,7 +11,7 @@ npm run build:backend
 npm run build
 ```
 
-Hoặc chạy một lệnh:
+Hoặc dùng script gộp:
 
 ```bash
 npm run build:full
@@ -21,7 +21,7 @@ npm run build:full
 
 ## Backend subprocess
 
-Electron chạy backend:
+Electron khởi chạy backend:
 
 - Development: `dotnet run --project backend/src/SlideGenerator.Presentation/...`
 - Production: `SlideGenerator.Presentation.exe` (hoặc `dotnet SlideGenerator.Presentation.dll`)

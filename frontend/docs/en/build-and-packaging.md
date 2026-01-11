@@ -1,6 +1,6 @@
 # Build and Packaging
 
-Vietnamese version: [Vietnamese](../vi/build-and-packaging.md)
+[Tiếng Việt](../vi/build-and-packaging.md)
 
 ## Build
 

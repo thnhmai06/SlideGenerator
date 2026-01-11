@@ -1,49 +1,49 @@
 # Usage Guide
 
-Vietnamese version: [Vietnamese](../vi/usage.md)
+[Tiếng Việt](../vi/usage.md)
 
 ## Prerequisites
 
 - Backend is running (Electron can start it automatically).
-- Template file: `.pptx` or `.potx`.
-- Spreadsheet file: `.xlsx` or `.xlsm`.
+- Template: `.pptx` or `.potx`.
+- Spreadsheet: `.xlsx` or `.xlsm`.
 
 ## Connect to backend
 
 1. Open **Settings**.
-2. Confirm host/port (default is local).
+2. Check host/port (defaults to local).
 3. Save changes and restart backend if prompted.
 
-## Create a job
+## Create a task (group job)
 
-1. Choose a PowerPoint template and a spreadsheet.
-2. Wait for shapes/placeholders and headers to load.
+1. Choose a PowerPoint template.
+2. Choose a spreadsheet and wait for columns/sheets to load.
 3. Add text and image replacements.
-4. Choose output path.
-5. Click **Create Task**.
+4. Optionally pick specific sheets to process.
+5. Choose output folder.
+6. Click **Create Task**.
 
 Notes:
 
-- Group job = one workbook + one template + output folder.
-- Sheet job = one sheet → one output file.
+- A group job represents one template + one workbook + one output folder.
+- A sheet job represents one sheet inside the group.
+- Progress and counts are based on slide rows, not the number of jobs.
 
-## Monitor processing
+## Processing
 
-Open **Process** to:
+Use **Processing** to:
 
-- Pause/Resume group or sheet jobs.
+- Pause/resume group or sheet jobs.
 - Cancel jobs.
-- Watch progress and row-level logs.
-- Group progress shows slides completed/total (jobs completed/total), and % is based on slides.
+- View row-level logs grouped by row.
 
 ## Results
 
-Open **Result** to:
+Use **Results** to:
 
 - View completed/failed/cancelled groups.
 - Open output folder or file.
-- Clear results from the UI (also removes backend state).
-- Removing a group or sheet also deletes backend state.
+- Remove a group or sheet (also clears backend state).
 
 ## Export/import configs
 

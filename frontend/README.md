@@ -1,6 +1,6 @@
 # SlideGenerator Frontend
 
-Electron + React client for SlideGenerator. It talks to the backend via SignalR and is optimized for local/offline usage.
+Electron + React desktop client for SlideGenerator. It connects to the backend via SignalR and runs fully local.
 
 ## Quick start
 
@@ -10,7 +10,18 @@ npm install
 npm run dev
 ```
 
-The Electron main process can start the backend automatically. You can also run the backend manually from `backend/`.
+## Structure
+
+- [src/app](src/app): app shell, providers, and top-level layout.
+- [src/features](src/features): feature screens (create-task, process, results, settings, about).
+- [src/shared](src/shared): shared UI, contexts, services, utils, locales, and styles.
+- [electron](electron): Electron main + preload.
+- [assets](assets): fonts and images.
+- [test](test): test setup and MSW handlers.
+
+## Aliases
+
+- `@/` maps to `src/`.
 
 ## Docs
 

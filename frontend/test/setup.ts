@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom';
+import { server } from './mocks/server';
 
 // Mock localStorage
 const localStorageMock = (function () {
@@ -20,3 +21,7 @@ const localStorageMock = (function () {
 Object.defineProperty(window, 'localStorage', {
 	value: localStorageMock,
 });
+
+beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
+afterEach(() => server.resetHandlers());
+afterAll(() => server.close());

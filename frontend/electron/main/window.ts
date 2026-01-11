@@ -1,7 +1,7 @@
 import { app, BrowserWindow, Menu, Tray, ipcMain } from 'electron';
 import { readFileSync } from 'fs';
 import path from 'path';
-import { translations } from '../../src/locales';
+import { translations } from '../../src/shared/locales';
 
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;

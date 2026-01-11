@@ -1,35 +1,39 @@
 # Frontend Overview
 
-Vietnamese version: [Vietnamese](../vi/overview.md)
+[Tiếng Việt](../vi/overview.md)
 
 ## Purpose
 
-The frontend is a desktop Electron app that hosts a React UI. It connects to the backend via SignalR and treats the backend as the source of truth for job state.
+- Desktop UI for creating and monitoring slide jobs.
+- Backend is the source of truth; the UI connects via SignalR.
+- Local-first: settings and UI state are stored on device.
 
 ## Architecture
 
-- UI layer: React + TypeScript.
-- Desktop shell: Electron (main + preload).
-- Backend bridge: SignalR client wrappers in `src/services`.
+- [src/app](../../src/app): app shell and providers.
+- [src/features](../../src/features): feature screens (create-task, process, results, settings, about).
+- [src/shared](../../src/shared): shared UI, contexts, services, utils, locales, styles.
+- [electron](../../electron): main/preload processes and tray menu.
 
-## Runtime model
+## Runtime flow
 
-1. Electron main process starts the window and (optionally) the backend.
-2. The UI connects to `/hubs/job` (alias: `/hubs/task`), `/hubs/sheet`, and `/hubs/config`.
-3. Job data and notifications stream over SignalR.
+1. Electron main starts the renderer and optionally the backend.
+2. Renderer connects to `/hubs/job`, `/hubs/sheet`, `/hubs/config`.
+3. The UI updates from hub notifications and explicit queries.
 
-## Storage
+## Storage keys
 
-- Backend URL: `localStorage.slidegen.backend.url`.
-- Create Task input cache: `sessionStorage.slidegen.ui.inputMenu.state`.
-- Group metadata/config cache:
-    - `sessionStorage.slidegen.group.meta`
-    - `sessionStorage.slidegen.group.config`
+- `localStorage.slidegen.backend.url`: active backend base URL.
+- `localStorage.slidegen.backend.url.pending`: pending URL (promoted once).
+- `sessionStorage.slidegen.backend.url.pending.defer`: defers promotion for the session.
+- `sessionStorage.slidegen.ui.inputsideBar.state`: Create Task draft.
+- `sessionStorage.slidegen.group.meta`: cached group meta.
+- `sessionStorage.slidegen.group.config`: cached group configs.
 
 ## Logs
 
-Logs are stored under `frontend/logs/<timestamp>/`:
+`frontend/logs/<timestamp>/`:
 
 - `process.log`: Electron main process.
 - `renderer.log`: renderer (DevTools) logs.
-- `backend.log`: backend output (when launched by Electron).
+- `backend.log`: backend output when launched by Electron.
