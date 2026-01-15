@@ -76,10 +76,6 @@ public class ConfigHub(
             new ImageConfig(
                 new FaceConfig(
                     config.Image.Face.Confidence,
-                    config.Image.Face.PaddingTop,
-                    config.Image.Face.PaddingBottom,
-                    config.Image.Face.PaddingLeft,
-                    config.Image.Face.PaddingRight,
                     config.Image.Face.UnionAll),
                 new SaliencyConfig(
                     config.Image.Saliency.PaddingTop,
@@ -130,10 +126,6 @@ public class ConfigHub(
                     Face = new Config.ImageConfig.FaceConfig
                     {
                         Confidence = request.Image.Face.Confidence,
-                        PaddingTop = request.Image.Face.PaddingTop,
-                        PaddingBottom = request.Image.Face.PaddingBottom,
-                        PaddingLeft = request.Image.Face.PaddingLeft,
-                        PaddingRight = request.Image.Face.PaddingRight,
                         UnionAll = request.Image.Face.UnionAll
                     },
                     Saliency = new Config.ImageConfig.SaliencyConfig

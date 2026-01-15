@@ -28,16 +28,10 @@ job:
 
 # Image processing configuration
 image:
-  # Face detection settings for Attention mode
+  # Face detection settings
   face:
     # Minimum confidence score (0-1) for face detection
     confidence: 0.6
-
-    # Padding ratios around detected faces (0-1)
-    padding_top: 0.15
-    padding_bottom: 0.15
-    padding_left: 0.15
-    padding_right: 0.15
 
     # If true, union all detected faces; if false, pick the best single face
     union_all: true
