@@ -6,6 +6,7 @@ using SlideGenerator.Application.Features.Configs.DTOs.Components;
 using SlideGenerator.Application.Features.Configs.DTOs.Requests;
 using SlideGenerator.Application.Features.Configs.DTOs.Responses.Errors;
 using SlideGenerator.Application.Features.Configs.DTOs.Responses.Successes;
+using SlideGenerator.Application.Features.Images;
 using SlideGenerator.Application.Features.Jobs.Contracts;
 using SlideGenerator.Domain.Configs;
 using SlideGenerator.Domain.Features.Jobs.Enums;
@@ -19,6 +20,7 @@ namespace SlideGenerator.Presentation.Features.Configs;
 /// </summary>
 public class ConfigHub(
     IJobManager jobManager,
+    IImageService imageService,
     ILogger<ConfigHub> logger) : HubBase
 {
     /// <inheritdoc />
@@ -49,6 +51,8 @@ public class ConfigHub(
                 "update" => ExecuteUpdateConfig(Deserialize<ConfigUpdate>(message)),
                 "reload" => ExecuteReloadConfig(),
                 "reset" => ExecuteResetConfig(),
+                "modelstatus" => ExecuteGetModelStatus(),
+                "modelcontrol" => await ExecuteModelControlAsync(Deserialize<ModelControl>(message)),
                 _ => throw new ArgumentOutOfRangeException(nameof(typeStr), typeStr, "Unknown config request type")
             };
         }
@@ -168,6 +172,53 @@ public class ConfigHub(
         logger.LogInformation("Configuration reset to defaults by client {ConnectionId}", Context.ConnectionId);
 
         return new ConfigResetSuccess(true, "Configuration reset to defaults");
+    }
+
+    private ModelStatusSuccess ExecuteGetModelStatus()
+    {
+        return new ModelStatusSuccess(imageService.IsFaceModelAvailable);
+    }
+
+    private async Task<ModelControlSuccess> ExecuteModelControlAsync(ModelControl request)
+    {
+        var model = request.Model.ToLowerInvariant();
+        var action = request.Action.ToLowerInvariant();
+
+        if (model != "face")
+            throw new ArgumentException($"Unknown model: {request.Model}");
+
+        bool success;
+        string message;
+
+        switch (action)
+        {
+            case "init":
+                if (HasWorkingJobs())
+                    throw new InvalidOperationException("Cannot initialize model while jobs are running.");
+                await imageService.InitFaceModelAsync();
+                success = imageService.IsFaceModelAvailable;
+                message = success
+                    ? "Face detection model initialized successfully"
+                    : "Failed to initialize face detection model";
+                logger.LogInformation("Face model init by client {ConnectionId}: {Success}", Context.ConnectionId, success);
+                break;
+
+            case "deinit":
+                if (HasWorkingJobs())
+                    throw new InvalidOperationException("Cannot deinitialize model while jobs are running.");
+                await imageService.DeInitFaceModelAsync();
+                success = !imageService.IsFaceModelAvailable;
+                message = success
+                    ? "Face detection model deinitialized successfully"
+                    : "Failed to deinitialize face detection model";
+                logger.LogInformation("Face model deinit by client {ConnectionId}: {Success}", Context.ConnectionId, success);
+                break;
+
+            default:
+                throw new ArgumentException($"Unknown action: {request.Action}");
+        }
+
+        return new ModelControlSuccess(request.Model, request.Action, success, message);
     }
 
     private bool HasWorkingJobs()

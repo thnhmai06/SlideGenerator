@@ -49,86 +49,40 @@ const getErrorDetail = (error: unknown): string => {
 	return '';
 };
 
-const getCaseInsensitive = <T extends Record<string, unknown>>(
-	obj: T | null | undefined,
-	key: string,
-) => {
-	if (!obj) return undefined;
-	if (key in obj) return obj[key];
-	const lowered = key.toLowerCase();
-	for (const [entryKey, value] of Object.entries(obj)) {
-		if (entryKey.toLowerCase() === lowered) {
-			return value;
-		}
-	}
-	return undefined;
-};
-
-const getSectionOrThrow = (root: Record<string, unknown>, key: string): Record<string, unknown> => {
-	const section = getCaseInsensitive(root, key) as Record<string, unknown> | undefined;
-	if (!section) throw new Error('Invalid config response.');
-	return section;
-};
-
-const parseServerConfig = (server: Record<string, unknown>) => {
-	return {
-		host: String(getCaseInsensitive(server, 'Host') ?? ''),
-		port: Number(getCaseInsensitive(server, 'Port') ?? 0),
-		debug: Boolean(getCaseInsensitive(server, 'Debug')),
-	};
-};
-
-const parseDownloadConfig = (download: Record<string, unknown>) => {
-	const retry = getSectionOrThrow(download, 'Retry');
-	return {
-		maxChunks: Number(getCaseInsensitive(download, 'MaxChunks') ?? 0),
-		limitBytesPerSecond: Number(getCaseInsensitive(download, 'LimitBytesPerSecond') ?? 0),
-		saveFolder: String(getCaseInsensitive(download, 'SaveFolder') ?? ''),
-		retryTimeout: Number(getCaseInsensitive(retry, 'Timeout') ?? 0),
-		maxRetries: Number(getCaseInsensitive(retry, 'MaxRetries') ?? 0),
-	};
-};
-
-const parseJobConfig = (job: Record<string, unknown>) => {
-	return {
-		maxConcurrentJobs: Number(getCaseInsensitive(job, 'MaxConcurrentJobs') ?? 0),
-	};
-};
-
-const parseImageConfig = (image: Record<string, unknown>) => {
-	const face = getSectionOrThrow(image, 'Face');
-	const saliency = getSectionOrThrow(image, 'Saliency');
-	return {
-		face: {
-			confidence: Number(getCaseInsensitive(face, 'Confidence') ?? 0),
-			unionAll: Boolean(getCaseInsensitive(face, 'UnionAll')),
-		},
-		saliency: {
-			paddingTop: Number(getCaseInsensitive(saliency, 'PaddingTop') ?? 0),
-			paddingBottom: Number(getCaseInsensitive(saliency, 'PaddingBottom') ?? 0),
-			paddingLeft: Number(getCaseInsensitive(saliency, 'PaddingLeft') ?? 0),
-			paddingRight: Number(getCaseInsensitive(saliency, 'PaddingRight') ?? 0),
-		},
-	};
-};
-
 const parseConfigResponse = (data: backendApi.ConfigGetSuccess) => {
-	const root = data as unknown as Record<string, unknown>;
-	const server = parseServerConfig(getSectionOrThrow(root, 'Server'));
-	const download = parseDownloadConfig(getSectionOrThrow(root, 'Download'));
-	const job = parseJobConfig(getSectionOrThrow(root, 'Job'));
-	const image = parseImageConfig(getSectionOrThrow(root, 'Image'));
-
 	const config: ConfigState = {
-		server,
-		download,
-		job,
-		image,
+		server: {
+			host: data.server.host ?? '',
+			port: data.server.port ?? 0,
+			debug: data.server.debug ?? false,
+		},
+		download: {
+			maxChunks: data.download.maxChunks ?? 0,
+			limitBytesPerSecond: data.download.limitBytesPerSecond ?? 0,
+			saveFolder: data.download.saveFolder ?? '',
+			retryTimeout: data.download.retry.timeout ?? 0,
+			maxRetries: data.download.retry.maxRetries ?? 0,
+		},
+		job: {
+			maxConcurrentJobs: data.job.maxConcurrentJobs ?? 0,
+		},
+		image: {
+			face: {
+				confidence: data.image.face.confidence ?? 0,
+				unionAll: data.image.face.unionAll ?? false,
+			},
+			saliency: {
+				paddingTop: data.image.saliency.paddingTop ?? 0,
+				paddingBottom: data.image.saliency.paddingBottom ?? 0,
+				paddingLeft: data.image.saliency.paddingLeft ?? 0,
+				paddingRight: data.image.saliency.paddingRight ?? 0,
+			},
+		},
 	};
 
 	return {
 		config,
-		server,
+		server: config.server,
 	};
 };
 
@@ -682,6 +636,10 @@ type ImageTabProps = {
 	config: ConfigState | null;
 	canEditConfig: boolean;
 	isLocked: boolean;
+	faceModelAvailable: boolean;
+	modelLoading: boolean;
+	onInitModel: () => void;
+	onDeinitModel: () => void;
 	updateFace: (patch: Partial<ConfigState['image']['face']>) => void;
 	updateSaliency: (patch: Partial<ConfigState['image']['saliency']>) => void;
 	createPadStyles: (padding: {
@@ -705,6 +663,10 @@ const ImageTab: React.FC<ImageTabProps> = ({
 	config,
 	canEditConfig,
 	isLocked,
+	faceModelAvailable,
+	modelLoading,
+	onInitModel,
+	onDeinitModel,
 	updateFace,
 	updateSaliency,
 	createPadStyles,
@@ -726,59 +688,107 @@ const ImageTab: React.FC<ImageTabProps> = ({
 							<span className="setting-hint">{t('settings.imageFaceHint')}</span>
 						</div>
 					</div>
-					<div className="image-config-grid">
-						<div className="image-config-side">
-							<div className="setting-item">
-								<label className="setting-label">
-									{t('settings.imageConfidence')}
-								</label>
-								<input
-									type="number"
-									className="setting-input"
-									value={
-										Number.isFinite(config.image.face.confidence)
-											? config.image.face.confidence
-											: ''
-									}
-									disabled={!canEditConfig}
-									onChange={(e) =>
-										handleNumberChange(e.target.value, (next) =>
-											updateFace({ confidence: next }),
-										)
-									}
-									onBlur={(e) =>
-										handleNumberBlur(e.target.value, (next) =>
-											updateFace({ confidence: next }),
-										)
-									}
-									onFocus={handleNumberFocus}
-									min="0"
-									max="1"
-									step="0.01"
-								/>
-								<span className="setting-hint">{t('settings.paddingHint')}</span>
-							</div>
-							<div className="setting-item setting-item-toggle">
-								<div className="toggle-content">
-									<div className="toggle-label">
-										<div className="label-text">
-											{t('settings.imageUnionAll')}
-										</div>
+					<div className="face-config-row">
+						<div className="setting-item">
+							<label className="setting-label">
+								{t('settings.imageConfidence')}
+							</label>
+							<input
+								type="number"
+								className="setting-input"
+								value={
+									Number.isFinite(config.image.face.confidence)
+										? config.image.face.confidence
+										: ''
+								}
+								disabled={!canEditConfig}
+								onChange={(e) =>
+									handleNumberChange(e.target.value, (next) =>
+										updateFace({ confidence: next }),
+									)
+								}
+								onBlur={(e) =>
+									handleNumberBlur(e.target.value, (next) =>
+										updateFace({ confidence: next }),
+									)
+								}
+								onFocus={handleNumberFocus}
+								min="0"
+								max="1"
+								step="0.01"
+							/>
+							<span className="setting-hint">{t('settings.imagePaddingHint')}</span>
+						</div>
+						<div className="setting-item setting-item-toggle">
+							<div className="toggle-content">
+								<div className="toggle-label">
+									<div className="label-text">
+										{t('settings.imageUnionAll')}
 									</div>
-									<label className="toggle-switch">
-										<input
-											type="checkbox"
-											checked={config.image.face.unionAll}
-											disabled={!canEditConfig}
-											onChange={(e) =>
-												updateFace({ unionAll: e.target.checked })
-											}
-										/>
-										<span className="toggle-slider"></span>
-									</label>
+									<div className="label-description">
+										{t('settings.imageUnionAllDesc')}
+									</div>
 								</div>
+								<label className="toggle-switch">
+									<input
+										type="checkbox"
+										checked={config.image.face.unionAll}
+										disabled={!canEditConfig}
+										onChange={(e) =>
+											updateFace({ unionAll: e.target.checked })
+										}
+									/>
+									<span className="toggle-slider"></span>
+								</label>
 							</div>
 						</div>
+					</div>
+
+					{/* Model table */}
+					<div className="model-table-container">
+						<h5 className="model-table-title">{t('settings.imageModel')}</h5>
+						<table className="model-table">
+							<thead>
+								<tr>
+									<th>{t('settings.modelName')}</th>
+									<th>{t('settings.modelstatus')}</th>
+									<th>{t('settings.modelAction')}</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>{t('settings.faceModel')}</td>
+									<td>
+										<span
+											className={`model-status-badge ${faceModelAvailable ? 'model-status-available' : 'model-status-unavailable'}`}
+										>
+											{faceModelAvailable
+												? t('settings.modelAvailable')
+												: t('settings.modelUnavailable')}
+										</span>
+									</td>
+									<td>
+										{faceModelAvailable ? (
+											<button
+												className="btn btn-danger btn-sm"
+												onClick={onDeinitModel}
+												disabled={modelLoading || !canEditConfig}
+											>
+												{modelLoading ? t('settings.modelLoading') : t('settings.modelDeinit')}
+											</button>
+										) : (
+											<button
+												className="btn btn-primary btn-sm"
+												onClick={onInitModel}
+												disabled={modelLoading || !canEditConfig}
+											>
+												{modelLoading ? t('settings.modelLoading') : t('settings.modelInit')}
+											</button>
+										)}
+									</td>
+								</tr>
+							</tbody>
+						</table>
 					</div>
 				</div>
 
@@ -790,9 +800,11 @@ const ImageTab: React.FC<ImageTabProps> = ({
 						</div>
 					</div>
 					<div className="image-config-grid">
-						<div className="image-padding-layout">
-							<div className="pad-item pad-top">
-								<label className="setting-label">{t('settings.paddingTop')}</label>
+						<div className="padding-section">
+							<h5 className="padding-title">{t('settings.imagePadding')}</h5>
+							<div className="image-padding-layout">
+								<div className="pad-item pad-top">
+									<label className="setting-label">{t('settings.imagePaddingTop')}</label>
 								<input
 									type="number"
 									className="setting-input"
@@ -817,10 +829,10 @@ const ImageTab: React.FC<ImageTabProps> = ({
 									max="1"
 									step="0.01"
 								/>
-								<span className="setting-hint">{t('settings.paddingHint')}</span>
+								<span className="setting-hint">{t('settings.imagePaddingHint')}</span>
 							</div>
 							<div className="pad-item pad-left">
-								<label className="setting-label">{t('settings.paddingLeft')}</label>
+								<label className="setting-label">{t('settings.imagePaddingLeft')}</label>
 								<input
 									type="number"
 									className="setting-input"
@@ -845,7 +857,7 @@ const ImageTab: React.FC<ImageTabProps> = ({
 									max="1"
 									step="0.01"
 								/>
-								<span className="setting-hint">{t('settings.paddingHint')}</span>
+								<span className="setting-hint">{t('settings.imagePaddingHint')}</span>
 							</div>
 							<div className="pad-center">
 								<div className="pad-diagram">
@@ -865,7 +877,7 @@ const ImageTab: React.FC<ImageTabProps> = ({
 							</div>
 							<div className="pad-item pad-right">
 								<label className="setting-label">
-									{t('settings.paddingRight')}
+									{t('settings.imagePaddingRight')}
 								</label>
 								<input
 									type="number"
@@ -891,11 +903,11 @@ const ImageTab: React.FC<ImageTabProps> = ({
 									max="1"
 									step="0.01"
 								/>
-								<span className="setting-hint">{t('settings.paddingHint')}</span>
+								<span className="setting-hint">{t('settings.imagePaddingHint')}</span>
 							</div>
 							<div className="pad-item pad-bottom">
 								<label className="setting-label">
-									{t('settings.paddingBottom')}
+									{t('settings.imagePaddingBottom')}
 								</label>
 								<input
 									type="number"
@@ -921,11 +933,12 @@ const ImageTab: React.FC<ImageTabProps> = ({
 									max="1"
 									step="0.01"
 								/>
-								<span className="setting-hint">{t('settings.paddingHint')}</span>
+								<span className="setting-hint">{t('settings.imagePaddingHint')}</span>
 							</div>
 						</div>
 					</div>
 				</div>
+			</div>
 			</>
 		)}
 	</div>
@@ -996,6 +1009,8 @@ const SettingMenu: React.FC = () => {
 	const [isStatusNotificationClosing, setIsStatusNotificationClosing] = useState(false);
 	const statusHideTimeoutRef = useRef<number | null>(null);
 	const statusCloseTimeoutRef = useRef<number | null>(null);
+	const [faceModelAvailable, setFaceModelAvailable] = useState(false);
+	const [modelLoading, setModelLoading] = useState(false);
 
 	const formatErrorMessage = useCallback(
 		(key: string, error: unknown) => {
@@ -1133,9 +1148,61 @@ const SettingMenu: React.FC = () => {
 		}
 	}, [formatErrorMessage, hasPendingBackendUrl, showMessage, storeBackendUrl]);
 
+	const loadModelStatus = useCallback(async () => {
+		try {
+			const response = await backendApi.getModelStatus();
+			const available = response.faceModelAvailable;
+			setFaceModelAvailable(available);
+			return available;
+		} catch (error) {
+			console.error('Failed to load model status:', error);
+			return undefined;
+		}
+	}, []);
+
+	const handleInitModel = useCallback(async () => {
+		try {
+			setModelLoading(true);
+			const response = await backendApi.controlModel('face', 'init');
+			const available = await loadModelStatus();
+			const isAvailable = available ?? response.success;
+			if (isAvailable) {
+				showMessage('success', t('settings.modelInitSuccess'));
+			} else {
+				showMessage('error', response.message ?? t('settings.modelInitError'));
+			}
+		} catch (error) {
+			console.error('Failed to init model:', error);
+			showMessage('error', formatErrorMessage('settings.modelInitError', error));
+		} finally {
+			setModelLoading(false);
+		}
+	}, [formatErrorMessage, loadModelStatus, showMessage, t]);
+
+	const handleDeinitModel = useCallback(async () => {
+		try {
+			setModelLoading(true);
+			const response = await backendApi.controlModel('face', 'deinit');
+			const available = await loadModelStatus();
+			const isUnavailable = available === undefined ? response.success : !available;
+			if (isUnavailable) {
+				setFaceModelAvailable(false);
+				showMessage('success', t('settings.modelDeinitSuccess'));
+			} else {
+				showMessage('error', response.message ?? t('settings.modelDeinitError'));
+			}
+		} catch (error) {
+			console.error('Failed to deinit model:', error);
+			showMessage('error', formatErrorMessage('settings.modelDeinitError', error));
+		} finally {
+			setModelLoading(false);
+		}
+	}, [formatErrorMessage, loadModelStatus, showMessage, t]);
+
 	useEffect(() => {
 		loadConfig().catch(() => undefined);
-	}, [loadConfig]);
+		loadModelStatus().catch(() => undefined);
+	}, [loadConfig, loadModelStatus]);
 
 	useEffect(() => {
 		if (restartRequired) {
@@ -1458,6 +1525,10 @@ const SettingMenu: React.FC = () => {
 					config={config}
 					canEditConfig={canEditConfig}
 					isLocked={isLocked}
+					faceModelAvailable={faceModelAvailable}
+					modelLoading={modelLoading}
+					onInitModel={handleInitModel}
+					onDeinitModel={handleDeinitModel}
 					updateFace={updateFace}
 					updateSaliency={updateSaliency}
 					createPadStyles={createPadStyles}

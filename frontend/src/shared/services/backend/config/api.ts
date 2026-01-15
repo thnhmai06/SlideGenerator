@@ -6,6 +6,8 @@ import type {
   ConfigReloadSuccess,
   ConfigResetSuccess,
   ConfigUpdateSuccess,
+  ModelStatusSuccess,
+  ModelControlSuccess,
 } from './types'
 
 export async function getConfig(): Promise<unknown> {
@@ -35,4 +37,23 @@ export async function resetConfig(): Promise<unknown> {
     type: 'reset',
   })
   return assertSuccess<ConfigResetSuccess>(response)
+}
+
+export async function getModelStatus(): Promise<ModelStatusSuccess> {
+  const response = await configHub.sendRequest<ResponseBase>({
+    type: 'modelstatus',
+  })
+  return assertSuccess<ModelStatusSuccess>(response)
+}
+
+export async function controlModel(
+  model: string,
+  action: 'init' | 'deinit',
+): Promise<ModelControlSuccess> {
+  const response = await configHub.sendRequest<ResponseBase>({
+    type: 'modelcontrol',
+    Model: model,
+    Action: action,
+  })
+  return assertSuccess<ModelControlSuccess>(response)
 }

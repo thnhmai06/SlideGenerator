@@ -120,7 +120,9 @@ public sealed class ConfigHubTests
 
     private static ConfigHub CreateHub(out CaptureClientProxy proxy)
     {
-        var hub = new ConfigHub(new FakeJobManager(new FakeActiveJobCollection()),
+        var hub = new ConfigHub(
+            new FakeJobManager(new FakeActiveJobCollection()),
+            new FakeImageService(),
             NullLogger<ConfigHub>.Instance);
         proxy = HubTestHelper.Attach(hub, "conn-1");
         return hub;

@@ -50,6 +50,15 @@ public class ImageService : Service,
             LazyThreadSafetyMode.ExecutionAndPublication);
     }
 
+    /// <inheritdoc />
+    public bool IsFaceModelAvailable => _faceDetectorMode.IsModelAvailable;
+
+    /// <inheritdoc />
+    public Task<bool> InitFaceModelAsync() => _faceDetectorMode.InitAsync();
+
+    /// <inheritdoc />
+    public Task<bool> DeInitFaceModelAsync() => _faceDetectorMode.DeInitAsync();
+
     public void Dispose()
     {
         _faceDetectorMode.Dispose();

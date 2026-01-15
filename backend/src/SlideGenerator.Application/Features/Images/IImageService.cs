@@ -9,6 +9,11 @@ namespace SlideGenerator.Application.Features.Images;
 public interface IImageService
 {
     /// <summary>
+    ///     Gets a value indicating whether the face detection model is currently available and initialized.
+    /// </summary>
+    bool IsFaceModelAvailable { get; }
+
+    /// <summary>
     ///     Crops the specified image file to the given size and region of interest using the specified crop type
     ///     asynchronously.
     /// </summary>
@@ -21,4 +26,22 @@ public interface IImageService
     ///     data in the original file's format.
     /// </returns>
     Task<byte[]> CropImageAsync(string filePath, Size size, ImageRoiType roiType, ImageCropType cropType);
+
+    /// <summary>
+    ///     Initializes the face detection model asynchronously.
+    /// </summary>
+    /// <returns>
+    ///     A task that represents the asynchronous operation. The task result is <see langword="true" /> if the model
+    ///     was successfully initialized; otherwise, <see langword="false" />.
+    /// </returns>
+    Task<bool> InitFaceModelAsync();
+
+    /// <summary>
+    ///     Deinitializes the face detection model asynchronously.
+    /// </summary>
+    /// <returns>
+    ///     A task that represents the asynchronous operation. The task result is <see langword="true" /> if the model
+    ///     was successfully deinitialized; otherwise, <see langword="false" />.
+    /// </returns>
+    Task<bool> DeInitFaceModelAsync();
 }
