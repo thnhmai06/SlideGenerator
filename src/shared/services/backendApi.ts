@@ -29,6 +29,8 @@ export type {
 	ConfigReloadSuccess,
 	ConfigResetSuccess,
 	ConfigUpdateSuccess,
+	ModelStatusSuccess,
+	ModelControlSuccess,
 } from './backend/config/types';
 export type {
 	ColumnListResponse,
@@ -76,4 +78,11 @@ export {
 	unloadFile,
 } from './backend/sheets/api';
 export { checkHealth } from './backend/health/api';
-export { getConfig, reloadConfig, resetConfig, updateConfig } from './backend/config/api';
+export {
+	getConfig,
+	reloadConfig,
+	resetConfig,
+	updateConfig,
+	getModelStatus,
+	controlModel,
+} from './backend/config/api';

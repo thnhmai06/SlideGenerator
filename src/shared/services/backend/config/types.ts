@@ -1,50 +1,63 @@
 export interface ConfigGetSuccess {
-  Type: 'get'
-  Server: {
-    Host: string
-    Port: number
-    Debug: boolean
+  type: 'get'
+  server: {
+    host: string
+    port: number
+    debug: boolean
   }
-  Download: {
-    MaxChunks: number
-    LimitBytesPerSecond: number
-    SaveFolder: string
-    Retry: {
-      Timeout: number
-      MaxRetries: number
+  download: {
+    maxChunks: number
+    limitBytesPerSecond: number
+    saveFolder: string
+    retry: {
+      timeout: number
+      maxRetries: number
     }
   }
-  Job: {
-    MaxConcurrentJobs: number
+  job: {
+    maxConcurrentJobs: number
   }
-  Image: {
-    Face: {
-      Confidence: number
-      UnionAll: boolean
+  image: {
+    face: {
+      confidence: number
+      unionAll: boolean
     }
-    Saliency: {
-      PaddingTop: number
-      PaddingBottom: number
-      PaddingLeft: number
-      PaddingRight: number
+    saliency: {
+      paddingTop: number
+      paddingBottom: number
+      paddingLeft: number
+      paddingRight: number
     }
   }
 }
 
 export interface ConfigUpdateSuccess {
-  Type: 'update'
-  Success: boolean
-  Message: string
+  type: 'update'
+  success: boolean
+  message: string
 }
 
 export interface ConfigReloadSuccess {
-  Type: 'reload'
-  Success: boolean
-  Message: string
+  type: 'reload'
+  success: boolean
+  message: string
 }
 
 export interface ConfigResetSuccess {
-  Type: 'reset'
-  Success: boolean
-  Message: string
+  type: 'reset'
+  success: boolean
+  message: string
+}
+
+export interface ModelStatusSuccess {
+  type: 'modelstatus'
+  faceModelAvailable: boolean
+}
+
+export interface ModelControlSuccess {
+  type: 'modelcontrol'
+  model: string
+  action: string
+  success: boolean
+  message?: string
 }
