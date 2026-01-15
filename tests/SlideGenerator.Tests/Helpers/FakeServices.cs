@@ -1,14 +1,17 @@
 using SlideGenerator.Application.Common.Utilities;
+using SlideGenerator.Application.Features.Images;
 using SlideGenerator.Application.Features.Jobs.Contracts;
 using SlideGenerator.Application.Features.Jobs.Contracts.Collections;
 using SlideGenerator.Application.Features.Jobs.DTOs.Requests;
 using SlideGenerator.Application.Features.Sheets;
 using SlideGenerator.Application.Features.Slides;
+using SlideGenerator.Domain.Features.Images.Enums;
 using SlideGenerator.Domain.Features.Jobs.Entities;
 using SlideGenerator.Domain.Features.Jobs.Enums;
 using SlideGenerator.Domain.Features.Jobs.Interfaces;
 using SlideGenerator.Domain.Features.Sheets.Interfaces;
 using SlideGenerator.Domain.Features.Slides;
+using System.Drawing;
 
 namespace SlideGenerator.Tests.Helpers;
 
@@ -395,5 +398,27 @@ internal sealed class FakeJobManager(IActiveJobCollection active) : IJobManager
     public IReadOnlyDictionary<string, IJobGroup> GetAllGroups()
     {
         return Active.GetAllGroups();
+    }
+}
+
+internal sealed class FakeImageService : IImageService
+{
+    public bool IsFaceModelAvailable { get; private set; }
+
+    public Task<byte[]> CropImageAsync(string filePath, Size size, ImageRoiType roiType, ImageCropType cropType)
+    {
+        return Task.FromResult(Array.Empty<byte>());
+    }
+
+    public Task<bool> InitFaceModelAsync()
+    {
+        IsFaceModelAvailable = true;
+        return Task.FromResult(true);
+    }
+
+    public Task<bool> DeInitFaceModelAsync()
+    {
+        IsFaceModelAvailable = false;
+        return Task.FromResult(true);
     }
 }
