@@ -12,10 +12,6 @@ public sealed record ImageConfig(
 /// </summary>
 public sealed record FaceConfig(
     float Confidence,
-    float PaddingTop,
-    float PaddingBottom,
-    float PaddingLeft,
-    float PaddingRight,
     bool UnionAll);
 
 /// <summary>

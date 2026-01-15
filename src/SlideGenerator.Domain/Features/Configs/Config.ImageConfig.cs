@@ -15,27 +15,7 @@ public sealed partial class Config
             public float Confidence { get; init; } = 0.7f;
 
             /// <summary>
-            ///     Padding ratio for top side of detected faces (0-1). Default is 0.15.
-            /// </summary>
-            public float PaddingTop { get; init; } = 0.15f;
-
-            /// <summary>
-            ///     Padding ratio for bottom side of detected faces (0-1). Default is 0.15.
-            /// </summary>
-            public float PaddingBottom { get; init; } = 0.15f;
-
-            /// <summary>
-            ///     Padding ratio for left side of detected faces (0-1). Default is 0.15.
-            /// </summary>
-            public float PaddingLeft { get; init; } = 0.15f;
-
-            /// <summary>
-            ///     Padding ratio for right side of detected faces (0-1). Default is 0.15.
-            /// </summary>
-            public float PaddingRight { get; init; } = 0.15f;
-
-            /// <summary>
-            ///     If true, union all detected faces; otherwise use the best single face. Default is true.
+            ///     If true, union all detected faces; otherwise use the best single face. Default is <see langword="false"/>.
             /// </summary>
             public bool UnionAll { get; init; } = false;
         }

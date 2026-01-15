@@ -113,11 +113,12 @@ public static class Program
         {
             Name = Config.AppName,
             Description = Config.AppDescription,
-            IsRunning = true
+            Repository = Config.AppUrl
         });
         app.MapGet("/health", () => Results.Ok(new { IsRunning = true }));
-        app.UseHangfireDashboard("/hangfire", new DashboardOptions
+        app.UseHangfireDashboard("/dashboard", new DashboardOptions
         {
+            DashboardTitle = Config.AppName,
             Authorization = [],
             IsReadOnlyFunc = _ => true
         });

@@ -3,62 +3,67 @@ using Microsoft.Extensions.Logging;
 using SlideGenerator.Application.Features.Configs;
 using SlideGenerator.Application.Features.Images;
 using SlideGenerator.Domain.Features.Images.Enums;
-using SlideGenerator.Framework.Image;
-using SlideGenerator.Framework.Image.Configs;
-using SlideGenerator.Framework.Image.Enums;
 using SlideGenerator.Framework.Image.Exceptions;
-using SlideGenerator.Framework.Image.Models;
+using SlideGenerator.Framework.Image.Modules.FaceDetection.Models;
+using SlideGenerator.Framework.Image.Modules.Roi;
+using SlideGenerator.Framework.Image.Modules.Roi.Configs;
+using SlideGenerator.Framework.Image.Modules.Roi.Enums;
+using SlideGenerator.Framework.Image.Modules.Roi.Models;
 using SlideGenerator.Infrastructure.Common.Base;
+using Image = SlideGenerator.Framework.Image.Models.Image;
 
 namespace SlideGenerator.Infrastructure.Features.Images.Services;
 
 /// <summary>
 ///     Image processing service implementation.
 /// </summary>
-public class ImageService(ILogger<ImageService> logger) : Service(logger),
+public class ImageService : Service,
     IImageService, IDisposable
 {
-    private readonly Lazy<ImageProcessor> _imageProcessor = new(
-        () =>
-        {
-            var imageConfig = ConfigHolder.Value.Image;
-            var roiOptions = new RoiOptions
-            {
-                FaceConfidence = imageConfig.Face.Confidence,
-                FacePaddingRatio = new ExpandRatio(
-                    imageConfig.Face.PaddingTop,
-                    imageConfig.Face.PaddingBottom,
-                    imageConfig.Face.PaddingLeft,
-                    imageConfig.Face.PaddingRight
-                ),
-                FacesUnionAll = imageConfig.Face.UnionAll,
-                SaliencyPaddingRatio = new ExpandRatio(
-                    imageConfig.Saliency.PaddingTop,
-                    imageConfig.Saliency.PaddingBottom,
-                    imageConfig.Saliency.PaddingLeft,
-                    imageConfig.Saliency.PaddingRight
-                )
-            };
+    private readonly FaceDetectorModel _faceDetectorMode;
+    private readonly Lazy<RoiModule> _roiModule;
 
-            var processor = new ImageProcessor(roiOptions);
-            return processor;
-        },
-        LazyThreadSafetyMode.ExecutionAndPublication);
+    public ImageService(ILogger<ImageService> logger) : base(logger)
+    {
+        _faceDetectorMode = new YuNetModel();
+        _roiModule = new Lazy<RoiModule>(
+            () =>
+            {
+                var imageConfig = ConfigHolder.Value.Image;
+                var roiOptions = new RoiOptions
+                {
+                    FaceConfidence = imageConfig.Face.Confidence,
+                    FacesUnionAll = imageConfig.Face.UnionAll,
+                    SaliencyPaddingRatio = new ExpandRatio(
+                        imageConfig.Saliency.PaddingTop,
+                        imageConfig.Saliency.PaddingBottom,
+                        imageConfig.Saliency.PaddingLeft,
+                        imageConfig.Saliency.PaddingRight
+                    )
+                };
+
+                return new RoiModule(roiOptions)
+                {
+                    FaceDetectorModel = _faceDetectorMode
+                };
+            },
+            LazyThreadSafetyMode.ExecutionAndPublication);
+    }
 
     public void Dispose()
     {
-        if (_imageProcessor.IsValueCreated)
-            _imageProcessor.Value.Dispose();
+        _faceDetectorMode.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     public async Task<byte[]> CropImageAsync(string filePath, Size size, ImageRoiType roiType, ImageCropType cropType)
     {
-        using var image = new ImageData(filePath);
+        using var image = new Image(filePath);
         try
         {
             var coreRoiType = roiType switch
             {
-                ImageRoiType.Attention => RoiType.Attention,
+                ImageRoiType.RuleOfThirds => RoiType.RuleOfThirds,
                 ImageRoiType.Prominent => RoiType.Prominent,
                 ImageRoiType.Center => RoiType.Center,
                 _ => throw new ArgumentOutOfRangeException(nameof(roiType), roiType, null)
@@ -70,8 +75,8 @@ public class ImageService(ILogger<ImageService> logger) : Service(logger),
                 _ => throw new ArgumentOutOfRangeException(nameof(cropType), cropType, null)
             };
 
-            var roiSelector = _imageProcessor.Value.GetRoiSelector(coreRoiType);
-            await ImageProcessor.CropToRoiAsync(image, size, roiSelector, coreCropType);
+            var roiSelector = _roiModule.Value.GetRoiSelector(coreRoiType);
+            await RoiModule.CropToRoiAsync(image, size, roiSelector, coreCropType);
             Logger.LogInformation(
                 "Cropped image {FilePath} to size {Width}x{Height} (Roi: {RoiMode}, Crop: {CropMode})",
                 filePath, image.Size.Width, image.Size.Height, roiType, cropType);

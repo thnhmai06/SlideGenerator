@@ -36,7 +36,7 @@ TaskCreate van duoc ho tro de tuong thich nguoc.
   "outputPath": "C:\\output",
   "sheetNames": ["Sheet1"],
   "textConfigs": [{ "pattern": "FullName", "columns": ["FullName"] }],
-  "imageConfigs": [{ "shapeId": 4, "columns": ["Photo"], "roiType": "Attention", "cropType": "Fit" }],
+  "imageConfigs": [{ "shapeId": 4, "columns": ["Photo"], "roiType": "RuleOfThirds", "cropType": "Fit" }],
   "autoStart": true
 }
 ```

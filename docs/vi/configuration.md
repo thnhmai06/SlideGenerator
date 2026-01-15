@@ -12,7 +12,7 @@ English version: [English](../en/configuration.md)
 
 - `server`: host, port, debug.
 - `job`: `maxConcurrentJobs` giới hạn số sheet chạy song song.
-- `image`: padding và confidence cho face/saliency.
+- `image`: độ tin cậy nhận diện khuôn mặt và padding saliency.
 - `download`: giới hạn băng thông và retry (khi tải ảnh).
 
 ## Hành vi runtime
