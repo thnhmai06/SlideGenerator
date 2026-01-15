@@ -745,7 +745,7 @@ export const JobProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 					id: index + 1,
 					shapeId: String(item.ShapeId),
 					columns: item.Columns,
-					roiType: item.RoiType ?? 'Attention',
+					roiType: item.RoiType ?? 'RuleOfThirds',
 					cropType: item.CropType ?? 'Fit',
 				})),
 			};

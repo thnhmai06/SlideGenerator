@@ -28,10 +28,6 @@ interface ConfigState {
 	image: {
 		face: {
 			confidence: number;
-			paddingTop: number;
-			paddingBottom: number;
-			paddingLeft: number;
-			paddingRight: number;
 			unionAll: boolean;
 		};
 		saliency: {
@@ -105,10 +101,6 @@ const parseImageConfig = (image: Record<string, unknown>) => {
 	return {
 		face: {
 			confidence: Number(getCaseInsensitive(face, 'Confidence') ?? 0),
-			paddingTop: Number(getCaseInsensitive(face, 'PaddingTop') ?? 0),
-			paddingBottom: Number(getCaseInsensitive(face, 'PaddingBottom') ?? 0),
-			paddingLeft: Number(getCaseInsensitive(face, 'PaddingLeft') ?? 0),
-			paddingRight: Number(getCaseInsensitive(face, 'PaddingRight') ?? 0),
 			unionAll: Boolean(getCaseInsensitive(face, 'UnionAll')),
 		},
 		saliency: {
@@ -735,140 +727,6 @@ const ImageTab: React.FC<ImageTabProps> = ({
 						</div>
 					</div>
 					<div className="image-config-grid">
-						<div className="image-padding-layout">
-							<div className="pad-item pad-top">
-								<label className="setting-label">{t('settings.paddingTop')}</label>
-								<input
-									type="number"
-									className="setting-input"
-									value={
-										Number.isFinite(config.image.face.paddingTop)
-											? config.image.face.paddingTop
-											: ''
-									}
-									disabled={!canEditConfig}
-									onChange={(e) =>
-										handleNumberChange(e.target.value, (next) =>
-											updateFace({ paddingTop: next }),
-										)
-									}
-									onBlur={(e) =>
-										handleNumberBlur(e.target.value, (next) =>
-											updateFace({ paddingTop: next }),
-										)
-									}
-									onFocus={handleNumberFocus}
-									min="0"
-									max="1"
-									step="0.01"
-								/>
-								<span className="setting-hint">{t('settings.paddingHint')}</span>
-							</div>
-							<div className="pad-item pad-left">
-								<label className="setting-label">{t('settings.paddingLeft')}</label>
-								<input
-									type="number"
-									className="setting-input"
-									value={
-										Number.isFinite(config.image.face.paddingLeft)
-											? config.image.face.paddingLeft
-											: ''
-									}
-									disabled={!canEditConfig}
-									onChange={(e) =>
-										handleNumberChange(e.target.value, (next) =>
-											updateFace({ paddingLeft: next }),
-										)
-									}
-									onBlur={(e) =>
-										handleNumberBlur(e.target.value, (next) =>
-											updateFace({ paddingLeft: next }),
-										)
-									}
-									onFocus={handleNumberFocus}
-									min="0"
-									max="1"
-									step="0.01"
-								/>
-								<span className="setting-hint">{t('settings.paddingHint')}</span>
-							</div>
-							<div className="pad-center">
-								<div className="pad-diagram">
-									<div
-										className="pad-box pad-base"
-										style={createPadStyles(config.image.face).base}
-									></div>
-									<div
-										className="pad-box pad-detect"
-										style={createPadStyles(config.image.face).detect}
-									></div>
-									<div
-										className="pad-box pad-crop"
-										style={createPadStyles(config.image.face).crop}
-									></div>
-								</div>
-							</div>
-							<div className="pad-item pad-right">
-								<label className="setting-label">
-									{t('settings.paddingRight')}
-								</label>
-								<input
-									type="number"
-									className="setting-input"
-									value={
-										Number.isFinite(config.image.face.paddingRight)
-											? config.image.face.paddingRight
-											: ''
-									}
-									disabled={!canEditConfig}
-									onChange={(e) =>
-										handleNumberChange(e.target.value, (next) =>
-											updateFace({ paddingRight: next }),
-										)
-									}
-									onBlur={(e) =>
-										handleNumberBlur(e.target.value, (next) =>
-											updateFace({ paddingRight: next }),
-										)
-									}
-									onFocus={handleNumberFocus}
-									min="0"
-									max="1"
-									step="0.01"
-								/>
-								<span className="setting-hint">{t('settings.paddingHint')}</span>
-							</div>
-							<div className="pad-item pad-bottom">
-								<label className="setting-label">
-									{t('settings.paddingBottom')}
-								</label>
-								<input
-									type="number"
-									className="setting-input"
-									value={
-										Number.isFinite(config.image.face.paddingBottom)
-											? config.image.face.paddingBottom
-											: ''
-									}
-									disabled={!canEditConfig}
-									onChange={(e) =>
-										handleNumberChange(e.target.value, (next) =>
-											updateFace({ paddingBottom: next }),
-										)
-									}
-									onBlur={(e) =>
-										handleNumberBlur(e.target.value, (next) =>
-											updateFace({ paddingBottom: next }),
-										)
-									}
-									onFocus={handleNumberFocus}
-									min="0"
-									max="1"
-									step="0.01"
-								/>
-								<span className="setting-hint">{t('settings.paddingHint')}</span>
-							</div>
-						</div>
 						<div className="image-config-side">
 							<div className="setting-item">
 								<label className="setting-label">
@@ -1347,10 +1205,6 @@ const SettingMenu: React.FC = () => {
 				Image: {
 					Face: {
 						Confidence: normalizeNumber(config.image.face.confidence),
-						PaddingTop: normalizeNumber(config.image.face.paddingTop),
-						PaddingBottom: normalizeNumber(config.image.face.paddingBottom),
-						PaddingLeft: normalizeNumber(config.image.face.paddingLeft),
-						PaddingRight: normalizeNumber(config.image.face.paddingRight),
 						UnionAll: config.image.face.unionAll,
 					},
 					Saliency: {

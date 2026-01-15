@@ -20,10 +20,6 @@ export interface ConfigGetSuccess {
   Image: {
     Face: {
       Confidence: number
-      PaddingTop: number
-      PaddingBottom: number
-      PaddingLeft: number
-      PaddingRight: number
       UnionAll: boolean
     }
     Saliency: {

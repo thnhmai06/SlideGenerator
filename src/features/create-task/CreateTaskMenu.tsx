@@ -227,7 +227,7 @@ const mapImageReplacements = (
 		id: item.id ?? 1,
 		shapeId: item.shapeId ?? '',
 		columns: item.columns ?? [],
-		roiType: item.roiType ?? 'Attention',
+		roiType: item.roiType ?? 'RuleOfThirds',
 		cropType: item.cropType ?? 'Fit',
 	}));
 	return importedImages
@@ -1278,9 +1278,9 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
 
 	const roiOptions = [
 		{
-			value: 'Attention',
-			label: t('replacement.roiAttention'),
-			description: t('replacement.roiAttentionDesc'),
+			value: 'RuleOfThirds',
+			label: t('replacement.roiRuleOfThirds'),
+			description: t('replacement.roiRuleOfThirdsDesc'),
 		},
 		{
 			value: 'Prominent',
@@ -1390,7 +1390,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
 				id: item.id ?? 1,
 				shapeId: item.shapeId ?? '',
 				columns: item.columns ?? [],
-				roiType: item.roiType ?? 'Attention',
+				roiType: item.roiType ?? 'RuleOfThirds',
 				cropType: item.cropType ?? 'Fit',
 			}),
 		),
@@ -1866,7 +1866,7 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
 				id: imageReplacements.length + 1,
 				shapeId: '',
 				columns: [],
-				roiType: 'Attention',
+				roiType: 'RuleOfThirds',
 				cropType: 'Fit',
 			},
 		]);

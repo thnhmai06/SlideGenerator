@@ -323,7 +323,7 @@ const ProcessMenu: React.FC = () => {
 	};
 
 	const handleOpenDashboard = async () => {
-		const url = `${getBackendBaseUrl()}/hangfire`;
+		const url = `${getBackendBaseUrl()}/dashboard`;
 		if (window.electronAPI?.openUrl) {
 			await window.electronAPI.openUrl(url);
 			return;
