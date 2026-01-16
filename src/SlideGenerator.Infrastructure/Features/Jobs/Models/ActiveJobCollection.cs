@@ -638,7 +638,7 @@ public class ActiveJobCollection(
 
     private static void RegisterJobDisplayName(JobGroup group, JobSheet sheet)
     {
-        var workbookName = Path.GetFileNameWithoutExtension(group.Workbook.FilePath);
+        var workbookName = Path.GetFileName(group.Workbook.FilePath);
         SheetJobNameRegistry.Register(sheet.Id, workbookName, sheet.SheetName);
     }
 
