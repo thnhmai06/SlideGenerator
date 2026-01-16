@@ -24,6 +24,13 @@ export const parseConfigResponse = (data: ConfigGetSuccess) => {
 			saveFolder: data.download.saveFolder ?? '',
 			retryTimeout: data.download.retry.timeout ?? 0,
 			maxRetries: data.download.retry.maxRetries ?? 0,
+			proxy: {
+				useProxy: data.download.proxy?.useProxy ?? false,
+				proxyAddress: data.download.proxy?.proxyAddress ?? '',
+				username: data.download.proxy?.username ?? '',
+				password: data.download.proxy?.password ?? '',
+				domain: data.download.proxy?.domain ?? '',
+			},
 		},
 		job: {
 			maxConcurrentJobs: data.job.maxConcurrentJobs ?? 0,

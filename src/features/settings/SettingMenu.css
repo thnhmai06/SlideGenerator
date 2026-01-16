@@ -90,6 +90,29 @@
 	color: var(--text-primary);
 }
 
+.setting-subsection-title {
+	font-size: var(--font-lg);
+	font-weight: var(--font-semibold);
+	color: var(--text-secondary);
+	margin-top: var(--spacing-md);
+	padding-top: var(--spacing-md);
+	border-top: 1px solid var(--border-primary);
+}
+
+.setting-label-inline {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-sm);
+	cursor: pointer;
+}
+
+.setting-checkbox {
+	width: 18px;
+	height: 18px;
+	accent-color: var(--accent-primary);
+	cursor: pointer;
+}
+
 .settings-grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
