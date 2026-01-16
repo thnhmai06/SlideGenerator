@@ -7,6 +7,6 @@ namespace SlideGenerator.Application.Features.Jobs.DTOs.Responses.Successes;
 ///     Response for job queries.
 /// </summary>
 public sealed record JobQuerySuccess(
-    [property: JsonPropertyName("Task")] JobDetail? Job,
-    [property: JsonPropertyName("Tasks")] IReadOnlyList<JobSummary>? Jobs)
+    [property: JsonPropertyName("Job")] JobDetail? Job,
+    [property: JsonPropertyName("Jobs")] IReadOnlyList<JobSummary>? Jobs)
     : Response("jobquery");

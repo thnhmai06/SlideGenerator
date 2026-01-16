@@ -30,7 +30,7 @@ TaskCreate van duoc ho tro de tuong thich nguoc.
 ```json
 {
   "type": "JobCreate",
-  "taskType": "Group",
+  "jobType": "Group",
   "templatePath": "C:\\slides\\template.pptx",
   "spreadsheetPath": "C:\\data\\book.xlsx",
   "outputPath": "C:\\output",
@@ -46,7 +46,7 @@ Sheet job:
 ```json
 {
   "type": "JobCreate",
-  "taskType": "Sheet",
+  "jobType": "Sheet",
   "templatePath": "C:\\slides\\template.pptx",
   "spreadsheetPath": "C:\\data\\book.xlsx",
   "outputPath": "C:\\output\\Sheet1.pptx",
@@ -60,11 +60,11 @@ Sheet job:
 - `includePayload` trả về payload được dựng lại từ state.
 
 ```json
-{ "type": "JobQuery", "taskId": "TASK_ID", "taskType": "Group", "includeSheets": true }
+{ "type": "JobQuery", "jobId": "TASK_ID", "jobType": "Group", "includeSheets": true }
 ```
 
 ```json
-{ "type": "JobQuery", "scope": "Active", "taskType": "Sheet" }
+{ "type": "JobQuery", "scope": "Active", "jobType": "Sheet" }
 ```
 
 ### JobControl
@@ -72,7 +72,7 @@ Sheet job:
 - `action`: `Pause`, `Resume`, `Cancel`, `Stop` (duoc hieu la Cancel), hoac `Remove` (xoa state backend).
 
 ```json
-{ "type": "JobControl", "taskId": "TASK_ID", "taskType": "Group", "action": "Pause" }
+{ "type": "JobControl", "jobId": "TASK_ID", "jobType": "Group", "action": "Pause" }
 ```
 
 ## Subscriptions

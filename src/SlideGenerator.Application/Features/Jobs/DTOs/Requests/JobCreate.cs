@@ -9,7 +9,7 @@ namespace SlideGenerator.Application.Features.Jobs.DTOs.Requests;
 /// </summary>
 public sealed record JobCreate
 {
-    [JsonPropertyName("TaskType")] public JobType JobType { get; init; } = JobType.Group;
+    [JsonPropertyName("JobType")] public JobType JobType { get; init; } = JobType.Group;
 
     public string TemplatePath { get; init; } = string.Empty;
 

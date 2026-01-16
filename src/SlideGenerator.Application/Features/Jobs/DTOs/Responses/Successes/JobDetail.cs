@@ -7,8 +7,8 @@ namespace SlideGenerator.Application.Features.Jobs.DTOs.Responses.Successes;
 ///     Detailed job information.
 /// </summary>
 public sealed record JobDetail(
-    [property: JsonPropertyName("TaskId")] string JobId,
-    [property: JsonPropertyName("TaskType")]
+    [property: JsonPropertyName("JobId")] string JobId,
+    [property: JsonPropertyName("JobType")]
     JobType JobType,
     JobState Status,
     float Progress,

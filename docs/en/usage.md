@@ -28,7 +28,7 @@ Create a group job:
 ```json
 {
   "type": "JobCreate",
-  "taskType": "Group",
+  "jobType": "Group",
   "templatePath": "C:\\slides\\template.pptx",
   "spreadsheetPath": "C:\\data\\book.xlsx",
   "outputPath": "C:\\output",
@@ -39,13 +39,13 @@ Create a group job:
 Pause a job:
 
 ```json
-{ "type": "JobControl", "taskId": "TASK_ID", "taskType": "Group", "action": "Pause" }
+{ "type": "JobControl", "jobId": "TASK_ID", "jobType": "Group", "action": "Pause" }
 ```
 
 Remove a group (also deletes backend state):
 
 ```json
-{ "type": "JobControl", "taskId": "TASK_ID", "taskType": "Group", "action": "Remove" }
+{ "type": "JobControl", "jobId": "TASK_ID", "jobType": "Group", "action": "Remove" }
 ```
 
 Query active jobs:

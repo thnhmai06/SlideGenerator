@@ -28,7 +28,7 @@ Tạo group job:
 ```json
 {
   "type": "JobCreate",
-  "taskType": "Group",
+  "jobType": "Group",
   "templatePath": "C:\\slides\\template.pptx",
   "spreadsheetPath": "C:\\data\\book.xlsx",
   "outputPath": "C:\\output",
@@ -39,13 +39,13 @@ Tạo group job:
 Tạm dừng job:
 
 ```json
-{ "type": "JobControl", "taskId": "TASK_ID", "taskType": "Group", "action": "Pause" }
+{ "type": "JobControl", "jobId": "TASK_ID", "jobType": "Group", "action": "Pause" }
 ```
 
 Xóa group (xóa cả backend state):
 
 ```json
-{ "type": "JobControl", "taskId": "TASK_ID", "taskType": "Group", "action": "Remove" }
+{ "type": "JobControl", "jobId": "TASK_ID", "jobType": "Group", "action": "Remove" }
 ```
 
 Query job đang chạy:

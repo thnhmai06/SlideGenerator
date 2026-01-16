@@ -9,9 +9,9 @@ namespace SlideGenerator.Application.Features.Jobs.DTOs.Requests;
 /// </summary>
 public sealed record JobControl
 {
-    [JsonPropertyName("TaskId")] public string JobId { get; init; } = string.Empty;
+    [JsonPropertyName("JobId")] public string JobId { get; init; } = string.Empty;
 
-    [JsonPropertyName("TaskType")] public JobType? JobType { get; init; }
+    [JsonPropertyName("JobType")] public JobType? JobType { get; init; }
 
     public ControlAction Action { get; init; } = ControlAction.Pause;
 }

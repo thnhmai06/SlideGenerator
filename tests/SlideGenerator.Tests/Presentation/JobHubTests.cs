@@ -100,7 +100,7 @@ public sealed class JobHubTests
         var hub = CreateHub(out var proxy, out _);
 
         var json =
-            "{\"type\":\"jobcreate\",\"taskType\":\"Group\",\"templatePath\":\"template.pptx\",\"spreadsheetPath\":\"book.xlsx\",\"outputPath\":\"C:\\\\out\",\"sheetNames\":[\"Sheet1\"]}";
+            "{\"type\":\"jobcreate\",\"jobType\":\"Group\",\"templatePath\":\"template.pptx\",\"spreadsheetPath\":\"book.xlsx\",\"outputPath\":\"C:\\\\out\",\"sheetNames\":[\"Sheet1\"]}";
         await hub.ProcessRequest(JsonHelper.Parse(json));
 
         var response = proxy.GetPayload<JobCreateSuccess>();
@@ -118,7 +118,7 @@ public sealed class JobHubTests
         var hub = CreateHub(out var proxy, out var jobManager);
 
         var json =
-            "{\"type\":\"jobcreate\",\"taskType\":\"Sheet\",\"templatePath\":\"template.pptx\",\"spreadsheetPath\":\"book.xlsx\",\"outputPath\":\"C:\\\\out\",\"sheetName\":\"Sheet2\"}";
+            "{\"type\":\"jobcreate\",\"jobType\":\"Sheet\",\"templatePath\":\"template.pptx\",\"spreadsheetPath\":\"book.xlsx\",\"outputPath\":\"C:\\\\out\",\"sheetName\":\"Sheet2\"}";
         await hub.ProcessRequest(JsonHelper.Parse(json));
 
         var response = proxy.GetPayload<JobCreateSuccess>();
@@ -135,13 +135,13 @@ public sealed class JobHubTests
         var hub = CreateHub(out var proxy, out _);
 
         var createJson =
-            "{\"type\":\"jobcreate\",\"taskType\":\"Group\",\"templatePath\":\"template.pptx\",\"spreadsheetPath\":\"book.xlsx\",\"outputPath\":\"C:\\\\out\",\"sheetNames\":[\"Sheet1\"]}";
+            "{\"type\":\"jobcreate\",\"jobType\":\"Group\",\"templatePath\":\"template.pptx\",\"spreadsheetPath\":\"book.xlsx\",\"outputPath\":\"C:\\\\out\",\"sheetNames\":[\"Sheet1\"]}";
         await hub.ProcessRequest(JsonHelper.Parse(createJson));
         var created = proxy.GetPayload<JobCreateSuccess>();
         Assert.IsNotNull(created);
 
         var queryJson =
-            $"{{\"type\":\"jobquery\",\"taskId\":\"{created.Job.JobId}\",\"taskType\":\"Group\",\"includeSheets\":true}}";
+            $"{{\"type\":\"jobquery\",\"jobId\":\"{created.Job.JobId}\",\"jobType\":\"Group\",\"includeSheets\":true}}";
         await hub.ProcessRequest(JsonHelper.Parse(queryJson));
 
         var response = proxy.GetPayload<JobQuerySuccess>();
@@ -158,13 +158,13 @@ public sealed class JobHubTests
         var hub = CreateHub(out var proxy, out var jobManager);
 
         var createJson =
-            "{\"type\":\"jobcreate\",\"taskType\":\"Group\",\"templatePath\":\"template.pptx\",\"spreadsheetPath\":\"book.xlsx\",\"outputPath\":\"C:\\\\out\"}";
+            "{\"type\":\"jobcreate\",\"jobType\":\"Group\",\"templatePath\":\"template.pptx\",\"spreadsheetPath\":\"book.xlsx\",\"outputPath\":\"C:\\\\out\"}";
         await hub.ProcessRequest(JsonHelper.Parse(createJson));
         var created = proxy.GetPayload<JobCreateSuccess>();
         Assert.IsNotNull(created);
 
         var controlJson =
-            $"{{\"type\":\"jobcontrol\",\"taskId\":\"{created.Job.JobId}\",\"taskType\":\"Group\",\"action\":\"Pause\"}}";
+            $"{{\"type\":\"jobcontrol\",\"jobId\":\"{created.Job.JobId}\",\"jobType\":\"Group\",\"action\":\"Pause\"}}";
         await hub.ProcessRequest(JsonHelper.Parse(controlJson));
 
         var response = proxy.GetPayload<JobControlSuccess>();
@@ -179,13 +179,13 @@ public sealed class JobHubTests
         var hub = CreateHub(out var proxy, out var jobManager);
 
         var createJson =
-            "{\"type\":\"jobcreate\",\"taskType\":\"Group\",\"templatePath\":\"template.pptx\",\"spreadsheetPath\":\"book.xlsx\",\"outputPath\":\"C:\\\\out\"}";
+            "{\"type\":\"jobcreate\",\"jobType\":\"Group\",\"templatePath\":\"template.pptx\",\"spreadsheetPath\":\"book.xlsx\",\"outputPath\":\"C:\\\\out\"}";
         await hub.ProcessRequest(JsonHelper.Parse(createJson));
         var created = proxy.GetPayload<JobCreateSuccess>();
         Assert.IsNotNull(created);
 
         var controlJson =
-            $"{{\"type\":\"jobcontrol\",\"taskId\":\"{created.Job.JobId}\",\"taskType\":\"Group\",\"action\":\"Remove\"}}";
+            $"{{\"type\":\"jobcontrol\",\"jobId\":\"{created.Job.JobId}\",\"jobType\":\"Group\",\"action\":\"Remove\"}}";
         await hub.ProcessRequest(JsonHelper.Parse(controlJson));
 
         var response = proxy.GetPayload<JobControlSuccess>();
