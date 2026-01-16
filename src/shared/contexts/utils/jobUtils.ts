@@ -391,28 +391,28 @@ export const clearGroupMetaFromStorage = (groupIds: string[]) => {
 
 export const saveGroupMetaToStorage = (
 	summaries: {
-		GroupId: string;
-		WorkbookPath: string;
-		OutputFolder?: string;
-		Status: string;
-		Progress: number;
-		SheetCount: number;
-		CompletedSheets: number;
-		ErrorCount?: number;
+		groupId: string;
+		workbookPath: string;
+		outputFolder?: string;
+		status: string;
+		progress: number;
+		sheetCount: number;
+		completedSheets: number;
+		errorCount?: number;
 	}[],
 ) => {
 	try {
 		const metaMap: Record<string, unknown> = {};
 		summaries.forEach((summary) => {
-			metaMap[summary.GroupId] = {
-				groupId: summary.GroupId,
-				workbookPath: summary.WorkbookPath,
-				outputFolder: summary.OutputFolder ?? undefined,
-				status: summary.Status,
-				progress: summary.Progress,
-				sheetCount: summary.SheetCount,
-				completedSheets: summary.CompletedSheets,
-				errorCount: summary.ErrorCount ?? 0,
+			metaMap[summary.groupId] = {
+				groupId: summary.groupId,
+				workbookPath: summary.workbookPath,
+				outputFolder: summary.outputFolder ?? undefined,
+				status: summary.status,
+				progress: summary.progress,
+				sheetCount: summary.sheetCount,
+				completedSheets: summary.completedSheets,
+				errorCount: summary.errorCount ?? 0,
 				updatedAt: new Date().toISOString(),
 			};
 		});

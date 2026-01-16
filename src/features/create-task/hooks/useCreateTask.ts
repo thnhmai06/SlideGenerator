@@ -266,19 +266,19 @@ export const useCreateTask = ({ onStart }: UseCreateTaskOptions) => {
 			try {
 				const response = await backendApi.scanTemplate(filePath);
 				const data = response as backendApi.SlideScanTemplateSuccess;
-				const mappedShapes = (data.Shapes ?? [])
-					.filter((shape) => shape.IsImage === true)
+				const mappedShapes = (data.shapes ?? [])
+					.filter((shape) => shape.isImage === true)
 					.map((shape) => ({
-						id: String(shape.Id),
-						name: shape.Name,
-						preview: shape.Data
-							? `data:image/png;base64,${shape.Data}`
+						id: String(shape.id),
+						name: shape.name,
+						preview: shape.data
+							? `data:image/png;base64,${shape.data}`
 							: getAssetPath('images', 'app-icon.png'),
 					}));
 				setShapes(mappedShapes);
 				lastLoadedTemplatePathRef.current = filePath;
 
-				const items = (data.Placeholders ?? [])
+				const items = (data.placeholders ?? [])
 					.map((item) => item.trim())
 					.filter((item) => item.length > 0);
 				const unique = Array.from(new Set(items));

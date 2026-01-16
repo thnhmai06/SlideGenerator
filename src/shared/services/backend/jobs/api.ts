@@ -92,9 +92,9 @@ export async function scanShapes(filePath: string): Promise<SlideScanShapesSucce
   })
   const raw = assertSuccess<SlideScanShapesSuccess>(response) as unknown as Record<string, unknown>
   return {
-    Type: 'scanshapes',
-    FilePath: (raw.filePath as string) ?? filePath,
-    Shapes: ((raw.shapes ?? []) as Array<Record<string, unknown>>).map((shape) =>
+    type: 'scanshapes',
+    filePath: (raw.filePath as string) ?? filePath,
+    shapes: ((raw.shapes ?? []) as Array<Record<string, unknown>>).map((shape) =>
       normalizeShapeDto(shape),
     ),
   } satisfies SlideScanShapesSuccess
@@ -116,9 +116,9 @@ export async function scanPlaceholders(filePath: string): Promise<SlideScanPlace
     unknown
   >
   return {
-    Type: 'scanplaceholders',
-    FilePath: (raw.filePath as string) ?? filePath,
-    Placeholders: (raw.placeholders ?? []) as string[],
+    type: 'scanplaceholders',
+    filePath: (raw.filePath as string) ?? filePath,
+    placeholders: (raw.placeholders ?? []) as string[],
   } satisfies SlideScanPlaceholdersSuccess
 }
 
@@ -138,12 +138,12 @@ export async function scanTemplate(filePath: string): Promise<SlideScanTemplateS
     unknown
   >
   return {
-    Type: 'scantemplate',
-    FilePath: (raw.filePath as string) ?? filePath,
-    Shapes: ((raw.shapes ?? []) as Array<Record<string, unknown>>).map((shape) =>
+    type: 'scantemplate',
+    filePath: (raw.filePath as string) ?? filePath,
+    shapes: ((raw.shapes ?? []) as Array<Record<string, unknown>>).map((shape) =>
       normalizeShapeDto(shape),
     ),
-    Placeholders: (raw.placeholders ?? []) as string[],
+    placeholders: (raw.placeholders ?? []) as string[],
   } satisfies SlideScanTemplateSuccess
 }
 
@@ -181,10 +181,10 @@ export async function createGroup(
     string
   >
   return {
-    Type: 'groupcreate',
-    GroupId: job.JobId,
-    OutputFolder: job.OutputPath ?? '',
-    JobIds: sheetJobIds,
+    type: 'groupcreate',
+    groupId: job.jobId,
+    outputFolder: job.outputPath ?? '',
+    jobIds: sheetJobIds,
   } satisfies SlideGroupCreateSuccess
 }
 
@@ -203,7 +203,7 @@ export async function groupStatus(
     throw new Error(`Group job ${groupId} not found`)
   }
 
-  const sheets = detail.Sheets ?? {}
+  const sheets = detail.sheets ?? {}
   const sheetEntries = Object.entries(sheets)
   const sheetDetails = await Promise.all(
     sheetEntries.map(async ([sheetId, summary]) => {
@@ -214,28 +214,28 @@ export async function groupStatus(
 
   const normalizedJobs: Record<string, JobStatusInfo> = {}
   sheetDetails.forEach(({ sheetId, summary, sheetDetail }) => {
-    const status = mapJobStateToJobStatus(sheetDetail?.Status ?? summary.Status)
+    const status = mapJobStateToJobStatus(sheetDetail?.status ?? summary.status)
     normalizedJobs[sheetId] = {
-      JobId: sheetId,
-      SheetName: summary.SheetName ?? sheetDetail?.SheetName ?? '',
-      Status: status,
-      CurrentRow: sheetDetail?.CurrentRow ?? 0,
-      TotalRows: sheetDetail?.TotalRows ?? 0,
-      Progress: summary.Progress ?? sheetDetail?.Progress ?? 0,
-      OutputPath: sheetDetail?.OutputPath ?? summary.OutputPath,
-      ErrorMessage: sheetDetail?.ErrorMessage ?? undefined,
-      ErrorCount: summary.ErrorCount ?? sheetDetail?.ErrorCount ?? 0,
-      HangfireJobId: sheetDetail?.HangfireJobId ?? summary.HangfireJobId ?? undefined,
+      jobId: sheetId,
+      sheetName: summary.sheetName ?? sheetDetail?.sheetName ?? '',
+      status: status,
+      currentRow: sheetDetail?.currentRow ?? 0,
+      totalRows: sheetDetail?.totalRows ?? 0,
+      progress: summary.progress ?? sheetDetail?.progress ?? 0,
+      outputPath: sheetDetail?.outputPath ?? summary.outputPath,
+      errorMessage: sheetDetail?.errorMessage ?? undefined,
+      errorCount: summary.errorCount ?? sheetDetail?.errorCount ?? 0,
+      hangfireJobId: sheetDetail?.hangfireJobId ?? summary.hangfireJobId ?? undefined,
     }
   })
 
   return {
-    Type: 'groupstatus',
-    GroupId: detail.JobId,
-    Status: mapJobStateToJobStatus(detail.Status),
-    Progress: detail.Progress ?? 0,
-    Jobs: normalizedJobs,
-    ErrorCount: detail.ErrorCount ?? 0,
+    type: 'groupstatus',
+    groupId: detail.jobId,
+    status: mapJobStateToJobStatus(detail.status),
+    progress: detail.progress ?? 0,
+    jobs: normalizedJobs,
+    errorCount: detail.errorCount ?? 0,
   } satisfies SlideGroupStatusSuccess
 }
 
@@ -276,7 +276,7 @@ export async function removeGroup(
       action: 'Remove',
     })
   }
-  return { Type: 'groupremove', GroupId: groupId, Removed: true }
+  return { type: 'groupremove', groupId: groupId, removed: true }
 }
 
 /**
@@ -292,17 +292,17 @@ export async function jobStatus(request: Record<string, unknown>): Promise<Slide
     throw new Error(`Sheet job ${jobId} not found`)
   }
   return {
-    Type: 'jobstatus',
-    JobId: detail.JobId,
-    SheetName: detail.SheetName ?? '',
-    Status: mapJobStateToJobStatus(detail.Status),
-    CurrentRow: detail.CurrentRow ?? 0,
-    TotalRows: detail.TotalRows ?? 0,
-    Progress: detail.Progress ?? 0,
-    OutputPath: detail.OutputPath ?? undefined,
-    ErrorMessage: detail.ErrorMessage ?? undefined,
-    ErrorCount: detail.ErrorCount ?? undefined,
-    HangfireJobId: detail.HangfireJobId ?? undefined,
+    type: 'jobstatus',
+    jobId: detail.jobId,
+    sheetName: detail.sheetName ?? '',
+    status: mapJobStateToJobStatus(detail.status),
+    currentRow: detail.currentRow ?? 0,
+    totalRows: detail.totalRows ?? 0,
+    progress: detail.progress ?? 0,
+    outputPath: detail.outputPath ?? undefined,
+    errorMessage: detail.errorMessage ?? undefined,
+    errorCount: detail.errorCount ?? undefined,
+    hangfireJobId: detail.hangfireJobId ?? undefined,
   } satisfies SlideJobStatusSuccess
 }
 
@@ -340,7 +340,7 @@ export async function removeJob(request: Record<string, unknown>): Promise<Slide
       action: 'Remove',
     })
   }
-  return { Type: 'jobremove', JobId: jobId, Removed: true }
+  return { type: 'jobremove', jobId: jobId, removed: true }
 }
 
 /**
@@ -352,9 +352,9 @@ export async function removeJob(request: Record<string, unknown>): Promise<Slide
 export async function getJobLogs(request: Record<string, unknown>): Promise<SlideJobLogsSuccess> {
   const jobId = request.jobId as string
   return {
-    Type: 'joblogs',
-    JobId: jobId,
-    Logs: [],
+    type: 'joblogs',
+    jobId: jobId,
+    logs: [],
   } satisfies SlideJobLogsSuccess
 }
 
@@ -368,7 +368,7 @@ export async function getGroupPayload(groupId: string): Promise<JobExportPayload
   if (!groupId) return null
   try {
     const detail = await fetchJobDetail(groupId, 'Group', false, true)
-    return parseJobPayload(detail?.PayloadJson ?? null)
+    return parseJobPayload(detail?.payloadJson ?? null)
   } catch {
     return null
   }
@@ -387,7 +387,7 @@ export async function globalControl(request: Record<string, unknown>): Promise<u
     groups.map((group) =>
       jobHub.sendRequest<ResponseBase>({
         type: 'jobcontrol',
-        jobId: group.JobId,
+        jobId: group.jobId,
         jobType: 'Group',
         action,
       }),
@@ -406,19 +406,19 @@ export async function getAllGroups(): Promise<SlideGlobalGetGroupsSuccess> {
   const summaries = await Promise.all(
     groups.map(async (group) => {
       let workbookPath = ''
-      let outputFolder = group.OutputPath
+      let outputFolder = group.outputPath
       let sheetCount = 0
       let completedSheets = 0
       try {
-        const detail = await fetchJobDetail(group.JobId, 'Group', true, true)
+        const detail = await fetchJobDetail(group.jobId, 'Group', true, true)
         if (detail) {
-          outputFolder = detail.OutputFolder ?? outputFolder
-          const sheets = detail.Sheets ?? {}
+          outputFolder = detail.outputFolder ?? outputFolder
+          const sheets = detail.sheets ?? {}
           sheetCount = Object.keys(sheets).length
           completedSheets = Object.values(sheets).filter(
-            (sheet) => mapJobStateToJobStatus(sheet.Status) === 'Completed',
+            (sheet) => mapJobStateToJobStatus(sheet.status) === 'Completed',
           ).length
-          const payload = parseJobPayload(detail.PayloadJson)
+          const payload = parseJobPayload(detail.payloadJson)
           workbookPath = payload?.spreadsheetPath ?? ''
         }
       } catch (error) {
@@ -426,21 +426,21 @@ export async function getAllGroups(): Promise<SlideGlobalGetGroupsSuccess> {
       }
 
       return {
-        GroupId: group.JobId,
-        WorkbookPath: workbookPath,
-        OutputFolder: outputFolder ?? '',
-        Status: mapJobStateToJobStatus(group.Status),
-        Progress: group.Progress ?? 0,
-        SheetCount: sheetCount,
-        CompletedSheets: completedSheets,
-        ErrorCount: group.ErrorCount ?? 0,
+        groupId: group.jobId,
+        workbookPath: workbookPath,
+        outputFolder: outputFolder ?? '',
+        status: mapJobStateToJobStatus(group.status),
+        progress: group.progress ?? 0,
+        sheetCount: sheetCount,
+        completedSheets: completedSheets,
+        errorCount: group.errorCount ?? 0,
       } satisfies GroupSummary
     }),
   )
 
   return {
-    Type: 'getallgroups',
-    Groups: summaries,
+    type: 'getallgroups',
+    groups: summaries,
   } satisfies SlideGlobalGetGroupsSuccess
 }
 

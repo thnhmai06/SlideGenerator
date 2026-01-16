@@ -113,15 +113,15 @@ export const useJobProvider = (): JobContextValue => {
 
 	const upsertGroupFromSummary = useCallback(
 		(summary: backendApi.GroupSummary) => {
-			updateGroup(summary.GroupId, (group) => {
+			updateGroup(summary.groupId, (group) => {
 				return {
 					...group,
-					id: summary.GroupId,
-					workbookPath: summary.WorkbookPath ?? group.workbookPath,
-					outputFolder: summary.OutputFolder ?? group.outputFolder,
-					status: summary.Status as JobStatus,
-					progress: summary.Progress ?? group.progress,
-					errorCount: summary.ErrorCount ?? group.errorCount,
+					id: summary.groupId,
+					workbookPath: summary.workbookPath ?? group.workbookPath,
+					outputFolder: summary.outputFolder ?? group.outputFolder,
+					status: summary.status as JobStatus,
+					progress: summary.progress ?? group.progress,
+					errorCount: summary.errorCount ?? group.errorCount,
 				};
 			});
 		},
@@ -130,35 +130,35 @@ export const useJobProvider = (): JobContextValue => {
 
 	const syncGroupStatus = useCallback(
 		async (groupId: string) => {
-			const response = await backendApi.groupStatus({ GroupId: groupId });
+			const response = await backendApi.groupStatus({ groupId: groupId });
 			const status = response as backendApi.SlideGroupStatusSuccess;
-			const jobs = status.Jobs ?? {};
+			const jobs = status.jobs ?? {};
 
 			updateGroup(groupId, (group) => {
 				const sheets: Record<string, SheetJob> = { ...group.sheets };
 				Object.values(jobs).forEach((job) => {
-					const sheetId = job.JobId;
+					const sheetId = job.jobId;
 					sheetToGroup.current[sheetId] = groupId;
 					sheets[sheetId] = {
 						id: sheetId,
-						sheetName: job.SheetName,
-						status: job.Status as JobStatus,
-						currentRow: job.CurrentRow ?? 0,
-						totalRows: job.TotalRows ?? 0,
-						progress: job.Progress ?? 0,
-						errorCount: job.ErrorCount ?? 0,
-						outputPath: job.OutputPath ?? sheets[sheetId]?.outputPath,
-						errorMessage: job.ErrorMessage ?? undefined,
+						sheetName: job.sheetName,
+						status: job.status as JobStatus,
+						currentRow: job.currentRow ?? 0,
+						totalRows: job.totalRows ?? 0,
+						progress: job.progress ?? 0,
+						errorCount: job.errorCount ?? 0,
+						outputPath: job.outputPath ?? sheets[sheetId]?.outputPath,
+						errorMessage: job.errorMessage ?? undefined,
 						logs: sheets[sheetId]?.logs ?? [],
-						hangfireJobId: job.HangfireJobId ?? sheets[sheetId]?.hangfireJobId,
+						hangfireJobId: job.hangfireJobId ?? sheets[sheetId]?.hangfireJobId,
 					};
 				});
 
 				return {
 					...group,
-					status: status.Status as JobStatus,
-					progress: status.Progress ?? group.progress,
-					errorCount: status.ErrorCount ?? group.errorCount,
+					status: status.status as JobStatus,
+					progress: status.progress ?? group.progress,
+					errorCount: status.errorCount ?? group.errorCount,
 					sheets,
 				};
 			});
@@ -172,10 +172,10 @@ export const useJobProvider = (): JobContextValue => {
 	const refreshGroups = useCallback(async () => {
 		const response = await backendApi.getAllGroups();
 		const data = response as backendApi.SlideGlobalGetGroupsSuccess;
-		const summaries = data.Groups ?? [];
+		const summaries = data.groups ?? [];
 
 		summaries.forEach((summary) => {
-			if (!removedGroupIds.current.has(summary.GroupId)) {
+			if (!removedGroupIds.current.has(summary.groupId)) {
 				upsertGroupFromSummary(summary);
 			}
 		});
@@ -184,8 +184,8 @@ export const useJobProvider = (): JobContextValue => {
 
 		await Promise.allSettled(
 			summaries.map((summary) => {
-				if (!removedGroupIds.current.has(summary.GroupId)) {
-					return syncGroupStatus(summary.GroupId);
+				if (!removedGroupIds.current.has(summary.groupId)) {
+					return syncGroupStatus(summary.groupId);
 				}
 				return Promise.resolve();
 			}),
@@ -195,23 +195,23 @@ export const useJobProvider = (): JobContextValue => {
 	const createGroup = useCallback(
 		async (payload: CreateGroupPayload) => {
 			const response = await backendApi.createGroup({
-				TemplatePath: payload.templatePath,
-				SpreadsheetPath: payload.spreadsheetPath,
-				OutputPath: payload.outputPath,
-				TextConfigs: payload.textConfigs,
-				ImageConfigs: payload.imageConfigs,
-				SheetNames: payload.sheetNames,
+				templatePath: payload.templatePath,
+				spreadsheetPath: payload.spreadsheetPath,
+				outputPath: payload.outputPath,
+				textConfigs: payload.textConfigs,
+				imageConfigs: payload.imageConfigs,
+				sheetNames: payload.sheetNames,
 			});
 
 			const data = response as backendApi.SlideGroupCreateSuccess;
-			const groupId = data.GroupId;
+			const groupId = data.groupId;
 			removedGroupIds.current.delete(groupId);
 			saveGroupConfig(groupId, payload);
 
 			let createdGroup: GroupJob = createEmptyGroup(groupId);
 			updateGroup(groupId, (group) => {
 				const sheets: Record<string, SheetJob> = { ...group.sheets };
-				Object.entries(data.JobIds ?? {}).forEach(([sheetName, jobId]) => {
+				Object.entries(data.jobIds ?? {}).forEach(([sheetName, jobId]) => {
 					sheetToGroup.current[jobId] = groupId;
 					sheets[jobId] = {
 						...(sheets[jobId] ?? createEmptySheet(jobId)),
@@ -224,7 +224,7 @@ export const useJobProvider = (): JobContextValue => {
 					...group,
 					id: groupId,
 					workbookPath: payload.spreadsheetPath,
-					outputFolder: data.OutputFolder,
+					outputFolder: data.outputFolder,
 					status: 'Running',
 					progress: 0,
 					errorCount: 0,
@@ -235,7 +235,7 @@ export const useJobProvider = (): JobContextValue => {
 
 			await ensureGroupSubscription(groupId);
 			await Promise.all(
-				Object.values(data.JobIds ?? {}).map((jobId) => ensureSheetSubscription(jobId)),
+				Object.values(data.jobIds ?? {}).map((jobId) => ensureSheetSubscription(jobId)),
 			);
 
 			await syncGroupStatus(groupId);
@@ -253,7 +253,7 @@ export const useJobProvider = (): JobContextValue => {
 
 	const groupControl = useCallback(
 		async (groupId: string, action: backendApi.ControlAction) => {
-			await backendApi.groupControl({ GroupId: groupId, Action: action });
+			await backendApi.groupControl({ groupId: groupId, action: action });
 			if (action === 'Stop' || action === 'Cancel') {
 				clearGroupMeta([groupId]);
 			}
@@ -265,7 +265,7 @@ export const useJobProvider = (): JobContextValue => {
 	const removeGroup = useCallback(
 		async (groupId: string) => {
 			try {
-				await backendApi.removeGroup({ GroupId: groupId });
+				await backendApi.removeGroup({ groupId: groupId });
 			} catch (error) {
 				loggers.jobs.error(`Failed to remove group ${groupId}:`, error);
 			}
@@ -286,7 +286,7 @@ export const useJobProvider = (): JobContextValue => {
 
 	const jobControl = useCallback(
 		async (jobId: string, action: backendApi.ControlAction) => {
-			await backendApi.jobControl({ JobId: jobId, Action: action });
+			await backendApi.jobControl({ jobId: jobId, action: action });
 			await refreshGroups();
 		},
 		[refreshGroups],
@@ -295,16 +295,16 @@ export const useJobProvider = (): JobContextValue => {
 	const loadSheetLogs = useCallback(
 		async (jobId: string) => {
 			try {
-				const response = await backendApi.getJobLogs({ JobId: jobId });
+				const response = await backendApi.getJobLogs({ jobId: jobId });
 				const data = response as backendApi.SlideJobLogsSuccess;
-				const logs = data.Logs.map((entry) => {
-					const rowValue = entry.Data ? entry.Data.row : undefined;
+				const logs = data.logs.map((entry) => {
+					const rowValue = entry.data ? entry.data.row : undefined;
 					const row = typeof rowValue === 'number' ? rowValue : Number(rowValue);
-					const rowStatusValue = entry.Data ? entry.Data.rowStatus : undefined;
+					const rowStatusValue = entry.data ? entry.data.rowStatus : undefined;
 					return {
-						message: entry.Message,
-						level: entry.Level,
-						timestamp: entry.Timestamp,
+						message: entry.message,
+						level: entry.level,
+						timestamp: entry.timestamp,
 						row: Number.isFinite(row) ? row : undefined,
 						rowStatus: typeof rowStatusValue === 'string' ? rowStatusValue : undefined,
 					} satisfies LogEntry;
@@ -322,9 +322,9 @@ export const useJobProvider = (): JobContextValue => {
 	);
 
 	const removeSheet = useCallback(async (jobId: string) => {
-		const response = await backendApi.removeJob({ JobId: jobId });
+		const response = await backendApi.removeJob({ jobId: jobId });
 		const data = response as backendApi.SlideJobRemoveSuccess;
-		if (!data.Removed) return false;
+		if (!data.removed) return false;
 
 		setGroupsById((prev) => {
 			const next: Record<string, GroupJob> = {};
@@ -348,7 +348,7 @@ export const useJobProvider = (): JobContextValue => {
 	}, []);
 
 	const globalControl = useCallback(async (action: backendApi.ControlAction) => {
-		await backendApi.globalControl({ Action: action });
+		await backendApi.globalControl({ action: action });
 	}, []);
 
 	const clearCompleted = useCallback(async () => {
@@ -362,7 +362,7 @@ export const useJobProvider = (): JobContextValue => {
 		const removedIds: string[] = [];
 		for (const groupId of completedIds) {
 			try {
-				await backendApi.removeGroup({ GroupId: groupId });
+				await backendApi.removeGroup({ groupId: groupId });
 				removedIds.push(groupId);
 			} catch (error) {
 				loggers.jobs.error(`Failed to remove group ${groupId}:`, error);
@@ -397,15 +397,15 @@ export const useJobProvider = (): JobContextValue => {
 				selectedSheets: config.sheetNames,
 				textReplacements: (config.textConfigs ?? []).map((item, index) => ({
 					id: index + 1,
-					placeholder: item.Pattern,
-					columns: item.Columns,
+					placeholder: item.pattern,
+					columns: item.columns,
 				})),
 				imageReplacements: (config.imageConfigs ?? []).map((item, index) => ({
 					id: index + 1,
-					shapeId: String(item.ShapeId),
-					columns: item.Columns,
-					roiType: item.RoiType ?? 'RuleOfThirds',
-					cropType: item.CropType ?? 'Fit',
+					shapeId: String(item.shapeId),
+					columns: item.columns,
+					roiType: item.roiType ?? 'RuleOfThirds',
+					cropType: item.cropType ?? 'Fit',
 				})),
 			};
 

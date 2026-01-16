@@ -84,13 +84,13 @@ export const resolveRequestedSheets = (
 };
 
 export const mapTemplateShapes = (template: backendApi.SlideScanTemplateSuccess): Shape[] => {
-	return (template.Shapes ?? [])
-		.filter((shape) => shape.IsImage === true)
+	return (template.shapes ?? [])
+		.filter((shape) => shape.isImage === true)
 		.map((shape) => ({
-			id: String(shape.Id),
-			name: shape.Name,
-			preview: shape.Data
-				? `data:image/png;base64,${shape.Data}`
+			id: String(shape.id),
+			name: shape.name,
+			preview: shape.data
+				? `data:image/png;base64,${shape.data}`
 				: getAssetPath('images', 'app-icon.png'),
 		}));
 };
@@ -98,7 +98,7 @@ export const mapTemplateShapes = (template: backendApi.SlideScanTemplateSuccess)
 export const mapTemplatePlaceholders = (
 	template: backendApi.SlideScanTemplateSuccess,
 ): string[] => {
-	const items = (template.Placeholders ?? [])
+	const items = (template.placeholders ?? [])
 		.map((item) => item.trim())
 		.filter((item) => item.length > 0);
 	return Array.from(new Set(items)).sort((a, b) => a.localeCompare(b));
@@ -205,8 +205,8 @@ export const buildTextConfigs = (textReplacements: TextReplacement[]): SlideText
 	return textReplacements
 		.filter((item) => item.placeholder.trim() && item.columns.length > 0)
 		.map((item) => ({
-			Pattern: item.placeholder.trim(),
-			Columns: item.columns,
+			pattern: item.placeholder.trim(),
+			columns: item.columns,
 		}));
 };
 
@@ -214,12 +214,12 @@ export const buildImageConfigs = (imageReplacements: ImageReplacement[]): SlideI
 	return imageReplacements
 		.filter((item) => item.shapeId && item.columns.length > 0)
 		.map((item) => ({
-			ShapeId: Number(item.shapeId),
-			Columns: item.columns,
-			RoiType: item.roiType || 'Center',
-			CropType: item.cropType || 'Crop',
+			shapeId: Number(item.shapeId),
+			columns: item.columns,
+			roiType: item.roiType || 'Center',
+			cropType: item.cropType || 'Crop',
 		}))
-		.filter((item) => Number.isFinite(item.ShapeId));
+		.filter((item) => Number.isFinite(item.shapeId));
 };
 
 export const resolveAvailablePlaceholders = (
