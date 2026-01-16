@@ -16,6 +16,7 @@ using SlideGenerator.Infrastructure.Features.Configs;
 using SlideGenerator.Infrastructure.Features.Downloads.Services;
 using SlideGenerator.Infrastructure.Features.Images.Services;
 using SlideGenerator.Infrastructure.Features.IO;
+using SlideGenerator.Infrastructure.Features.Jobs.Hangfire;
 using SlideGenerator.Infrastructure.Features.Jobs.Services;
 using SlideGenerator.Infrastructure.Features.Sheets.Services;
 using SlideGenerator.Infrastructure.Features.Slides.Services;
@@ -120,7 +121,17 @@ public static class Program
         {
             DashboardTitle = Config.AppName,
             Authorization = [],
-            IsReadOnlyFunc = _ => true
+            IsReadOnlyFunc = _ => true,
+            DisplayNameFunc = (_, job) =>
+            {
+                if (job.Args is { Count: > 0 } && job.Args[0] is string sheetId)
+                {
+                    var displayName = SheetJobNameRegistry.GetDisplayName(sheetId);
+                    if (!string.IsNullOrEmpty(displayName))
+                        return displayName;
+                }
+                return $"{job.Type.Name}.{job.Method.Name}";
+            }
         });
 
         // Get host/port
