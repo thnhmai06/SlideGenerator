@@ -200,7 +200,8 @@ public class ConfigHub(
                 message = success
                     ? "Face detection model initialized successfully"
                     : "Failed to initialize face detection model";
-                logger.LogInformation("Face model init by client {ConnectionId}: {Success}", Context.ConnectionId, success);
+                logger.LogInformation("Face model init by client {ConnectionId}: {Success}", Context.ConnectionId,
+                    success);
                 break;
 
             case "deinit":
@@ -211,7 +212,8 @@ public class ConfigHub(
                 message = success
                     ? "Face detection model deinitialized successfully"
                     : "Failed to deinitialize face detection model";
-                logger.LogInformation("Face model deinit by client {ConnectionId}: {Success}", Context.ConnectionId, success);
+                logger.LogInformation("Face model deinit by client {ConnectionId}: {Success}", Context.ConnectionId,
+                    success);
                 break;
 
             default:

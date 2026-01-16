@@ -50,19 +50,25 @@ public class ImageService : Service,
             LazyThreadSafetyMode.ExecutionAndPublication);
     }
 
-    /// <inheritdoc />
-    public bool IsFaceModelAvailable => _faceDetectorMode.IsModelAvailable;
-
-    /// <inheritdoc />
-    public Task<bool> InitFaceModelAsync() => _faceDetectorMode.InitAsync();
-
-    /// <inheritdoc />
-    public Task<bool> DeInitFaceModelAsync() => _faceDetectorMode.DeInitAsync();
-
     public void Dispose()
     {
         _faceDetectorMode.Dispose();
         GC.SuppressFinalize(this);
+    }
+
+    /// <inheritdoc />
+    public bool IsFaceModelAvailable => _faceDetectorMode.IsModelAvailable;
+
+    /// <inheritdoc />
+    public Task<bool> InitFaceModelAsync()
+    {
+        return _faceDetectorMode.InitAsync();
+    }
+
+    /// <inheritdoc />
+    public Task<bool> DeInitFaceModelAsync()
+    {
+        return _faceDetectorMode.DeInitAsync();
     }
 
     public async Task<byte[]> CropImageAsync(string filePath, Size size, ImageRoiType roiType, ImageCropType cropType)

@@ -1,3 +1,4 @@
+using System.Drawing;
 using SlideGenerator.Application.Common.Utilities;
 using SlideGenerator.Application.Features.Images;
 using SlideGenerator.Application.Features.Jobs.Contracts;
@@ -11,7 +12,6 @@ using SlideGenerator.Domain.Features.Jobs.Enums;
 using SlideGenerator.Domain.Features.Jobs.Interfaces;
 using SlideGenerator.Domain.Features.Sheets.Interfaces;
 using SlideGenerator.Domain.Features.Slides;
-using System.Drawing;
 
 namespace SlideGenerator.Tests.Helpers;
 
