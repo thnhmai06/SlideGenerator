@@ -1,4 +1,3 @@
-using System.Text.Json.Serialization;
 using SlideGenerator.Application.Features.Slides.DTOs.Components;
 using SlideGenerator.Domain.Features.Jobs.Enums;
 
@@ -9,7 +8,7 @@ namespace SlideGenerator.Application.Features.Jobs.DTOs.Requests;
 /// </summary>
 public sealed record JobCreate
 {
-    [JsonPropertyName("JobType")] public JobType JobType { get; init; } = JobType.Group;
+    public JobType JobType { get; init; } = JobType.Group;
 
     public string TemplatePath { get; init; } = string.Empty;
 

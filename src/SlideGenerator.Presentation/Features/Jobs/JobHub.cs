@@ -475,7 +475,6 @@ public class JobHub(
     }
 
     private sealed record JobExportPayload(
-        [property: JsonPropertyName("taskType")]
         JobType JobType,
         string TemplatePath,
         string SpreadsheetPath,

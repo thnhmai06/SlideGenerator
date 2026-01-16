@@ -1,4 +1,3 @@
-using System.Text.Json.Serialization;
 using SlideGenerator.Domain.Features.Jobs.Enums;
 
 namespace SlideGenerator.Application.Features.Jobs.DTOs.Responses.Successes;
@@ -7,8 +6,7 @@ namespace SlideGenerator.Application.Features.Jobs.DTOs.Responses.Successes;
 ///     Detailed job information.
 /// </summary>
 public sealed record JobDetail(
-    [property: JsonPropertyName("JobId")] string JobId,
-    [property: JsonPropertyName("JobType")]
+    string JobId,
     JobType JobType,
     JobState Status,
     float Progress,
