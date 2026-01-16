@@ -10,6 +10,11 @@ import type {
   ModelControlSuccess,
 } from './types'
 
+/**
+ * Retrieves the current backend configuration.
+ *
+ * @returns The current configuration settings
+ */
 export async function getConfig(): Promise<unknown> {
   const response = await configHub.sendRequest<ResponseBase>({
     type: 'get',
@@ -17,6 +22,12 @@ export async function getConfig(): Promise<unknown> {
   return assertSuccess<ConfigGetSuccess>(response)
 }
 
+/**
+ * Updates backend configuration with new values.
+ *
+ * @param request - Configuration values to update
+ * @returns Updated configuration confirmation
+ */
 export async function updateConfig(request: Record<string, unknown>): Promise<unknown> {
   const response = await configHub.sendRequest<ResponseBase>({
     type: 'update',
@@ -25,6 +36,11 @@ export async function updateConfig(request: Record<string, unknown>): Promise<un
   return assertSuccess<ConfigUpdateSuccess>(response)
 }
 
+/**
+ * Reloads configuration from the backend config file.
+ *
+ * @returns Reload confirmation
+ */
 export async function reloadConfig(): Promise<unknown> {
   const response = await configHub.sendRequest<ResponseBase>({
     type: 'reload',
@@ -32,6 +48,11 @@ export async function reloadConfig(): Promise<unknown> {
   return assertSuccess<ConfigReloadSuccess>(response)
 }
 
+/**
+ * Resets configuration to default values.
+ *
+ * @returns Reset confirmation
+ */
 export async function resetConfig(): Promise<unknown> {
   const response = await configHub.sendRequest<ResponseBase>({
     type: 'reset',
@@ -39,6 +60,11 @@ export async function resetConfig(): Promise<unknown> {
   return assertSuccess<ConfigResetSuccess>(response)
 }
 
+/**
+ * Gets the initialization status of ML models.
+ *
+ * @returns Model status information
+ */
 export async function getModelStatus(): Promise<ModelStatusSuccess> {
   const response = await configHub.sendRequest<ResponseBase>({
     type: 'modelstatus',
@@ -46,6 +72,13 @@ export async function getModelStatus(): Promise<ModelStatusSuccess> {
   return assertSuccess<ModelStatusSuccess>(response)
 }
 
+/**
+ * Controls ML model initialization/deinitialization.
+ *
+ * @param model - The model identifier
+ * @param action - Action to perform ('init' or 'deinit')
+ * @returns Model control confirmation
+ */
 export async function controlModel(
   model: string,
   action: 'init' | 'deinit',

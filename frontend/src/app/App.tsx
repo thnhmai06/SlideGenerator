@@ -1,15 +1,24 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import Sidebar from '@/shared/components/Sidebar';
 import TitleBar from '@/shared/components/TitleBar';
-import CreateTaskMenu from '@/features/create-task';
-import SettingMenu from '@/features/settings';
-import ProcessMenu from '@/features/process';
-import ResultMenu from '@/features/results';
-import AboutMenu from '@/features/about';
 import { checkHealth } from '@/shared/services/backendApi';
 import { useApp } from '@/shared/contexts/useApp';
 import { useJobs } from '@/shared/contexts/useJobs';
 import './App.css';
+
+// Lazy load feature components for code splitting
+const CreateTaskMenu = lazy(() => import('@/features/create-task'));
+const SettingMenu = lazy(() => import('@/features/settings'));
+const ProcessMenu = lazy(() => import('@/features/process'));
+const ResultMenu = lazy(() => import('@/features/results'));
+const AboutMenu = lazy(() => import('@/features/about'));
+
+// Loading fallback component
+const MenuLoader: React.FC = () => (
+	<div className="menu-loader">
+		<div className="menu-loader-spinner" />
+	</div>
+);
 
 type MenuType = 'input' | 'setting' | 'download' | 'process' | 'about';
 
@@ -17,9 +26,7 @@ const App: React.FC = () => {
 	const { t } = useApp();
 	const { groups } = useJobs();
 	const [currentMenu, setCurrentMenu] = useState<MenuType>('input');
-	const [bannerState, setBannerState] = useState<'hidden' | 'connected' | 'disconnected'>(
-		'hidden',
-	);
+	const [bannerState, setBannerState] = useState<'hidden' | 'connected' | 'disconnected'>('hidden');
 	const bannerTimeoutRef = useRef<number | null>(null);
 	const connectionRef = useRef<'connected' | 'disconnected' | 'unknown'>('unknown');
 
@@ -112,10 +119,14 @@ const App: React.FC = () => {
 		document.title = windowTitle;
 	}, [windowTitle]);
 
-	const renderMenu = () => {
+	const handleStart = useCallback(() => {
+		setCurrentMenu('process');
+	}, []);
+
+	const renderMenu = useMemo(() => {
 		switch (currentMenu) {
 			case 'input':
-				return <CreateTaskMenu onStart={() => setCurrentMenu('process')} />;
+				return <CreateTaskMenu onStart={handleStart} />;
 			case 'setting':
 				return <SettingMenu />;
 			case 'download':
@@ -125,9 +136,9 @@ const App: React.FC = () => {
 			case 'about':
 				return <AboutMenu />;
 			default:
-				return <CreateTaskMenu onStart={() => setCurrentMenu('process')} />;
+				return <CreateTaskMenu onStart={handleStart} />;
 		}
-	};
+	}, [currentMenu, handleStart]);
 
 	return (
 		<div className="app-shell">
@@ -140,7 +151,9 @@ const App: React.FC = () => {
 			</div>
 			<div className="app-container">
 				<Sidebar currentMenu={currentMenu} onMenuChange={setCurrentMenu} />
-				<div className="main-content">{renderMenu()}</div>
+				<div className="main-content">
+					<Suspense fallback={<MenuLoader />}>{renderMenu}</Suspense>
+				</div>
 			</div>
 		</div>
 	);

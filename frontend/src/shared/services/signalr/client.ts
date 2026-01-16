@@ -9,21 +9,70 @@ import {
 import { getBackendBaseUrl } from './baseUrl';
 import { NOTIFICATION_METHOD, RESPONSE_METHOD } from './constants';
 
+/**
+ * A SignalR hub client wrapper that provides automatic connection management,
+ * request queuing, and reconnection handling.
+ *
+ * @remarks
+ * This client wraps the Microsoft SignalR HubConnection and adds:
+ * - Automatic connection establishment before sending requests
+ * - Request queuing to prevent concurrent connection attempts
+ * - Automatic reconnection when backend URL changes
+ * - Event handlers for notifications and connection state changes
+ *
+ * @example
+ * ```typescript
+ * const client = new SignalRHubClient('/hubs/slides');
+ *
+ * // Subscribe to notifications
+ * const unsubscribe = client.onNotification((payload) => {
+ *   console.log('Received:', payload);
+ * });
+ *
+ * // Send a request
+ * const result = await client.sendRequest<MyResponse>({ action: 'generate' });
+ *
+ * // Cleanup
+ * unsubscribe();
+ * await client.dispose();
+ * ```
+ */
 export class SignalRHubClient {
+	/** The hub endpoint path (e.g., '/hubs/slides') */
 	private readonly hubPath: string;
+	/** The underlying SignalR connection */
 	private connection: HubConnection;
+	/** Current backend base URL */
 	private baseUrl: string;
+	/** Set of notification handlers to invoke on ReceiveNotification events */
 	private notificationHandlers = new Set<(payload: unknown) => void>();
+	/** Set of handlers to invoke when connection is re-established after disconnect */
 	private reconnectHandlers = new Set<(connectionId?: string) => void>();
+	/** Set of handlers to invoke when initial connection is established */
 	private connectedHandlers = new Set<(connectionId?: string) => void>();
+	/** Queue to serialize connection and request operations */
 	private queue: Promise<void> = Promise.resolve();
 
+	/**
+	 * Creates a new SignalR hub client.
+	 *
+	 * @param hubPath - The hub endpoint path (e.g., '/hubs/slides')
+	 */
 	constructor(hubPath: string) {
 		this.hubPath = hubPath;
 		this.baseUrl = getBackendBaseUrl();
 		this.connection = this.buildConnection(this.baseUrl);
 	}
 
+	/**
+	 * Sends a request to the backend hub and waits for a typed response.
+	 *
+	 * @typeParam TResponse - The expected response type
+	 * @param payload - The request payload to send
+	 * @param timeoutMs - Maximum time to wait for response (default: 15000ms)
+	 * @returns Promise resolving to the backend response
+	 * @throws Error if timeout expires or connection fails
+	 */
 	async sendRequest<TResponse>(
 		payload: Record<string, unknown>,
 		timeoutMs = 15000,
@@ -34,6 +83,12 @@ export class SignalRHubClient {
 		});
 	}
 
+	/**
+	 * Invokes a hub method without waiting for a specific response.
+	 *
+	 * @param methodName - The hub method name to invoke
+	 * @param args - Arguments to pass to the hub method
+	 */
 	async invoke(methodName: string, ...args: unknown[]): Promise<void> {
 		await this.enqueue(async () => {
 			await this.ensureConnected();
@@ -41,6 +96,12 @@ export class SignalRHubClient {
 		});
 	}
 
+	/**
+	 * Registers a handler for backend notification events.
+	 *
+	 * @param handler - Callback function invoked when a notification is received
+	 * @returns Cleanup function to unsubscribe the handler
+	 */
 	onNotification(handler: (payload: unknown) => void): () => void {
 		this.notificationHandlers.add(handler);
 		this.connection.on(NOTIFICATION_METHOD, handler);
@@ -50,6 +111,12 @@ export class SignalRHubClient {
 		};
 	}
 
+	/**
+	 * Registers a handler for reconnection events.
+	 *
+	 * @param handler - Callback function invoked when connection is re-established
+	 * @returns Cleanup function to unsubscribe the handler
+	 */
 	onReconnected(handler: (connectionId?: string) => void): () => void {
 		this.reconnectHandlers.add(handler);
 		return () => {
@@ -57,6 +124,12 @@ export class SignalRHubClient {
 		};
 	}
 
+	/**
+	 * Registers a handler for initial connection events.
+	 *
+	 * @param handler - Callback function invoked when connection is first established
+	 * @returns Cleanup function to unsubscribe the handler
+	 */
 	onConnected(handler: (connectionId?: string) => void): () => void {
 		this.connectedHandlers.add(handler);
 		return () => {
@@ -64,6 +137,12 @@ export class SignalRHubClient {
 		};
 	}
 
+	/**
+	 * Builds a new SignalR HubConnection with WebSocket transport.
+	 *
+	 * @param baseUrl - The backend base URL
+	 * @returns Configured HubConnection instance
+	 */
 	private buildConnection(baseUrl: string): HubConnection {
 		const connection = new HubConnectionBuilder()
 			.withUrl(`${baseUrl}${this.hubPath}`, {
@@ -82,6 +161,10 @@ export class SignalRHubClient {
 		return connection;
 	}
 
+	/**
+	 * Refreshes the connection if the backend URL has changed.
+	 * Stops the old connection and creates a new one with updated URL.
+	 */
 	private async refreshConnectionIfNeeded(): Promise<void> {
 		const currentBaseUrl = getBackendBaseUrl();
 		if (currentBaseUrl === this.baseUrl) return;
@@ -102,6 +185,10 @@ export class SignalRHubClient {
 		});
 	}
 
+	/**
+	 * Ensures the connection is in Connected state before operations.
+	 * Handles reconnection and waits for pending connection attempts.
+	 */
 	private async ensureConnected(): Promise<void> {
 		await this.refreshConnectionIfNeeded();
 		const state = this.connection.state;
@@ -113,11 +200,14 @@ export class SignalRHubClient {
 		}
 
 		await this.connection.start();
-		this.connectedHandlers.forEach((handler) =>
-			handler(this.connection.connectionId ?? undefined),
-		);
+		this.connectedHandlers.forEach((handler) => handler(this.connection.connectionId ?? undefined));
 	}
 
+	/**
+	 * Waits for a pending connection to complete with polling.
+	 *
+	 * @returns Promise that resolves when connected or rejects if disconnected
+	 */
 	private waitForConnected(): Promise<void> {
 		return new Promise((resolve, reject) => {
 			const check = () => {
@@ -135,6 +225,13 @@ export class SignalRHubClient {
 		});
 	}
 
+	/**
+	 * Enqueues an async operation to prevent concurrent connection operations.
+	 *
+	 * @typeParam T - The return type of the work function
+	 * @param work - The async function to execute
+	 * @returns Promise resolving to the work function result
+	 */
 	private enqueue<T>(work: () => Promise<T>): Promise<T> {
 		const result = this.queue.then(work, work);
 		this.queue = result.then(
@@ -144,31 +241,66 @@ export class SignalRHubClient {
 		return result;
 	}
 
+	/**
+	 * Internal method that sends a request and waits for a response with timeout.
+	 *
+	 * @typeParam TResponse - The expected response type
+	 * @param payload - The request payload
+	 * @param timeoutMs - Maximum time to wait for response
+	 * @returns Promise resolving to the backend response
+	 */
 	private sendRequestInternal<TResponse>(
 		payload: Record<string, unknown>,
 		timeoutMs: number,
 	): Promise<TResponse> {
 		return new Promise((resolve, reject) => {
+			let isCleanedUp = false;
+
 			const timeoutId = setTimeout(() => {
-				cleanup();
-				reject(new Error('Timeout waiting for backend response.'));
+				if (!isCleanedUp) {
+					cleanup();
+					reject(new Error('Timeout waiting for backend response.'));
+				}
 			}, timeoutMs);
 
 			const handleResponse = (response: TResponse) => {
-				cleanup();
-				resolve(response);
+				if (!isCleanedUp) {
+					cleanup();
+					resolve(response);
+				}
 			};
 
 			const cleanup = () => {
+				if (isCleanedUp) return;
+				isCleanedUp = true;
 				clearTimeout(timeoutId);
 				this.connection.off(RESPONSE_METHOD, handleResponse);
 			};
 
 			this.connection.on(RESPONSE_METHOD, handleResponse);
 			this.connection.invoke('ProcessRequest', payload).catch((error) => {
-				cleanup();
-				reject(error);
+				if (!isCleanedUp) {
+					cleanup();
+					reject(error);
+				}
 			});
 		});
+	}
+
+	/**
+	 * Dispose of the SignalR client and clean up resources
+	 */
+	async dispose(): Promise<void> {
+		this.notificationHandlers.clear();
+		this.reconnectHandlers.clear();
+		this.connectedHandlers.clear();
+
+		if (this.connection.state !== HubConnectionState.Disconnected) {
+			try {
+				await this.connection.stop();
+			} catch (error) {
+				console.warn('Error stopping SignalR connection during dispose:', error);
+			}
+		}
 	}
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, ReactNode } from 'react';
+import React, { useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
 import { translations, Language } from '@/shared/locales';
 import { AppContext, type Theme, type Settings } from './AppContextType';
 
@@ -30,7 +30,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 	const [closeToTray, setCloseToTrayState] = useState<boolean>(false);
 	const [isLoaded, setIsLoaded] = useState(false);
 
-	// Load settings on mount
 	useEffect(() => {
 		const initSettings = async () => {
 			const savedSettings = await loadSettings();
@@ -46,7 +45,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 		initSettings();
 	}, []);
 
-	// Auto-save settings whenever they change
 	useEffect(() => {
 		if (isLoaded) {
 			const settings: Settings = {
@@ -93,42 +91,54 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 		}
 	}, [resolvedTheme, enableAnimations]);
 
-	const setTheme = (newTheme: Theme) => {
+	const setTheme = useCallback((newTheme: Theme) => {
 		setThemeState(newTheme);
-	};
+	}, []);
 
-	const setLanguage = (newLanguage: Language) => {
+	const setLanguage = useCallback((newLanguage: Language) => {
 		setLanguageState(newLanguage);
-	};
+	}, []);
 
-	const setEnableAnimations = (enable: boolean) => {
+	const setEnableAnimations = useCallback((enable: boolean) => {
 		setEnableAnimationsState(enable);
-	};
+	}, []);
 
-	const setCloseToTray = (enable: boolean) => {
+	const setCloseToTray = useCallback((enable: boolean) => {
 		setCloseToTrayState(enable);
-	};
+	}, []);
 
-	const t = (key: string): string => {
-		const langTranslations = translations[language] as Record<string, string>;
-		return langTranslations[key] || key;
-	};
-
-	return (
-		<AppContext.Provider
-			value={{
-				theme,
-				language,
-				enableAnimations,
-				closeToTray,
-				setTheme,
-				setLanguage,
-				setEnableAnimations,
-				setCloseToTray,
-				t,
-			}}
-		>
-			{children}
-		</AppContext.Provider>
+	const t = useCallback(
+		(key: string): string => {
+			const langTranslations = translations[language] as Record<string, string>;
+			return langTranslations[key] || key;
+		},
+		[language],
 	);
+
+	const contextValue = useMemo(
+		() => ({
+			theme,
+			language,
+			enableAnimations,
+			closeToTray,
+			setTheme,
+			setLanguage,
+			setEnableAnimations,
+			setCloseToTray,
+			t,
+		}),
+		[
+			theme,
+			language,
+			enableAnimations,
+			closeToTray,
+			setTheme,
+			setLanguage,
+			setEnableAnimations,
+			setCloseToTray,
+			t,
+		],
+	);
+
+	return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;
 };

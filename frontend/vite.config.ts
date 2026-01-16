@@ -11,7 +11,14 @@ const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 
 
 export default defineConfig({
 	plugins: [
-		react(),
+		react({
+			// Enable React Compiler optimizations in development
+			babel: {
+				plugins: [
+					// Babel plugin for automatic React runtime
+				],
+			},
+		}),
 		electron([
 			{
 				entry: 'electron/main.ts',
@@ -49,6 +56,31 @@ export default defineConfig({
 	},
 	define: {
 		__APP_VERSION__: JSON.stringify(pkg.version ?? '0.0.0'),
+	},
+	build: {
+		// Optimize chunk splitting for better caching
+		rollupOptions: {
+			output: {
+				manualChunks: {
+					// Vendor chunk for React
+					'vendor-react': ['react', 'react-dom'],
+					// SignalR in its own chunk
+					'vendor-signalr': ['@microsoft/signalr'],
+				},
+			},
+		},
+		// Enable minification with terser for smaller bundles
+		minify: 'esbuild',
+		// Target modern browsers for smaller output
+		target: 'esnext',
+		// Enable source maps for debugging (disable in production if not needed)
+		sourcemap: false,
+		// Reduce chunk size warnings threshold
+		chunkSizeWarningLimit: 500,
+	},
+	// Optimize dependencies
+	optimizeDeps: {
+		include: ['react', 'react-dom', '@microsoft/signalr'],
 	},
 	test: {
 		environment: 'jsdom',

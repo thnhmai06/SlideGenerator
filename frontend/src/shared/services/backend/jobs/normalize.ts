@@ -1,23 +1,13 @@
 import type { ShapeDto } from '../common/types'
-import { getCaseInsensitive } from '../common/utils'
 import type { JobDetail, JobExportPayload, JobState, JobSummary, JobType } from './types'
 
 export function normalizeShapeDto(input: Record<string, unknown>): ShapeDto {
   return {
-    Id: (getCaseInsensitive<number>(input, 'Id') ?? 0) as number,
-    Name: (() => {
-      const val = getCaseInsensitive<string>(input, 'Name')
-      return typeof val === 'string' ? val : ''
-    })(),
-    Data: (() => {
-      const val = getCaseInsensitive<string>(input, 'Data')
-      return typeof val === 'string' ? val : ''
-    })(),
-    Kind: (() => {
-      const val = getCaseInsensitive<string>(input, 'Kind')
-      return typeof val === 'string' ? val : undefined
-    })(),
-    IsImage: getCaseInsensitive<boolean>(input, 'IsImage') ?? undefined,
+    Id: ((input.id as number) ?? 0) as number,
+    Name: typeof input.name === 'string' ? input.name : '',
+    Data: typeof input.data === 'string' ? input.data : '',
+    Kind: typeof input.kind === 'string' ? input.kind : undefined,
+    IsImage: (input.isImage as boolean) ?? undefined,
   }
 }
 
@@ -60,61 +50,43 @@ export function mapJobStateToJobStatus(state: JobState): string {
 
 export function normalizeJobSummary(input: Record<string, unknown>): JobSummary {
   return {
-    JobId: (getCaseInsensitive<string>(input, 'TaskId') ?? '') as string,
-    JobType: normalizeJobType(getCaseInsensitive(input, 'TaskType')),
-    Status: normalizeJobState(getCaseInsensitive(input, 'Status')),
-    Progress: (getCaseInsensitive(input, 'Progress') ?? 0) as number,
-    GroupId: (() => {
-      const val = getCaseInsensitive(input, 'GroupId')
-      return typeof val === 'string' ? val : undefined
-    })(),
-    SheetName: (() => {
-      const val = getCaseInsensitive(input, 'SheetName')
-      return typeof val === 'string' ? val : undefined
-    })(),
-    OutputPath: (() => {
-      const val = getCaseInsensitive(input, 'OutputPath')
-      return typeof val === 'string' ? val : undefined
-    })(),
-    ErrorCount: (() => {
-      const val = getCaseInsensitive(input, 'ErrorCount')
-      return typeof val === 'number' ? val : undefined
-    })(),
-    HangfireJobId: (() => {
-      const val = getCaseInsensitive(input, 'HangfireJobId')
-      return typeof val === 'string' ? val : undefined
-    })(),
+    JobId: ((input.taskId as string) ?? '') as string,
+    JobType: normalizeJobType(input.taskType),
+    Status: normalizeJobState(input.status),
+    Progress: ((input.progress as number) ?? 0) as number,
+    GroupId: typeof input.groupId === 'string' ? input.groupId : undefined,
+    SheetName: typeof input.sheetName === 'string' ? input.sheetName : undefined,
+    OutputPath: typeof input.outputPath === 'string' ? input.outputPath : undefined,
+    ErrorCount: typeof input.errorCount === 'number' ? input.errorCount : undefined,
+    HangfireJobId: typeof input.hangfireJobId === 'string' ? input.hangfireJobId : undefined,
   }
 }
 
 export function normalizeJobDetail(input: Record<string, unknown>): JobDetail {
   const summary = normalizeJobSummary(input)
-  const sheetsRaw = (getCaseInsensitive<Record<string, Record<string, unknown>>>(
-    input,
-    'Sheets',
-  ) ?? {}) as Record<string, Record<string, unknown>>
+  const sheetsRaw = ((input.sheets as Record<string, Record<string, unknown>>) ?? {}) as Record<
+    string,
+    Record<string, unknown>
+  >
   const sheets: Record<string, JobSummary> = {}
   Object.entries(sheetsRaw).forEach(([sheetId, sheet]) => {
-    sheets[sheetId] = normalizeJobSummary({ TaskId: sheetId, ...sheet })
+    sheets[sheetId] = normalizeJobSummary({ taskId: sheetId, ...sheet })
   })
 
   return {
     ...summary,
-    ErrorMessage: (() => {
-      const val = getCaseInsensitive(input, 'ErrorMessage')
-      return typeof val === 'string' || val === null ? val : undefined
-    })(),
-    CurrentRow: (getCaseInsensitive(input, 'CurrentRow') ?? undefined) as number | undefined,
-    TotalRows: (getCaseInsensitive(input, 'TotalRows') ?? undefined) as number | undefined,
-    OutputFolder: (() => {
-      const val = getCaseInsensitive(input, 'OutputFolder')
-      return typeof val === 'string' ? val : undefined
-    })(),
+    ErrorMessage:
+      typeof input.errorMessage === 'string' || input.errorMessage === null
+        ? (input.errorMessage as string | null | undefined)
+        : undefined,
+    CurrentRow: (input.currentRow as number) ?? undefined,
+    TotalRows: (input.totalRows as number) ?? undefined,
+    OutputFolder: typeof input.outputFolder === 'string' ? input.outputFolder : undefined,
     Sheets: Object.keys(sheets).length > 0 ? sheets : undefined,
-    PayloadJson: (() => {
-      const val = getCaseInsensitive(input, 'PayloadJson')
-      return typeof val === 'string' || val === null ? val : undefined
-    })(),
+    PayloadJson:
+      typeof input.payloadJson === 'string' || input.payloadJson === null
+        ? (input.payloadJson as string | null | undefined)
+        : undefined,
   }
 }
 

@@ -77,7 +77,8 @@ export const en = {
 	'replacement.columnPlaceholder': 'Enter columns, separated by commas...',
 	'replacement.shapePlaceholder': 'Select shape...',
 	'replacement.roiRuleOfThirds': 'Rule of Thirds',
-	'replacement.roiRuleOfThirdsDesc': 'Use face detection to anchor image according to Rule Of Thirds.',
+	'replacement.roiRuleOfThirdsDesc':
+		'Use face detection to anchor image according to Rule Of Thirds.',
 	'replacement.roiProminent': 'Prominent',
 	'replacement.roiProminentDesc': 'Use Saliency to find the most prominent area.',
 	'replacement.roiCenter': 'Center',
@@ -139,7 +140,8 @@ export const en = {
 	'settings.imagePadding': 'Padding',
 	'settings.imageConfidence': 'Confidence',
 	'settings.imageUnionAll': 'Union all faces',
-	'settings.imageUnionAllDesc': 'Use center of all faces as anchor when multiple faces are detected.',
+	'settings.imageUnionAllDesc':
+		'Use center of all faces as anchor when multiple faces are detected.',
 	'settings.imageModel': 'Models',
 	'settings.imageModelHint': 'Manage AI models for image processing.',
 	'settings.faceModel': 'YuNet',
