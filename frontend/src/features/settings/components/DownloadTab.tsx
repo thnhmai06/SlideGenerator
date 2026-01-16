@@ -128,6 +128,98 @@ export const DownloadTab: React.FC<DownloadTabProps> = ({
 						<span className="setting-hint">{t('settings.maxRetriesHint')}</span>
 					</div>
 				</div>
+
+				<h4 className="setting-subsection-title">{t('settings.proxySettings')}</h4>
+
+				<div className="setting-item">
+					<label className="setting-label setting-label-inline">
+						<input
+							type="checkbox"
+							className="setting-checkbox"
+							checked={config.download.proxy.useProxy}
+							disabled={!canEditConfig}
+							onChange={(e) =>
+								updateDownload({
+									proxy: { ...config.download.proxy, useProxy: e.target.checked },
+								})
+							}
+						/>
+						{t('settings.useProxy')}
+					</label>
+					<span className="setting-hint">{t('settings.useProxyHint')}</span>
+				</div>
+
+				{config.download.proxy.useProxy && (
+					<>
+						<div className="setting-item">
+							<label className="setting-label">{t('settings.proxyAddress')}</label>
+							<input
+								type="text"
+								className="setting-input"
+								value={config.download.proxy.proxyAddress}
+								disabled={!canEditConfig}
+								onChange={(e) =>
+									updateDownload({
+										proxy: { ...config.download.proxy, proxyAddress: e.target.value },
+									})
+								}
+								placeholder="http://proxy.example.com:8080"
+							/>
+							<span className="setting-hint">{t('settings.proxyAddressHint')}</span>
+						</div>
+
+						<div className="settings-grid">
+							<div className="setting-item">
+								<label className="setting-label">{t('settings.proxyUsername')}</label>
+								<input
+									type="text"
+									className="setting-input"
+									value={config.download.proxy.username}
+									disabled={!canEditConfig}
+									onChange={(e) =>
+										updateDownload({
+											proxy: { ...config.download.proxy, username: e.target.value },
+										})
+									}
+									placeholder={t('settings.optional')}
+								/>
+							</div>
+
+							<div className="setting-item">
+								<label className="setting-label">{t('settings.proxyPassword')}</label>
+								<input
+									type="password"
+									className="setting-input"
+									value={config.download.proxy.password}
+									disabled={!canEditConfig}
+									onChange={(e) =>
+										updateDownload({
+											proxy: { ...config.download.proxy, password: e.target.value },
+										})
+									}
+									placeholder={t('settings.optional')}
+								/>
+							</div>
+						</div>
+
+						<div className="setting-item">
+							<label className="setting-label">{t('settings.proxyDomain')}</label>
+							<input
+								type="text"
+								className="setting-input"
+								value={config.download.proxy.domain}
+								disabled={!canEditConfig}
+								onChange={(e) =>
+									updateDownload({
+										proxy: { ...config.download.proxy, domain: e.target.value },
+									})
+								}
+								placeholder={t('settings.optional')}
+							/>
+							<span className="setting-hint">{t('settings.proxyDomainHint')}</span>
+						</div>
+					</>
+				)}
 			</>
 		)}
 	</div>

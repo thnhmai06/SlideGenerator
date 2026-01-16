@@ -15,6 +15,13 @@ export interface ConfigState {
 		saveFolder: string;
 		retryTimeout: number;
 		maxRetries: number;
+		proxy: {
+			useProxy: boolean;
+			proxyAddress: string;
+			username: string;
+			password: string;
+			domain: string;
+		};
 	};
 	job: {
 		maxConcurrentJobs: number;

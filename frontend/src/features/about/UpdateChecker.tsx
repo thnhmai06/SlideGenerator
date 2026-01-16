@@ -51,9 +51,7 @@ export const UpdateChecker: React.FC = () => {
 				return true;
 			}
 			// Check all sheet statuses
-			return Object.values(group.sheets).some(
-				(sheet) => !FINISHED_STATUSES.includes(sheet.status),
-			);
+			return Object.values(group.sheets).some((sheet) => !FINISHED_STATUSES.includes(sheet.status));
 		});
 	}, [groups]);
 
