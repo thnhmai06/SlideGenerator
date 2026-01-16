@@ -64,9 +64,14 @@ public class JobManager : Service, IJobManager
     /// </summary>
     public async Task RestoreAsync(CancellationToken cancellationToken)
     {
+        Logger.LogInformation("Starting job restoration from persisted state");
+
         var groupStates = await _jobStateStore.GetAllGroupsAsync(cancellationToken);
         if (groupStates.Count == 0)
             groupStates = [.. await _jobStateStore.GetActiveGroupsAsync(cancellationToken)];
+
+        Logger.LogDebug("Found {GroupCount} persisted job groups to restore", groupStates.Count);
+
         foreach (var groupState in groupStates)
         {
             var sheetStates = await _jobStateStore.GetSheetsByGroupAsync(groupState.Id, cancellationToken);
@@ -74,9 +79,14 @@ public class JobManager : Service, IJobManager
 
             if (!IsActiveStatus(groupState.Status))
             {
+                Logger.LogDebug("Restoring completed group {GroupId} with status {Status}",
+                    groupState.Id, groupState.Status);
                 RestoreCompletedGroup(groupState, sheetStates);
                 continue;
             }
+
+            Logger.LogInformation("Restoring active group {GroupId} with {SheetCount} sheets",
+                groupState.Id, sheetStates.Count);
 
             var workbook = _sheetService.OpenFile(groupState.WorkbookPath);
             _slideTemplateManager.AddTemplate(groupState.TemplatePath);

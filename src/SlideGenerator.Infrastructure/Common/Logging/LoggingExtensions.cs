@@ -9,6 +9,13 @@ namespace SlideGenerator.Infrastructure.Common.Logging;
 public static class LoggingExtensions
 {
     /// <summary>
+    ///     Log output template matching frontend format:
+    ///     [timestamp] [LEVEL] [Source] Message
+    /// </summary>
+    private const string LogTemplate =
+        "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}";
+
+    /// <summary>
     ///     Configures Serilog for the application, reading configuration from appsettings and environment variables.
     ///     It sets up console logging and file logging if the SLIDEGEN_LOG_PATH environment variable is provided.
     /// </summary>
@@ -20,9 +27,10 @@ public static class LoggingExtensions
         var loggerConfig = new LoggerConfiguration()
             .ReadFrom.Configuration(builder.Configuration)
             .Enrich.FromLogContext()
-            .WriteTo.Console();
+            .WriteTo.Console(outputTemplate: LogTemplate);
 
-        if (!string.IsNullOrWhiteSpace(logPath)) loggerConfig.WriteTo.File(logPath);
+        if (!string.IsNullOrWhiteSpace(logPath))
+            loggerConfig.WriteTo.File(logPath, outputTemplate: LogTemplate);
 
         builder.Host.UseSerilog(loggerConfig.CreateLogger());
     }

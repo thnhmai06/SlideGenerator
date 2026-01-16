@@ -159,15 +159,15 @@ public class SlideServices(
             }
             catch (CannotExtractUrlException ex)
             {
-                Logger.LogWarning(ex,
-                    "The provided URL for shape {ShapeId} cannot be extracted, keeping placeholder ({Url})",
-                    config.ShapeId, ex.OriginalUrl);
+                Logger.LogWarning(
+                    "The provided URL for shape {ShapeId} cannot be resolved: {Message} ({Url})",
+                    config.ShapeId, ex.Message, ex.OriginalUrl);
             }
             catch (NotImageFileUrl ex)
             {
-                Logger.LogWarning(ex,
-                    "The provided URL for shape {ShapeId} cannot be extracted, keeping placeholder ({Url})",
-                    config.ShapeId, ex.Url);
+                Logger.LogWarning(
+                    "The provided URL for shape {ShapeId} is not an image file: {Message} ({Url})",
+                    config.ShapeId, ex.Message, ex.Url);
             }
             catch (Exception ex)
             {
