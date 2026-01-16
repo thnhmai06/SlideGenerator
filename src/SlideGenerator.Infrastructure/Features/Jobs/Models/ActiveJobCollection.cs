@@ -17,6 +17,7 @@ using SlideGenerator.Domain.Features.Jobs.Enums;
 using SlideGenerator.Domain.Features.Jobs.Interfaces;
 using SlideGenerator.Domain.Features.Jobs.States;
 using SlideGenerator.Infrastructure.Common.Utilities;
+using SlideGenerator.Infrastructure.Features.Jobs.Hangfire;
 
 namespace SlideGenerator.Infrastructure.Features.Jobs.Models;
 
@@ -176,6 +177,9 @@ public class ActiveJobCollection(
                 : Path.Combine(outputFolder.FullName, $"{sanitizedSheetName}.pptx");
             var job = group.AddJob(sheetName, outputPath);
             _sheets[job.Id] = job;
+
+            // Register display name for Hangfire dashboard
+            RegisterJobDisplayName(group, job);
         }
 
         _groups[group.Id] = group;
@@ -477,7 +481,12 @@ public class ActiveJobCollection(
         _groups[group.Id] = group;
         _groupIdByOutputPath[group.OutputFolder.FullName] = group.Id;
         foreach (var sheet in group.InternalJobs.Values)
+        {
             _sheets[sheet.Id] = sheet;
+
+            // Register display name for Hangfire dashboard
+            RegisterJobDisplayName(group, sheet);
+        }
     }
 
     private void PauseSheetInternal(JobSheet job)
@@ -625,6 +634,12 @@ public class ActiveJobCollection(
     private static string FormatHangfireSuffix(string? hangfireJobId)
     {
         return string.IsNullOrWhiteSpace(hangfireJobId) ? string.Empty : $" (#{hangfireJobId})";
+    }
+
+    private static void RegisterJobDisplayName(JobGroup group, JobSheet sheet)
+    {
+        var workbookName = Path.GetFileNameWithoutExtension(group.Workbook.FilePath);
+        SheetJobNameRegistry.Register(sheet.Id, workbookName, sheet.SheetName);
     }
 
     #endregion

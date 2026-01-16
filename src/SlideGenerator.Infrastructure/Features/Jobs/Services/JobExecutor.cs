@@ -8,6 +8,7 @@ using SlideGenerator.Domain.Features.Jobs.Interfaces;
 using SlideGenerator.Domain.Features.Jobs.Notifications;
 using SlideGenerator.Domain.Features.Jobs.States;
 using SlideGenerator.Infrastructure.Common.Base;
+using SlideGenerator.Infrastructure.Features.Jobs.Hangfire;
 
 namespace SlideGenerator.Infrastructure.Features.Jobs.Services;
 
@@ -22,6 +23,7 @@ public class JobExecutor(
     IFileSystem fileSystem) : Service(logger), IJobExecutor
 {
     /// <inheritdoc />
+    [SheetJobDisplayName]
     public async Task ExecuteJobAsync(string sheetId, CancellationToken cancellationToken)
     {
         if (!TryGetSheetAndGroup(sheetId, out var sheet, out var group) || sheet == null || group == null)
