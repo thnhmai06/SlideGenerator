@@ -198,7 +198,6 @@ export const useJobProvider = (): JobContextValue => {
 				TemplatePath: payload.templatePath,
 				SpreadsheetPath: payload.spreadsheetPath,
 				OutputPath: payload.outputPath,
-				Path: payload.outputPath,
 				TextConfigs: payload.textConfigs,
 				ImageConfigs: payload.imageConfigs,
 				SheetNames: payload.sheetNames,

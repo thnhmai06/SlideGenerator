@@ -8,9 +8,9 @@ namespace SlideGenerator.Application.Features.Jobs.DTOs.Requests;
 /// </summary>
 public sealed record JobQuery
 {
-    [JsonPropertyName("TaskId")] public string? JobId { get; init; }
+    [JsonPropertyName("JobId")] public string? JobId { get; init; }
 
-    [JsonPropertyName("TaskType")] public JobType? JobType { get; init; }
+    [JsonPropertyName("JobType")] public JobType? JobType { get; init; }
 
     public JobQueryScope Scope { get; init; } = JobQueryScope.All;
 

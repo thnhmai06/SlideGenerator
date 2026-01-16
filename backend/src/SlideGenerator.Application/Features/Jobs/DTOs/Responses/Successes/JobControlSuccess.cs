@@ -9,8 +9,8 @@ namespace SlideGenerator.Application.Features.Jobs.DTOs.Responses.Successes;
 ///     Response for job control.
 /// </summary>
 public sealed record JobControlSuccess(
-    [property: JsonPropertyName("TaskId")] string JobId,
-    [property: JsonPropertyName("TaskType")]
+    [property: JsonPropertyName("JobId")] string JobId,
+    [property: JsonPropertyName("JobType")]
     JobType JobType,
     ControlAction Action)
     : Response("jobcontrol");
