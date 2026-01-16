@@ -99,7 +99,7 @@ export const ImageTab: React.FC<ImageTabProps> = ({
 									<td>
 										{faceModelAvailable ? (
 											<button
-												className="btn btn-danger btn-sm"
+												className="btn btn-danger"
 												onClick={onDeinitModel}
 												disabled={modelLoading || !canEditConfig}
 											>
@@ -107,7 +107,7 @@ export const ImageTab: React.FC<ImageTabProps> = ({
 											</button>
 										) : (
 											<button
-												className="btn btn-primary btn-sm"
+												className="btn btn-primary"
 												onClick={onInitModel}
 												disabled={modelLoading || !canEditConfig}
 											>

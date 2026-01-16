@@ -33,7 +33,7 @@ export function registerUpdaterHandlers(): void {
 	// Configure updater
 	autoUpdater.logger = log;
 	autoUpdater.autoDownload = false;
-	autoUpdater.autoInstallOnAppQuit = true;
+	autoUpdater.autoInstallOnAppQuit = false;
 	autoUpdater.allowPrerelease = false; // Only check for stable releases
 
 	// Set up event handlers

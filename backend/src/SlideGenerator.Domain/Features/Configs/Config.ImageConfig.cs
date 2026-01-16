@@ -15,7 +15,7 @@ public sealed partial class Config
             public float Confidence { get; init; } = 0.7f;
 
             /// <summary>
-            ///     If true, union all detected faces; otherwise use the best single face. Default is <see langword="false"/>.
+            ///     If true, union all detected faces; otherwise use the best single face. Default is <see langword="false" />.
             /// </summary>
             public bool UnionAll { get; init; } = false;
         }
