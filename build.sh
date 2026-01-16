@@ -10,9 +10,11 @@ dotnet publish ./backend/src/SlideGenerator.Presentation/SlideGenerator.Presenta
   -o ./frontend/backend \
   --self-contained false
 
-echo "Building frontend..."
+echo "Building frontend (no publish)..."
 cd ./frontend
 npm install
-npm run build -- --publish never
+export ELECTRON_BUILDER_PUBLISH=never
+npm run build
+unset ELECTRON_BUILDER_PUBLISH
 
 echo "Done."
