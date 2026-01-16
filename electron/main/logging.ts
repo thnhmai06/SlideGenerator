@@ -68,12 +68,8 @@ export const attachProcessOutputCapture = (processLogPath: string) => {
 		fs.appendFile(processLogPath, text).catch(() => undefined);
 	};
 
-	const stdoutWrite = process.stdout.write.bind(process.stdout) as (
-		...args: unknown[]
-	) => boolean;
-	const stderrWrite = process.stderr.write.bind(process.stderr) as (
-		...args: unknown[]
-	) => boolean;
+	const stdoutWrite = process.stdout.write.bind(process.stdout) as (...args: unknown[]) => boolean;
+	const stderrWrite = process.stderr.write.bind(process.stderr) as (...args: unknown[]) => boolean;
 	process.stdout.write = ((chunk: unknown, ...args: unknown[]) => {
 		appendProcessOutput(chunk);
 		return stdoutWrite(chunk, ...args);

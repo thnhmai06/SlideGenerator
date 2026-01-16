@@ -1,6 +1,6 @@
 import { sheetHub } from '../clients'
 import type { ResponseBase } from '../common/types'
-import { assertSuccess, getCaseInsensitive } from '../common/utils'
+import { assertSuccess } from '../common/utils'
 import type {
   ColumnListResponse,
   FileListResponse,
@@ -12,22 +12,26 @@ import type {
   SheetWorkbookGetInfoSuccess,
 } from './types'
 
+/** Response type for opening a workbook file */
 interface OpenBookSheetSuccess {
   Type: 'openfile'
   FilePath: string
 }
 
+/** Response type for closing a workbook file */
 interface SheetWorkbookCloseSuccess {
   Type: 'closefile'
   FilePath: string
 }
 
+/** Response type for getting sheet table information */
 interface SheetWorkbookGetSheetInfoSuccess {
   Type: 'gettables'
   FilePath: string
   Sheets: Record<string, number>
 }
 
+/** Response type for getting sheet column headers */
 interface SheetWorksheetGetHeadersSuccess {
   Type: 'getheaders'
   FilePath: string
@@ -35,6 +39,7 @@ interface SheetWorksheetGetHeadersSuccess {
   Headers: Array<string | null>
 }
 
+/** Response type for getting a single row */
 interface SheetWorksheetGetRowSuccess {
   Type: 'getrow'
   FilePath: string
@@ -43,6 +48,12 @@ interface SheetWorksheetGetRowSuccess {
   Row: Record<string, string | null>
 }
 
+/**
+ * Opens and loads an Excel/spreadsheet file for processing.
+ *
+ * @param filePath - Path to the spreadsheet file
+ * @returns File load result with sheet information
+ */
 export async function loadFile(filePath: string): Promise<LoadFileResponse> {
   const open = await sheetHub.sendRequest<ResponseBase>({
     type: 'openfile',
@@ -67,6 +78,12 @@ export async function loadFile(filePath: string): Promise<LoadFileResponse> {
   }
 }
 
+/**
+ * Closes and unloads a previously loaded spreadsheet file.
+ *
+ * @param filePath - Path to the spreadsheet file
+ * @returns Success indicator
+ */
 export async function unloadFile(filePath: string): Promise<{ success: boolean }> {
   const response = await sheetHub.sendRequest<ResponseBase>({
     type: 'closefile',
@@ -76,19 +93,32 @@ export async function unloadFile(filePath: string): Promise<{ success: boolean }
   return { success: true }
 }
 
+/**
+ * Gets the list of currently loaded files.
+ *
+ * @returns List of loaded file information
+ */
 export async function getLoadedFiles(): Promise<FileListResponse> {
   return { files: [] }
 }
 
+/**
+ * Gets all sheets in a workbook file.
+ *
+ * @param filePath - Path to the workbook file
+ * @returns List of sheets with metadata
+ */
 export async function getSheets(filePath: string): Promise<SheetListResponse> {
   const response = await sheetHub.sendRequest<ResponseBase>({
     type: 'gettables',
     filePath,
   })
-  const data = assertSuccess<SheetWorkbookGetSheetInfoSuccess>(response)
+  const raw = assertSuccess<SheetWorkbookGetSheetInfoSuccess>(response) as unknown as Record<
+    string,
+    unknown
+  >
 
-  const tables = (getCaseInsensitive<Record<string, number>>(data as unknown, 'Sheets') ??
-    {}) as Record<string, number>
+  const tables = ((raw.sheets as Record<string, number>) ?? {}) as Record<string, number>
   const sheets: SheetInfo[] = Object.entries(tables).map(([name, rows]) => ({
     sheet_id: name,
     sheet_name: name,
@@ -99,40 +129,54 @@ export async function getSheets(filePath: string): Promise<SheetListResponse> {
   return { sheets }
 }
 
+/**
+ * Gets column headers for a specific sheet.
+ *
+ * @param filePath - Path to the workbook file
+ * @param sheetName - Name of the sheet
+ * @returns List of column names
+ */
 export async function getColumns(filePath: string, sheetName: string): Promise<ColumnListResponse> {
   const response = await sheetHub.sendRequest<ResponseBase>({
     type: 'getheaders',
     filePath,
     sheetName,
   })
-  const data = assertSuccess<SheetWorksheetGetHeadersSuccess>(response)
-  const headers = (getCaseInsensitive<Array<string | null>>(data, 'Headers') ?? []) as Array<
-    string | null
+  const raw = assertSuccess<SheetWorksheetGetHeadersSuccess>(response) as unknown as Record<
+    string,
+    unknown
   >
+  const headers = ((raw.headers as Array<string | null>) ?? []) as Array<string | null>
   const columns = headers.filter((header): header is string => Boolean(header))
   return { columns }
 }
 
+/**
+ * Gets detailed information about a specific sheet.
+ *
+ * @param filePath - Path to the workbook file
+ * @param sheetName - Name of the sheet
+ * @returns Sheet details including row/column counts and headers
+ */
 export async function getSheetInfo(filePath: string, sheetName: string): Promise<SheetDetailInfo> {
   const tableResponse = await sheetHub.sendRequest<ResponseBase>({
     type: 'gettables',
     filePath,
   })
-  const tables = assertSuccess<SheetWorkbookGetSheetInfoSuccess>(tableResponse)
-  const tableMap = (getCaseInsensitive<Record<string, number>>(tables, 'Sheets') ?? {}) as Record<
-    string,
-    number
-  >
+  const tablesRaw = assertSuccess<SheetWorkbookGetSheetInfoSuccess>(
+    tableResponse,
+  ) as unknown as Record<string, unknown>
+  const tableMap = ((tablesRaw.sheets as Record<string, number>) ?? {}) as Record<string, number>
 
   const headerResponse = await sheetHub.sendRequest<ResponseBase>({
     type: 'getheaders',
     filePath,
     sheetName,
   })
-  const headers = assertSuccess<SheetWorksheetGetHeadersSuccess>(headerResponse)
-  const headerList = (getCaseInsensitive<Array<string | null>>(headers, 'Headers') ?? []) as Array<
-    string | null
-  >
+  const headersRaw = assertSuccess<SheetWorksheetGetHeadersSuccess>(
+    headerResponse,
+  ) as unknown as Record<string, unknown>
+  const headerList = ((headersRaw.headers as Array<string | null>) ?? []) as Array<string | null>
   const columns = headerList.filter((header): header is string => Boolean(header))
 
   return {
@@ -146,6 +190,15 @@ export async function getSheetInfo(filePath: string, sheetName: string): Promise
   }
 }
 
+/**
+ * Gets paginated row data from a sheet.
+ *
+ * @param filePath - Path to the workbook file
+ * @param sheetName - Name of the sheet
+ * @param offset - Row offset to start from (0-based)
+ * @param limit - Maximum number of rows to return
+ * @returns Sheet data with row content
+ */
 export async function getSheetData(
   filePath: string,
   sheetName: string,
@@ -165,8 +218,11 @@ export async function getSheetData(
       tableName: sheetName,
       rowNumber: rowIndex,
     })
-    const row = assertSuccess<SheetWorksheetGetRowSuccess>(response)
-    const rowData = (getCaseInsensitive<Record<string, string | null>>(row, 'Row') ?? {}) as Record<
+    const rowRaw = assertSuccess<SheetWorksheetGetRowSuccess>(response) as unknown as Record<
+      string,
+      unknown
+    >
+    const rowData = ((rowRaw.row as Record<string, string | null>) ?? {}) as Record<
       string,
       string | null
     >
@@ -182,6 +238,14 @@ export async function getSheetData(
   }
 }
 
+/**
+ * Gets a single row from a sheet by index.
+ *
+ * @param filePath - Path to the workbook file
+ * @param sheetName - Name of the sheet
+ * @param rowIndex - 1-based row index
+ * @returns Row data as key-value pairs
+ */
 export async function getSheetRow(
   filePath: string,
   sheetName: string,
@@ -193,15 +257,24 @@ export async function getSheetRow(
     tableName: sheetName,
     rowNumber: rowIndex,
   })
-  const row = assertSuccess<SheetWorksheetGetRowSuccess>(response)
-  const rowData = (getCaseInsensitive<Record<string, string | null>>(row, 'Row') ?? {}) as Record<
+  const rowRaw = assertSuccess<SheetWorksheetGetRowSuccess>(response) as unknown as Record<
+    string,
+    unknown
+  >
+  const rowData = ((rowRaw.row as Record<string, string | null>) ?? {}) as Record<
     string,
     string | null
   >
-  const rowNumber = (getCaseInsensitive<number>(row, 'RowNumber') ?? rowIndex) as number
+  const rowNumber = ((rowRaw.rowNumber as number) ?? rowIndex) as number
   return { row_index: rowNumber, data: rowData }
 }
 
+/**
+ * Gets all unique column headers from multiple workbook files.
+ *
+ * @param filePaths - Array of workbook file paths
+ * @returns Sorted array of unique column names
+ */
 export async function getAllColumns(filePaths: string[]): Promise<string[]> {
   const allColumns = new Set<string>()
 
@@ -211,13 +284,14 @@ export async function getAllColumns(filePaths: string[]): Promise<string[]> {
         type: 'getworkbookinfo',
         filePath,
       })
-      const info = assertSuccess<SheetWorkbookGetInfoSuccess>(infoResponse)
-      const sheets = (getCaseInsensitive<Array<Record<string, unknown>>>(info, 'Sheets') ??
-        []) as Array<Record<string, unknown>>
+      const infoRaw = assertSuccess<SheetWorkbookGetInfoSuccess>(
+        infoResponse,
+      ) as unknown as Record<string, unknown>
+      const sheets = ((infoRaw.sheets as Array<Record<string, unknown>>) ?? []) as Array<
+        Record<string, unknown>
+      >
       sheets.forEach((sheet) => {
-        const headers = (getCaseInsensitive<Array<string | null>>(sheet, 'Headers') ?? []) as Array<
-          string | null
-        >
+        const headers = ((sheet.headers as Array<string | null>) ?? []) as Array<string | null>
         headers
           .filter((header): header is string => Boolean(header))
           .forEach((header) => allColumns.add(header))
@@ -230,25 +304,33 @@ export async function getAllColumns(filePaths: string[]): Promise<string[]> {
   return Array.from(allColumns).sort()
 }
 
+/**
+ * Gets comprehensive workbook information including all sheets and their headers.
+ *
+ * @param filePath - Path to the workbook file
+ * @returns Workbook info with sheet details
+ */
 export async function getWorkbookInfo(filePath: string): Promise<SheetWorkbookGetInfoSuccess> {
   const response = await sheetHub.sendRequest<ResponseBase>({
     type: 'getworkbookinfo',
     filePath,
   })
-  const data = assertSuccess<SheetWorkbookGetInfoSuccess>(response)
-  const sheets = (getCaseInsensitive<Array<Record<string, unknown>>>(data, 'Sheets') ??
-    []) as Array<Record<string, unknown>>
+  const raw = assertSuccess<SheetWorkbookGetInfoSuccess>(response) as unknown as Record<
+    string,
+    unknown
+  >
+  const sheets = ((raw.sheets as Array<Record<string, unknown>>) ?? []) as Array<
+    Record<string, unknown>
+  >
 
   return {
     Type: 'getworkbookinfo',
-    FilePath: getCaseInsensitive<string>(data, 'FilePath') ?? filePath,
-    WorkbookName: getCaseInsensitive<string>(data, 'WorkbookName') ?? undefined,
+    FilePath: (raw.filePath as string) ?? filePath,
+    WorkbookName: (raw.workbookName as string) ?? undefined,
     Sheets: sheets.map((sheet) => ({
-      Name: (getCaseInsensitive<string>(sheet, 'Name') ?? '') as string,
-      Headers: (getCaseInsensitive<Array<string | null>>(sheet, 'Headers') ?? []) as Array<
-        string | null
-      >,
-      RowCount: (getCaseInsensitive<number>(sheet, 'RowCount') ?? 0) as number,
+      Name: ((sheet.name as string) ?? '') as string,
+      Headers: ((sheet.headers as Array<string | null>) ?? []) as Array<string | null>,
+      RowCount: ((sheet.rowCount as number) ?? 0) as number,
     })),
   }
 }

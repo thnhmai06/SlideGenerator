@@ -1,9 +1,21 @@
+/**
+ * Backend API types and functions barrel export.
+ *
+ * @module backendApi
+ * @remarks
+ * This module re-exports all backend API types and functions from their
+ * respective domain modules (jobs, sheets, config, health).
+ */
+
+// Common types
 export type {
 	ControlAction,
 	ShapeDto,
 	SlideImageConfig,
 	SlideTextConfig,
 } from './backend/common/types';
+
+// Job management types
 export type {
 	GroupSummary,
 	JobDetail,
@@ -24,6 +36,8 @@ export type {
 	SlideScanShapesSuccess,
 	SlideScanTemplateSuccess,
 } from './backend/jobs/types';
+
+// Configuration types
 export type {
 	ConfigGetSuccess,
 	ConfigReloadSuccess,
@@ -32,6 +46,8 @@ export type {
 	ModelStatusSuccess,
 	ModelControlSuccess,
 } from './backend/config/types';
+
+// Sheet/workbook types
 export type {
 	ColumnListResponse,
 	FileListResponse,
@@ -44,6 +60,7 @@ export type {
 	SheetWorkbookGetInfoSuccess,
 } from './backend/sheets/types';
 
+// Job management APIs
 export {
 	createGroup,
 	getAllGroups,
@@ -65,6 +82,8 @@ export {
 	subscribeGroup,
 	subscribeSheet,
 } from './backend/jobs/api';
+
+// Sheet/workbook APIs
 export {
 	getAllColumns,
 	getColumns,
@@ -77,7 +96,11 @@ export {
 	loadFile,
 	unloadFile,
 } from './backend/sheets/api';
+
+// Health check API
 export { checkHealth } from './backend/health/api';
+
+// Configuration APIs
 export {
 	getConfig,
 	reloadConfig,

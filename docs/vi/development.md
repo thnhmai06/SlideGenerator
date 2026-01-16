@@ -38,9 +38,42 @@ Bộ công cụ test:
 - MSW handlers nằm ở [test/mocks/handlers.ts](../../test/mocks/handlers.ts).
 - Override handlers theo từng test với `server.use(...)`.
 
+## Code Style
+
+- **TSDoc comments**: Tất cả functions, hooks, và components đều có TSDoc documentation.
+- **TypeScript strict mode**: Bật để đảm bảo type safety.
+- **ESLint + Prettier**: Auto-formatting khi save.
+
+## Hướng dẫn tối ưu hiệu năng
+
+- Sử dụng `React.memo` cho components nhận props ổn định.
+- Wrap callbacks trong `useCallback` để tránh re-render không cần thiết.
+- Sử dụng `useMemo` cho các tính toán tốn kém.
+- Ưu tiên lazy loading cho feature modules.
+
 ## Aliases
 
 - `@/` ánh xạ tới `src/`.
+
+## Cấu trúc Project
+
+```
+src/
+├── app/           # App shell, providers, routing
+├── features/      # Feature modules
+│   ├── create-task/  # Task creation workflow
+│   ├── process/      # Job monitoring
+│   ├── results/      # Completed jobs
+│   ├── settings/     # App configuration
+│   └── about/        # About screen
+└── shared/        # Shared code
+    ├── components/   # Reusable UI components
+    ├── contexts/     # React contexts và hooks
+    ├── services/     # Backend API và SignalR
+    ├── utils/        # Utility functions
+    ├── locales/      # i18n translations
+    └── styles/       # Global CSS
+```
 
 ## Logs
 

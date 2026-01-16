@@ -1,14 +1,26 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { memo, useCallback, useMemo, useRef, useState } from 'react';
 import './TagInput.css';
 
+/** Props for {@link TagInput}. */
 interface TagInputProps {
+	/** Current selected tags. */
 	value: string[];
+	/** Callback when tags change. */
 	onChange: (tags: string[]) => void;
+	/** Available suggestions for autocomplete. */
 	suggestions: string[];
+	/** Placeholder text when empty. */
 	placeholder?: string;
 }
 
-const TagInput: React.FC<TagInputProps> = ({ value, onChange, suggestions, placeholder }) => {
+/**
+ * Multi-select tag input with autocomplete suggestions.
+ *
+ * @remarks
+ * Supports keyboard navigation (Arrow keys, Enter, Escape, Backspace).
+ * Tags can be added by selecting from suggestions or typing with comma.
+ */
+const TagInput: React.FC<TagInputProps> = memo(({ value, onChange, suggestions, placeholder }) => {
 	const [inputValue, setInputValue] = useState('');
 	const [showSuggestions, setShowSuggestions] = useState(false);
 	const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
@@ -23,77 +35,94 @@ const TagInput: React.FC<TagInputProps> = ({ value, onChange, suggestions, place
 		return filtered.filter((suggestion) => suggestion.includes(inputValue));
 	}, [inputValue, suggestions, value]);
 
-	const addTag = (tag: string) => {
-		const suggestionExists = suggestions.some((s) => s === tag);
-		if (tag && !value.includes(tag) && suggestionExists) {
-			onChange([...value, tag]);
-			setInputValue('');
+	const addTag = useCallback(
+		(tag: string) => {
+			const suggestionExists = suggestions.some((s) => s === tag);
+			if (tag && !value.includes(tag) && suggestionExists) {
+				onChange([...value, tag]);
+				setInputValue('');
+				setShowSuggestions(true);
+				setSelectedSuggestionIndex(-1);
+			}
+		},
+		[onChange, suggestions, value],
+	);
+
+	const removeTag = useCallback(
+		(tagToRemove: string) => {
+			onChange(value.filter((tag) => tag !== tagToRemove));
+		},
+		[onChange, value],
+	);
+
+	const handleInputChange = useCallback(
+		(e: React.ChangeEvent<HTMLInputElement>) => {
+			const newValue = e.target.value;
+
+			if (newValue.endsWith(',')) {
+				const tag = newValue.slice(0, -1);
+				if (tag) {
+					addTag(tag);
+				}
+				return;
+			}
+
+			setInputValue(newValue);
+			setSelectedSuggestionIndex(-1);
 			setShowSuggestions(true);
-			setSelectedSuggestionIndex(-1);
-		}
-	};
+		},
+		[addTag],
+	);
 
-	const removeTag = (tagToRemove: string) => {
-		onChange(value.filter((tag) => tag !== tagToRemove));
-	};
-
-	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const newValue = e.target.value;
-
-		// Check if user typed comma
-		if (newValue.endsWith(',')) {
-			const tag = newValue.slice(0, -1);
-			if (tag) {
-				addTag(tag);
+	const handleKeyDown = useCallback(
+		(e: React.KeyboardEvent<HTMLInputElement>) => {
+			if (e.key === 'Enter') {
+				e.preventDefault();
+				if (selectedSuggestionIndex >= 0 && filteredSuggestions[selectedSuggestionIndex]) {
+					addTag(filteredSuggestions[selectedSuggestionIndex]);
+				} else if (inputValue) {
+					addTag(inputValue);
+				}
+			} else if (e.key === 'Backspace' && !inputValue && value.length > 0) {
+				removeTag(value[value.length - 1]);
+			} else if (e.key === 'ArrowDown') {
+				e.preventDefault();
+				if (showSuggestions && filteredSuggestions.length > 0) {
+					setSelectedSuggestionIndex((prev) =>
+						prev < filteredSuggestions.length - 1 ? prev + 1 : prev,
+					);
+				}
+			} else if (e.key === 'ArrowUp') {
+				e.preventDefault();
+				if (showSuggestions && filteredSuggestions.length > 0) {
+					setSelectedSuggestionIndex((prev) => (prev > 0 ? prev - 1 : -1));
+				}
+			} else if (e.key === 'Escape') {
+				setShowSuggestions(false);
+				setSelectedSuggestionIndex(-1);
 			}
-			return;
-		}
+		},
+		[
+			addTag,
+			filteredSuggestions,
+			inputValue,
+			removeTag,
+			selectedSuggestionIndex,
+			showSuggestions,
+			value,
+		],
+	);
 
-		setInputValue(newValue);
-		setSelectedSuggestionIndex(-1);
+	const handleInputFocus = useCallback(() => {
 		setShowSuggestions(true);
-	};
+	}, []);
 
-	const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-		if (e.key === 'Enter') {
-			e.preventDefault();
-			if (selectedSuggestionIndex >= 0 && filteredSuggestions[selectedSuggestionIndex]) {
-				addTag(filteredSuggestions[selectedSuggestionIndex]);
-			} else if (inputValue) {
-				addTag(inputValue);
-			}
-		} else if (e.key === 'Backspace' && !inputValue && value.length > 0) {
-			// Remove last tag when backspace on empty input
-			removeTag(value[value.length - 1]);
-		} else if (e.key === 'ArrowDown') {
-			e.preventDefault();
-			if (showSuggestions && filteredSuggestions.length > 0) {
-				setSelectedSuggestionIndex((prev) =>
-					prev < filteredSuggestions.length - 1 ? prev + 1 : prev,
-				);
-			}
-		} else if (e.key === 'ArrowUp') {
-			e.preventDefault();
-			if (showSuggestions && filteredSuggestions.length > 0) {
-				setSelectedSuggestionIndex((prev) => (prev > 0 ? prev - 1 : -1));
-			}
-		} else if (e.key === 'Escape') {
-			setShowSuggestions(false);
-			setSelectedSuggestionIndex(-1);
-		}
-	};
-
-	const handleInputFocus = () => {
-		setShowSuggestions(true);
-	};
-
-	const handleInputBlur = () => {
-		// Delay to allow click on suggestion
+	const handleInputBlur = useCallback(() => {
 		setTimeout(() => {
 			setShowSuggestions(false);
 			setSelectedSuggestionIndex(-1);
 		}, 200);
-	};
+	}, []);
 
 	return (
 		<div
@@ -144,6 +173,8 @@ const TagInput: React.FC<TagInputProps> = ({ value, onChange, suggestions, place
 			)}
 		</div>
 	);
-};
+});
+
+TagInput.displayName = 'TagInput';
 
 export default TagInput;
