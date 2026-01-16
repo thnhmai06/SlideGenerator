@@ -50,10 +50,10 @@ describe('CreateTaskMenu', () => {
 		// Test PPTX selection
 		electronAPIMock.openFile.mockResolvedValueOnce('C:\\template.pptx');
 		vi.mocked(backendApi.scanTemplate).mockResolvedValueOnce({
-			Type: 'scantemplate',
-			FilePath: 'C:\\template.pptx',
-			Shapes: [{ Id: 1, Name: 'Pic1', Data: '', IsImage: true }],
-			Placeholders: ['{{Name}}'],
+			type: 'scantemplate',
+			filePath: 'C:\\template.pptx',
+			shapes: [{ id: 1, name: 'Pic1', data: '', isImage: true }],
+			placeholders: ['{{Name}}'],
 		});
 
 		const pptxButton = screen.getAllByText('createTask.browse')[0];

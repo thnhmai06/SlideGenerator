@@ -1,13 +1,13 @@
 import type { ResponseBase } from './types'
 
 export function getResponseType(response: ResponseBase): string {
-  return (response.Type ?? response.type ?? '').toLowerCase()
+  return (response.type ?? '').toLowerCase()
 }
 
 export function getResponseErrorMessage(response: ResponseBase): string {
-  const message = response.Message ?? response.message ?? ''
-  const kind = response.Kind ?? ''
-  const filePath = response.FilePath ?? response.filePath ?? ''
+  const message = response.message ?? ''
+  const kind = response.kind ?? ''
+  const filePath = response.filePath ?? ''
   const prefix = filePath ? `[${filePath}] ` : ''
   if (message && kind && !message.includes(kind)) {
     return `${prefix}${kind}: ${message}`
