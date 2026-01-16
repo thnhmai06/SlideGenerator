@@ -1,4 +1,3 @@
-using System.Text.Json.Serialization;
 using SlideGenerator.Domain.Features.Jobs.Enums;
 
 namespace SlideGenerator.Application.Features.Jobs.DTOs.Requests;
@@ -8,9 +7,9 @@ namespace SlideGenerator.Application.Features.Jobs.DTOs.Requests;
 /// </summary>
 public sealed record JobQuery
 {
-    [JsonPropertyName("JobId")] public string? JobId { get; init; }
+    public string? JobId { get; init; }
 
-    [JsonPropertyName("JobType")] public JobType? JobType { get; init; }
+    public JobType? JobType { get; init; }
 
     public JobQueryScope Scope { get; init; } = JobQueryScope.All;
 

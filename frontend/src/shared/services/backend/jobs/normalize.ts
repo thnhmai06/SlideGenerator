@@ -3,11 +3,11 @@ import type { JobDetail, JobExportPayload, JobState, JobSummary, JobType } from 
 
 export function normalizeShapeDto(input: Record<string, unknown>): ShapeDto {
   return {
-    Id: ((input.id as number) ?? 0) as number,
-    Name: typeof input.name === 'string' ? input.name : '',
-    Data: typeof input.data === 'string' ? input.data : '',
-    Kind: typeof input.kind === 'string' ? input.kind : undefined,
-    IsImage: (input.isImage as boolean) ?? undefined,
+    id: ((input.id as number) ?? 0) as number,
+    name: typeof input.name === 'string' ? input.name : '',
+    data: typeof input.data === 'string' ? input.data : '',
+    kind: typeof input.kind === 'string' ? input.kind : undefined,
+    isImage: (input.isImage as boolean) ?? undefined,
   }
 }
 
@@ -50,15 +50,15 @@ export function mapJobStateToJobStatus(state: JobState): string {
 
 export function normalizeJobSummary(input: Record<string, unknown>): JobSummary {
   return {
-    JobId: ((input.jobId as string) ?? '') as string,
-    JobType: normalizeJobType(input.jobType),
-    Status: normalizeJobState(input.status),
-    Progress: ((input.progress as number) ?? 0) as number,
-    GroupId: typeof input.groupId === 'string' ? input.groupId : undefined,
-    SheetName: typeof input.sheetName === 'string' ? input.sheetName : undefined,
-    OutputPath: typeof input.outputPath === 'string' ? input.outputPath : undefined,
-    ErrorCount: typeof input.errorCount === 'number' ? input.errorCount : undefined,
-    HangfireJobId: typeof input.hangfireJobId === 'string' ? input.hangfireJobId : undefined,
+    jobId: ((input.jobId as string) ?? '') as string,
+    jobType: normalizeJobType(input.jobType),
+    status: normalizeJobState(input.status),
+    progress: ((input.progress as number) ?? 0) as number,
+    groupId: typeof input.groupId === 'string' ? input.groupId : undefined,
+    sheetName: typeof input.sheetName === 'string' ? input.sheetName : undefined,
+    outputPath: typeof input.outputPath === 'string' ? input.outputPath : undefined,
+    errorCount: typeof input.errorCount === 'number' ? input.errorCount : undefined,
+    hangfireJobId: typeof input.hangfireJobId === 'string' ? input.hangfireJobId : undefined,
   }
 }
 
@@ -75,15 +75,15 @@ export function normalizeJobDetail(input: Record<string, unknown>): JobDetail {
 
   return {
     ...summary,
-    ErrorMessage:
+    errorMessage:
       typeof input.errorMessage === 'string' || input.errorMessage === null
         ? (input.errorMessage as string | null | undefined)
         : undefined,
-    CurrentRow: (input.currentRow as number) ?? undefined,
-    TotalRows: (input.totalRows as number) ?? undefined,
-    OutputFolder: typeof input.outputFolder === 'string' ? input.outputFolder : undefined,
-    Sheets: Object.keys(sheets).length > 0 ? sheets : undefined,
-    PayloadJson:
+    currentRow: (input.currentRow as number) ?? undefined,
+    totalRows: (input.totalRows as number) ?? undefined,
+    outputFolder: typeof input.outputFolder === 'string' ? input.outputFolder : undefined,
+    sheets: Object.keys(sheets).length > 0 ? sheets : undefined,
+    payloadJson:
       typeof input.payloadJson === 'string' || input.payloadJson === null
         ? (input.payloadJson as string | null | undefined)
         : undefined,

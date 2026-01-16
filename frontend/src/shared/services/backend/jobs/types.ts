@@ -4,24 +4,24 @@ export type JobType = 'Group' | 'Sheet'
 export type JobState = 'Pending' | 'Processing' | 'Paused' | 'Done' | 'Cancelled' | 'Error'
 
 export interface JobSummary {
-  JobId: string
-  JobType: JobType
-  Status: JobState
-  Progress: number
-  GroupId?: string
-  SheetName?: string
-  OutputPath?: string
-  ErrorCount?: number
-  HangfireJobId?: string
+  jobId: string
+  jobType: JobType
+  status: JobState
+  progress: number
+  groupId?: string
+  sheetName?: string
+  outputPath?: string
+  errorCount?: number
+  hangfireJobId?: string
 }
 
 export interface JobDetail extends JobSummary {
-  ErrorMessage?: string | null
-  CurrentRow?: number
-  TotalRows?: number
-  OutputFolder?: string
-  Sheets?: Record<string, JobSummary>
-  PayloadJson?: string | null
+  errorMessage?: string | null
+  currentRow?: number
+  totalRows?: number
+  outputFolder?: string
+  sheets?: Record<string, JobSummary>
+  payloadJson?: string | null
 }
 
 export interface JobExportPayload {
@@ -36,104 +36,104 @@ export interface JobExportPayload {
 }
 
 export interface SlideScanShapesSuccess {
-  Type: 'scanshapes'
-  FilePath: string
-  Shapes: ShapeDto[]
+  type: 'scanshapes'
+  filePath: string
+  shapes: ShapeDto[]
 }
 
 export interface SlideScanPlaceholdersSuccess {
-  Type: 'scanplaceholders'
-  FilePath: string
-  Placeholders: string[]
+  type: 'scanplaceholders'
+  filePath: string
+  placeholders: string[]
 }
 
 export interface SlideScanTemplateSuccess {
-  Type: 'scantemplate'
-  FilePath: string
-  Shapes: ShapeDto[]
-  Placeholders: string[]
+  type: 'scantemplate'
+  filePath: string
+  shapes: ShapeDto[]
+  placeholders: string[]
 }
 
 export interface SlideGroupCreateSuccess {
-  Type: 'groupcreate'
-  GroupId: string
-  OutputFolder: string
-  JobIds: Record<string, string>
+  type: 'groupcreate'
+  groupId: string
+  outputFolder: string
+  jobIds: Record<string, string>
 }
 
 export interface JobStatusInfo {
-  JobId: string
-  SheetName: string
-  Status: string
-  CurrentRow: number
-  TotalRows: number
-  Progress: number
-  OutputPath?: string
-  ErrorMessage?: string | null
-  ErrorCount?: number
-  HangfireJobId?: string
+  jobId: string
+  sheetName: string
+  status: string
+  currentRow: number
+  totalRows: number
+  progress: number
+  outputPath?: string
+  errorMessage?: string | null
+  errorCount?: number
+  hangfireJobId?: string
 }
 
 export interface SlideGroupStatusSuccess {
-  Type: 'groupstatus'
-  GroupId: string
-  Status: string
-  Progress: number
-  Jobs: Record<string, JobStatusInfo>
-  ErrorCount?: number
+  type: 'groupstatus'
+  groupId: string
+  status: string
+  progress: number
+  jobs: Record<string, JobStatusInfo>
+  errorCount?: number
 }
 
 export interface SlideGroupRemoveSuccess {
-  Type: 'groupremove'
-  GroupId: string
-  Removed: boolean
+  type: 'groupremove'
+  groupId: string
+  removed: boolean
 }
 
 export interface SlideJobStatusSuccess {
-  Type: 'jobstatus'
-  JobId: string
-  SheetName: string
-  Status: string
-  CurrentRow: number
-  TotalRows: number
-  Progress: number
-  OutputPath?: string
-  ErrorMessage?: string | null
-  ErrorCount?: number
-  HangfireJobId?: string
+  type: 'jobstatus'
+  jobId: string
+  sheetName: string
+  status: string
+  currentRow: number
+  totalRows: number
+  progress: number
+  outputPath?: string
+  errorMessage?: string | null
+  errorCount?: number
+  hangfireJobId?: string
 }
 
 export interface SlideJobRemoveSuccess {
-  Type: 'jobremove'
-  JobId: string
-  Removed: boolean
+  type: 'jobremove'
+  jobId: string
+  removed: boolean
 }
 
 export interface JobLogEntry {
-  Level: string
-  Message: string
-  Timestamp: string
-  Data?: Record<string, unknown>
+  level: string
+  message: string
+  timestamp: string
+  data?: Record<string, unknown>
 }
 
 export interface SlideJobLogsSuccess {
-  Type: 'joblogs'
-  JobId: string
-  Logs: JobLogEntry[]
+  type: 'joblogs'
+  jobId: string
+  logs: JobLogEntry[]
 }
 
 export interface GroupSummary {
-  GroupId: string
-  WorkbookPath: string
-  OutputFolder?: string
-  Status: string
-  Progress: number
-  SheetCount: number
-  CompletedSheets: number
-  ErrorCount?: number
+  groupId: string
+  workbookPath: string
+  outputFolder?: string
+  status: string
+  progress: number
+  sheetCount: number
+  completedSheets: number
+  errorCount?: number
 }
 
 export interface SlideGlobalGetGroupsSuccess {
-  Type: 'getallgroups'
-  Groups: GroupSummary[]
+  type: 'getallgroups'
+  groups: GroupSummary[]
 }
