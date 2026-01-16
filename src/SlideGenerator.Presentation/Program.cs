@@ -130,6 +130,7 @@ public static class Program
                     if (!string.IsNullOrEmpty(displayName))
                         return displayName;
                 }
+
                 return $"{job.Type.Name}.{job.Method.Name}";
             }
         });

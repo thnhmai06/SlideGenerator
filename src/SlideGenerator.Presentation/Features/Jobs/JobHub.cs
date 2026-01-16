@@ -268,7 +268,7 @@ public class JobHub(
                         if (jobManager.Active.ContainsGroup(group!.Id))
                             jobManager.Active.CancelAndRemoveGroup(group.Id);
                         else
-                            jobManager.Completed.RemoveGroup(group!.Id);
+                            jobManager.Completed.RemoveGroup(group.Id);
                         break;
                 }
 
@@ -289,7 +289,7 @@ public class JobHub(
                         if (jobManager.Active.ContainsSheet(sheet!.Id))
                             jobManager.Active.CancelAndRemoveSheet(sheet.Id);
                         else
-                            jobManager.Completed.RemoveSheet(sheet!.Id);
+                            jobManager.Completed.RemoveSheet(sheet.Id);
                         break;
                 }
 
@@ -465,13 +465,13 @@ public class JobHub(
     private static SlideTextConfig[]? MapTextConfigs(JobTextConfig[] configs)
     {
         if (configs.Length == 0) return null;
-        return configs.Select(c => new SlideTextConfig(c.Pattern, c.Columns)).ToArray();
+        return [.. configs.Select(c => new SlideTextConfig(c.Pattern, c.Columns))];
     }
 
     private static SlideImageConfig[]? MapImageConfigs(JobImageConfig[] configs)
     {
         if (configs.Length == 0) return null;
-        return configs.Select(c => new SlideImageConfig(c.ShapeId, c.Columns, c.RoiType, c.CropType)).ToArray();
+        return [.. configs.Select(c => new SlideImageConfig(c.ShapeId, c.Columns, c.RoiType, c.CropType))];
     }
 
     private sealed record JobExportPayload(
