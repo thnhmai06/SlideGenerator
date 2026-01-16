@@ -14,7 +14,7 @@ dotnet publish .\backend\src\SlideGenerator.Presentation\SlideGenerator.Presenta
 Write-Host "Building frontend..." -ForegroundColor Cyan
 Push-Location .\frontend
 npm install
-npm run build
+npm run build -- --publish never
 Pop-Location
 
 Write-Host "Done." -ForegroundColor Green

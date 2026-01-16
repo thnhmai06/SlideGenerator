@@ -13,34 +13,16 @@ permissions:
 
 jobs:
   build:
-    name: Build (${{ matrix.os }} - ${{ matrix.rid }})
+    name: Build (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: windows-latest
-            rid: win-x64
-            electron_arch: x64
-            upload_glob: "frontend/release/*.exe"
-          - os: ubuntu-latest
-            rid: linux-x64
-            electron_arch: x64
-            upload_glob: |
-              frontend/release/*.AppImage
-              frontend/release/*.tar.gz
-          - os: ubuntu-latest
-            rid: linux-arm
-            electron_arch: armv7l
-            upload_glob: |
-              frontend/release/*.AppImage
-              frontend/release/*.tar.gz
-          - os: ubuntu-latest
-            rid: linux-arm64
-            electron_arch: arm64
-            upload_glob: |
-              frontend/release/*.AppImage
-              frontend/release/*.tar.gz
+        os:
+          - windows-latest
+          - ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -59,20 +41,28 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Publish backend
-        run: dotnet publish backend/src/SlideGenerator.Presentation/SlideGenerator.Presentation.csproj -c Release -r ${{ matrix.rid }} -o frontend/backend --self-contained false
+        shell: bash
+        run: |
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            RID=win-x64
+          elif [[ "$RUNNER_OS" == "macOS" ]]; then
+            RID=osx-x64
+          else
+            RID=linux-x64
+          fi
+
+          dotnet publish backend/src/SlideGenerator.Presentation/SlideGenerator.Presentation.csproj \
+            -c Release \
+            -r $RID \
+            --self-contained false \
+            -o frontend/backend
 
       - name: Install frontend deps
+        working-directory: frontend
         run: npm ci
-        working-directory: frontend
 
-      - name: Build frontend
-        run: npm run build -- --${{ matrix.electron_arch }}
+      - name: Build & Publish Electron
         working-directory: frontend
-
-      - name: Upload release assets
-        uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'release'
-        with:
-          files: ${{ matrix.upload_glob }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run build

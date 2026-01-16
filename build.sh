@@ -13,6 +13,6 @@ dotnet publish ./backend/src/SlideGenerator.Presentation/SlideGenerator.Presenta
 echo "Building frontend..."
 cd ./frontend
 npm install
-npm run build
+npm run build -- --publish never
 
 echo "Done."
