@@ -49,3 +49,13 @@ Trong **Results** bạn có thể:
 
 - **Create Task** hỗ trợ export/import JSON.
 - Mỗi group có chức năng export config nhanh.
+
+## Kiểm tra cập nhật
+
+Trong tab **Giới thiệu** bạn có thể kiểm tra và cài đặt bản cập nhật:
+
+1. Mở tab **Giới thiệu**.
+2. Nhấn **Kiểm tra cập nhật** để kiểm tra phiên bản mới.
+3. Nếu có bản cập nhật, nhấn **Tải và cài đặt**.
+4. Sau khi tải xong, nhấn **Cài đặt ngay** để khởi động lại và áp dụng bản cập nhật.
+5. Hoặc bản cập nhật sẽ được áp dụng khi bạn thoát ứng dụng.

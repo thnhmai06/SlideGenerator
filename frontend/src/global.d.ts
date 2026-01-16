@@ -3,6 +3,13 @@ export {};
 declare global {
 	const __APP_VERSION__: string;
 
+	interface UpdateState {
+		status: string;
+		info?: { version: string; releaseNotes?: string };
+		progress?: number;
+		error?: string;
+	}
+
 	interface Window {
 		electronAPI: {
 			openFile: (filters?: { name: string; extensions: string[] }[]) => Promise<string | undefined>;
@@ -24,6 +31,10 @@ declare global {
 				handler: (menu: 'input' | 'process' | 'download' | 'setting' | 'about') => void,
 			) => () => void;
 			setTrayLocale: (locale: 'vi' | 'en') => Promise<void>;
+			checkForUpdates: () => Promise<UpdateState>;
+			downloadUpdate: () => Promise<boolean>;
+			installUpdate: () => void;
+			onUpdateStatus: (handler: (state: UpdateState) => void) => () => void;
 		};
 		getAssetPath: (...p: string[]) => string;
 	}

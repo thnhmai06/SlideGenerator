@@ -1,11 +1,12 @@
 import React from 'react';
 import { useApp } from '@/shared/contexts/useApp';
 import { getAssetPath } from '@/shared/utils/paths';
+import { UpdateChecker } from './UpdateChecker';
 import './AboutMenu.css';
 
 const AboutMenu: React.FC = () => {
 	const { t } = useApp();
-	const version = typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : '';
+	// const version = typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : '';
 	const developers = [
 		{ name: 'thnhmai06', url: 'https://github.com/thnhmai06' },
 		{ name: 'NAV-adsf23fd', url: 'https://github.com/NAV-adsf23fd' },
@@ -34,12 +35,16 @@ const AboutMenu: React.FC = () => {
 				</div>
 				<div className="about-section">
 					<h2>{t('about.appName')}</h2>
-					<p className="version">{`${t('about.version')} ${version}`.trim()}</p>
 					<p className="description">
 						{t('about.description')}
 						<br />
 						{t('about.details')}
 					</p>
+				</div>
+
+				<div className="about-section update-section">
+					<h3>{t('update.checkForUpdates')}</h3>
+					<UpdateChecker />
 				</div>
 
 				<div className="about-section">
