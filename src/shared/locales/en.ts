@@ -194,6 +194,22 @@ export const en = {
 	'about.readDocs': 'Read documentation',
 	'about.license': '© 2026 Mai Thành',
 
+	// Update
+	'update.checkForUpdates': 'Check for updates',
+	'update.checking': 'Checking for updates...',
+	'update.available': 'Update available',
+	'update.notAvailable': 'You are using the latest version',
+	'update.downloading': 'Downloading update...',
+	'update.downloaded': 'Update downloaded',
+	'update.downloadAndInstall': 'Download and install',
+	'update.installNow': 'Install now',
+	'update.installLater': 'Install on exit',
+	'update.activeJobsWarning': 'Cannot install while jobs are running. Please wait for all jobs to finish.',
+	'update.error': 'Update check failed',
+	'update.newVersion': 'New version available:',
+	'update.currentVersion': 'Current version:',
+	'update.releaseNotes': 'Release notes',
+
 	// Process
 	'process.title': 'Processing',
 	'process.pause': 'Pause',

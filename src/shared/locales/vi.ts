@@ -190,6 +190,21 @@ export const vi = {
 	'about.githubRepo': 'Kho GitHub',
 	'about.readDocs': 'Đọc tài liệu',
 	'about.license': '© 2026 Mai Thành',
+	// Update
+	'update.checkForUpdates': 'Kiểm tra cập nhật',
+	'update.checking': 'Đang kiểm tra cập nhật...',
+	'update.available': 'Có bản cập nhật mới',
+	'update.notAvailable': 'Bạn đang sử dụng phiên bản mới nhất',
+	'update.downloading': 'Đang tải bản cập nhật...',
+	'update.downloaded': 'Đã tải bản cập nhật',
+	'update.downloadAndInstall': 'Tải và cài đặt',
+	'update.installNow': 'Cài đặt ngay',
+	'update.installLater': 'Cài khi thoát',
+	'update.activeJobsWarning': 'Không thể cài đặt khi còn công việc đang chạy. Vui lòng đợi hoàn thành.',
+	'update.error': 'Kiểm tra cập nhật thất bại',
+	'update.newVersion': 'Phiên bản mới:',
+	'update.currentVersion': 'Phiên bản hiện tại:',
+	'update.releaseNotes': 'Ghi chú phát hành',
 
 	// Process
 	'process.title': 'Xử lý',

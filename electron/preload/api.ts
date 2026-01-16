@@ -1,5 +1,20 @@
 import type { IpcRenderer, IpcRendererEvent } from 'electron';
 
+export type UpdateStatus =
+	| 'checking'
+	| 'available'
+	| 'not-available'
+	| 'downloading'
+	| 'downloaded'
+	| 'error';
+
+export interface UpdateState {
+	status: UpdateStatus;
+	info?: { version: string; releaseNotes?: string };
+	progress?: number;
+	error?: string;
+}
+
 export interface ElectronAPI {
 	openFile: (filters?: { name: string; extensions: string[] }[]) => Promise<string | undefined>;
 	openMultipleFiles: (
@@ -20,6 +35,11 @@ export interface ElectronAPI {
 		handler: (menu: 'input' | 'process' | 'download' | 'setting' | 'about') => void,
 	) => () => void;
 	setTrayLocale: (locale: 'vi' | 'en') => Promise<void>;
+	// Updater APIs
+	checkForUpdates: () => Promise<UpdateState>;
+	downloadUpdate: () => Promise<boolean>;
+	installUpdate: () => void;
+	onUpdateStatus: (handler: (state: UpdateState) => void) => () => void;
 }
 
 export const createElectronAPI = (ipcRenderer: IpcRenderer): ElectronAPI => {
@@ -45,5 +65,16 @@ export const createElectronAPI = (ipcRenderer: IpcRenderer): ElectronAPI => {
 			return () => ipcRenderer.removeListener('app:navigate', listener);
 		},
 		setTrayLocale: (locale) => ipcRenderer.invoke('tray:setLocale', locale),
+		// Updater APIs
+		checkForUpdates: () => ipcRenderer.invoke('updater:check'),
+		downloadUpdate: () => ipcRenderer.invoke('updater:download'),
+		installUpdate: () => ipcRenderer.invoke('updater:install'),
+		onUpdateStatus: (handler) => {
+			const listener = (_: IpcRendererEvent, state: unknown) => {
+				handler(state as UpdateState);
+			};
+			ipcRenderer.on('updater:status', listener);
+			return () => ipcRenderer.removeListener('updater:status', listener);
+		},
 	};
 };

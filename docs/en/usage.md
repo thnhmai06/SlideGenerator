@@ -49,3 +49,13 @@ Use **Results** to:
 
 - **Create Task** supports JSON export/import for reuse.
 - Each group has an export action for quick sharing.
+
+## Check for updates
+
+Use **About** to check for and install application updates:
+
+1. Open the **About** tab.
+2. Click **Check for updates** to check for new versions.
+3. If an update is available, click **Download and install**.
+4. After downloading, click **Install now** to restart and apply the update.
+5. Alternatively, the update will be applied when you quit the application.

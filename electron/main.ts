@@ -6,6 +6,7 @@ import { createBackendController } from './main/backend';
 import { registerDialogHandlers } from './main/dialogs';
 import { attachProcessOutputCapture, initLogging, registerRendererLogIpc } from './main/logging';
 import { registerSettingsHandlers } from './main/settings';
+import { registerUpdaterHandlers } from './main/updater';
 import { createMainWindow, registerWindowHandlers, setIsQuitting } from './main/window';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -24,6 +25,7 @@ registerAssetHandlers();
 registerDialogHandlers();
 registerSettingsHandlers();
 registerWindowHandlers(getAssetPath);
+registerUpdaterHandlers();
 
 const backendController = createBackendController(logPaths.backendLogPath);
 

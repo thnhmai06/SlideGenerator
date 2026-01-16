@@ -5,6 +5,10 @@
 	"description": "Generate presentation slides from predefined template",
 	"main": "dist-electron/main.js",
 	"type": "commonjs",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/thnhmai06/SlideGenerator.git"
+	},
 	"scripts": {
 		"dev": "vite",
 		"build:types": "tsc -p tsconfig.node.json",
@@ -27,6 +31,7 @@
 	"dependencies": {
 		"@microsoft/signalr": "^10.0.0",
 		"electron-log": "^5.4.3",
+		"electron-updater": "^6.7.3",
 		"react": "^19.2.3",
 		"react-dom": "^19.2.3"
 	},
@@ -67,6 +72,12 @@
 				"to": "backend"
 			}
 		],
+		"publish": {
+			"provider": "github",
+			"owner": "thnhmai06",
+			"repo": "SlideGenerator",
+			"releaseType": "release"
+		},
 		"win": {
 			"icon": "assets/images/app-icon.ico",
 			"target": [
