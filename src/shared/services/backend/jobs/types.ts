@@ -25,7 +25,7 @@ export interface JobDetail extends JobSummary {
 }
 
 export interface JobExportPayload {
-  taskType: JobType
+  jobType: JobType
   templatePath: string
   spreadsheetPath: string
   outputPath: string

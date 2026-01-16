@@ -46,13 +46,13 @@ async function fetchJobDetail(
   if (!jobId) return null
   const response = await jobHub.sendRequest<ResponseBase>({
     type: 'jobquery',
-    taskId: jobId,
-    taskType: jobType,
+    jobId: jobId,
+    jobType: jobType,
     includeSheets,
     includePayload,
   })
   const data = assertSuccess<ResponseBase>(response)
-  const job = (data as Record<string, unknown>).task as Record<string, unknown> | undefined
+  const job = (data as Record<string, unknown>).job as Record<string, unknown> | undefined
   if (!job) return null
   return normalizeJobDetail(job)
 }
@@ -71,10 +71,10 @@ async function fetchJobList(
   const response = await jobHub.sendRequest<ResponseBase>({
     type: 'jobquery',
     scope,
-    taskType: jobType,
+    jobType: jobType,
   })
   const data = assertSuccess<ResponseBase>(response)
-  const jobs = (((data as Record<string, unknown>).tasks as Array<Record<string, unknown>>) ??
+  const jobs = (((data as Record<string, unknown>).jobs as Array<Record<string, unknown>>) ??
     []) as Array<Record<string, unknown>>
   return jobs.map((job) => normalizeJobSummary(job))
 }
@@ -165,7 +165,7 @@ export async function createGroup(
 
   const response = await jobHub.sendRequest<ResponseBase>({
     type: 'jobcreate',
-    taskType: 'Group',
+    jobType: 'Group',
     templatePath,
     spreadsheetPath,
     outputPath,
@@ -175,8 +175,8 @@ export async function createGroup(
   })
   const data = assertSuccess<ResponseBase>(response)
   const dataRecord = data as Record<string, unknown>
-  const job = normalizeJobSummary((dataRecord.task as Record<string, unknown>) ?? {})
-  const sheetJobIds = ((dataRecord.sheetTaskIds as Record<string, string>) ?? {}) as Record<
+  const job = normalizeJobSummary((dataRecord.job as Record<string, unknown>) ?? {})
+  const sheetJobIds = ((dataRecord.sheetJobIds as Record<string, string>) ?? {}) as Record<
     string,
     string
   >
@@ -251,8 +251,8 @@ export async function groupControl(request: Record<string, unknown>): Promise<Re
 
   const response = await jobHub.sendRequest<ResponseBase>({
     type: 'jobcontrol',
-    taskId: groupId,
-    taskType: 'Group',
+    jobId: groupId,
+    jobType: 'Group',
     action,
   })
   return assertSuccess(response)
@@ -271,8 +271,8 @@ export async function removeGroup(
   if (groupId) {
     await jobHub.sendRequest<ResponseBase>({
       type: 'jobcontrol',
-      taskId: groupId,
-      taskType: 'Group',
+      jobId: groupId,
+      jobType: 'Group',
       action: 'Remove',
     })
   }
@@ -317,8 +317,8 @@ export async function jobControl(request: Record<string, unknown>): Promise<Resp
   const action = request.action as ControlAction
   const response = await jobHub.sendRequest<ResponseBase>({
     type: 'jobcontrol',
-    taskId: jobId,
-    taskType: 'Sheet',
+    jobId: jobId,
+    jobType: 'Sheet',
     action,
   })
   return assertSuccess(response)
@@ -335,8 +335,8 @@ export async function removeJob(request: Record<string, unknown>): Promise<Slide
   if (jobId) {
     await jobHub.sendRequest<ResponseBase>({
       type: 'jobcontrol',
-      taskId: jobId,
-      taskType: 'Sheet',
+      jobId: jobId,
+      jobType: 'Sheet',
       action: 'Remove',
     })
   }
@@ -387,8 +387,8 @@ export async function globalControl(request: Record<string, unknown>): Promise<u
     groups.map((group) =>
       jobHub.sendRequest<ResponseBase>({
         type: 'jobcontrol',
-        taskId: group.JobId,
-        taskType: 'Group',
+        jobId: group.JobId,
+        jobType: 'Group',
         action,
       }),
     ),

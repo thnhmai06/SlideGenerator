@@ -50,8 +50,8 @@ export function mapJobStateToJobStatus(state: JobState): string {
 
 export function normalizeJobSummary(input: Record<string, unknown>): JobSummary {
   return {
-    JobId: ((input.taskId as string) ?? '') as string,
-    JobType: normalizeJobType(input.taskType),
+    JobId: ((input.jobId as string) ?? '') as string,
+    JobType: normalizeJobType(input.jobType),
     Status: normalizeJobState(input.status),
     Progress: ((input.progress as number) ?? 0) as number,
     GroupId: typeof input.groupId === 'string' ? input.groupId : undefined,
@@ -70,7 +70,7 @@ export function normalizeJobDetail(input: Record<string, unknown>): JobDetail {
   >
   const sheets: Record<string, JobSummary> = {}
   Object.entries(sheetsRaw).forEach(([sheetId, sheet]) => {
-    sheets[sheetId] = normalizeJobSummary({ taskId: sheetId, ...sheet })
+    sheets[sheetId] = normalizeJobSummary({ jobId: sheetId, ...sheet })
   })
 
   return {
