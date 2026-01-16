@@ -96,15 +96,18 @@ export const attachProcessOutputCapture = (processLogPath: string) => {
 };
 
 export const registerRendererLogIpc = (rendererLogPath: string) => {
-	ipcMain.on('logs:renderer', (_, payload: { level?: string; message?: string; source?: string }) => {
-		const level = payload?.level ?? 'info';
-		const source = payload?.source ?? 'Renderer';
-		const message = payload?.message ?? '';
-		const line = `${formatTimestamp()} [${level}] [${source}] ${message}\n`;
-		fs.appendFile(rendererLogPath, line).catch((error) => {
-			log.warn('Failed to append renderer log:', error);
-		});
-	});
+	ipcMain.on(
+		'logs:renderer',
+		(_, payload: { level?: string; message?: string; source?: string }) => {
+			const level = payload?.level ?? 'info';
+			const source = payload?.source ?? 'Renderer';
+			const message = payload?.message ?? '';
+			const line = `${formatTimestamp()} [${level}] [${source}] ${message}\n`;
+			fs.appendFile(rendererLogPath, line).catch((error) => {
+				log.warn('Failed to append renderer log:', error);
+			});
+		},
+	);
 };
 
 /**
