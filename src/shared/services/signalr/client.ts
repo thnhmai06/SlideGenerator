@@ -6,6 +6,7 @@ import {
 	LogLevel,
 } from '@microsoft/signalr';
 
+import { loggers } from '../logging';
 import { getBackendBaseUrl } from './baseUrl';
 import { NOTIFICATION_METHOD, RESPONSE_METHOD } from './constants';
 
@@ -175,7 +176,7 @@ export class SignalRHubClient {
 			try {
 				await previous.stop();
 			} catch (error) {
-				console.warn('Failed to stop SignalR connection before reconnect:', error);
+				loggers.signalR.warn('Failed to stop connection before reconnect:', error);
 			}
 		}
 
@@ -299,7 +300,7 @@ export class SignalRHubClient {
 			try {
 				await this.connection.stop();
 			} catch (error) {
-				console.warn('Error stopping SignalR connection during dispose:', error);
+				loggers.signalR.warn('Error stopping connection during dispose:', error);
 			}
 		}
 	}

@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import * as backendApi from '@/shared/services/backendApi';
+import { loggers } from '@/shared/services/logging';
 import type { ConfigState } from '../types';
 import {
 	buildBackendUrl,
@@ -129,7 +130,7 @@ export const useSettings = ({ t }: UseSettingsOptions) => {
 				storeBackendUrl(server.host, server.port);
 			}
 		} catch (error) {
-			console.error('Failed to load config:', error);
+			loggers.settings.error('Failed to load config:', error);
 			showMessage('error', formatErrorMessage('settings.loadError', error));
 		} finally {
 			setLoading(false);
@@ -143,7 +144,7 @@ export const useSettings = ({ t }: UseSettingsOptions) => {
 			setFaceModelAvailable(available);
 			return available;
 		} catch (error) {
-			console.error('Failed to load model status:', error);
+			loggers.settings.error('Failed to load model status:', error);
 			return undefined;
 		}
 	}, []);
@@ -160,7 +161,7 @@ export const useSettings = ({ t }: UseSettingsOptions) => {
 				showMessage('error', response.message ?? t('settings.modelInitError'));
 			}
 		} catch (error) {
-			console.error('Failed to init model:', error);
+			loggers.settings.error('Failed to init model:', error);
 			showMessage('error', formatErrorMessage('settings.modelInitError', error));
 		} finally {
 			setModelLoading(false);
@@ -180,7 +181,7 @@ export const useSettings = ({ t }: UseSettingsOptions) => {
 				showMessage('error', response.message ?? t('settings.modelDeinitError'));
 			}
 		} catch (error) {
-			console.error('Failed to deinit model:', error);
+			loggers.settings.error('Failed to deinit model:', error);
 			showMessage('error', formatErrorMessage('settings.modelDeinitError', error));
 		} finally {
 			setModelLoading(false);
@@ -261,7 +262,7 @@ export const useSettings = ({ t }: UseSettingsOptions) => {
 			}
 			showMessage('success', t('settings.saveSuccess'));
 		} catch (error) {
-			console.error('Failed to save config:', error);
+			loggers.settings.error('Failed to save config:', error);
 			showMessage('error', formatErrorMessage('settings.saveError', error));
 		} finally {
 			setSaving(false);
@@ -284,7 +285,7 @@ export const useSettings = ({ t }: UseSettingsOptions) => {
 			await loadConfig();
 			showMessage('success', t('settings.reloadSuccess'));
 		} catch (error) {
-			console.error('Failed to reload config:', error);
+			loggers.settings.error('Failed to reload config:', error);
 			showMessage('error', formatErrorMessage('settings.reloadError', error));
 		} finally {
 			setLoading(false);
@@ -299,7 +300,7 @@ export const useSettings = ({ t }: UseSettingsOptions) => {
 			await loadConfig();
 			showMessage('success', t('settings.resetSuccess'));
 		} catch (error) {
-			console.error('Failed to reset config:', error);
+			loggers.settings.error('Failed to reset config:', error);
 			showMessage('error', formatErrorMessage('settings.resetError', error));
 		} finally {
 			setLoading(false);
@@ -325,7 +326,7 @@ export const useSettings = ({ t }: UseSettingsOptions) => {
 				showMessage('error', t('settings.restartError'));
 			}
 		} catch (error) {
-			console.error('Failed to restart server:', error);
+			loggers.settings.error('Failed to restart server:', error);
 			showMessage('error', formatErrorMessage('settings.restartError', error));
 		}
 	}, [

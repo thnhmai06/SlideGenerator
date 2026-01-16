@@ -1,3 +1,4 @@
+import { loggers } from '@/shared/services/logging';
 import { jobHub } from '../clients'
 import type { ControlAction, ResponseBase, SlideImageConfig, SlideTextConfig } from '../common/types'
 import { assertSuccess } from '../common/utils'
@@ -421,7 +422,7 @@ export async function getAllGroups(): Promise<SlideGlobalGetGroupsSuccess> {
           workbookPath = payload?.spreadsheetPath ?? ''
         }
       } catch (error) {
-        console.warn('Failed to load job payload:', error)
+        loggers.jobs.warn('Failed to load job payload:', error)
       }
 
       return {

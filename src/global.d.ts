@@ -26,7 +26,11 @@ declare global {
 			hideToTray: () => Promise<void>;
 			setProgressBar: (value: number) => Promise<void>;
 			restartBackend: () => Promise<boolean>;
-			logRenderer: (level: 'debug' | 'info' | 'warn' | 'error', message: string) => void;
+			logRenderer: (
+				level: 'debug' | 'info' | 'warn' | 'error',
+				message: string,
+				source?: string,
+			) => void;
 			onNavigate: (
 				handler: (menu: 'input' | 'process' | 'download' | 'setting' | 'about') => void,
 			) => () => void;

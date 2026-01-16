@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as backendApi from '@/shared/services/backendApi';
+import { loggers } from '@/shared/services/logging';
 import type {
 	GroupJob,
 	SheetJob,
@@ -267,7 +268,7 @@ export const useJobProvider = (): JobContextValue => {
 			try {
 				await backendApi.removeGroup({ GroupId: groupId });
 			} catch (error) {
-				console.error(`Failed to remove group ${groupId}:`, error);
+				loggers.jobs.error(`Failed to remove group ${groupId}:`, error);
 			}
 
 			setGroupsById((prev) => {
@@ -315,7 +316,7 @@ export const useJobProvider = (): JobContextValue => {
 					return { ...sheet, logs: trimLogs(logs) };
 				});
 			} catch (error) {
-				console.error('Failed to load job logs:', error);
+				loggers.jobs.error('Failed to load job logs:', error);
 			}
 		},
 		[updateSheet],
@@ -365,7 +366,7 @@ export const useJobProvider = (): JobContextValue => {
 				await backendApi.removeGroup({ GroupId: groupId });
 				removedIds.push(groupId);
 			} catch (error) {
-				console.error(`Failed to remove group ${groupId}:`, error);
+				loggers.jobs.error(`Failed to remove group ${groupId}:`, error);
 				removedIds.push(groupId);
 			}
 		}
@@ -469,7 +470,7 @@ export const useJobProvider = (): JobContextValue => {
 		subscribedGroups.current.clear();
 		subscribedSheets.current.clear();
 		refreshGroups().catch((error) => {
-			console.error('Failed to refresh jobs after reconnect:', error);
+			loggers.jobs.error('Failed to refresh jobs after reconnect:', error);
 		});
 	}, [refreshGroups]);
 
@@ -485,7 +486,7 @@ export const useJobProvider = (): JobContextValue => {
 
 	useEffect(() => {
 		refreshGroups().catch((error) => {
-			console.error('Failed to refresh jobs:', error);
+			loggers.jobs.error('Failed to refresh jobs:', error);
 		});
 	}, [refreshGroups]);
 
