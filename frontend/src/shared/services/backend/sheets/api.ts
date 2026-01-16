@@ -1,3 +1,4 @@
+import { loggers } from '@/shared/services/logging';
 import { sheetHub } from '../clients'
 import type { ResponseBase } from '../common/types'
 import { assertSuccess } from '../common/utils'
@@ -297,7 +298,7 @@ export async function getAllColumns(filePaths: string[]): Promise<string[]> {
           .forEach((header) => allColumns.add(header))
       })
     } catch (error) {
-      console.error(`Error getting columns for file ${filePath}:`, error)
+      loggers.jobs.error(`Error getting columns for file ${filePath}:`, error)
     }
   }
 

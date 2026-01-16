@@ -1,3 +1,4 @@
+import { loggers } from '@/shared/services/logging';
 import type {
 	GroupJob,
 	SheetJob,
@@ -323,7 +324,7 @@ export const readGroupConfigs = (): Record<string, CreateGroupPayload> => {
 		if (!raw) return {};
 		return JSON.parse(raw) as Record<string, CreateGroupPayload>;
 	} catch (error) {
-		console.error('Failed to read group configs:', error);
+		loggers.jobs.error('Failed to read group configs:', error);
 		return {};
 	}
 };
@@ -334,7 +335,7 @@ export const saveGroupConfigToStorage = (groupId: string, payload: CreateGroupPa
 		current[groupId] = payload;
 		sessionStorage.setItem(GROUP_CONFIG_KEY, JSON.stringify(current));
 	} catch (error) {
-		console.error('Failed to save group config:', error);
+		loggers.jobs.error('Failed to save group config:', error);
 	}
 };
 
@@ -355,7 +356,7 @@ export const removeGroupConfigFromStorage = (groupIds: string[]) => {
 			sessionStorage.setItem(GROUP_CONFIG_KEY, JSON.stringify(current));
 		}
 	} catch (error) {
-		console.error('Failed to remove group configs:', error);
+		loggers.jobs.error('Failed to remove group configs:', error);
 	}
 };
 
@@ -384,7 +385,7 @@ export const clearGroupMetaFromStorage = (groupIds: string[]) => {
 			sessionStorage.setItem(GROUP_META_KEY, JSON.stringify(parsed));
 		}
 	} catch (error) {
-		console.error('Failed to clear group meta:', error);
+		loggers.jobs.error('Failed to clear group meta:', error);
 	}
 };
 
@@ -417,6 +418,6 @@ export const saveGroupMetaToStorage = (
 		});
 		sessionStorage.setItem(GROUP_META_KEY, JSON.stringify(metaMap));
 	} catch (error) {
-		console.error('Failed to save group meta:', error);
+		loggers.jobs.error('Failed to save group meta:', error);
 	}
 };

@@ -175,9 +175,16 @@ public class JobHub(
         if (request.JobType == JobType.Sheet && string.IsNullOrWhiteSpace(request.SheetName))
             throw new InvalidOperationException("SheetName is required for sheet jobs.");
 
+        logger.LogInformation(
+            "Creating job: Type={JobType}, Template={TemplatePath}, Spreadsheet={SpreadsheetPath}, AutoStart={AutoStart}",
+            request.JobType, request.TemplatePath, request.SpreadsheetPath, request.AutoStart);
+
         var group = jobManager.Active.CreateGroup(request);
         if (request.AutoStart)
             jobManager.Active.StartGroup(group.Id);
+
+        logger.LogInformation("Job group created: {GroupId} with {SheetCount} sheets",
+            group.Id, group.Sheets.Count);
 
         if (request.JobType == JobType.Sheet)
         {
@@ -239,6 +246,9 @@ public class JobHub(
     {
         var (jobType, group, sheet) = ResolveJob(request.JobId, request.JobType);
         var action = request.Action == ControlAction.Stop ? ControlAction.Cancel : request.Action;
+
+        logger.LogInformation("Job control: {Action} on {JobType} {JobId}",
+            action, jobType, request.JobId);
 
         switch (jobType)
         {

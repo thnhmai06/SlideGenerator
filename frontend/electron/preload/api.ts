@@ -30,7 +30,11 @@ export interface ElectronAPI {
 	hideToTray: () => Promise<void>;
 	setProgressBar: (value: number) => Promise<void>;
 	restartBackend: () => Promise<boolean>;
-	logRenderer: (level: 'debug' | 'info' | 'warn' | 'error', message: string) => void;
+	logRenderer: (
+		level: 'debug' | 'info' | 'warn' | 'error',
+		message: string,
+		source?: string,
+	) => void;
 	onNavigate: (
 		handler: (menu: 'input' | 'process' | 'download' | 'setting' | 'about') => void,
 	) => () => void;
@@ -56,7 +60,8 @@ export const createElectronAPI = (ipcRenderer: IpcRenderer): ElectronAPI => {
 		hideToTray: () => ipcRenderer.invoke('window:hideToTray'),
 		setProgressBar: (value) => ipcRenderer.invoke('window:setProgress', value),
 		restartBackend: () => ipcRenderer.invoke('backend:restart'),
-		logRenderer: (level, message) => ipcRenderer.send('logs:renderer', { level, message }),
+		logRenderer: (level, message, source) =>
+			ipcRenderer.send('logs:renderer', { level, message, source }),
 		onNavigate: (handler) => {
 			const listener = (_: IpcRendererEvent, menu: string) => {
 				handler(menu as 'input' | 'process' | 'download' | 'setting' | 'about');

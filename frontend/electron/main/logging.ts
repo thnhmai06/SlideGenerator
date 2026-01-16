@@ -11,6 +11,9 @@ export interface LogPaths {
 	backendLogPath: string;
 }
 
+/** Maximum age of log folders in days before cleanup */
+const LOG_RETENTION_DAYS = 30;
+
 const padNumber = (value: number, length = 2) => String(value).padStart(length, '0');
 const formatTimestamp = (time = new Date()) => {
 	return (
@@ -51,11 +54,23 @@ export const initLogging = (): LogPaths => {
 		| undefined;
 	if (fileTransport) {
 		fileTransport.resolvePathFn = () => processLogPath;
-		fileTransport.format = '{y}-{m}-{d} {h}:{i}:{s}.{ms} [{level}] {text}';
+		// Format matching backend: timestamp [LEVEL] [Source] message
+		fileTransport.format = '{y}-{m}-{d} {h}:{i}:{s}.{ms} [{level}] [Main] {text}';
+	}
+
+	// Also update console format for consistency
+	const consoleTransport = log.transports?.console as unknown as { format?: string } | undefined;
+	if (consoleTransport) {
+		consoleTransport.format = '{y}-{m}-{d} {h}:{i}:{s}.{ms} [{level}] [Main] {text}';
 	}
 
 	Object.assign(console, log.functions);
 	log.info('Process logger initialized');
+
+	// Cleanup old log folders asynchronously
+	cleanupOldLogs(logFolder).catch((error) => {
+		log.warn('[Logging] Failed to cleanup old logs:', error);
+	});
 
 	return { sessionLogFolder, processLogPath, rendererLogPath, backendLogPath };
 };
@@ -81,12 +96,52 @@ export const attachProcessOutputCapture = (processLogPath: string) => {
 };
 
 export const registerRendererLogIpc = (rendererLogPath: string) => {
-	ipcMain.on('logs:renderer', (_, payload: { level?: string; message?: string }) => {
+	ipcMain.on('logs:renderer', (_, payload: { level?: string; message?: string; source?: string }) => {
 		const level = payload?.level ?? 'info';
+		const source = payload?.source ?? 'Renderer';
 		const message = payload?.message ?? '';
-		const line = `${formatTimestamp()} [${level}]  ${message}\n`;
+		const line = `${formatTimestamp()} [${level}] [${source}] ${message}\n`;
 		fs.appendFile(rendererLogPath, line).catch((error) => {
 			log.warn('Failed to append renderer log:', error);
 		});
 	});
+};
+
+/**
+ * Removes log folders older than LOG_RETENTION_DAYS.
+ * Folders are expected to be named with timestamp format: YYYY-MM-DD_HH-MM-SS-mmm
+ */
+const cleanupOldLogs = async (logFolder: string): Promise<void> => {
+	const now = Date.now();
+	const maxAge = LOG_RETENTION_DAYS * 24 * 60 * 60 * 1000;
+
+	let entries: fsSync.Dirent[];
+	try {
+		entries = await fs.readdir(logFolder, { withFileTypes: true });
+	} catch {
+		return; // Log folder doesn't exist yet
+	}
+
+	const folderPattern = /^(\d{4})-(\d{2})-(\d{2})_(\d{2})-(\d{2})-(\d{2})-(\d{3})$/;
+
+	for (const entry of entries) {
+		if (!entry.isDirectory()) continue;
+
+		const match = folderPattern.exec(entry.name);
+		if (!match) continue;
+
+		const [, year, month, day, hour, minute, second] = match.map(Number);
+		const folderDate = new Date(year, month - 1, day, hour, minute, second);
+		const age = now - folderDate.getTime();
+
+		if (age > maxAge) {
+			const folderPath = path.join(logFolder, entry.name);
+			try {
+				await fs.rm(folderPath, { recursive: true, force: true });
+				log.info(`[Logging] Removed old log folder: ${entry.name}`);
+			} catch (error) {
+				log.warn(`[Logging] Failed to remove old log folder ${entry.name}:`, error);
+			}
+		}
+	}
 };
