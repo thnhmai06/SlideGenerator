@@ -6,6 +6,7 @@ const checkForUpdates = vi.fn();
 const downloadUpdate = vi.fn();
 const installUpdate = vi.fn();
 const onUpdateStatus = vi.fn();
+const isPortable = vi.fn();
 
 vi.mock('@/shared/contexts/useApp', () => ({
 	useApp: () => ({ t: (key: string) => key }),
@@ -24,10 +25,14 @@ describe('UpdateChecker', () => {
 		downloadUpdate.mockReset();
 		installUpdate.mockReset();
 		onUpdateStatus.mockReset();
-		mockGroups.length = 0; // Clear groups
+		isPortable.mockReset();
+		mockGroups.length = 0;
 
-		// Mock electronAPI
+		// Default: not portable
+		isPortable.mockResolvedValue(false);
+
 		window.electronAPI = {
+			isPortable,
 			checkForUpdates,
 			downloadUpdate,
 			installUpdate,
@@ -42,11 +47,27 @@ describe('UpdateChecker', () => {
 		window.electronAPI = undefined as unknown as typeof window.electronAPI;
 	});
 
-	it('renders current version and check button', () => {
+	it('renders current version and check button (non-portable)', async () => {
 		render(<UpdateChecker />);
 
 		expect(screen.getByText(/update.currentVersion/)).toBeInTheDocument();
-		expect(screen.getByRole('button', { name: 'update.checkForUpdates' })).toBeInTheDocument();
+
+		await waitFor(() => {
+			expect(screen.getByRole('button', { name: 'update.checkForUpdates' })).toBeInTheDocument();
+		});
+	});
+
+	it('hides check button and shows portable message (portable)', async () => {
+		isPortable.mockResolvedValue(true);
+
+		render(<UpdateChecker />);
+
+		await waitFor(() => {
+			expect(
+				screen.queryByRole('button', { name: 'update.checkForUpdates' }),
+			).not.toBeInTheDocument();
+			expect(screen.getByText('update.portableUnsupported')).toBeInTheDocument();
+		});
 	});
 
 	it('shows checking status when checking for updates', async () => {
@@ -60,6 +81,10 @@ describe('UpdateChecker', () => {
 		const user = userEvent.setup();
 		render(<UpdateChecker />);
 
+		await waitFor(() => {
+			expect(screen.getByRole('button', { name: 'update.checkForUpdates' })).toBeInTheDocument();
+		});
+
 		await user.click(screen.getByRole('button', { name: 'update.checkForUpdates' }));
 
 		expect(screen.getByText('update.checking')).toBeInTheDocument();
@@ -70,6 +95,10 @@ describe('UpdateChecker', () => {
 
 		const user = userEvent.setup();
 		render(<UpdateChecker />);
+
+		await waitFor(() => {
+			expect(screen.getByRole('button', { name: 'update.checkForUpdates' })).toBeInTheDocument();
+		});
 
 		await user.click(screen.getByRole('button', { name: 'update.checkForUpdates' }));
 
@@ -87,12 +116,16 @@ describe('UpdateChecker', () => {
 		const user = userEvent.setup();
 		render(<UpdateChecker />);
 
+		await waitFor(() => {
+			expect(screen.getByRole('button', { name: 'update.checkForUpdates' })).toBeInTheDocument();
+		});
+
 		await user.click(screen.getByRole('button', { name: 'update.checkForUpdates' }));
 
 		await waitFor(() => {
 			expect(screen.getByText('update.available')).toBeInTheDocument();
 			expect(screen.getByText(/2.0.0/)).toBeInTheDocument();
-			expect(screen.getByRole('button', { name: 'update.downloadAndInstall' })).toBeInTheDocument();
+			expect(screen.getByRole('button', { name: 'update.download' })).toBeInTheDocument();
 		});
 	});
 
@@ -106,13 +139,17 @@ describe('UpdateChecker', () => {
 		const user = userEvent.setup();
 		render(<UpdateChecker />);
 
+		await waitFor(() => {
+			expect(screen.getByRole('button', { name: 'update.checkForUpdates' })).toBeInTheDocument();
+		});
+
 		await user.click(screen.getByRole('button', { name: 'update.checkForUpdates' }));
 
 		await waitFor(() => {
-			expect(screen.getByRole('button', { name: 'update.downloadAndInstall' })).toBeInTheDocument();
+			expect(screen.getByRole('button', { name: 'update.download' })).toBeInTheDocument();
 		});
 
-		await user.click(screen.getByRole('button', { name: 'update.downloadAndInstall' }));
+		await user.click(screen.getByRole('button', { name: 'update.download' }));
 
 		expect(downloadUpdate).toHaveBeenCalled();
 	});
@@ -123,6 +160,10 @@ describe('UpdateChecker', () => {
 		const user = userEvent.setup();
 		render(<UpdateChecker />);
 
+		await waitFor(() => {
+			expect(screen.getByRole('button', { name: 'update.checkForUpdates' })).toBeInTheDocument();
+		});
+
 		await user.click(screen.getByRole('button', { name: 'update.checkForUpdates' }));
 
 		await waitFor(() => {
@@ -132,10 +173,17 @@ describe('UpdateChecker', () => {
 	});
 
 	it('shows install button when update downloaded', async () => {
-		checkForUpdates.mockResolvedValue({ status: 'downloaded' });
+		checkForUpdates.mockResolvedValue({
+			status: 'downloaded',
+			info: { version: '2.0.0' },
+		});
 
 		const user = userEvent.setup();
 		render(<UpdateChecker />);
+
+		await waitFor(() => {
+			expect(screen.getByRole('button', { name: 'update.checkForUpdates' })).toBeInTheDocument();
+		});
 
 		await user.click(screen.getByRole('button', { name: 'update.checkForUpdates' }));
 
@@ -146,10 +194,17 @@ describe('UpdateChecker', () => {
 	});
 
 	it('calls installUpdate when install button clicked', async () => {
-		checkForUpdates.mockResolvedValue({ status: 'downloaded' });
+		checkForUpdates.mockResolvedValue({
+			status: 'downloaded',
+			info: { version: '2.0.0' },
+		});
 
 		const user = userEvent.setup();
 		render(<UpdateChecker />);
+
+		await waitFor(() => {
+			expect(screen.getByRole('button', { name: 'update.checkForUpdates' })).toBeInTheDocument();
+		});
 
 		await user.click(screen.getByRole('button', { name: 'update.checkForUpdates' }));
 
@@ -163,17 +218,23 @@ describe('UpdateChecker', () => {
 	});
 
 	it('shows warning and hides install button when active jobs exist', async () => {
-		// Add an active (running) job
 		mockGroups.push({
 			id: 'group-1',
 			status: 'Running',
 			sheets: { 'sheet-1': { status: 'Running' } },
 		});
 
-		checkForUpdates.mockResolvedValue({ status: 'downloaded' });
+		checkForUpdates.mockResolvedValue({
+			status: 'downloaded',
+			info: { version: '2.0.0' },
+		});
 
 		const user = userEvent.setup();
 		render(<UpdateChecker />);
+
+		await waitFor(() => {
+			expect(screen.getByRole('button', { name: 'update.checkForUpdates' })).toBeInTheDocument();
+		});
 
 		await user.click(screen.getByRole('button', { name: 'update.checkForUpdates' }));
 
@@ -185,17 +246,23 @@ describe('UpdateChecker', () => {
 	});
 
 	it('shows warning when paused jobs exist', async () => {
-		// Add a paused job
 		mockGroups.push({
 			id: 'group-1',
 			status: 'Paused',
 			sheets: { 'sheet-1': { status: 'Paused' } },
 		});
 
-		checkForUpdates.mockResolvedValue({ status: 'downloaded' });
+		checkForUpdates.mockResolvedValue({
+			status: 'downloaded',
+			info: { version: '2.0.0' },
+		});
 
 		const user = userEvent.setup();
 		render(<UpdateChecker />);
+
+		await waitFor(() => {
+			expect(screen.getByRole('button', { name: 'update.checkForUpdates' })).toBeInTheDocument();
+		});
 
 		await user.click(screen.getByRole('button', { name: 'update.checkForUpdates' }));
 
@@ -205,23 +272,42 @@ describe('UpdateChecker', () => {
 	});
 
 	it('allows install when all jobs are completed', async () => {
-		// Add a completed job
 		mockGroups.push({
 			id: 'group-1',
 			status: 'Completed',
 			sheets: { 'sheet-1': { status: 'Completed' } },
 		});
 
-		checkForUpdates.mockResolvedValue({ status: 'downloaded' });
+		checkForUpdates.mockResolvedValue({
+			status: 'downloaded',
+			info: { version: '2.0.0' },
+		});
 
 		const user = userEvent.setup();
 		render(<UpdateChecker />);
+
+		await waitFor(() => {
+			expect(screen.getByRole('button', { name: 'update.checkForUpdates' })).toBeInTheDocument();
+		});
 
 		await user.click(screen.getByRole('button', { name: 'update.checkForUpdates' }));
 
 		await waitFor(() => {
 			expect(screen.getByRole('button', { name: 'update.installNow' })).toBeInTheDocument();
 			expect(screen.queryByText('update.activeJobsWarning')).not.toBeInTheDocument();
+		});
+	});
+
+	it('hides check button when running in portable mode', async () => {
+		// portable = true
+		window.electronAPI.isPortable = vi.fn().mockResolvedValue(true);
+
+		render(<UpdateChecker />);
+
+		await waitFor(() => {
+			expect(
+				screen.queryByRole('button', { name: 'update.checkForUpdates' }),
+			).not.toBeInTheDocument();
 		});
 	});
 });
