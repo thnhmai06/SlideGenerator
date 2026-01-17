@@ -18,7 +18,7 @@ namespace SlideGenerator.Infrastructure.Features.Images.Services;
 /// <param name="inner">The inner face detector model.</param>
 /// <param name="maxDimensionProvider">A function that returns the maximum allowed dimension (width or height).</param>
 /// <param name="logger">The logger instance.</param>
-public class ResizingFaceDetectorModel(FaceDetectorModel inner, Func<int> maxDimensionProvider, ILogger logger)
+public sealed class ResizingFaceDetectorModel(FaceDetectorModel inner, Func<int> maxDimensionProvider, ILogger logger)
     : FaceDetectorModel
 {
     private readonly FaceDetectorModel _inner = inner;
@@ -30,7 +30,6 @@ public class ResizingFaceDetectorModel(FaceDetectorModel inner, Func<int> maxDim
     public override void Dispose()
     {
         _inner.Dispose();
-        GC.SuppressFinalize(this);
     }
 
     public override Task<bool> InitAsync()
