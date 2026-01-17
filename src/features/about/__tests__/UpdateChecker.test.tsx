@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import UpdateChecker from '../UpdateChecker';
+import { UpdaterProvider } from '@/shared/contexts/UpdaterContext';
 
 const checkForUpdates = vi.fn();
 const downloadUpdate = vi.fn();
@@ -48,7 +49,11 @@ describe('UpdateChecker', () => {
 	});
 
 	it('renders current version and check button (non-portable)', async () => {
-		render(<UpdateChecker />);
+		render(
+			<UpdaterProvider>
+				<UpdateChecker />
+			</UpdaterProvider>,
+		);
 
 		expect(screen.getByText(/update.currentVersion/)).toBeInTheDocument();
 
@@ -60,7 +65,11 @@ describe('UpdateChecker', () => {
 	it('hides check button and shows portable message (portable)', async () => {
 		isPortable.mockResolvedValue(true);
 
-		render(<UpdateChecker />);
+		render(
+			<UpdaterProvider>
+				<UpdateChecker />
+			</UpdaterProvider>,
+		);
 
 		await waitFor(() => {
 			expect(
@@ -79,7 +88,11 @@ describe('UpdateChecker', () => {
 		);
 
 		const user = userEvent.setup();
-		render(<UpdateChecker />);
+		render(
+			<UpdaterProvider>
+				<UpdateChecker />
+			</UpdaterProvider>,
+		);
 
 		await waitFor(() => {
 			expect(screen.getByRole('button', { name: 'update.checkForUpdates' })).toBeInTheDocument();
@@ -94,7 +107,11 @@ describe('UpdateChecker', () => {
 		checkForUpdates.mockResolvedValue({ status: 'not-available' });
 
 		const user = userEvent.setup();
-		render(<UpdateChecker />);
+		render(
+			<UpdaterProvider>
+				<UpdateChecker />
+			</UpdaterProvider>,
+		);
 
 		await waitFor(() => {
 			expect(screen.getByRole('button', { name: 'update.checkForUpdates' })).toBeInTheDocument();
@@ -114,7 +131,11 @@ describe('UpdateChecker', () => {
 		});
 
 		const user = userEvent.setup();
-		render(<UpdateChecker />);
+		render(
+			<UpdaterProvider>
+				<UpdateChecker />
+			</UpdaterProvider>,
+		);
 
 		await waitFor(() => {
 			expect(screen.getByRole('button', { name: 'update.checkForUpdates' })).toBeInTheDocument();
@@ -137,7 +158,11 @@ describe('UpdateChecker', () => {
 		downloadUpdate.mockResolvedValue(true);
 
 		const user = userEvent.setup();
-		render(<UpdateChecker />);
+		render(
+			<UpdaterProvider>
+				<UpdateChecker />
+			</UpdaterProvider>,
+		);
 
 		await waitFor(() => {
 			expect(screen.getByRole('button', { name: 'update.checkForUpdates' })).toBeInTheDocument();
@@ -158,7 +183,11 @@ describe('UpdateChecker', () => {
 		checkForUpdates.mockRejectedValue(new Error('Network error'));
 
 		const user = userEvent.setup();
-		render(<UpdateChecker />);
+		render(
+			<UpdaterProvider>
+				<UpdateChecker />
+			</UpdaterProvider>,
+		);
 
 		await waitFor(() => {
 			expect(screen.getByRole('button', { name: 'update.checkForUpdates' })).toBeInTheDocument();
@@ -179,7 +208,11 @@ describe('UpdateChecker', () => {
 		});
 
 		const user = userEvent.setup();
-		render(<UpdateChecker />);
+		render(
+			<UpdaterProvider>
+				<UpdateChecker />
+			</UpdaterProvider>,
+		);
 
 		await waitFor(() => {
 			expect(screen.getByRole('button', { name: 'update.checkForUpdates' })).toBeInTheDocument();
@@ -200,7 +233,11 @@ describe('UpdateChecker', () => {
 		});
 
 		const user = userEvent.setup();
-		render(<UpdateChecker />);
+		render(
+			<UpdaterProvider>
+				<UpdateChecker />
+			</UpdaterProvider>,
+		);
 
 		await waitFor(() => {
 			expect(screen.getByRole('button', { name: 'update.checkForUpdates' })).toBeInTheDocument();
@@ -230,7 +267,11 @@ describe('UpdateChecker', () => {
 		});
 
 		const user = userEvent.setup();
-		render(<UpdateChecker />);
+		render(
+			<UpdaterProvider>
+				<UpdateChecker />
+			</UpdaterProvider>,
+		);
 
 		await waitFor(() => {
 			expect(screen.getByRole('button', { name: 'update.checkForUpdates' })).toBeInTheDocument();
@@ -258,7 +299,11 @@ describe('UpdateChecker', () => {
 		});
 
 		const user = userEvent.setup();
-		render(<UpdateChecker />);
+		render(
+			<UpdaterProvider>
+				<UpdateChecker />
+			</UpdaterProvider>,
+		);
 
 		await waitFor(() => {
 			expect(screen.getByRole('button', { name: 'update.checkForUpdates' })).toBeInTheDocument();
@@ -284,7 +329,11 @@ describe('UpdateChecker', () => {
 		});
 
 		const user = userEvent.setup();
-		render(<UpdateChecker />);
+		render(
+			<UpdaterProvider>
+				<UpdateChecker />
+			</UpdaterProvider>,
+		);
 
 		await waitFor(() => {
 			expect(screen.getByRole('button', { name: 'update.checkForUpdates' })).toBeInTheDocument();
@@ -302,7 +351,11 @@ describe('UpdateChecker', () => {
 		// portable = true
 		window.electronAPI.isPortable = vi.fn().mockResolvedValue(true);
 
-		render(<UpdateChecker />);
+		render(
+			<UpdaterProvider>
+				<UpdateChecker />
+			</UpdaterProvider>,
+		);
 
 		await waitFor(() => {
 			expect(

@@ -6,7 +6,8 @@ export type UpdateStatus =
 	| 'not-available'
 	| 'downloading'
 	| 'downloaded'
-	| 'error';
+	| 'error'
+	| 'unsupported';
 
 export interface UpdateState {
 	status: UpdateStatus;
