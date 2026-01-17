@@ -1,6 +1,7 @@
 import React from 'react';
 import { AppProvider } from '@/shared/contexts/AppContext';
 import { JobProvider } from '@/shared/contexts/JobContext';
+import { UpdaterProvider } from '@/shared/contexts/UpdaterContext';
 
 type AppProvidersProps = {
 	children: React.ReactNode;
@@ -8,7 +9,9 @@ type AppProvidersProps = {
 
 const AppProviders: React.FC<AppProvidersProps> = ({ children }) => (
 	<AppProvider>
-		<JobProvider>{children}</JobProvider>
+		<JobProvider>
+			<UpdaterProvider>{children}</UpdaterProvider>
+		</JobProvider>
 	</AppProvider>
 );
 

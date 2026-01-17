@@ -1,4 +1,4 @@
-import { BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import { autoUpdater, UpdateInfo } from 'electron-updater';
 import log from 'electron-log';
 import * as path from 'path';
@@ -81,6 +81,10 @@ function sendUpdateStatus(state: UpdateState): void {
 
 export function registerUpdaterHandlers(): void {
 	const portable = isPortableMode();
+
+	if (!app.isPackaged) {
+		autoUpdater.forceDevUpdateConfig = true; // for dev testing
+	}
 
 	autoUpdater.logger = log;
 	autoUpdater.autoDownload = false;

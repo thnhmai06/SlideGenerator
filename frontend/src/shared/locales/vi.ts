@@ -203,7 +203,7 @@ export const vi = {
 	// Update
 	'update.checkForUpdates': 'Kiểm tra cập nhật',
 	'update.checking': 'Đang kiểm tra cập nhật...',
-	'update.available': 'Có bản cập nhật mới',
+	'update.available': 'Đã có bản cập nhật mới',
 	'update.downloaded': 'Đã tải về bản cập nhật mới',
 	'update.notAvailable': 'Bạn đang sử dụng phiên bản mới nhất',
 	'update.portableUnsupported': 'Bản portable không hỗ trợ cập nhật tự động.',
