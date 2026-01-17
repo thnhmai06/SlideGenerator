@@ -36,6 +36,9 @@ image:
     # If true, union all detected faces; if false, pick the best single face
     union_all: true
 
+    # Maximum dimension for face detection image. 0 = unlimited. Default is 1280.
+    max_dimension: 1280
+
   # Saliency detection settings
   saliency:
     # Padding ratios around saliency anchor (0-1)

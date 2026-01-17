@@ -30,6 +30,7 @@ export interface ConfigState {
 		face: {
 			confidence: number;
 			unionAll: boolean;
+			maxDimension: number;
 		};
 		saliency: {
 			paddingTop: number;

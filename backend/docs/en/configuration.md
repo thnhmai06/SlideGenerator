@@ -12,7 +12,7 @@ Vietnamese version: [Vietnamese](../vi/configuration.md)
 
 - `server`: host, port, debug.
 - `job`: `maxConcurrentJobs` controls how many sheet jobs run in parallel.
-- `image`: face detection confidence and saliency padding.
+- `image`: face detection confidence, max dimension (default 1280, 0 = unlimited) and saliency padding.
 - `download`: bandwidth limits and retry policy (used when downloading images).
 
 ## Runtime behavior

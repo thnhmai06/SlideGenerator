@@ -1,7 +1,7 @@
 {
 	"name": "slide-generator",
 	"productName": "Slide Generator",
-	"version": "1.0.1",
+	"version": "1.1.0",
 	"description": "Generate presentation slides from predefined template",
 	"main": "dist-electron/main.js",
 	"type": "commonjs",
