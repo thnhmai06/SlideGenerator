@@ -147,6 +147,9 @@ export const vi = {
 	'settings.imageSaliencyHint': 'Cài đặt nhận diện vùng nổi bật.',
 	'settings.imagePadding': 'Padding',
 	'settings.imageConfidence': 'Độ tin cậy',
+	'settings.imageMaxDimension': 'Kích thước tối đa (px)',
+	'settings.imageMaxDimensionHint':
+		'Giới hạn kích thước tối đa để nhận diện khuôn mặt (0 = không giới hạn).',
 	'settings.imageUnionAll': 'Gộp tất cả khuôn mặt',
 	'settings.imageUnionAllDesc': 'Lấy trung tâm các khuôn mặt làm tâm khi có nhiều mặt.',
 	'settings.imageModel': 'Mô hình',

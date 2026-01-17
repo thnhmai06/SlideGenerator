@@ -149,6 +149,8 @@ export const en = {
 	'settings.imageSaliencyHint': 'Settings for salient areas.',
 	'settings.imagePadding': 'Padding',
 	'settings.imageConfidence': 'Confidence',
+	'settings.imageMaxDimension': 'Max dimension (px)',
+	'settings.imageMaxDimensionHint': 'Limit max dimension for face detection (0 = unlimited).',
 	'settings.imageUnionAll': 'Union all faces',
 	'settings.imageUnionAllDesc':
 		'Use center of all faces as anchor when multiple faces are detected.',

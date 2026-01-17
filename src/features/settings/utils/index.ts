@@ -39,6 +39,7 @@ export const parseConfigResponse = (data: ConfigGetSuccess) => {
 			face: {
 				confidence: data.image.face.confidence ?? 0,
 				unionAll: data.image.face.unionAll ?? false,
+				maxDimension: data.image.face.maxDimension ?? 1280,
 			},
 			saliency: {
 				paddingTop: data.image.saliency.paddingTop ?? 0,

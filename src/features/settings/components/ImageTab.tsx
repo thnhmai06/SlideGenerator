@@ -54,6 +54,32 @@ export const ImageTab: React.FC<ImageTabProps> = ({
 							/>
 							<span className="setting-hint">{t('settings.imagePaddingHint')}</span>
 						</div>
+						<div className="setting-item">
+							<label className="setting-label">{t('settings.imageMaxDimension')}</label>
+							<input
+								type="number"
+								className="setting-input"
+								value={
+									Number.isFinite(config.image.face.maxDimension)
+										? config.image.face.maxDimension
+										: ''
+								}
+								disabled={!canEditConfig}
+								onChange={(e) =>
+									handleNumberChange(e.target.value, (next) => updateFace({ maxDimension: next }))
+								}
+								onBlur={(e) =>
+									handleNumberBlur(e.target.value, (next) => updateFace({ maxDimension: next }))
+								}
+								onFocus={handleNumberFocus}
+								min="0"
+								step="1"
+							/>
+							<span className="setting-hint">{t('settings.imageMaxDimensionHint')}</span>
+						</div>
+					</div>
+
+					<div className="face-config-row">
 						<div className="setting-item setting-item-toggle">
 							<div className="toggle-content">
 								<div className="toggle-label">

@@ -28,6 +28,7 @@ export interface ConfigGetSuccess {
     face: {
       confidence: number
       unionAll: boolean
+      maxDimension: number
     }
     saliency: {
       paddingTop: number
