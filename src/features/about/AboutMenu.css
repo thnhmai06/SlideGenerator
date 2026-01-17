@@ -337,8 +337,8 @@
 
 .update-downloaded {
 	justify-content: space-between;
-	background: color-mix(in srgb, var(--status-completed) 10%, transparent);
-	border: 1px solid var(--status-completed);
+	background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+	border: 1px solid var(--accent-primary);
 }
 
 .update-actions {
@@ -353,9 +353,10 @@
 }
 
 .update-hint-disabled {
-	font-size: var(--font-xs);
+	font-size: var(--font-sm);
 	color: var(--text-tertiary);
 	font-style: italic;
+	padding-left: var(--spacing-lg);
 }
 
 .update-not-available {
@@ -406,4 +407,18 @@
 .update-warning-icon {
 	color: var(--status-pending);
 	font-size: var(--font-base);
+}
+
+.update-text-highlight {
+	display: inline-block;
+	font-size: var(--font-sm);
+	font-weight: var(--font-medium);
+	color: var(--accent-primary);
+}
+
+.update-text-highlight-success {
+	display: inline-block;
+	font-size: var(--font-sm);
+	font-weight: var(--font-medium);
+	color: var(--accent-primary);
 }
