@@ -13,7 +13,7 @@
 - [src/app](../../src/app): app shell và providers.
 - [src/features](../../src/features): các màn hình theo feature (create-task, process, results, settings, about).
 - [src/shared](../../src/shared): UI chung, contexts, services, utils, locales, styles.
-- [electron](../../electron): main/preload và tray.
+- [electron](../../electron): main/preload, tray và [trình cập nhật](updater.md).
 
 ### Tầng Services
 
