@@ -15,12 +15,14 @@ The application uses `electron-updater` to provide automated updates for non-por
 ## Architecture
 
 ### Main Process (`electron/main/updater.ts`)
+
 - Manages the `autoUpdater` instance.
 - Handles IPC calls for checking, downloading, and installing updates.
 - Broadcasts status updates to all renderer windows via `updater:status`.
 - Persists "downloaded" state to handle app restarts.
 
 ### Preload (`electron/preload/api.ts`)
+
 - Exposes typed methods to the renderer via `window.electronAPI`:
   - `checkForUpdates()`
   - `downloadUpdate()`
@@ -29,6 +31,7 @@ The application uses `electron-updater` to provide automated updates for non-por
   - `isPortable()`
 
 ### React Context (`src/shared/contexts/UpdaterContext.tsx`)
+
 - Provides `useUpdater()` hook.
 - Synchronizes local state with IPC events.
 - Tracks `hasActiveJobs` to gate the installation process.
@@ -40,7 +43,7 @@ The application uses `electron-updater` to provide automated updates for non-por
 3. **Download**: User clicks download. Status becomes `downloading` with progress percentage.
 4. **Ready**: Once downloaded, status becomes `downloaded`.
 5. **Install**: User clicks install. The app calls `quitAndInstall()`.
-   - *Note*: The UI disables the Install button if `hasActiveJobs` is true.
+   - _Note_: The UI disables the Install button if `hasActiveJobs` is true.
 
 ## Configuration
 
@@ -59,5 +62,6 @@ The updater configuration is read from `package.json` under `build.publish`.
 ## Testing in Development
 
 The updater is configured to allow testing in development mode:
+
 - `autoUpdater.forceDevUpdateConfig = true` is set when `app.isPackaged` is false.
 - A `dev-app-update.yml` may be required in the root for local testing.
