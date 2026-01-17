@@ -17,7 +17,7 @@ namespace SlideGenerator.Infrastructure.Features.Images.Services;
 /// <summary>
 ///     Image processing service implementation.
 /// </summary>
-public class ImageService : Service,
+public sealed class ImageService : Service,
     IImageService, IDisposable
 {
     private readonly FaceDetectorModel _faceDetectorMode;
@@ -56,7 +56,6 @@ public class ImageService : Service,
     public void Dispose()
     {
         _faceDetectorMode.Dispose();
-        GC.SuppressFinalize(this);
     }
 
     /// <inheritdoc />
