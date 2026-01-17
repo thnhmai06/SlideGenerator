@@ -84,15 +84,13 @@
 			"icon": "assets/images/app-icon.ico",
 			"target": [
 				"nsis",
-				"portable",
-				"zip"
+				"portable"
 			]
 		},
 		"mac": {
 			"icon": "assets/images/app-icon.icns",
 			"target": [
-				"dmg",
-				"zip"
+				"dmg"
 			],
 			"category": "public.app-category.productivity"
 		},
