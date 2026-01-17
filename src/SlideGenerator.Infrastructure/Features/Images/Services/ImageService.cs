@@ -25,7 +25,10 @@ public class ImageService : Service,
 
     public ImageService(ILogger<ImageService> logger) : base(logger)
     {
-        _faceDetectorMode = new YuNetModel();
+        var baseModel = new YuNetModel();
+        _faceDetectorMode = new ResizingFaceDetectorModel(baseModel,
+            () => ConfigHolder.Value.Image.Face.MaxDimension,
+            logger);
         _roiModule = new Lazy<RoiModule>(
             () =>
             {

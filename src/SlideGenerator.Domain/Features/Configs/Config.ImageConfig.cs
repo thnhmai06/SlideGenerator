@@ -18,6 +18,13 @@ public sealed partial class Config
             ///     If true, union all detected faces; otherwise use the best single face. Default is <see langword="false" />.
             /// </summary>
             public bool UnionAll { get; init; } = false;
+
+            /// <summary>
+            ///     Maximum dimension (width or height) for face detection image.
+            ///     If the image is larger, it will be resized maintaining aspect ratio.
+            ///     Default is 1280.
+            /// </summary>
+            public int MaxDimension { get; init; } = 1280;
         }
 
         public sealed class SaliencyConfig
