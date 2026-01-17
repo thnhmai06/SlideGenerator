@@ -61,11 +61,17 @@ export default defineConfig({
 		// Optimize chunk splitting for better caching
 		rollupOptions: {
 			output: {
-				manualChunks: {
-					// Vendor chunk for React
-					'vendor-react': ['react', 'react-dom'],
-					// SignalR in its own chunk
-					'vendor-signalr': ['@microsoft/signalr'],
+				manualChunks: (id) => {
+					if (id.includes('node_modules')) {
+						if (id.includes('react') || id.includes('react-dom')) {
+							return 'vendor-react';
+						}
+						if (id.includes('@microsoft/signalr')) {
+							return 'vendor-signalr';
+						}
+						// Group other small dependencies into a single vendor chunk to avoid too many requests
+						return 'vendor';
+					}
 				},
 			},
 		},
