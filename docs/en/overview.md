@@ -13,7 +13,7 @@
 - [src/app](../../src/app): app shell and providers.
 - [src/features](../../src/features): feature screens (create-task, process, results, settings, about).
 - [src/shared](../../src/shared): shared UI, contexts, services, utils, locales, styles.
-- [electron](../../electron): main/preload processes and tray menu.
+- [electron](../../electron): main/preload processes, tray menu, and [updater](updater.md).
 
 ### Services Layer
 
