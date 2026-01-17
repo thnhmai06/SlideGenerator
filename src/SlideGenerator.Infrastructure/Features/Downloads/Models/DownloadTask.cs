@@ -41,10 +41,7 @@ public abstract class DownloadTask : IDownloadTask, IDisposable
 
     public void Dispose()
     {
-        if (_disposed) return;
-        _disposed = true;
-        _downloader.Dispose();
-
+        Dispose(true);
         GC.SuppressFinalize(this);
     }
 
@@ -119,6 +116,20 @@ public abstract class DownloadTask : IDownloadTask, IDisposable
     public void Cancel()
     {
         _downloader.CancelAsync();
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_disposed) return;
+        if (disposing)
+        {
+            _downloader.DownloadStarted -= OnDownloadStarted;
+            _downloader.DownloadProgressChanged -= OnDownloadProgressed;
+            _downloader.DownloadFileCompleted -= OnDownloadCompleted;
+            _downloader.Dispose();
+        }
+
+        _disposed = true;
     }
 
     private void OnDownloadStarted(object? sender, DownloadStartedEventArgs args)

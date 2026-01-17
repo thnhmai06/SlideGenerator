@@ -306,6 +306,7 @@ public class ActiveJobCollection(
                 CancelSheetInternal(job);
 
             _sheets.TryRemove(job.Id, out _);
+            SheetJobNameRegistry.Unregister(job.Id);
         }
 
         group.SetStatus(GroupStatus.Cancelled);
@@ -349,6 +350,7 @@ public class ActiveJobCollection(
     public void CancelAndRemoveSheet(string sheetId)
     {
         if (!_sheets.TryRemove(sheetId, out var job)) return;
+        SheetJobNameRegistry.Unregister(job.Id);
 
         if (job.Status is SheetJobStatus.Pending or SheetJobStatus.Running or SheetJobStatus.Paused)
             CancelSheetInternal(job);
@@ -552,7 +554,10 @@ public class ActiveJobCollection(
             if (_groups.TryRemove(group.Id, out _))
             {
                 foreach (var sheet in group.InternalJobs.Values)
+                {
                     _sheets.TryRemove(sheet.Id, out _);
+                    SheetJobNameRegistry.Unregister(sheet.Id);
+                }
 
                 group.Workbook.Dispose();
                 onGroupCompleted(group);

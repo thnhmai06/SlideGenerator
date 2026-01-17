@@ -1,12 +1,9 @@
-using System.Text;
-using DocumentFormat.OpenXml.Drawing;
 using DocumentFormat.OpenXml.Packaging;
 using Microsoft.Extensions.Logging;
 using SlideGenerator.Application.Features.Configs;
 using SlideGenerator.Application.Features.Images;
 using SlideGenerator.Application.Features.Slides;
 using SlideGenerator.Domain.Features.Downloads;
-using SlideGenerator.Domain.Features.Images.Enums;
 using SlideGenerator.Domain.Features.Jobs.Components;
 using SlideGenerator.Framework.Cloud;
 using SlideGenerator.Framework.Cloud.Exceptions;
@@ -16,8 +13,6 @@ using SlideGenerator.Infrastructure.Common.Utilities;
 using SlideGenerator.Infrastructure.Features.Images.Exceptions;
 using Path = System.IO.Path;
 using Presentation = SlideGenerator.Framework.Slide.Models.Presentation;
-using PresentationPicture = DocumentFormat.OpenXml.Presentation.Picture;
-using PresentationShape = DocumentFormat.OpenXml.Presentation.Shape;
 
 namespace SlideGenerator.Infrastructure.Features.Slides.Services;
 
@@ -99,10 +94,14 @@ public class SlideServices(
         if (replacements.Count == 0)
             return new TextReplacementOutcome(0, []);
 
-        var details = CollectTextReplacementDetails(slidePart, replacements);
         await checkpoint(JobCheckpointStage.BeforeSlideUpdate, cancellationToken);
-        var replacedCount = await TextReplacer.ReplaceAsync(slidePart, replacements);
+        var (replacedCount, internalDetails) = await TextReplacer.ReplaceAsync(slidePart, replacements);
         await checkpoint(JobCheckpointStage.AfterSlideUpdate, cancellationToken);
+
+        var details = internalDetails
+            .Select(d => new TextReplacementDetail(d.ShapeId, d.Placeholder, d.Value))
+            .ToList();
+
         return new TextReplacementOutcome((int)replacedCount, details);
     }
 
@@ -114,44 +113,62 @@ public class SlideServices(
         CancellationToken cancellationToken)
     {
         var errors = new List<string>();
-        var imageReplacementCount = 0;
         var details = new List<ImageReplacementDetail>();
+        var successCount = 0;
 
-        foreach (var config in imageConfigs)
+        var slideLock = new object();
+
+        await Parallel.ForEachAsync(imageConfigs, new ParallelOptions
         {
-            cancellationToken.ThrowIfCancellationRequested();
-
+            CancellationToken = cancellationToken,
+            MaxDegreeOfParallelism = Math.Max(1, Environment.ProcessorCount / 2)
+        }, async (config, ct) =>
+        {
             var imageSource = GetImageSourceFromRowData(rowData, config.Columns);
             if (string.IsNullOrWhiteSpace(imageSource))
-                continue;
+                return;
 
             string? imagePath = null;
             var isTempDownload = false;
 
             try
             {
-                imagePath = await ResolveImagePathAsync(imageSource, checkpoint, cancellationToken);
+                imagePath = await ResolveImagePathAsync(imageSource, checkpoint, ct);
                 if (imagePath == null)
                 {
-                    errors.Add($"Failed to resolve image source for shape {config.ShapeId}");
-                    continue;
+                    lock (errors)
+                    {
+                        errors.Add($"Failed to resolve image source for shape {config.ShapeId}");
+                    }
+
+                    return;
                 }
 
                 isTempDownload = IsTemporaryDownload(imageSource, imagePath);
 
-                var roiType = config.RoiType;
-                var cropType = config.CropType;
+                var picture = Presentation.GetPictureById(slidePart, config.ShapeId);
+                var shape = Presentation.GetShapeById(slidePart, config.ShapeId);
 
-                await ProcessSingleImageReplacementAsync(
-                    slidePart,
-                    config.ShapeId,
-                    imagePath,
-                    roiType,
-                    cropType,
-                    checkpoint,
-                    cancellationToken);
-                imageReplacementCount++;
-                details.Add(new ImageReplacementDetail(config.ShapeId, imageSource));
+                if (shape == null && picture == null)
+                    return;
+
+                var targetSize = picture != null
+                    ? ImageReplacer.GetPictureSize(picture)
+                    : ImageReplacer.GetShapeSize(shape!);
+
+                var bytes = await imageService.CropImageAsync(imagePath, targetSize, config.RoiType, config.CropType);
+
+                lock (slideLock)
+                {
+                    using var stream = new MemoryStream(bytes, false);
+                    if (picture != null)
+                        ImageReplacer.ReplaceImage(slidePart, picture, stream);
+                    else if (shape != null)
+                        ImageReplacer.ReplaceImage(slidePart, shape!, stream);
+
+                    successCount++;
+                    details.Add(new ImageReplacementDetail(config.ShapeId, imageSource));
+                }
             }
             catch (OperationCanceledException)
             {
@@ -174,7 +191,10 @@ public class SlideServices(
                 Logger.LogWarning(ex,
                     "Failed to process image for shape {ShapeId}, keeping placeholder",
                     config.ShapeId);
-                errors.Add($"Shape {config.ShapeId}: {ex.Message}");
+                lock (errors)
+                {
+                    errors.Add($"Shape {config.ShapeId}: {ex.Message}");
+                }
             }
             finally
             {
@@ -188,68 +208,13 @@ public class SlideServices(
                         // Ignore cleanup failures for temp downloads.
                     }
             }
-        }
+        });
 
-        return new ImageReplacementOutcome(imageReplacementCount, errors.Count, errors, details);
-    }
+        // Checkpoints inside parallel loop are tricky. We call them once at the end or begin, 
+        // or accept that they will be called concurrently (Checkpoints must be thread-safe).
+        // Assuming JobCheckpoint delegate is thread-safe or we don't strictly need precise intermediate progress here for speed.
 
-    private async Task ProcessSingleImageReplacementAsync(
-        SlidePart slidePart,
-        uint shapeId,
-        string imagePath,
-        ImageRoiType roiType,
-        ImageCropType cropType,
-        JobCheckpoint checkpoint,
-        CancellationToken cancellationToken)
-    {
-        var picture = Presentation.GetPictureById(slidePart, shapeId);
-        var shape = Presentation.GetShapeById(slidePart, shapeId);
-
-        if (shape == null && picture == null)
-            throw new InvalidOperationException($"Shape {shapeId} not found in slide.");
-
-        await checkpoint(JobCheckpointStage.BeforeImageProcess, cancellationToken);
-        if (picture != null)
-            await ProcessImageAsync(slidePart, picture, imagePath, roiType, cropType, checkpoint, cancellationToken);
-        else if (shape != null)
-            await ProcessImageAsync(slidePart, shape, imagePath, roiType, cropType, checkpoint, cancellationToken);
-        await checkpoint(JobCheckpointStage.AfterImageProcess, cancellationToken);
-    }
-
-    private async Task ProcessImageAsync(
-        SlidePart slidePart,
-        PresentationShape shape,
-        string imagePath,
-        ImageRoiType roiType,
-        ImageCropType cropType,
-        JobCheckpoint checkpoint,
-        CancellationToken cancellationToken)
-    {
-        var targetSize = ImageReplacer.GetShapeSize(shape);
-        var bytes = await imageService.CropImageAsync(imagePath, targetSize, roiType, cropType);
-
-        await checkpoint(JobCheckpointStage.BeforeSlideUpdate, cancellationToken);
-        using var stream = new MemoryStream(bytes, false);
-        ImageReplacer.ReplaceImage(slidePart, shape, stream);
-        await checkpoint(JobCheckpointStage.AfterSlideUpdate, cancellationToken);
-    }
-
-    private async Task ProcessImageAsync(
-        SlidePart slidePart,
-        PresentationPicture picture,
-        string imagePath,
-        ImageRoiType roiType,
-        ImageCropType cropType,
-        JobCheckpoint checkpoint,
-        CancellationToken cancellationToken)
-    {
-        var targetSize = ImageReplacer.GetPictureSize(picture);
-        var bytes = await imageService.CropImageAsync(imagePath, targetSize, roiType, cropType);
-
-        await checkpoint(JobCheckpointStage.BeforeSlideUpdate, cancellationToken);
-        using var stream = new MemoryStream(bytes);
-        ImageReplacer.ReplaceImage(slidePart, picture, stream);
-        await checkpoint(JobCheckpointStage.AfterSlideUpdate, cancellationToken);
+        return new ImageReplacementOutcome(successCount, errors.Count, errors, details);
     }
 
     private async Task<string?> ResolveImagePathAsync(
@@ -293,39 +258,6 @@ public class SlideServices(
             if (rowData.TryGetValue(column, out var value) && !string.IsNullOrWhiteSpace(value))
                 return value;
         return null;
-    }
-
-    private static List<TextReplacementDetail> CollectTextReplacementDetails(
-        SlidePart slidePart,
-        ReplaceInstructions replacements)
-    {
-        var details = new List<TextReplacementDetail>();
-        var replacementIndex = BuildReplacementIndex(replacements);
-
-        foreach (var shape in Presentation.GetShapes(slidePart))
-        {
-            var shapeId = shape.NonVisualShapeProperties?.NonVisualDrawingProperties?.Id?.Value;
-            if (shapeId is null) continue;
-
-            var textBody = shape.TextBody;
-            if (textBody is null) continue;
-
-            var builder = new StringBuilder();
-            foreach (var run in textBody.Descendants<Text>())
-                builder.Append(run.Text);
-            if (builder.Length == 0) continue;
-
-            var original = builder.ToString();
-            if (string.IsNullOrEmpty(original) || !original.Contains("{{", StringComparison.Ordinal))
-                continue;
-
-            var placeholders = TextReplacer.ScanPlaceholders(original);
-            foreach (var placeholder in placeholders)
-                if (replacementIndex.TryGetValue(placeholder, out var value))
-                    details.Add(new TextReplacementDetail(shapeId.Value, placeholder, value));
-        }
-
-        return details;
     }
 
     private static ReplaceInstructions BuildReplacementIndex(ReplaceInstructions replacements)
