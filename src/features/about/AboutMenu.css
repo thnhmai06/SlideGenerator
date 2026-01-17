@@ -235,6 +235,7 @@
 	border-radius: var(--radius-md);
 	background: var(--bg-tertiary);
 	flex-wrap: wrap;
+	min-height: 60px; /* Consistent height across all states */
 }
 
 .update-checking {
@@ -266,6 +267,15 @@
 	display: flex;
 	flex-direction: column;
 	gap: var(--spacing-xs);
+	flex: 1;
+}
+
+/* Row layout for not-available and error states */
+.update-not-available .update-info,
+.update-error .update-info {
+	flex-direction: row;
+	align-items: center;
+	gap: var(--spacing-sm);
 }
 
 .update-badge {
@@ -288,14 +298,26 @@
 	font-weight: var(--font-medium);
 }
 
+.update-text {
+	font-size: var(--font-sm);
+	color: var(--text-primary);
+}
+
 .update-downloading {
 	flex-direction: column;
 	align-items: stretch;
 	gap: var(--spacing-sm);
 }
 
+.update-downloading .update-info {
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+}
+
 .update-progress-bar {
 	height: 8px;
+	width: 100%;
 	background: var(--bg-primary);
 	border-radius: var(--radius-full);
 	overflow: hidden;
@@ -308,9 +330,9 @@
 }
 
 .update-progress-text {
-	text-align: center;
 	font-size: var(--font-sm);
 	color: var(--text-secondary);
+	font-weight: var(--font-medium);
 }
 
 .update-downloaded {
@@ -330,6 +352,12 @@
 	color: var(--text-tertiary);
 }
 
+.update-hint-disabled {
+	font-size: var(--font-xs);
+	color: var(--text-tertiary);
+	font-style: italic;
+}
+
 .update-not-available {
 	color: var(--text-secondary);
 	font-size: var(--font-base);
@@ -338,17 +366,23 @@
 .update-check-icon {
 	color: var(--status-completed);
 	font-weight: var(--font-bold);
+	font-size: var(--font-lg);
 }
 
 .update-error {
 	background: color-mix(in srgb, var(--status-failed) 10%, transparent);
 	border: 1px solid var(--status-failed);
+}
+
+.update-error-content {
+	display: flex;
 	flex-direction: column;
-	align-items: flex-start;
+	gap: var(--spacing-xs);
 }
 
 .update-error-icon {
 	color: var(--status-failed);
+	font-size: var(--font-lg);
 }
 
 .update-error-detail {

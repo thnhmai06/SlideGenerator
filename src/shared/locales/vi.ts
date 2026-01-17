@@ -204,10 +204,11 @@ export const vi = {
 	'update.checkForUpdates': 'Kiểm tra cập nhật',
 	'update.checking': 'Đang kiểm tra cập nhật...',
 	'update.available': 'Có bản cập nhật mới',
+	'update.downloaded': 'Đã tải về bản cập nhật mới',
 	'update.notAvailable': 'Bạn đang sử dụng phiên bản mới nhất',
+	'update.portableUnsupported': 'Bản portable không hỗ trợ cập nhật tự động.',
 	'update.downloading': 'Đang tải bản cập nhật...',
-	'update.downloaded': 'Đã tải bản cập nhật',
-	'update.downloadAndInstall': 'Tải và cài đặt',
+	'update.download': 'Tải xuống',
 	'update.installNow': 'Cài đặt ngay',
 	'update.installLater': 'Cài khi thoát',
 	'update.activeJobsWarning':

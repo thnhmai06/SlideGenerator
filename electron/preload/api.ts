@@ -44,6 +44,7 @@ export interface ElectronAPI {
 	downloadUpdate: () => Promise<boolean>;
 	installUpdate: () => void;
 	onUpdateStatus: (handler: (state: UpdateState) => void) => () => void;
+	isPortable: () => Promise<boolean>;
 }
 
 export const createElectronAPI = (ipcRenderer: IpcRenderer): ElectronAPI => {
@@ -81,5 +82,6 @@ export const createElectronAPI = (ipcRenderer: IpcRenderer): ElectronAPI => {
 			ipcRenderer.on('updater:status', listener);
 			return () => ipcRenderer.removeListener('updater:status', listener);
 		},
+		isPortable: () => ipcRenderer.invoke('updater:isPortable'),
 	};
 };

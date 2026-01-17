@@ -208,10 +208,11 @@ export const en = {
 	'update.checkForUpdates': 'Check for updates',
 	'update.checking': 'Checking for updates...',
 	'update.available': 'Update available',
+	'update.downloaded': 'Update downloaded successfully',
 	'update.notAvailable': 'You are using the latest version',
+	'update.portableUnsupported': 'Portable build does not support in-app updates.',
 	'update.downloading': 'Downloading update...',
-	'update.downloaded': 'Update downloaded',
-	'update.downloadAndInstall': 'Download and install',
+	'update.download': 'Download',
 	'update.installNow': 'Install now',
 	'update.installLater': 'Install on exit',
 	'update.activeJobsWarning':

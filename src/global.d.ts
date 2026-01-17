@@ -39,6 +39,7 @@ declare global {
 			downloadUpdate: () => Promise<boolean>;
 			installUpdate: () => void;
 			onUpdateStatus: (handler: (state: UpdateState) => void) => () => void;
+			isPortable: () => Promise<boolean>;
 		};
 		getAssetPath: (...p: string[]) => string;
 	}
