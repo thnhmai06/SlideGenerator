@@ -1,60 +1,91 @@
 # SlideGenerator Backend
 
-## Table of contents
+The robust backend service that powers SlideGenerator, built with **ASP.NET Core 10** and **SignalR**. It handles slide generation logic, job management, and background processing with resilience and performance in mind.
+
+## Table of Contents
 
 - [SlideGenerator Backend](#slidegenerator-backend)
-  - [Table of contents](#table-of-contents)
+  - [Table of Contents](#table-of-contents)
   - [Overview](#overview)
   - [Architecture](#architecture)
-  - [Job system](#job-system)
-  - [SignalR API](#signalr-api)
-  - [Configuration](#configuration)
-  - [Usage](#usage)
-  - [Development](#development)
-  - [Deployment](#deployment)
-  - [Framework library](#framework-library)
+  - [Key Systems](#key-systems)
+    - [Job System](#job-system)
+    - [SignalR API](#signalr-api)
+  - [Getting Started](#getting-started)
+    - [Configuration](#configuration)
+    - [Usage](#usage)
+  - [Development Guide](#development-guide)
+    - [Development](#development)
+    - [Deployment](#deployment)
+  - [Framework Library](#framework-library)
 
 ## Overview
 
-This folder contains the backend services for SlideGenerator.
+This directory contains the backend source code, structured as a Clean Architecture solution.
 
-- Target runtime: .NET 10
-- Host: ASP.NET Core + SignalR
-- Background jobs: Hangfire
-- Layers: Application / Domain / Infrastructure / Presentation
+- **Target Runtime:** .NET 10
+- **Host:** ASP.NET Core Web API + SignalR
+- **Background Jobs:** Hangfire (Persistent job execution)
+- **Database:** SQLite (Job state storage)
+- **Architectural Pattern:** Clean Architecture (Domain, Application, Infrastructure, Presentation)
 
 ## Architecture
 
-See: [Architecture](docs/en/architecture.md)
+The backend is designed to be modular and testable. It strictly separates concerns between the core domain logic and external infrastructure.
 
-## Job system
+👉 **Deep Dive:** [Architecture Documentation](docs/en/architecture.md)
 
-See: [Job system](docs/en/job-system.md)
+## Key Systems
 
-## SignalR API
+### Job System
 
-See: [SignalR API](docs/en/signalr.md)
+The heart of the application. It manages the lifecycle of slide generation tasks, from parsing Excel files to rendering PowerPoint slides.
 
-## Configuration
+- **Features:** Parallel processing, Pause/Resume/Cancel capabilities, Crash recovery.
+- **Learn more:** [Job System Documentation](docs/en/job-system.md)
 
-See: [Configuration](docs/en/configuration.md)
+### SignalR API
 
-## Usage
+Real-time bi-directional communication with the Frontend.
 
-See: [Usage](docs/en/usage.md)
+- **Protocol:** WebSocket (primary)
+- **Features:** Real-time progress updates, Job control commands, Configuration sync.
+- **Learn more:** [SignalR API Documentation](docs/en/signalr.md)
 
-## Development
+## Getting Started
 
-See: [Development](docs/en/development.md)
+### Configuration
 
-## Deployment
+Customize server settings, job concurrency limits, and image processing parameters.
 
-See: [Deployment](docs/en/deployment.md)
+- **Guide:** [Configuration Guide](docs/en/configuration.md)
 
-## Framework library
+### Usage
 
-The framework used by this backend is documented here:
+How to run, interact, and troubleshoot the backend service.
 
-- [SlideGenerator.Framework](src/SlideGenerator.Framework/README.md)
+- **Guide:** [Usage Guide](docs/en/usage.md)
 
-[Vietnamese docs](docs/vi)
+## Development Guide
+
+### Development
+
+Setup your environment, run the server locally, and run tests.
+
+- **Guide:** [Development Guide](docs/en/development.md)
+
+### Deployment
+
+How to publish and deploy the backend for production (Windows/Linux).
+
+- **Guide:** [Deployment Guide](docs/en/deployment.md)
+
+## Framework Library
+
+The core logic for slide manipulation is abstracted into a reusable framework.
+
+- **Repository:** [SlideGenerator.Framework](../src/SlideGenerator.Framework/README.md)
+
+---
+
+[🇻🇳 Vietnamese Documentation](docs/vi)

@@ -1,59 +1,85 @@
-# Frontend Overview
+# Frontend Architecture
 
-[Tiếng Việt](../vi/overview.md)
+[🇻🇳 Vietnamese Version](../vi/overview.md)
 
 ## Purpose
 
-- Desktop UI for creating and monitoring slide jobs.
-- Backend is the source of truth; the UI connects via SignalR.
-- Local-first: settings and UI state are stored on device.
+The SlideGenerator Frontend is a specialized desktop application designed to:
+1.  Provide a wizard-like interface for configuring complex slide generation jobs.
+2.  Offer real-time monitoring of background processes.
+3.  Manage local application settings and themes.
 
-## Architecture
+**Key Principle:** The Frontend is "Thin". It holds minimal business logic. The Backend is the source of truth for all job states. The UI simply reflects the state received via SignalR.
 
-- [src/app](../../src/app): app shell and providers.
-- [src/features](../../src/features): feature screens (create-task, process, results, settings, about).
-- [src/shared](../../src/shared): shared UI, contexts, services, utils, locales, styles.
-- [electron](../../electron): main/preload processes, tray menu, and [updater](updater.md).
+## High-Level Architecture
 
-### Services Layer
+The application follows a Feature-based folder structure, ensuring scalability and maintainability.
 
-- `src/shared/services/signalr/`: SignalR client with auto-reconnect and request queuing.
-- `src/shared/services/backend/`: Typed API functions for jobs, sheets, config, health.
-- All backend communication uses typed request/response patterns.
+```mermaid
+graph TD
+    AppShell --> Features
+    Features --> Shared
+    Shared --> Services
+    Services --> SignalR
+    SignalR --> Backend
+```
 
-### State Management
+### 1. Application Layer (`src/app`)
+Responsible for the app's lifecycle and global context.
+- **Routing:** Manages navigation between tabs (Create, Process, Results).
+- **Providers:** Wraps the app with `ThemeProvider`, `ToastProvider`, etc.
+- **Layout:** Defines the standard window frame (Sidebar, TitleBar).
 
-- `AppContext`: Global app state (theme, settings, language).
-- `JobContext`: Job groups, sheets, logs, real-time updates.
-- Feature hooks: `useCreateTask`, `useProcess`, `useReplacements`, etc.
+### 2. Feature Layer (`src/features`)
+Contains the UI logic for specific user workflows.
+- **`create-task`**: Multi-step form for job inputs.
+- **`process`**: Dashboard showing progress bars and status indicators.
+- **`results`**: List of completed jobs with file actions (Open, Explorer).
+- **`settings`**: Configuration UI for backend and app preferences.
 
-## Runtime flow
+### 3. Shared Layer (`src/shared`)
+Reusable components and utilities.
+- **`components`**: Generic UI elements (Buttons, Inputs, Modals).
+- **`contexts`**: Global state containers (`AppContext`, `JobContext`).
+- **`services`**: API clients and SignalR integration.
 
-1. Electron main starts the renderer and optionally the backend.
-2. Renderer connects to `/hubs/job`, `/hubs/sheet`, `/hubs/config`.
-3. The UI updates from hub notifications and explicit queries.
+## Communication Layer
 
-## Performance Optimizations
+### SignalR Client
+Located in `src/shared/services/signalr/`.
+- **Auto-reconnect:** Automatically handles connection drops.
+- **Queueing:** Buffers requests if the connection is temporarily lost.
+- **Typed Events:** Strongly typed listeners for `GroupProgress`, `JobStatus`, etc.
 
-- **React.memo**: Applied to major components (Sidebar, TitleBar, TagInput, ShapeSelector).
-- **useMemo/useCallback**: Memoized expensive computations and callbacks.
-- **Lazy loading**: Feature menus loaded on-demand with React.lazy.
-- **Vite chunking**: Vendor libraries split into separate chunks (vendor-react, vendor-signalr).
-- **Log trimming**: Logs auto-trimmed at 2500 entries to prevent memory bloat.
+### API Facade
+Located in `src/shared/services/backend/`.
+- Provides a clean, Promise-based API for interacting with the backend.
+- Wraps SignalR calls to abstract the underlying transport.
 
-## Storage keys
+## Data Flow
 
-- `localStorage.slidegen.backend.url`: active backend base URL.
-- `localStorage.slidegen.backend.url.pending`: pending URL (promoted once).
-- `sessionStorage.slidegen.backend.url.pending.defer`: defers promotion for the session.
-- `sessionStorage.slidegen.ui.inputsideBar.state`: Create Task draft.
-- `sessionStorage.slidegen.group.meta`: cached group meta.
-- `sessionStorage.slidegen.group.config`: cached group configs.
+1.  **User Action:** User clicks "Start Job" in the `create-task` feature.
+2.  **Service Call:** Component calls `BackendService.createJob()`.
+3.  **Transmission:** Request is sent via SignalR WebSocket.
+4.  **Backend Processing:** Backend creates the job and returns an ID.
+5.  **Notification:** Backend pushes a `JobStatus` event (Pending).
+6.  **Update:** `JobContext` receives the event and updates the global state.
+7.  **Re-render:** `process` feature re-renders to show the new job in the list.
 
-## Logs
+## Performance Strategies
 
-`frontend/logs/<timestamp>/`:
+- **Virtualization:** (Planned) For efficiently rendering large lists of jobs.
+- **Memoization:** `React.memo` and `useMemo` are aggressively used in `JobItem` components to prevent unnecessary re-renders during rapid progress updates.
+- **Log Trimming:** The in-memory log buffer is capped (default 2500 lines) to prevent memory leaks in long-running sessions.
 
-- `process.log`: Electron main process.
-- `renderer.log`: renderer (DevTools) logs.
-- `backend.log`: backend output when launched by Electron.
+## Storage
+
+We use `localStorage` and `sessionStorage` for non-critical persistence:
+
+| Key | Storage | Description |
+| :--- | :--- | :--- |
+| `slidegen.backend.url` | Local | The active Backend URL. |
+| `slidegen.theme` | Local | UI Theme preference (Dark/Light). |
+| `slidegen.ui.inputsideBar.state` | Session | Draft state of the Create Task form. |
+
+Next: [Development Guide](development.md)

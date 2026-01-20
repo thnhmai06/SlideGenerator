@@ -1,82 +1,76 @@
-# SlideGenerator
+<center>
+    <p align="center">
+        <a href="https://github.com/thnhmai06/SlideGenerator/releases">
+            <img src="https://img.shields.io/github/release/thnhmai06/SlideGenerator? style=flat-square" alt="Latest Release" />
+        </a>
+        <a href="https://github.com/thnhmai06/SlideGenerator/releases">
+            <img src="https://img.shields.io/github/downloads/thnhmai06/SlideGenerator/total?   style=flat-square&color=blue" alt="Downloads" />
+        </a>
+        <a href="https://www.codefactor.io/repository/github/thnhmai06/SlideGenerator">
+            <img src="https://www.codefactor.io/repository/github/thnhmai06/SlideGenerator/badge?style=flat-square" alt="CodeFactor" />
+        </a>
+        <a href="https://github.com/thnhmai06/SlideGenerator/blob/main/LICENSE">
+            <img src="https://img.shields.io/github/license/thnhmai06/SlideGenerator?style=flat-square" alt="License" />
+        </a>
+    </p>
+    <h1 align="center">Slide Generator</h1>  
+    <h4 align="center">
+        An offline desktop tool to auto-generate PowerPoint slides from templates and spreadsheet data.
+    </h4>
+    <h5 align="center">Cross-platform, parallel-processing support, no Office required.</h5>
+</center>
 
-## Overview
+## Features
 
-SlideGenerator is an offline desktop app that generates PowerPoint slides from spreadsheet data.
-The repository is split into two main parts:
+- **Automated Slide Generation:** Instantly create PowerPoint presentations from Excel spreadsheets and PPTX templates.
+- **Offline & Private:** Runs 100% locally on your desktop. No internet connection or cloud upload required.
+- **No Office Needed:** Generates slides without requiring Microsoft Office or PowerPoint to be installed.
+- **Robust Job Management:**
+  - **Real-time Monitoring:** Track progress and status of every job and sheet.
+  - **Control:** Pause, resume, cancel, or remove jobs at any time.
+  - **Resilience:** Automatically saves job state; keeps your progress safe even if the app closes unexpectedly.
+- **Modern UI/UX:**
+  - Clean, responsive interface with Dark/Light theme support.
+  - Multi-language support (English, Vietnamese).
+- **Performance:**
+  - Parallel processing for faster generation.
+  - Cross-platform support (Windows, Linux).
 
-- `backend/` - ASP.NET Core + SignalR + Hangfire job system
-- `frontend/` - Electron + React UI
+## Installation
 
-Docs are split by module and language:
+### Prerequisites
 
-- [Backend English](backend/docs/en)
-- [Backend Vietnamese](backend/docs/vi)
-- [Frontend English](frontend/docs/en)
-- [Frontend Vietnamese](frontend/docs/vi)
+To run Slide Generator, you need to install the following runtime:
 
-## Quick start
+- [ASP.NET Core 10 Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/10.0/runtime) (Choose the **Run server apps** option).
 
-Backend:
+### Setup
 
-```
-cd backend
-dotnet run --project src/SlideGenerator.Presentation
-```
+1. **Download:** Get the latest release compatible with your platform from the [Releases page](https://github.com/thnhmai06/SlideGenerator/releases/latest).
+2. **Run:** Launch the application by running the executable file (Setup/Protable).
 
-Frontend:
+## Star History
 
-```
-cd frontend
-npm install
-npm run dev
-```
+<a href="https://www.star-history.com/#thnhmai06/SlideGenerator&type=timeline&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=thnhmai06/SlideGenerator&type=timeline&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=thnhmai06/SlideGenerator&type=timeline&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=thnhmai06/SlideGenerator&type=timeline&legend=top-left" />
+ </picture>
+</a>
 
-## Build scripts (root)
+## License
 
-These scripts build the backend (with correct runtime identifier) and the frontend bundle.
-They are OS-specific and live at the repository root.
+This project is licensed under the GPL-3.0 License - see the [LICENSE](LICENSE) file for details.
 
-Windows (PowerShell):
+## Contributing
 
-```
-.\build.ps1 -Runtime win-x64
-```
-
-Linux (bash):
-
-```
-chmod +x ./build.sh
-./build.sh linux-x64
-```
-
-Supported runtimes:
-
-- `win-x64`
-- `linux-x64`
-- `linux-arm`
-- `linux-arm64`
-
-## Module docs
-
-Backend:
-
-- [Overview](backend/README.md)
-- [Architecture](backend/docs/en/architecture.md)
-- [Job system](backend/docs/en/job-system.md)
-- [SignalR API](backend/docs/en/signalr.md)
-- [Configuration](backend/docs/en/configuration.md)
-- [Usage](backend/docs/en/usage.md)
-
-Frontend:
-
-- [Overview](frontend/docs/en/overview.md)
-- [Usage](frontend/docs/en/usage.md)
-- [Development](frontend/docs/en/development.md)
-- [Build & packaging](frontend/docs/en/build-and-packaging.md)
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details on how to set up the development environment, build the project, and submit changes.
 
 ## Contributors
 
-- **PM, Main Developer: [@thnhmai06](https://github.com/thnhmai06)**
-- UI/UX Idea: [@NAV-adsf23fd](https://github.com/NAV-adsf23fd)
-- Framework: [SlideGenerator.Framework](https://github.com/thnhmai06/SlideGenerator.Framework)
+| [<img src="https://github.com/thnhmai06.png" width="100"><br><sub>**thnhmai06**</sub>](https://github.com/thnhmai06) | [<img src="https://github.com/NAV-adsf23fd.png" width="100"><br><sub>**NAV-adsf23fd**</sub>](https://github.com/NAV-adsf23fd) |
+| :---: | :---: |
+| <span title="Project Manager">👑</span> <span title="Developer">💻</span> | <span title="UI/UX Concept">🎨</span> |
+
+**Core Framework:** [SlideGenerator.Framework](https://github.com/thnhmai06/SlideGenerator.Framework)

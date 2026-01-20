@@ -1,80 +1,89 @@
-# Phát triển
+# Hướng dẫn Phát triển
 
-[English](../en/development.md)
+[🇺🇸 English Version](../en/development.md)
 
-## Yêu cầu
+## Thiết lập Môi trường
 
-- Node.js + npm
-- .NET 10 SDK (nếu chạy backend khi dev)
+### Yêu cầu tiên quyết
+- **Node.js** (Khuyên dùng bản LTS)
+- **npm** (đi kèm với Node.js)
+- **.NET 10 SDK** (Cần thiết nếu bạn định chạy/debug backend cục bộ)
 
-## Cài đặt
-
+### Cài đặt
 ```bash
 cd frontend
 npm install
 ```
 
-## Chạy dev
+### Chạy trong môi trường Dev
+
+Lệnh này khởi động Vite dev server và Electron container.
 
 ```bash
 npm run dev
 ```
 
-Ghi chú:
+**Lưu ý:** Mặc định, Electron sẽ cố gắng khởi chạy tiến trình backend.
+- **Tắt khởi chạy Backend:** `SLIDEGEN_DISABLE_BACKEND=1` (Hữu ích khi bạn đang chạy backend riêng trong Visual Studio).
+- **Đường dẫn Backend tùy chỉnh:** `SLIDEGEN_BACKEND_PATH=/path/to/executable`.
 
-- Electron có thể auto-start backend.
-- Tắt auto-start bằng `SLIDEGEN_DISABLE_BACKEND=1`.
-- Override đường dẫn backend bằng `SLIDEGEN_BACKEND_PATH`.
+## Cấu trúc Dự án
 
-## Test
+Chúng tôi tuân theo kiến trúc **Feature-First** (Ưu tiên tính năng).
 
+```
+src/
+├── app/                  # App shell, Layouts, Providers
+├── features/             # Feature modules
+│   ├── create-task/      # Wizard tạo task
+│   ├── process/          # Dashboard giám sát job
+│   ├── results/          # Danh sách job hoàn thành
+│   └── settings/         # Cấu hình ứng dụng
+├── shared/               # Tiện ích chia sẻ
+│   ├── components/       # UI components nguyên tử (Buttons, Inputs)
+│   ├── contexts/         # React Contexts (JobContext, AppContext)
+│   ├── hooks/            # Custom React Hooks
+│   ├── services/         # API & SignalR clients
+│   └── styles/           # Global SCSS & Variables
+└── assets/               # Tài nguyên tĩnh (Images, Fonts)
+```
+
+## Tiêu chuẩn Coding
+
+### TypeScript
+- **Strict Mode:** Đã bật. Không được dùng `any` trừ khi thực sự cần thiết (và phải có comment giải thích).
+- **Interfaces:** Ưu tiên dùng `interface` hơn `type` cho các định nghĩa object.
+- **Đặt tên:** PascalCase cho components/interfaces, camelCase cho functions/vars.
+
+### React
+- **Functional Components:** Sử dụng FC với Hooks.
+- **Props:** Luôn định nghĩa interface Props có kiểu.
+- **Hiệu năng:**
+    - Sử dụng `React.memo` cho các item trong danh sách hoặc component nặng.
+    - Sử dụng `useCallback` cho các event handler được truyền xuống component con.
+
+### Styling
+- **CSS Modules:** Sử dụng cho style riêng của component (`Component.module.scss`).
+- **Global Styles:** Nằm trong `src/shared/styles/`. Sử dụng biến CSS cho theming.
+
+## Testing
+
+Chúng tôi sử dụng **Vitest** + **React Testing Library**.
+
+### Chạy Test
 ```bash
 npm test
 ```
 
-Bộ công cụ test:
+### Viết Test
+- **Unit Tests:** Tập trung vào các hàm tiện ích (utility functions) và hooks.
+- **Component Tests:** Tập trung vào tương tác người dùng và khả năng truy cập (accessibility).
+- **Mocking:** Sử dụng MSW (Mock Service Worker) cho các request mạng. Handlers nằm trong `test/mocks/handlers.ts`.
 
-- Vitest + Testing Library.
-- MSW handlers nằm ở [test/mocks/handlers.ts](../../test/mocks/handlers.ts).
-- Override handlers theo từng test với `server.use(...)`.
+## Debugging
 
-## Code Style
+- **Renderer Process:** Sử dụng Chrome DevTools tiêu chuẩn (Ctrl+Shift+I).
+- **Main Process:** Debug qua cấu hình "Debug Main Process" của VS Code.
+- **Backend:** Debug qua Visual Studio hoặc extension C# của VS Code.
 
-- **TSDoc comments**: Tất cả functions, hooks, và components đều có TSDoc documentation.
-- **TypeScript strict mode**: Bật để đảm bảo type safety.
-- **ESLint + Prettier**: Auto-formatting khi save.
-
-## Hướng dẫn tối ưu hiệu năng
-
-- Sử dụng `React.memo` cho components nhận props ổn định.
-- Wrap callbacks trong `useCallback` để tránh re-render không cần thiết.
-- Sử dụng `useMemo` cho các tính toán tốn kém.
-- Ưu tiên lazy loading cho feature modules.
-
-## Aliases
-
-- `@/` ánh xạ tới `src/`.
-
-## Cấu trúc Project
-
-```
-src/
-├── app/           # App shell, providers, routing
-├── features/      # Feature modules
-│   ├── create-task/  # Task creation workflow
-│   ├── process/      # Job monitoring
-│   ├── results/      # Completed jobs
-│   ├── settings/     # App configuration
-│   └── about/        # About screen
-└── shared/        # Shared code
-    ├── components/   # Reusable UI components
-    ├── contexts/     # React contexts và hooks
-    ├── services/     # Backend API và SignalR
-    ├── utils/        # Utility functions
-    ├── locales/      # i18n translations
-    └── styles/       # Global CSS
-```
-
-## Logs
-
-Xem `frontend/logs/<timestamp>/` cho process/renderer/backend logs.
+Tiếp theo: [Build & Đóng gói](build-and-packaging.md)

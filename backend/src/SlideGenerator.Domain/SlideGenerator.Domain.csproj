@@ -5,6 +5,7 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
 		<NoWarn>$(NoWarn);1591</NoWarn>
 	</PropertyGroup>
 

@@ -1,32 +1,35 @@
 # SignalR API
 
-English version: [English](../en/signalr.md)
+[🇺🇸 English Version](../en/signalr.md)
 
-## Endpoint
+Backend cung cấp một API thời gian thực thông qua SignalR hubs. Mọi giao tiếp đều tuân theo mẫu request/response kèm theo các thông báo (notification) bất đồng bộ.
 
-- `/hubs/job`: tao/dieu khien/truy van job + scan template.
-- `/hubs/task`: legacy alias cua `/hubs/job`.
-- `/hubs/sheet`: đọc workbook (header/row).
-- `/hubs/config`: cấu hình backend.
+## Các Hub Endpoint
 
-## Mô hình request/response
+| Endpoint | Mô tả |
+| :--- | :--- |
+| `/hubs/job` | Endpoint chính để tạo, điều khiển và truy vấn job. |
+| `/hubs/sheet` | Tiện ích để kiểm tra Excel workbook (tiêu đề, dòng dữ liệu). |
+| `/hubs/config` | Đọc và ghi cấu hình backend. |
 
-- Client gửi JSON vào `ProcessRequest`.
-- Bắt buộc có `type` (không phân biệt hoa thường).
-- Phản hồi trả qua `ReceiveResponse`.
-- Lỗi trả về `type = error` kèm message.
+> **Lưu ý:** `/hubs/task` là alias cũ (legacy) của `/hubs/job`.
 
-## Job hub messages
+## Giao thức
 
-### Scan dữ liệu template
+### Mẫu Request
+Client gửi yêu cầu bằng cách gọi phương thức `ProcessRequest` trên Hub với payload JSON.
 
-- `ScanShapes` / `ScanPlaceholders` / `ScanTemplate`
-- Payload: `{ "filePath": "..." }`
+- **Trường bắt buộc:** `type` (chuỗi ký tự, không phân biệt hoa thường).
+- **Phản hồi:** Được gửi lại qua sự kiện `ReceiveResponse`.
+- **Lỗi:** Trả về message với type là `error`.
 
-### JobCreate
+## Job Hub Messages (`/hubs/job`)
 
-TaskCreate van duoc ho tro de tuong thich nguoc.
+### 1. Tạo Job (`JobCreate`)
 
+Tạo một tác vụ tạo slide mới.
+
+**Group Job (Workbook + Template):**
 ```json
 {
   "type": "JobCreate",
@@ -34,15 +37,23 @@ TaskCreate van duoc ho tro de tuong thich nguoc.
   "templatePath": "C:\\slides\\template.pptx",
   "spreadsheetPath": "C:\\data\\book.xlsx",
   "outputPath": "C:\\output",
-  "sheetNames": ["Sheet1"],
-  "textConfigs": [{ "pattern": "FullName", "columns": ["FullName"] }],
-  "imageConfigs": [{ "shapeId": 4, "columns": ["Photo"], "roiType": "RuleOfThirds", "cropType": "Fit" }],
+  "sheetNames": ["Sheet1", "Sheet2"],
+  "textConfigs": [
+    { "pattern": "{{Name}}", "columns": ["FullName"] }
+  ],
+  "imageConfigs": [
+    {
+      "shapeId": 4,
+      "columns": ["Photo"],
+      "roiType": "RuleOfThirds",
+      "cropType": "Fit"
+    }
+  ],
   "autoStart": true
 }
 ```
 
-Sheet job:
-
+**Sheet Job (Single Sheet):**
 ```json
 {
   "type": "JobCreate",
@@ -54,37 +65,62 @@ Sheet job:
 }
 ```
 
-### JobQuery
+### 2. Điều khiển Job (`JobControl`)
 
-- `scope`: `Active`, `Completed`, hoặc `All`.
-- `includePayload` trả về payload được dựng lại từ state.
+Quản lý trạng thái của các job đang chạy.
 
-```json
-{ "type": "JobQuery", "jobId": "TASK_ID", "jobType": "Group", "includeSheets": true }
-```
+- **Hành động:** `Pause`, `Resume`, `Cancel`, `Stop` (giống Cancel), `Remove` (xóa khỏi lịch sử).
 
 ```json
-{ "type": "JobQuery", "scope": "Active", "jobType": "Sheet" }
+{
+  "type": "JobControl",
+  "jobId": "GUID-ID-HERE",
+  "jobType": "Group",
+  "action": "Pause"
+}
 ```
 
-### JobControl
+### 3. Truy vấn Job (`JobQuery`)
 
-- `action`: `Pause`, `Resume`, `Cancel`, `Stop` (duoc hieu la Cancel), hoac `Remove` (xoa state backend).
+Lấy chi tiết job.
+
+- **Phạm vi (Scope):** `Active`, `Completed`, `All`.
+- **includePayload:** Trả về JSON payload gốc (được tái tạo từ DB).
 
 ```json
-{ "type": "JobControl", "jobId": "TASK_ID", "jobType": "Group", "action": "Pause" }
+{
+  "type": "JobQuery",
+  "jobId": "GUID-ID-HERE",
+  "jobType": "Group",
+  "includeSheets": true
+}
 ```
 
-## Subscriptions
+### 4. Quét Template (Scan Template)
+Các tiện ích để kiểm tra file PPTX.
+- **Hành động:** `ScanShapes`, `ScanPlaceholders`, `ScanTemplate`.
+
+```json
+{
+  "type": "ScanShapes",
+  "filePath": "C:\\slides\\template.pptx"
+}
+```
+
+## Thông báo (Notifications)
+
+Client phải lắng nghe sự kiện `ReceiveNotification` để nhận cập nhật thời gian thực.
+
+**Loại sự kiện:**
+- `GroupProgress`: Tiến độ tổng thể của một group.
+- `SheetProgress`: Tiến độ của một sheet đơn lẻ.
+- `JobStatus`: Thay đổi trạng thái (ví dụ: Pending -> Processing).
+- `LogEvent`: Log message có cấu trúc từ backend.
+
+## Đăng ký (Subscriptions)
+
+Để nhận cập nhật chi tiết cho các job cụ thể, client cần đăng ký:
 
 - `SubscribeGroup(groupId)`
 - `SubscribeSheet(sheetId)`
-
-## Notifications
-
-Notification được gửi qua `ReceiveNotification` cho client đã subscribe:
-
-- Progress/status của group
-- Progress/status/error của sheet
-- Log sự kiện
 
