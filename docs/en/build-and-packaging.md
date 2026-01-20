@@ -10,24 +10,29 @@ The build process consists of two main stages:
 1.  **Backend Build:** Compiling the .NET application into a self-contained executable.
 2.  **Frontend Build:** Bundling the React app and packaging it with Electron, including the backend binary.
 
-## 1. Building the Backend
+## 1. Building with Task (Recommended)
+
+The easiest way to build the project is using [Task](https://taskfile.dev/).
+
+**Build Full App:**
+```bash
+task build
+```
+
+**Build for Linux:**
+```bash
+task build RUNTIME=linux-x64
+```
+
+This automates the process of building the backend, copying it to the frontend resources, and packaging the Electron app.
+
+## 2. Manual Build Steps
+
+If you prefer to run commands manually without Task:
+
+### Step 1: Build Backend
 
 The backend must be built first so it can be copied into the frontend's resource folder.
-
-**Command:**
-```bash
-# Run from repository root
-./build.ps1 -Runtime win-x64
-```
-*or on Linux:*
-```bash
-./build.sh linux-x64
-```
-
-**Output:**
-The compiled binaries will be placed in `backend/bin/Release/net10.0/<runtime>/publish`.
-
-## 2. Building the Frontend
 
 Once the backend is ready, you can build the Electron app.
 

@@ -10,24 +10,29 @@ Quy trình build bao gồm hai giai đoạn chính:
 1.  **Backend Build:** Biên dịch ứng dụng .NET thành file thực thi khép kín (self-contained executable).
 2.  **Frontend Build:** Đóng gói ứng dụng React và Electron, bao gồm cả binary backend.
 
-## 1. Build Backend
+## 1. Build với Task (Khuyên dùng)
+
+Cách dễ nhất để build dự án là sử dụng [Task](https://taskfile.dev/).
+
+**Build Toàn bộ:**
+```bash
+task build
+```
+
+**Build cho Linux:**
+```bash
+task build RUNTIME=linux-x64
+```
+
+Lệnh này tự động hóa quy trình build backend, copy vào resource frontend, và đóng gói ứng dụng Electron.
+
+## 2. Quy trình Build Thủ công
+
+Nếu bạn muốn chạy lệnh thủ công mà không dùng Task:
+
+### Bước 1: Build Backend
 
 Backend phải được build trước để có thể copy vào thư mục resource của frontend.
-
-**Lệnh:**
-```bash
-# Chạy từ thư mục gốc (root)
-./build.ps1 -Runtime win-x64
-```
-*hoặc trên Linux:*
-```bash
-./build.sh linux-x64
-```
-
-**Kết quả:**
-Các file binary đã biên dịch sẽ nằm tại `backend/bin/Release/net10.0/<runtime>/publish`.
-
-## 2. Build Frontend
 
 Khi backend đã sẵn sàng, bạn có thể build ứng dụng Electron.
 
