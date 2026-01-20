@@ -1,21 +1,8 @@
 <center>
     <p align="center">
-        <a href="https://github.com/thnhmai06/SlideGenerator/releases">
-            <img src="https://img.shields.io/github/release/thnhmai06/SlideGenerator?style=flat-square" alt="Latest Release" />
-        </a>
-        <a href="https://github.com/thnhmai06/SlideGenerator/releases">
-            <img src="https://img.shields.io/github/downloads/thnhmai06/SlideGenerator/total?style=flat-square&color=blue" alt="Downloads" />
-        </a>
-        <a href="https://www.codefactor.io/repository/github/thnhmai06/SlideGenerator">
-            <img src="https://www.codefactor.io/repository/github/thnhmai06/SlideGenerator/badge?style=flat-square" alt="CodeFactor" />
-        </a>
-        <a href="https://ghloc.vercel.app/thnhmai06/SlideGenerator">
-            <img src="https://img.shields.io/endpoint?url=https://ghloc.vercel.app/api/thnhmai06/SlideGenerator/badge%3Ffilter=.ts$,.tsx$,.html$,.css$,.cs$%26format=human&style=flat-square&color=blue" alt="Lines of Code" />
-        </a>
-        <a href="https://github.com/thnhmai06/SlideGenerator/blob/main/LICENSE">
-            <img src="https://img.shields.io/github/license/thnhmai06/SlideGenerator?style=flat-square" alt="License" />
-        </a>
-        
+        <a href="https://github.com/thnhmai06/SlideGenerator/releases"><img src="https://img.shields.io/github/release/thnhmai06/SlideGenerator?style=flat-square" alt="Latest Release" /></a>
+        <a href="https://github.com/thnhmai06/SlideGenerator/releases"><img src="https://img.shields.io/github/downloads/thnhmai06/SlideGenerator/total?style=flat-square&color=blue" alt="Downloads" /></a>
+        <a href="https://www.codefactor.io/repository/github/thnhmai06/SlideGenerator"><img src="https://www.codefactor.io/repository/github/thnhmai06/SlideGenerator/badge?style=flat-square" alt="CodeFactor" /></a><a href="https://ghloc.vercel.app/thnhmai06/SlideGenerator"><img src="https://img.shields.io/endpoint?url=https://ghloc.vercel.app/api/thnhmai06/SlideGenerator/badge%3Ffilter=.ts$,.tsx$,.html$,.css$,.cs$%26format=human&style=flat-square&color=blue" alt="Lines of Code" /></a><a href="https://github.com/thnhmai06/SlideGenerator/blob/main/LICENSE"><img src="https://img.shields.io/github/license/thnhmai06/SlideGenerator?style=flat-square" alt="License" /></a>
     </p>
     <h1 align="center">Slide Generator</h1>  
     <h4 align="center">
