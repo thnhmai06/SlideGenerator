@@ -1,32 +1,35 @@
 # SignalR API
 
-Vietnamese version: [Vietnamese](../vi/signalr.md)
+[🇻🇳 Vietnamese Version](../vi/signalr.md)
 
-## Endpoints
+The backend exposes a real-time API via SignalR hubs. All communication follows a request/response pattern with asynchronous notifications.
 
-- `/hubs/job`: job create/control/query + template scanning.
-- `/hubs/task`: legacy alias for `/hubs/job`.
-- `/hubs/sheet`: workbook inspection (headers/rows).
-- `/hubs/config`: backend configuration.
+## Hub Endpoints
 
-## Request/response pattern
+| Endpoint | Description |
+| :--- | :--- |
+| `/hubs/job` | Main endpoint for creating, controlling, and querying jobs. |
+| `/hubs/sheet` | Utilities for inspecting Excel workbooks (headers, rows). |
+| `/hubs/config` | Read and write backend configuration. |
 
-- Client sends a JSON object to `ProcessRequest`.
-- `type` is required and case-insensitive.
-- Responses are sent via `ReceiveResponse`.
-- Errors are returned with type `error` and a message.
+> **Note:** `/hubs/task` is a legacy alias for `/hubs/job`.
 
-## Job hub messages
+## Protocol
 
-### Scan template data
+### Request Pattern
+Clients send requests by invoking the `ProcessRequest` method on the Hub with a JSON payload.
 
-- `ScanShapes` / `ScanPlaceholders` / `ScanTemplate`
-- Payload: `{ "filePath": "..." }`
+- **Required Field:** `type` (case-insensitive string).
+- **Response:** Sent back via the `ReceiveResponse` event.
+- **Errors:** Returned as a message with type `error`.
 
-### JobCreate
+## Job Hub Messages (`/hubs/job`)
 
-Creates a group or sheet job. `TaskCreate` is accepted for backward compatibility.
+### 1. Create Job (`JobCreate`)
 
+Creates a new generation task.
+
+**Group Job (Workbook + Template):**
 ```json
 {
   "type": "JobCreate",
@@ -34,15 +37,23 @@ Creates a group or sheet job. `TaskCreate` is accepted for backward compatibilit
   "templatePath": "C:\\slides\\template.pptx",
   "spreadsheetPath": "C:\\data\\book.xlsx",
   "outputPath": "C:\\output",
-  "sheetNames": ["Sheet1"],
-  "textConfigs": [{ "pattern": "FullName", "columns": ["FullName"] }],
-  "imageConfigs": [{ "shapeId": 4, "columns": ["Photo"], "roiType": "RuleOfThirds", "cropType": "Fit" }],
+  "sheetNames": ["Sheet1", "Sheet2"],
+  "textConfigs": [
+    { "pattern": "{{Name}}", "columns": ["FullName"] }
+  ],
+  "imageConfigs": [
+    {
+      "shapeId": 4,
+      "columns": ["Photo"],
+      "roiType": "RuleOfThirds",
+      "cropType": "Fit"
+    }
+  ],
   "autoStart": true
 }
 ```
 
-Sheet job example:
-
+**Sheet Job (Single Sheet):**
 ```json
 {
   "type": "JobCreate",
@@ -54,37 +65,61 @@ Sheet job example:
 }
 ```
 
-### JobQuery
+### 2. Control Job (`JobControl`)
 
-- Query a single job by id, or list jobs by scope.
-- `scope`: `Active`, `Completed`, or `All`.
-- `includePayload` returns JSON reconstructed from persisted state (useful for export).
+Manage the state of running jobs.
 
-```json
-{ "type": "JobQuery", "jobId": "TASK_ID", "jobType": "Group", "includeSheets": true }
-```
+- **Actions:** `Pause`, `Resume`, `Cancel`, `Stop` (same as Cancel), `Remove` (delete from history).
 
 ```json
-{ "type": "JobQuery", "scope": "Active", "jobType": "Sheet" }
+{
+  "type": "JobControl",
+  "jobId": "GUID-ID-HERE",
+  "jobType": "Group",
+  "action": "Pause"
+}
 ```
 
-### JobControl
+### 3. Query Job (`JobQuery`)
 
-- `action`: `Pause`, `Resume`, `Cancel`, `Stop` (treated as Cancel), or `Remove` (delete backend state).
+Retrieve job details.
+
+- **Scope:** `Active`, `Completed`, `All`.
+- **includePayload:** Returns the original JSON payload (reconstructed from DB).
 
 ```json
-{ "type": "JobControl", "jobId": "TASK_ID", "jobType": "Group", "action": "Pause" }
+{
+  "type": "JobQuery",
+  "jobId": "GUID-ID-HERE",
+  "jobType": "Group",
+  "includeSheets": true
+}
 ```
 
-## Subscriptions
+### 4. Scan Template
+Helpers to inspect PPTX files.
+- **Actions:** `ScanShapes`, `ScanPlaceholders`, `ScanTemplate`.
 
-- `SubscribeGroup(groupId)`
-- `SubscribeSheet(sheetId)`
+```json
+{
+  "type": "ScanShapes",
+  "filePath": "C:\\slides\\template.pptx"
+}
+```
 
 ## Notifications
 
-Notifications are delivered via `ReceiveNotification` to subscribed clients:
+Clients must listen to `ReceiveNotification` to get real-time updates.
 
-- Group progress/status
-- Sheet progress/status/error
-- Structured log events
+**Event Types:**
+- `GroupProgress`: Overall progress of a group.
+- `SheetProgress`: Progress of an individual sheet.
+- `JobStatus`: State changes (e.g., Pending -> Processing).
+- `LogEvent`: Structured log messages from the backend.
+
+## Subscriptions
+
+To receive detailed updates for specific jobs, clients must subscribe:
+
+- `SubscribeGroup(groupId)`
+- `SubscribeSheet(sheetId)`
