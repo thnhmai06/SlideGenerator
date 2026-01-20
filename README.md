@@ -9,9 +9,13 @@
         <a href="https://www.codefactor.io/repository/github/thnhmai06/SlideGenerator">
             <img src="https://www.codefactor.io/repository/github/thnhmai06/SlideGenerator/badge?style=flat-square" alt="CodeFactor" />
         </a>
+        <a href="https://ghloc.vercel.app/thnhmai06/SlideGenerator">
+            <img src="https://img.shields.io/endpoint?url=https://ghloc.vercel.app/api/thnhmai06/SlideGenerator/badge%3Ffilter=.ts$,.tsx$,.html$,.css$,.cs$%26format=human&style=flat-square&color=blue" alt="Lines of Code" />
+        </a>
         <a href="https://github.com/thnhmai06/SlideGenerator/blob/main/LICENSE">
             <img src="https://img.shields.io/github/license/thnhmai06/SlideGenerator?style=flat-square" alt="License" />
         </a>
+        
     </p>
     <h1 align="center">Slide Generator</h1>  
     <h4 align="center">
@@ -81,7 +85,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 ## Contributors
 
 | [<img src="https://github.com/thnhmai06.png" width="100"><br><sub>**thnhmai06**</sub>](https://github.com/thnhmai06) | [<img src="https://github.com/NAV-adsf23fd.png" width="100"><br><sub>**NAV-adsf23fd**</sub>](https://github.com/NAV-adsf23fd) |
-| :---: | :---: |
-| <span title="Project Manager">👑</span> <span title="Developer">💻</span> | <span title="UI/UX Concept">🎨</span> |
+| :------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------: |
+|                      <span title="Project Manager">👑</span> <span title="Developer">💻</span>                       |                                             <span title="UI/UX Concept">🎨</span>                                             |
 
 **Core Framework:** [SlideGenerator.Framework](https://github.com/thnhmai06/SlideGenerator.Framework)
