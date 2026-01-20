@@ -1,0 +1,89 @@
+version: '3'
+
+vars:
+  RUNTIME: '{{default "win-x64" .RUNTIME}}'
+  BACKEND_BUILD_DIR: 'frontend/backend'
+  BACKEND_PROJECT: 'backend/src/SlideGenerator.Presentation/SlideGenerator.Presentation.csproj'
+  BACKEND_SOLUTION: 'backend/SlideGenerator.slnx'
+
+tasks:
+  default:
+    cmds:
+      - task: build
+
+  # ============================================================================
+  # BUILD TASKS
+  # ============================================================================
+  build:
+    desc: Build the full application (Backend + Frontend)
+    cmds:
+      - task: build:backend
+      - task: build:frontend
+
+  build:backend:
+    desc: Build and publish Backend to frontend resources
+    cmds:
+      - echo "Building Backend for {{.RUNTIME}}..."
+      - dotnet publish {{.BACKEND_PROJECT}} -c Release -r {{.RUNTIME}} -o {{.BACKEND_BUILD_DIR}} --self-contained false
+
+  build:frontend:
+    desc: Build the Frontend
+    dir: frontend
+    cmds:
+      - echo "Building Frontend..."
+      - npm install
+      - npm run build
+    env:
+      ELECTRON_BUILDER_PUBLISH: never
+
+  # ============================================================================
+  # TEST TASKS
+  # ============================================================================
+  test:
+    desc: Run all tests
+    cmds:
+      - task: test:backend
+      - task: test:frontend
+
+  test:backend:
+    desc: Run Backend unit tests
+    cmds:
+      - echo "Running Backend Tests..."
+      - dotnet restore {{.BACKEND_SOLUTION}}
+      - dotnet test {{.BACKEND_SOLUTION}} --no-restore --logger "trx;LogFileName=backend-tests.trx" --results-directory backend/TestResults
+
+  test:frontend:
+    desc: Run Frontend unit tests
+    dir: frontend
+    cmds:
+      - echo "Running Frontend Tests..."
+      - npm install
+      - mkdir -p test-results
+      - npm test -- --run --reporter=default --reporter=junit --outputFile=./test-results/junit.xml
+
+  # ============================================================================
+  # MAINTENANCE TASKS
+  # ============================================================================
+  format:
+    desc: Format code for both Backend and Frontend
+    cmds:
+      - task: format:backend
+      - task: format:frontend
+
+  format:backend:
+    dir: backend
+    cmds:
+      - dotnet format
+
+  format:frontend:
+    dir: frontend
+    cmds:
+      - npm run format
+
+  clean:
+    desc: Clean build artifacts
+    cmds:
+      - cmd: rm -rf frontend/backend frontend/dist frontend/release backend/TestResults
+        platforms: [linux, darwin]
+      - cmd: Remove-Item -Recurse -Force -ErrorAction SilentlyContinue frontend/backend, frontend/dist, frontend/release, backend/TestResults
+        platforms: [windows]

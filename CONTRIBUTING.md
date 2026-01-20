@@ -119,33 +119,48 @@ npm install
 
 ### Building
 
-Build scripts are available in the root directory.
+We use [Task](https://taskfile.dev/) (also known as `go-task`) as our build runner. It provides a consistent interface across platforms.
 
-**Windows (PowerShell):**
-```powershell
-.\build.ps1 -Runtime win-x64
+**Prerequisites:**
+- Install Task: [Installation Guide](https://taskfile.dev/installation/)
+
+**VS Code Integration:**
+The project includes a `.vscode/tasks.json` that maps VS Code tasks to Taskfile commands. You can run them via the **Terminal -> Run Task** menu or by pressing `Ctrl+Shift+B` for a full build.
+
+**Build Commands:**
+
+Build everything (Backend + Frontend):
+```bash
+task build
 ```
 
-**Linux (Bash):**
+Build components individually:
 ```bash
-chmod +x ./build.sh
-./build.sh linux-x64
+task build:backend
+task build:frontend
+```
+
+Run tests:
+```bash
+task test
+```
+
+Specify target runtime (defaults to `win-x64`):
+```bash
+task build RUNTIME=linux-x64
 ```
 
 **Supported Runtimes:** `win-x64`, `linux-x64`, `linux-arm`, `linux-arm64`.
 
 ### Code Quality
 
-Before committing, please run the formatters:
+Before committing, please run the formatters using Task:
 
-- **Backend:**
-  ```bash
-  dotnet format
-  ```
-- **Frontend:**
-  ```bash
-  npm run format
-  ```
+```bash
+task format
+```
+
+This will run `dotnet format` for the backend and `npm run format` for the frontend.
 
 ## Documentation
 

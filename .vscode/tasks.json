@@ -2,29 +2,38 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "test:backend",
+      "label": "task: test:backend",
       "type": "shell",
-      "command": "dotnet test SlideGenerator.slnx",
-      "options": {
-        "cwd": "${workspaceFolder}/backend"
-      },
+      "command": "task test:backend",
       "group": "test",
       "problemMatcher": "$msCompile"
     },
     {
-      "label": "test:frontend",
+      "label": "task: test:frontend",
       "type": "shell",
-      "command": "npm test",
-      "options": {
-        "cwd": "${workspaceFolder}/frontend"
-      },
+      "command": "task test:frontend",
       "group": "test"
     },
     {
-      "label": "test:all",
-      "dependsOn": ["test:backend", "test:frontend"],
-      "dependsOrder": "sequence",
+      "label": "task: test",
+      "type": "shell",
+      "command": "task test",
       "group": "test"
+    },
+    {
+      "label": "task: format",
+      "type": "shell",
+      "command": "task format",
+      "group": "none"
+    },
+    {
+      "label": "task: build",
+      "type": "shell",
+      "command": "task build",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
     }
   ]
 }
