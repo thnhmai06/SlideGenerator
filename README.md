@@ -23,7 +23,18 @@
 ## Features
 
 - **Automated Slide Generation:** Instantly create PowerPoint presentations from Excel spreadsheets and PPTX templates.
-- **Offline & Private:** Runs 100% locally on your desktop. No internet connection or cloud upload required.
+- **Intelligent Image Processing:**
+  - **Smart ROI (Region of Interest) Strategies:**
+    - **Rule of Thirds (Face Focus):** Detect faces and align them with the "rule of thirds" grid for professional photographic composition.
+    - **Prominent (Saliency):** Automatically identifies and preserves the most visually striking or important region of the image.
+    - **Center:** Traditional center-point anchoring for standard layouts.
+  - **Precision Cropping Modes:**
+    - **Fit:** Automatically calculates the optimal aspect ratio and scales the image to fit perfectly within the target shape without distortion.
+    - **Crop:** Performs a direct cut based on the target dimensions for pixel-perfect results.
+- **Cloud-Ready Data Handling:**
+  - **Auto-Resolve Cloud Links:** Supports direct image resolution from Google Drive, OneDrive, and Google Photos.
+  - **Automated Downloading:** Automatically fetches remote images during the generation process, eliminating manual downloads.
+- **Offline & Private:** Runs 100% locally on your desktop. No internet connection required for core generation (Cloud features require temporary access).
 - **No Office Needed:** Generates slides without requiring Microsoft Office or PowerPoint to be installed.
 - **Robust Job Management:**
   - **Real-time Monitoring:** Track progress and status of every job and sheet.
@@ -49,6 +60,10 @@ To run Slide Generator, you need to install the following runtime:
 1. **Download:** Get the latest release compatible with your platform from the [Releases page](https://github.com/thnhmai06/SlideGenerator/releases/latest).
 2. **Run:** Launch the application by running the executable file (Setup/Protable).
 
+## License
+
+This project is licensed under the GPL-3.0 License - see the [LICENSE](LICENSE) file for details.
+
 ## Star History
 
 <a href="https://www.star-history.com/#thnhmai06/SlideGenerator&type=timeline&legend=top-left">
@@ -58,10 +73,6 @@ To run Slide Generator, you need to install the following runtime:
    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=thnhmai06/SlideGenerator&type=timeline&legend=top-left" />
  </picture>
 </a>
-
-## License
-
-This project is licensed under the GPL-3.0 License - see the [LICENSE](LICENSE) file for details.
 
 ## Contributing
 
