@@ -1,37 +1,61 @@
-# Build and Packaging
+# Build & Packaging
 
-[Tiếng Việt](../vi/build-and-packaging.md)
+[🇻🇳 Vietnamese Version](../vi/build-and-packaging.md)
 
-## Build
+This guide covers how to build the SlideGenerator application for production distribution.
 
-From `frontend/`:
+## Build Process Overview
 
+The build process consists of two main stages:
+1.  **Backend Build:** Compiling the .NET application into a self-contained executable.
+2.  **Frontend Build:** Bundling the React app and packaging it with Electron, including the backend binary.
+
+## 1. Building the Backend
+
+The backend must be built first so it can be copied into the frontend's resource folder.
+
+**Command:**
 ```bash
-npm run build:backend
-npm run build
+# Run from repository root
+./build.ps1 -Runtime win-x64
+```
+*or on Linux:*
+```bash
+./build.sh linux-x64
 ```
 
-Or use the combined script:
+**Output:**
+The compiled binaries will be placed in `backend/bin/Release/net10.0/<runtime>/publish`.
 
+## 2. Building the Frontend
+
+Once the backend is ready, you can build the Electron app.
+
+**Command:**
 ```bash
+# Run from frontend/ directory
 npm run build:full
 ```
 
-`build:backend` publishes the backend into `frontend/backend`.
+This script performs the following actions:
+1.  `build:backend`: Copies the published backend files to `frontend/backend`.
+2.  `build`: Runs Vite to bundle the React application.
+3.  `electron-builder`: Packages everything into an installer (NSIS for Windows, AppImage for Linux).
 
-## Backend subprocess
+## Distribution
 
-Electron launches the backend:
+### Output Artifacts
+The final installers are located in `frontend/release/`.
 
-- Development: `dotnet run --project backend/src/SlideGenerator.Presentation/...`
-- Production: `SlideGenerator.Presentation.exe` (or `dotnet SlideGenerator.Presentation.dll`)
+- **Windows:** `SlideGenerator Setup <version>.exe`
+- **Linux:** `SlideGenerator-<version>.AppImage`
 
-Environment variables:
+### Signing (Optional)
+To sign the application (required for auto-updates and to avoid SmartScreen warnings):
+1.  Set `CSC_LINK` and `CSC_KEY_PASSWORD` environment variables.
+2.  Refer to [electron-builder documentation](https://www.electron.build/code-signing) for details.
 
-- `SLIDEGEN_DISABLE_BACKEND=1` disables auto-start.
-- `SLIDEGEN_BACKEND_PATH` overrides the backend executable/DLL path.
+## Troubleshooting
 
-## Packaging notes
-
-- `frontend/backend` is bundled into the app as `resources/backend`.
-- Ensure the target machine has .NET 10 runtime if you ship the DLL.
+- **Missing Backend:** If the app launches but does nothing, ensure the backend binary was correctly copied to `resources/backend` inside the installed app.
+- **Runtime Error:** Verify that the target machine meets the OS requirements (though the .NET runtime is self-contained, some OS dependencies might be needed on Linux).
