@@ -1,10 +1,10 @@
 <center>
     <p align="center">
         <a href="https://github.com/thnhmai06/SlideGenerator/releases">
-            <img src="https://img.shields.io/github/release/thnhmai06/SlideGenerator? style=flat-square" alt="Latest Release" />
+            <img src="https://img.shields.io/github/release/thnhmai06/SlideGenerator?style=flat-square" alt="Latest Release" />
         </a>
         <a href="https://github.com/thnhmai06/SlideGenerator/releases">
-            <img src="https://img.shields.io/github/downloads/thnhmai06/SlideGenerator/total?   style=flat-square&color=blue" alt="Downloads" />
+            <img src="https://img.shields.io/github/downloads/thnhmai06/SlideGenerator/total?style=flat-square&color=blue" alt="Downloads" />
         </a>
         <a href="https://www.codefactor.io/repository/github/thnhmai06/SlideGenerator">
             <img src="https://www.codefactor.io/repository/github/thnhmai06/SlideGenerator/badge?style=flat-square" alt="CodeFactor" />
