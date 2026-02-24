@@ -4,7 +4,7 @@ English version: [English](../en/deployment.md)
 
 ## Tóm tắt
 
-Backend là ứng dụng ASP.NET Core chạy từ `SlideGenerator.Presentation`.
+Backend là ứng dụng ASP.NET Core chạy từ `SlideGenerator.Ipc`.
 
 ## Các bước
 

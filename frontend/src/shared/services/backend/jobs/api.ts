@@ -1,5 +1,5 @@
 import { loggers } from '@/shared/services/logging';
-import { jobHub } from '../clients'
+import { jobClient } from '../clients'
 import type { ControlAction, ResponseBase, SlideImageConfig, SlideTextConfig } from '../common/types'
 import { assertSuccess } from '../common/utils'
 import {
@@ -44,7 +44,7 @@ async function fetchJobDetail(
   includePayload = false,
 ): Promise<JobDetail | null> {
   if (!jobId) return null
-  const response = await jobHub.sendRequest<ResponseBase>({
+  const response = await jobClient.sendRequest<ResponseBase>({
     type: 'jobquery',
     jobId: jobId,
     jobType: jobType,
@@ -68,7 +68,7 @@ async function fetchJobList(
   scope: 'Active' | 'Completed' | 'All',
   jobType?: JobType,
 ): Promise<JobSummary[]> {
-  const response = await jobHub.sendRequest<ResponseBase>({
+  const response = await jobClient.sendRequest<ResponseBase>({
     type: 'jobquery',
     scope,
     jobType: jobType,
@@ -86,7 +86,7 @@ async function fetchJobList(
  * @returns Shape information including shape IDs and types
  */
 export async function scanShapes(filePath: string): Promise<SlideScanShapesSuccess> {
-  const response = await jobHub.sendRequest<ResponseBase>({
+  const response = await jobClient.sendRequest<ResponseBase>({
     type: 'scanshapes',
     filePath,
   })
@@ -107,7 +107,7 @@ export async function scanShapes(filePath: string): Promise<SlideScanShapesSucce
  * @returns List of placeholder names found in the template
  */
 export async function scanPlaceholders(filePath: string): Promise<SlideScanPlaceholdersSuccess> {
-  const response = await jobHub.sendRequest<ResponseBase>({
+  const response = await jobClient.sendRequest<ResponseBase>({
     type: 'scanplaceholders',
     filePath,
   })
@@ -129,7 +129,7 @@ export async function scanPlaceholders(filePath: string): Promise<SlideScanPlace
  * @returns Combined shape and placeholder information
  */
 export async function scanTemplate(filePath: string): Promise<SlideScanTemplateSuccess> {
-  const response = await jobHub.sendRequest<ResponseBase>({
+  const response = await jobClient.sendRequest<ResponseBase>({
     type: 'scantemplate',
     filePath,
   })
@@ -163,7 +163,7 @@ export async function createGroup(
   const textConfigs = request.textConfigs as SlideTextConfig[] | undefined
   const imageConfigs = request.imageConfigs as SlideImageConfig[] | undefined
 
-  const response = await jobHub.sendRequest<ResponseBase>({
+  const response = await jobClient.sendRequest<ResponseBase>({
     type: 'jobcreate',
     jobType: 'Group',
     templatePath,
@@ -249,7 +249,7 @@ export async function groupControl(request: Record<string, unknown>): Promise<Re
   const groupId = request.groupId as string
   const action = request.action as ControlAction
 
-  const response = await jobHub.sendRequest<ResponseBase>({
+  const response = await jobClient.sendRequest<ResponseBase>({
     type: 'jobcontrol',
     jobId: groupId,
     jobType: 'Group',
@@ -269,7 +269,7 @@ export async function removeGroup(
 ): Promise<SlideGroupRemoveSuccess> {
   const groupId = request.groupId as string
   if (groupId) {
-    await jobHub.sendRequest<ResponseBase>({
+    await jobClient.sendRequest<ResponseBase>({
       type: 'jobcontrol',
       jobId: groupId,
       jobType: 'Group',
@@ -315,7 +315,7 @@ export async function jobStatus(request: Record<string, unknown>): Promise<Slide
 export async function jobControl(request: Record<string, unknown>): Promise<ResponseBase> {
   const jobId = request.jobId as string
   const action = request.action as ControlAction
-  const response = await jobHub.sendRequest<ResponseBase>({
+  const response = await jobClient.sendRequest<ResponseBase>({
     type: 'jobcontrol',
     jobId: jobId,
     jobType: 'Sheet',
@@ -333,7 +333,7 @@ export async function jobControl(request: Record<string, unknown>): Promise<Resp
 export async function removeJob(request: Record<string, unknown>): Promise<SlideJobRemoveSuccess> {
   const jobId = request.jobId as string
   if (jobId) {
-    await jobHub.sendRequest<ResponseBase>({
+    await jobClient.sendRequest<ResponseBase>({
       type: 'jobcontrol',
       jobId: jobId,
       jobType: 'Sheet',
@@ -385,7 +385,7 @@ export async function globalControl(request: Record<string, unknown>): Promise<u
   const groups = await fetchJobList('Active', 'Group')
   await Promise.all(
     groups.map((group) =>
-      jobHub.sendRequest<ResponseBase>({
+      jobClient.sendRequest<ResponseBase>({
         type: 'jobcontrol',
         jobId: group.jobId,
         jobType: 'Group',
@@ -450,7 +450,7 @@ export async function getAllGroups(): Promise<SlideGlobalGetGroupsSuccess> {
  * @param groupId - The group job identifier to subscribe to
  */
 export async function subscribeGroup(groupId: string): Promise<void> {
-  await jobHub.invoke('SubscribeGroup', groupId)
+  await jobClient.invoke('SubscribeGroup', groupId)
 }
 
 /**
@@ -459,7 +459,7 @@ export async function subscribeGroup(groupId: string): Promise<void> {
  * @param sheetId - The sheet job identifier to subscribe to
  */
 export async function subscribeSheet(sheetId: string): Promise<void> {
-  await jobHub.invoke('SubscribeSheet', sheetId)
+  await jobClient.invoke('SubscribeSheet', sheetId)
 }
 
 /**
@@ -469,7 +469,7 @@ export async function subscribeSheet(sheetId: string): Promise<void> {
  * @returns Cleanup function to unsubscribe
  */
 export function onSlideNotification(handler: (payload: unknown) => void): () => void {
-  return jobHub.onNotification(handler)
+  return jobClient.onNotification(handler)
 }
 
 /**
@@ -479,7 +479,7 @@ export function onSlideNotification(handler: (payload: unknown) => void): () => 
  * @returns Cleanup function to unsubscribe
  */
 export function onSlideReconnected(handler: (connectionId?: string) => void): () => void {
-  return jobHub.onReconnected(handler)
+  return jobClient.onReconnected(handler)
 }
 
 /**
@@ -489,5 +489,5 @@ export function onSlideReconnected(handler: (connectionId?: string) => void): ()
  * @returns Cleanup function to unsubscribe
  */
 export function onSlideConnected(handler: (connectionId?: string) => void): () => void {
-  return jobHub.onConnected(handler)
+  return jobClient.onConnected(handler)
 }

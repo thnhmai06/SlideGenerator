@@ -2,75 +2,75 @@
 
 [🇻🇳 Vietnamese Version](../vi/job-system.md)
 
-The Job System is the core engine of SlideGenerator, responsible for managing the lifecycle of slide generation tasks. It supports complex workflows including grouping, pausing, resuming, and crash recovery.
+The Job System is the core engine of SlideGenerator, responsible for managing the lifecycle of slide generation tasks. It supports grouping, pause/resume/cancel control, and crash recovery from SQLite checkpoints.
 
 ## Concepts
 
 ### Job Hierarchy
 
-The system uses a composite pattern to manage jobs:
+The runtime executes a 3-level hierarchy:
 
-1.  **Group Job (`JobGroup`)**: The root container. Represents a single user request (one Workbook + one Template).
-    *   Contains multiple **Sheet Jobs**.
-    *   Manages shared resources (template parsing, output folder).
-2.  **Sheet Job (`JobSheet`)**: The atomic unit of work. Represents the generation of one output file from one worksheet.
+1. **Book Job**
+    - Root request scope.
+    - Validates config/input and prepares output files.
+2. **Sheet Job**
+    - One worksheet mapped to one output presentation.
+    - Expands template slide by row count.
+3. **Row Job**
+    - One record processing unit.
+    - Resolves text/image replacement with column priority.
 
 ### Job States
 
 A job transitions through the following states:
 
 - **Pending:** Queued and waiting for execution resources.
-- **Processing:** Currently running (parsing data or generating slides).
+- **Running:** Currently executing.
 - **Paused:** Temporarily stopped by the user. State is preserved.
-- **Done:** Successfully completed.
+- **Completed:** Successfully completed.
 - **Cancelled:** Stopped by user request.
-- **Error:** Failed due to an exception.
+- **Failed:** Failed due to an exception.
 
 ### State Diagram
 
 ```mermaid
 stateDiagram-v2
     [*] --> Pending
-    Pending --> Processing: Scheduler picks up
-    Processing --> Paused: User Pause
-    Paused --> Processing: User Resume
-    Processing --> Done: Success
-    Processing --> Error: Exception
-    Processing --> Cancelled: User Cancel
+    Pending --> Running: Scheduler picks up
+    Running --> Paused: User Pause
+    Paused --> Running: User Resume
+    Running --> Completed: Success
+    Running --> Failed: Exception
+    Running --> Cancelled: User Cancel
     Paused --> Cancelled: User Cancel
     Pending --> Cancelled: User Cancel
 ```
 
-## Collections & Persistence
+## Persistence & Recovery
 
-The `JobManager` orchestrates jobs across two primary collections:
+Job state is persisted in SQLite:
 
-1.  **Active Collection:**
-    *   **Storage:** In-memory `ConcurrentDictionary`.
-    *   **Contents:** Jobs that are `Pending`, `Processing`, or `Paused`.
-    *   **Persistence:** State is continuously synced to SQLite via `HangfireJobStateStore`.
-2.  **Completed Collection:**
-    *   **Storage:** In-memory (cached) + SQLite (archived).
-    *   **Contents:** Jobs that are `Done`, `Failed`, or `Cancelled`.
+- `jobs`: root job status and serialized request payload.
+- `job_sheets`: per-sheet checkpoint (`current_row`, `total_rows`, status, output path).
+- `job_rows`: per-row status and idempotency key.
 
 ### Crash Recovery
 The system is designed to be resilient.
-- **State Saving:** Every state change and progress update is written to the local SQLite database.
-- **Recovery:** On application restart, the system loads unfinished jobs from the database.
-    - Jobs that were `Processing` are demoted to `Paused` to prevent immediate resource contention.
-    - `Pending` jobs remain `Pending`.
+- **State Saving:** status/progress updates are flushed during execution.
+- **Recovery:** on startup, pending/running jobs are re-enqueued.
+- **Idempotency:** row-level idempotency keys provide best-effort exactly-once behavior.
 
 ## Workflow
 
 ### 1. Creation (`JobCreate`)
-- User submits a request via SignalR.
-- System creates a `JobGroup` and analyzes the Excel workbook to create child `JobSheet`s.
-- The Group is added to the **Active Collection**.
+- User submits a request via JSON-RPC (`jobs.create`).
+- Runtime validates template/data paths and writes initial job/sheet rows.
+- Job enters `Pending` and is pushed to runtime queue.
 
 ### 2. Execution
-- If `AutoStart` is enabled, jobs are enqueued to Hangfire.
-- **Concurrency Control:** The system respects `job.maxConcurrentJobs` configuration to limit parallel processing.
-- **Resume Strategy:** When resuming, the system prioritizes filling available slots with paused jobs before starting new pending ones.
+- Runtime worker picks queued jobs and executes `Book -> Sheet -> Row`.
+- **Concurrency Control:** bounded by configured semaphores (book and sheet level).
+- **Resume Strategy:** paused jobs return to queue on `jobs.resume`.
 
 ### 3. Processing
 - **Step 1:** Load Template & Data.
@@ -79,12 +79,13 @@ The system is designed to be resilient.
 - **Step 4:** Save to Output Path.
 
 ### 4. Completion
-- When a `JobSheet` finishes, it updates its status.
-- When **all** `JobSheet`s in a `JobGroup` are finished, the Group transitions to `Completed` and is moved to the **Completed Collection**.
+- Each finished row updates checkpoint and progress.
+- A sheet becomes `Completed` when all rows are done.
+- A book becomes `Completed` when all mapped sheets are done.
 
 ## Concurrency Model
 
 - **Limit:** Defined by `job.maxConcurrentJobs` in `backend.config.yaml`.
-- **Scope:** Limits the number of *Sheet Jobs* running simultaneously, not Groups. A single Group with 10 sheets can consume all available slots.
+- **Scope:** limits top-level book execution; sheet concurrency is additionally bounded inside a book.
 
-Next: [SignalR API](signalr.md)
+Next: [Stdio JSON-RPC API](stdio-jsonrpc.md)

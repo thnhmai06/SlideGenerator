@@ -52,7 +52,7 @@ export interface UseCreateTaskOptions {
  * @example
  * ```tsx
  * const {
- *   pptxPath, setPptxPath,
+	 *   slidePath, setSlidePath,
  *   dataPath, setDataPath,
  *   handleSubmit,
  *   validationState
@@ -110,7 +110,7 @@ export const useCreateTask = ({ onStart }: UseCreateTaskOptions) => {
 	const savedState = useMemo(() => loadSavedState(), []);
 
 	// Path state
-	const [pptxPath, setPptxPath] = useState(savedState?.pptxPath || '');
+	const [slidePath, setSlidePath] = useState(savedState?.slidePath || '');
 	const [dataPath, setDataPath] = useState(savedState?.dataPath || '');
 	const [savePath, setSavePath] = useState(savedState?.savePath || '');
 
@@ -143,12 +143,12 @@ export const useCreateTask = ({ onStart }: UseCreateTaskOptions) => {
 	const isHydratingRef = useRef(false);
 	const hasHydratedRef = useRef(false);
 	const templateErrorAtRef = useRef(0);
-	const pptxPathRef = useRef(pptxPath);
+	const slidePathRef = useRef(slidePath);
 	const dataErrorAtRef = useRef(0);
 	const dataPathRef = useRef(dataPath);
 	const lastLoadedDataPathRef = useRef(savedState?.dataLoaded ? savedState?.dataPath || '' : '');
 	const lastLoadedTemplatePathRef = useRef(
-		savedState?.templateLoaded ? savedState?.pptxPath || '' : '',
+		savedState?.templateLoaded ? savedState?.slidePath || '' : '',
 	);
 
 	// Initialize replacements from saved state
@@ -184,7 +184,7 @@ export const useCreateTask = ({ onStart }: UseCreateTaskOptions) => {
 	// Save state to sessionStorage whenever it changes
 	useEffect(() => {
 		const state = {
-			pptxPath,
+			slidePath,
 			dataPath,
 			savePath,
 			textReplacements: replacementsHook.textReplacements,
@@ -202,7 +202,7 @@ export const useCreateTask = ({ onStart }: UseCreateTaskOptions) => {
 		};
 		sessionStorage.setItem(STORAGE_KEYS.inputMenuState, JSON.stringify(state));
 	}, [
-		pptxPath,
+		slidePath,
 		dataPath,
 		savePath,
 		replacementsHook.textReplacements,
@@ -221,8 +221,8 @@ export const useCreateTask = ({ onStart }: UseCreateTaskOptions) => {
 
 	// Keep refs in sync
 	useEffect(() => {
-		pptxPathRef.current = pptxPath;
-	}, [pptxPath]);
+		slidePathRef.current = slidePath;
+	}, [slidePath]);
 
 	useEffect(() => {
 		dataPathRef.current = dataPath;
@@ -286,9 +286,9 @@ export const useCreateTask = ({ onStart }: UseCreateTaskOptions) => {
 				setPlaceholders(unique);
 				setTemplateLoaded(true);
 			} catch (error) {
-				if (!isHydratingRef.current && filePath === pptxPathRef.current) {
+				if (!isHydratingRef.current && filePath === slidePathRef.current) {
 					notifyTemplateError(error);
-					setPptxPath('');
+					setSlidePath('');
 					setShapes([]);
 					setPlaceholders([]);
 					setTemplateLoaded(false);
@@ -359,11 +359,11 @@ export const useCreateTask = ({ onStart }: UseCreateTaskOptions) => {
 		hasHydratedRef.current = true;
 		isHydratingRef.current = true;
 
-		const nextPptxPath = savedState.pptxPath || '';
+		const nextSlidePath = savedState.slidePath || '';
 		const nextDataPath = savedState.dataPath || '';
 		const nextSavePath = savedState.savePath || '';
 
-		setPptxPath(nextPptxPath);
+		setSlidePath(nextSlidePath);
 		setDataPath(nextDataPath);
 		setSavePath(nextSavePath);
 
@@ -390,7 +390,7 @@ export const useCreateTask = ({ onStart }: UseCreateTaskOptions) => {
 		setTotalRows(cached.totalRows);
 		setTemplateLoaded(cached.templateLoaded);
 		setDataLoaded(cached.dataLoaded);
-		lastLoadedTemplatePathRef.current = cached.templateLoaded ? nextPptxPath : '';
+		lastLoadedTemplatePathRef.current = cached.templateLoaded ? nextSlidePath : '';
 		lastLoadedDataPathRef.current = cached.dataLoaded ? nextDataPath : '';
 
 		setIsLoadingShapes(true);
@@ -399,8 +399,8 @@ export const useCreateTask = ({ onStart }: UseCreateTaskOptions) => {
 
 		try {
 			const templateAssets =
-				!cached.templateLoaded && nextPptxPath
-					? await loadTemplateAssets(nextPptxPath)
+				!cached.templateLoaded && nextSlidePath
+					? await loadTemplateAssets(nextSlidePath)
 					: { shapes: cached.shapes, placeholders: cached.placeholders };
 			const dataAssets =
 				!cached.dataLoaded && nextDataPath
@@ -413,9 +413,9 @@ export const useCreateTask = ({ onStart }: UseCreateTaskOptions) => {
 							totalRows: cached.totalRows,
 						};
 
-			if (!cached.templateLoaded && nextPptxPath) {
+			if (!cached.templateLoaded && nextSlidePath) {
 				setTemplateLoaded(true);
-				lastLoadedTemplatePathRef.current = nextPptxPath;
+				lastLoadedTemplatePathRef.current = nextSlidePath;
 			}
 			if (!cached.dataLoaded && nextDataPath) {
 				setSheetCount(dataAssets.sheetCount);
@@ -471,17 +471,17 @@ export const useCreateTask = ({ onStart }: UseCreateTaskOptions) => {
 		hydrateFromSavedState().catch(() => undefined);
 	}, [hydrateFromSavedState]);
 
-	// Schedule template load when pptxPath changes
+	// Schedule template load when slidePath changes
 	useEffect(() => {
 		if (isHydratingRef.current) return;
-		if (!pptxPath) {
+		if (!slidePath) {
 			setShapes([]);
 			setPlaceholders([]);
 			setTemplateLoaded(false);
 			return;
 		}
 
-		if (templateLoaded && lastLoadedTemplatePathRef.current === pptxPath && shapes.length > 0) {
+		if (templateLoaded && lastLoadedTemplatePathRef.current === slidePath && shapes.length > 0) {
 			return;
 		}
 
@@ -490,11 +490,11 @@ export const useCreateTask = ({ onStart }: UseCreateTaskOptions) => {
 		setTemplateLoaded(false);
 
 		const timer = setTimeout(() => {
-			loadTemplateFromServer(pptxPath).catch(() => undefined);
+			loadTemplateFromServer(slidePath).catch(() => undefined);
 		}, 400);
 
 		return () => clearTimeout(timer);
-	}, [pptxPath, templateLoaded, shapes.length, loadTemplateFromServer]);
+	}, [slidePath, templateLoaded, shapes.length, loadTemplateFromServer]);
 
 	// Schedule data load when dataPath changes
 	useEffect(() => {
@@ -530,12 +530,12 @@ export const useCreateTask = ({ onStart }: UseCreateTaskOptions) => {
 	}, [dataPath, dataLoaded, isLoadingColumns, loadDataFromServer]);
 
 	// Browse handlers
-	const handleBrowsePptx = useCallback(async () => {
+	const handleBrowseSlide = useCallback(async () => {
 		const path = await window.electronAPI.openFile([
 			{ name: 'PowerPoint Files', extensions: ['pptx', 'potx'] },
 		]);
 		if (path) {
-			setPptxPath(path);
+			setSlidePath(path);
 			setShapes([]);
 			setPlaceholders([]);
 		}
@@ -563,7 +563,7 @@ export const useCreateTask = ({ onStart }: UseCreateTaskOptions) => {
 	const validationState = useMemo(
 		() =>
 			computeValidationState({
-				pptxPath,
+				slidePath,
 				dataPath,
 				savePath,
 				isLoadingColumns,
@@ -579,7 +579,7 @@ export const useCreateTask = ({ onStart }: UseCreateTaskOptions) => {
 				sheetRowCounts,
 			}),
 		[
-			pptxPath,
+			slidePath,
 			dataPath,
 			savePath,
 			isLoadingColumns,
@@ -634,11 +634,11 @@ export const useCreateTask = ({ onStart }: UseCreateTaskOptions) => {
 
 	// Start job
 	const handleStart = useCallback(async () => {
-		const resolvedPptxPath = resolvePath(pptxPath);
+		const resolvedSlidePath = resolvePath(slidePath);
 		const resolvedDataPath = resolvePath(dataPath);
 		const resolvedSavePath = resolvePath(savePath);
 
-		if (!resolvedPptxPath || !resolvedDataPath || !resolvedSavePath || !validationState.canStart) {
+		if (!resolvedSlidePath || !resolvedDataPath || !resolvedSavePath || !validationState.canStart) {
 			showNotification('error', t('createTask.error'));
 			return;
 		}
@@ -646,14 +646,14 @@ export const useCreateTask = ({ onStart }: UseCreateTaskOptions) => {
 		const textConfigs = buildTextConfigs(replacementsHook.textReplacements);
 		const imageConfigs = buildImageConfigs(replacementsHook.imageReplacements);
 
-		setPptxPath(resolvedPptxPath);
+		setSlidePath(resolvedSlidePath);
 		setDataPath(resolvedDataPath);
 		setSavePath(resolvedSavePath);
 
 		try {
 			setIsStarting(true);
 			await createGroup({
-				templatePath: resolvedPptxPath,
+				templatePath: resolvedSlidePath,
 				spreadsheetPath: resolvedDataPath,
 				outputPath: resolvedSavePath,
 				textConfigs,
@@ -669,7 +669,7 @@ export const useCreateTask = ({ onStart }: UseCreateTaskOptions) => {
 			setIsStarting(false);
 		}
 	}, [
-		pptxPath,
+		slidePath,
 		dataPath,
 		savePath,
 		validationState.canStart,
@@ -685,7 +685,7 @@ export const useCreateTask = ({ onStart }: UseCreateTaskOptions) => {
 	// Export config
 	const exportConfig = useCallback(async () => {
 		const config = {
-			pptxPath,
+			slidePath,
 			dataPath,
 			savePath,
 			selectedSheets,
@@ -707,7 +707,7 @@ export const useCreateTask = ({ onStart }: UseCreateTaskOptions) => {
 			showNotification('error', t('createTask.exportError'));
 		}
 	}, [
-		pptxPath,
+		slidePath,
 		dataPath,
 		savePath,
 		selectedSheets,
@@ -735,11 +735,11 @@ export const useCreateTask = ({ onStart }: UseCreateTaskOptions) => {
 			if (!data) return;
 
 			const config = JSON.parse(data) as SavedInputState;
-			const nextPptxPath = config.pptxPath || '';
+			const nextSlidePath = config.slidePath || '';
 			const nextDataPath = config.dataPath || '';
 			const nextSavePath = config.savePath || '';
 
-			setPptxPath(nextPptxPath);
+			setSlidePath(nextSlidePath);
 			setDataPath(nextDataPath);
 			setSavePath(nextSavePath);
 			setShapes([]);
@@ -754,8 +754,8 @@ export const useCreateTask = ({ onStart }: UseCreateTaskOptions) => {
 			setDataLoaded(false);
 			clearReplacements();
 
-			const templateAssets = nextPptxPath
-				? await loadTemplateAssets(nextPptxPath)
+			const templateAssets = nextSlidePath
+				? await loadTemplateAssets(nextSlidePath)
 				: { shapes: [], placeholders: [] };
 			const dataAssets = nextDataPath
 				? await loadDataAssets(nextDataPath)
@@ -767,9 +767,9 @@ export const useCreateTask = ({ onStart }: UseCreateTaskOptions) => {
 						sheetRowCounts: {},
 					};
 
-			if (nextPptxPath) {
+			if (nextSlidePath) {
 				setTemplateLoaded(true);
-				lastLoadedTemplatePathRef.current = nextPptxPath;
+				lastLoadedTemplatePathRef.current = nextSlidePath;
 			}
 			if (nextDataPath) {
 				const explicitSelectedSheets = Array.isArray(config.selectedSheets)
@@ -827,7 +827,7 @@ export const useCreateTask = ({ onStart }: UseCreateTaskOptions) => {
 	// Clear all
 	const clearAll = useCallback(() => {
 		if (confirm(t('createTask.confirmClear') || 'Are you sure you want to clear all data?')) {
-			setPptxPath('');
+			setSlidePath('');
 			setDataPath('');
 			setSavePath('');
 			setColumns([]);
@@ -857,10 +857,10 @@ export const useCreateTask = ({ onStart }: UseCreateTaskOptions) => {
 		getOptionDescription,
 
 		// Path state
-		pptxPath,
+		slidePath,
 		dataPath,
 		savePath,
-		setPptxPath,
+		setSlidePath,
 		setDataPath,
 		setSavePath,
 
@@ -916,7 +916,7 @@ export const useCreateTask = ({ onStart }: UseCreateTaskOptions) => {
 		updateImageReplacement: replacementsHook.updateImageReplacement,
 
 		// Browse handlers
-		handleBrowsePptx,
+		handleBrowseSlide,
 		handleBrowseData,
 		handleBrowseSave,
 

@@ -63,7 +63,7 @@ Hệ thống được thiết kế để có khả năng phục hồi cao.
 ## Quy trình làm việc (Workflow)
 
 ### 1. Khởi tạo (`JobCreate`)
-- Người dùng gửi yêu cầu qua SignalR.
+- Người dùng gửi yêu cầu qua JSON-RPC (`jobs.create`).
 - Hệ thống tạo `JobGroup` và phân tích Excel workbook để tạo các `JobSheet` con.
 - Group được thêm vào **Active Collection**.
 
@@ -87,5 +87,5 @@ Hệ thống được thiết kế để có khả năng phục hồi cao.
 - **Giới hạn:** Được định nghĩa bởi `job.maxConcurrentJobs` trong `backend.config.yaml`.
 - **Phạm vi:** Giới hạn số lượng *Sheet Jobs* chạy đồng thời, không phải Groups. Một Group đơn lẻ với 10 sheet có thể chiếm dụng toàn bộ các slot xử lý.
 
-Tiếp theo: [SignalR API](signalr.md)
+Tiếp theo: [Stdio JSON-RPC API](../en/stdio-jsonrpc.md)
 

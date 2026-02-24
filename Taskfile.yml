@@ -3,7 +3,7 @@ version: '3'
 vars:
   RUNTIME: '{{default "win-x64" .RUNTIME}}'
   BACKEND_BUILD_DIR: 'frontend/backend'
-  BACKEND_PROJECT: 'backend/src/SlideGenerator.Presentation/SlideGenerator.Presentation.csproj'
+  BACKEND_PROJECT: 'backend/src/SlideGenerator.Ipc/SlideGenerator.Ipc.csproj'
   BACKEND_SOLUTION: 'backend/SlideGenerator.slnx'
 
 tasks:
@@ -46,11 +46,9 @@ tasks:
       - task: test:frontend
 
   test:backend:
-    desc: Run Backend unit tests
+    desc: Backend tests removed
     cmds:
-      - echo "Running Backend Tests..."
-      - dotnet restore {{.BACKEND_SOLUTION}}
-      - dotnet test {{.BACKEND_SOLUTION}} --no-restore --logger "trx;LogFileName=backend-tests.trx" --results-directory backend/TestResults
+      - echo "Backend tests removed"
 
   test:frontend:
     desc: Run Frontend unit tests

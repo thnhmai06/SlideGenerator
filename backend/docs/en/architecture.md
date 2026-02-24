@@ -4,65 +4,53 @@
 
 ## Overview
 
-The backend is built on the principles of **Clean Architecture**, ensuring a strict separation of concerns. This design allows the core business logic to remain independent of frameworks, databases, and external interfaces.
+The backend is organized in a **feature-based** style for simpler ownership and faster iteration.  
+Instead of enforcing strict clean-architecture rings, each project owns one runtime feature while reusing shared contracts from `SlideGenerator.Application` and domain models from `SlideGenerator.Domain`.
 
-## Layered Architecture
-
-The solution is divided into four concentric layers:
+## Project Layout
 
 ```mermaid
 graph TD
-    Presentation --> Application
-    Application --> Domain
-    Infrastructure --> Application
-    Infrastructure --> Domain
-    Presentation --> Infrastructure
+    Ipc[SlideGenerator.Ipc] --> JobRuntime[SlideGenerator.Jobs]
+    JobRuntime --> Scan[SlideGenerator.Scan]
+    JobRuntime --> Generate[SlideGenerator.Generate]
+    JobRuntime --> App[SlideGenerator.Application]
+    Scan --> App
+    Generate --> App
+    JobRuntime --> Domain[SlideGenerator.Domain]
+    Scan --> Framework[SlideGenerator.Framework]
+    JobRuntime --> Framework
 ```
 
-### 1. Domain Layer (`SlideGenerator.Domain`)
-**The Core.** Contains the enterprise business rules and entities.
-- **Dependencies:** None.
-- **Components:**
-    - `Entities`: Core objects like `JobGroup`, `JobSheet`.
-    - `Enums`: `JobStatus`, `JobType`.
-    - `ValueObjects`: Immutable descriptors.
-    - `Constants`: System-wide invariants.
+### `SlideGenerator.Ipc`
+- JSON-RPC host over stdio (`StreamJsonRpc`).
+- Exposes methods: `system.health`, `slides.scan`, `excel.scan`, `jobs.*`.
+- Emits `jobs.updated` notifications.
 
-### 2. Application Layer (`SlideGenerator.Application`)
-**The Orchestrator.** Contains application-specific business rules.
-- **Dependencies:** Domain.
-- **Components:**
-    - `Interfaces`: Contracts for Infrastructure (e.g., `IJobStore`, `IFileService`).
-    - `DTOs`: Data Transfer Objects for API communication.
-    - `Services`: Business logic services (e.g., `JobManager`).
-    - `Features`: CQRS-style handlers (if applicable).
+### `SlideGenerator.Scan`
+- Scan workflows for PPTX and Excel metadata.
+- Returns DTO-compatible payloads (`SlideScanResult`, `SheetScanResult`).
 
-### 3. Infrastructure Layer (`SlideGenerator.Infrastructure`)
-**The Adapter.** Implements interfaces defined in the Application layer.
-- **Dependencies:** Application, Domain.
-- **Components:**
-    - `Hangfire`: Background job processing and state persistence.
-    - `SQLite`: Physical data storage implementation.
-    - `FileSystem`: IO operations (reading/writing files).
-    - `Logging`: Serilog integration.
+### `SlideGenerator.Generate`
+- Generate request validation and mapping logic.
+- Encapsulates feature-specific generation helpers.
 
-### 4. Presentation Layer (`SlideGenerator.Presentation`)
-**The Entry Point.** The interface through which users interact with the system.
-- **Dependencies:** Application, Infrastructure.
-- **Components:**
-    - `ASP.NET Core`: Web Host configuration.
-    - `SignalR Hubs`: Real-time API endpoints (`JobHub`, `ConfigHub`).
-    - `Program.cs`: Dependency Injection (DI) composition root.
+### `SlideGenerator.Jobs`
+- Main runtime orchestration for create/list/get/control jobs.
+- Queue + concurrency control + pause/resume/cancel.
+- SQLite persistence for job/sheet/row state and recovery.
 
-## Key Runtime Components
+### Shared Projects
+- `SlideGenerator.Application`: DTO/contracts and backend service interface.
+- `SlideGenerator.Domain`: job snapshots/status models.
+- `SlideGenerator.Framework`: low-level slide/image capabilities (unchanged by backend rewrite).
 
-### Job Execution Flow
+## Runtime Flow
 
-1.  **Request:** `TaskHub` receives a `JobCreate` request (JSON) from the client.
-2.  **Orchestration:** `JobManager` (Application) validates the request and creates a `JobGroup` (Domain).
-3.  **Persistence:** `ActiveJobCollection` delegates to `HangfireJobStateStore` (Infrastructure) to save the initial state.
-4.  **Execution:** `Hangfire` (Infrastructure) picks up the job.
-5.  **Processing:** `JobExecutor` (Application/Infrastructure) performs the slide generation using the Framework.
-6.  **Notification:** `JobNotifier` (Infrastructure) pushes updates back to the client via `SignalR`.
+1. `Ipc` receives JSON-RPC request.
+2. `JobRuntime` validates and persists initial job state to SQLite.
+3. Runtime enqueues work with bounded concurrency.
+4. Per sheet/row processing executes and checkpoints progress.
+5. Runtime publishes `jobs.updated` snapshots back to client.
 
-Next: [SignalR API](signalr.md)
+Next: [Stdio JSON-RPC API](stdio-jsonrpc.md)

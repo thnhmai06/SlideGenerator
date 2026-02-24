@@ -1,0 +1,39 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
+		<NoWarn>$(NoWarn);1591</NoWarn>
+		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
+		<EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\SlideGenerator.Configs\SlideGenerator.Configs.csproj" />
+		<ProjectReference Include="..\SlideGenerator.Framework\SlideGenerator.Framework.csproj" />
+		<PackageReference Include="Downloader" Version="4.0.3" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(RuntimeIdentifier)'=='win-x64'">
+		<PackageReference Include="Emgu.CV.runtime.windows" Version="4.12.0.5764" />
+	</ItemGroup>
+	<ItemGroup Condition="'$(RuntimeIdentifier)'=='linux-x64'">
+		<PackageReference Include="Emgu.CV.runtime.ubuntu-x64" Version="4.12.0.5764" />
+	</ItemGroup>
+	<ItemGroup Condition="'$(RuntimeIdentifier)'=='linux-arm'">
+		<PackageReference Include="Emgu.CV.runtime.debian-arm" Version="4.12.0.5764" />
+	</ItemGroup>
+	<ItemGroup Condition="'$(RuntimeIdentifier)'=='linux-arm64'">
+		<PackageReference Include="Emgu.CV.runtime.debian-arm64" Version="4.12.0.5764" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Compile Include="*.cs" />
+        <Compile Include="Models\**\*.cs" />
+        <Compile Include="Services\**\*.cs" />
+	</ItemGroup>
+
+</Project>

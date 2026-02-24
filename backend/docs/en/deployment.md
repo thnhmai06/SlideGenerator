@@ -4,7 +4,7 @@ Vietnamese version: [Vietnamese](../vi/deployment.md)
 
 ## Summary
 
-The backend is an ASP.NET Core app hosted by `SlideGenerator.Presentation`.
+The backend is an ASP.NET Core app hosted by `SlideGenerator.Ipc`.
 
 ## Steps
 

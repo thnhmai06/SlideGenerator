@@ -9,7 +9,7 @@ Frontend của SlideGenerator là một ứng dụng desktop chuyên biệt đư
 2.  Cung cấp khả năng giám sát thời gian thực các tiến trình nền.
 3.  Quản lý các cài đặt ứng dụng cục bộ và giao diện (theme).
 
-**Nguyên lý cốt lõi:** Frontend là dạng "Thin Client". Nó chứa rất ít logic nghiệp vụ. Backend mới là nơi chứa sự thật (source of truth) cho mọi trạng thái job. Giao diện chỉ phản ánh trạng thái nhận được qua SignalR.
+**Nguyên lý cốt lõi:** Frontend là dạng "Thin Client". Nó chứa rất ít logic nghiệp vụ. Backend mới là nơi chứa sự thật (source of truth) cho mọi trạng thái job. Giao diện chỉ phản ánh trạng thái nhận được qua thông báo JSON-RPC.
 
 ## Kiến trúc Mức cao
 
@@ -20,8 +20,8 @@ graph TD
     AppShell --> Features
     Features --> Shared
     Shared --> Services
-    Services --> SignalR
-    SignalR --> Backend
+    Services --> RPC
+    RPC --> Backend
 ```
 
 ### 1. Tầng Ứng dụng (`src/app`)
@@ -41,26 +41,26 @@ Chứa logic UI cho các luồng công việc cụ thể của người dùng.
 Các component và tiện ích tái sử dụng.
 - **`components`**: Các phần tử UI chung (Buttons, Inputs, Modals).
 - **`contexts`**: Các container trạng thái toàn cục (`AppContext`, `JobContext`).
-- **`services`**: Tích hợp API client và SignalR.
+- **`services`**: Tích hợp API client và JSON-RPC.
 
 ## Tầng Giao tiếp
 
-### SignalR Client
-Nằm tại `src/shared/services/signalr/`.
-- **Tự động kết nối lại:** Tự động xử lý khi mất kết nối.
-- **Hàng đợi (Queueing):** Đệm các request nếu kết nối bị mất tạm thời.
-- **Typed Events:** Các listener định kiểu mạnh cho `GroupProgress`, `JobStatus`, v.v.
+### RPC Client
+Nằm tại `src/shared/services/rpc/`.
+- **IPC transport:** Dùng cầu nối Electron + backend stdio JSON-RPC.
+- **Typed calls:** Wrapper định kiểu mạnh cho các method backend.
+- **Notifications:** Lắng nghe sự kiện `jobs.updated`.
 
 ### API Facade
 Nằm tại `src/shared/services/backend/`.
 - Cung cấp API sạch, dựa trên Promise để tương tác với backend.
-- Bọc các gọi SignalR để trừu tượng hóa lớp vận chuyển bên dưới.
+- Bọc các gọi JSON-RPC để trừu tượng hóa lớp vận chuyển bên dưới.
 
 ## Luồng Dữ liệu
 
 1.  **Hành động người dùng:** Người dùng nhấn "Start Job" trong tính năng `create-task`.
 2.  **Gọi Service:** Component gọi `BackendService.createJob()`.
-3.  **Truyền tải:** Yêu cầu được gửi qua SignalR WebSocket.
+3.  **Truyền tải:** Yêu cầu được gửi qua JSON-RPC trên Electron IPC.
 4.  **Xử lý Backend:** Backend tạo job và trả về một ID.
 5.  **Thông báo:** Backend đẩy sự kiện `JobStatus` (Pending).
 6.  **Cập nhật:** `JobContext` nhận sự kiện và cập nhật state toàn cục.

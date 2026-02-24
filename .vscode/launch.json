@@ -39,7 +39,7 @@
             "args": [
                 "run",
                 "--project",
-                "${workspaceFolder}/backend/src/SlideGenerator.Presentation/SlideGenerator.Presentation.csproj"
+                "${workspaceFolder}/backend/src/SlideGenerator.Ipc/SlideGenerator.Ipc.csproj"
             ],
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",

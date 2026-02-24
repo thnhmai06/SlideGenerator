@@ -117,7 +117,7 @@ export const createLogEntryFromPayload = (
 /** Ref-like object for mutable values. */
 export type RefLike<T> = { current: T };
 
-/** Context for handling SignalR notifications. */
+/** Context for handling RPC notifications. */
 export type SlideNotificationContext = {
 	updateGroup: (groupId: string, updater: (group: GroupJob) => GroupJob) => void;
 	updateSheet: (sheetId: string, updater: (sheet: SheetJob) => SheetJob) => void;
@@ -126,7 +126,7 @@ export type SlideNotificationContext = {
 	groupsRef: RefLike<Record<string, GroupJob>>;
 };
 
-/** Parsed notification payload from SignalR. */
+/** Parsed notification payload from RPC events. */
 export type SlideNotificationPayload = {
 	data: Record<string, unknown>;
 	groupId?: string;

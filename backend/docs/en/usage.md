@@ -7,7 +7,7 @@ Vietnamese version: [Vietnamese](../vi/usage.md)
 From `backend/`:
 
 ```
-dotnet run --project src/SlideGenerator.Presentation
+dotnet run --project src/SlideGenerator.Ipc
 ```
 
 ## Verify
@@ -17,13 +17,13 @@ dotnet run --project src/SlideGenerator.Presentation
 
 ## Connect from the client
 
-- Job hub: `/hubs/job` (alias: `/hubs/task`)
-- Sheet hub: `/hubs/sheet`
-- Config hub: `/hubs/config`
+- Transport: stdio JSON-RPC 2.0
+- Main methods: `jobs.create`, `jobs.get`, `jobs.list`, `jobs.pause`, `jobs.resume`, `jobs.cancel`
+- Utility methods: `slides.scan`, `excel.scan`, `system.health`
 
 ## Quick examples
 
-Create a group job:
+Create a group job (`jobs.create` params):
 
 ```json
 {
@@ -36,20 +36,20 @@ Create a group job:
 }
 ```
 
-Pause a job:
+Pause a job (`jobs.pause` params):
 
 ```json
-{ "type": "JobControl", "jobId": "TASK_ID", "jobType": "Group", "action": "Pause" }
+{ "jobId": "TASK_ID" }
 ```
 
-Remove a group (also deletes backend state):
+Cancel a group (`jobs.cancel` params):
 
 ```json
-{ "type": "JobControl", "jobId": "TASK_ID", "jobType": "Group", "action": "Remove" }
+{ "jobId": "TASK_ID" }
 ```
 
-Query active jobs:
+Get a specific job (`jobs.get` params):
 
 ```json
-{ "type": "JobQuery", "scope": "Active" }
+{ "jobId": "TASK_ID" }
 ```

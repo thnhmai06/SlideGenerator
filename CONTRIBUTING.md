@@ -88,7 +88,7 @@ git pull
 
 1. **Via Visual Studio:**
    - Open `SlideGenerator.sln`.
-   - Set `SlideGenerator.Presentation` as the startup project.
+   - Set `SlideGenerator.Ipc` as the startup project.
    - Start Debugging (F5).
 
 2. **Via VS Code:**
@@ -98,7 +98,7 @@ git pull
 3. **Via CLI:**
    ```bash
    cd backend
-   dotnet run --project src/SlideGenerator.Presentation
+   dotnet run --project src/SlideGenerator.Ipc
    ```
 
 #### Frontend
@@ -161,6 +161,13 @@ task format
 ```
 
 This will run `dotnet format` for the backend and `npm run format` for the frontend.
+
+Backend coding convention (including `backend/src` and `backend/tests`):
+
+- Prefer **one standalone top-level type per file** (`class`, `interface`, `record`, `enum`, `struct`).
+- Nested composite types inside their parent type are allowed in the same file.
+- Avoid adding 2+ standalone top-level types in the same `.cs` file unless there is a strong reason.
+- The backend includes analyzer rule `SA1402` as a suggestion to remind this convention during development.
 
 ## Documentation
 

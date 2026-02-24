@@ -25,6 +25,10 @@ declare global {
 			windowControl: (action: 'minimize' | 'maximize' | 'close') => Promise<void>;
 			hideToTray: () => Promise<void>;
 			setProgressBar: (value: number) => Promise<void>;
+				backendRequest: <TResult = unknown>(method: string, params?: unknown) => Promise<TResult>;
+				onBackendNotification: (
+					handler: (payload: { method: string; params: unknown }) => void,
+				) => () => void;
 			restartBackend: () => Promise<boolean>;
 			logRenderer: (
 				level: 'debug' | 'info' | 'warn' | 'error',

@@ -249,7 +249,7 @@ export const resolveAvailableShapes = (
 };
 
 export const computeValidationState = (args: {
-	pptxPath: string;
+	slidePath: string;
 	dataPath: string;
 	savePath: string;
 	isLoadingColumns: boolean;
@@ -266,7 +266,7 @@ export const computeValidationState = (args: {
 }): ValidationState => {
 	const templateExtPattern = /\.(pptx|potx)$/i;
 	const sheetExtPattern = /\.(xlsx|xlsm)$/i;
-	const isTemplateValid = Boolean(args.pptxPath && templateExtPattern.test(args.pptxPath));
+	const isTemplateValid = Boolean(args.slidePath && templateExtPattern.test(args.slidePath));
 	const isDataValid = Boolean(args.dataPath && sheetExtPattern.test(args.dataPath));
 	const isOutputValid = Boolean(args.savePath && args.savePath.trim().length > 0);
 

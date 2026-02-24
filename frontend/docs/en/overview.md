@@ -9,7 +9,7 @@ The SlideGenerator Frontend is a specialized desktop application designed to:
 2.  Offer real-time monitoring of background processes.
 3.  Manage local application settings and themes.
 
-**Key Principle:** The Frontend is "Thin". It holds minimal business logic. The Backend is the source of truth for all job states. The UI simply reflects the state received via SignalR.
+**Key Principle:** The Frontend is "Thin". It holds minimal business logic. The Backend is the source of truth for all job states. The UI simply reflects the state received via JSON-RPC notifications.
 
 ## High-Level Architecture
 
@@ -20,8 +20,8 @@ graph TD
     AppShell --> Features
     Features --> Shared
     Shared --> Services
-    Services --> SignalR
-    SignalR --> Backend
+    Services --> RPC
+    RPC --> Backend
 ```
 
 ### 1. Application Layer (`src/app`)
@@ -41,26 +41,26 @@ Contains the UI logic for specific user workflows.
 Reusable components and utilities.
 - **`components`**: Generic UI elements (Buttons, Inputs, Modals).
 - **`contexts`**: Global state containers (`AppContext`, `JobContext`).
-- **`services`**: API clients and SignalR integration.
+- **`services`**: API clients and JSON-RPC integration.
 
 ## Communication Layer
 
-### SignalR Client
-Located in `src/shared/services/signalr/`.
-- **Auto-reconnect:** Automatically handles connection drops.
-- **Queueing:** Buffers requests if the connection is temporarily lost.
-- **Typed Events:** Strongly typed listeners for `GroupProgress`, `JobStatus`, etc.
+### RPC Client
+Located in `src/shared/services/rpc/`.
+- **IPC transport:** Uses Electron bridge + backend stdio JSON-RPC.
+- **Typed calls:** Strongly typed wrappers for backend methods.
+- **Notifications:** Subscribes to `jobs.updated` events.
 
 ### API Facade
 Located in `src/shared/services/backend/`.
 - Provides a clean, Promise-based API for interacting with the backend.
-- Wraps SignalR calls to abstract the underlying transport.
+- Wraps JSON-RPC calls to abstract the underlying transport.
 
 ## Data Flow
 
 1.  **User Action:** User clicks "Start Job" in the `create-task` feature.
 2.  **Service Call:** Component calls `BackendService.createJob()`.
-3.  **Transmission:** Request is sent via SignalR WebSocket.
+3.  **Transmission:** Request is sent through JSON-RPC over Electron IPC.
 4.  **Backend Processing:** Backend creates the job and returns an ID.
 5.  **Notification:** Backend pushes a `JobStatus` event (Pending).
 6.  **Update:** `JobContext` receives the event and updates the global state.

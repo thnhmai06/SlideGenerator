@@ -391,7 +391,7 @@ export const useJobProvider = (): JobContextValue => {
 			const config = await resolveGroupConfig(groupId);
 			if (!config) return false;
 			const exportPayload = {
-				pptxPath: config.templatePath,
+				slidePath: config.templatePath,
 				dataPath: config.spreadsheetPath,
 				savePath: config.outputPath,
 				selectedSheets: config.sheetNames,

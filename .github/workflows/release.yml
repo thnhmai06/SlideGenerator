@@ -51,7 +51,7 @@ jobs:
             RID=linux-x64
           fi
 
-          dotnet publish backend/src/SlideGenerator.Presentation/SlideGenerator.Presentation.csproj \
+          dotnet publish backend/src/SlideGenerator.Ipc/SlideGenerator.Ipc.csproj \
             -c Release \
             -r $RID \
             --self-contained false \
