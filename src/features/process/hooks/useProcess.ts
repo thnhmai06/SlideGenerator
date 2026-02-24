@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useApp } from '@/shared/contexts/useApp';
 import { useJobs } from '@/shared/contexts/useJobs';
-import { getBackendBaseUrl } from '@/shared/services/signalrClient';
+import { getBackendBaseUrl } from '@/shared/services/rpcClient';
 import type { LogEntry } from '../types';
 import { formatLogEntry, formatTime } from '../utils';
 

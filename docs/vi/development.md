@@ -43,7 +43,7 @@ src/
 │   ├── components/       # UI components nguyên tử (Buttons, Inputs)
 │   ├── contexts/         # React Contexts (JobContext, AppContext)
 │   ├── hooks/            # Custom React Hooks
-│   ├── services/         # API & SignalR clients
+│   ├── services/         # API & RPC clients
 │   └── styles/           # Global SCSS & Variables
 └── assets/               # Tài nguyên tĩnh (Images, Fonts)
 ```

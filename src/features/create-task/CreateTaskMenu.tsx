@@ -36,9 +36,9 @@ const CreateTaskMenu: React.FC<CreateTaskMenuProps> = ({ onStart }) => {
 
 			{/* File Inputs */}
 			<TemplateInputSection
-				pptxPath={task.pptxPath}
-				onChangePath={task.setPptxPath}
-				onBrowse={task.handleBrowsePptx}
+				slidePath={task.slidePath}
+				onChangePath={task.setSlidePath}
+				onBrowse={task.handleBrowseSlide}
 				isLoadingShapes={task.isLoadingShapes}
 				isLoadingPlaceholders={task.isLoadingPlaceholders}
 				templateLoaded={task.templateLoaded}

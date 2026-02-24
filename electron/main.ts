@@ -33,6 +33,12 @@ app.commandLine.appendSwitch('remote-debugging-port', '9222');
 
 app.whenReady().then(() => {
 	backendController.startBackend();
+	backendController.onNotification((method, params) => {
+		BrowserWindow.getAllWindows().forEach((window) => {
+			window.webContents.send('backend:notification', { method, params });
+		});
+	});
+
 	createMainWindow({
 		preloadPath,
 		getAssetPath,
@@ -74,4 +80,8 @@ app.on('before-quit', async (event) => {
 
 ipcMain.handle('backend:restart', async () => {
 	return backendController.restartBackend();
+});
+
+ipcMain.handle('backend:request', async (_event, method: string, params?: unknown) => {
+	return backendController.request(method, params);
 });

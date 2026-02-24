@@ -66,9 +66,6 @@ export default defineConfig({
 						if (id.includes('react') || id.includes('react-dom')) {
 							return 'vendor-react';
 						}
-						if (id.includes('@microsoft/signalr')) {
-							return 'vendor-signalr';
-						}
 						// Group other small dependencies into a single vendor chunk to avoid too many requests
 						return 'vendor';
 					}
@@ -86,7 +83,7 @@ export default defineConfig({
 	},
 	// Optimize dependencies
 	optimizeDeps: {
-		include: ['react', 'react-dom', '@microsoft/signalr'],
+		include: ['react', 'react-dom'],
 	},
 	test: {
 		environment: 'jsdom',

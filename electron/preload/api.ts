@@ -17,6 +17,8 @@ export interface UpdateState {
 }
 
 export interface ElectronAPI {
+	backendRequest: <TResult = unknown>(method: string, params?: unknown) => Promise<TResult>;
+	onBackendNotification: (handler: (payload: { method: string; params: unknown }) => void) => () => void;
 	openFile: (filters?: { name: string; extensions: string[] }[]) => Promise<string | undefined>;
 	openMultipleFiles: (
 		filters?: { name: string; extensions: string[] }[],
@@ -50,6 +52,14 @@ export interface ElectronAPI {
 
 export const createElectronAPI = (ipcRenderer: IpcRenderer): ElectronAPI => {
 	return {
+		backendRequest: (method, params) => ipcRenderer.invoke('backend:request', method, params),
+		onBackendNotification: (handler) => {
+			const listener = (_event: IpcRendererEvent, payload: unknown) => {
+				handler(payload as { method: string; params: unknown });
+			};
+			ipcRenderer.on('backend:notification', listener);
+			return () => ipcRenderer.removeListener('backend:notification', listener);
+		},
 		openFile: (filters) => ipcRenderer.invoke('dialog:openFile', filters),
 		openMultipleFiles: (filters) => ipcRenderer.invoke('dialog:openMultipleFiles', filters),
 		openFolder: () => ipcRenderer.invoke('dialog:openFolder'),

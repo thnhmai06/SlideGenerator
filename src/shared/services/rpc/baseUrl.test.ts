@@ -3,7 +3,7 @@ import {
 	DEFAULT_BACKEND_URL,
 	PENDING_BACKEND_URL_KEY,
 	PENDING_BACKEND_URL_SESSION_KEY,
-} from '@/shared/services/signalr/constants';
+} from '@/shared/services/rpc/constants';
 import { getBackendBaseUrl, normalizeBaseUrl } from './baseUrl';
 
 describe('normalizeBaseUrl', () => {

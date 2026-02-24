@@ -2,7 +2,7 @@ import React from 'react';
 import type { TemplateInputSectionProps } from '../types';
 
 export const TemplateInputSection: React.FC<TemplateInputSectionProps> = ({
-	pptxPath,
+	slidePath,
 	onChangePath,
 	onBrowse,
 	isLoadingShapes,
@@ -13,14 +13,14 @@ export const TemplateInputSection: React.FC<TemplateInputSectionProps> = ({
 	t,
 }) => (
 	<div className="input-section">
-		<label className="input-label">{t('createTask.pptxFile')}</label>
+		<label className="input-label">{t('createTask.slideFile')}</label>
 		<div className="input-group">
 			<input
 				type="text"
 				className="input-field"
-				value={pptxPath}
+				value={slidePath}
 				onChange={(e) => onChangePath(e.target.value)}
-				placeholder={t('createTask.pptxPlaceholder')}
+				placeholder={t('createTask.slidePlaceholder')}
 			/>
 			<button className="browse-btn" onClick={onBrowse} disabled={isLoadingShapes}>
 				{isLoadingShapes ? t('createTask.loadingShapes') : t('createTask.browse')}

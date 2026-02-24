@@ -60,7 +60,7 @@ vi.mock('@/shared/contexts/useJobs', () => ({
 	}),
 }));
 
-vi.mock('@/shared/services/signalrClient', () => ({
+vi.mock('@/shared/services/rpcClient', () => ({
 	getBackendBaseUrl: () => 'http://localhost:5000',
 }));
 

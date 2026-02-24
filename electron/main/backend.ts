@@ -3,6 +3,12 @@ import { spawn, ChildProcess } from 'child_process';
 import path from 'path';
 import fsSync from 'fs';
 import log from 'electron-log';
+import {
+	createMessageConnection,
+	StreamMessageReader,
+	StreamMessageWriter,
+	type MessageConnection,
+} from 'vscode-jsonrpc/node';
 
 interface BackendLaunch {
 	command: string;
@@ -38,13 +44,13 @@ const resolveBackendCommand = (): BackendLaunch | null => {
 
 	if (app.isPackaged) {
 		const backendRoot = path.join(process.resourcesPath, 'backend');
-		const exePath = path.join(backendRoot, 'SlideGenerator.Presentation.exe');
+		const exePath = path.join(backendRoot, 'SlideGenerator.Ipc.exe');
 
 		if (fsSync.existsSync(exePath)) {
 			return { command: exePath, args: [], cwd: backendRoot };
 		}
 
-		const dllPath = path.join(backendRoot, 'SlideGenerator.Presentation.dll');
+		const dllPath = path.join(backendRoot, 'SlideGenerator.Ipc.dll');
 		if (fsSync.existsSync(dllPath)) {
 			return { command: 'dotnet', args: [dllPath], cwd: backendRoot };
 		}
@@ -55,6 +61,8 @@ const resolveBackendCommand = (): BackendLaunch | null => {
 
 export const createBackendController = (backendLogPath: string) => {
 	let backendProcess: ChildProcess | null = null;
+	let connection: MessageConnection | null = null;
+	const notificationHandlers = new Set<(method: string, params: unknown) => void>();
 
 	const startBackend = () => {
 		if (!shouldStartBackend() || backendProcess) return;
@@ -64,7 +72,7 @@ export const createBackendController = (backendLogPath: string) => {
 		backendProcess = spawn(launch.command, launch.args, {
 			cwd: launch.cwd,
 			windowsHide: true,
-			stdio: 'ignore',
+			stdio: ['pipe', 'pipe', 'pipe'],
 			detached: false,
 			env: {
 				...process.env,
@@ -72,8 +80,44 @@ export const createBackendController = (backendLogPath: string) => {
 			},
 		});
 
+		if (!backendProcess.stdin || !backendProcess.stdout) {
+			log.error('Backend process missing stdin/stdout for JSON-RPC communication.');
+			backendProcess.kill();
+			backendProcess = null;
+			return;
+		}
+
+		if (backendProcess.stderr) {
+			backendProcess.stderr.on('data', (chunk: Buffer) => {
+				log.warn(`[backend] ${chunk.toString().trimEnd()}`);
+			});
+		}
+
+		connection = createMessageConnection(
+			new StreamMessageReader(backendProcess.stdout),
+			new StreamMessageWriter(backendProcess.stdin),
+		);
+
+		connection.onNotification((method: string, params: unknown) => {
+			notificationHandlers.forEach((handler) => {
+				try {
+					handler(method, params);
+				} catch (error) {
+					log.error('Backend notification handler error:', error);
+				}
+			});
+		});
+
+		connection.listen();
+
 		backendProcess.on('exit', (code) => {
 			log.info(`Backend process exited with code ${code}`);
+			try {
+				connection?.dispose();
+			} catch {
+				// no-op
+			}
+			connection = null;
 			backendProcess = null;
 		});
 	};
@@ -82,6 +126,12 @@ export const createBackendController = (backendLogPath: string) => {
 		if (!backendProcess) return;
 		const proc = backendProcess;
 		backendProcess = null;
+		try {
+			connection?.dispose();
+		} catch {
+			// no-op
+		}
+		connection = null;
 
 		return new Promise<void>((resolve) => {
 			const timeout = setTimeout(() => {
@@ -116,9 +166,30 @@ export const createBackendController = (backendLogPath: string) => {
 		return Boolean(backendProcess);
 	};
 
+	const request = async <TResult>(method: string, params?: unknown): Promise<TResult> => {
+		if (!backendProcess || !connection) {
+			startBackend();
+		}
+
+		if (!connection) {
+			throw new Error('Backend JSON-RPC connection is not available.');
+		}
+
+		return connection.sendRequest(method, params) as Promise<TResult>;
+	};
+
+	const onNotification = (handler: (method: string, params: unknown) => void) => {
+		notificationHandlers.add(handler);
+		return () => {
+			notificationHandlers.delete(handler);
+		};
+	};
+
 	return {
 		startBackend,
 		stopBackend,
 		restartBackend,
+		request,
+		onNotification,
 	};
 };

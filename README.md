@@ -34,6 +34,19 @@ npm run dev
 
 > **Note:** By default, Electron will attempt to launch the backend binary. To disable this behavior (e.g., when debugging the backend separately in Visual Studio), set the environment variable: `SLIDEGEN_DISABLE_BACKEND=1`.
 
+### Configure Backend Endpoint
+
+You can override backend endpoints via Vite env variables:
+
+```bash
+VITE_BACKEND_URL=http://127.0.0.1:65500
+VITE_SHEET_RPC_CHANNEL=sheets
+VITE_JOB_RPC_CHANNEL=jobs
+VITE_CONFIG_RPC_CHANNEL=config
+```
+
+Create `frontend/.env.local` for local development overrides.
+
 ## Project Structure
 
 The codebase is organized by feature:
