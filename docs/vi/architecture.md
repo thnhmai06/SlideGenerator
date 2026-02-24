@@ -46,23 +46,23 @@ graph TD
     - `FileSystem`: Các thao tác I/O (đọc/ghi file).
     - `Logging`: Tích hợp Serilog.
 
-### 4. Tầng Presentation (`SlideGenerator.Presentation`)
+### 4. Tầng Presentation (`SlideGenerator.Ipc`)
 **Điểm nhập.** Giao diện để người dùng tương tác với hệ thống.
 - **Phụ thuộc:** Application, Infrastructure.
 - **Thành phần:**
-    - `ASP.NET Core`: Cấu hình Web Host.
-    - `SignalR Hubs`: Các endpoint API thời gian thực (`JobHub`, `ConfigHub`).
+    - `StreamJsonRpc`: transport stdio JSON-RPC.
+    - `RpcEndpoint`: các nhóm API jobs/slides/excel/system.
     - `Program.cs`: Root (gốc) để cấu hình Dependency Injection (DI).
 
 ## Các thành phần Runtime chính
 
 ### Luồng thực thi Job
 
-1.  **Yêu cầu:** `TaskHub` nhận một yêu cầu `JobCreate` (JSON) từ client.
+1.  **Yêu cầu:** `RpcEndpoint` nhận yêu cầu JSON-RPC `jobs.create` từ client.
 2.  **Điều phối:** `JobManager` (Application) xác thực yêu cầu và tạo một `JobGroup` (Domain).
 3.  **Lưu trữ:** `ActiveJobCollection` ủy quyền cho `HangfireJobStateStore` (Infrastructure) để lưu trạng thái ban đầu.
 4.  **Thực thi:** `Hangfire` (Infrastructure) nhận job để xử lý.
 5.  **Xử lý:** `JobExecutor` (Application/Infrastructure) thực hiện việc tạo slide sử dụng Framework.
-6.  **Thông báo:** `JobNotifier` (Infrastructure) đẩy cập nhật trạng thái về client thông qua `SignalR`.
+6.  **Thông báo:** Backend phát sự kiện `jobs.updated` qua JSON-RPC.
 
-Tiếp theo: [SignalR API](signalr.md)
+Tiếp theo: [Stdio JSON-RPC API](../en/stdio-jsonrpc.md)

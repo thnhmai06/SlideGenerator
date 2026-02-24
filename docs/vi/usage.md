@@ -7,7 +7,7 @@ English version: [English](../en/usage.md)
 Từ thư mục `backend/`:
 
 ```
-dotnet run --project src/SlideGenerator.Presentation
+dotnet run --project src/SlideGenerator.Ipc
 ```
 
 ## Kiểm tra
@@ -17,13 +17,13 @@ dotnet run --project src/SlideGenerator.Presentation
 
 ## Kết nối từ client
 
-- Job hub: `/hubs/job` (alias: `/hubs/task`)
-- Sheet hub: `/hubs/sheet`
-- Config hub: `/hubs/config`
+- Transport: stdio JSON-RPC 2.0
+- Method chính: `jobs.create`, `jobs.get`, `jobs.list`, `jobs.pause`, `jobs.resume`, `jobs.cancel`
+- Method tiện ích: `slides.scan`, `excel.scan`, `system.health`
 
 ## Ví dụ nhanh
 
-Tạo group job:
+Tạo group job (`jobs.create` params):
 
 ```json
 {
@@ -36,21 +36,21 @@ Tạo group job:
 }
 ```
 
-Tạm dừng job:
+Tạm dừng job (`jobs.pause` params):
 
 ```json
-{ "type": "JobControl", "jobId": "TASK_ID", "jobType": "Group", "action": "Pause" }
+{ "jobId": "TASK_ID" }
 ```
 
-Xóa group (xóa cả backend state):
+Hủy group (`jobs.cancel` params):
 
 ```json
-{ "type": "JobControl", "jobId": "TASK_ID", "jobType": "Group", "action": "Remove" }
+{ "jobId": "TASK_ID" }
 ```
 
-Query job đang chạy:
+Lấy chi tiết job (`jobs.get` params):
 
 ```json
-{ "type": "JobQuery", "scope": "Active" }
+{ "jobId": "TASK_ID" }
 ```
 

@@ -1,6 +1,6 @@
 # SlideGenerator Backend
 
-The robust backend service that powers SlideGenerator, built with **ASP.NET Core 10** and **SignalR**. It handles slide generation logic, job management, and background processing with resilience and performance in mind.
+The robust backend service that powers SlideGenerator, built with **.NET 10** and **stdio JSON-RPC**. It handles slide generation logic, job management, and background processing with resilience and performance in mind.
 
 ## Table of Contents
 
@@ -10,7 +10,7 @@ The robust backend service that powers SlideGenerator, built with **ASP.NET Core
   - [Architecture](#architecture)
   - [Key Systems](#key-systems)
     - [Job System](#job-system)
-    - [SignalR API](#signalr-api)
+    - [Stdio JSON-RPC API](#stdio-json-rpc-api)
   - [Getting Started](#getting-started)
     - [Configuration](#configuration)
     - [Usage](#usage)
@@ -24,7 +24,7 @@ The robust backend service that powers SlideGenerator, built with **ASP.NET Core
 This directory contains the backend source code, structured as a Clean Architecture solution.
 
 - **Target Runtime:** .NET 10
-- **Host:** ASP.NET Core Web API + SignalR
+- **Host:** Console host + StreamJsonRpc over stdio
 - **Background Jobs:** Hangfire (Persistent job execution)
 - **Database:** SQLite (Job state storage)
 - **Architectural Pattern:** Clean Architecture (Domain, Application, Infrastructure, Presentation)
@@ -44,13 +44,13 @@ The heart of the application. It manages the lifecycle of slide generation tasks
 - **Features:** Parallel processing, Pause/Resume/Cancel capabilities, Crash recovery.
 - **Learn more:** [Job System Documentation](docs/en/job-system.md)
 
-### SignalR API
+### Stdio JSON-RPC API
 
-Real-time bi-directional communication with the Frontend.
+Bidirectional request/notification channel between Frontend and Backend.
 
-- **Protocol:** WebSocket (primary)
+- **Protocol:** JSON-RPC 2.0 over stdio
 - **Features:** Real-time progress updates, Job control commands, Configuration sync.
-- **Learn more:** [SignalR API Documentation](docs/en/signalr.md)
+- **Learn more:** [Stdio JSON-RPC API Documentation](docs/en/stdio-jsonrpc.md)
 
 ## Getting Started
 
