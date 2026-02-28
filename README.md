@@ -11,6 +11,8 @@
     <h5 align="center">Cross-platform, parallel-processing support, no Office required.</h5>
 </center>
 
+### VERSION 2 IS IN PROGRESS!!!
+
 ## Features
 
 - **Automated Slide Generation:** Instantly create PowerPoint presentations from Excel spreadsheets and PPTX templates.
