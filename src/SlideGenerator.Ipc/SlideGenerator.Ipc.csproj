@@ -8,27 +8,11 @@
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
 		<NoWarn>$(NoWarn);1591</NoWarn>
-		<EnableDefaultCompileItems>false</EnableDefaultCompileItems>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\SlideGenerator.Jobs\SlideGenerator.Jobs.csproj" />
-		<ProjectReference Include="..\SlideGenerator.Scanning\SlideGenerator.Scanning.csproj" />
-		<ProjectReference Include="..\SlideGenerator.Generating\SlideGenerator.Generating.csproj" />
-		<PackageReference Include="Elsa" Version="3.5.3" />
-		<PackageReference Include="Elsa.EntityFrameworkCore" Version="3.5.3" />
-		<PackageReference Include="Elsa.EntityFrameworkCore.Sqlite" Version="3.5.3" />
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.11" />
-		<PackageReference Include="StreamJsonRpc" Version="2.21.69" />
+		<ProjectReference Include="..\SlideGenerator.Services\SlideGenerator.Services.csproj" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.3" />
+		<PackageReference Include="StreamJsonRpc" Version="2.24.84" />
 	</ItemGroup>
-
-	<ItemGroup>
-		<Compile Include="*.cs" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<Compile Include="Contracts\**\*.cs" />
-		<Compile Include="Endpoints\**\*.cs" />
-	</ItemGroup>
-
 </Project>

@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<NoWarn>$(NoWarn);1591</NoWarn>
+		<PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\SlideGenerator.Framework\SlideGenerator.Framework.csproj" />
+		<ProjectReference Include="..\SlideGenerator.Features\SlideGenerator.Features.csproj" />
+	</ItemGroup>
+	<ItemGroup Condition="'$(RuntimeIdentifier)'=='win-x64'">
+		<PackageReference Include="Emgu.CV.runtime.windows" Version="4.12.0.5764" />
+	</ItemGroup>
+	<ItemGroup Condition="'$(RuntimeIdentifier)'=='linux-x64'">
+		<PackageReference Include="Emgu.CV.runtime.ubuntu-x64" Version="4.12.0.5764" />
+	</ItemGroup>
+
+</Project>
