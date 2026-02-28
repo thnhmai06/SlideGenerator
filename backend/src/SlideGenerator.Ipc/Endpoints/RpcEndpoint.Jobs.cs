@@ -1,6 +1,6 @@
-using SlideGenerator.Generating.Models;
+using SlideGenerator.Features.Jobs.Entities.Jobs;
 using SlideGenerator.Ipc.Contracts.Requests;
-using SlideGenerator.Jobs.Entities.Jobs;
+using SlideGenerator.Services.Generating.Models;
 using StreamJsonRpc;
 
 namespace SlideGenerator.Ipc.Endpoints;
@@ -8,7 +8,7 @@ namespace SlideGenerator.Ipc.Endpoints;
 public sealed partial class RpcEndpoint
 {
     [JsonRpcMethod("jobs.create")]
-    public async Task<object> CreateJobAsync(GenerateSlidesRequest request, CancellationToken cancellationToken)
+    public async Task<object> CreateJobAsync(SlidesGenerateRequest request, CancellationToken cancellationToken)
     {
         if (request == null)
             throw new ArgumentException("jobs.create params is invalid", nameof(request));

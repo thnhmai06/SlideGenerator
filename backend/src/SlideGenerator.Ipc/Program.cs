@@ -1,15 +1,17 @@
-using Microsoft.Extensions.DependencyInjection;
-using Elsa.Extensions;
 using Elsa.EntityFrameworkCore.Extensions;
 using Elsa.EntityFrameworkCore.Modules.Management;
 using Elsa.EntityFrameworkCore.Modules.Runtime;
-using StreamJsonRpc;
-using SlideGenerator.Configs.Contracts;
-using SlideGenerator.Configs.Entities;
-using SlideGenerator.Configs.Services;
-using SlideGenerator.Generating.Services;
+using Elsa.Extensions;
+using Microsoft.Extensions.DependencyInjection;
 using SlideGenerator.Ipc.Endpoints;
-using SlideGenerator.Jobs;
+using SlideGenerator.Features.Configs.Contracts;
+using SlideGenerator.Features.Configs.Entities;
+using SlideGenerator.Features.Configs.Services;
+using SlideGenerator.Features.Jobs;
+using SlideGenerator.Framework.Image.Services;
+using SlideGenerator.Services;
+using SlideGenerator.Services.Generating.Services;
+using StreamJsonRpc;
 
 namespace SlideGenerator.Ipc;
 

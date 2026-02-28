@@ -1,6 +1,6 @@
-using SlideGenerator.Jobs;
-using SlideGenerator.Jobs.Entities.Jobs;
-using SlideGenerator.Configs.Services;
+using SlideGenerator.Features.Configs.Services;
+using SlideGenerator.Features.Jobs.Entities.Jobs;
+using SlideGenerator.Services;
 using JsonRpcConnection = StreamJsonRpc.JsonRpc;
 
 namespace SlideGenerator.Ipc.Endpoints;

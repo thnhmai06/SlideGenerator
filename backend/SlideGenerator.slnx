@@ -1,8 +1,6 @@
 <Solution>
-  <Project Path="src/SlideGenerator.Configs/SlideGenerator.Configs.csproj" />
+  <Project Path="src/SlideGenerator.Services/SlideGenerator.Services.csproj" Id="f93b09d2-d84d-4053-ad70-33ae926179d8" />
+  <Project Path="src/SlideGenerator.Features/SlideGenerator.Features.csproj" Id="6f61d8c7-c91b-4fc5-a43b-c09b0c4ddbaf" />
   <Project Path="src/SlideGenerator.Framework/SlideGenerator.Framework.csproj" />
-  <Project Path="src/SlideGenerator.Jobs/SlideGenerator.Jobs.csproj" />
-  <Project Path="src/SlideGenerator.Generating/SlideGenerator.Generating.csproj" />
   <Project Path="src/SlideGenerator.Ipc/SlideGenerator.Ipc.csproj" Id="ae13f840-eb10-4ab4-adcc-ccd9d25c0426" />
-  <Project Path="src/SlideGenerator.Scanning/SlideGenerator.Scanning.csproj" />
 </Solution>

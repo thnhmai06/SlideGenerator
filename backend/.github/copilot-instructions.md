@@ -30,29 +30,32 @@
 
 ## Project-Specific Rules
 - Keep architecture boundaries strict:
-	- `Framework`: reusable low-level features, no app orchestration.
-	- `Generating`: runtime orchestration services for generation flow.
-	- `Jobs`: workflow and persistence orchestration.
-	- `Scanning`: slide/sheet metadata scanning.
+	- `Framework`: reusable low-level features (slide/sheet/image/cloud services), no app orchestration. Can be published as NuGet.
+	- `Features`: domain entities/models (Configs, Jobs orchestration with persistence/workflow, Slides/Sheets domain models).
+	- `Services`: application services (ScanService, GenerateService, DownloadService, FaceDetectorModelManager, ValidationService).
 	- `Ipc`: JSON-RPC transport adapter.
-	- `Configs`: configuration contracts/entities/services only.
-- Configuration access for non-`Configs` projects currently uses `IConfigProvider` mapping from singleton `ConfigManager`.
+- Configuration access for non-`Features` projects currently uses `IConfigProvider` mapping from singleton `ConfigManager` (in `Features.Configs`).
 	- Register `ConfigManager` once in DI and map provider interfaces from it.
 	- Avoid passing raw `Config` as root dependency unless taking a runtime snapshot in an internal service.
 - Prefer Dependency Injection from `Program.cs` (`Microsoft.Extensions.DependencyInjection`).
 	- Avoid manual `new` for service wiring in constructors.
 - Face detection lifecycle contract:
-	- Model initialization ownership is in `FaceDetectorModelManager`.
+	- Model initialization ownership is in `FaceDetectorModelManager` (in `Services`).
 	- In `Framework`, `DetectAsync` must throw when model is not initialized.
 	- `Framework` returns all detections; score filtering is handled by caller/business layer.
 - Download behavior:
-	- Use `DownloadService` (Downloader library) for remote downloads in Generate flow.
+	- Use `DownloadService` (in `Services.Generating`, uses Downloader library) for remote downloads in Generate flow.
 	- Avoid direct ad-hoc `HttpClient` download logic in generation pipeline.
 - IPC endpoint structure:
-	- Keep request DTO in `SlideGenerator.Ipc/Contracts/Requests`.
-	- Keep RPC handlers in partial `RpcEndpoint.*.cs` files and call `BackendService` for orchestration.
+	- Keep request DTO in `Services.Generating.Models` (for GenerateSlidesRequest) or `SlideGenerator.Ipc/Contracts/Requests`.
+	- Keep RPC handlers in partial `RpcEndpoint.*.cs` files and call `BackendService` (in `Features.Jobs`) for orchestration.
 - Framework reuse:
-	- If logic already exists in `Framework` services, use it instead of duplicating logic in `Scanning`, `Generating`, or `Jobs`.
+	- If logic already exists in `Framework` services, use it instead of duplicating logic in `Services` or `Features`.
 - Data shape conventions:
-	- Use `Entities` for domain/runtime entities.
-	- Use `Models` for supporting option/value model types.
+	- Use `Entities` for domain/runtime entities (in `Features`).
+	- Use `Models` for supporting option/value model types (in `Features` or `Services`).
+- **Current architecture**: Solution organized into 4 projects:
+	- `Framework` (low-level reusable library)
+	- `Features` (domain entities, Jobs, Configs, domain models)
+	- `Services` (application services for scan/generate/download/validation)
+	- `Ipc` (JSON-RPC transport layer)
