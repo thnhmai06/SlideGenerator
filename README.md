@@ -33,7 +33,7 @@ This directory contains the backend source code, structured as a Clean Architect
 
 The backend is designed to be modular and testable. It strictly separates concerns between the core domain logic and external infrastructure.
 
-👉 **Deep Dive:** [Architecture Documentation](docs/en/architecture.md)
+👉 **Deep Dive:** [Architecture Documentation](Documents/en/architecture.md)
 
 ## Key Systems
 
@@ -42,7 +42,7 @@ The backend is designed to be modular and testable. It strictly separates concer
 The heart of the application. It manages the lifecycle of slide generation tasks, from parsing Excel files to rendering PowerPoint slides.
 
 - **Features:** Parallel processing, Pause/Resume/Cancel capabilities, Crash recovery.
-- **Learn more:** [Job System Documentation](docs/en/job-system.md)
+- **Learn more:** [Job System Documentation](Documents/en/job-system.md)
 
 ### Stdio JSON-RPC API
 
@@ -50,7 +50,7 @@ Bidirectional request/notification channel between Frontend and Backend.
 
 - **Protocol:** JSON-RPC 2.0 over stdio
 - **Features:** Real-time progress updates, Job control commands, Configuration sync.
-- **Learn more:** [Stdio JSON-RPC API Documentation](docs/en/stdio-jsonrpc.md)
+- **Learn more:** [Stdio JSON-RPC API Documentation](Documents/en/stdio-jsonrpc.md)
 
 ## Getting Started
 
@@ -58,13 +58,13 @@ Bidirectional request/notification channel between Frontend and Backend.
 
 Customize server settings, job concurrency limits, and image processing parameters.
 
-- **Guide:** [Configuration Guide](docs/en/configuration.md)
+- **Guide:** [Configuration Guide](Documents/en/configuration.md)
 
 ### Usage
 
 How to run, interact, and troubleshoot the backend service.
 
-- **Guide:** [Usage Guide](docs/en/usage.md)
+- **Guide:** [Usage Guide](Documents/en/usage.md)
 
 ## Development Guide
 
@@ -72,20 +72,20 @@ How to run, interact, and troubleshoot the backend service.
 
 Setup your environment, run the server locally, and run tests.
 
-- **Guide:** [Development Guide](docs/en/development.md)
+- **Guide:** [Development Guide](Documents/en/development.md)
 
 ### Deployment
 
 How to publish and deploy the backend for production (Windows/Linux).
 
-- **Guide:** [Deployment Guide](docs/en/deployment.md)
+- **Guide:** [Deployment Guide](Documents/en/deployment.md)
 
 ## Framework Library
 
 The core logic for slide manipulation is abstracted into a reusable framework.
 
-- **Repository:** [SlideGenerator.Framework](../src/SlideGenerator.Framework/README.md)
+- **Repository:** [SlideGenerator.Framework](../SlideGenerator.Framework/README.md)
 
 ---
 
-[🇻🇳 Vietnamese Documentation](docs/vi)
+[🇻🇳 Vietnamese Documentation](Documents/vi)
