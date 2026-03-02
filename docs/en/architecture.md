@@ -4,7 +4,7 @@
 
 ## Overview
 
-The backend is organized in a **feature-based** style for simpler ownership and faster iteration.  
+The backend is organized in a **feature-based** style for simpler ownership and faster iteration.
 Instead of enforcing strict clean-architecture rings, each project owns one runtime feature while reusing shared contracts from `SlideGenerator.Application` and domain models from `SlideGenerator.Domain`.
 
 ## Project Layout

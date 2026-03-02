@@ -3,12 +3,13 @@ using ClosedXML.Excel;
 using DocumentFormat.OpenXml.Packaging;
 using ImageMagick;
 using SlideGenerator.Features.Configs.Contracts;
-using SlideGenerator.Framework.Image.Factory;
-using SlideGenerator.Framework.Image.Models.FaceDetection;
-using SlideGenerator.Framework.Image.Models.Roi;
-using SlideGenerator.Framework.Image.Services;
-using SlideGenerator.Framework.Sheet.Services;
-using SlideGenerator.Framework.Slide.Services;
+using SlideGenerator.Framework.Features.Image.Contracts;
+using SlideGenerator.Framework.Features.Image.Models.Roi;
+using SlideGenerator.Framework.Features.Image.Services;
+using SlideGenerator.Framework.Features.Sheet.Services;
+using SlideGenerator.Framework.Features.Slide.Services;
+using SlideGenerator.Framework.Features.Slide.Services.Presentation;
+using SlideGenerator.Framework.Features.Slide.Services.Replacer;
 using SlideGenerator.Services.Generating.Models.Configs;
 
 namespace SlideGenerator.Services.Generating.Services;
@@ -21,11 +22,11 @@ namespace SlideGenerator.Services.Generating.Services;
 /// <remarks>
 ///     Initializes runtime dependencies used for generation.
 /// </remarks>
-/// <param name="faceDetectorManager">Face detector manager.</param>
+/// <param name="faceDetectorProvider">Face detector model provider.</param>
 /// <param name="downloadService">Download service.</param>
 /// <param name="configProvider">Read-only configuration manager.</param>
 public sealed class GenerateService(
-    FaceDetectorModelManager faceDetectorManager,
+    IFaceDetectorModelProvider faceDetectorProvider,
     DownloadService downloadService,
     IConfigProvider configProvider) : IAsyncDisposable
 {
@@ -40,43 +41,16 @@ public sealed class GenerateService(
     private readonly DownloadService _downloadService = downloadService;
 
     /// <summary>
-    ///     Face detector manager used to select and control detector model lifecycle.
+    ///     Face detector model provider used to get current model instance.
     /// </summary>
-    private readonly FaceDetectorModelManager _faceDetectorManager = faceDetectorManager;
+    private readonly IFaceDetectorModelProvider _faceDetectorProvider = faceDetectorProvider;
 
     /// <summary>
     ///     Disposes runtime resources allocated for generation.
     /// </summary>
     public ValueTask DisposeAsync()
     {
-        return _faceDetectorManager.DisposeAsync();
-    }
-
-    /// <summary>
-    ///     Initializes face detector model by key.
-    /// </summary>
-    /// <param name="modelKey">Model key to initialize.</param>
-    public Task<bool> InitializeFaceDetectorAsync(FaceDetectorModelKey modelKey)
-    {
-        return _faceDetectorManager.InitializeAsync(modelKey);
-    }
-
-    /// <summary>
-    ///     De-initializes face detector model by key.
-    /// </summary>
-    /// <param name="modelKey">Model key to de-initialize.</param>
-    public Task<bool> DeInitializeFaceDetectorAsync(FaceDetectorModelKey modelKey)
-    {
-        return _faceDetectorManager.DeInitializeAsync(modelKey);
-    }
-
-    /// <summary>
-    ///     Selects a face detector model manually.
-    /// </summary>
-    public Task SelectFaceDetectorModelAsync(FaceDetectorModelKey modelKey)
-    {
-        _faceDetectorManager.SelectModel(modelKey);
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
     /// <summary>
@@ -180,22 +154,9 @@ public sealed class GenerateService(
 
         try
         {
-            var roiOptions = ;
-            var roiFactory = new RoiFactory { Options = roiOptions };
-            if (roiType == RoiType.RuleOfThirds)
-            {
-                var faceDetector = await _faceDetectorManager
-                    .GetCurrentModelAsync()
-                    .ConfigureAwait(false);
+            // RuleOfThirds requires face detector provider
+            var calculator = await roiType.GetCalculator(_faceDetectorProvider).ConfigureAwait(false);
 
-                roiFactory = new RoiFactory
-                {
-                    Options = roiOptions,
-                    FaceDetector = faceDetector
-                };
-            }
-
-            var calculator = roiFactory.GetCalculator(roiType);
             var cropRect = await calculator.CalculateRoiAsync(mat, targetSize).ConfigureAwait(false);
             ManipulatingService.Crop(ref mat, cropRect);
             ManipulatingService.Resize(ref mat, targetSize);

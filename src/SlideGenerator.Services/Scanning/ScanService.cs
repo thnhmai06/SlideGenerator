@@ -1,5 +1,7 @@
-using SlideGenerator.Framework.Sheet.Services;
-using SlideGenerator.Framework.Slide.Services;
+using SlideGenerator.Framework.Features.Sheet.Services;
+using SlideGenerator.Framework.Features.Slide.Services;
+using SlideGenerator.Framework.Features.Slide.Services.Presentation;
+using SlideGenerator.Framework.Features.Slide.Services.Replacer;
 using SlideGenerator.Services.Scanning.Models.Sheets;
 using SlideGenerator.Services.Scanning.Models.Slides;
 
