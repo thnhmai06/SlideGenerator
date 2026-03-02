@@ -16,7 +16,6 @@ using SlideGenerator.Services.Scanning;
 using SlideGenerator.Services.Scanning.Models.Sheets;
 using SlideGenerator.Services.Scanning.Models.Slides;
 
-
 #pragma warning disable CS8602
 
 namespace SlideGenerator.Services;

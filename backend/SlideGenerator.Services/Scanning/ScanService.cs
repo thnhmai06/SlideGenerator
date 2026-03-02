@@ -8,7 +8,7 @@ using SlideGenerator.Services.Scanning.Models.Slides;
 namespace SlideGenerator.Services.Scanning;
 
 /// <remarks>
-/// Reviewed by @thnhmai06 at 01/03/2026 00:36:09 GMT+7
+///     Reviewed by @thnhmai06 at 01/03/2026 00:36:09 GMT+7
 /// </remarks>
 public sealed class ScanService
 {

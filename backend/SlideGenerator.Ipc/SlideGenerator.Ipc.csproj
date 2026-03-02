@@ -1,20 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-	<PropertyGroup>
-		<TargetFramework>net10.0</TargetFramework>
-		<Nullable>enable</Nullable>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<OutputType>Exe</OutputType>
-		<GenerateDocumentationFile>true</GenerateDocumentationFile>
-		<PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
-		<NoWarn>$(NoWarn);1591</NoWarn>
-	</PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <OutputType>Exe</OutputType>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
+        <NoWarn>$(NoWarn);1591</NoWarn>
+    </PropertyGroup>
 
-	<ItemGroup>
-		<ProjectReference Include="..\SlideGenerator.Services\SlideGenerator.Services.csproj" />
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.3" />
-		<PackageReference Include="StreamJsonRpc" Version="2.24.84" />
-	</ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\SlideGenerator.Services\SlideGenerator.Services.csproj"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.3"/>
+        <PackageReference Include="StreamJsonRpc" Version="2.24.84"/>
+    </ItemGroup>
 
     <ItemGroup
             Condition=" ('$(RuntimeIdentifier)' == '' And $([MSBuild]::IsOSPlatform('Windows'))) Or $(RuntimeIdentifier.StartsWith('win')) ">

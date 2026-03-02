@@ -6,7 +6,7 @@ using YamlDotNet.Serialization.NamingConventions;
 namespace SlideGenerator.Features.Configs.Services;
 
 /// <remarks>
-/// Reviewed by @thnhmai06 at 01/03/2026 00:43:30 GMT+7
+///     Reviewed by @thnhmai06 at 01/03/2026 00:43:30 GMT+7
 /// </remarks>
 public sealed class ConfigManager : IConfigProvider
 {
