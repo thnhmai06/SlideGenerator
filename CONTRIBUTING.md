@@ -98,7 +98,7 @@ git pull
 3. **Via CLI:**
    ```bash
    cd backend
-   dotnet run --project src/SlideGenerator.Ipc
+   dotnet run --project SlideGenerator.Ipc
    ```
 
 #### Frontend

@@ -31,18 +31,33 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
+      - name: Detect backend tests
+        id: detect-backend-tests
+        shell: pwsh
+        run: |
+          $hasTests = (Get-ChildItem -Path backend -Recurse -Include *.Tests.csproj,*.UnitTests.csproj,*.IntegrationTests.csproj -ErrorAction SilentlyContinue | Select-Object -First 1) -ne $null
+          if (-not $hasTests) {
+            $hasTests = (Get-ChildItem -Path backend -Recurse -Filter *Test*.cs -ErrorAction SilentlyContinue | Select-Object -First 1) -ne $null
+          }
+          "has_tests=$($hasTests.ToString().ToLower())" >> $env:GITHUB_OUTPUT
+
       - name: Run Backend Tests
+        if: steps.detect-backend-tests.outputs.has_tests == 'true'
         run: task test:backend
 
+      - name: Skip backend tests (none found)
+        if: steps.detect-backend-tests.outputs.has_tests == 'false'
+        run: echo "No backend tests found. Skipping backend test steps."
+
       - name: Upload backend test results
-        if: always()
+        if: always() && steps.detect-backend-tests.outputs.has_tests == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: backend-test-results
           path: backend/TestResults/*.trx
       
       - name: Publish backend test report
-        if: always()
+        if: always() && steps.detect-backend-tests.outputs.has_tests == 'true'
         uses: dorny/test-reporter@v1
         with:
           name: Backend Tests
@@ -71,18 +86,33 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
+      - name: Detect frontend tests
+        id: detect-frontend-tests
+        shell: bash
+        run: |
+          if find frontend -type f \( -name "*.test.*" -o -name "*.spec.*" \) | grep -q .; then
+            echo "has_tests=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_tests=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Run Frontend Tests
+        if: steps.detect-frontend-tests.outputs.has_tests == 'true'
         run: task test:frontend
 
+      - name: Skip frontend tests (none found)
+        if: steps.detect-frontend-tests.outputs.has_tests == 'false'
+        run: echo "No frontend tests found. Skipping frontend test steps."
+
       - name: Upload frontend test results
-        if: always()
+        if: always() && steps.detect-frontend-tests.outputs.has_tests == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: frontend-test-results
           path: frontend/test-results/junit.xml
       
       - name: Publish frontend test report
-        if: always()
+        if: always() && steps.detect-frontend-tests.outputs.has_tests == 'true'
         uses: dorny/test-reporter@v1
         with:
           name: Frontend Tests

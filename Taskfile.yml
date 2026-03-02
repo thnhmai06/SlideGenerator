@@ -3,7 +3,7 @@ version: '3'
 vars:
   RUNTIME: '{{default "win-x64" .RUNTIME}}'
   BACKEND_BUILD_DIR: 'frontend/backend'
-  BACKEND_PROJECT: 'backend/src/SlideGenerator.Ipc/SlideGenerator.Ipc.csproj'
+  BACKEND_PROJECT: 'backend/SlideGenerator.Ipc/SlideGenerator.Ipc.csproj'
   BACKEND_SOLUTION: 'backend/SlideGenerator.slnx'
 
 tasks:
