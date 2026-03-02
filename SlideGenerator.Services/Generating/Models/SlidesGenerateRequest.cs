@@ -12,7 +12,7 @@ namespace SlideGenerator.Services.Generating.Models;
 /// <param name="ImageConfigs">Image replacement bindings.</param>
 /// <param name="SaveFolder">Save folder for generated presentations.</param>
 /// <remarks>
-/// Reviewed by @thnhmai06 at 01/03/2026 00:58:42 GMT+7
+///     Reviewed by @thnhmai06 at 01/03/2026 00:58:42 GMT+7
 /// </remarks>
 public sealed record SlidesGenerateRequest(
     BookInfo Book,

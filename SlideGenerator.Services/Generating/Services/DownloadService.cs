@@ -8,7 +8,7 @@ namespace SlideGenerator.Services.Generating.Services;
 ///     Downloads remote files service.
 /// </summary>
 /// <remarks>
-/// Reviewed by @thnhmai06 at 01/03/2026 00:32:20 GMT+7
+///     Reviewed by @thnhmai06 at 01/03/2026 00:32:20 GMT+7
 /// </remarks>
 public sealed class DownloadService
 {
@@ -33,8 +33,8 @@ public sealed class DownloadService
     /// <returns>Downloaded bytes.</returns>
     /// <exception cref="InvalidOperationException">The URI is not qualified by check function.</exception>
     public async Task<byte[]> DownloadAsync(
-        Uri uri, CancellationToken cancellationToken, 
-        string? fileName = null, 
+        Uri uri, CancellationToken cancellationToken,
+        string? fileName = null,
         Func<Uri, HttpClient, Task<bool>>? checkFunc = null)
     {
         var config = _configProvider.Current;
@@ -60,7 +60,7 @@ public sealed class DownloadService
             ChunkCount = Math.Max(1, config.Download.MaxChunks),
             MaximumBytesPerSecond = Math.Max(0, config.Download.LimitBytesPerSecond),
             MaxTryAgainOnFailure = Math.Max(0, config.Download.Retry.MaxRetries),
-            Timeout = Math.Max(1, config.Download.Retry.Timeout * 1000),
+            HttpClientTimeout = Math.Max(1, config.Download.Retry.Timeout * 1000),
             RequestConfiguration = { Proxy = proxy }
         };
 
@@ -72,10 +72,7 @@ public sealed class DownloadService
             var ext = Path.GetExtension(e.FileName);
             fileFullName = string.IsNullOrEmpty(fileName) ? e.FileName : fileName + ext;
         };
-        downloader.DownloadFileCompleted += (_, _) =>
-        {
-            filePath = Path.Combine(saveFolder.FullName, fileFullName);
-        };
+        downloader.DownloadFileCompleted += (_, _) => { filePath = Path.Combine(saveFolder.FullName, fileFullName); };
         await downloader.DownloadFileTaskAsync(url, tempFilePath, cancellationToken)
             .ConfigureAwait(false);
         if (File.Exists(tempFilePath))
@@ -89,7 +86,6 @@ public sealed class DownloadService
         finally
         {
             if (config.Download.DeleteAfterDownload && File.Exists(filePath))
-            {
                 try
                 {
                     File.Delete(filePath);
@@ -98,14 +94,13 @@ public sealed class DownloadService
                 {
                     // ignored
                 }
-            }
         }
     }
 
     public static async Task<bool> IsImageDownloadUri(Uri uri, HttpClient httpClient)
     {
         var response = await httpClient.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead);
-        return response.IsSuccessStatusCode 
+        return response.IsSuccessStatusCode
                && response.Content.Headers.ContentType?.MediaType?.StartsWith("image/") == true;
     }
 }
