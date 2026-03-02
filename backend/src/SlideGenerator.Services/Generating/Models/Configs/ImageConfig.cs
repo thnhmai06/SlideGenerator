@@ -1,4 +1,4 @@
-using SlideGenerator.Framework.Image.Models.Roi;
+using SlideGenerator.Framework.Features.Image.Models.Roi;
 using SlideGenerator.Services.Generating.Models.Info;
 
 namespace SlideGenerator.Services.Generating.Models.Configs;

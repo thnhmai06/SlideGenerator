@@ -1,6 +1,6 @@
 using Downloader;
 using SlideGenerator.Features.Configs.Contracts;
-using SlideGenerator.Framework.Cloud.Services;
+using SlideGenerator.Framework.Features.Cloud.Services;
 
 namespace SlideGenerator.Services.Generating.Services;
 

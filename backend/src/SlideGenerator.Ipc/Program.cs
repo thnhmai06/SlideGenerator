@@ -8,7 +8,8 @@ using SlideGenerator.Features.Configs.Contracts;
 using SlideGenerator.Features.Configs.Entities;
 using SlideGenerator.Features.Configs.Services;
 using SlideGenerator.Features.Jobs;
-using SlideGenerator.Framework.Image.Services;
+using SlideGenerator.Framework.Features.Image.Contracts;
+using SlideGenerator.Framework.Features.Image.Services;
 using SlideGenerator.Services;
 using SlideGenerator.Services.Generating.Services;
 using StreamJsonRpc;
@@ -58,7 +59,10 @@ public static class Program
             serviceProvider.GetRequiredService<ConfigManager>());
         services.AddSingleton<JobSnapshotWorkflowDispatcher>();
         services.AddSingleton<DownloadService>();
+        services.AddSingleton<IFaceDetectorModelFactory, IFaceDetectorModelFactory>();
         services.AddSingleton<FaceDetectorModelManager>();
+        services.AddSingleton<IFaceDetectorModelProvider>(serviceProvider =>
+            serviceProvider.GetRequiredService<FaceDetectorModelManager>());
         services.AddSingleton<GenerateService>();
         services.AddSingleton<BackendService>();
         services.AddSingleton<RpcEndpoint>();
