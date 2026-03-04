@@ -20,4 +20,3 @@ public enum TaskControl
     /// </summary>
     Cancel
 }
-

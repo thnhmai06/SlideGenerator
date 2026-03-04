@@ -2,9 +2,11 @@
 
 namespace SlideGenerator.Domain.Download.Services;
 
-/// Review by @thnhmai06 at 04/03/2026 22:01:09 GMT+7 
+/// Review by @thnhmai06 at 04/03/2026 22:01:09 GMT+7
 public static class ResolveService
 {
+    public static Func<Uri, HttpClient, Task<bool>> CheckImageUriFunc => CheckImageUri;
+
     /// <summary>
     ///     Resolves a remote URI and validates it with optional check function.
     /// </summary>
@@ -23,9 +25,7 @@ public static class ResolveService
             throw new InvalidOperationException($"The URI {uri} is not qualified check function.");
         return uri;
     }
-    
-    public static Func<Uri, HttpClient, Task<bool>> CheckImageUriFunc => CheckImageUri;
-    
+
     private static async Task<bool> CheckImageUri(Uri uri, HttpClient httpClient)
     {
         var response = await httpClient.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead);

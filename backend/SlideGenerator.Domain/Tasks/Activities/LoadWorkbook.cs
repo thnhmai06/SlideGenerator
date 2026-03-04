@@ -23,27 +23,27 @@ namespace SlideGenerator.Domain.Tasks.Activities;
 ///         </item>
 ///         <item>
 ///             <description>
-///                 <strong>Open Workbook:</strong> Calls <see cref="WorkbookService.OpenWorkbook"/> to open 
+///                 <strong>Open Workbook:</strong> Calls <see cref="WorkbookService.OpenWorkbook" /> to open
 ///                 the Excel file in read-only mode. Supports both .xlsx and other Excel formats.
 ///             </description>
 ///         </item>
 ///         <item>
 ///             <description>
-///                 <strong>Build Worksheet Dictionary:</strong> Iterates through the SelectedSheets list 
-///                 and retrieves each worksheet from the workbook. Creates a dictionary mapping sheet names 
+///                 <strong>Build Worksheet Dictionary:</strong> Iterates through the SelectedSheets list
+///                 and retrieves each worksheet from the workbook. Creates a dictionary mapping sheet names
 ///                 to IXLWorksheet instances.
 ///             </description>
 ///         </item>
 ///         <item>
 ///             <description>
-///                 <strong>Store in TransientProperties:</strong> Stores both the Workbook instance and 
+///                 <strong>Store in TransientProperties:</strong> Stores both the Workbook instance and
 ///                 Worksheets dictionary in workflow context's TransientProperties for use by downstream tasks.
 ///             </description>
 ///         </item>
 ///     </list>
 ///     <para>
-///         The Workbook instance is not persisted to workflow state - it exists only in runtime memory 
-///         (TransientProperties) to avoid serialization issues with large Excel objects. Downstream tasks 
+///         The Workbook instance is not persisted to workflow state - it exists only in runtime memory
+///         (TransientProperties) to avoid serialization issues with large Excel objects. Downstream tasks
 ///         can retrieve these objects from the same TransientProperties.
 ///     </para>
 /// </remarks>
@@ -83,10 +83,8 @@ public sealed class LoadWorkbook : WorkflowBase
             // Step 4: Build worksheet dictionary by iterating selected sheets
             var worksheetDict = new Dictionary<string, IXLWorksheet>();
             foreach (var sheetName in selectedSheets)
-            {
                 if (workbook.Worksheets.TryGetWorksheet(sheetName, out var worksheet))
                     worksheetDict[sheetName] = worksheet;
-            }
 
             // Step 5: Store in TransientProperties (not persisted to state)
             context.WorkflowExecutionContext.TransientProperties["WorkbookFs"] = fs;
