@@ -1,6 +1,5 @@
-using SlideGenerator.Features.Configs.Services;
-using SlideGenerator.Features.Jobs.Entities.Jobs;
-using SlideGenerator.Services;
+using SlideGenerator.Application;
+using SlideGenerator.Domain.Configs.Services;
 using JsonRpcConnection = StreamJsonRpc.JsonRpc;
 
 namespace SlideGenerator.Ipc.Endpoints;
@@ -28,7 +27,7 @@ public sealed partial class RpcEndpoint : IDisposable
         _rpc = rpc;
     }
 
-    private void HandleJobUpdated(JobSnapshotEntity snapshot)
+    private void HandleJobUpdated(JobSnapshot snapshot)
     {
         var rpc = _rpc;
         if (rpc == null) return;

@@ -1,6 +1,5 @@
-using SlideGenerator.Features.Jobs.Entities.Jobs;
 using SlideGenerator.Ipc.Contracts.Requests;
-using SlideGenerator.Services.Generating.Models;
+using SlideGenerator.Domain.Tasks.Models;
 using StreamJsonRpc;
 
 namespace SlideGenerator.Ipc.Endpoints;
@@ -8,7 +7,7 @@ namespace SlideGenerator.Ipc.Endpoints;
 public sealed partial class RpcEndpoint
 {
     [JsonRpcMethod("jobs.create")]
-    public async Task<object> CreateJobAsync(SlidesGenerateRequest request, CancellationToken cancellationToken)
+    public async Task<object> CreateJobAsync(GenerateRequest request, CancellationToken cancellationToken)
     {
         if (request == null)
             throw new ArgumentException("jobs.create params is invalid", nameof(request));
@@ -18,7 +17,7 @@ public sealed partial class RpcEndpoint
     }
 
     [JsonRpcMethod("jobs.get")]
-    public async Task<JobSnapshotEntity?> GetJobAsync(JobIdRequest request, CancellationToken cancellationToken)
+    public async Task<JobSnapshot?> GetJobAsync(JobIdRequest request, CancellationToken cancellationToken)
     {
         if (request == null)
             throw new ArgumentException("params.jobId is required", nameof(request));
@@ -27,7 +26,7 @@ public sealed partial class RpcEndpoint
     }
 
     [JsonRpcMethod("jobs.list")]
-    public async Task<IReadOnlyList<JobSnapshotEntity>> ListJobsAsync(CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<JobSnapshot>> ListJobsAsync(CancellationToken cancellationToken)
     {
         return await _backendService.ListJobsAsync(cancellationToken);
     }
@@ -35,25 +34,25 @@ public sealed partial class RpcEndpoint
     [JsonRpcMethod("jobs.pause")]
     public async Task<object> PauseJobAsync(JobIdRequest request, CancellationToken cancellationToken)
     {
-        await ControlJobAsync(request, JobControlEntity.Pause, cancellationToken);
+        await ControlJobAsync(request, TaskControl.Pause, cancellationToken);
         return new { ok = true };
     }
 
     [JsonRpcMethod("jobs.resume")]
     public async Task<object> ResumeJobAsync(JobIdRequest request, CancellationToken cancellationToken)
     {
-        await ControlJobAsync(request, JobControlEntity.Resume, cancellationToken);
+        await ControlJobAsync(request, TaskControl.Resume, cancellationToken);
         return new { ok = true };
     }
 
     [JsonRpcMethod("jobs.cancel")]
     public async Task<object> CancelJobAsync(JobIdRequest request, CancellationToken cancellationToken)
     {
-        await ControlJobAsync(request, JobControlEntity.Cancel, cancellationToken);
+        await ControlJobAsync(request, TaskControl.Cancel, cancellationToken);
         return new { ok = true };
     }
 
-    private async Task ControlJobAsync(JobIdRequest request, JobControlEntity action,
+    private async Task ControlJobAsync(JobIdRequest request, TaskControl action,
         CancellationToken cancellationToken)
     {
         if (request == null)

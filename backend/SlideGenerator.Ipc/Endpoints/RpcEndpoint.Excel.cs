@@ -1,5 +1,5 @@
 using SlideGenerator.Ipc.Contracts.Requests;
-using SlideGenerator.Services.Scanning.Models.Sheets;
+using SlideGenerator.Application.Scanning.Models.Sheets;
 using StreamJsonRpc;
 
 namespace SlideGenerator.Ipc.Endpoints;
