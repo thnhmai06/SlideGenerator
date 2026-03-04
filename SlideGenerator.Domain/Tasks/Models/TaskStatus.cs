@@ -35,4 +35,3 @@ public enum TaskStatus
     /// </summary>
     Cancelled
 }
-

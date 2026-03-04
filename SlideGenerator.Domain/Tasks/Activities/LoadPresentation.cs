@@ -19,37 +19,37 @@ namespace SlideGenerator.Domain.Tasks.Activities;
 ///     <list type="number">
 ///         <item>
 ///             <description>
-///                 <strong>Validate Inputs:</strong> Checks that all required inputs (TemplatePath, SaveFolder, 
+///                 <strong>Validate Inputs:</strong> Checks that all required inputs (TemplatePath, SaveFolder,
 ///                 FileName, TemplateIndex) are provided and valid.
 ///             </description>
 ///         </item>
 ///         <item>
 ///             <description>
-///                 <strong>Load Template:</strong> Reads the template file into a MemoryStream and opens it as 
+///                 <strong>Load Template:</strong> Reads the template file into a MemoryStream and opens it as
 ///                 a PresentationDocument for in-memory editing. Supports both .pptx and .potx formats.
 ///             </description>
 ///         </item>
 ///         <item>
 ///             <description>
-///                 <strong>Remove Unwanted Slides:</strong> Iterates through all slides from end to start 
+///                 <strong>Remove Unwanted Slides:</strong> Iterates through all slides from end to start
 ///                 (to avoid index shifting) and removes all slides except the one at TemplateIndex (1-based).
 ///             </description>
 ///         </item>
 ///         <item>
 ///             <description>
-///                 <strong>Change Document Type:</strong> Converts the document to the specified output format 
+///                 <strong>Change Document Type:</strong> Converts the document to the specified output format
 ///                 using ChangeDocumentType based on FileExtension input.
 ///             </description>
 ///         </item>
 ///         <item>
 ///             <description>
-///                 <strong>Save to Output:</strong> Copies the modified presentation from memory to the output 
+///                 <strong>Save to Output:</strong> Copies the modified presentation from memory to the output
 ///                 file at the specified SaveFolder with the given FileName and FileExtension.
 ///             </description>
 ///         </item>
 ///     </list>
 ///     <para>
-///         The entire process occurs in memory for efficiency - the template file is not modified, 
+///         The entire process occurs in memory for efficiency - the template file is not modified,
 ///         and only the final result is written to disk at the output path.
 ///     </para>
 /// </remarks>
@@ -118,8 +118,8 @@ public sealed class LoadPresentation : WorkflowBase
                     // Step 1: Load template into memory stream
                     var bytes = File.ReadAllBytes(templatePath);
                     using var memoryStream = new MemoryStream(bytes);
-                    using var doc = PresentationDocument.Open(memoryStream, isEditable: true);
-                    
+                    using var doc = PresentationDocument.Open(memoryStream, true);
+
                     // Step 2: Remove unwanted slides (keep only templateIndex)
                     var slideIdList = doc.PresentationPart?.Presentation?.SlideIdList;
                     if (slideIdList != null)
@@ -154,7 +154,7 @@ public sealed class LoadPresentation : WorkflowBase
                     var filePath = context.Get(FilePath);
                     if (string.IsNullOrEmpty(filePath)) return;
 
-                    var doc = PresentationDocument.Open(filePath, isEditable: true);
+                    var doc = PresentationDocument.Open(filePath, true);
                     context.WorkflowExecutionContext.TransientProperties["Presentation"] = doc;
                 })
                 {
