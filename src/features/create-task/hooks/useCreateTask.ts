@@ -531,7 +531,7 @@ export const useCreateTask = ({ onStart }: UseCreateTaskOptions) => {
 
 	// Browse handlers
 	const handleBrowseSlide = useCallback(async () => {
-		const path = await window.electronAPI.openFile([
+		const path = await window.desktopAPI.openFile([
 			{ name: 'PowerPoint Files', extensions: ['pptx', 'potx'] },
 		]);
 		if (path) {
@@ -542,7 +542,7 @@ export const useCreateTask = ({ onStart }: UseCreateTaskOptions) => {
 	}, []);
 
 	const handleBrowseData = useCallback(async () => {
-		const path = await window.electronAPI.openFile([
+		const path = await window.desktopAPI.openFile([
 			{ name: 'Spreadsheets Files', extensions: ['xlsx', 'xlsm'] },
 		]);
 		if (path) {
@@ -551,7 +551,7 @@ export const useCreateTask = ({ onStart }: UseCreateTaskOptions) => {
 	}, []);
 
 	const handleBrowseSave = useCallback(async () => {
-		const path = await window.electronAPI.openFolder();
+		const path = await window.desktopAPI.openFolder();
 		if (path) setSavePath(path);
 	}, []);
 
@@ -693,7 +693,7 @@ export const useCreateTask = ({ onStart }: UseCreateTaskOptions) => {
 			imageReplacements: replacementsHook.imageReplacements,
 		};
 
-		const path = await window.electronAPI.saveFile([
+		const path = await window.desktopAPI.saveFile([
 			{ name: 'JSON Files', extensions: ['json'] },
 			{ name: 'All Files', extensions: ['*'] },
 		]);
@@ -701,7 +701,7 @@ export const useCreateTask = ({ onStart }: UseCreateTaskOptions) => {
 		if (!path) return;
 
 		try {
-			await window.electronAPI.writeSettings(path, JSON.stringify(config, null, 2));
+			await window.desktopAPI.writeSettings(path, JSON.stringify(config, null, 2));
 			showNotification('success', t('createTask.exportSuccess'));
 		} catch {
 			showNotification('error', t('createTask.exportError'));
@@ -719,7 +719,7 @@ export const useCreateTask = ({ onStart }: UseCreateTaskOptions) => {
 
 	// Import config
 	const importConfig = useCallback(async () => {
-		const path = await window.electronAPI.openFile([
+		const path = await window.desktopAPI.openFile([
 			{ name: 'JSON Files', extensions: ['json'] },
 			{ name: 'All Files', extensions: ['*'] },
 		]);
@@ -731,7 +731,7 @@ export const useCreateTask = ({ onStart }: UseCreateTaskOptions) => {
 		setIsLoadingColumns(true);
 
 		try {
-			const data = await window.electronAPI.readSettings(path);
+			const data = await window.desktopAPI.readSettings(path);
 			if (!data) return;
 
 			const config = JSON.parse(data) as SavedInputState;

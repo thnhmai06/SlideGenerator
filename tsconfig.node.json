@@ -5,6 +5,8 @@
 		"declarationDir": "dist-types",
 		"outDir": "dist-types",
 		"skipLibCheck": true,
+		"lib": ["ES2020"],
+		"types": ["node"],
 		"module": "ESNext",
 		"moduleResolution": "bundler",
 		"allowSyntheticDefaultImports": true,
@@ -14,5 +16,5 @@
 			"@/*": ["src/*"]
 		}
 	},
-	"include": ["vite.config.ts", "electron", "src/shared/locales/**/*.ts"]
+	"include": ["vite.config.ts", "src/shared/locales/**/*.ts"]
 }

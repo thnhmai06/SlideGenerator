@@ -193,11 +193,12 @@ export const resolvePath = (inputPath: string): string => {
 		return inputPath;
 	}
 
-	if (typeof process === 'undefined' || !process.cwd) {
+	const nodeProcess = (globalThis as { process?: { cwd?: () => string } }).process;
+	if (!nodeProcess?.cwd) {
 		return inputPath;
 	}
 
-	const cwd = process.cwd();
+	const cwd = nodeProcess.cwd();
 	return `${cwd}\\${inputPath.replace(/\//g, '\\')}`;
 };
 

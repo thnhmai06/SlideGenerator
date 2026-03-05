@@ -4,7 +4,7 @@
 
 ## Prerequisites
 
-- Backend is running (Electron can start it automatically).
+- Backend is running (desktop host can start it automatically).
 - Template: `.pptx` or `.potx`.
 - Spreadsheet: `.xlsx` or `.xlsm`.
 

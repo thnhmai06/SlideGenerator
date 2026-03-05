@@ -198,7 +198,7 @@ export const vi = {
 	'about.appName': 'Slide Generator',
 	'about.version': 'Phiên bản',
 	'about.description': 'Phần mềm tạo slide trình chiếu PowerPoint từ dữ liệu bảng tính.',
-	'about.details': 'Xây dựng trên ASP.NET, React, Electron với ❤️.',
+	'about.details': 'Xây dựng trên ASP.NET, React, Tauri với ❤️.',
 	'about.developer': 'Nhà phát triển',
 	'about.githubRepo': 'Kho GitHub',
 	'about.readDocs': 'Đọc tài liệu',

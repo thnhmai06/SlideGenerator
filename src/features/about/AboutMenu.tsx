@@ -13,7 +13,7 @@ const AboutMenu: React.FC = () => {
 		{ name: 'Hair-Nguyeenx', url: 'https://github.com/Hair-Nguyeenx' },
 	];
 	const handleOpenGithub = () => {
-		window.electronAPI.openUrl('https://github.com/thnhmai06/SlideGenerator');
+		window.desktopAPI.openUrl('https://github.com/thnhmai06/SlideGenerator');
 	};
 
 	return (
@@ -54,7 +54,7 @@ const AboutMenu: React.FC = () => {
 							<button
 								key={dev.name}
 								className="developer-link"
-								onClick={() => window.electronAPI.openUrl(dev.url)}
+								onClick={() => window.desktopAPI.openUrl(dev.url)}
 							>
 								<img
 									src={`https://github.com/${dev.name}.png`}

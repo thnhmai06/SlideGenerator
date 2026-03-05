@@ -29,8 +29,8 @@ const log = (level: LogLevel, source: string, message: string, args: unknown[]):
 	const formattedMessage = formatMessage(message, args);
 
 	// Send to main process for file logging
-	if (window.electronAPI?.logRenderer) {
-		window.electronAPI.logRenderer(level, formattedMessage, source);
+	if (window.desktopAPI?.logRenderer) {
+		window.desktopAPI.logRenderer(level, formattedMessage, source);
 	}
 
 	// Also log to console for development

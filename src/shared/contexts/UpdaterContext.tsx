@@ -52,8 +52,8 @@ export const UpdaterProvider: React.FC<{ children: ReactNode }> = ({ children })
 	useEffect(() => {
 		let mounted = true;
 		(async () => {
-			if (window.electronAPI?.isPortable) {
-				const v = await window.electronAPI.isPortable();
+			if (window.desktopAPI?.isPortable) {
+				const v = await window.desktopAPI.isPortable();
 				if (mounted) setPortable(Boolean(v));
 			}
 		})();
@@ -63,8 +63,8 @@ export const UpdaterProvider: React.FC<{ children: ReactNode }> = ({ children })
 	}, []);
 
 	useEffect(() => {
-		if (!window.electronAPI?.onUpdateStatus) return;
-		const unsubscribe = window.electronAPI.onUpdateStatus((newState) => {
+		if (!window.desktopAPI?.onUpdateStatus) return;
+		const unsubscribe = window.desktopAPI.onUpdateStatus((newState) => {
 			setState((prev) => ({
 				...prev,
 				status: newState.status as UpdateStatus,
@@ -78,11 +78,11 @@ export const UpdaterProvider: React.FC<{ children: ReactNode }> = ({ children })
 
 	const checkForUpdates = async () => {
 		if (portable) return;
-		if (!window.electronAPI?.checkForUpdates) return;
+		if (!window.desktopAPI?.checkForUpdates) return;
 
 		setState((prev) => ({ ...prev, status: 'checking' }));
 		try {
-			const result = await window.electronAPI.checkForUpdates();
+			const result = await window.desktopAPI.checkForUpdates();
 			setState({
 				status: result.status as UpdateStatus,
 				info: result.info as UpdateInfo | undefined,
@@ -98,18 +98,18 @@ export const UpdaterProvider: React.FC<{ children: ReactNode }> = ({ children })
 
 	const downloadUpdate = async () => {
 		if (portable) return;
-		if (!window.electronAPI?.downloadUpdate) return;
+		if (!window.desktopAPI?.downloadUpdate) return;
 
 		setState((prev) => ({ ...prev, status: 'downloading', progress: 0 }));
-		await window.electronAPI.downloadUpdate();
+		await window.desktopAPI.downloadUpdate();
 	};
 
 	const installUpdate = () => {
 		if (portable) return;
-		if (!window.electronAPI?.installUpdate) return;
+		if (!window.desktopAPI?.installUpdate) return;
 		if (hasActiveJobs) return;
 
-		window.electronAPI.installUpdate();
+		window.desktopAPI.installUpdate();
 	};
 
 	const value = useMemo(

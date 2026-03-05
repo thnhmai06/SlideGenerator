@@ -58,7 +58,7 @@ const scanWorkbook = async (filePath: string, force = false): Promise<SheetScanR
   }
 
   const raw =
-    (await window.electronAPI.backendRequest<Record<string, unknown>>('sheet.scan', {
+    (await window.desktopAPI.backendRequest<Record<string, unknown>>('sheet.scan', {
       filePath,
     })) ?? {}
 

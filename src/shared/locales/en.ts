@@ -200,7 +200,7 @@ export const en = {
 	'about.appName': 'Slide Generator',
 	'about.version': 'Version',
 	'about.description': 'Software to generate PowerPoint slides from spreadsheet data.',
-	'about.details': 'Made with ASP.NET, React, Electron with ❤️.',
+	'about.details': 'Made with ASP.NET, React, Tauri with ❤️.',
 	'about.developer': 'Developer',
 	'about.githubRepo': 'GitHub repository',
 	'about.readDocs': 'Read documentation',
