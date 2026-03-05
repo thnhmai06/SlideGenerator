@@ -93,8 +93,8 @@ export const useProcess = () => {
 
 	const handleOpenDashboard = useCallback(async () => {
 		const url = `${getBackendBaseUrl()}/dashboard`;
-		if (window.electronAPI?.openUrl) {
-			await window.electronAPI.openUrl(url);
+		if (window.desktopAPI?.openUrl) {
+			await window.desktopAPI.openUrl(url);
 			return;
 		}
 		window.open(url, '_blank');

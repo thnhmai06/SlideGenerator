@@ -47,7 +47,7 @@ Các component và tiện ích tái sử dụng.
 
 ### RPC Client
 Nằm tại `src/shared/services/rpc/`.
-- **IPC transport:** Dùng cầu nối Electron + backend stdio JSON-RPC.
+- **IPC transport:** Dùng cầu nối Tauri command/event + backend stdio JSON-RPC.
 - **Typed calls:** Wrapper định kiểu mạnh cho các method backend.
 - **Notifications:** Lắng nghe sự kiện `jobs.updated`.
 
@@ -60,7 +60,7 @@ Nằm tại `src/shared/services/backend/`.
 
 1.  **Hành động người dùng:** Người dùng nhấn "Start Job" trong tính năng `create-task`.
 2.  **Gọi Service:** Component gọi `BackendService.createJob()`.
-3.  **Truyền tải:** Yêu cầu được gửi qua JSON-RPC trên Electron IPC.
+3.  **Truyền tải:** Yêu cầu được gửi qua JSON-RPC trên desktop bridge.
 4.  **Xử lý Backend:** Backend tạo job và trả về một ID.
 5.  **Thông báo:** Backend đẩy sự kiện `JobStatus` (Pending).
 6.  **Cập nhật:** `JobContext` nhận sự kiện và cập nhật state toàn cục.

@@ -47,7 +47,7 @@ Reusable components and utilities.
 
 ### RPC Client
 Located in `src/shared/services/rpc/`.
-- **IPC transport:** Uses Electron bridge + backend stdio JSON-RPC.
+- **IPC transport:** Uses Tauri command/event bridge + backend stdio JSON-RPC.
 - **Typed calls:** Strongly typed wrappers for backend methods.
 - **Notifications:** Subscribes to `jobs.updated` events.
 
@@ -60,7 +60,7 @@ Located in `src/shared/services/backend/`.
 
 1.  **User Action:** User clicks "Start Job" in the `create-task` feature.
 2.  **Service Call:** Component calls `BackendService.createJob()`.
-3.  **Transmission:** Request is sent through JSON-RPC over Electron IPC.
+3.  **Transmission:** Request is sent through JSON-RPC over the desktop bridge.
 4.  **Backend Processing:** Backend creates the job and returns an ID.
 5.  **Notification:** Backend pushes a `JobStatus` event (Pending).
 6.  **Update:** `JobContext` receives the event and updates the global state.

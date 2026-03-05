@@ -33,8 +33,6 @@ tasks:
       - echo "Building Frontend..."
       - npm install
       - npm run build
-    env:
-      ELECTRON_BUILDER_PUBLISH: never
 
   # ============================================================================
   # TEST TASKS
@@ -81,7 +79,7 @@ tasks:
   clean:
     desc: Clean build artifacts
     cmds:
-      - cmd: rm -rf frontend/backend frontend/dist frontend/release backend/TestResults
+      - cmd: rm -rf frontend/backend frontend/dist frontend/release frontend/src-tauri/target backend/TestResults
         platforms: [linux, darwin]
-      - cmd: Remove-Item -Recurse -Force -ErrorAction SilentlyContinue frontend/backend, frontend/dist, frontend/release, backend/TestResults
+      - cmd: Remove-Item -Recurse -Force -ErrorAction SilentlyContinue frontend/backend, frontend/dist, frontend/release, frontend/src-tauri/target, backend/TestResults
         platforms: [windows]

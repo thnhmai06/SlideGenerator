@@ -6,7 +6,7 @@ const SETTINGS_FILE = 'app-settings.json';
 
 const loadSettings = async (): Promise<Settings | null> => {
 	try {
-		const data = await window.electronAPI.readSettings(SETTINGS_FILE);
+		const data = await window.desktopAPI.readSettings(SETTINGS_FILE);
 		return data ? JSON.parse(data) : null;
 	} catch (error) {
 		console.error('Failed to load settings:', error);
@@ -16,7 +16,7 @@ const loadSettings = async (): Promise<Settings | null> => {
 
 const saveSettings = async (settings: Settings) => {
 	try {
-		await window.electronAPI.writeSettings(SETTINGS_FILE, JSON.stringify(settings, null, 2));
+		await window.desktopAPI.writeSettings(SETTINGS_FILE, JSON.stringify(settings, null, 2));
 	} catch (error) {
 		console.error('Failed to save settings:', error);
 	}
@@ -59,7 +59,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
 	useEffect(() => {
 		if (!isLoaded) return;
-		window.electronAPI?.setTrayLocale?.(language);
+		window.desktopAPI?.setTrayLocale?.(language);
 	}, [language, isLoaded]);
 
 	useEffect(() => {

@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from '@/app/App';
 import AppProviders from '@/app/providers/AppProviders';
+import '@/shared/platform/desktopApi';
 import '@/shared/styles/theme.css';
 import '@/shared/styles/index.css';
 
@@ -22,7 +23,7 @@ const formatLogArg = (arg: unknown): string => {
 };
 
 const initRendererLogging = () => {
-	if (!window.electronAPI?.logRenderer) return;
+	if (!window.desktopAPI?.logRenderer) return;
 	const flagKey = '__rendererLoggerInstalled';
 	const windowFlags = window as unknown as Record<string, unknown>;
 	if (windowFlags[flagKey]) return;
@@ -38,7 +39,7 @@ const initRendererLogging = () => {
 
 	const sendRendererLog = (level: 'debug' | 'info' | 'warn' | 'error', args: unknown[]) => {
 		const message = args.map(formatLogArg).join(' ');
-		window.electronAPI.logRenderer(level, message);
+		window.desktopAPI.logRenderer(level, message);
 	};
 
 	console.log = (...args: unknown[]) => {

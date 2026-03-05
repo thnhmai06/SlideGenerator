@@ -17,13 +17,13 @@ npm install
 
 ### Chạy trong môi trường Dev
 
-Lệnh này khởi động Vite dev server và Electron container.
+Lệnh này khởi động Vite dev server và desktop host của Tauri.
 
 ```bash
 npm run dev
 ```
 
-**Lưu ý:** Mặc định, Electron sẽ cố gắng khởi chạy tiến trình backend.
+**Lưu ý:** Runtime desktop đang được migration sang Tauri v2.
 - **Tắt khởi chạy Backend:** `SLIDEGEN_DISABLE_BACKEND=1` (Hữu ích khi bạn đang chạy backend riêng trong Visual Studio).
 - **Đường dẫn Backend tùy chỉnh:** `SLIDEGEN_BACKEND_PATH=/path/to/executable`.
 
@@ -83,7 +83,7 @@ npm test
 ## Debugging
 
 - **Renderer Process:** Sử dụng Chrome DevTools tiêu chuẩn (Ctrl+Shift+I).
-- **Main Process:** Debug qua cấu hình "Debug Main Process" của VS Code.
+- **Desktop Host (Rust):** Debug qua Rust tooling / VS Code Rust extension.
 - **Backend:** Debug qua Visual Studio hoặc extension C# của VS Code.
 
 Tiếp theo: [Build & Đóng gói](build-and-packaging.md)

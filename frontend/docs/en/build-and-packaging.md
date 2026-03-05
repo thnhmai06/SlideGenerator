@@ -8,7 +8,7 @@ This guide covers how to build the SlideGenerator application for production dis
 
 The build process consists of two main stages:
 1.  **Backend Build:** Compiling the .NET application into a self-contained executable.
-2.  **Frontend Build:** Bundling the React app and packaging it with Electron, including the backend binary.
+2.  **Frontend Build:** Bundling the React app and packaging it with Tauri, including the backend binary.
 
 ## 1. Building with Task (Recommended)
 
@@ -24,7 +24,7 @@ task build
 task build RUNTIME=linux-x64
 ```
 
-This automates the process of building the backend, copying it to the frontend resources, and packaging the Electron app.
+This automates the process of building the backend, copying it to the frontend resources, and packaging the Tauri app.
 
 ## 2. Manual Build Steps
 
@@ -34,7 +34,7 @@ If you prefer to run commands manually without Task:
 
 The backend must be built first so it can be copied into the frontend's resource folder.
 
-Once the backend is ready, you can build the Electron app.
+Once the backend is ready, you can build the Tauri app.
 
 **Command:**
 ```bash
@@ -45,20 +45,21 @@ npm run build:full
 This script performs the following actions:
 1.  `build:backend`: Copies the published backend files to `frontend/backend`.
 2.  `build`: Runs Vite to bundle the React application.
-3.  `electron-builder`: Packages everything into an installer (NSIS for Windows, AppImage for Linux).
+3.  `tauri build`: Packages everything into native installers/bundles per platform.
 
 ## Distribution
 
 ### Output Artifacts
-The final installers are located in `frontend/release/`.
+The final installers are produced by Tauri under `frontend/src-tauri/target/release/bundle/`.
 
-- **Windows:** `SlideGenerator Setup <version>.exe`
-- **Linux:** `SlideGenerator-<version>.AppImage`
+- **Windows:** NSIS/MSI installers
+- **Linux:** AppImage/deb/rpm (depending on configuration)
+- **macOS:** app/dmg (depending on configuration)
 
 ### Signing (Optional)
 To sign the application (required for auto-updates and to avoid SmartScreen warnings):
 1.  Set `CSC_LINK` and `CSC_KEY_PASSWORD` environment variables.
-2.  Refer to [electron-builder documentation](https://www.electron.build/code-signing) for details.
+2.  Refer to [Tauri signing documentation](https://tauri.app/distribute/sign/) for details.
 
 ## Troubleshooting
 

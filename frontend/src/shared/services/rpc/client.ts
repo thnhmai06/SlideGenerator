@@ -7,7 +7,7 @@ export class RpcChannelClient {
 
 	constructor(channel: string) {
 		this.channel = channel;
-		this.unsubscribeNotification = window.electronAPI.onBackendNotification(({ method, params }) => {
+		this.unsubscribeNotification = window.desktopAPI.onBackendNotification(({ method, params }) => {
 			if (this.channel !== 'jobs') return;
 			if (method !== 'jobs.updated') return;
 			this.handleJobUpdated(params);
@@ -45,7 +45,7 @@ export class RpcChannelClient {
 		if (methodName === 'SubscribeGroup' || methodName === 'SubscribeSheet') {
 			return;
 		}
-		await window.electronAPI.backendRequest(methodName, args);
+		await window.desktopAPI.backendRequest(methodName, args);
 	}
 
 	onNotification(handler: (payload: unknown) => void): () => void {
@@ -72,7 +72,7 @@ export class RpcChannelClient {
 		switch (type) {
 			case 'scanshapes': {
 				const filePath = payload.filePath as string;
-				const result = await window.electronAPI.backendRequest<{
+				const result = await window.desktopAPI.backendRequest<{
 					filePath: string;
 					slides: Array<{ imageShapeIds: number[] }>;
 				}>('slide.scan', { filePath });
@@ -94,7 +94,7 @@ export class RpcChannelClient {
 			}
 			case 'scanplaceholders': {
 				const filePath = payload.filePath as string;
-				const result = await window.electronAPI.backendRequest<{
+				const result = await window.desktopAPI.backendRequest<{
 					filePath: string;
 					slides: Array<{ placeholders: string[] }>;
 				}>('slide.scan', { filePath });
@@ -110,7 +110,7 @@ export class RpcChannelClient {
 			}
 			case 'scantemplate': {
 				const filePath = payload.filePath as string;
-				const result = await window.electronAPI.backendRequest<{
+				const result = await window.desktopAPI.backendRequest<{
 					filePath: string;
 					slides: Array<{ imageShapeIds: number[]; placeholders: string[] }>;
 				}>('slide.scan', { filePath });
@@ -149,7 +149,7 @@ export class RpcChannelClient {
 				const templateKey = 'default';
 				const sheetTemplateMap = Object.fromEntries(sheetNames.map((sheetName) => [sheetName, templateKey]));
 
-				const job = await window.electronAPI.backendRequest<{ jobId: string }>('jobs.create', {
+				const job = await window.desktopAPI.backendRequest<{ jobId: string }>('jobs.create', {
 					templates: [{ templateKey, filePath: templatePath, templateSlideIndex: 1 }],
 					sheetPath: spreadsheetPath,
 					sheetTemplateMap,
@@ -182,7 +182,7 @@ export class RpcChannelClient {
 			case 'jobquery': {
 				const jobId = payload.jobId as string | undefined;
 				if (jobId) {
-					const snapshot = await window.electronAPI.backendRequest<{
+					const snapshot = await window.desktopAPI.backendRequest<{
 						jobId: string;
 						status: string;
 						progress: number;
@@ -248,7 +248,7 @@ export class RpcChannelClient {
 					};
 				}
 
-				const snapshots = await window.electronAPI.backendRequest<
+				const snapshots = await window.desktopAPI.backendRequest<
 					Array<{ jobId: string; status: string; progress: number; sheets: Array<{ outputPath: string; error?: string | null }> }>
 				>('jobs.list');
 
@@ -277,7 +277,7 @@ export class RpcChannelClient {
 						: action === 'resume'
 							? 'jobs.resume'
 							: 'jobs.cancel';
-				await window.electronAPI.backendRequest(method, { jobId: targetJobId });
+				await window.desktopAPI.backendRequest(method, { jobId: targetJobId });
 				return {
 					type: 'jobcontrol',
 					jobId,

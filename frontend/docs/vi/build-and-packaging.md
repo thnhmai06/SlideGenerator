@@ -8,7 +8,7 @@ Hướng dẫn này bao gồm cách build ứng dụng SlideGenerator để phâ
 
 Quy trình build bao gồm hai giai đoạn chính:
 1.  **Backend Build:** Biên dịch ứng dụng .NET thành file thực thi khép kín (self-contained executable).
-2.  **Frontend Build:** Đóng gói ứng dụng React và Electron, bao gồm cả binary backend.
+2.  **Frontend Build:** Đóng gói ứng dụng React và Tauri, bao gồm cả binary backend.
 
 ## 1. Build với Task (Khuyên dùng)
 
@@ -24,7 +24,7 @@ task build
 task build RUNTIME=linux-x64
 ```
 
-Lệnh này tự động hóa quy trình build backend, copy vào resource frontend, và đóng gói ứng dụng Electron.
+Lệnh này tự động hóa quy trình build backend, copy vào resource frontend, và đóng gói ứng dụng Tauri.
 
 ## 2. Quy trình Build Thủ công
 
@@ -34,7 +34,7 @@ Nếu bạn muốn chạy lệnh thủ công mà không dùng Task:
 
 Backend phải được build trước để có thể copy vào thư mục resource của frontend.
 
-Khi backend đã sẵn sàng, bạn có thể build ứng dụng Electron.
+Khi backend đã sẵn sàng, bạn có thể build ứng dụng Tauri.
 
 **Lệnh:**
 ```bash
@@ -45,20 +45,21 @@ npm run build:full
 Script này thực hiện các hành động sau:
 1.  `build:backend`: Copy các file backend đã publish vào `frontend/backend`.
 2.  `build`: Chạy Vite để đóng gói ứng dụng React.
-3.  `electron-builder`: Đóng gói mọi thứ thành bộ cài đặt (NSIS cho Windows, AppImage cho Linux).
+3.  `tauri build`: Đóng gói thành bộ cài đặt/bundle native theo từng hệ điều hành.
 
 ## Phân phối
 
 ### Artifact đầu ra
-Các bộ cài đặt cuối cùng nằm tại `frontend/release/`.
+Các bộ cài đặt cuối cùng được tạo trong `frontend/src-tauri/target/release/bundle/`.
 
-- **Windows:** `SlideGenerator Setup <version>.exe`
-- **Linux:** `SlideGenerator-<version>.AppImage`
+- **Windows:** NSIS/MSI
+- **Linux:** AppImage/deb/rpm (tùy cấu hình)
+- **macOS:** app/dmg (tùy cấu hình)
 
 ### Signing (Tùy chọn)
 Để ký ứng dụng (bắt buộc cho auto-update và tránh cảnh báo SmartScreen):
 1.  Thiết lập biến môi trường `CSC_LINK` và `CSC_KEY_PASSWORD`.
-2.  Tham khảo [tài liệu electron-builder](https://www.electron.build/code-signing) để biết chi tiết.
+2.  Tham khảo [tài liệu ký số của Tauri](https://tauri.app/distribute/sign/) để biết chi tiết.
 
 ## Khắc phục sự cố
 

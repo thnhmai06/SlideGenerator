@@ -2,28 +2,26 @@
 
 [English](../en/updater.md)
 
-Ứng dụng sử dụng `electron-updater` để cung cấp khả năng cập nhật tự động cho các bản dựng Windows (không bao gồm bản portable).
+Trình cập nhật của ứng dụng hiện dùng updater plugin của Tauri v2.
 
 ## Tính năng
 
 - **Kiểm tra tự động**: Tự động kiểm tra bản cập nhật khi khởi động ứng dụng.
 - **Kiểm tra thủ công**: Người dùng có thể kích hoạt kiểm tra từ màn hình Giới thiệu (About).
-- **Tải xuống vi sai**: Chỉ tải xuống những phần thay đổi (hành vi mặc định của `electron-updater`).
+- **Tải xuống vi sai**: Được quản lý theo cấu hình artifact/signature của updater Tauri.
 - **Bảo vệ an toàn**: Ngăn chặn việc cài đặt nếu đang có các tiến trình tạo slide đang chạy.
 - **Phát hiện bản Portable**: Tự động vô hiệu hóa tính năng cập nhật khi chạy từ tệp thực thi portable.
 
 ## Kiến trúc
 
-### Tiến trình chính (Main Process - `electron/main/updater.ts`)
+### Desktop Host (`src-tauri/src/main.rs` và cấu hình updater plugin)
 
-- Quản lý thực thể `autoUpdater`.
-- Xử lý các cuộc gọi IPC để kiểm tra, tải xuống và cài đặt bản cập nhật.
-- Phát tín hiệu trạng thái tới tất cả các cửa sổ renderer thông qua `updater:status`.
-- Lưu giữ trạng thái "đã tải xuống" để xử lý khi ứng dụng khởi động lại.
+- Dùng vòng đời updater plugin của Tauri.
+- Cung cấp luồng cập nhật cho frontend thông qua adapter desktop API.
 
-### Preload (`electron/preload/api.ts`)
+### Frontend Bridge (`desktopApi` adapter)
 
-- Cung cấp các phương thức đã được định nghĩa kiểu cho renderer thông qua `window.electronAPI`:
+- Cung cấp các phương thức updater định kiểu cho renderer thông qua adapter Tauri:
   - `checkForUpdates()`
   - `downloadUpdate()`
   - `installUpdate()`
@@ -42,19 +40,19 @@
 2. **Có bản mới**: Nếu tìm thấy phiên bản mới hơn, trạng thái trở thành `available`.
 3. **Tải xuống**: Người dùng nhấn tải xuống. Trạng thái trở thành `downloading` kèm theo phần trăm tiến độ.
 4. **Sẵn sàng**: Sau khi tải xong, trạng thái trở thành `downloaded`.
-5. **Cài đặt**: Người dùng nhấn cài đặt. Ứng dụng gọi `quitAndInstall()`.
+5. **Cài đặt**: Người dùng nhấn cài đặt. Ứng dụng áp dụng cập nhật và relaunch.
    - _Lưu ý_: Giao diện sẽ vô hiệu hóa nút Cài đặt nếu `hasActiveJobs` là true.
 
 ## Cấu hình
 
-Cấu hình của trình cập nhật được đọc từ `package.json` trong mục `build.publish`.
+Cấu hình updater được đọc từ `src-tauri/tauri.conf.json` trong mục `plugins.updater`.
 
 ```json
-"build": {
-  "publish": {
-    "provider": "github",
-    "owner": "your-username",
-    "repo": "your-repo"
+"plugins": {
+  "updater": {
+    "active": true,
+    "pubkey": "PUBLIC_KEY_CONTENT",
+    "endpoints": ["https://example.com/latest.json"]
   }
 }
 ```
@@ -63,5 +61,4 @@ Cấu hình của trình cập nhật được đọc từ `package.json` trong 
 
 Trình cập nhật được cấu hình để cho phép kiểm thử trong chế độ phát triển:
 
-- `autoUpdater.forceDevUpdateConfig = true` được thiết lập khi `app.isPackaged` là false.
-- Có thể cần tệp `dev-app-update.yml` ở thư mục gốc để kiểm thử cục bộ.
+- Hành vi updater ở môi trường dev tuân theo cấu hình plugin updater của Tauri.

@@ -32,7 +32,7 @@ describe('UpdateChecker', () => {
 		// Default: not portable
 		isPortable.mockResolvedValue(false);
 
-		window.electronAPI = {
+		window.desktopAPI = {
 			isPortable,
 			checkForUpdates,
 			downloadUpdate,
@@ -41,11 +41,11 @@ describe('UpdateChecker', () => {
 				onUpdateStatus.mockImplementation(handler);
 				return () => {};
 			},
-		} as unknown as typeof window.electronAPI;
+		} as unknown as typeof window.desktopAPI;
 	});
 
 	afterEach(() => {
-		window.electronAPI = undefined as unknown as typeof window.electronAPI;
+		window.desktopAPI = undefined as unknown as typeof window.desktopAPI;
 	});
 
 	it('renders current version and check button (non-portable)', async () => {
@@ -349,7 +349,7 @@ describe('UpdateChecker', () => {
 
 	it('hides check button when running in portable mode', async () => {
 		// portable = true
-		window.electronAPI.isPortable = vi.fn().mockResolvedValue(true);
+		window.desktopAPI.isPortable = vi.fn().mockResolvedValue(true);
 
 		render(
 			<UpdaterProvider>

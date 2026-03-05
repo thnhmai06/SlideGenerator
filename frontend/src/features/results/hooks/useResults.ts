@@ -53,8 +53,8 @@ export const useResults = () => {
 	}, []);
 
 	const handleOpenFolder = useCallback(async (folderPath: string | undefined) => {
-		if (!folderPath || !window.electronAPI) return;
-		await window.electronAPI.openPath(folderPath);
+		if (!folderPath || !window.desktopAPI) return;
+		await window.desktopAPI.openPath(folderPath);
 	}, []);
 
 	const handleExportGroup = useCallback(
@@ -65,8 +65,8 @@ export const useResults = () => {
 	);
 
 	const handleOpenFile = useCallback(async (filePath: string | undefined) => {
-		if (!filePath || !window.electronAPI) return;
-		await window.electronAPI.openPath(filePath);
+		if (!filePath || !window.desktopAPI) return;
+		await window.desktopAPI.openPath(filePath);
 	}, []);
 
 	const handleRemoveSheet = useCallback(

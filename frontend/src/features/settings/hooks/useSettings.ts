@@ -308,12 +308,12 @@ export const useSettings = ({ t }: UseSettingsOptions) => {
 	}, [formatErrorMessage, loadConfig, showMessage, t]);
 
 	const handleRestartServer = useCallback(async () => {
-		if (!window.electronAPI?.restartBackend) {
+		if (!window.desktopAPI?.restartBackend) {
 			showMessage('warning', t('settings.restartUnavailable'));
 			return;
 		}
 		try {
-			const restarted = await window.electronAPI.restartBackend();
+			const restarted = await window.desktopAPI.restartBackend();
 			if (restarted) {
 				setRestartRequired(false);
 				if (config) {
@@ -396,8 +396,8 @@ export const useSettings = ({ t }: UseSettingsOptions) => {
 	}, []);
 
 	const handleSelectDownloadFolder = useCallback(async () => {
-		if (!config || !window.electronAPI) return;
-		const folder = await window.electronAPI.openFolder();
+		if (!config || !window.desktopAPI) return;
+		const folder = await window.desktopAPI.openFolder();
 		if (folder) {
 			updateDownload({ saveFolder: folder });
 		}

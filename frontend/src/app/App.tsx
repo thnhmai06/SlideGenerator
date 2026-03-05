@@ -81,7 +81,7 @@ const App: React.FC = () => {
 		const allowedMenus: MenuType[] = ['input', 'setting', 'download', 'process', 'about'];
 		const isMenuType = (value: string): value is MenuType =>
 			allowedMenus.includes(value as MenuType);
-		const unsubscribe = window.electronAPI?.onNavigate?.((menu) => {
+		const unsubscribe = window.desktopAPI?.onNavigate?.((menu) => {
 			if (isMenuType(menu)) {
 				setCurrentMenu(menu);
 			}

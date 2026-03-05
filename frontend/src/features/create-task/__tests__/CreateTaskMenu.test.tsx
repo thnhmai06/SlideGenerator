@@ -22,15 +22,15 @@ vi.mock('@/shared/services/backendApi', () => ({
 	getWorkbookInfo: vi.fn(),
 }));
 
-// Mock window.electronAPI
-const electronAPIMock = {
+// Mock window.desktopAPI
+const desktopAPIMock = {
 	openFile: vi.fn(),
 	openFolder: vi.fn(),
 	saveFile: vi.fn(),
 	readSettings: vi.fn(),
 	writeSettings: vi.fn(),
 };
-Object.assign(window, { electronAPI: electronAPIMock });
+Object.assign(window, { desktopAPI: desktopAPIMock });
 
 // Mock getAssetPath global
 Object.assign(window, { getAssetPath: (...args: string[]) => args.join('/') });
@@ -48,7 +48,7 @@ describe('CreateTaskMenu', () => {
 		expect(screen.getByText('createTask.title')).toBeInTheDocument();
 
 		// Test PPTX selection
-		electronAPIMock.openFile.mockResolvedValueOnce('C:\\template.pptx');
+		desktopAPIMock.openFile.mockResolvedValueOnce('C:\\template.pptx');
 		vi.mocked(backendApi.scanTemplate).mockResolvedValueOnce({
 			type: 'scantemplate',
 			filePath: 'C:\\template.pptx',
@@ -65,7 +65,7 @@ describe('CreateTaskMenu', () => {
 		expect(screen.getByDisplayValue('C:\\template.pptx')).toBeInTheDocument();
 
 		// Test Data selection
-		electronAPIMock.openFile.mockResolvedValueOnce('C:\\data.xlsx');
+		desktopAPIMock.openFile.mockResolvedValueOnce('C:\\data.xlsx');
 		vi.mocked(backendApi.loadFile).mockResolvedValue({
 			success: true,
 			num_sheets: 1,
