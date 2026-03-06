@@ -5,7 +5,7 @@
   "identifier": "com.thnhmai06.slide-generator",
   "build": {
     "beforeDevCommand": "npm run dev:web",
-    "beforeBuildCommand": "npm run build:frontend",
+    "beforeBuildCommand": "npm run build",
     "devUrl": "http://localhost:65000",
     "frontendDist": "../dist"
   },
@@ -34,8 +34,8 @@
       "../assets/images/app-icon.ico"
     ],
     "resources": [
-      "resources/backend/**",
-      "../assets/images/**"
+      "resources/backend/**/*?",
+      "../assets/images/**/*?"
     ],
     "category": "Utility",
     "shortDescription": "Generate presentation slides from predefined template",

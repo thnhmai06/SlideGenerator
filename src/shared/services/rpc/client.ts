@@ -7,11 +7,18 @@ export class RpcChannelClient {
 
 	constructor(channel: string) {
 		this.channel = channel;
-		this.unsubscribeNotification = window.desktopAPI.onBackendNotification(({ method, params }) => {
-			if (this.channel !== 'jobs') return;
-			if (method !== 'jobs.updated') return;
-			this.handleJobUpdated(params);
-		});
+
+		if (window.desktopAPI?.onBackendNotification) {
+			this.unsubscribeNotification = window.desktopAPI.onBackendNotification(({ method, params }) => {
+				if (this.channel !== 'jobs') return;
+				if (method !== 'jobs.updated') return;
+				this.handleJobUpdated(params);
+			});
+			return;
+		}
+
+		this.unsubscribeNotification = () => {};
+		loggers.jobs.warn('Desktop API is unavailable; RPC notifications are disabled in this runtime.');
 	}
 
 	async sendRequest<TResponse>(payload: Record<string, unknown>): Promise<TResponse> {
@@ -45,7 +52,7 @@ export class RpcChannelClient {
 		if (methodName === 'SubscribeGroup' || methodName === 'SubscribeSheet') {
 			return;
 		}
-		await window.desktopAPI.backendRequest(methodName, args);
+		await this.backendRequest(methodName, args);
 	}
 
 	onNotification(handler: (payload: unknown) => void): () => void {
@@ -72,7 +79,7 @@ export class RpcChannelClient {
 		switch (type) {
 			case 'scanshapes': {
 				const filePath = payload.filePath as string;
-				const result = await window.desktopAPI.backendRequest<{
+				const result = await this.backendRequest<{
 					filePath: string;
 					slides: Array<{ imageShapeIds: number[] }>;
 				}>('slide.scan', { filePath });
@@ -94,7 +101,7 @@ export class RpcChannelClient {
 			}
 			case 'scanplaceholders': {
 				const filePath = payload.filePath as string;
-				const result = await window.desktopAPI.backendRequest<{
+				const result = await this.backendRequest<{
 					filePath: string;
 					slides: Array<{ placeholders: string[] }>;
 				}>('slide.scan', { filePath });
@@ -110,7 +117,7 @@ export class RpcChannelClient {
 			}
 			case 'scantemplate': {
 				const filePath = payload.filePath as string;
-				const result = await window.desktopAPI.backendRequest<{
+				const result = await this.backendRequest<{
 					filePath: string;
 					slides: Array<{ imageShapeIds: number[]; placeholders: string[] }>;
 				}>('slide.scan', { filePath });
@@ -149,7 +156,7 @@ export class RpcChannelClient {
 				const templateKey = 'default';
 				const sheetTemplateMap = Object.fromEntries(sheetNames.map((sheetName) => [sheetName, templateKey]));
 
-				const job = await window.desktopAPI.backendRequest<{ jobId: string }>('jobs.create', {
+				const job = await this.backendRequest<{ jobId: string }>('jobs.create', {
 					templates: [{ templateKey, filePath: templatePath, templateSlideIndex: 1 }],
 					sheetPath: spreadsheetPath,
 					sheetTemplateMap,
@@ -182,7 +189,7 @@ export class RpcChannelClient {
 			case 'jobquery': {
 				const jobId = payload.jobId as string | undefined;
 				if (jobId) {
-					const snapshot = await window.desktopAPI.backendRequest<{
+					const snapshot = await this.backendRequest<{
 						jobId: string;
 						status: string;
 						progress: number;
@@ -248,7 +255,7 @@ export class RpcChannelClient {
 					};
 				}
 
-				const snapshots = await window.desktopAPI.backendRequest<
+				const snapshots = await this.backendRequest<
 					Array<{ jobId: string; status: string; progress: number; sheets: Array<{ outputPath: string; error?: string | null }> }>
 				>('jobs.list');
 
@@ -277,7 +284,7 @@ export class RpcChannelClient {
 						: action === 'resume'
 							? 'jobs.resume'
 							: 'jobs.cancel';
-				await window.desktopAPI.backendRequest(method, { jobId: targetJobId });
+				await this.backendRequest(method, { jobId: targetJobId });
 				return {
 					type: 'jobcontrol',
 					jobId,
@@ -365,5 +372,12 @@ export class RpcChannelClient {
 			default:
 				return 'Pending';
 		}
+	}
+
+	private async backendRequest<TResult = unknown>(method: string, params?: unknown): Promise<TResult> {
+		if (!window.desktopAPI?.backendRequest) {
+			throw new Error('Desktop API is unavailable. Run desktop mode (`task dev`) to access backend RPC.');
+		}
+		return await window.desktopAPI.backendRequest<TResult>(method, params);
 	}
 }

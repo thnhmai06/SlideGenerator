@@ -74,7 +74,7 @@ export const buildBackendUrl = (host: string, port: number): string | undefined 
 
 	const hasScheme = /^https?:\/\//i.test(trimmedHost);
 	const base = hasScheme ? trimmedHost : `http://${trimmedHost}`;
-	const normalizedHost = base.replace(/^(https?:\/\/)localhost(?=[:/]|$)/i, '$1127.0.0.1');
+	const normalizedHost = base.replace(/^(https?:\/\/)localhost(?=[:/]|$)/i, '$1localhost');
 	const normalizedBase = normalizedHost.endsWith('/')
 		? normalizedHost.slice(0, -1)
 		: normalizedHost;
@@ -86,7 +86,7 @@ export const normalizeBackendUrl = (url: string): string => {
 	const trimmed = url.trim();
 	if (!trimmed) return '';
 	const withScheme = /^https?:\/\//i.test(trimmed) ? trimmed : `http://${trimmed}`;
-	const normalizedHost = withScheme.replace(/^(https?:\/\/)localhost(?=[:/]|$)/i, '$1127.0.0.1');
+	const normalizedHost = withScheme.replace(/^(https?:\/\/)localhost(?=[:/]|$)/i, '$1localhost');
 	return normalizedHost.endsWith('/') ? normalizedHost.slice(0, -1) : normalizedHost;
 };
 
