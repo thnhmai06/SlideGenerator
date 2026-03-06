@@ -4,18 +4,9 @@
         // Frontend
         {
             "name": "[Frontend] Main Process",
-            "type": "node",
+            "type": "node-terminal",
             "request": "launch",
-            "cwd": "${workspaceFolder}/frontend",
-            "runtimeExecutable": "npm",
-            "runtimeArgs": [
-                "run",
-                "dev"
-            ],
-            "windows": {
-                "runtimeExecutable": "npm.cmd"
-            },
-            "console": "integratedTerminal",
+            "command": "task dev:frontend",
             "presentation": {
                 "hidden": true
             }
@@ -33,20 +24,9 @@
         // Backend
         {
             "name": "[Backend]",
-            "type": "coreclr",
+            "type": "node-terminal",
             "request": "launch",
-            "program": "dotnet",
-            "args": [
-                "run",
-                "--project",
-                "${workspaceFolder}/backend/SlideGenerator.Ipc/SlideGenerator.Ipc.csproj"
-            ],
-            "cwd": "${workspaceFolder}",
-            "console": "integratedTerminal",
-            "stopAtEntry": false,
-            "env": {
-                "ASPNETCORE_ENVIRONMENT": "Development"
-            }
+            "command": "task dev:backend"
         }
     ],
     "compounds": [

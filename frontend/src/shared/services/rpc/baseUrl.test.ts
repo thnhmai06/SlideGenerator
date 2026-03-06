@@ -13,7 +13,7 @@ describe('normalizeBaseUrl', () => {
 	});
 
 	it('adds scheme and normalizes localhost', () => {
-		expect(normalizeBaseUrl('localhost:65500/')).toBe('http://127.0.0.1:65500');
+		expect(normalizeBaseUrl('localhost:65500/')).toBe('http://localhost:65500');
 	});
 
 	it('keeps scheme and removes trailing slash', () => {
@@ -34,9 +34,9 @@ describe('getBackendBaseUrl', () => {
 	it('promotes pending url when allowed', () => {
 		localStorage.setItem(PENDING_BACKEND_URL_KEY, 'localhost:65000/');
 		const value = getBackendBaseUrl();
-		expect(value).toBe('http://127.0.0.1:65000');
+		expect(value).toBe('http://localhost:65000');
 		expect(localStorage.getItem(PENDING_BACKEND_URL_KEY)).toBeNull();
-		expect(localStorage.getItem(BACKEND_URL_KEY)).toBe('http://127.0.0.1:65000');
+		expect(localStorage.getItem(BACKEND_URL_KEY)).toBe('http://localhost:65000');
 	});
 
 	it('keeps pending url when session defers promotion', () => {

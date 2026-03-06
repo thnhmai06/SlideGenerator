@@ -1,8 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import '@/shared/platform/desktopApi';
 import App from '@/app/App';
 import AppProviders from '@/app/providers/AppProviders';
-import '@/shared/platform/desktopApi';
 import '@/shared/styles/theme.css';
 import '@/shared/styles/index.css';
 

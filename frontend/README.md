@@ -39,7 +39,7 @@ npm run dev
 You can override backend endpoints via Vite env variables:
 
 ```bash
-VITE_BACKEND_URL=http://127.0.0.1:65500
+VITE_BACKEND_URL=http://localhost:65500
 VITE_SHEET_RPC_CHANNEL=sheets
 VITE_JOB_RPC_CHANNEL=jobs
 VITE_CONFIG_RPC_CHANNEL=config

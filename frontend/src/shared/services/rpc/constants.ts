@@ -1,5 +1,5 @@
 export const DEFAULT_BACKEND_URL =
-	(import.meta.env.VITE_BACKEND_URL as string | undefined) ?? 'http://127.0.0.1:65500';
+	(import.meta.env.VITE_BACKEND_URL as string | undefined) ?? 'http://localhost:65500';
 
 export const DEFAULT_SHEET_RPC_CHANNEL =
 	(import.meta.env.VITE_SHEET_RPC_CHANNEL as string | undefined) ?? 'sheets';

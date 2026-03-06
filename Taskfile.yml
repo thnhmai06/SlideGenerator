@@ -33,6 +33,33 @@ tasks:
       - echo "Building Frontend..."
       - npm install
       - npm run build
+  
+  # ============================================================================
+  # RUN TASKS
+  # ============================================================================
+
+  dev:frontend:
+    desc: Run Frontend desktop app (Tauri + Vite)
+    dir: frontend
+    cmds:
+      - npm run dev
+
+  dev:web:
+    desc: Run Frontend web-only development server (Vite)
+    dir: frontend
+    cmds:
+      - npm run dev:web
+
+  dev:backend:
+    desc: Run Backend development server
+    cmds:
+      - dotnet run --project {{.BACKEND_PROJECT}}
+
+  dev:
+    desc: Run Backend + Frontend development servers
+    deps:
+      - dev:backend
+      - dev:frontend
 
   # ============================================================================
   # TEST TASKS

@@ -27,7 +27,7 @@ export const ServerTab: React.FC<ServerTabProps> = ({
 							value={config.server.host}
 							disabled={!canEditConfig}
 							onChange={(e) => updateServer({ host: e.target.value })}
-							placeholder="127.0.0.1"
+							placeholder="localhost"
 						/>
 						<span className="setting-hint">{t('settings.hostHint')}</span>
 					</div>

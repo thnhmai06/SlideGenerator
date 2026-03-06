@@ -13,7 +13,7 @@ export function normalizeBaseUrl(url: string): string {
 
 	const normalizedHost = withScheme.replace(
 		/^(https?:\/\/)localhost(?=[:/]|$)/i,
-		(_, scheme: string) => `${scheme}127.0.0.1`,
+		(_, scheme: string) => `${scheme}localhost`,
 	);
 
 	return normalizedHost.endsWith('/') ? normalizedHost.slice(0, -1) : normalizedHost;
