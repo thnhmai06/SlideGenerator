@@ -1,0 +1,4 @@
+[submodule "SlideGenerator.Framework"]
+	path = SlideGenerator.Framework
+	url = https://github.com/thnhmai06/SlideGenerator.Framework.git
+	branch = refactor/services-based

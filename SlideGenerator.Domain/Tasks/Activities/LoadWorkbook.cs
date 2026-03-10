@@ -2,65 +2,47 @@
 using Elsa.Workflows;
 using Elsa.Workflows.Activities;
 using Elsa.Workflows.Models;
-using SlideGenerator.Framework.Sheet.Services;
 
 namespace SlideGenerator.Domain.Tasks.Activities;
 
 /// <summary>
-///     Workflow step to open an Excel workbook and prepare a worksheet dictionary.
-///     Opens the workbook file and creates a dictionary mapping sheet names to IXLWorksheet instances
-///     for the specified list of sheets.
+///     Workflow step that opens a workbook file and exposes selected worksheets to downstream activities.
 /// </summary>
 /// <remarks>
 ///     <para>
-///         This workflow performs the following steps:
+///         This activity validates <see cref="WorkbookPath" />, opens the workbook with <see cref="XLWorkbook" />,
+///         resolves sheets listed in <see cref="SelectedSheets" />, and stores runtime objects in
+///         <c>WorkflowExecutionContext.TransientProperties</c>.
 ///     </para>
-///     <list type="number">
+///     <para>
+///         The following keys are written to transient properties:
+///     </para>
+///     <list type="bullet">
 ///         <item>
-///             <description>
-///                 <strong>Validate Inputs:</strong> Checks that WorkbookPath is provided and not empty.
-///             </description>
+///             <description><c>WorkbookFs</c>: the open <see cref="FileStream" /> for the workbook file.</description>
 ///         </item>
 ///         <item>
-///             <description>
-///                 <strong>Open Workbook:</strong> Calls <see cref="WorkbookService.OpenWorkbook" /> to open
-///                 the Excel file in read-only mode. Supports both .xlsx and other Excel formats.
-///             </description>
+///             <description><c>Workbook</c>: the opened <see cref="IXLWorkbook" /> instance.</description>
 ///         </item>
 ///         <item>
-///             <description>
-///                 <strong>Build Worksheet Dictionary:</strong> Iterates through the SelectedSheets list
-///                 and retrieves each worksheet from the workbook. Creates a dictionary mapping sheet names
-///                 to IXLWorksheet instances.
-///             </description>
-///         </item>
-///         <item>
-///             <description>
-///                 <strong>Store in TransientProperties:</strong> Stores both the Workbook instance and
-///                 Worksheets dictionary in workflow context's TransientProperties for use by downstream tasks.
-///             </description>
+///             <description><c>Worksheets</c>: <see cref="Dictionary{TKey,TValue}" /> of sheet name to <see cref="IXLWorksheet" />.</description>
 ///         </item>
 ///     </list>
-///     <para>
-///         The Workbook instance is not persisted to workflow state - it exists only in runtime memory
-///         (TransientProperties) to avoid serialization issues with large Excel objects. Downstream tasks
-///         can retrieve these objects from the same TransientProperties.
-///     </para>
 /// </remarks>
 public sealed class LoadWorkbook : WorkflowBase
 {
     /// <summary>
-    ///     Input: Full path to the Excel workbook file (.xlsx, .xls, etc.).
+    ///     Input: Full path to the workbook file.
     /// </summary>
     public Input<string> WorkbookPath { get; set; } = null!;
 
     /// <summary>
-    ///     Input: List of worksheet names to load from the workbook.
+    ///     Input: Worksheet names to load into the runtime worksheet dictionary.
     /// </summary>
     public Input<IReadOnlyList<string>> SelectedSheets { get; set; } = null!;
 
     /// <summary>
-    ///     Loads the workbook and builds a worksheet dictionary stored in workflow context's TransientProperties.
+    ///     Opens the workbook and stores workbook-related runtime objects in transient properties.
     /// </summary>
     protected override void Build(IWorkflowBuilder builder)
     {
