@@ -1,34 +1,34 @@
 using System.Net;
 
-namespace SlideGenerator.Domain.Configs.Models;
+namespace SlideGenerator.Domain.Settings.Models;
 
-public sealed partial class Config
+public sealed partial class Setting
 {
     private static readonly string DefaultDownloadPath = Path.Combine(Path.GetTempPath(), AppName);
 
-    public sealed class DownloadConfig
+    public sealed class DownloadSetting
     {
         public bool DeleteAfterDownload = true;
         public int LimitBytesPerSecond = 0;
         public int MaxChunks = 5;
 
-        public ProxyConfig Proxy = new();
+        public ProxySetting Proxy = new();
 
-        public RetryConfig Retry = new();
+        public RetrySetting Retry = new();
 
-        public string SaveFolder
+        public string DownloadFolder
         {
             get => string.IsNullOrEmpty(field) ? DefaultDownloadPath : field;
             set;
         } = string.Empty;
 
-        public sealed class RetryConfig
+        public sealed class RetrySetting
         {
             public int MaxRetries = 3;
             public int Timeout = 30;
         }
 
-        public sealed class ProxyConfig
+        public sealed class ProxySetting
         {
             public string Domain = string.Empty;
             public string Password = string.Empty;

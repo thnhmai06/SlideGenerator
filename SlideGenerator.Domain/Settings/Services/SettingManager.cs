@@ -1,16 +1,16 @@
-using SlideGenerator.Domain.Configs.Contacts;
-using SlideGenerator.Domain.Configs.Models;
+using SlideGenerator.Domain.Settings.Contacts;
+using SlideGenerator.Domain.Settings.Models;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
-namespace SlideGenerator.Domain.Configs.Services;
+namespace SlideGenerator.Domain.Settings.Services;
 
 /// <remarks>
 ///     Reviewed by @thnhmai06 at 01/03/2026 00:43:30 GMT+7
 /// </remarks>
-public sealed class ConfigManager : IConfigProvider
+public sealed class SettingManager : ISettingProvider
 {
-    private static readonly string ConfigFilePath = Path.Combine(AppContext.BaseDirectory, "Configs.yaml");
+    private static readonly string FilePath = Path.Combine(AppContext.BaseDirectory, "Settings.yaml");
 
     private readonly IDeserializer _deserializer = new DeserializerBuilder()
         .WithNamingConvention(UnderscoredNamingConvention.Instance)
@@ -21,14 +21,14 @@ public sealed class ConfigManager : IConfigProvider
         .WithNamingConvention(UnderscoredNamingConvention.Instance)
         .Build();
 
-    public Config Current { get; private set; } = new();
+    public Setting Current { get; private set; } = new();
 
     public bool Load()
     {
         try
         {
-            var yaml = File.ReadAllText(ConfigFilePath);
-            var loaded = _deserializer.Deserialize<Config>(yaml);
+            var yaml = File.ReadAllText(FilePath);
+            var loaded = _deserializer.Deserialize<Setting>(yaml);
 
             Current = loaded;
             return true;
@@ -45,8 +45,8 @@ public sealed class ConfigManager : IConfigProvider
     {
         try
         {
-            Directory.CreateDirectory(Path.GetPathRoot(ConfigFilePath)!);
-            File.WriteAllText(ConfigFilePath, _serializer.Serialize(Current));
+            Directory.CreateDirectory(Path.GetPathRoot(FilePath)!);
+            File.WriteAllText(FilePath, _serializer.Serialize(Current));
             return true;
         }
         catch
@@ -57,7 +57,7 @@ public sealed class ConfigManager : IConfigProvider
 
     public bool ResetToDefaults()
     {
-        Current = new Config();
+        Current = new Setting();
         return Save();
     }
 }

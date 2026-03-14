@@ -14,20 +14,16 @@ namespace SlideGenerator.Domain.Tasks.Activities;
 ///         resolves sheets listed in <see cref="SelectedSheets" />, and stores runtime objects in
 ///         <c>WorkflowExecutionContext.TransientProperties</c>.
 ///     </para>
+/// 
 ///     <para>
-///         The following keys are written to transient properties:
+///        The following keys are written to:
+///        <code>context.WorkflowExecutionContext.TransientProperties</code>
+///        <list>
+///           <item>+ <c>WorkbookFs</c>: the open <see cref="FileStream" /> for the workbook file.</item>
+///           <item>+ <c>Workbook</c>: the opened <see cref="IXLWorkbook" /> instance.</item>
+///           <item>+ <c>Worksheets</c>: <see cref="Dictionary{TKey,TValue}" /> of sheet name to <see cref="IXLWorksheet" />.</item>
+///        </list>
 ///     </para>
-///     <list type="bullet">
-///         <item>
-///             <description><c>WorkbookFs</c>: the open <see cref="FileStream" /> for the workbook file.</description>
-///         </item>
-///         <item>
-///             <description><c>Workbook</c>: the opened <see cref="IXLWorkbook" /> instance.</description>
-///         </item>
-///         <item>
-///             <description><c>Worksheets</c>: <see cref="Dictionary{TKey,TValue}" /> of sheet name to <see cref="IXLWorksheet" />.</description>
-///         </item>
-///     </list>
 /// </remarks>
 public sealed class LoadWorkbook : WorkflowBase
 {

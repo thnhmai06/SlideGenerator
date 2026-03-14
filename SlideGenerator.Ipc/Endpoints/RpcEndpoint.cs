@@ -1,5 +1,5 @@
 using SlideGenerator.Application;
-using SlideGenerator.Domain.Configs.Services;
+using SlideGenerator.Domain.Settings.Services;
 using JsonRpcConnection = StreamJsonRpc.JsonRpc;
 
 namespace SlideGenerator.Ipc.Endpoints;
@@ -7,13 +7,13 @@ namespace SlideGenerator.Ipc.Endpoints;
 public sealed partial class RpcEndpoint : IDisposable
 {
     private readonly BackendService _backendService;
-    private readonly ConfigManager _configManager;
+    private readonly SettingManager _settingManager;
     private JsonRpcConnection? _rpc;
 
-    public RpcEndpoint(BackendService backendService, ConfigManager configManager)
+    public RpcEndpoint(BackendService backendService, SettingManager settingManager)
     {
         _backendService = backendService;
-        _configManager = configManager;
+        _settingManager = settingManager;
         _backendService.JobUpdated += HandleJobUpdated;
     }
 

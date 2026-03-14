@@ -7,35 +7,35 @@ public sealed partial class RpcEndpoint
     [JsonRpcMethod("configs.get")]
     public object GetConfigs()
     {
-        return _configManager.Current;
+        return _settingManager.Current;
     }
 
     [JsonRpcMethod("configs.reload")]
     public object ReloadConfigs()
     {
-        var ok = _configManager.Load();
+        var ok = _settingManager.Load();
         return new
         {
             ok,
-            config = _configManager.Current
+            config = _settingManager.Current
         };
     }
 
     [JsonRpcMethod("configs.save")]
     public object SaveConfigs()
     {
-        var ok = _configManager.Save();
+        var ok = _settingManager.Save();
         return new { ok };
     }
 
     [JsonRpcMethod("configs.reset")]
     public object ResetConfigs()
     {
-        var ok = _configManager.ResetToDefaults();
+        var ok = _settingManager.ResetToDefaults();
         return new
         {
             ok,
-            config = _configManager.Current
+            config = _settingManager.Current
         };
     }
 }

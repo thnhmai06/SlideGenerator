@@ -10,7 +10,7 @@ using SlideGenerator.Application;
 using SlideGenerator.Application.Generating.Services;
 using SlideGenerator.Domain.Configs.Contracts;
 using SlideGenerator.Domain.Configs.Entities;
-using SlideGenerator.Domain.Configs.Services;
+using SlideGenerator.Domain.Settings.Services;
 using StreamJsonRpc;
 
 namespace SlideGenerator.Ipc;
@@ -48,14 +48,14 @@ public static class Program
             elsa.UseWorkflowRuntime(runtime =>
                 runtime.UseEntityFrameworkCore(ef => ef.UseSqlite(jobsDbConnection)));
         });
-        services.AddSingleton<ConfigManager>(_ =>
+        services.AddSingleton<SettingManager>(_ =>
         {
-            var configManager = new ConfigManager();
+            var configManager = new SettingManager();
             configManager.Load();
             return configManager;
         });
         services.AddSingleton<IConfigProvider>(serviceProvider =>
-            serviceProvider.GetRequiredService<ConfigManager>());
+            serviceProvider.GetRequiredService<SettingManager>());
         services.AddSingleton<JobSnapshotWorkflowDispatcher>();
         services.AddSingleton<DownloadService>();
         services.AddSingleton<IFaceDetectorModelFactory, IFaceDetectorModelFactory>();

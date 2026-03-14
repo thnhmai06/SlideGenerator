@@ -18,8 +18,8 @@ namespace SlideGenerator.Domain.Tasks.Activities;
 ///         <item>
 ///             <description>
 ///                 <c>PreparePresentation</c> loads the template into memory, keeps only <see cref="TemplateIndex" />,
-///                 converts to <see cref="FileExtension" />, writes the result to <see cref="SaveFolder" />,
-///                 and sets <see cref="FilePath" />.
+///                 converts to <see cref="PresentationExtension" />, writes the result to <see cref="SaveFolder" />,
+///                 and sets <see cref="PresentationPath" />.
 ///             </description>
 ///         </item>
 ///         <item>
@@ -30,18 +30,21 @@ namespace SlideGenerator.Domain.Tasks.Activities;
 ///             </description>
 ///         </item>
 ///     </list>
+///
+///     <para>
+///     The following keys are written to:
+///        <code>context.WorkflowExecutionContext.TransientProperties</code>
+///        <list>
+///           <item>+ <c>Presentation</c>: the open <see cref="PresentationDocument" /> instance for the generated presentation file.</item>
+///        </list>
+///     </para>
 /// </remarks>
 public sealed class LoadPresentation : WorkflowBase
 {
     /// <summary>
-    ///     Input: Path to the source template presentation file.
+    ///     Input: File path and index of the template slide to use.
     /// </summary>
-    public Input<string> TemplatePath { get; set; } = null!;
-
-    /// <summary>
-    ///     Input: 1-based slide index to keep in the generated output.
-    /// </summary>
-    public Input<int> TemplateIndex { get; set; } = null!;
+    public Input<SlideInfo> TemplateInfo { get; set; } = null!;
 
     /// <summary>
     ///     Input: Output folder for the generated presentation file.
@@ -51,17 +54,17 @@ public sealed class LoadPresentation : WorkflowBase
     /// <summary>
     ///     Input: Output file name without extension.
     /// </summary>
-    public Input<string> FileName { get; set; } = null!;
+    public Input<string> PresentationName { get; set; } = null!;
 
     /// <summary>
     ///     Input: Output presentation extension and OpenXML document type.
     /// </summary>
-    public Input<OutputExtension> FileExtension { get; set; } = null!;
+    public Input<OutputExtension> PresentationExtension { get; set; } = null!;
 
     /// <summary>
     ///     Output: Full path of the generated presentation file.
     /// </summary>
-    public Output<string> FilePath { get; set; } = null!;
+    public Output<string> PresentationPath { get; set; } = null!;
 
     /// <summary>
     ///     Configures the sequence that prepares and then opens the generated presentation.
@@ -74,7 +77,8 @@ public sealed class LoadPresentation : WorkflowBase
             {
                 PreparePresentation,
                 OpenPresentation
-            }
+            },
+            Name = "LoadPresentation"
         };
     }
 
@@ -84,18 +88,17 @@ public sealed class LoadPresentation : WorkflowBase
     private Inline PreparePresentation => new(context =>
     {
         // Get input values
-        var templatePath = context.Get(TemplatePath);
+        var templateInfo = context.Get(TemplateInfo);
         var saveFolder = context.Get(SaveFolder);
-        var fileName = context.Get(FileName);
-        var templateIndex = context.Get(TemplateIndex);
-        var outputExtension = context.Get(FileExtension).ToFileExtension();
-        var outputType = context.Get(FileExtension).ToPresentationDocumentType();
+        var fileName = context.Get(PresentationName);
+        var outputExtension = context.Get(PresentationExtension).ToFileExtension();
+        var outputType = context.Get(PresentationExtension).ToPresentationDocumentType();
 
         // Validate inputs
-        if (string.IsNullOrEmpty(templatePath) ||
+        if (string.IsNullOrEmpty(templateInfo?.FilePath) ||
             string.IsNullOrEmpty(saveFolder) ||
             string.IsNullOrEmpty(fileName) ||
-            templateIndex <= 0)
+            templateInfo.Index <= 0)
             return;
 
         // Prepare output directory and path
@@ -103,7 +106,7 @@ public sealed class LoadPresentation : WorkflowBase
         var outputPath = Path.Combine(saveFolder, $"{fileName}{outputExtension}");
 
         // Step 1: Load template into memory stream
-        var bytes = File.ReadAllBytes(templatePath);
+        var bytes = File.ReadAllBytes(templateInfo.FilePath);
         using var memoryStream = new MemoryStream(bytes);
         using var doc = PresentationDocument.Open(memoryStream, true);
 
@@ -115,7 +118,7 @@ public sealed class LoadPresentation : WorkflowBase
             var slideCount = slideIds.Count;
             // Remove from end to start to avoid index shifting
             for (var index = slideCount; index >= 1; index--)
-                if (index != templateIndex)
+                if (index != templateInfo.Index)
                     slideIds[index - 1].Remove();
         }
 
@@ -131,7 +134,7 @@ public sealed class LoadPresentation : WorkflowBase
         }
 
         // Set output value
-        context.Set(FilePath, outputPath);
+        context.Set(PresentationPath, outputPath);
     })
     {
         Name = "PreparePresentation"
@@ -142,7 +145,7 @@ public sealed class LoadPresentation : WorkflowBase
     /// </summary>
     private Inline OpenPresentation => new(context =>
     {
-        var filePath = context.Get(FilePath);
+        var filePath = context.Get(PresentationPath);
         if (string.IsNullOrEmpty(filePath)) return;
 
         var doc = PresentationDocument.Open(filePath, true);
