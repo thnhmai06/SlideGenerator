@@ -8,7 +8,22 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3a1f1c77-0578-40bf-9d5d-a0e8452562c2" name="Changes" comment="" />
+    <list default="true" id="3a1f1c77-0578-40bf-9d5d-a0e8452562c2" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Models/ImageFlatConfig.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Framework/.github/copilot-instructions.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.github/copilot-instructions.md" beforeDir="false" afterPath="$PROJECT_DIR$/.github/copilot-instructions.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.SlideGenerator/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.SlideGenerator/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Download/Entities/FileDownloadInfo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Download/Entities/DownloadInfo.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Download/Entities/FileDownloader.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Download/Entities/Downloader.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Download/Services/DownloadManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Download/Services/DownloadManager.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Settings/Models/Setting.DownloadConfig.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Settings/Models/Setting.DownloadConfig.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/SlideGenerator.Domain.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/SlideGenerator.Domain.csproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Activities/FilterConfigs.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Activities/FilterConfigs.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Activities/GetRowContent.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Activities/GetRowContent.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Activities/PrepareImages.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Activities/PrepareImages.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Models/ImageConfig.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Models/ImageConfig.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Framework" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Framework" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -18,6 +33,9 @@
     <persistenceIdMap>
       <entry key="_D:/Development/Code/.multi/SlideGenerator" value="3AjRSsDaXgOGJifP2mkOaJyARb5" />
     </persistenceIdMap>
+  </component>
+  <component name="CopilotUserSelectedChatMode">
+    <option name="chatModeId" value="Agent" />
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -51,10 +69,13 @@
     <option name="ROOT_SYNC" value="DONT_SYNC" />
   </component>
   <component name="HighlightingSettingsPerFile">
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/6340b5fe53504d64abf787165f5fc155ad800/7c/7ae0de59/ParallelForEach`1.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/a344d5234cda41fbb887e67f5efa58d0bba00/c5/0c88de65/ParallelForEach`1.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/aeddec7ccf3f1571cfd14ca2540abbf19f9846eb91bc3767e402298d4cbaa/ConcurrentDictionary.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Domain/Download/Services/DownloadManager.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Activities/FilterConfigs.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Activities/GetRowContent.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Models/ImageFlatConfig.cs" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="true" />
   <component name="ProblemsViewState">
@@ -72,25 +93,25 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "git-widget-placeholder": "develop/backend",
-    "ignore.virus.scanning.warn.message": "true",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "preferences.pluginManager",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;develop/backend&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.github.copilot.settings.mcp.McpConfigurable&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager" selected=".NET Launch Settings Profile.SlideGenerator.Ipc: JsonRpc">
     <configuration name="SlideGenerator.Ipc: JsonRpc" type="LaunchSettings" factoryName=".NET Launch Settings Profile">
       <option name="LAUNCH_PROFILE_PROJECT_FILE_PATH" value="$PROJECT_DIR$/SlideGenerator.Ipc/SlideGenerator.Ipc.csproj" />
@@ -155,7 +176,11 @@
       <workItem from="1773191922173" duration="3989000" />
       <workItem from="1773204195484" duration="2208000" />
       <workItem from="1773475098788" duration="6075000" />
-      <workItem from="1773503782323" duration="5411000" />
+      <workItem from="1773503782323" duration="5498000" />
+      <workItem from="1773669968014" duration="1335000" />
+      <workItem from="1773707291539" duration="7247000" />
+      <workItem from="1773714749600" duration="121000" />
+      <workItem from="1773737548921" duration="9578000" />
     </task>
     <task id="LOCAL-00001" summary="feat: update LoadPresentation workflow&#10;&#10;- Updated LoadPresentation class to enhance documentation and streamline presentation preparation workflow (improves clarity and maintainability).">
       <option name="closed" value="true" />
@@ -205,7 +230,15 @@
       <option name="project" value="LOCAL" />
       <updated>1773508510664</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="feat(sheet): add GetHeadersName method to WorksheetService&#10;&#10;- Introduced GetHeadersName method to retrieve column headers from the first row of a specified content range (enhances data retrieval capabilities).&#10;- Refactored GetRowContent method to maintain functionality while improving code structure.">
+      <option name="closed" value="true" />
+      <created>1773510243172</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1773510243172</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

@@ -1,61 +1,55 @@
 # Copilot Instructions
 
 ## Source of Truth
-- Read and follow [Constructon](../construction.md) before making architectural decisions.
-- If `copilot-instructions.md` and `Constructon` differ, prefer `Constructon` for project-specific architecture/runtime rules.
+- Read and follow [`construction.md`](../construction.md) before making architectural decisions.
+- If this file and `construction.md` differ, prefer `construction.md`.
+- Validate architecture assumptions against current code in `SlideGenerator.Application`, `SlideGenerator.Domain`, `SlideGenerator.Framework`, and `SlideGenerator.Ipc` before large changes.
 
-## General Guidelines
-- Keep changes minimal and scoped to the requested feature.
-- Prefer fixing root causes over adding temporary workarounds.
-- Do not introduce unrelated refactors while implementing a task.
-- Keep public APIs stable unless the task explicitly requests breaking changes.
+## Solution Shape (Current Codebase)
+- `SlideGenerator.Framework`: reusable low-level library (Cloud, Sheet, Slide, Image), publishable as standalone package.
+- `SlideGenerator.Domain`: domain/runtime concerns (settings, download orchestration, workflow activity models).
+- `SlideGenerator.Application`: application-facing services/models (currently scanning models/services).
+- `SlideGenerator.Ipc`: stdio JSON-RPC adapter and composition root (`Program.cs`, `Endpoints/RpcEndpoint.*.cs`).
 
-## Code Style
-- Use C# 12+ style already used in this repo (`sealed`, file-scoped namespaces, explicit async APIs).
-- Use meaningful names; avoid one-letter variables except in trivial loops.
-- Add XML doc comments for public types and public methods in touched files.
-- Prefer expression clarity over clever code.
-- Preserve existing indentation and formatting conventions.
-- Keep method bodies short and intention-revealing; extract private helpers when a method handles multiple concerns.
-- Validate external inputs early (guard clauses) and fail fast with explicit exception types.
-- Prefer `async`/`await` end-to-end for I/O paths; avoid sync-over-async patterns (`.Result`, `.Wait()`).
-- Return structured results/models instead of loosely typed objects or magic dictionaries.
-- Use `ILogger<T>` for operational logs; keep logs concise, contextual, and free of sensitive data.
-- Avoid hidden side effects: methods should do what their names describe and keep state transitions explicit.
-- Follow object-oriented design by default:
-	- Encapsulate behavior in classes/services instead of top-level script style.
-	- Keep methods focused and single-purpose; extract private helper methods when logic grows.
-	- Prefer dependency inversion (interfaces/contracts) for cross-project dependencies.
-	- Keep mutable state private and expose minimal public surface.
+## Layer Boundaries
+- Keep `Framework` free of app orchestration and transport concerns.
+- Keep `Domain` focused on domain models, state/config access abstractions, and workflow-level activities.
+- Keep `Application` focused on use-case services that compose `Domain` + `Framework`.
+- Keep `Ipc` thin: validate request payloads, call backend/application orchestration services, return DTOs.
+- Do not move business logic into endpoint classes or DTOs.
 
-## Project-Specific Rules
-- Keep architecture boundaries strict:
-	- `Framework`: reusable low-level features (slide/sheet/image/cloud services), no app orchestration. Can be published as NuGet.
-	- `Features`: domain entities/models (Configs, Jobs orchestration with persistence/workflow, Slides/Sheets domain models).
-	- `Services`: application services (ScanService, GenerateService, DownloadService, FaceDetectorModelManager, ValidationService).
-	- `Ipc`: JSON-RPC transport adapter.
-- Configuration access for non-`Features` projects currently uses `IConfigProvider` mapping from singleton `ConfigManager` (in `Features.Configs`).
-	- Register `ConfigManager` once in DI and map provider interfaces from it.
-	- Avoid passing raw `Config` as root dependency unless taking a runtime snapshot in an internal service.
-- Prefer Dependency Injection from `Program.cs` (`Microsoft.Extensions.DependencyInjection`).
-	- Avoid manual `new` for service wiring in constructors.
-- Face detection lifecycle contract:
-	- Model initialization ownership is in `FaceDetectorModelManager` (in `Services`).
-	- In `Framework`, `DetectAsync` must throw when model is not initialized.
-	- `Framework` returns all detections; score filtering is handled by caller/business layer.
-- Download behavior:
-	- Use `DownloadService` (in `Services.Generating`, uses Downloader library) for remote downloads in Generate flow.
-	- Avoid direct ad-hoc `HttpClient` download logic in generation pipeline.
-- IPC endpoint structure:
-	- Keep request DTO in `Services.Generating.Models` (for GenerateSlidesRequest) or `SlideGenerator.Ipc/Contracts/Requests`.
-	- Keep RPC handlers in partial `RpcEndpoint.*.cs` files and call `BackendService` (in `Features.Jobs`) for orchestration.
-- Framework reuse:
-	- If logic already exists in `Framework` services, use it instead of duplicating logic in `Services` or `Features`.
-- Data shape conventions:
-	- Use `Entities` for domain/runtime entities (in `Features`).
-	- Use `Models` for supporting option/value model types (in `Features` or `Services`).
-- **Current architecture**: Solution organized into 4 projects:
-	- `Framework` (low-level reusable library)
-	- `Features` (domain entities, Jobs, Configs, domain models)
-	- `Services` (application services for scan/generate/download/validation)
-	- `Ipc` (JSON-RPC transport layer)
+## DI and Runtime Composition
+- Register services in `SlideGenerator.Ipc/Program.cs` using `Microsoft.Extensions.DependencyInjection`.
+- Keep singleton config owner in `Domain` (`SettingManager`), and expose read-only access via `ISettingProvider`.
+- Prefer constructor injection; avoid manual service wiring inside service constructors.
+- Preserve async disposal/lifecycle semantics for long-lived services that hold unmanaged/native resources.
+
+## Contracts Inferred from Code
+- Scanning flow should reuse `Framework` extension/services (`ShapeService`, `WorkbookService`, presentation scanners) instead of re-parsing formats.
+- Cloud link resolution should go through `Framework.Cloud.Services.CloudResolver` and `Domain.Download.Services.ResolveService`.
+- Download orchestration should stay in `Domain.Download.Services` (`DownloadManager`, `FileDownloader`) with concurrency-safe state management.
+- Face detection model lifecycle is explicit:
+  - initialization and model selection in `Framework.Image.Services.FaceDetectorModelManager`.
+  - `FaceDetectionModel.DetectAsync` implementations (for example `YuNetModel`) must throw when model is not initialized.
+  - detection results are raw/full; confidence filtering belongs to caller/business layer.
+
+## Coding Guidelines
+- Keep changes minimal, scoped, and backward-compatible unless a breaking change is requested.
+- Use C# 12+ style already present in repo (file-scoped namespaces, `sealed` where appropriate, async APIs).
+- Add XML docs for public types and public methods in touched files.
+- Prefer clear, intention-revealing code over compact but opaque expressions.
+- Validate inputs with guard clauses and fail fast with explicit exceptions.
+- Avoid sync-over-async (`.Result`, `.Wait()`).
+
+## Naming and Data Shape
+- Keep DTO/model placement consistent with project responsibilities:
+  - transport request contracts under `SlideGenerator.Ipc/Contracts/Requests`.
+  - application response models under `SlideGenerator.Application/.../Models`.
+  - domain/runtime models under `SlideGenerator.Domain/.../Models` and entities under `.../Entities`.
+- Maintain existing naming unless task asks for explicit renaming; avoid incidental churn.
+
+## Change Safety Checklist
+- Confirm touched code stays inside the correct project boundary.
+- Reuse existing `Framework` and `Domain` helpers before adding new low-level logic.
+- Build affected projects first, then build solution when practical.
+- If pre-existing compile/runtime issues are found, call them out separately from new changes.

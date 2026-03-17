@@ -7,15 +7,15 @@ namespace SlideGenerator.Domain.Download.Services;
 
 public class DownloadManager
 {
-    private readonly ConcurrentDictionary<FileDownloadInfo, FileDownloader> _currentDownload = new();
+    private readonly ConcurrentDictionary<DownloadInfo, Entities.Downloader> _currentDownload = new();
 
-    public static bool IsDownloadCompleted(FileDownloadInfo info, [MaybeNullWhen(false)] out string filePath)
+    public static bool IsDownloadCompleted(DownloadInfo info, [MaybeNullWhen(false)] out string filePath)
     {
         var files = Directory.GetFiles(info.SaveFolder, $"{info.FileName}.*");
         foreach (var file in files)
         {
             var ext = Path.GetExtension(file);
-            if (ext.Equals(FileDownloader.TempExtension, StringComparison.OrdinalIgnoreCase)) continue;
+            if (ext.Equals(Entities.Downloader.TempExtension, StringComparison.OrdinalIgnoreCase)) continue;
             filePath = file;
             return true;
         }
@@ -24,8 +24,8 @@ public class DownloadManager
         return false;
     }
 
-    public bool TryGetOrAddDownloader(FileDownloadInfo info, DownloadConfiguration config,
-        [MaybeNullWhen(false)] out FileDownloader downloader)
+    public bool TryGetOrCreateDownloader(DownloadInfo info, DownloadConfiguration? config,
+        [MaybeNullWhen(false)] out Entities.Downloader downloader)
     {
         if (IsDownloadCompleted(info, out _))
         {
@@ -36,7 +36,7 @@ public class DownloadManager
         if (_currentDownload.TryGetValue(info, out downloader))
             return true;
 
-        downloader = new FileDownloader(info, config);
+        downloader = new Entities.Downloader(info, config ?? new DownloadConfiguration());
         downloader.Service.DownloadFileCompleted += (_, _) => { _currentDownload.TryRemove(info, out _); };
         return _currentDownload.TryAdd(info, downloader);
     }

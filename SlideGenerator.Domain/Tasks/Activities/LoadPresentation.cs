@@ -30,13 +30,15 @@ namespace SlideGenerator.Domain.Tasks.Activities;
 ///             </description>
 ///         </item>
 ///     </list>
-///
 ///     <para>
-///     The following keys are written to:
-///        <code>context.WorkflowExecutionContext.TransientProperties</code>
-///        <list>
-///           <item>+ <c>Presentation</c>: the open <see cref="PresentationDocument" /> instance for the generated presentation file.</item>
-///        </list>
+///         The following keys are written to:
+///         <code>context.WorkflowExecutionContext.TransientProperties</code>
+///         <list>
+///             <item>
+///                 + <c>Presentation</c>: the open <see cref="PresentationDocument" /> instance for the generated
+///                 presentation file.
+///             </item>
+///         </list>
 ///     </para>
 /// </remarks>
 public sealed class LoadPresentation : WorkflowBase
@@ -65,22 +67,6 @@ public sealed class LoadPresentation : WorkflowBase
     ///     Output: Full path of the generated presentation file.
     /// </summary>
     public Output<string> PresentationPath { get; set; } = null!;
-
-    /// <summary>
-    ///     Configures the sequence that prepares and then opens the generated presentation.
-    /// </summary>
-    protected override void Build(IWorkflowBuilder builder)
-    {
-        builder.Root = new Sequence
-        {
-            Activities =
-            {
-                PreparePresentation,
-                OpenPresentation
-            },
-            Name = "LoadPresentation"
-        };
-    }
 
     /// <summary>
     ///     Creates the output presentation file by trimming template slides and applying the requested format.
@@ -154,4 +140,20 @@ public sealed class LoadPresentation : WorkflowBase
     {
         Name = "OpenPresentation"
     };
+
+    /// <summary>
+    ///     Configures the sequence that prepares and then opens the generated presentation.
+    /// </summary>
+    protected override void Build(IWorkflowBuilder builder)
+    {
+        builder.Root = new Sequence
+        {
+            Activities =
+            {
+                PreparePresentation,
+                OpenPresentation
+            },
+            Name = "LoadPresentation"
+        };
+    }
 }

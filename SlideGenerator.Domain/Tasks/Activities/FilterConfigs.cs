@@ -25,10 +25,10 @@ public class FilterConfigs : WorkflowBase
     {
         builder.Root = new Inline(context =>
         {
+            var sheetName = context.Get(SheetName);
             var rawTextConfigs = context.Get(RawTextConfigs);
             var rawImageConfigs = context.Get(RawImageConfigs);
             var worksheets = context.WorkflowExecutionContext.GetProperty<Worksheets>("Worksheets");
-            var sheetName = context.Get(SheetName);
 
             if (rawTextConfigs is null || rawImageConfigs is null || worksheets is null || sheetName is null ||
                 !worksheets.TryGetValue(sheetName, out var worksheet)) return;
@@ -36,14 +36,14 @@ public class FilterConfigs : WorkflowBase
             var contentRange = worksheet.GetContentRange();
             var columnNames = contentRange?.GetHeadersName().ToHashSet();
             if (columnNames is null) return;
-            
+
             var textConfigs = rawTextConfigs
                 .Where(config => config.Columns.Any(column => columnNames.Contains(column)))
                 .ToList();
             var imageConfigs = rawImageConfigs
                 .Where(config => config.Columns.Any(column => columnNames.Contains(column)))
                 .ToList();
-            
+
             context.Set(TextConfigs, textConfigs);
             context.Set(ImageConfigs, imageConfigs);
         })

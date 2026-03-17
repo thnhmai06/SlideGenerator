@@ -1,4 +1,5 @@
 using System.Net;
+using Downloader;
 
 namespace SlideGenerator.Domain.Settings.Models;
 
@@ -22,6 +23,17 @@ public sealed partial class Setting
             set;
         } = string.Empty;
 
+        internal DownloadConfiguration GetConfigurationObject()
+        {
+            var config = new DownloadConfiguration
+            {
+                MaximumBytesPerSecond = LimitBytesPerSecond,
+                ChunkCount = MaxChunks
+            };
+            config.ApplyRetrySetting(Retry).ApplyProxySetting(Proxy);
+            return config;
+        }
+
         public sealed class RetrySetting
         {
             public int MaxRetries = 3;
@@ -36,7 +48,7 @@ public sealed partial class Setting
             public bool UseProxy = false;
             public string Username = string.Empty;
 
-            public IWebProxy? GetWebProxy()
+            internal IWebProxy? GetWebProxy()
             {
                 if (!UseProxy || string.IsNullOrEmpty(ProxyAddress))
                     return null;
@@ -47,6 +59,25 @@ public sealed partial class Setting
                 };
                 return proxy;
             }
+        }
+    }
+}
+
+internal static class ApplyConfigurationObjectExtensions
+{
+    extension(DownloadConfiguration downloadConfiguration)
+    {
+        internal DownloadConfiguration ApplyRetrySetting(Setting.DownloadSetting.RetrySetting retrySetting)
+        {
+            downloadConfiguration.MaxTryAgainOnFailure = retrySetting.MaxRetries;
+            downloadConfiguration.BlockTimeout = retrySetting.Timeout;
+            return downloadConfiguration;
+        }
+
+        internal DownloadConfiguration ApplyProxySetting(Setting.DownloadSetting.ProxySetting proxySetting)
+        {
+            downloadConfiguration.RequestConfiguration.Proxy = proxySetting.GetWebProxy();
+            return downloadConfiguration;
         }
     }
 }
