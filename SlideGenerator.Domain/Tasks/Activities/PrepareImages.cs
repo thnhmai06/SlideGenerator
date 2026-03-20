@@ -4,32 +4,31 @@ using Elsa.Workflows;
 using Elsa.Workflows.Activities;
 using Elsa.Workflows.Memory;
 using Elsa.Workflows.Models;
-using SlideGenerator.Domain.Download.Entities;
-using SlideGenerator.Domain.Download.Services;
-using SlideGenerator.Domain.Settings.Contacts;
-using SlideGenerator.Domain.Tasks.Models;
+using SlideGenerator.Domain.Download.Models;
+using SlideGenerator.Domain.Settings.Abstractions;
+using SlideGenerator.Domain.Tasks.Models.Image;
 using SlideGenerator.Framework.Sheet.Services;
 
 namespace SlideGenerator.Domain.Tasks.Activities;
 
-using ImageConfigs = IReadOnlyList<ImageConfig>;
-using ImageFlatConfigs = IReadOnlyList<ImageFlatConfig>;
+using ImageConfigs = IReadOnlyList<GeneralInstruction>;
+using ImageFlatConfigs = IReadOnlyList<SpecializedInstruction>;
 using RowData = (int Index, IReadOnlyDictionary<string, string>? Content);
 
 /// <summary>
 ///     Workflow step that resolves and downloads images required for a row's image replacements.
 /// </summary>
-public class PrepareImages(DownloadManager downloadManager, ISettingProvider settingProvider) : WorkflowBase
+public class PrepareImages(DownloadRegistry downloadRegistry, ISettingProvider settingProvider) : WorkflowBase
 {
-    private readonly Variable<string> _downloadRootFolder = new("DownloadRootFolder", null!);
-    private readonly Variable<string> _imagePath = new("ImagePath", null!);
-    private readonly Variable<RowData> _imageRowData = new("ImageRowData", new RowData(0, null));
-
     // -------------------------------------------------------------------------
     // Variables
     // -------------------------------------------------------------------------
-
-    private readonly Variable<ImageFlatConfigs> _necessaryFlattenConfigs = new("NecessaryFlattenConfigs", null!);
+    
+    private readonly Variable<string> _downloadRootFolder = new("DownloadRootFolder", null!);
+    private readonly Variable<string> _imagePath = new("ImagePath", null!);
+    private readonly Variable<RowData> _imageRowData = new("ImageRowData", new RowData(0, null));
+    private readonly Variable<ImageFlatConfigs> _flattenConfigs = new("FlattenConfigs", null!);
+    
     // -------------------------------------------------------------------------
     // Inputs
     // -------------------------------------------------------------------------
@@ -42,51 +41,42 @@ public class PrepareImages(DownloadManager downloadManager, ISettingProvider set
 
     /// <summary>Input: Presentation file name used to build the download subfolder path.</summary>
     public Input<string> PresentationName { get; set; } = null!;
+    
+    // -------------------------------------------------------------------------
+    // Build
+    // -------------------------------------------------------------------------
+    
+    protected override void Build(IWorkflowBuilder builder)
+    {
+        builder.Root = new Sequence
+        {
+            Variables = { _flattenConfigs, _imageRowData, _downloadRootFolder },
+            Activities =
+            {
+                GetImageRowData,
+                ResolveImageUrl,
+                PrepareRootPath,
+                new ParallelForEach<SpecializedInstruction>
+                {
+                    Items = new Input<object>(_flattenConfigs),
+                    Body = new Sequence
+                    {
+                        Activities =
+                        {
+                            DownloadImage
+                        },
+                        Name = "HandleImage"
+                    },
+                    Name = "IterateImageContents"
+                }
+            },
+            Name = "PrepareImages"
+        };
+    }
 
     // -------------------------------------------------------------------------
     // Activities
     // -------------------------------------------------------------------------
-
-    // lowkenuinely magic-maxxing rn fr fr 🪄✨ this font is straight negative aura 📉 and rizz like a struggle 4
-    // the famepilled npcs 🤖 but im an s-tier reader 🏆 if you cant decode this, youre literally unc-coded 👴
-    // no cap, my brain is just built different 🧬 six-seven ✌️👅💦 ⁶🤷⁷
-
-    // ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠿⢛⣛⣩⣭⣭⣭⣭⣙⣩⣭⣭⣭⣭⣙⣛⠻⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-    // ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠟⣋⣵⣶⣿⣿⣿⣿⣿⠿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡷⣦⣙⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-    // ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⢋⣴⣿⣿⡟⡿⢻⣿⣿⡟⣿⠸⣿⡙⣿⣿⣇⢻⣿⣿⣿⣿⣿⣷⣍⡻⣷⣬⡻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-    // ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⢣⣶⢿⡿⢋⠍⢰⠃⣾⣿⣿⢡⣿⡆⢿⣧⠹⣿⣿⣆⢻⣿⣿⣿⣿⣿⣿⣿⣦⡹⣷⣌⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-    // ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠏⣴⡿⡡⠋⡴⢣⠢⠃⣼⣿⣿⢃⣾⣿⡇⣌⠻⣷⡈⠻⢿⣦⡙⢿⣿⣿⣿⣿⣿⣿⣷⣌⢿⣷⡜⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-    // ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⢋⣼⡟⠁⠄⣨⠞⡁⢀⣾⣿⡿⢃⣾⣿⢏⣴⣿⣷⣮⣙⡂⠄⠨⢙⡂⠙⠻⢿⣿⣿⣿⣿⣿⣧⡙⢿⣆⢻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-    // ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡟⣸⣿⠃⣴⣶⣿⠖⣣⣾⣿⠟⣡⡾⠟⣫⣼⣿⣿⣿⣿⣿⣷⣶⣤⣼⣷⣶⣦⣬⣙⡻⢿⣿⣿⣿⣷⣜⠿⣎⢻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-    // ⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⢠⣿⣯⣼⡿⢟⣡⣾⠿⢛⣡⣤⣴⣶⣿⣿⣿⣿⣿⣿⣿⣿⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣬⡙⣿⣿⣿⣷⣶⣆⠹⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-    // ⣿⣿⣿⣿⣿⣿⣿⣿⣿⠃⣾⣿⣿⣦⣤⣤⢀⣶⣾⢛⡭⠐⠒⠒⠬⡛⢿⣿⣿⢸⣿⣿⡌⣿⣿⡿⢋⠅⠒⠐⠒⢬⡝⢿⣷⡘⣿⣿⣿⣿⣿⣷⡜⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-    // ⣿⣿⣿⣿⣿⣿⣿⣿⣿⢸⣿⣿⣿⣿⣿⢃⣾⣿⡡⡏⠀⠐⠀⠂⠀⣈⣼⣿⡇⢾⣿⣿⡆⢿⣿⣧⣀⠀⠰⠠⠅⠀⢹⡎⣿⣷⡘⣿⣿⣿⣿⣿⡿⠷⠬⢙⢻⢿⣿⣿⣿⣿⣿
-    // ⣿⣿⣿⣿⣿⣿⣿⣿⣿⢸⣿⣿⣿⣿⡏⣼⣿⣿⣿⡿⠶⠶⠶⢞⣫⣼⣿⠟⣡⣭⣶⣦⣽⣌⠻⣿⣦⣙⡲⠶⠶⠶⢿⣿⣿⣿⣧⠸⣿⣿⣿⣿⣿⣦⣤⣭⡭⢀⣿⣿⣿⣿⣿
-    // ⣿⣿⡟⢻⣿⣿⣿⣿⡏⣸⣿⣿⣿⡿⢠⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⢋⣴⡿⠓⠹⣿⡏⠙⠿⢷⣎⢻⡻⣿⣿⣿⣿⣿⣿⣿⣿⣿⡆⢻⣿⣿⣿⣿⣿⡟⢉⣒⡁⣼⣿⣿⣿⡿
-    // ⣿⣿⣷⠠⣉⡛⠿⢛⣠⣿⣿⣿⣿⡇⣿⣿⣿⣿⣿⣿⣿⡿⢋⣵⣿⣦⣛⣠⣴⣾⣿⣷⣶⣤⣛⣛⣼⣿⣦⣙⢿⣿⣿⣿⣿⣿⣿⣷⢸⣿⣿⣿⣿⣿⣿⣿⡿⢡⣿⣿⣿⡿⠞
-    // ⣿⠋⢛⠷⠍⠛⢻⣿⣿⣿⣿⣿⣿⢰⣿⣿⣿⣿⣿⡿⣫⣶⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣍⢻⣿⣿⣿⣿⣿⢸⣿⣿⣿⣿⣿⣿⡿⣡⣾⣿⣿⣿⣿⡌
-    // ⣿⠀⠦⡻⢿⣿⣿⣿⣿⣿⣿⣿⣟⢸⣿⣿⣿⣿⢏⣴⣿⣿⣿⠿⠟⠛⣛⡛⠉⠉⣉⠉⠉⢛⣛⠛⡛⠿⠿⣿⣿⣿⣷⡹⣿⣿⣿⣿⢸⣿⣿⣿⣿⠟⣫⠴⠟⣻⣿⣿⣿⡿⠁
-    // ⣿⣆⠳⣦⣤⣽⣿⣿⣿⣿⣿⣿⣗⢸⣿⣿⣿⠇⣾⣿⡟⠋⠀⣬⢡⣶⣎⣰⣿⣿⣀⣾⣿⣷⣱⣶⡎⣥⡔⡂⢍⢿⣿⣷⢹⣿⣿⡟⢸⣿⣿⠿⣷⡶⠖⣫⣴⣿⡿⠏⠁⠀⠒
-    // ⣿⣿⠣⠜⠻⢿⣿⣿⣿⣿⣿⣿⣿⠸⣿⣿⡏⢸⣿⡏⢠⢸⢇⣿⢻⣿⣿⣿⣿⣿⡛⣿⣿⣿⢿⣿⠿⣿⣇⣿⢈⠂⢹⣿⡌⣿⣿⡇⣿⡿⠛⠦⠄⣀⣿⡿⠉⠁⠀⠀⠀⠀⠀
-    // ⣿⣿⣷⣬⡐⠻⢿⢿⣿⣿⣿⣿⣿⡆⢻⣿⣿⢸⣿⠀⢆⢆⠣⠍⠀⠀⠀⠈⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⢒⣋⠟⡄⠈⣿⡇⣿⡿⢰⡿⢁⣶⣤⣍⠻⠁⠀⠀⠀⠀⣀⣠⣀⣀
-    // ⣿⣿⣿⣿⣷⣀⠨⢼⣿⣿⣿⣿⣿⣧⠸⣿⣿⢸⣿⠀⠘⠊⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠐⠁⠀⣿⢣⣿⠇⡼⢃⣼⣿⣿⣿⣦⡐⢶⣶⣴⣶⣿⣿⣿⣿
-    // ⣿⣿⣿⣿⣿⣿⣷⣶⣤⣭⣭⣄⠙⢿⣆⢻⣿⡌⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣯⣼⡿⢀⣴⣿⣿⣿⣿⡏⢿⣷⣄⡙⢾⣿⣿⣿⣿⣿
-    // ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⢠⡆⢲⣬⡈⣿⣿⣿⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⡇⣾⣿⣿⣿⣿⣿⣿⢸⣿⣿⣿⡄⢿⣿⣿⣿⣿
-    // ⣿⣿⣿⣿⣿⣿⣿⣿⠟⣠⣾⣿⣷⠸⣿⡇⢻⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣸⣿⣿⢠⣿⣿⣿⣿⣿⣿⡏⣼⣿⣿⣿⡇⠸⣿⣿⣿⣿
-    // ⣿⣿⣿⣿⣿⣿⡿⠛⠰⣿⣿⣿⣿⣆⢹⣿⠸⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⡟⣸⣿⣿⣿⣿⣿⡟⣰⣿⣿⣿⡿⢁⣷⣤⡹⣿⣿
-    // ⣿⣿⣿⣿⡟⢉⣴⣾⣆⠹⣿⣿⣿⣿⣆⠻⡆⣿⣿⣿⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⣿⣿⠇⣿⣿⣿⣿⡿⢋⣴⣿⣿⣿⠟⣠⣾⣿⣿⣷⡌⢿
-    // ⣿⣿⣿⠋⣴⣿⣿⣿⣿⣷⡈⠻⣿⣿⣿⣿⣧⢸⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⢰⣿⣿⣿⣿⣷⣿⣿⣿⡿⢃⣴⣿⣿⣿⣿⣿⣿⡌
-    // ⣿⣿⢃⣾⣿⣿⣿⣿⣿⣿⣿⣦⡈⠻⣿⣿⣿⡈⣿⣿⣧⢠⢤⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠴⠆⣾⣿⡏⣸⣿⣿⣿⣿⣿⣿⡿⢋⣴⣿⣿⣿⣿⣿⣿⣿⣿⣿
-    // ⣿⠇⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⣌⠻⢿⡇⢿⣿⣿⠰⢿⡂⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣿⠇⣿⣿⡇⣿⣿⣿⣿⣿⡿⢋⣴⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-    // ⡿⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣶⣦⢸⣿⣿⡄⢿⣟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣛⠻⢸⣿⣿⢁⣿⣿⣿⠟⣁⣴⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-    // ⡇⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡀⣿⣿⣇⠙⣫⣤⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠸⠿⡇⣸⣿⡟⢸⠿⢋⣥⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-    // ⠇⣿⣿⣿⣿⣿⣆⠸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⢻⣿⣿⡄⠿⣯⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡻⣿⢀⣿⣿⡏⣠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-    // ⠀⣿⣿⣿⣿⣿⣿⡀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⢸⣿⣿⣇⢰⣿⢗⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢴⣧⠙⢸⣿⣿⠃⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-    // ⠰⣿⣿⣿⣿⣿⣿⣧⠸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡈⣿⣿⣿⣆⢣⣿⢃⡀⠀⠀⠀⠀⠀⠀⣀⢰⣧⠻⢡⣿⣿⣿⢰⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-    // ⠘⣿⣿⣿⣿⣿⣿⣿⡆⢻⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⢿⣿⣯⠻⣦⠉⢿⡇⣿⡷⣶⢲⣿⡞⣿⠺⠟⣠⢿⣿⣿⡇⣸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-    // ⠈⣿⣿⣿⣿⣿⣿⣿⣿⡄⢻⣿⣿⣿⣿⣿⣿⣿⣿⣿⠸⣿⣿⣷⡙⢷⣦⣔⣈⠉⠛⠩⠛⢁⣉⣴⡾⢋⣼⣿⣟⢀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-    // ⡄⣿⣿⣿⣿⣿⣿⣿⣿⣿⡄⢿⣿⣿⣿⣿⣿⣿⣿⣿⡆⢻⣿⣿⣿⣷⣭⣛⠻⠿⠿⠿⠿⠿⢛⣫⣴⣿⣿⣿⠇⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-    // ⡇⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡄⠹⣿⣿⣿⣿⣿⣿⣿⣿⡌⠿⣿⣿⣿⣿⣿⡿⣿⣿⣿⣿⢿⢿⣿⣿⣿⡿⠏⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
 
     /// <summary>
     ///     Filters image configs by available row columns and extracts the relevant image URL values.
@@ -100,11 +90,11 @@ public class PrepareImages(DownloadManager downloadManager, ISettingProvider set
             return;
 
         var necessary =
-            imageConfigs.Where(config => config.Columns.Any(col => rowData.Content.ContainsKey(col)));
-        var flatten = necessary.SelectMany(config => config.Flatten()).ToList();
-        _necessaryFlattenConfigs.Set(context.ExpressionExecutionContext, flatten);
+            imageConfigs.Where(config => config.Sources.Any(col => rowData.Content.ContainsKey(col)));
+        var flatten = necessary.SelectMany(config => config.Specialize()).ToList();
+        _flattenConfigs.Set(context.ExpressionExecutionContext, flatten);
 
-        var imageCols = flatten.Select(config => config.Column).ToHashSet();
+        var imageCols = flatten.Select(config => config.Source).ToHashSet();
         var imageRowData =
             rowData.Content
                 .Where(kvp => imageCols.Contains(kvp.Key))
@@ -115,9 +105,9 @@ public class PrepareImages(DownloadManager downloadManager, ISettingProvider set
         Name = "GetImageRowData"
     };
 
-    private Inline ResolveImageUrls => new(context =>
+    private Inline ResolveImageUrl => new(context =>
     {
-        var flattenConfigs = context.Get<ImageFlatConfigs>(_necessaryFlattenConfigs);
+        var flattenConfigs = context.Get<ImageFlatConfigs>(_flattenConfigs);
         var imageRowData = context.Get<RowData>(_imageRowData);
 
         if (flattenConfigs is null || imageRowData is { Content: null })
@@ -126,7 +116,7 @@ public class PrepareImages(DownloadManager downloadManager, ISettingProvider set
         // TODO: Resolve them all by using ParallelForEach
     })
     {
-        Name = "ResolveImageUrls"
+        Name = "ResolveImageUrl"
     };
 
     /// <summary>
@@ -135,7 +125,7 @@ public class PrepareImages(DownloadManager downloadManager, ISettingProvider set
     private Inline PrepareRootPath => new(context =>
     {
         var presentationName = context.Get(PresentationName);
-        var workbook = context.WorkflowExecutionContext.GetProperty<IXLWorkbook>("Workbook");
+        var workbook = context.WorkflowExecutionContext.GetProperty<IXLWorkbook>("Workbooks");
         var downloadFolder = settingProvider.Current.Download.DownloadFolder;
 
         if (string.IsNullOrEmpty(presentationName) || workbook is null)
@@ -152,25 +142,25 @@ public class PrepareImages(DownloadManager downloadManager, ISettingProvider set
 
     private Inline DownloadImage => new(async context =>
     {
-        var imageFlatConfig = context.GetVariable<ImageFlatConfig>("CurrentValue");
+        var imageFlatConfig = context.GetVariable<SpecializedInstruction>("CurrentValue");
         var imageRowData = _imageRowData.Get(context.ExpressionExecutionContext);
         var downloadRootFolder = _downloadRootFolder.Get(context.ExpressionExecutionContext);
 
         if (imageFlatConfig is null || imageRowData is { Content: null } || string.IsNullOrEmpty(downloadRootFolder))
             return;
 
-        // .../{ShapeId}/{Column}/{Index}.ext
+        // .../{Target}/{Source}/{Index}.ext
         var downloadLocation =
-            Path.Combine(downloadRootFolder, imageFlatConfig.ShapeId.ToString(), imageFlatConfig.Column);
-        var downloadInfo = new DownloadInfo(
-            imageRowData.Content[imageFlatConfig.Column],
+            Path.Combine(downloadRootFolder, imageFlatConfig.Target.ToString(), imageFlatConfig.Source);
+        var downloadInfo = new DownloadRequest(
+            imageRowData.Content[imageFlatConfig.Source],
             downloadLocation,
             imageRowData.Index.ToString());
-        if (downloadManager.TryGetOrCreateDownloader(downloadInfo,
+        if (downloadRegistry.TryGetOrCreateDownloader(downloadInfo,
                 settingProvider.Current.Download.GetConfigurationObject(), out var downloader))
             await downloader.Download();
 
-        if (!DownloadManager.IsDownloadCompleted(downloadInfo, out var imagePath))
+        if (!DownloadRegistry.TryGetCompletedDownloadFilePath(downloadInfo, out var imagePath))
             return;
 
         _imagePath.Set(context.ExpressionExecutionContext, imagePath);
@@ -178,37 +168,4 @@ public class PrepareImages(DownloadManager downloadManager, ISettingProvider set
     {
         Name = "DownloadImage"
     };
-
-    // -------------------------------------------------------------------------
-    // Build
-    // -------------------------------------------------------------------------
-
-    /// <inheritdoc />
-    protected override void Build(IWorkflowBuilder builder)
-    {
-        builder.Root = new Sequence
-        {
-            Variables = { _necessaryFlattenConfigs, _imageRowData, _downloadRootFolder },
-            Activities =
-            {
-                GetImageRowData,
-                ResolveImageUrls,
-                PrepareRootPath,
-                new ParallelForEach<ImageFlatConfig>
-                {
-                    Items = new Input<object>(_necessaryFlattenConfigs),
-                    Body = new Sequence
-                    {
-                        Activities =
-                        {
-                            DownloadImage
-                        },
-                        Name = "HandleImage"
-                    },
-                    Name = "IterateImageContents"
-                }
-            },
-            Name = "PrepareImages"
-        };
-    }
 }

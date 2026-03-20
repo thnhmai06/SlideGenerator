@@ -2,7 +2,7 @@ using ClosedXML.Excel;
 using Elsa.Workflows;
 using Elsa.Workflows.Activities;
 using Elsa.Workflows.Models;
-using SlideGenerator.Domain.Tasks.Models;
+using SlideGenerator.Domain.Tasks.Models.Image;
 using SlideGenerator.Framework.Sheet.Services;
 
 namespace SlideGenerator.Domain.Tasks.Activities;
@@ -11,15 +11,15 @@ using Worksheets = IReadOnlyDictionary<string, IXLWorksheet>;
 
 public class FilterConfigs : WorkflowBase
 {
-    public Input<IReadOnlyList<TextConfig>> RawTextConfigs { get; set; } = null!;
+    public Input<IReadOnlyList<Models.Text.GeneralInstruction>> RawTextConfigs { get; set; } = null!;
 
-    public Input<IReadOnlyList<ImageConfig>> RawImageConfigs { get; set; } = null!;
+    public Input<IReadOnlyList<GeneralInstruction>> RawImageConfigs { get; set; } = null!;
 
     public Input<string> SheetName { get; set; } = null!;
 
-    public Output<IReadOnlyList<TextConfig>> TextConfigs { get; set; } = null!;
+    public Output<IReadOnlyList<Models.Text.GeneralInstruction>> TextConfigs { get; set; } = null!;
 
-    public Output<IReadOnlyList<ImageConfig>> ImageConfigs { get; set; } = null!;
+    public Output<IReadOnlyList<GeneralInstruction>> ImageConfigs { get; set; } = null!;
 
     protected override void Build(IWorkflowBuilder builder)
     {
@@ -38,10 +38,10 @@ public class FilterConfigs : WorkflowBase
             if (columnNames is null) return;
 
             var textConfigs = rawTextConfigs
-                .Where(config => config.Columns.Any(column => columnNames.Contains(column)))
+                .Where(config => config.Sources.Any(column => columnNames.Contains(column)))
                 .ToList();
             var imageConfigs = rawImageConfigs
-                .Where(config => config.Columns.Any(column => columnNames.Contains(column)))
+                .Where(config => config.Sources.Any(column => columnNames.Contains(column)))
                 .ToList();
 
             context.Set(TextConfigs, textConfigs);

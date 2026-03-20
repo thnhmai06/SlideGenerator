@@ -41,7 +41,7 @@ public sealed class ScanService
         {
             filePath = Path.GetFullPath(filePath);
             if (!File.Exists(filePath))
-                throw new FileNotFoundException("Workbook file not found.", filePath);
+                throw new FileNotFoundException("Workbooks file not found.", filePath);
 
             using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
             using var workbook = new XLWorkbook(fs);

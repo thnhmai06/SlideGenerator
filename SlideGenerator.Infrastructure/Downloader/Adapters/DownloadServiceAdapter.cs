@@ -1,0 +1,73 @@
+using System.Collections.Concurrent;
+using System.ComponentModel;
+using Downloader;
+using SlideGenerator.Application.Download.Abstractions;
+using IDownloadService = SlideGenerator.Application.Download.Abstractions.IDownloadService;
+
+namespace SlideGenerator.Infrastructure.Downloader.Adapters;
+
+/// <summary>
+/// Adapts the external downloader service to the application download service abstraction.
+/// </summary>
+public class DownloadServiceAdapter(DownloadService core) : IDownloadService
+{
+    private readonly
+        ConcurrentDictionary<EventHandler<IDownloadStartedEventArgs>, EventHandler<DownloadStartedEventArgs>>
+        _downloadStartedHandlers = new();
+
+    /// <inheritdoc />
+    public void Dispose() => core.Dispose();
+
+    /// <inheritdoc />
+    public ValueTask DisposeAsync() => core.DisposeAsync();
+
+    /// <inheritdoc />
+    public event EventHandler<AsyncCompletedEventArgs>? DownloadFileCompleted
+    {
+        add => core.DownloadFileCompleted += value;
+        remove => core.DownloadFileCompleted -= value;
+    }
+
+    /// <inheritdoc />
+    public event EventHandler<IDownloadStartedEventArgs>? DownloadStarted
+    {
+        add
+        {
+            if (value is null) return;
+
+            EventHandler<DownloadStartedEventArgs> coreHandler = (sender, args) =>
+                value(sender, new DownloadStartedEventArgsAdapter(args));
+            if (_downloadStartedHandlers.TryAdd(value, coreHandler)) core.DownloadStarted += coreHandler;
+        }
+        remove
+        {
+            if (value is null) return;
+
+            if (_downloadStartedHandlers.TryRemove(value, out var coreHandler)) core.DownloadStarted -= coreHandler;
+        }
+    }
+
+    /// <inheritdoc />
+    public Task DownloadFileTaskAsync(string url, string filePath)
+    {
+        return core.DownloadFileTaskAsync(url, filePath);
+    }
+
+    /// <inheritdoc />
+    public void Pause()
+    {
+        core.Pause();
+    }
+
+    /// <inheritdoc />
+    public void Resume()
+    {
+        core.Resume();
+    }
+
+    /// <inheritdoc />
+    public Task CancelTaskAsync()
+    {
+        return core.CancelTaskAsync();
+    }
+}

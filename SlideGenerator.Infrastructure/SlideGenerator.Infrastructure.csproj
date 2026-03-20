@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Downloader" Version="5.1.0" />
+      <PackageReference Include="Elsa" Version="3.6.0" />
+      <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+      <PackageReference Update="StyleCop.Analyzers" Version="1.1.118" />
+      <PackageReference Include="YamlDotNet" Version="16.3.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\SlideGenerator.Application\SlideGenerator.Application.csproj" />
+      <ProjectReference Include="..\SlideGenerator.Domain\SlideGenerator.Domain.csproj" />
+      <ProjectReference Include="..\SlideGenerator.Framework\SlideGenerator.Framework.csproj" />
+    </ItemGroup>
+
+</Project>

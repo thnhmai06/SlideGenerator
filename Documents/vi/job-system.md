@@ -78,6 +78,15 @@ Hệ thống được thiết kế để có khả năng phục hồi cao.
 - **Bước 3:** Render Slide.
 - **Bước 4:** Lưu xuống đường dẫn đầu ra.
 
+#### Activity LoadWorkbooks (Bước 1)
+
+- **Input (`Workbooks`)**: `ICollection<WorkbookIdentifier>` chứa danh sách đường dẫn workbook.
+- **Cấu trúc workflow**: `Sequence` -> `InitializeRegistry` -> `ParallelForEach<WorkbookIdentifier>`.
+- **Phần tử duyệt song song**: trong `Body`, Elsa cung cấp item hiện tại qua biến `"CurrentValue"`.
+- **Trạng thái tạm (transient)**: workbook đã mở được lưu tại `WorkflowExecutionContext.TransientProperties["Workbooks"]` dưới dạng concurrent dictionary.
+- **Quy tắc bỏ qua**: item null, path rỗng, hoặc file không tồn tại sẽ được bỏ qua.
+- **Khóa registry**: ưu tiên tên workbook nội bộ (`XLWorkbook.GetName()`), fallback sang tên file không có extension.
+
 ### 4. Hoàn tất
 - Khi một `JobSheet` xong, nó cập nhật trạng thái của mình.
 - Khi **tất cả** `JobSheet` trong một `JobGroup` xong, Group chuyển sang trạng thái `Completed` và được di chuyển sang **Completed Collection**.

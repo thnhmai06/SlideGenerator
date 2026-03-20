@@ -78,6 +78,15 @@ The system is designed to be resilient.
 - **Step 3:** Render Slide.
 - **Step 4:** Save to Output Path.
 
+#### LoadWorkbooks Activity (Step 1)
+
+- **Input (`Workbooks`)**: `ICollection<WorkbookIdentifier>` containing workbook file paths.
+- **Workflow shape**: `Sequence` -> `InitializeRegistry` -> `ParallelForEach<WorkbookIdentifier>`.
+- **Parallel iteration item**: inside `Body`, Elsa exposes the current item via variable `"CurrentValue"`.
+- **Transient state**: opened workbooks are stored in `WorkflowExecutionContext.TransientProperties["Workbooks"]` as a concurrent dictionary.
+- **Skip behavior**: null item, empty path, and non-existing file paths are ignored.
+- **Registry key**: workbook internal name (`XLWorkbook.GetName()`), fallback to file name without extension.
+
 ### 4. Completion
 - Each finished row updates checkpoint and progress.
 - A sheet becomes `Completed` when all rows are done.

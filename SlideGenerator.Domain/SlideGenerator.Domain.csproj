@@ -12,9 +12,8 @@
     <ItemGroup>
         <ProjectReference Include="..\SlideGenerator.Framework\SlideGenerator.Framework.csproj"/>
         <PackageReference Include="Elsa" Version="3.6.0"/>
-        <PackageReference Include="YamlDotNet" Version="16.3.0"/>
         <PackageReference Include="Serilog.Sinks.File" Version="7.0.0"/>
-        <PackageReference Include="Downloader" Version="5.1.0"/>
+        <PackageReference Update="StyleCop.Analyzers" Version="1.1.118" />
     </ItemGroup>
 
 </Project>

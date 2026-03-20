@@ -10,16 +10,15 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\SlideGenerator.Framework\SlideGenerator.Framework.csproj"/>
         <ProjectReference Include="..\SlideGenerator.Domain\SlideGenerator.Domain.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Elsa.EntityFrameworkCore.Sqlite" Version="3.5.3"/>
+        <Folder Include="Scanning\Models\"/>
     </ItemGroup>
 
     <ItemGroup>
-        <Folder Include="Scanning\Models\"/>
+      <PackageReference Update="StyleCop.Analyzers" Version="1.1.118" />
     </ItemGroup>
 
 </Project>
