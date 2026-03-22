@@ -6,6 +6,6 @@ public interface IRegistry<T>
     
     void Write(string filePath, T? content)
     {
-        throw new NotImplementedException();
+        throw new InvalidOperationException();
     }
 }

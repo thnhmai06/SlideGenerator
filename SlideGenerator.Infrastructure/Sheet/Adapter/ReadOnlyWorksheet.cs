@@ -3,9 +3,16 @@ using SlideGenerator.Domain.Sheet.Entities;
 
 namespace SlideGenerator.Infrastructure.Sheet.Adapter;
 
-public class ReadOnlyWorksheet(IXLWorksheet core) : IReadOnlyWorksheet
+public class ReadOnlyWorksheet : IReadOnlyWorksheet
 {
-    private IXLRange? ContentRange => core.RangeUsed(XLCellsUsedOptions.Contents);
+    internal readonly IXLWorksheet Core;
+    
+    internal ReadOnlyWorksheet(IXLWorksheet core)
+    {
+        Core = core;
+    }
+    
+    private IXLRange? ContentRange => Core.RangeUsed(XLCellsUsedOptions.Contents);
 
     public IReadOnlyList<string> GetHeadersName()
     {
