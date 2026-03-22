@@ -1,7 +1,7 @@
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
-namespace SlideGenerator.Infrastructure.Settings.Adapters;
+namespace SlideGenerator.Infrastructure.Settings.Services;
 
 public class YamlSerializer : SlideGenerator.Application.Settings.Abstractions.ISerializer
 {

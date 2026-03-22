@@ -4,7 +4,6 @@ using SlideGenerator.Application.Scanning.Models.Sheets;
 using SlideGenerator.Application.Scanning.Models.Slides;
 using SlideGenerator.Framework.Sheet.Services;
 using SlideGenerator.Framework.Slide.Services;
-using SlideGenerator.Framework.Slide.Services.Presentation;
 using SlideGenerator.Framework.Slide.Services.Replacer;
 
 namespace SlideGenerator.Application.Scanning.Services;

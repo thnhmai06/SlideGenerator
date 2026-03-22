@@ -1,8 +1,8 @@
-using SlideGenerator.Application.Settings.Abstractions;
+using SlideGenerator.Application.Common;
 
-namespace SlideGenerator.Infrastructure.Settings.Adapters;
+namespace SlideGenerator.Infrastructure.Settings.Services;
 
-public class FileRepository : IRepository
+public class FileSystem : IRegistry<string>
 {
     public string Read(string path)
     {

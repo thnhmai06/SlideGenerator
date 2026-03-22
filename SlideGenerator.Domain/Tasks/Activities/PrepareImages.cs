@@ -149,7 +149,7 @@ public class PrepareImages(DownloadRegistry downloadRegistry, ISettingProvider s
         if (imageFlatConfig is null || imageRowData is { Content: null } || string.IsNullOrEmpty(downloadRootFolder))
             return;
 
-        // .../{Target}/{Source}/{Index}.ext
+        // .../{Target}/{Source}/{Id}.ext
         var downloadLocation =
             Path.Combine(downloadRootFolder, imageFlatConfig.Target.ToString(), imageFlatConfig.Source);
         var downloadInfo = new DownloadRequest(

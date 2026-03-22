@@ -1,3 +1,4 @@
+using SlideGenerator.Application.Common;
 using SlideGenerator.Application.Settings.Abstractions;
 using SlideGenerator.Domain.Settings.Abstractions;
 using SlideGenerator.Domain.Settings.Entities;
@@ -5,7 +6,7 @@ using SlideGenerator.Domain.Settings.Rules;
 
 namespace SlideGenerator.Application.Settings.Services;
 
-public sealed class SettingRegistry(IRepository repository, ISerializer serializer)
+public sealed class SettingRegistry(IRegistry<string> registry, ISerializer serializer)
     : ISettingRegistry
 {
     public string FilePath =>
@@ -17,7 +18,7 @@ public sealed class SettingRegistry(IRepository repository, ISerializer serializ
     {
         try
         {
-            var source = repository.Read(FilePath);
+            var source = registry.Read(FilePath)!;
             var loaded = serializer.Deserialize<Setting>(source);
 
             Current = loaded;
@@ -36,7 +37,7 @@ public sealed class SettingRegistry(IRepository repository, ISerializer serializ
         try
         {
             var content = serializer.Serialize(Current);
-            repository.Write(FilePath, content);
+            registry.Write(FilePath, content);
             return true;
         }
         catch

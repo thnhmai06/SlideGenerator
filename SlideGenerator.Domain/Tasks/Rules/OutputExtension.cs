@@ -1,6 +1,4 @@
-﻿using DocumentFormat.OpenXml;
-
-namespace SlideGenerator.Domain.Tasks.Rules;
+﻿namespace SlideGenerator.Domain.Tasks.Rules;
 
 public enum OutputExtension
 {
@@ -22,14 +20,14 @@ public static class OutputExtensionExtensions
             };
         }
 
-        public PresentationDocumentType ToPresentationDocumentType()
-        {
-            return extension switch
-            {
-                OutputExtension.Potx => PresentationDocumentType.Template,
-                OutputExtension.Pptx => PresentationDocumentType.Presentation,
-                _ => throw new ArgumentOutOfRangeException(nameof(extension), extension, null)
-            };
-        }
+        // public PresentationDocumentType ToPresentationDocumentType()
+        // {
+        //     return extension switch
+        //     {
+        //         OutputExtension.Potx => PresentationDocumentType.Template,
+        //         OutputExtension.Pptx => PresentationDocumentType.Presentation,
+        //         _ => throw new ArgumentOutOfRangeException(nameof(extension), extension, null)
+        //     };
+        // }
     }
 }

@@ -84,7 +84,7 @@ public sealed class CreatePresentation : WorkflowBase
         if (string.IsNullOrEmpty(templateInfo?.FilePath) ||
             string.IsNullOrEmpty(saveFolder) ||
             string.IsNullOrEmpty(fileName) ||
-            templateInfo.Index <= 0)
+            templateInfo.Id <= 0)
             return;
 
         // Prepare output directory and path
@@ -104,7 +104,7 @@ public sealed class CreatePresentation : WorkflowBase
             var slideCount = slideIds.Count;
             // Remove from end to start to avoid index shifting
             for (var index = slideCount; index >= 1; index--)
-                if (index != templateInfo.Index)
+                if (index != templateInfo.Id)
                     slideIds[index - 1].Remove();
         }
 

@@ -9,10 +9,10 @@ namespace SlideGenerator.Infrastructure.Downloader.Adapters;
 /// <summary>
 /// Adapts the external downloader service to the application download service abstraction.
 /// </summary>
-public class DownloadServiceAdapter(DownloadService core) : IDownloadService
+public class DownloadService(global::Downloader.DownloadService core) : IDownloadService
 {
     private readonly
-        ConcurrentDictionary<EventHandler<IDownloadStartedEventArgs>, EventHandler<DownloadStartedEventArgs>>
+        ConcurrentDictionary<EventHandler<IDownloadStartedEventArgs>, EventHandler<global::Downloader.DownloadStartedEventArgs>>
         _downloadStartedHandlers = new();
 
     /// <inheritdoc />
@@ -35,8 +35,8 @@ public class DownloadServiceAdapter(DownloadService core) : IDownloadService
         {
             if (value is null) return;
 
-            EventHandler<DownloadStartedEventArgs> coreHandler = (sender, args) =>
-                value(sender, new DownloadStartedEventArgsAdapter(args));
+            EventHandler<global::Downloader.DownloadStartedEventArgs> coreHandler = (sender, args) =>
+                value(sender, new DownloadStartedEventArgs(args));
             if (_downloadStartedHandlers.TryAdd(value, coreHandler)) core.DownloadStarted += coreHandler;
         }
         remove

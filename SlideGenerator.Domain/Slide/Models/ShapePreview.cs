@@ -1,0 +1,6 @@
+using System.Drawing;
+
+namespace SlideGenerator.Domain.Slide.Models;
+
+/// <param name="Id">The unique identifier of the shape in the slide.</param>
+public record ShapePreview(uint Id, string Name, RectangleF Buonds, byte[] Image) : ObjectPreview(Name, Image);
