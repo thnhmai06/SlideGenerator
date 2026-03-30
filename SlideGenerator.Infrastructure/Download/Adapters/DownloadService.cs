@@ -3,7 +3,7 @@ using System.ComponentModel;
 using SlideGenerator.Application.Download.Abstractions;
 using IDownloadService = SlideGenerator.Application.Download.Abstractions.IDownloadService;
 
-namespace SlideGenerator.Infrastructure.Downloader.Adapters;
+namespace SlideGenerator.Infrastructure.Download.Adapters;
 
 /// <summary>
 /// Adapts the external downloader service to the application download service abstraction.

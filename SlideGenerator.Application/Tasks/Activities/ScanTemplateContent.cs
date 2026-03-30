@@ -19,12 +19,14 @@ namespace SlideGenerator.Application.Tasks.Activities;
 ///         <item><description>Does not persist OpenXml document objects in workflow state.</description></item>
 ///     </list>
 /// </remarks>
-public sealed class ScanTemplateContent : Activity
+public sealed class ScanTemplateContent(
+    IRegistry<IPresentation> slideRegistry,
+    ISlideContentOperator slideContentOperator) : Activity
 {
     /// <summary>
     ///     Input target slide descriptor in working presentation.
     /// </summary>
-    public Input<SlideIdentifier> SlideInfo { get; set; } = null!;
+    public Input<SlideIdentifier> TemplateSlide { get; set; } = null!;
 
     /// <summary>
     ///     Output set of mustache placeholder names found in the template slide.
@@ -36,32 +38,19 @@ public sealed class ScanTemplateContent : Activity
     /// </summary>
     public Output<IReadOnlySet<uint>> ImageShapeIds { get; set; } = null!;
 
-    /// <summary>
-    ///     Gets or sets the slide registry dependency (injected by DI).
-    /// </summary>
-    public IRegistry<IPresentation> SlideRegistry { get; set; } = null!;
-
-    /// <summary>
-    ///     Gets or sets the slide content operator dependency (injected by DI).
-    /// </summary>
-    public ISlideContentOperator SlideContentOperator { get; set; } = null!;
-
     protected override ValueTask ExecuteAsync(ActivityExecutionContext context)
     {
-        var slideInfo = context.Get(SlideInfo);
-        var presentationPath = slideInfo?.Presentation.FilePath;
-        var slideIndex = slideInfo?.Index ?? 0;
+        var slideIdentifier = context.Get(TemplateSlide);
+        if (slideIdentifier is null)
+            throw new ArgumentException("Template slide must be provided.");
 
-        if (string.IsNullOrWhiteSpace(presentationPath) || slideIndex <= 0)
-            throw new ArgumentException("Slide info is invalid.");
-
-        var presentation = SlideRegistry.GetOrOpen(presentationPath, isEditable: true);
-        var targetSlide = presentation.EnumerateSlides().ElementAtOrDefault(slideIndex - 1);
+        var presentation = slideRegistry.GetOrOpen(slideIdentifier.Presentation.FilePath, isEditable: true);
+        var targetSlide = presentation.EnumerateSlides().ElementAtOrDefault(slideIdentifier.Index - 1);
         if (targetSlide == null)
-            throw new InvalidOperationException($"Cannot scan template content: slide {slideIndex} does not exist.");
+            throw new InvalidOperationException(
+                $"Cannot scan template content: slide {slideIdentifier.Index} does not exist.");
 
-        var (placeholders, imageShapeIds) = SlideContentOperator.ScanTemplateContent(targetSlide);
-
+        var (placeholders, imageShapeIds) = slideContentOperator.ScanTemplateContent(targetSlide);
         context.Set(Placeholders, placeholders);
         context.Set(ImageShapeIds, imageShapeIds);
         return ValueTask.CompletedTask;

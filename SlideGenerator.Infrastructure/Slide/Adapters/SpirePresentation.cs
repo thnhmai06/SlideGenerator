@@ -35,7 +35,7 @@ public class SpirePresentation : IPresentation, IDisposable
 
     public ISlide CopySlide(int from, int to)
     {
-        throw new NotSupportedException("Slide copy is not supported for SpirePresentation.");
+        throw new NotSupportedException("TemplateSlide copy is not supported for SpirePresentation.");
     }
 
     public bool RemoveSlide(int position)
@@ -49,19 +49,6 @@ public class SpirePresentation : IPresentation, IDisposable
 
         Core.Value.Slides.RemoveAt(index);
         return true;
-    }
-
-    public void SaveAs(string filePath, PresentationExtension? extension = null)
-    {
-        if (string.IsNullOrWhiteSpace(filePath))
-            throw new ArgumentException("Output file path cannot be null or empty.", nameof(filePath));
-
-        var normalizedPath = Path.GetFullPath(filePath);
-        var directory = Path.GetDirectoryName(normalizedPath);
-        if (!string.IsNullOrWhiteSpace(directory))
-            Directory.CreateDirectory(directory);
-
-        Core.Value.SaveToFile(normalizedPath, extension.ToSpireDocType());
     }
 
     public void Save(PresentationExtension? extension)

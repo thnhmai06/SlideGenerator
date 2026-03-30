@@ -8,6 +8,5 @@ public interface IPresentation: ISlideObject
     IEnumerable<ISlide> EnumerateSlides();
     ISlide CopySlide(int from, int to);
     bool RemoveSlide(int position);
-    void SaveAs(string filePath, PresentationExtension? extension = null);
     void Save(PresentationExtension? extension = null);
 }

@@ -2,6 +2,7 @@ using Elsa.Workflows;
 using Elsa.Workflows.Models;
 using SlideGenerator.Application.Common;
 using SlideGenerator.Domain.Slide.Entities;
+using SlideGenerator.Domain.Slide.Models;
 
 namespace SlideGenerator.Application.Tasks.Activities;
 
@@ -13,41 +14,26 @@ namespace SlideGenerator.Application.Tasks.Activities;
 ///         This activity resolves target presentation through registry by file path.
 ///     </para>
 /// </remarks>
-public sealed class RemoveWorkingTemplateSlide : Activity
+public sealed class RemoveWorkingTemplateSlide(IRegistry<IPresentation> slideRegistry) : Activity
 {
     /// <summary>
-    ///     Full path of target presentation.
+    ///    Input working template slide identifier.
     /// </summary>
-    public Input<string> PresentationPath { get; set; } = null!;
-
-    /// <summary>
-    ///     1-based index of template slide to remove.
-    /// </summary>
-    public Input<int> TemplateSlideIndex { get; set; } = new(1);
+    public Input<SlideIdentifier> WorkingTemplateSlide { get; set; } = null!;
 
     /// <summary>
     ///     Output whether a slide was removed.
     /// </summary>
     public Output<bool> Removed { get; set; } = null!;
 
-    /// <summary>
-    ///     Gets or sets the slide registry dependency (injected by DI).
-    /// </summary>
-    public IRegistry<IPresentation> SlideRegistry { get; set; } = null!;
-
     protected override ValueTask ExecuteAsync(ActivityExecutionContext context)
     {
-        var presentationPath = context.Get(PresentationPath);
-        var slideIndex = context.Get(TemplateSlideIndex);
-        if (slideIndex <= 0 || string.IsNullOrWhiteSpace(presentationPath))
-        {
-            context.Set(Removed, false);
-            return ValueTask.CompletedTask;
-        }
+        var slideIdentifier = context.Get(WorkingTemplateSlide);
+        if (slideIdentifier is null)
+            throw new InvalidOperationException("Template slide identifier is not provided.");
 
-        var presentation = SlideRegistry.GetOrOpen(presentationPath, isEditable: true);
-
-        context.Set(Removed, presentation.RemoveSlide(slideIndex));
+        var presentation = slideRegistry.GetOrOpen(slideIdentifier.Presentation.FilePath, isEditable: true);
+        context.Set(Removed, presentation.RemoveSlide(slideIdentifier.Index));
         return ValueTask.CompletedTask;
     }
 }

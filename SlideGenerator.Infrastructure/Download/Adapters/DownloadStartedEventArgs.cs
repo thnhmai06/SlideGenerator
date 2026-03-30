@@ -1,6 +1,6 @@
 using SlideGenerator.Application.Download.Abstractions;
 
-namespace SlideGenerator.Infrastructure.Downloader.Adapters;
+namespace SlideGenerator.Infrastructure.Download.Adapters;
 
 public sealed class DownloadStartedEventArgs(global::Downloader.DownloadStartedEventArgs core) : IDownloadStartedEventArgs
 {

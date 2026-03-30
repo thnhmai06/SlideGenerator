@@ -200,22 +200,6 @@ public class XmlPresentation(string filePath, bool isEditable = true) : IPresent
         return true;
     }
 
-    public void SaveAs(string filePath, PresentationExtension? extension = null)
-    {
-        if (string.IsNullOrWhiteSpace(filePath))
-            throw new ArgumentException("Output file path cannot be null or empty.", nameof(filePath));
-
-        var normalizedPath = Path.GetFullPath(filePath);
-        var directory = Path.GetDirectoryName(normalizedPath);
-        if (!string.IsNullOrWhiteSpace(directory))
-            Directory.CreateDirectory(directory);
-
-        using var cloned = Document.Value.Clone(normalizedPath, true);
-        if (extension is not null)
-            cloned.ChangeDocumentType(extension.ToXmlDocType());
-        cloned.Save();
-    }
-
     public void Save(PresentationExtension? extension = null)
     {
         if (!Document.IsValueCreated) return;

@@ -2,6 +2,7 @@ using Elsa.Workflows;
 using Elsa.Workflows.Models;
 using SlideGenerator.Application.Common;
 using SlideGenerator.Domain.Slide.Entities;
+using SlideGenerator.Domain.Slide.Models;
 
 namespace SlideGenerator.Application.Tasks.Activities;
 
@@ -13,41 +14,31 @@ namespace SlideGenerator.Application.Tasks.Activities;
 ///         The activity resolves target presentation through registry by file path.
 ///     </para>
 /// </remarks>
-public sealed class CloneTemplateSlide : Activity
+public sealed class CloneTemplateSlide(IRegistry<IPresentation> slideRegistry) : Activity
 {
     /// <summary>
-    ///     Full path of target presentation.
+    ///    Path to presentation file where slide should be cloned.
     /// </summary>
-    public Input<string> PresentationPath { get; set; } = null!;
-
-    /// <summary>
-    ///     1-based index of source slide to clone.
-    /// </summary>
-    public Input<int> SourceSlideIndex { get; set; } = null!;
+    public Input<SlideIdentifier> TemplateSlide { get; set; } = null!;
 
     /// <summary>
     ///     1-based index where cloned slide should be inserted.
     /// </summary>
     public Input<int> InsertAtIndex { get; set; } = null!;
 
-    /// <summary>
-    ///     Gets or sets the slide registry dependency (injected by DI).
-    /// </summary>
-    public IRegistry<IPresentation> SlideRegistry { get; set; } = null!;
-
     protected override ValueTask ExecuteAsync(ActivityExecutionContext context)
     {
-        var presentationPath = context.Get(PresentationPath);
-        var sourceSlideIndex = context.Get(SourceSlideIndex);
+        var templateSlideIdentifier = context.Get(TemplateSlide);
         var insertAtIndex = context.Get(InsertAtIndex);
-        if (sourceSlideIndex <= 0 || string.IsNullOrWhiteSpace(presentationPath))
-            throw new ArgumentException("Presentation path and source slide index must be valid.");
+        if (templateSlideIdentifier is null || insertAtIndex < 1)
+            throw new InvalidOperationException("template slide identifier and insert index must be valid.");
 
-        var presentation = SlideRegistry.GetOrOpen(presentationPath, isEditable: true);
-        if (presentation.EnumerateSlides().ElementAtOrDefault(sourceSlideIndex - 1) == null)
-            throw new InvalidOperationException($"Cannot clone slide {sourceSlideIndex}: source slide does not exist.");
+        var presentation = slideRegistry.GetOrOpen(templateSlideIdentifier.Presentation.FilePath, isEditable: true);
+        if (presentation.EnumerateSlides().ElementAtOrDefault(templateSlideIdentifier.Index - 1) == null)
+            throw new InvalidOperationException(
+                $"Cannot clone slide {templateSlideIdentifier.Index}: source slide does not exist.");
 
-        _ = presentation.CopySlide(sourceSlideIndex, insertAtIndex);
+        _ = presentation.CopySlide(templateSlideIdentifier.Index, insertAtIndex);
         return ValueTask.CompletedTask;
     }
 }

@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using ClosedXML.Excel;
 using SlideGenerator.Domain.Sheet.Entities;
+using SlideGenerator.Domain.Sheet.Models;
 
 namespace SlideGenerator.Infrastructure.Sheet.Adapter;
 
@@ -8,11 +9,11 @@ public class ReadOnlyWorkbook : IReadOnlyWorkbook
 {
     private readonly Lazy<IXLWorkbook> _workbookLazy;
     private FileStream? _fileStream;
-    private readonly string _filePath;
+    private readonly WorkbookIdentifier _identifier;
 
     public ReadOnlyWorkbook(string filePath)
     {
-        _filePath = filePath;
+        _identifier = new(filePath);
         _workbookLazy = new Lazy<IXLWorkbook>(() =>
         {
             _fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
@@ -25,7 +26,7 @@ public class ReadOnlyWorkbook : IReadOnlyWorkbook
     // public string? Name => string.IsNullOrWhiteSpace(Core.Properties.Title)
     //     ? Path.GetFileNameWithoutExtension(_filePath)
     //     : Core.Properties.Title;
-    public string? Name => Path.GetFileNameWithoutExtension(_filePath);
+    public string Name => _identifier.Name;
 
     public bool TryGetWorksheet(string name, [MaybeNullWhen(false)] out IReadOnlyWorksheet readOnlyWorksheet)
     {

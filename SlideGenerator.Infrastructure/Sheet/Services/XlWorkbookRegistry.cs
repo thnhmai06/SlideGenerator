@@ -41,6 +41,4 @@ public sealed class XlWorkbookRegistry : IRegistry<IReadOnlyWorkbook>, IDisposab
         foreach (var path in _workbooks.Keys.ToList())
             Close(path);
     }
-
-
 }

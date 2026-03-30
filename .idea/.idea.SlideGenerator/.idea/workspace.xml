@@ -9,8 +9,40 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3a1f1c77-0578-40bf-9d5d-a0e8452562c2" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Tasks/Activities/CleanupTransientResources.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Tasks/Activities/GeneratingWorkflow.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Tasks/Activities/GeneratingWorkflow.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/System/IFileSystem.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Rules/NamingRules.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/System/FileSystem.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.SlideGenerator/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.SlideGenerator/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Scanning/Models/Sheets/WorksheetInfo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Scanning/Models/Sheets/WorksheetInfo.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Tasks/Activities/BuildOutputPath.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Tasks/Activities/BuildOutputPath.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Tasks/Activities/CleanupResources.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Tasks/Activities/CleanupResources.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Tasks/Activities/CloneTemplateSlide.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Tasks/Activities/CloneTemplateSlide.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Tasks/Activities/CreatePresentation.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Tasks/Activities/CreateWorkingPresentation.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Tasks/Activities/DownloadImages.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Tasks/Activities/DownloadImages.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Tasks/Activities/FilterConfigs.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Tasks/Activities/LoadWorkbooks.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Tasks/Activities/RemoveWorkingTemplateSlide.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Tasks/Activities/RemoveWorkingTemplateSlide.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Tasks/Activities/ReplaceSlideContents.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Tasks/Activities/ReplaceSlideContents.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Tasks/Activities/ReplaceSlideImages.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Tasks/Activities/ReplaceSlideText.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Tasks/Activities/ResolveImageUrls.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Tasks/Activities/ResolveImageUrls.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Tasks/Activities/SavePresentationDocument.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Tasks/Activities/ScanGraphRequirements.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Tasks/Activities/ScanGraphRequirements.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Tasks/Activities/ScanTemplateContent.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Tasks/Activities/ScanTemplateContent.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Tasks/Activities/SpecializeInstructions.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Tasks/Activities/SpecializeInstructions.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Tasks/Utilities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Tasks/Utilities.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Sheet/Models/WorkbookIdentifier.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Sheet/Models/WorkbookIdentifier.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Sheet/Models/WorksheetIdentifier.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Sheet/Models/WorksheetIdentifier.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Slide/Entities/IPresentation.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Slide/Entities/IPresentation.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Slide/Models/PresentationIdentifier.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Slide/Models/PresentationIdentifier.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Slide/Models/ShapePreview.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Slide/Models/ShapePreview.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Slide/Models/SlideIdentifier.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Slide/Models/SlideIdentifier.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Slide/Rules/PresentationExtension.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Slide/Rules/PresentationExtension.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Models/GenerateRequest.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Models/GenerateRequest.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Sheet/Adapter/ReadOnlyWorkbook.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Sheet/Adapter/ReadOnlyWorkbook.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Sheet/Services/XlWorkbookRegistry.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Sheet/Services/XlWorkbookRegistry.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slide/Adapters/SpirePresentation.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slide/Adapters/SpirePresentation.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slide/Adapters/XmlPresentation.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slide/Adapters/XmlPresentation.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -88,6 +120,7 @@
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/f8933dc0151257bf474678ae93838fb9978d7b6fe81d878b68a1c61350bc4026/DownloadStartedEventArgs.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Application/Common/IRegistry.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Application/Download/Abstractions/IDownloadStartedEventArgs.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/SlideGenerator.Application/System/IFileSystem.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Application/Tasks/Activities/GeneratingWorkflow.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Domain/Download/Rules/FileExtensionRules.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Domain/Settings/Rules/NamingRules.cs" root0="FORCE_HIGHLIGHTING" />
@@ -96,10 +129,12 @@
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Domain/Slide/Rules/ImageShapeType.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Models/ISpecializable.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Models/Image/Instruction.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Rules/NamingRules.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Infrastructure/Image/Utilities.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Infrastructure/Slide/Adapters/SpireImageShape.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Infrastructure/Slide/Adapters/SpirePresentation.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Infrastructure/Slide/Adapters/SpireSlide.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/SlideGenerator.Infrastructure/System/FileSystem.cs" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="true" />
   <component name="ProblemsViewState">
@@ -220,7 +255,8 @@
       <workItem from="1774532456196" duration="2098000" />
       <workItem from="1774775970672" duration="14803000" />
       <workItem from="1774844893399" duration="1673000" />
-      <workItem from="1774857723812" duration="7038000" />
+      <workItem from="1774857723812" duration="7920000" />
+      <workItem from="1774879658617" duration="5175000" />
     </task>
     <task id="LOCAL-00001" summary="feat: update LoadPresentation workflow&#10;&#10;- Updated LoadPresentation class to enhance documentation and streamline presentation preparation workflow (improves clarity and maintainability).">
       <option name="closed" value="true" />
@@ -326,7 +362,15 @@
       <option name="project" value="LOCAL" />
       <updated>1774866304977</updated>
     </task>
-    <option name="localTasksCounter" value="14" />
+    <task id="LOCAL-00014" summary="feat(backend): complete generating activities and clean architecture structure&#10;&#10;- Changed ISlide and IImageShape to inherit from ISlideObject (ensures a unified interface structure).&#10;- Updated namespaces in various files to reflect the new structure (improves clarity and organization).&#10;- Renamed methods in ISpecializable to Flatten for better semantic meaning (enhances code readability).">
+      <option name="closed" value="true" />
+      <created>1774866373734</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1774866373734</updated>
+    </task>
+    <option name="localTasksCounter" value="15" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

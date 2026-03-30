@@ -1,7 +1,10 @@
 using Elsa.Workflows;
 using Elsa.Workflows.Models;
+using SlideGenerator.Application.Common;
+using SlideGenerator.Domain.Sheet.Entities;
 using SlideGenerator.Domain.Slide.Rules;
 using SlideGenerator.Domain.Sheet.Models;
+using SlideGenerator.Domain.Tasks.Rules;
 
 namespace SlideGenerator.Application.Tasks.Activities;
 
@@ -15,10 +18,10 @@ namespace SlideGenerator.Application.Tasks.Activities;
 ///         <item><description>Writes final output path string to <see cref="OutputPath"/>.</description></item>
 ///     </list>
 ///     <para>
-///         This activity is idempotent and side-effect free.
+///         This activity is idempotent and side effect free.
 ///     </para>
 /// </remarks>
-public sealed class BuildOutputPath : Activity
+public sealed class BuildOutputPath(IRegistry<IReadOnlyWorkbook> workbookRegistry) : Activity
 {
     /// <summary>
     ///     Input output root folder.
@@ -47,17 +50,12 @@ public sealed class BuildOutputPath : Activity
         var extension = context.Get(Extension).ToFileExtension();
 
         if (string.IsNullOrWhiteSpace(saveFolder) || worksheet is null)
-            return ValueTask.CompletedTask;
+            throw new InvalidOperationException("Save folder and worksheet must be provided.");
 
-        var workbookFolder = Utilities.NormalizeFileName(Path.GetFileNameWithoutExtension(worksheet.Workbook.FilePath));
-        if (string.IsNullOrWhiteSpace(workbookFolder))
-            workbookFolder = "workbook";
+        var workbookName = Utilities.NormalizeFileName(worksheet.Workbook.Name, NamingRules.DEFAULT_WORKBOOK_NAME);
+        var worksheetName = Utilities.NormalizeFileName(worksheet.Name, NamingRules.DEFAULT_WORKSHEET_NAME);
 
-        var fileName = Utilities.NormalizeFileName(worksheet.Name);
-        if (string.IsNullOrWhiteSpace(fileName))
-            fileName = "worksheet";
-
-        var outputPath = Path.Combine(saveFolder, workbookFolder, fileName + extension);
+        var outputPath = Path.Combine(saveFolder, workbookName, worksheetName + extension);
         context.Set(OutputPath, outputPath);
         return ValueTask.CompletedTask;
     }

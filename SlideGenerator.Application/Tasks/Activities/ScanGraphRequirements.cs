@@ -12,7 +12,7 @@ namespace SlideGenerator.Application.Tasks.Activities;
 /// <remarks>
 ///     <para>State usage:</para>
 ///     <list type="bullet">
-///         <item><description>Writes lightweight outputs only: <see cref="WorkItems"/> and <see cref="Workbooks"/>.</description></item>
+///         <item><description>Writes lightweight outputs only: <see cref="WorkingItems"/> and <see cref="Workbooks"/>.</description></item>
 ///         <item><description>Does not store streams, workbook contents, or other temporary runtime resources.</description></item>
 ///     </list>
 ///     <para>
@@ -29,7 +29,7 @@ public sealed class ScanGraphRequirements : Activity
     /// <summary>
     ///     Output deterministic worksheet-slide pairs to process.
     /// </summary>
-    public Output<IReadOnlyList<WorkingItem>> WorkItems { get; set; } = null!;
+    public Output<IReadOnlyList<WorkingItem>> WorkingItems { get; set; } = null!;
 
     /// <summary>
     ///     Output distinct workbooks needed by the graph.
@@ -41,7 +41,7 @@ public sealed class ScanGraphRequirements : Activity
         var request = context.Get(Request);
         if (request?.Graph is null || request.Graph.Count == 0)
         {
-            context.Set(WorkItems, []);
+            context.Set(WorkingItems, []);
             context.Set(Workbooks, []);
             return ValueTask.CompletedTask;
         }
@@ -57,7 +57,7 @@ public sealed class ScanGraphRequirements : Activity
             .Distinct()
             .ToList();
 
-        context.Set(WorkItems, ordered);
+        context.Set(WorkingItems, ordered);
         context.Set(Workbooks, workbooks);
         return ValueTask.CompletedTask;
     }

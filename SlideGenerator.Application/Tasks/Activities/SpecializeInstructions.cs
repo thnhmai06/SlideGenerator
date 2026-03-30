@@ -21,20 +21,15 @@ using SpecializedTextInstruction = Domain.Tasks.Models.Text.SpecializedInstructi
 ///         <item><description>Source worksheet must match <see cref="Worksheet"/>.</description></item>
 ///         <item><description>Source column must exist in the resolved worksheet instance headers.</description></item>
 ///         <item><description>Text placeholder must exist in <see cref="TemplatePlaceholders"/>.</description></item>
-///         <item><description>Image target shape must exist in <see cref="TemplateImageShapeIds"/> and target slide must match <see cref="Slide"/>.</description></item>
+///         <item><description>Image target shape must exist in <see cref="TemplateImageShapeIds"/> and target slide must match <see cref="TemplateSlide"/>.</description></item>
 ///     </list>
 ///     <para>
 ///         This activity stores only lightweight specialized instruction lists in state.
 ///         No temporary runtime resources are persisted.
 ///     </para>
 /// </remarks>
-public sealed class SpecializeInstructions : Activity
+public sealed class SpecializeInstructions(IRegistry<IReadOnlyWorkbook> workbookRegistry) : Activity
 {
-    /// <summary>
-    ///     Gets or sets the workbook registry dependency (injected by DI).
-    /// </summary>
-    public IRegistry<IReadOnlyWorkbook> WorkbookRegistry { get; set; } = null!;
-
     /// <summary>
     ///     Input target worksheet identifier.
     /// </summary>
@@ -43,7 +38,7 @@ public sealed class SpecializeInstructions : Activity
     /// <summary>
     ///     Input target template slide identifier.
     /// </summary>
-    public Input<SlideIdentifier> Slide { get; set; } = null!;
+    public Input<SlideIdentifier> TemplateSlide { get; set; } = null!;
 
     /// <summary>
     ///     Input global text instructions.
@@ -77,44 +72,36 @@ public sealed class SpecializeInstructions : Activity
 
     protected override ValueTask ExecuteAsync(ActivityExecutionContext context)
     {
-        var worksheet = context.Get(Worksheet);
-        var slide = context.Get(Slide);
-        var rawText = context.Get(RawTextInstructions) ?? [];
-        var rawImage = context.Get(RawImageInstructions) ?? [];
+        var worksheetIdentifier = context.Get(Worksheet);
+        var templateSlideIdentifier = context.Get(TemplateSlide);
+        var rawTexts = context.Get(RawTextInstructions) ?? [];
+        var rawImages = context.Get(RawImageInstructions) ?? [];
         var placeholders = context.Get(TemplatePlaceholders) ?? new HashSet<string>(StringComparer.Ordinal);
         var imageShapeIds = context.Get(TemplateImageShapeIds) ?? new HashSet<uint>();
 
-        if (worksheet is null || slide is null)
-        {
-            context.Set(TextInstructions, []);
-            context.Set(ImageInstructions, []);
-            return ValueTask.CompletedTask;
-        }
+        if (worksheetIdentifier is null || templateSlideIdentifier is null)
+            throw new ArgumentException("Worksheet and template slide must be provided.");
 
-        var workbook = WorkbookRegistry.GetOrOpen(worksheet.Workbook.FilePath, isEditable: false);
-        if (!workbook.TryGetWorksheet(worksheet.Name, out var worksheetInstance))
-        {
-            context.Set(TextInstructions, []);
-            context.Set(ImageInstructions, []);
-            return ValueTask.CompletedTask;
-        }
+        var workbook = workbookRegistry.GetOrOpen(worksheetIdentifier.Workbook.FilePath, isEditable: false);
+        if (!workbook.TryGetWorksheet(worksheetIdentifier.Name, out var worksheetInstance))
+            throw new InvalidOperationException(
+                $"Cannot specialize instructions: worksheet '{worksheetIdentifier.Name}' does not exist in workbook.");
 
         var headers = worksheetInstance.GetHeadersName();
-
         var headerSet = headers.ToHashSet(StringComparer.Ordinal);
 
-        var textInstructions = rawText
+        var textInstructions = rawTexts
             .Where(instruction => placeholders.Contains(instruction.Placeholder))
             .SelectMany(instruction => instruction.Flatten(instruction))
-            .Where(instruction => Equals(instruction.Source.Worksheet, worksheet))
+            .Where(instruction => Equals(instruction.Source.Worksheet, worksheetIdentifier))
             .Where(instruction => headerSet.Contains(instruction.Source.ColumnName))
             .ToList();
 
-        var imageInstructions = rawImage
-            .Where(instruction => Equals(instruction.Target.Slide, slide))
+        var imageInstructions = rawImages
+            .Where(instruction => Equals(instruction.Target.Slide, templateSlideIdentifier))
             .Where(instruction => imageShapeIds.Contains(instruction.Target.Id))
             .SelectMany(instruction => instruction.Flatten(instruction))
-            .Where(instruction => Equals(instruction.Source.Worksheet, worksheet))
+            .Where(instruction => Equals(instruction.Source.Worksheet, worksheetIdentifier))
             .Where(instruction => headerSet.Contains(instruction.Source.ColumnName))
             .ToList();
 

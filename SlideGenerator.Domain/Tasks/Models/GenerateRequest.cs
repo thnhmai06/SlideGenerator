@@ -17,4 +17,13 @@ public sealed record GenerateRequest(
     IReadOnlyDictionary<WorksheetIdentifier, SlideIdentifier> Graph,
     IReadOnlyList<Text.GeneralInstruction> TextInstructions,
     IReadOnlyList<Image.GeneralInstruction> ImageInstructions,
-    string SaveFolder);
+    string SaveFolder)
+{
+    public IReadOnlyDictionary<WorksheetIdentifier, SlideIdentifier> Graph { get; init; } = Graph.Count == 0
+        ? throw new ArgumentException("Graph cannot be empty.", nameof(Graph))
+        : Graph;
+    
+    public string SaveFolder { get; init; } = string.IsNullOrWhiteSpace(SaveFolder)
+        ? throw new ArgumentException("Save folder cannot be null or whitespace.", nameof(SaveFolder))
+        : SaveFolder;
+}

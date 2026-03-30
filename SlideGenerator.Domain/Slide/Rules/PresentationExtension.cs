@@ -7,7 +7,7 @@ public enum PresentationExtension
     Ppsx
 }
 
-public static class PresentationExtensionExtensions
+public static class PresentationExtensions
 {
     extension(PresentationExtension extension)
     {
@@ -21,5 +21,16 @@ public static class PresentationExtensionExtensions
                 _ => throw new ArgumentOutOfRangeException(nameof(extension), extension, null)
             };
         }
+    }
+    
+    public static PresentationExtension FromFileExtension(string fileExtension)
+    {
+        return fileExtension.ToLower() switch
+        {
+            ".potx" => PresentationExtension.Potx,
+            ".pptx" => PresentationExtension.Pptx,
+            ".ppsx" => PresentationExtension.Ppsx,
+            _ => throw new ArgumentException($"Unsupported file extension: {fileExtension}", nameof(fileExtension))
+        };
     }
 }

@@ -8,66 +8,46 @@ using SlideGenerator.Domain.Download.Abstractions;
 using SlideGenerator.Domain.Download.Models;
 using SlideGenerator.Domain.Settings.Interfaces;
 using SlideGenerator.Domain.Tasks.Models.Image;
+using SlideGenerator.Domain.Tasks.Rules;
 
 namespace SlideGenerator.Application.Tasks.Activities;
 
 /// <summary>
 ///     Workflow step that downloads images from already resolved URLs.
 /// </summary>
-public class DownloadImages : Activity
+public class DownloadImages(
+    IDownloadRegistry downloadRegistry,
+    ISettingProvider settingProvider,
+    IRegistry<IReadOnlyWorkbook> workbookRegistry) : Activity
 {
     /// <summary>Input: Resolved image URLs keyed by specialized image instruction.</summary>
-    public Input<IReadOnlyDictionary<SpecializedInstruction, string>> ResolvedImageUrls { get; set; } = null!;
-
-    /// <summary>Input: 1-based row index in the target worksheet.</summary>
-    public Input<int> RowIndex { get; set; } = new(1);
+    public Input<IReadOnlyDictionary<SpecializedInstruction, string>> ImageUrls { get; set; } = null!;
 
     /// <summary>Input: Target worksheet identifier used to derive workbook/worksheet names for download folder.</summary>
-    public Input<WorksheetIdentifier> WorksheetInfo { get; set; } = null!;
-
+    public Input<WorksheetIdentifier> Worksheet { get; set; } = null!;
+    
+    /// <summary>Input: 1-based row index in the target worksheet.</summary>
+    public Input<int> RowIndex { get; set; } = new(0);
+    
     /// <summary>
     ///     Output downloaded file paths keyed by specialized image instruction.
     /// </summary>
     public Output<IReadOnlyDictionary<SpecializedInstruction, string>> ImagePaths { get; set; } = null!;
 
-    /// <summary>
-    ///     Gets or sets the download registry dependency (injected by DI).
-    /// </summary>
-    public IDownloadRegistry DownloadRegistry { get; set; } = null!;
-
-    /// <summary>
-    ///     Gets or sets the setting provider dependency (injected by DI).
-    /// </summary>
-    public ISettingProvider SettingProvider { get; set; } = null!;
-
-    /// <summary>
-    ///     Gets or sets the workbook registry dependency (injected by DI).
-    /// </summary>
-    public IRegistry<IReadOnlyWorkbook> WorkbookRegistry { get; set; } = null!;
-
     protected override async ValueTask ExecuteAsync(ActivityExecutionContext context)
     {
-        var worksheetInfo = context.Get(WorksheetInfo);
+        var worksheetInfo = context.Get(Worksheet);
         var rowIndex = context.Get(RowIndex);
 
         if (worksheetInfo is null || rowIndex <= 0)
-        {
-            context.Set(ImagePaths, new Dictionary<SpecializedInstruction, string>());
-            return;
-        }
+            throw new ArgumentException("Worksheet information and row index must be provided and valid.");
 
-        var downloadFolder = SettingProvider.Current.Download.DownloadFolder;
-        var worksheetName = Utilities.NormalizeFileName(worksheetInfo.Name);
-        if (string.IsNullOrWhiteSpace(worksheetName))
-            worksheetName = "worksheet";
-
-        var workbook = WorkbookRegistry.GetOrOpen(worksheetInfo.Workbook.FilePath, isEditable: false);
-        var workbookName = Utilities.NormalizeFileName(workbook.Name);
-        if (string.IsNullOrWhiteSpace(workbookName))
-            workbookName = "workbook";
+        var downloadFolder = settingProvider.Current.Download.DownloadFolder;
+        var workbookName = Utilities.NormalizeFileName(worksheetInfo.Workbook.Name, NamingRules.DEFAULT_WORKBOOK_NAME);
+        var worksheetName = Utilities.NormalizeFileName(worksheetInfo.Name, NamingRules.DEFAULT_WORKSHEET_NAME);
 
         var downloadRootFolder = Path.Combine(downloadFolder, workbookName, worksheetName);
-        var resolvedImageUrls = context.Get(ResolvedImageUrls) ?? new Dictionary<SpecializedInstruction, string>();
+        var resolvedImageUrls = context.Get(ImageUrls) ?? new Dictionary<SpecializedInstruction, string>();
         var imagePaths = new ConcurrentDictionary<SpecializedInstruction, string>();
 
         foreach (var (imageInstruction, downloadUrl) in resolvedImageUrls)
@@ -82,13 +62,13 @@ public class DownloadImages : Activity
                 itemDownloadFolder,
                 rowIndex.ToString());
 
-            if (DownloadRegistry.TryGetOrCreateDownloader(
+            if (downloadRegistry.TryGetOrCreateDownloader(
                     downloadRequest,
-                    SettingProvider.Current.Download.GetConfigurationObject(),
+                    settingProvider.Current.Download.GetConfigurationObject(),
                     out var downloader))
                 await downloader.DownloadAsync().ConfigureAwait(false);
 
-            if (!DownloadRegistry.TryGetCompletedDownloadFilePath(downloadRequest, out var imagePath))
+            if (!downloadRegistry.TryGetCompletedDownloadFilePath(downloadRequest, out var imagePath))
                 continue;
 
             imagePaths.TryAdd(imageInstruction, imagePath);
