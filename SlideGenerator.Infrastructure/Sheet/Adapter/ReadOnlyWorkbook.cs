@@ -4,16 +4,37 @@ using SlideGenerator.Domain.Sheet.Entities;
 
 namespace SlideGenerator.Infrastructure.Sheet.Adapter;
 
-public class ReadOnlyWorkbook(IXLWorkbook core) : IReadOnlyWorkbook
+public class ReadOnlyWorkbook : IReadOnlyWorkbook
 {
-    public string? Name => core.Properties.Title;
+    private readonly Lazy<IXLWorkbook> _workbookLazy;
+    private FileStream? _fileStream;
+    private readonly string _filePath;
+
+    public ReadOnlyWorkbook(string filePath)
+    {
+        _filePath = filePath;
+        _workbookLazy = new Lazy<IXLWorkbook>(() =>
+        {
+            _fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            return new XLWorkbook(_fileStream);
+        });
+    }
+
+    private IXLWorkbook Core => _workbookLazy.Value;
+
+    // public string? Name => string.IsNullOrWhiteSpace(Core.Properties.Title)
+    //     ? Path.GetFileNameWithoutExtension(_filePath)
+    //     : Core.Properties.Title;
+    public string? Name => Path.GetFileNameWithoutExtension(_filePath);
+
     public bool TryGetWorksheet(string name, [MaybeNullWhen(false)] out IReadOnlyWorksheet readOnlyWorksheet)
     {
-        if (!core.TryGetWorksheet(name, out var coreWorksheet))
+        if (!Core.TryGetWorksheet(name, out var coreWorksheet))
         {
             readOnlyWorksheet = null;
             return false;
         }
+
         readOnlyWorksheet = new ReadOnlyWorksheet(coreWorksheet);
         return true;
     }
@@ -21,15 +42,22 @@ public class ReadOnlyWorkbook(IXLWorkbook core) : IReadOnlyWorkbook
     public IReadOnlyDictionary<string, int> SummarySheets()
     {
         var result = new Dictionary<string, int>();
-        foreach (var worksheet in core.Worksheets)
+        foreach (var worksheet in Core.Worksheets)
         {
             var contentRange = worksheet.RangeUsed(XLCellsUsedOptions.Contents);
             var name = worksheet.Name;
             var count = Math.Max(contentRange?.RowCount() - 1 ?? 0, 0);
             result[name] = count;
         }
+
         return result;
     }
 
-    public void Dispose() => core.Dispose();
+    public void Dispose()
+    {
+        if (_workbookLazy.IsValueCreated)
+            Core.Dispose();
+
+        _fileStream?.Dispose();
+    }
 }

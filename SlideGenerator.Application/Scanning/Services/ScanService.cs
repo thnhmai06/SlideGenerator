@@ -1,72 +1,68 @@
-using ClosedXML.Excel;
-using DocumentFormat.OpenXml.Packaging;
+using SlideGenerator.Application.Common;
+using SlideGenerator.Application.Slide.Abstractions;
+using SlideGenerator.Domain.Sheet.Entities;
+using SlideGenerator.Domain.Slide.Entities;
 using SlideGenerator.Application.Scanning.Models.Sheets;
 using SlideGenerator.Application.Scanning.Models.Slides;
-using SlideGenerator.Framework.Sheet.Services;
-using SlideGenerator.Framework.Slide.Services;
-using SlideGenerator.Framework.Slide.Services.Replacer;
 
 namespace SlideGenerator.Application.Scanning.Services;
 
 /// Reviewed by @thnhmai06 at 05/03/2026
-public sealed class ScanService
+public sealed class ScanService(
+    IRegistry<IPresentation> slideRegistry,
+    ISlideContentOperator slideContentOperator,
+    IRegistry<IReadOnlyWorkbook> workbookRegistry)
 {
-    public static async Task<PresentationInfo> ScanPresentationAsync(string filePath)
+    public Task<PresentationInfo> ScanPresentationAsync(string filePath)
     {
         filePath = Path.GetFullPath(filePath);
         if (!File.Exists(filePath))
             throw new FileNotFoundException("Presentation file not found.", filePath);
 
-        using var document = PresentationDocument.Open(filePath, false);
-
-        var result = new List<SlideInfo>();
-        foreach (var slidePart in document.EnumerateSlides())
-        {
-            var mustaches = slidePart.ScanMustache()
-                .Select(m => m.Mustache)
-                .Distinct()
-                .ToList();
-            var imageIds = slidePart.GetImageShapeIds().ToList();
-
-            result.Add(new SlideInfo(result.Count, mustaches, imageIds));
-        }
-
-        return await Task.FromResult(new PresentationInfo(filePath, result));
-    }
-
-    public static Task<WorkbookInfo> ScanWorkbookAsync(string filePath)
-    {
+        var presentation = slideRegistry.GetOrOpen(filePath, isEditable: false);
         try
         {
-            filePath = Path.GetFullPath(filePath);
-            if (!File.Exists(filePath))
-                throw new FileNotFoundException("Workbooks file not found.", filePath);
-
-            using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-            using var workbook = new XLWorkbook(fs);
-            var sheets = new List<WorksheetInfo>();
-            foreach (var sheet in workbook.Worksheets)
+            var result = presentation.EnumerateSlides()
+            .Select((slide, index) =>
             {
-                var contentRange = sheet.GetContentRange();
-                if (contentRange == null)
-                {
-                    sheets.Add(new WorksheetInfo(sheet.Name, [], 0));
-                    continue;
-                }
+                var (placeholders, imageShapeIds) = slideContentOperator.ScanTemplateContent(slide);
+                return new SlideInfo(index, placeholders.ToList(), imageShapeIds.ToList());
+            })
+            .ToList();
 
-                var headers = contentRange.FirstRow().Cells()
-                    .Select(cell => cell.GetString())
-                    .Where(value => !string.IsNullOrWhiteSpace(value))
-                    .ToList();
-                var recordCount = Math.Max(0, contentRange.RowCount() - 1);
-                sheets.Add(new WorksheetInfo(sheet.Name, headers, recordCount));
+            return Task.FromResult(new PresentationInfo(filePath, result));
+        }
+        finally
+        {
+            slideRegistry.Close(filePath);
+        }
+    }
+
+    public Task<WorkbookInfo> ScanWorkbookAsync(string filePath)
+    {
+        filePath = Path.GetFullPath(filePath);
+        if (!File.Exists(filePath))
+            throw new FileNotFoundException("Workbooks file not found.", filePath);
+
+        var workbook = workbookRegistry.GetOrOpen(filePath);
+        try
+        {
+            var summary = workbook.SummarySheets();
+            var worksheets = new List<WorksheetInfo>(summary.Count);
+            foreach (var (sheetName, recordCount) in summary)
+            {
+                var headers = workbook.TryGetWorksheet(sheetName, out var worksheet)
+                    ? worksheet.GetHeadersName().Where(value => !string.IsNullOrWhiteSpace(value)).ToList()
+                    : [];
+
+                worksheets.Add(new WorksheetInfo(sheetName, headers, recordCount));
             }
 
-            return Task.FromResult(new WorkbookInfo(filePath, sheets));
+            return Task.FromResult(new WorkbookInfo(filePath, worksheets));
         }
-        catch (Exception exception)
+        finally
         {
-            return Task.FromException<WorkbookInfo>(exception);
+            workbookRegistry.Close(filePath);
         }
     }
 }

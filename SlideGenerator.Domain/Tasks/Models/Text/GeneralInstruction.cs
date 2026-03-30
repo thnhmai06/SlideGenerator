@@ -1,4 +1,4 @@
-using SlideGenerator.Domain.Tasks.Models.Sheet;
+using SlideGenerator.Domain.Sheet.Models;
 
 namespace SlideGenerator.Domain.Tasks.Models.Text;
 
@@ -9,6 +9,6 @@ namespace SlideGenerator.Domain.Tasks.Models.Text;
 public sealed record GeneralInstruction(string Placeholder, IReadOnlyList<ColumnIdentifier> Sources)
     : Instruction(Placeholder), ISpecializable<GeneralInstruction, SpecializedInstruction>
 {
-    public IEnumerable<SpecializedInstruction> Specialize(GeneralInstruction general)
+    public IEnumerable<SpecializedInstruction> Flatten(GeneralInstruction general)
         => general.Sources.Select(source => new SpecializedInstruction(general.Placeholder, source));
 }

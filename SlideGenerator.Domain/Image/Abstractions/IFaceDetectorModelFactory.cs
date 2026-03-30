@@ -1,5 +1,4 @@
-﻿using SlideGenerator.Domain.Image.Models;
-using SlideGenerator.Domain.Image.Rules;
+﻿using SlideGenerator.Domain.Image.Rules;
 
 namespace SlideGenerator.Domain.Image.Abstractions;
 

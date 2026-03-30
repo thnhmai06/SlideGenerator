@@ -1,6 +1,5 @@
-using SlideGenerator.Domain.Tasks.Models.Image.Edits;
-using SlideGenerator.Domain.Tasks.Models.Sheet;
-using SlideGenerator.Domain.Tasks.Models.Slide;
+using SlideGenerator.Domain.Sheet.Models;
+using SlideGenerator.Domain.Slide.Models;
 
 namespace SlideGenerator.Domain.Tasks.Models.Image;
 
@@ -16,6 +15,6 @@ public sealed record GeneralInstruction(
     EditOptions Edit)
     : Instruction(Target, Edit), ISpecializable<GeneralInstruction, SpecializedInstruction>
 {
-    public IEnumerable<SpecializedInstruction> Specialize(GeneralInstruction general)
+    public IEnumerable<SpecializedInstruction> Flatten(GeneralInstruction general)
         => general.Sources.Select(source => new SpecializedInstruction(general.Target, source, general.Edit));
 }

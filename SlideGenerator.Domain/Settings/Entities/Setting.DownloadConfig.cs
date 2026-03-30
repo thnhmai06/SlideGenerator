@@ -24,7 +24,7 @@ public sealed partial class Setting
             set;
         } = string.Empty;
 
-        internal DownloadConfiguration GetConfigurationObject()
+        public DownloadConfiguration GetConfigurationObject()
         {
             var config = new DownloadConfiguration
             {

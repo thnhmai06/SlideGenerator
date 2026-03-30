@@ -1,6 +1,6 @@
 namespace SlideGenerator.Domain.Slide.Entities;
 
-public interface ISlide : IObject
+public interface ISlide : ISlideObject
 {
     uint Id { get; }
     

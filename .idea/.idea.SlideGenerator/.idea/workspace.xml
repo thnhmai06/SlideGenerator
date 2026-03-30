@@ -9,86 +9,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3a1f1c77-0578-40bf-9d5d-a0e8452562c2" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Cloud/Entities/GoogleDriveProvider.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Cloud/Entities/GooglePhotosProvider.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Cloud/Entities/OneDriveProvider.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Cloud/Entities/SharePointProvider.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Cloud/Services/CloudResolver.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Common/IRegistry.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Download/Services/ValidateService.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Image/Abstractions/IImageRegistry.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Image/Abstractions/IVisionComputer.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Image/Entities/CenterRoi.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Image/Entities/RuleOfThirdsRoi.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Image/Services/FaceDetectorModelManager.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Image/Utilities.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Cloud/Abstractions/ICloudResolver.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Cloud/Entities/CloudProvider.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Download/Abstractions/IValidateService.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Image/Abstractions/IFaceDetectionModel.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Image/Abstractions/IFaceDetectorModelFactory.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Image/Abstractions/IFaceDetectorModelProvider.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Image/Abstractions/IMat.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Image/Entities/RoiCalculator.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Image/Models/FaceInfo.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Image/Models/Ratio.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Image/Rules/FaceDetectorModelKey.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Image/Rules/RoiType.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Sheet/Entities/IReadOnlyWorkbook.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Sheet/Entities/IReadOnlyWorksheet.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Slide/Entities/IImageShape.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Slide/Entities/IObject.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Slide/Entities/IPresentation.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Slide/Entities/ISlide.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Slide/Interfaces/ICopyable.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Slide/Interfaces/IPreviewable.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Slide/Models/ObjectPreview.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Slide/Models/ShapePreview.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Slide/Models/SlidePreview.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Slide/Rules/ImageShapeType.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Slide/Rules/PresentationExtension.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Models/Image/Edits/RoiType.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Image/Adapters/Mat.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Image/Adapters/YuNetModel.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Image/Services/Cv2Computer.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Image/Services/FileSystem.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Image/Utilities.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Sheet/Adapter/FileSystem.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Sheet/Adapter/ReadOnlyWorkbook.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Sheet/Adapter/ReadOnlyWorksheet.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slide/Adapters/SpireImageShape.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slide/Adapters/SpirePresentation.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slide/Adapters/SpireSlide.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slide/Adapters/XmlImageShape.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slide/Adapters/XmlPresentation.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slide/Adapters/XmlSlide.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slide/Services/ImageReplacer.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slide/Services/TextReplacer.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slide/Utilities.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.SlideGenerator/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.SlideGenerator/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.SlideGenerator/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.SlideGenerator/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Download/Services/ResolveService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Scanning/Services/ScanService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Scanning/Services/ScanService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Settings/Abstractions/IRepository.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Settings/Services/SettingRegistry.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Settings/Services/SettingRegistry.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/SlideGenerator.Application.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/SlideGenerator.Application.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Download/Abstractions/IResolveService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/SlideGenerator.Domain.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/SlideGenerator.Domain.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Activities/CreatePresentation.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Activities/CreatePresentation.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Activities/PrepareImages.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Activities/PrepareImages.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Models/Image/EditOptions.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Models/Image/Edits/EditOptions.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Models/Image/GeneralInstruction.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Models/Image/GeneralInstruction.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Models/Image/Instruction.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Models/Image/Instruction.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Models/Image/SpecializedInstruction.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Models/Image/SpecializedInstruction.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Models/Slide/SlideIdentifier.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Models/Slide/SlideIdentifier.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Rules/OutputExtension.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Rules/OutputExtension.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Framework" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Downloader/Adapters/DownloadServiceAdapter.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Downloader/Adapters/DownloadService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Downloader/Adapters/DownloadStartedEventArgsAdapter.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Downloader/Adapters/DownloadStartedEventArgs.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Settings/Adapters/FileRepository.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Settings/Services/FileSystem.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Settings/Adapters/YamlSerializer.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Settings/Services/YamlSerializer.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/SlideGenerator.Infrastructure.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/SlideGenerator.Infrastructure.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.slnx" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.slnx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Tasks/Activities/CleanupTransientResources.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Tasks/Activities/GeneratingWorkflow.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Tasks/Activities/GeneratingWorkflow.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -166,23 +88,18 @@
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/f8933dc0151257bf474678ae93838fb9978d7b6fe81d878b68a1c61350bc4026/DownloadStartedEventArgs.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Application/Common/IRegistry.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Application/Download/Abstractions/IDownloadStartedEventArgs.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/SlideGenerator.Application/Tasks/Activities/GeneratingWorkflow.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Domain/Download/Rules/FileExtensionRules.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Domain/Settings/Rules/NamingRules.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Domain/Slide/Models/ShapePreview.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Domain/Slide/Models/SlidePreview.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/SlideGenerator.Domain/Slide/Rules/ExportedPresentationExtension.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Domain/Slide/Rules/ImageShapeType.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/SlideGenerator.Domain/Slide/Rules/ImportedPresentationExtension.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Activities/FilterConfigs.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Activities/GetRowContent.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Models/ISpecializable.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Domain/Tasks/Models/Image/Instruction.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Infrastructure/Image/Utilities.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/SlideGenerator.Infrastructure/Sheet/Adapter/FileSystem.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Infrastructure/Slide/Adapters/SpireImageShape.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Infrastructure/Slide/Adapters/SpirePresentation.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Infrastructure/Slide/Adapters/SpireSlide.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/SlideGenerator.Infrastructure/Slide/Adapters/Utilities.cs" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="true" />
   <component name="ProblemsViewState">
@@ -298,7 +215,12 @@
       <workItem from="1773926156529" duration="16972000" />
       <workItem from="1774004945988" duration="8031000" />
       <workItem from="1774063479234" duration="17757000" />
-      <workItem from="1774140567355" duration="9545000" />
+      <workItem from="1774140567355" duration="9676000" />
+      <workItem from="1774178811127" duration="1047000" />
+      <workItem from="1774532456196" duration="2098000" />
+      <workItem from="1774775970672" duration="14803000" />
+      <workItem from="1774844893399" duration="1673000" />
+      <workItem from="1774857723812" duration="7038000" />
     </task>
     <task id="LOCAL-00001" summary="feat: update LoadPresentation workflow&#10;&#10;- Updated LoadPresentation class to enhance documentation and streamline presentation preparation workflow (improves clarity and maintainability).">
       <option name="closed" value="true" />
@@ -372,7 +294,39 @@
       <option name="project" value="LOCAL" />
       <updated>1773747723062</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="refactor!(backend): Merge Framework into Domain, Application, Infastructure (part 1)">
+      <option name="closed" value="true" />
+      <created>1774150322437</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1774150322437</updated>
+    </task>
+    <task id="LOCAL-00011" summary="chore(backend): Make ReadOnlyWorksheet constructor internal">
+      <option name="closed" value="true" />
+      <created>1774180207814</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1774180207814</updated>
+    </task>
+    <task id="LOCAL-00012" summary="feat(backend): complete generating activities and clean architecture structure &#10;&#10;- Changed ISlide and IImageShape to inherit from ISlideObject (ensures a unified interface structure).&#10;- Updated namespaces in various files to reflect the new structure (improves clarity and organization).&#10;- Renamed methods in ISpecializable to Flatten for better semantic meaning (enhances code readability).">
+      <option name="closed" value="true" />
+      <created>1774866233535</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1774866233535</updated>
+    </task>
+    <task id="LOCAL-00013" summary="feat(backend): complete generating activities and clean architecture structure&#10;&#10;- Changed ISlide and IImageShape to inherit from ISlideObject (ensures a unified interface structure).&#10;- Updated namespaces in various files to reflect the new structure (improves clarity and organization).&#10;- Renamed methods in ISpecializable to Flatten for better semantic meaning (enhances code readability).">
+      <option name="closed" value="true" />
+      <created>1774866304977</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1774866304977</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -415,7 +369,11 @@
     <MESSAGE value="feat(sheet): add GetHeadersName method to WorksheetService&#10;&#10;- Introduced GetHeadersName method to retrieve column headers from the first row of a specified content range (enhances data retrieval capabilities).&#10;- Refactored GetRowContent method to maintain functionality while improving code structure." />
     <MESSAGE value="[skip ci] chore: add copilot-instructions.md" />
     <MESSAGE value="refactor(download): complete almost workflows for PrepareImages.cs&#10;&#10;- Updated class names for clarity and consistency (improves code readability).&#10;- Refactored DownloadManager to use new class names.&#10;- Enhanced copilot instructions for better architectural guidance." />
-    <option name="LAST_COMMIT_MESSAGE" value="refactor(download): complete almost workflows for PrepareImages.cs&#10;&#10;- Updated class names for clarity and consistency (improves code readability).&#10;- Refactored DownloadManager to use new class names.&#10;- Enhanced copilot instructions for better architectural guidance." />
+    <MESSAGE value="refactor!(backend): Merge Framework into Domain, Application, Infastructure (part 1)" />
+    <MESSAGE value="chore(backend): Make ReadOnlyWorksheet constructor internal" />
+    <MESSAGE value="feat(backend): complete generating activities and clean architecture structure &#10;&#10;- Changed ISlide and IImageShape to inherit from ISlideObject (ensures a unified interface structure).&#10;- Updated namespaces in various files to reflect the new structure (improves clarity and organization).&#10;- Renamed methods in ISpecializable to Flatten for better semantic meaning (enhances code readability)." />
+    <MESSAGE value="feat(backend): complete generating activities and clean architecture structure&#10;&#10;- Changed ISlide and IImageShape to inherit from ISlideObject (ensures a unified interface structure).&#10;- Updated namespaces in various files to reflect the new structure (improves clarity and organization).&#10;- Renamed methods in ISpecializable to Flatten for better semantic meaning (enhances code readability)." />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(backend): complete generating activities and clean architecture structure&#10;&#10;- Changed ISlide and IImageShape to inherit from ISlideObject (ensures a unified interface structure).&#10;- Updated namespaces in various files to reflect the new structure (improves clarity and organization).&#10;- Renamed methods in ISpecializable to Flatten for better semantic meaning (enhances code readability)." />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

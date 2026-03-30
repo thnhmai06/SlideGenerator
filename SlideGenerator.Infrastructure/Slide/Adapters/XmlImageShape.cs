@@ -1,7 +1,6 @@
 using System.Drawing;
 using DocumentFormat.OpenXml;
 using SlideGenerator.Domain.Slide.Entities;
-using SlideGenerator.Domain.Slide.Models;
 using SlideGenerator.Domain.Slide.Rules;
 using Picture = DocumentFormat.OpenXml.Presentation.Picture;
 using Shape = DocumentFormat.OpenXml.Presentation.Shape;

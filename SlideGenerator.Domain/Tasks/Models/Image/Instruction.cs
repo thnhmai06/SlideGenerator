@@ -1,5 +1,4 @@
-using SlideGenerator.Domain.Tasks.Models.Image.Edits;
-using SlideGenerator.Domain.Tasks.Models.Slide;
+using SlideGenerator.Domain.Slide.Models;
 
 namespace SlideGenerator.Domain.Tasks.Models.Image;
 

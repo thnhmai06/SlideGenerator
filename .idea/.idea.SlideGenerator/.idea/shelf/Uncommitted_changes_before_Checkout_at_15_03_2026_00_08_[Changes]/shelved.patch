@@ -1,0 +1,709 @@
+Index: SlideGenerator.Framework/Slide/Models/WorkingPresentation.cs
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/SlideGenerator.Framework/Slide/Models/WorkingPresentation.cs b/SlideGenerator.Framework/Slide/Services/Presentation/XmlPresentationService.Manipulation.cs
+rename from SlideGenerator.Framework/Slide/Models/WorkingPresentation.cs
+rename to SlideGenerator.Framework/Slide/Services/Presentation/XmlPresentationService.Manipulation.cs
+--- a/SlideGenerator.Framework/Slide/Models/WorkingPresentation.cs	(revision e6d033ea965e06ac4721197da49a483313733f71)
++++ b/SlideGenerator.Framework/Slide/Services/Presentation/XmlPresentationService.Manipulation.cs	(date 1773104494884)
+@@ -2,52 +2,36 @@
+ using DocumentFormat.OpenXml.Packaging;
+ using DocumentFormat.OpenXml.Presentation;
+ 
+-namespace SlideGenerator.Framework.Slide.Models;
+-
+-/// <summary>
+-///     Represents a presentation working from a template, allowing slide generation.
+-/// </summary>
+-public sealed class WorkingPresentation : Presentation
+-{
+-    /// <summary>
+-    ///     Creates a working presentation.
+-    /// </summary>
+-    /// <param name="filePath">Destination path for the new presentation.</param>
+-    public WorkingPresentation(string filePath)
+-        : base(filePath, true)
+-    {
+-    }
+-
+-    internal WorkingPresentation(PresentationDocument doc, string filePath)
+-        : base(doc, filePath)
+-    {
+-    }
++namespace SlideGenerator.Framework.Slide.Services.Presentation;
+ 
+-    /// <summary>
+-    ///     Saves the presentation.
+-    /// </summary>
+-    public void Save()
+-    {
+-        GetPresentationPart()!.Presentation!.Save();
+-    }
+-
++/// Reviewed by @thnhmai06 at 05/03/2026
++public static partial class XmlPresentationService
++{
+     /// <summary>
+     ///     Copies a slide and inserts it at the specified position.
+     /// </summary>
+-    /// <param name="slideRid">Relationship ID of the slide to copy.</param>
++    /// <param name="doc">The presentation document to modify.</param>
++    /// <param name="sourceRelId">Relationship ID of the slide to copy.</param>
+     /// <param name="position">
+     ///     Position that new slide will have (1-based).
+     ///     If below than 0 or greater than current total slides, appends to end.
+     /// </param>
+     /// <returns>The slide part of the copied slide.</returns>
+-    public SlidePart CopySlide(string slideRid, int position = -1)
++    public static SlidePart CloneSlide(this PresentationDocument doc, string sourceRelId, int position = -1)
+     {
+-        var presentationPart = GetPresentationPart();
+-        var sourceSlide = GetSlidePart(slideRid);
+-        var newSlide = presentationPart!.AddNewPart<SlidePart>();
++        var presentationPart = doc.PresentationPart
++                               ?? throw new InvalidOperationException(
++                                   "Invalid presentation: missing presentation part.");
++
++        var sourceSlide = (SlidePart?)presentationPart.GetPartById(sourceRelId)
++                          ?? throw new ArgumentException(
++                              $"Invalid slide: slide with relationship ID '{sourceRelId}' not found.",
++                              nameof(sourceRelId));
++
++        var newSlide = presentationPart.AddNewPart<SlidePart>();
+ 
+         // clone slide XML (contains transition/timing)
+-        newSlide.Slide = (DocumentFormat.OpenXml.Presentation.Slide)sourceSlide!.Slide!.CloneNode(true);
++        newSlide.Slide = (DocumentFormat.OpenXml.Presentation.Slide)sourceSlide.Slide!.CloneNode(true);
+ 
+         // old rId -> new rId
+         var ridMap = new Dictionary<string, string>(StringComparer.Ordinal);
+@@ -129,7 +113,7 @@
+         newSlide.Slide.Save();
+ 
+         // add slide to SlideIdList
+-        var slideIdList = GetSlideIdList()!;
++        var slideIdList = presentationPart.Presentation!.SlideIdList!;
+         uint nextId = 256;
+         var hasIds = false;
+         uint maxId = 0;
+@@ -156,8 +140,6 @@
+             slideIdList.Append(newSlideId);
+         else
+             slideIdList.InsertAt(newSlideId, position - 1);
+-
+-        presentationPart.Presentation!.Save();
+         return newSlide;
+     }
+ 
+@@ -207,16 +189,4 @@
+         foreach (var el in toRemove)
+             el.Remove();
+     }
+-
+-
+-    /// <summary>
+-    ///     Removes the slide at the specified position.
+-    /// </summary>
+-    /// <param name="position">Position of the slide to remove (1-based).</param>
+-    public void RemoveSlide(int position)
+-    {
+-        var slideIdList = GetSlideIdList();
+-        var slide = slideIdList!.ChildElements.Cast<SlideId>().ElementAt(position - 1);
+-        slide?.Remove();
+-    }
+ }
+\ No newline at end of file
+Index: SlideGenerator.Framework/Common/AsyncLazy.cs
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/SlideGenerator.Framework/Common/AsyncLazy.cs b/SlideGenerator.Framework/AsyncLazy.cs
+rename from SlideGenerator.Framework/Common/AsyncLazy.cs
+rename to SlideGenerator.Framework/AsyncLazy.cs
+--- a/SlideGenerator.Framework/Common/AsyncLazy.cs	(revision e6d033ea965e06ac4721197da49a483313733f71)
++++ b/SlideGenerator.Framework/AsyncLazy.cs	(date 1773104494857)
+@@ -1,9 +1,13 @@
+-namespace SlideGenerator.Framework.Common;
++namespace SlideGenerator.Framework;
+ 
+ /// <summary>
+ ///     Provides lazy asynchronous initialization with thread-safe single execution guarantee and reset capability.
+ /// </summary>
+ /// <typeparam name="T">The type of object being lazily initialized.</typeparam>
++/// ///
++/// <remarks>
++///     Reviewed by @thnhmai06 at 01/03/2026 00:59:20 GMT+7
++/// </remarks>
+ public sealed class AsyncLazy<T> : IDisposable
+ {
+     private readonly Func<Task<T>> _factory;
+@@ -56,20 +60,7 @@
+     public async Task ResetAsync(Action<T>? disposeAction = null)
+     {
+         await _lock.WaitAsync().ConfigureAwait(false);
+-        try
+-        {
+-            if (_instance?.IsValueCreated == true)
+-            {
+-                var task = _instance.Value;
+-                if (task.IsCompletedSuccessfully && disposeAction != null) disposeAction(task.Result);
+-            }
+-
+-            _instance = CreateLazy();
+-        }
+-        finally
+-        {
+-            _lock.Release();
+-        }
++        Reset(disposeAction);
+     }
+ 
+     /// <summary>
+Index: SlideGenerator.Framework/Image/Utilities/ImageUtilities.cs
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/SlideGenerator.Framework/Image/Utilities/ImageUtilities.cs b/SlideGenerator.Framework/Image/Services/ManipulatingService.cs
+rename from SlideGenerator.Framework/Image/Utilities/ImageUtilities.cs
+rename to SlideGenerator.Framework/Image/Services/ManipulatingService.cs
+--- a/SlideGenerator.Framework/Image/Utilities/ImageUtilities.cs	(revision e6d033ea965e06ac4721197da49a483313733f71)
++++ b/SlideGenerator.Framework/Image/Services/ManipulatingService.cs	(date 1773104494877)
+@@ -1,128 +1,46 @@
+ using System.Drawing;
+-using Emgu.CV;
+-using Emgu.CV.CvEnum;
+-using Emgu.CV.Saliency;
+-using SlideGenerator.Framework.Image.Exceptions;
++using OpenCvSharp;
++using Point = System.Drawing.Point;
++using CvSize = OpenCvSharp.Size;
++using Size = System.Drawing.Size;
+ 
+-namespace SlideGenerator.Framework.Image.Utilities;
++namespace SlideGenerator.Framework.Image.Services;
+ 
+-public static class ImageUtilities
+-{
+-    /// <summary>
+-    ///     Get the largest size that has the same aspect ratio with the target size and fits within the original size.
+-    /// </summary>
+-    /// <param name="original">The original size.</param>
+-    /// <param name="target">The target size.</param>
+-    /// <returns>The largest size that has the same aspect ratio with the target size and fits within the original size.</returns>
+-    public static Size GetMaxAspectSize(Size original, Size target)
+-    {
+-        var originalAspect = original.Width / (double)original.Height;
+-        var targetAspect = target.Width / (double)target.Height;
+-
+-        int width, height;
+-        if (originalAspect >= targetAspect)
+-        {
+-            height = original.Height;
+-            width = (int)Math.Round(height * targetAspect);
+-        }
+-        else
+-        {
+-            width = original.Width;
+-            height = (int)Math.Round(width / targetAspect);
+-        }
+-
+-        width = Math.Min(width, original.Width);
+-        height = Math.Min(height, original.Height);
+-        return new Size(width, height);
+-    }
+-
++/// <summary>
++///     Provides static methods for manipulating images and geometric shapes, including cropping, resizing, and clamping
++///     rectangles and points to specified bounds.
++/// </summary>
++/// Reviewed by @thnhmai06 at 05/03/2026
++public static class ManipulatingService
++{
+     /// <summary>
+-    ///     Crops an image to the specified region of interest.
++    ///     Crops the specified mat to the given dimensions in place.
+     /// </summary>
+-    /// <param name="image">The image to crop (modified in place).</param>
++    /// <param name="mat">The mat to crop (modified in place).</param>
+     /// <param name="rect">The region of interest to crop to.</param>
+-    public static void Crop(Models.Image image, Rectangle rect)
++    public static void Crop(ref Mat mat, Rectangle rect)
+     {
+-        var croppedMat = new Mat(image.Mat, rect);
++        var croppedMat = new Mat(mat, new Rect(rect.X, rect.Y, rect.Width, rect.Height));
+         var cloned = croppedMat.Clone();
+ 
+-        image.Mat.Dispose();
+-        image.Mat = cloned;
++        mat.Dispose();
++        mat = cloned;
+         croppedMat.Dispose();
+     }
+ 
+     /// <summary>
+-    ///     Resizes the specified image to the given dimensions in place.
++    ///     Resizes the specified mat to the given dimensions in place.
+     /// </summary>
+-    /// <param name="image">The image to resize (modified in place).</param>
++    /// <param name="mat">The mat to resize (modified in place).</param>
+     /// <param name="size">The size to resize to.</param>
+-    public static void Resize(Models.Image image, Size size)
++    /// <param name="interpolation">Interpolation method.</param>
++    public static void Resize(ref Mat mat, CvSize size, InterpolationFlags interpolation = InterpolationFlags.Area)
+     {
+         var resizedMat = new Mat();
+-        CvInvoke.Resize(image.Mat, resizedMat, size, 0, 0, Inter.Area);
+-
+-        image.Mat.Dispose();
+-        image.Mat = resizedMat;
+-    }
+-
+-    /// <summary>
+-    ///     Computes a normalized saliency map for the specified image using the spectral residual method.
+-    /// </summary>
+-    /// <param name="image">The source image.</param>
+-    /// <returns>Normalized saliency map (value from 0 to 1).</returns>
+-    public static Mat ComputeSaliency(Models.Image image)
+-    {
+-        using var saliency = new StaticSaliencySpectralResidual();
+-        using var saliencyMap = new Mat();
+-
+-        var ok = saliency.Compute(image.Mat, saliencyMap);
+-        if (!ok) throw new ComputeSaliencyFailed(image.SourceName);
+-
+-        using var outMap = new Mat();
+-        saliencyMap.ConvertTo(outMap, DepthType.Cv32F);
+-        CvInvoke.Normalize(outMap, outMap, 0, 1, NormType.MinMax);
+-
+-        return outMap.Clone();
+-    }
+-
+-    /// <summary>
+-    ///     Calculates the visual center of a shape represented by a mask image.
+-    /// </summary>
+-    /// <remarks>
+-    ///     The visual center (not centroid) is determined using a distance transform, which finds the point farthest from the
+-    ///     mask boundary.
+-    ///     The input can be grayscale or color; it is converted to a single-channel binary image internally.
+-    /// </remarks>
+-    /// <param name="image">
+-    ///     Mask image (grayscale or color) where non-zero pixels represent the shape. Must not be null or
+-    ///     empty.
+-    /// </param>
+-    /// <returns>Coordinates of the visual center (pixel farthest from edges).</returns>
+-    public static Point ComputeVisualCenter(Models.Image image)
+-    {
+-        var mat = image.Mat;
+-        if (mat == null || mat.IsEmpty)
+-            throw new ArgumentException("Image is empty", nameof(image));
++        Cv2.Resize(mat, resizedMat, size, 0, 0, interpolation);
+ 
+-        // convert to only 1 channel binary image
+-        using var gray = mat.NumberOfChannels > 1 ? new Mat() : mat.Clone();
+-        if (mat.NumberOfChannels > 1) CvInvoke.CvtColor(mat, gray, ColorConversion.Bgr2Gray);
+-        using var binary = new Mat();
+-        CvInvoke.Threshold(gray, binary, 127, 255, ThresholdType.Binary);
+-
+-        if (CvInvoke.CountNonZero(binary) == 0)
+-            throw new ArgumentException("Image does not contains foreground pixels", nameof(image));
+-
+-        // Each pixel inside the shape is assigned a value representing the distance to the nearest edge
+-        using var distTransform = new Mat();
+-        CvInvoke.DistanceTransform(binary, distTransform, null, DistType.L2, 3);
+-
+-        // Determine the center by finding the pixel with the maximum value (i.e., farthest from edges)
+-        double minVal = 0, maxVal = 0;
+-        Point minLoc = new(), maxLoc = new();
+-        CvInvoke.MinMaxLoc(distTransform, ref minVal, ref maxVal, ref minLoc, ref maxLoc);
+-
+-        return maxLoc;
++        mat.Dispose();
++        mat = resizedMat;
+     }
+ 
+     /// <summary>
+@@ -142,7 +60,7 @@
+     ///     A rectangle with the same size as the input rectangle, unless it exceeds the border's dimensions, in which case
+     ///     its size and position are adjusted to fit entirely within the border.
+     /// </returns>
+-    public static Rectangle ClampToBorder(Rectangle rect, Rectangle border)
++    public static Rectangle ClampIn(this Rectangle rect, Rectangle border)
+     {
+         var x = rect.X;
+         var y = rect.Y;
+@@ -183,11 +101,67 @@
+     ///     rectangle.
+     /// </param>
+     /// <returns>A new point whose X and Y coordinates are constrained to the borders of the specified rectangle.</returns>
+-    public static Point ClampToBorder(Point point, Rectangle border)
++    public static Point ClampIn(this Point point, Rectangle border)
+     {
+         var x = Math.Clamp(point.X, border.Left, border.Right - 1);
+         var y = Math.Clamp(point.Y, border.Top, border.Bottom - 1);
+ 
+         return new Point(x, y);
+     }
++
++    /// <summary>
++    ///     Get the largest size that has the same aspect ratio with the target size and fits within the original size.
++    /// </summary>
++    /// <param name="original">The original size (OpenCvSharp.Size).</param>
++    /// <param name="target">The target size (OpenCvSharp.Size).</param>
++    /// <returns>The largest size that has the same aspect ratio with the target size and fits within the original size.</returns>
++    public static CvSize GetMaxAspectSize(this CvSize original, CvSize target)
++    {
++        var originalAspect = original.Width / (double)original.Height;
++        var targetAspect = target.Width / (double)target.Height;
++
++        int width, height;
++        if (originalAspect >= targetAspect)
++        {
++            height = original.Height;
++            width = (int)Math.Round(height * targetAspect);
++        }
++        else
++        {
++            width = original.Width;
++            height = (int)Math.Round(width / targetAspect);
++        }
++
++        width = Math.Min(width, original.Width);
++        height = Math.Min(height, original.Height);
++        return new CvSize(width, height);
++    }
++
++    /// <summary>
++    ///     Get the largest size that has the same aspect ratio with the target size and fits within the original size.
++    /// </summary>
++    /// <param name="original">The original size.</param>
++    /// <param name="target">The target size.</param>
++    /// <returns>The largest size that has the same aspect ratio with the target size and fits within the original size.</returns>
++    public static Size GetMaxAspectSize(this Size original, Size target)
++    {
++        var originalAspect = original.Width / (double)original.Height;
++        var targetAspect = target.Width / (double)target.Height;
++
++        int width, height;
++        if (originalAspect >= targetAspect)
++        {
++            height = original.Height;
++            width = (int)Math.Round(height * targetAspect);
++        }
++        else
++        {
++            width = original.Width;
++            height = (int)Math.Round(width / targetAspect);
++        }
++
++        width = Math.Min(width, original.Width);
++        height = Math.Min(height, original.Height);
++        return new Size(width, height);
++    }
+ }
+\ No newline at end of file
+Index: SlideGenerator.Framework/Image/Modules/FaceDetection/Models/FaceDetectionModel.cs
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/SlideGenerator.Framework/Image/Modules/FaceDetection/Models/FaceDetectionModel.cs b/SlideGenerator.Framework/Image/Entities/FaceDetection/FaceDetectionModel.cs
+rename from SlideGenerator.Framework/Image/Modules/FaceDetection/Models/FaceDetectionModel.cs
+rename to SlideGenerator.Framework/Image/Entities/FaceDetection/FaceDetectionModel.cs
+--- a/SlideGenerator.Framework/Image/Modules/FaceDetection/Models/FaceDetectionModel.cs	(revision e6d033ea965e06ac4721197da49a483313733f71)
++++ b/SlideGenerator.Framework/Image/Entities/FaceDetection/FaceDetectionModel.cs	(date 1773104494870)
+@@ -1,18 +1,23 @@
+-using CoreImage = SlideGenerator.Framework.Image.Models.Image;
++using OpenCvSharp;
++using SlideGenerator.Framework.Image.Models.FaceDetection;
+ 
+-namespace SlideGenerator.Framework.Image.Modules.FaceDetection.Models;
++namespace SlideGenerator.Framework.Image.Entities.FaceDetection;
+ 
+ /// <summary>
+ ///     A face detector model.
+ /// </summary>
+-public abstract class FaceDetectorModel : IDisposable
++/// Reviewed by @thnhmai06 at 01/03/2026 01:38:16 GMT+7
++public abstract class FaceDetectorModel : IAsyncDisposable
+ {
+     /// <summary>
+     ///     Gets a value indicating whether the face detection model is available for use.
+     /// </summary>
+     public abstract bool IsModelAvailable { get; }
+ 
+-    public abstract void Dispose();
++    /// <summary>
++    ///     Disposes the model asynchronously.
++    /// </summary>
++    public abstract ValueTask DisposeAsync();
+ 
+     /// <summary>
+     ///     Initializes the face detection model asynchronously.
+@@ -35,18 +40,19 @@
+     /// <summary>
+     ///     Attempts to detect faces in the specified image.
+     /// </summary>
+-    /// <remarks>
+-    ///     The method returns a list of detected face candidates. If the face model cannot be initialized
+-    ///     or an error occurs during detection, an empty list is returned.
+-    /// </remarks>
+-    /// <param name="image">The image data in which to search for faces. Must not be null.</param>
+-    /// <param name="minScore">
+-    ///     The minimum confidence score required for a detected face to be included in the results. Must be between 0.0 and
+-    ///     1.0.
+-    /// </param>
++    /// <param name="mat">The mat in which to search for faces. Must not be null.</param>
+     /// <returns>
+     ///     A task that represents the asynchronous operation. The task result is a list of detected
+     ///     face candidates. The list is empty if no faces are detected or if detection fails.
+     /// </returns>
+-    public abstract Task<List<Face>> DetectAsync(CoreImage image, float minScore);
++    /// <exception cref="InvalidOperationException">Thrown when the model has not been initialized.</exception>
++    public abstract Task<List<FaceInfo>> DetectAsync(Mat mat);
++
++    /// <summary>
++    ///     Synchronous dispose for compatibility.
++    /// </summary>
++    public void Dispose()
++    {
++        DisposeAsync().AsTask().Wait();
++    }
+ }
+\ No newline at end of file
+Index: SlideGenerator.Framework/Image/Modules/Roi/Models/ExpandRatio.cs
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/SlideGenerator.Framework/Image/Modules/Roi/Models/ExpandRatio.cs b/SlideGenerator.Framework/Image/Models/Roi/Ratio.cs
+rename from SlideGenerator.Framework/Image/Modules/Roi/Models/ExpandRatio.cs
+rename to SlideGenerator.Framework/Image/Models/Roi/Ratio.cs
+--- a/SlideGenerator.Framework/Image/Modules/Roi/Models/ExpandRatio.cs	(revision e6d033ea965e06ac4721197da49a483313733f71)
++++ b/SlideGenerator.Framework/Image/Models/Roi/Ratio.cs	(date 1773104494874)
+@@ -1,33 +1,34 @@
++using System.Diagnostics.CodeAnalysis;
+ using System.Drawing;
+ 
+-namespace SlideGenerator.Framework.Image.Modules.Roi.Models;
++namespace SlideGenerator.Framework.Image.Models.Roi;
+ 
+ /// <summary>
+-///     Represents expansion ratios of a rectangle.
++///     Represents ratios of a rectangle.
+ /// </summary>
+-/// <remarks>
+-///     Use this class to specify non-uniform or uniform expansion for each side when adjusting the size of
+-///     a rectangle. Ratios are typically expressed as multipliers relative to the original size.
+-/// </remarks>
+-/// <param name="top">The ratio by which to expand the top side. (0 to 1)</param>
+-/// <param name="bottom">The ratio by which to expand the bottom side. (0 to 1)</param>
+-/// <param name="left">The ratio by which to expand the left side. (0 to 1)</param>
+-/// <param name="right">The ratio by which to expand the right side. (0 to 1)</param>
+-public class ExpandRatio(float top, float bottom, float left, float right)
++/// Reviewed by @thnhmai06 at 01/03/2026 02:08:30 GMT+7
++public record Ratio
+ {
+     /// <summary>
+-    ///     Initializes an expand ratio that applies the same margin to all sides.
++    ///     Initializes an ratio.
++    /// </summary>
++    public Ratio()
++    {
++    }
++
++    /// <summary>
++    ///     Initializes a ratio that applies the same margin to all sides.
+     /// </summary>
+     /// <param name="allSides">
+     ///     The margin ratio applied uniformly to the left, top, right, and bottom sides.
+     /// </param>
+-    public ExpandRatio(float allSides)
+-        : this(allSides, allSides, allSides, allSides)
++    [SetsRequiredMembers]
++    public Ratio(float allSides) : this(allSides, allSides)
+     {
+     }
+ 
+     /// <summary>
+-    ///     Initializes an expand ratio that applies the same vertical and horizontal margins.
++    ///     Initializes a ratio that applies the same vertical and horizontal margins.
+     /// </summary>
+     /// <param name="vertical">
+     ///     The margin ratio applied to the top and bottom sides.
+@@ -35,34 +36,64 @@
+     /// <param name="horizontal">
+     ///     The margin ratio applied to the left and right sides.
+     /// </param>
+-    public ExpandRatio(float vertical, float horizontal)
+-        : this(vertical, vertical, horizontal, horizontal)
++    [SetsRequiredMembers]
++    public Ratio(float vertical, float horizontal)
+     {
++        Top = Bottom = vertical;
++        Left = Right = horizontal;
+     }
+ 
+-    public float Top
++    /// <summary>
++    ///     The margin ratio applied to the top side. (0 to 1)
++    /// </summary>
++    public required float Top
+     {
+         get;
+-        set => Math.Clamp(value, 0, 1);
+-    } = top;
++        init
++        {
++            field = value;
++            Math.Clamp(value, 0, 1);
++        }
++    }
+ 
+-    public float Bottom
++    /// <summary>
++    ///     The margin ratio applied to the bottom side. (0 to 1)
++    /// </summary>
++    public required float Bottom
+     {
+         get;
+-        set => Math.Clamp(value, 0, 1);
+-    } = bottom;
++        init
++        {
++            field = value;
++            Math.Clamp(value, 0, 1);
++        }
++    }
+ 
+-    public float Left
++    /// <summary>
++    ///     The margin ratio applied to the left side. (0 to 1)
++    /// </summary>
++    public required float Left
+     {
+         get;
+-        set => Math.Clamp(value, 0, 1);
+-    } = left;
++        init
++        {
++            field = value;
++            Math.Clamp(value, 0, 1);
++        }
++    }
+ 
+-    public float Right
++    /// <summary>
++    ///     The margin ratio applied to the right side. (0 to 1)
++    /// </summary>
++    public required float Right
+     {
+         get;
+-        set => Math.Clamp(value, 0, 1);
+-    } = right;
++        init
++        {
++            field = value;
++            Math.Clamp(value, 0, 1);
++        }
++    }
+ 
+ 
+     /// <summary>
+@@ -75,7 +106,7 @@
+     ///     Positive values expand the rectangle outward, while negative values shrink it inward.
+     ///     The input rectangle is not modified.
+     /// </remarks>
+-    /// <param name="rect">The source rectangle.</param>
++    /// <param name="original">The source rectangle.</param>
+     /// <param name="border">
+     ///     Optional bounding rectangle used to constrain the result
+     ///     (typically the image bounds).
+@@ -83,13 +114,13 @@
+     /// <returns>
+     ///     A new rectangle adjusted by the margin ratios and constrained to the border.
+     /// </returns>
+-    public Rectangle With(Rectangle rect, Rectangle? border = null)
++    public Rectangle Expand(Rectangle original, Rectangle? border = null)
+     {
+         var expanded = new Rectangle(
+-            rect.X - (int)(rect.Width * Left),
+-            rect.Y - (int)(rect.Height * Top),
+-            rect.Width + (int)(rect.Width * (Left + Right)),
+-            rect.Height + (int)(rect.Height * (Top + Bottom))
++            original.X - (int)(original.Width * Left),
++            original.Y - (int)(original.Height * Top),
++            original.Width + (int)(original.Width * (Left + Right)),
++            original.Height + (int)(original.Height * (Top + Bottom))
+         );
+         if (border is null) return expanded;
+ 
+Index: SlideGenerator.Framework/Image/Modules/FaceDetection/Models/Face.cs
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/SlideGenerator.Framework/Image/Modules/FaceDetection/Models/Face.cs b/SlideGenerator.Framework/Image/Models/FaceDetection/FaceInfo.cs
+rename from SlideGenerator.Framework/Image/Modules/FaceDetection/Models/Face.cs
+rename to SlideGenerator.Framework/Image/Models/FaceDetection/FaceInfo.cs
+--- a/SlideGenerator.Framework/Image/Modules/FaceDetection/Models/Face.cs	(revision e6d033ea965e06ac4721197da49a483313733f71)
++++ b/SlideGenerator.Framework/Image/Models/FaceDetection/FaceInfo.cs	(date 1773104494874)
+@@ -1,6 +1,6 @@
+ using System.Drawing;
+ 
+-namespace SlideGenerator.Framework.Image.Modules.FaceDetection.Models;
++namespace SlideGenerator.Framework.Image.Models.FaceDetection;
+ 
+ /// <summary>
+ ///     Represents a face with its bounding box, score, and eye landmarks (if available).
+@@ -12,26 +12,12 @@
+ /// <param name="Nose">The nose landmark (if provided by the model).</param>
+ /// <param name="RightMouth">The right mouth corner landmark (if provided by the model).</param>
+ /// <param name="LeftMouth">The left mouth corner landmark (if provided by the model).</param>
+-public readonly record struct Face(
++/// Reviewed by @thnhmai06 at 02/03/2026 11:42:59 GMT+7
++public readonly record struct FaceInfo(
+     Rectangle Rect,
+     float Score,
+     Point? RightEye = null,
+     Point? LeftEye = null,
+     Point? Nose = null,
+     Point? RightMouth = null,
+-    Point? LeftMouth = null)
+-{
+-    public bool TryGetEyeCenter(out Point center)
+-    {
+-        if (RightEye is { } rightEye && LeftEye is { } leftEye)
+-        {
+-            center = new Point(
+-                (int)MathF.Round((rightEye.X + leftEye.X) / 2f),
+-                (int)MathF.Round((rightEye.Y + leftEye.Y) / 2f));
+-            return true;
+-        }
+-
+-        center = default;
+-        return false;
+-    }
+-}
+\ No newline at end of file
++    Point? LeftMouth = null);
+\ No newline at end of file
+Index: SlideGenerator.Framework/Image/Modules/Roi/Enums/RoiType.cs
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/SlideGenerator.Framework/Image/Modules/Roi/Enums/RoiType.cs b/SlideGenerator.Framework/Image/Models/Roi/RoiType.cs
+rename from SlideGenerator.Framework/Image/Modules/Roi/Enums/RoiType.cs
+rename to SlideGenerator.Framework/Image/Models/Roi/RoiType.cs
+--- a/SlideGenerator.Framework/Image/Modules/Roi/Enums/RoiType.cs	(revision e6d033ea965e06ac4721197da49a483313733f71)
++++ b/SlideGenerator.Framework/Image/Models/Roi/RoiType.cs	(date 1773104494875)
+@@ -1,4 +1,4 @@
+-namespace SlideGenerator.Framework.Image.Modules.Roi.Enums;
++namespace SlideGenerator.Framework.Image.Models.Roi;
+ 
+ /// <summary>
+ ///     Specifies the region of interest (ROI) detection type for image cropping.

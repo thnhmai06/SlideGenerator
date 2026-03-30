@@ -1,5 +1,4 @@
 using System.Drawing;
-using SlideGenerator.Application.Image.Services;
 using SlideGenerator.Domain.Image.Abstractions;
 using SlideGenerator.Domain.Image.Entities;
 using SlideGenerator.Domain.Image.Models;

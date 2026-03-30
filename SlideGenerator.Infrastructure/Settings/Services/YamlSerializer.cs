@@ -3,7 +3,7 @@ using YamlDotNet.Serialization.NamingConventions;
 
 namespace SlideGenerator.Infrastructure.Settings.Services;
 
-public class YamlSerializer : SlideGenerator.Application.Settings.Abstractions.ISerializer
+public class YamlSerializer : Application.Settings.Abstractions.ISerializer
 {
     public string FileExtension => ".yaml";
 

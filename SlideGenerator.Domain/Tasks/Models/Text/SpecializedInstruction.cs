@@ -1,4 +1,4 @@
-using SlideGenerator.Domain.Tasks.Models.Sheet;
+using SlideGenerator.Domain.Sheet.Models;
 
 namespace SlideGenerator.Domain.Tasks.Models.Text;
 

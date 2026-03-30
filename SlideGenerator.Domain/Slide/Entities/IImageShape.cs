@@ -3,7 +3,7 @@ using SlideGenerator.Domain.Slide.Rules;
 
 namespace SlideGenerator.Domain.Slide.Entities;
 
-public interface IImageShape : IObject
+public interface IImageShape : ISlideObject
 {
     uint Id { get; }
     string Name { get; }

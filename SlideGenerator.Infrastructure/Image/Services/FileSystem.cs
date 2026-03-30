@@ -1,13 +1,10 @@
 ﻿using ImageMagick;
-using OpenCvSharp;
-using SlideGenerator.Application.Common;
 using SlideGenerator.Domain.Image.Abstractions;
-using SlideGenerator.Infrastructure.Image.Adapters;
 using Mat = SlideGenerator.Infrastructure.Image.Adapters.Mat;
 
 namespace SlideGenerator.Infrastructure.Image.Services;
 
-public class FileSystem : IRegistry<IMat>
+public class FileSystem
 {
     public IMat? Read(string path)
     {

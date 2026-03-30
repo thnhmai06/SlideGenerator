@@ -1,55 +1,127 @@
-# Copilot Instructions
+# SlideGenerator Coding Instructions
 
-## Source of Truth
-- Read and follow [`construction.md`](../construction.md) before making architectural decisions.
-- If this file and `construction.md` differ, prefer `construction.md`.
-- Validate architecture assumptions against current code in `SlideGenerator.Application`, `SlideGenerator.Domain`, `SlideGenerator.Framework`, and `SlideGenerator.Ipc` before large changes.
+## Goal
+This document summarizes the conventions currently used across the three main projects:
+- SlideGenerator.Domain
+- SlideGenerator.Application
+- SlideGenerator.Infrastructure
 
-## Solution Shape (Current Codebase)
-- `SlideGenerator.Framework`: reusable low-level library (Cloud, Sheet, Slide, Image), publishable as standalone package.
-- `SlideGenerator.Domain`: domain/runtime concerns (settings, download orchestration, workflow activity models).
-- `SlideGenerator.Application`: application-facing services/models (currently scanning models/services).
-- `SlideGenerator.Ipc`: stdio JSON-RPC adapter and composition root (`Program.cs`, `Endpoints/RpcEndpoint.*.cs`).
+When creating or modifying code, prioritize following the rules below.
 
-## Layer Boundaries
-- Keep `Framework` free of app orchestration and transport concerns.
-- Keep `Domain` focused on domain models, state/config access abstractions, and workflow-level activities.
-- Keep `Application` focused on use-case services that compose `Domain` + `Framework`.
-- Keep `Ipc` thin: validate request payloads, call backend/application orchestration services, return DTOs.
-- Do not move business logic into endpoint classes or DTOs.
+## Overall Architecture: Clean Architecture
 
-## DI and Runtime Composition
-- Register services in `SlideGenerator.Ipc/Program.cs` using `Microsoft.Extensions.DependencyInjection`.
-- Keep singleton config owner in `Domain` (`SettingManager`), and expose read-only access via `ISettingProvider`.
-- Prefer constructor injection; avoid manual service wiring inside service constructors.
-- Preserve async disposal/lifecycle semantics for long-lived services that hold unmanaged/native resources.
+This solution follows Clean Architecture with clear dependency rules:
 
-## Contracts Inferred from Code
-- Scanning flow should reuse `Framework` extension/services (`ShapeService`, `WorkbookService`, presentation scanners) instead of re-parsing formats.
-- Cloud link resolution should go through `Framework.Cloud.Services.CloudResolver` and `Domain.Download.Services.ResolveService`.
-- Download orchestration should stay in `Domain.Download.Services` (`DownloadManager`, `FileDownloader`) with concurrency-safe state management.
-- Face detection model lifecycle is explicit:
-  - initialization and model selection in `Framework.Image.Services.FaceDetectorModelManager`.
-  - `FaceDetectionModel.DetectAsync` implementations (for example `YuNetModel`) must throw when model is not initialized.
-  - detection results are raw/full; confidence filtering belongs to caller/business layer.
+Exception:
+- Elsa workflow dependencies are allowed in Application as an explicit architectural exception.
+- Domain must not depend on Elsa.
 
-## Coding Guidelines
-- Keep changes minimal, scoped, and backward-compatible unless a breaking change is requested.
-- Use C# 12+ style already present in repo (file-scoped namespaces, `sealed` where appropriate, async APIs).
-- Add XML docs for public types and public methods in touched files.
-- Prefer clear, intention-revealing code over compact but opaque expressions.
-- Validate inputs with guard clauses and fail fast with explicit exceptions.
-- Avoid sync-over-async (`.Result`, `.Wait()`).
+1. Domain is the innermost layer.
+- Contains business models, business rules, and domain abstractions.
+- Must not depend on Application or Infrastructure.
+- Should avoid framework-specific technical details whenever possible.
 
-## Naming and Data Shape
-- Keep DTO/model placement consistent with project responsibilities:
-  - transport request contracts under `SlideGenerator.Ipc/Contracts/Requests`.
-  - application response models under `SlideGenerator.Application/.../Models`.
-  - domain/runtime models under `SlideGenerator.Domain/.../Models` and entities under `.../Entities`.
-- Maintain existing naming unless task asks for explicit renaming; avoid incidental churn.
+2. Application is the use-case/orchestration layer.
+- Depends on Domain.
+- Contains orchestration services, registries, and workflow-level logic.
+- Defines abstractions that are implemented in Infrastructure (for example serializer, file registry, image compute service).
 
-## Change Safety Checklist
-- Confirm touched code stays inside the correct project boundary.
-- Reuse existing `Framework` and `Domain` helpers before adding new low-level logic.
-- Build affected projects first, then build solution when practical.
-- If pre-existing compile/runtime issues are found, call them out separately from new changes.
+3. Infrastructure is the implementation/adapters layer.
+- May depend on Domain and Application to implement abstractions.
+- Contains integrations with external libraries (OpenXml, Spire, OpenCvSharp, ClosedXML, YamlDotNet, Downloader, ...).
+- Must not contain core business rules.
+
+## Folder Structure And Naming Conventions
+
+Use consistent naming by module:
+- Abstractions: interfaces/contracts (typically start with I).
+- Entities: business objects or implementation-level objects with identity/behavior.
+- Models: DTOs/value models/preview models.
+- Rules: constants, enums, extension mappings, domain rules.
+- Services: services for use-case/module processing.
+- Activities: workflow activities (Elsa).
+- Adapters: wrappers/converters between external libraries and internal abstractions.
+
+Naming interfaces and classes:
+- Interface: I + Name (ISettingProvider, IReadOnlyWorkbook, IVisionComputer...).
+- Concrete class names should clearly describe their role (YamlSerializer, Cv2Computer, TextReplacer...).
+- Prefer sealed for concrete classes when inheritance is not needed.
+
+## C# Coding Conventions
+
+1. Platform/language settings
+- Target framework: net10.0.
+- Nullable: enable.
+- ImplicitUsings: enable.
+- File-scoped namespace.
+
+2. General style
+- Prefer one top-level type per file (SA1402 is set to suggestion).
+- Minimize style noise; focus on clarity and stability.
+- Add XML docs for many public APIs (summary/param/returns).
+
+3. Data types and models
+- Prefer record for data-centric models (identifier/instruction/request).
+- Use enum + extension method for technical mappings (for example file extension, document type).
+- Use readonly/required/init where appropriate to clarify intent.
+
+4. Asynchrony and resources
+- Prefer async/await for I/O or heavy operations.
+- Frequently use ConfigureAwait(false) in library/service code.
+- Use IDisposable/IAsyncDisposable when holding native resources/streams/models.
+
+5. Input guards and null-safety
+- Validate inputs early (null/empty/file exists/valid range).
+- Prefer TryGet/Try... patterns for operations that may fail.
+- If an operation can fail safely, returning bool/null is preferred over excessive throwing.
+
+6. Concurrency
+- Use ConcurrentDictionary/locks when there is shared multi-threaded state.
+- For event/callback flows, ensure cleanup state (for example remove items from registry on completion).
+
+## Layer-Specific Rules
+
+### Domain
+- Keep domain models/rules simple and business-focused.
+- Define abstractions for external capabilities (cloud/image/settings/sheet/slide...).
+- Do not include external-library implementation details in Domain.
+
+### Application
+- Acts as the bridge for use-cases, workflows, and policies.
+- Use registry/provider/service patterns to manage runtime state.
+- Avoid pushing framework-specific technical logic too deep when it can be moved to Infrastructure.
+
+### Infrastructure
+- Implement Domain/Application abstractions using concrete libraries.
+- Prefer adapter pattern to wrap external libraries.
+- Place technical handling (format conversion, OpenXml relationships, CV compute, YAML serializer...) here.
+
+## Workflow Conventions (Elsa)
+
+When implementing workflow activities:
+- Inherit from WorkflowBase.
+- Define Input/Output/Variable with clear names and semantics.
+- Build graphs with Sequence/ParallelForEach/Inline in a readable manner.
+- Store temporary runtime objects in WorkflowExecutionContext.TransientProperties when needed.
+- Validate inputs before I/O operations.
+
+## Error Handling And Logging
+
+- Some places currently use broad catch for fail-safe behavior; when extending, add contextual logging.
+- Do not swallow errors silently in business-critical paths.
+- Prefer clear, action-oriented error messages.
+
+## Dependency Rule Checklist (Mandatory)
+
+Before merging new code, self-check:
+- Does Domain reference Application/Infrastructure? If yes: incorrect.
+- Are core business rules placed in Infrastructure? If yes: incorrect.
+- Does Application call concrete implementations directly instead of abstractions? If yes: review required.
+
+## When Copilot Generates Code
+
+- Always respect this solution's Clean Architecture dependency rules.
+- Keep naming/folder structure aligned with existing modules.
+- Prefer defining abstractions in Domain/Application first, then implement in Infrastructure.
+- Do not change existing public API/behavior without explicit request.
+- If adding a new library: add it only to the project that needs implementation; avoid leaking dependencies into Domain.

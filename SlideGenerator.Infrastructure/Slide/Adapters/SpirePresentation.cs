@@ -1,5 +1,4 @@
 using SlideGenerator.Domain.Slide.Entities;
-using SlideGenerator.Domain.Slide.Models;
 using SlideGenerator.Domain.Slide.Rules;
 using Spire.Presentation;
 using ISlide = SlideGenerator.Domain.Slide.Entities.ISlide;
@@ -34,12 +33,43 @@ public class SpirePresentation : IPresentation, IDisposable
         }
     }
 
+    public ISlide CopySlide(int from, int to)
+    {
+        throw new NotSupportedException("Slide copy is not supported for SpirePresentation.");
+    }
+
+    public bool RemoveSlide(int position)
+    {
+        if (position <= 0)
+            return false;
+
+        var index = position - 1;
+        if (index >= Core.Value.Slides.Count)
+            return false;
+
+        Core.Value.Slides.RemoveAt(index);
+        return true;
+    }
+
+    public void SaveAs(string filePath, PresentationExtension? extension = null)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+            throw new ArgumentException("Output file path cannot be null or empty.", nameof(filePath));
+
+        var normalizedPath = Path.GetFullPath(filePath);
+        var directory = Path.GetDirectoryName(normalizedPath);
+        if (!string.IsNullOrWhiteSpace(directory))
+            Directory.CreateDirectory(directory);
+
+        Core.Value.SaveToFile(normalizedPath, extension.ToSpireDocType());
+    }
+
     public void Save(PresentationExtension? extension)
     {
         if (_coreFs.IsValueCreated)
             _coreFs.Value.Position = 0;
         if (Core.IsValueCreated)
-            Core.Value.SaveToFile(_coreFs.Value, extension.ToFileFormat());
+            Core.Value.SaveToFile(_coreFs.Value, extension.ToSpireDocType());
     }
 
     public void Dispose()

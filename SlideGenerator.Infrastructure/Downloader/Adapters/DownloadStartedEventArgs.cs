@@ -1,4 +1,3 @@
-using Downloader;
 using SlideGenerator.Application.Download.Abstractions;
 
 namespace SlideGenerator.Infrastructure.Downloader.Adapters;

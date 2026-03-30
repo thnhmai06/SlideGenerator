@@ -1,7 +1,6 @@
 using OpenCvSharp;
 using SlideGenerator.Application.Image.Abstractions;
 using SlideGenerator.Domain.Image.Abstractions;
-using SlideGenerator.Infrastructure.Image.Adapters;
 using Mat = SlideGenerator.Infrastructure.Image.Adapters.Mat;
 using Point = System.Drawing.Point;
 

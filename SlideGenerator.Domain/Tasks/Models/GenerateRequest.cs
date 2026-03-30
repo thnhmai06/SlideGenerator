@@ -1,5 +1,5 @@
-using SlideGenerator.Domain.Tasks.Models.Sheet;
-using SlideGenerator.Domain.Tasks.Models.Slide;
+using SlideGenerator.Domain.Sheet.Models;
+using SlideGenerator.Domain.Slide.Models;
 
 namespace SlideGenerator.Domain.Tasks.Models;
 

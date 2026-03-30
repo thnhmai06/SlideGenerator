@@ -7,10 +7,17 @@ using SlideGenerator.Framework.Features.Image.Contracts;
 using SlideGenerator.Framework.Features.Image.Services;
 using SlideGenerator.Ipc.Endpoints;
 using SlideGenerator.Application;
+using SlideGenerator.Application.Common;
 using SlideGenerator.Application.Generating.Services;
+using SlideGenerator.Application.Slide.Abstractions;
 using SlideGenerator.Domain.Configs.Contracts;
 using SlideGenerator.Domain.Configs.Entities;
+using SlideGenerator.Domain.Sheet.Entities;
+using SlideGenerator.Domain.Slide.Entities;
 using SlideGenerator.Domain.Settings.Services;
+using SlideGenerator.Infrastructure.Sheet.Adapter;
+using SlideGenerator.Infrastructure.Slide.Adapters;
+using SlideGenerator.Infrastructure.Slide.Services;
 using StreamJsonRpc;
 
 namespace SlideGenerator.Ipc;
@@ -62,6 +69,9 @@ public static class Program
         services.AddSingleton<FaceDetectorModelManager>();
         services.AddSingleton<IFaceDetectorModelProvider>(serviceProvider =>
             serviceProvider.GetRequiredService<FaceDetectorModelManager>());
+        services.AddSingleton<IRegistry<IPresentation>, XmlSlideRegistry>();
+        services.AddSingleton<ISlideContentOperator, XmlSlideContentReplacer>();
+        services.AddSingleton<IRegistry<IReadOnlyWorkbook>, XlWorkbookRegistry>();
         services.AddSingleton<GenerateService>();
         services.AddSingleton<BackendService>();
         services.AddSingleton<RpcEndpoint>();

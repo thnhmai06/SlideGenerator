@@ -10,7 +10,7 @@ public static class Utilities
     
     extension(PresentationExtension? extension)
     {
-        public FileFormat ToFileFormat()
+        public FileFormat ToSpireDocType()
         {
             return extension switch
             {
@@ -22,10 +22,11 @@ public static class Utilities
             };
         }
 
-        public PresentationDocumentType ToDocumentType()
+        public PresentationDocumentType ToXmlDocType()
         {
             return extension switch
             {
+                null => PresentationDocumentType.Presentation,
                 PresentationExtension.Potx => PresentationDocumentType.Template,
                 PresentationExtension.Pptx => PresentationDocumentType.Presentation,
                 PresentationExtension.Ppsx => PresentationDocumentType.Slideshow,
@@ -33,4 +34,5 @@ public static class Utilities
             };
         }
     }
+
 }

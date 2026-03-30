@@ -11,11 +11,6 @@ public enum RoiType
     RuleOfThirds,
 
     /// <summary>
-    ///     Detects the most prominent/salient region of the image using spectral residual saliency.
-    /// </summary>
-    Prominent,
-
-    /// <summary>
     ///     Uses the center region of the image.
     /// </summary>
     Center

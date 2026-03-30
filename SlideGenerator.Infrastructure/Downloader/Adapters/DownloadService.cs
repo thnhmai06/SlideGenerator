@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using System.ComponentModel;
-using Downloader;
 using SlideGenerator.Application.Download.Abstractions;
 using IDownloadService = SlideGenerator.Application.Download.Abstractions.IDownloadService;
 
