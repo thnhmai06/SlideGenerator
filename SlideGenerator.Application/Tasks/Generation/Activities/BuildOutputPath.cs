@@ -2,11 +2,11 @@ using Elsa.Workflows;
 using Elsa.Workflows.Models;
 using SlideGenerator.Application.Common;
 using SlideGenerator.Domain.Sheet.Entities;
-using SlideGenerator.Domain.Slide.Rules;
 using SlideGenerator.Domain.Sheet.Models;
+using SlideGenerator.Domain.Slide.Rules;
 using SlideGenerator.Domain.Tasks.Rules;
 
-namespace SlideGenerator.Application.Tasks.Activities;
+namespace SlideGenerator.Application.Tasks.Generation.Activities;
 
 /// <summary>
 ///     Builds the final output file path for one worksheet with normalized file name.
@@ -26,22 +26,22 @@ public sealed class BuildOutputPath(IRegistry<IReadOnlyWorkbook> workbookRegistr
     /// <summary>
     ///     Input output root folder.
     /// </summary>
-    public Input<string> SaveFolder { get; set; } = null!;
+    public required Input<string> SaveFolder { get; init; }
 
     /// <summary>
     ///     Input worksheet identifier used to derive output file name.
     /// </summary>
-    public Input<WorksheetIdentifier> Worksheet { get; set; } = null!;
+    public required Input<WorksheetIdentifier> Worksheet { get; init; }
 
     /// <summary>
     ///     Input output extension.
     /// </summary>
-    public Input<PresentationExtension> Extension { get; set; } = null!;
+    public required Input<PresentationExtension> Extension { get; init; }
 
     /// <summary>
     ///     Output normalized full file path.
     /// </summary>
-    public Output<string> OutputPath { get; set; } = null!;
+    public Output<string> OutputPath { get; init; } = null!;
 
     protected override ValueTask ExecuteAsync(ActivityExecutionContext context)
     {

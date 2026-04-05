@@ -5,7 +5,7 @@ using SlideGenerator.Application.Slide.Abstractions;
 using SlideGenerator.Domain.Slide.Entities;
 using SlideGenerator.Domain.Slide.Models;
 
-namespace SlideGenerator.Application.Tasks.Activities;
+namespace SlideGenerator.Application.Tasks.Generation.Activities;
 
 /// <summary>
 ///     Scans one template slide and returns placeholders and image shape identifiers used for specialization.
@@ -26,17 +26,17 @@ public sealed class ScanTemplateContent(
     /// <summary>
     ///     Input target slide descriptor in working presentation.
     /// </summary>
-    public Input<SlideIdentifier> TemplateSlide { get; set; } = null!;
+    public required Input<SlideIdentifier> TemplateSlide { get; init; }
 
     /// <summary>
     ///     Output set of mustache placeholder names found in the template slide.
     /// </summary>
-    public Output<IReadOnlySet<string>> Placeholders { get; set; } = null!;
+    public Output<IReadOnlySet<string>> Placeholders { get; init; } = null!;
 
     /// <summary>
     ///     Output set of image shape IDs found in the template slide.
     /// </summary>
-    public Output<IReadOnlySet<uint>> ImageShapeIds { get; set; } = null!;
+    public Output<IReadOnlySet<uint>> ImageShapeIds { get; init; } = null!;
 
     protected override ValueTask ExecuteAsync(ActivityExecutionContext context)
     {

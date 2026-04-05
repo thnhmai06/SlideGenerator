@@ -5,10 +5,10 @@ using SlideGenerator.Application.System;
 using SlideGenerator.Domain.Sheet.Entities;
 using SlideGenerator.Domain.Sheet.Models;
 using SlideGenerator.Domain.Slide.Entities;
-using SlideGenerator.Domain.Slide.Rules;
 using SlideGenerator.Domain.Slide.Models;
+using SlideGenerator.Domain.Slide.Rules;
 
-namespace SlideGenerator.Application.Tasks.Activities;
+namespace SlideGenerator.Application.Tasks.Generation.Activities;
 
 /// <summary>
 ///     Workflow step that prepares an output presentation from a template and keeps it opened for downstream processing.
@@ -35,17 +35,22 @@ public sealed class CreateWorkingPresentation(
     /// <summary>
     ///     Input: File path and index of the template slide to use.
     /// </summary>
-    public Input<SlideIdentifier> TemplateSlide { get; set; } = null!;
+    public required Input<SlideIdentifier> TemplateSlide { get; init; }
 
     /// <summary>
     ///     Input: Target worksheet that must exist in the source workbook before creating output presentation.
     /// </summary>
-    public Input<WorksheetIdentifier> Worksheet { get; set; } = null!;
+    public required Input<WorksheetIdentifier> Worksheet { get; init; }
 
     /// <summary>
     ///     Input: Full output path for the generated presentation file.
     /// </summary>
-    public Input<string> OutputPath { get; set; } = null!;
+    public required Input<string> OutputPath { get; init; }
+
+    /// <summary>
+    ///     Output: The only template slide kept in the working presentation.
+    /// </summary>
+    public Output<SlideIdentifier> WorkingTemplateSlide { get; init; } = null!;
 
     protected override ValueTask ExecuteAsync(ActivityExecutionContext context)
     {
@@ -81,9 +86,10 @@ public sealed class CreateWorkingPresentation(
             if (index != templateSlideIdentifier.Index)
                 workingPresentation.RemoveSlide(index);
         }
-
         var outputExtensionType = PresentationExtensions.FromFileExtension(Path.GetExtension(outputPath));
         workingPresentation.Save(outputExtensionType);
+        
+        context.Set(WorkingTemplateSlide, new PresentationIdentifier(outputPath).GetSlide(1));
         return ValueTask.CompletedTask;
     }
 }

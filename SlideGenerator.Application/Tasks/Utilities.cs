@@ -1,3 +1,5 @@
+using Elsa.Expressions.Models;
+
 namespace SlideGenerator.Application.Tasks;
 
 /// <summary>
@@ -24,4 +26,6 @@ public static class Utilities
 
         return string.IsNullOrWhiteSpace(normalized) ? defaultValue : normalized;
     }
+    
+    public static MemoryBlockReference GetRef(string name) => new(name);
 }

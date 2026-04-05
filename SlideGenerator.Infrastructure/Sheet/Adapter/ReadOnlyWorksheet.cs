@@ -21,6 +21,16 @@ public class ReadOnlyWorksheet : IReadOnlyWorksheet
             .ToList() ?? [];
     }
 
+    public int GetRowsCount()
+    {
+        var contentRange = ContentRange;
+        if (contentRange == null)
+            return 0;
+
+        // Exclude the header row.
+        return Math.Max(0, contentRange.RowCount() - 1);
+    }
+
     public IReadOnlyDictionary<string, string> GetRowContent(int rowIndex)
     {
         var contentRange = ContentRange;

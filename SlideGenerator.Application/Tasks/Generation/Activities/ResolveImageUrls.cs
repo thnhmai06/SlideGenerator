@@ -7,7 +7,7 @@ using SlideGenerator.Domain.Sheet.Entities;
 using SlideGenerator.Domain.Sheet.Models;
 using SlideGenerator.Domain.Tasks.Models.Image;
 
-namespace SlideGenerator.Application.Tasks.Activities;
+namespace SlideGenerator.Application.Tasks.Generation.Activities;
 
 /// <summary>
 ///     Workflow step that resolves source URLs for image instructions.
@@ -17,18 +17,18 @@ public sealed class ResolveImageUrls(
     IRegistry<IReadOnlyWorkbook> workbookRegistry) : Activity
 {
     /// <summary>Input: Image replacement instructions specialized for the current row and slide.</summary>
-    public Input<IReadOnlyList<SpecializedInstruction>> ImageInstructions { get; set; } = null!;
+    public required Input<IReadOnlyList<SpecializedInstruction>> ImageInstructions { get; init; }
 
     /// <summary>Input: 1-based row index in the target worksheet.</summary>
-    public Input<int> RowIndex { get; set; } = new(1);
+    public required Input<int> RowIndex { get; init; }
 
     /// <summary>Input: Target worksheet identifier used to load row content.</summary>
-    public Input<WorksheetIdentifier> WorksheetInfo { get; set; } = null!;
+    public required Input<WorksheetIdentifier> WorksheetInfo { get; init; }
 
     /// <summary>
     ///     Output resolved URLs keyed by specialized image instruction.
     /// </summary>
-    public Output<IReadOnlyDictionary<SpecializedInstruction, string>> ResolvedImageUrls { get; set; } = null!;
+    public Output<IReadOnlyDictionary<SpecializedInstruction, string>> ResolvedImageUrls { get; init; } = null!;
 
     protected override async ValueTask ExecuteAsync(ActivityExecutionContext context)
     {

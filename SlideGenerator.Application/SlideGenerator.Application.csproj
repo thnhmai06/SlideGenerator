@@ -16,6 +16,7 @@
     <ItemGroup>
         <Folder Include="Cloud\" />
         <Folder Include="Scanning\Models\"/>
+        <Folder Include="Tasks\Generation\" />
     </ItemGroup>
 
     <ItemGroup>

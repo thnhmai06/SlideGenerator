@@ -8,7 +8,7 @@ using SlideGenerator.Framework.Features.Image.Services;
 using SlideGenerator.Ipc.Endpoints;
 using SlideGenerator.Application;
 using SlideGenerator.Application.Common;
-using SlideGenerator.Application.Generating.Services;
+using SlideGenerator.Application.Generation.Services;
 using SlideGenerator.Application.Slide.Abstractions;
 using SlideGenerator.Domain.Configs.Contracts;
 using SlideGenerator.Domain.Configs.Entities;

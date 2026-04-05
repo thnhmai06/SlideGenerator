@@ -1,6 +1,6 @@
 using SlideGenerator.Application.System;
 
-namespace SlideGenerator.Infrastructure.System;
+namespace SlideGenerator.Infrastructure.System.Adapter;
 
 public class FileSystem : IFileSystem
 {

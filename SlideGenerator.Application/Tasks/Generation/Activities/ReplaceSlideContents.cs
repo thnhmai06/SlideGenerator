@@ -5,7 +5,7 @@ using SlideGenerator.Application.Slide.Abstractions;
 using SlideGenerator.Domain.Slide.Entities;
 using SlideGenerator.Domain.Slide.Models;
 
-namespace SlideGenerator.Application.Tasks.Activities;
+namespace SlideGenerator.Application.Tasks.Generation.Activities;
 
 /// <summary>
 ///     Replaces both text and image contents on a target slide in sequence.
@@ -20,27 +20,27 @@ public sealed class ReplaceSlideContents(
     /// <summary>
     ///     Identifier of target slide to replace contents on.
     /// / </summary>
-    public Input<SlideIdentifier> SlideIdentifier { get; set; } = null!;
+    public required Input<SlideIdentifier> SlideIdentifier { get; init; }
 
     /// <summary>
     ///     Replacement values by placeholder key (without braces).
     /// </summary>
-    public Input<IReadOnlyDictionary<string, string>> TextInstructions { get; set; } = null!;
+    public required Input<IReadOnlyDictionary<string, string>> TextInstructions { get; init; }
 
     /// <summary>
     ///     Assignments from shape ID to local image file path.
     /// </summary>
-    public Input<IReadOnlyDictionary<uint, string>> ImageInstructions { get; set; } = null!;
+    public required Input<IReadOnlyDictionary<uint, string>> ImageInstructions { get; init; }
 
     /// <summary>
     ///     Output count of text changes.
     /// </summary>
-    public Output<int> ReplacedTextCount { get; set; } = null!;
+    public Output<int> ReplacedTextCount { get; init; } = null!;
 
     /// <summary>
     ///     Output count of image replacements.
     /// </summary>
-    public Output<int> ReplacedImageCount { get; set; } = null!;
+    public Output<int> ReplacedImageCount { get; init; } = null!;
 
     protected override ValueTask ExecuteAsync(ActivityExecutionContext context)
     {

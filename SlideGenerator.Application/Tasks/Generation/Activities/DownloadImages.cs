@@ -1,38 +1,35 @@
 using System.Collections.Concurrent;
 using Elsa.Workflows;
 using Elsa.Workflows.Models;
-using SlideGenerator.Application.Common;
-using SlideGenerator.Domain.Sheet.Entities;
-using SlideGenerator.Domain.Sheet.Models;
 using SlideGenerator.Domain.Download.Abstractions;
 using SlideGenerator.Domain.Download.Models;
 using SlideGenerator.Domain.Settings.Interfaces;
+using SlideGenerator.Domain.Sheet.Models;
 using SlideGenerator.Domain.Tasks.Models.Image;
 using SlideGenerator.Domain.Tasks.Rules;
 
-namespace SlideGenerator.Application.Tasks.Activities;
+namespace SlideGenerator.Application.Tasks.Generation.Activities;
 
 /// <summary>
 ///     Workflow step that downloads images from already resolved URLs.
 /// </summary>
 public class DownloadImages(
     IDownloadRegistry downloadRegistry,
-    ISettingProvider settingProvider,
-    IRegistry<IReadOnlyWorkbook> workbookRegistry) : Activity
+    ISettingProvider settingProvider) : Activity
 {
     /// <summary>Input: Resolved image URLs keyed by specialized image instruction.</summary>
-    public Input<IReadOnlyDictionary<SpecializedInstruction, string>> ImageUrls { get; set; } = null!;
+    public required Input<IReadOnlyDictionary<SpecializedInstruction, string>> ImageUrls { get; init; }
 
     /// <summary>Input: Target worksheet identifier used to derive workbook/worksheet names for download folder.</summary>
-    public Input<WorksheetIdentifier> Worksheet { get; set; } = null!;
+    public required Input<WorksheetIdentifier> Worksheet { get; init; }
     
     /// <summary>Input: 1-based row index in the target worksheet.</summary>
-    public Input<int> RowIndex { get; set; } = new(0);
+    public required Input<int> RowIndex { get; init; }
     
     /// <summary>
     ///     Output downloaded file paths keyed by specialized image instruction.
     /// </summary>
-    public Output<IReadOnlyDictionary<SpecializedInstruction, string>> ImagePaths { get; set; } = null!;
+    public Output<IReadOnlyDictionary<SpecializedInstruction, string>> ImagePaths { get; init; } = null!;
 
     protected override async ValueTask ExecuteAsync(ActivityExecutionContext context)
     {

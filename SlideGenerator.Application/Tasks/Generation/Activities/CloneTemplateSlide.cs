@@ -4,7 +4,7 @@ using SlideGenerator.Application.Common;
 using SlideGenerator.Domain.Slide.Entities;
 using SlideGenerator.Domain.Slide.Models;
 
-namespace SlideGenerator.Application.Tasks.Activities;
+namespace SlideGenerator.Application.Tasks.Generation.Activities;
 
 /// <summary>
 ///     Clones a source slide inside presentation and inserts it at a target 1-based position.
@@ -19,12 +19,12 @@ public sealed class CloneTemplateSlide(IRegistry<IPresentation> slideRegistry) :
     /// <summary>
     ///    Path to presentation file where slide should be cloned.
     /// </summary>
-    public Input<SlideIdentifier> TemplateSlide { get; set; } = null!;
+    public required Input<SlideIdentifier> TemplateSlide { get; init; }
 
     /// <summary>
     ///     1-based index where cloned slide should be inserted.
     /// </summary>
-    public Input<int> InsertAtIndex { get; set; } = null!;
+    public required Input<int> InsertAtIndex { get; init; }
 
     protected override ValueTask ExecuteAsync(ActivityExecutionContext context)
     {

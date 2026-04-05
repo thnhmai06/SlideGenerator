@@ -7,7 +7,7 @@ using SlideGenerator.Domain.Slide.Models;
 using TextGeneralInstruction = SlideGenerator.Domain.Tasks.Models.Text.GeneralInstruction;
 using ImageGeneralInstruction = SlideGenerator.Domain.Tasks.Models.Image.GeneralInstruction;
 
-namespace SlideGenerator.Application.Tasks.Activities;
+namespace SlideGenerator.Application.Tasks.Generation.Activities;
 
 using SpecializedImageInstruction = Domain.Tasks.Models.Image.SpecializedInstruction;
 using SpecializedTextInstruction = Domain.Tasks.Models.Text.SpecializedInstruction;
@@ -33,42 +33,42 @@ public sealed class SpecializeInstructions(IRegistry<IReadOnlyWorkbook> workbook
     /// <summary>
     ///     Input target worksheet identifier.
     /// </summary>
-    public Input<WorksheetIdentifier> Worksheet { get; set; } = null!;
+    public required Input<WorksheetIdentifier> Worksheet { get; init; }
 
     /// <summary>
     ///     Input target template slide identifier.
     /// </summary>
-    public Input<SlideIdentifier> TemplateSlide { get; set; } = null!;
+    public required Input<SlideIdentifier> TemplateSlide { get; init; }
 
     /// <summary>
     ///     Input global text instructions.
     /// </summary>
-    public Input<IReadOnlyList<TextGeneralInstruction>> RawTextInstructions { get; set; } = null!;
+    public required Input<IReadOnlyList<TextGeneralInstruction>> RawTextInstructions { get; init; }
 
     /// <summary>
     ///     Input global image instructions.
     /// </summary>
-    public Input<IReadOnlyList<ImageGeneralInstruction>> RawImageInstructions { get; set; } = null!;
+    public required Input<IReadOnlyList<ImageGeneralInstruction>> RawImageInstructions { get; init; }
 
     /// <summary>
     ///     Input placeholders scanned from template slide.
     /// </summary>
-    public Input<IReadOnlySet<string>> TemplatePlaceholders { get; set; } = null!;
+    public required Input<IReadOnlySet<string>> TemplatePlaceholders { get; init; }
 
     /// <summary>
     ///     Input image shape IDs scanned from template slide.
     /// </summary>
-    public Input<IReadOnlySet<uint>> TemplateImageShapeIds { get; set; } = null!;
+    public required Input<IReadOnlySet<uint>> TemplateImageShapeIds { get; init; }
 
     /// <summary>
     ///     Output worksheet-specific text instructions.
     /// </summary>
-    public Output<IReadOnlyList<SpecializedTextInstruction>> TextInstructions { get; set; } = null!;
+    public Output<IReadOnlyList<SpecializedTextInstruction>> TextInstructions { get; init; } = null!;
 
     /// <summary>
     ///     Output worksheet-specific image instructions.
     /// </summary>
-    public Output<IReadOnlyList<SpecializedImageInstruction>> ImageInstructions { get; set; } = null!;
+    public Output<IReadOnlyList<SpecializedImageInstruction>> ImageInstructions { get; init; } = null!;
 
     protected override ValueTask ExecuteAsync(ActivityExecutionContext context)
     {

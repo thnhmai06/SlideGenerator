@@ -4,7 +4,7 @@ using SlideGenerator.Application.Common;
 using SlideGenerator.Domain.Slide.Entities;
 using SlideGenerator.Domain.Slide.Models;
 
-namespace SlideGenerator.Application.Tasks.Activities;
+namespace SlideGenerator.Application.Tasks.Generation.Activities;
 
 /// <summary>
 ///     Removes a slide from presentation by 1-based index.
@@ -19,12 +19,12 @@ public sealed class RemoveWorkingTemplateSlide(IRegistry<IPresentation> slideReg
     /// <summary>
     ///    Input working template slide identifier.
     /// </summary>
-    public Input<SlideIdentifier> WorkingTemplateSlide { get; set; } = null!;
+    public required Input<SlideIdentifier> WorkingTemplateSlide { get; init; }
 
     /// <summary>
     ///     Output whether a slide was removed.
     /// </summary>
-    public Output<bool> Removed { get; set; } = null!;
+    public Output<bool> Removed { get; init; } = null!;
 
     protected override ValueTask ExecuteAsync(ActivityExecutionContext context)
     {
