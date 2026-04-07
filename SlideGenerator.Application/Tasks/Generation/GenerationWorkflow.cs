@@ -11,18 +11,19 @@ using SlideGenerator.Domain.Download.Abstractions;
 using SlideGenerator.Domain.Settings.Interfaces;
 using SlideGenerator.Domain.Sheet.Entities;
 using SlideGenerator.Domain.Sheet.Models;
-using SlideGenerator.Domain.Slide.Entities;
-using SlideGenerator.Domain.Slide.Models;
-using SlideGenerator.Domain.Tasks.Models;
-using TextSpecializedInstruction = SlideGenerator.Domain.Tasks.Models.Text.SpecializedInstruction;
-using ImageSpecializedInstruction = SlideGenerator.Domain.Tasks.Models.Image.SpecializedInstruction;
+using SlideGenerator.Domain.Slide.Entities.Presentation;
+using SlideGenerator.Domain.Slide.Models.Identifiers;
+using SlideGenerator.Domain.Tasks.Models.Generation;
+using TextSpecializedInstruction = SlideGenerator.Domain.Tasks.Models.Generation.Text.SpecializedInstruction;
+using ImageSpecializedInstruction = SlideGenerator.Domain.Tasks.Models.Generation.Image.SpecializedInstruction;
 
 namespace SlideGenerator.Application.Tasks.Generation;
 
 public sealed class GenerationWorkflow(
     IRegistry<IReadOnlyWorkbook> workbookRegistry,
     IRegistry<IPresentation> slideRegistry,
-    ISlideContentOperator slideContentOperator,
+    ITextReplacer textReplacer,
+    IEnumerable<IImageReplacer> imageReplacers,
     IFileSystem fileSystem,
     ICloudResolver cloudResolver,
     IDownloadRegistry downloadRegistry,
@@ -83,7 +84,7 @@ public sealed class GenerationWorkflow(
                                 OutputPath = new(Utilities.GetRef(outputPathRefKey)),
                                 WorkingTemplateSlide = new(Utilities.GetRef(workingTemplateSlideRefKey))
                             },
-                            new ScanTemplateContent(slideRegistry, slideContentOperator)
+                            new ScanTemplateContent(slideRegistry, textReplacer)
                             {
                                 TemplateSlide = new(Utilities.GetRef(workingTemplateSlideRefKey)),
                                 Placeholders = new(Utilities.GetRef(templatePlaceholdersRefKey)),
@@ -127,14 +128,13 @@ public sealed class GenerationWorkflow(
                                 Items = new(context =>
                                 {
                                     var worksheet = context.GetVariable<WorksheetIdentifier>("CurrentValue")!;
-                                    var workbook = workbookRegistry.GetOrOpen(worksheet.Workbook.FilePath,
-                                        isEditable: false);
+                                    var workbook = workbookRegistry.GetOrOpen(worksheet.Workbook.FilePath, true);
 
                                     if (!workbook.TryGetWorksheet(worksheet.Name, out var readOnlyWorksheet))
                                         throw new InvalidOperationException(
                                             $"Worksheet '{worksheet.Name}' does not exist in workbook.");
 
-                                    var rowCount = readOnlyWorksheet.GetRowsCount();
+                                    var rowCount = readOnlyWorksheet.RowsCount;
                                     return Enumerable.Range(1, rowCount).ToList();
                                 }),
                                 CurrentValue = new(Utilities.GetRef(currentRowIndexRefKey)),
@@ -153,7 +153,7 @@ public sealed class GenerationWorkflow(
                                                 return WorkingTemplateSlideIndex + rowIndex;
                                             })
                                         },
-                                        new ReplaceSlideContents(slideRegistry, slideContentOperator)
+                                        new ReplaceSlideContents(slideRegistry, textReplacer, imageReplacers)
                                         {
                                             SlideIdentifier = new(context =>
                                             {
@@ -171,8 +171,7 @@ public sealed class GenerationWorkflow(
                                                     context.GetVariable<WorksheetIdentifier>("CurrentValue")!;
                                                 var rowIndex =
                                                     context.Get<int>(Utilities.GetRef(currentRowIndexRefKey));
-                                                var workbook = workbookRegistry.GetOrOpen(worksheet.Workbook.FilePath,
-                                                    isEditable: false);
+                                                var workbook = workbookRegistry.GetOrOpen(worksheet.Workbook.FilePath, true);
 
                                                 if (!workbook.TryGetWorksheet(worksheet.Name,
                                                         out var readOnlyWorksheet))
@@ -188,7 +187,7 @@ public sealed class GenerationWorkflow(
                                                     .GroupBy(x => x.Placeholder, StringComparer.Ordinal)
                                                     .ToDictionary(
                                                         x => x.Key,
-                                                        x => rowContent.TryGetValue(x.First().Source.ColumnName,
+                                                        x => rowContent.TryGetValue(x.First().Source.Name,
                                                             out var value)
                                                             ? value
                                                             : string.Empty,

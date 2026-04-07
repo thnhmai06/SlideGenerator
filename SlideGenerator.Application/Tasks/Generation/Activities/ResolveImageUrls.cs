@@ -5,7 +5,7 @@ using SlideGenerator.Application.Common;
 using SlideGenerator.Domain.Cloud.Abstractions;
 using SlideGenerator.Domain.Sheet.Entities;
 using SlideGenerator.Domain.Sheet.Models;
-using SlideGenerator.Domain.Tasks.Models.Image;
+using SlideGenerator.Domain.Tasks.Models.Generation.Image;
 
 namespace SlideGenerator.Application.Tasks.Generation.Activities;
 
@@ -38,7 +38,7 @@ public sealed class ResolveImageUrls(
         if (worksheetInfo is null || rowIndex <= 0)
             throw new ArgumentException("Worksheet identifier and row index must be valid.");
 
-        var workbook = workbookRegistry.GetOrOpen(worksheetInfo.Workbook.FilePath, isEditable: false);
+        var workbook = workbookRegistry.GetOrOpen(worksheetInfo.Workbook.FilePath, true);
         var rowContent = !workbook.TryGetWorksheet(worksheetInfo.Name, out var worksheet)
             ? throw new InvalidOperationException($"Worksheet '{worksheetInfo.Name}' does not exist in workbook.")
             : new Dictionary<string, string>(worksheet.GetRowContent(rowIndex), StringComparer.Ordinal);
@@ -49,7 +49,7 @@ public sealed class ResolveImageUrls(
 
         foreach (var imageInstruction in imageInstructions)
         {
-            if (!rowContent.TryGetValue(imageInstruction.Source.ColumnName, out var sourceValue) ||
+            if (!rowContent.TryGetValue(imageInstruction.Source.Name, out var sourceValue) ||
                 string.IsNullOrWhiteSpace(sourceValue))
                 continue;
             if (!Uri.TryCreate(sourceValue, UriKind.Absolute, out var sourceUri))

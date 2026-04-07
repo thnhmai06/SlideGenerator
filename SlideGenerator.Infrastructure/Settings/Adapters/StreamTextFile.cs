@@ -52,7 +52,7 @@ public sealed class StreamTextFile : ITextFile
         {
             ThrowIfDisposed();
             if (!IsEditable)
-                throw new InvalidOperationException("Text file is opened in read-only mode.");
+                throw new InvalidOperationException("HasTextFrame file is opened in read-only mode.");
 
             _stream.Seek(0, SeekOrigin.Begin);
             _stream.SetLength(0);

@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using ClosedXML.Excel;
 using SlideGenerator.Domain.Sheet.Entities;
@@ -9,50 +10,49 @@ public class ReadOnlyWorkbook : IReadOnlyWorkbook
 {
     private readonly Lazy<IXLWorkbook> _workbookLazy;
     private FileStream? _fileStream;
-    private readonly WorkbookIdentifier _identifier;
+    private readonly ConcurrentDictionary<IXLWorksheet, ReadOnlyWorksheet> _worksheetCache = new();
+    private IXLWorkbook Core => _workbookLazy.Value;
 
     public ReadOnlyWorkbook(string filePath)
     {
-        _identifier = new(filePath);
+        Identifier = new(filePath);
         _workbookLazy = new Lazy<IXLWorkbook>(() =>
         {
             _fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
             return new XLWorkbook(_fileStream);
         });
+
+        Worksheets = EnumerateWorksheets().ToList();
     }
 
-    private IXLWorkbook Core => _workbookLazy.Value;
-
-    // public string? Name => string.IsNullOrWhiteSpace(Core.Properties.Title)
-    //     ? Path.GetFileNameWithoutExtension(_filePath)
-    //     : Core.Properties.Title;
-    public string Name => _identifier.Name;
+    public WorkbookIdentifier Identifier { get; }
+    public IReadOnlyList<IReadOnlyWorksheet> Worksheets { get; }
 
     public bool TryGetWorksheet(string name, [MaybeNullWhen(false)] out IReadOnlyWorksheet readOnlyWorksheet)
     {
-        if (!Core.TryGetWorksheet(name, out var coreWorksheet))
+        if (!Core.TryGetWorksheet(name, out var core))
         {
             readOnlyWorksheet = null;
             return false;
         }
 
-        readOnlyWorksheet = new ReadOnlyWorksheet(coreWorksheet);
+        readOnlyWorksheet = _worksheetCache.GetOrAdd(
+            core,
+            static (core, currentThis) => new ReadOnlyWorksheet(currentThis, core),
+            this
+        );
         return true;
     }
 
-    public IReadOnlyDictionary<string, int> SummarySheets()
+    public IEnumerable<IReadOnlyWorksheet> EnumerateWorksheets()
     {
-        var result = new Dictionary<string, int>();
-        foreach (var worksheet in Core.Worksheets)
-        {
-            var contentRange = worksheet.RangeUsed(XLCellsUsedOptions.Contents);
-            var name = worksheet.Name;
-            var count = Math.Max(contentRange?.RowCount() - 1 ?? 0, 0);
-            result[name] = count;
-        }
-
-        return result;
+        return Core.Worksheets.Select(core => _worksheetCache.GetOrAdd(
+            core,
+            static (core, currentThis) => new ReadOnlyWorksheet(currentThis, core),
+            this
+        ));
     }
+
 
     public void Dispose()
     {

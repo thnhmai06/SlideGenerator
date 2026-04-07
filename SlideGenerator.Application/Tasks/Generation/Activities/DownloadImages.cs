@@ -5,7 +5,7 @@ using SlideGenerator.Domain.Download.Abstractions;
 using SlideGenerator.Domain.Download.Models;
 using SlideGenerator.Domain.Settings.Interfaces;
 using SlideGenerator.Domain.Sheet.Models;
-using SlideGenerator.Domain.Tasks.Models.Image;
+using SlideGenerator.Domain.Tasks.Models.Generation.Image;
 using SlideGenerator.Domain.Tasks.Rules;
 
 namespace SlideGenerator.Application.Tasks.Generation.Activities;
@@ -40,8 +40,8 @@ public class DownloadImages(
             throw new ArgumentException("Worksheet information and row index must be provided and valid.");
 
         var downloadFolder = settingProvider.Current.Download.DownloadFolder;
-        var workbookName = Utilities.NormalizeFileName(worksheetInfo.Workbook.Name, NamingRules.DEFAULT_WORKBOOK_NAME);
-        var worksheetName = Utilities.NormalizeFileName(worksheetInfo.Name, NamingRules.DEFAULT_WORKSHEET_NAME);
+        var workbookName = Utilities.NormalizeFileName(worksheetInfo.Workbook.Name, NamingRules.DefaultWorkbookName);
+        var worksheetName = Utilities.NormalizeFileName(worksheetInfo.Name, NamingRules.DefaultWorksheetName);
 
         var downloadRootFolder = Path.Combine(downloadFolder, workbookName, worksheetName);
         var resolvedImageUrls = context.Get(ImageUrls) ?? new Dictionary<SpecializedInstruction, string>();
@@ -52,7 +52,7 @@ public class DownloadImages(
             if (string.IsNullOrWhiteSpace(downloadUrl))
                 continue;
 
-            var columnName = imageInstruction.Source.ColumnName;
+            var columnName = imageInstruction.Source.Name;
             var itemDownloadFolder = Path.Combine(downloadRootFolder, columnName);
             var downloadRequest = new DownloadRequest(
                 downloadUrl,

@@ -4,8 +4,8 @@ using SlideGenerator.Application.Common;
 using SlideGenerator.Application.System;
 using SlideGenerator.Domain.Sheet.Entities;
 using SlideGenerator.Domain.Sheet.Models;
-using SlideGenerator.Domain.Slide.Entities;
-using SlideGenerator.Domain.Slide.Models;
+using SlideGenerator.Domain.Slide.Entities.Presentation;
+using SlideGenerator.Domain.Slide.Models.Identifiers;
 using SlideGenerator.Domain.Slide.Rules;
 
 namespace SlideGenerator.Application.Tasks.Generation.Activities;
@@ -68,7 +68,7 @@ public sealed class CreateWorkingPresentation(
         if (!File.Exists(workbookPath))
             throw new FileNotFoundException("Workbook file not found.", workbookPath);
 
-        var workbook = workbookRegistry.GetOrOpen(workbookPath, isEditable: false);
+        var workbook = workbookRegistry.GetOrOpen(workbookPath, true);
         if (!workbook.TryGetWorksheet(worksheet.Name, out _))
             throw new InvalidOperationException(
                 $"Worksheet '{worksheet.Name}' does not exist in workbook '{workbook.Name}'.");
@@ -79,7 +79,7 @@ public sealed class CreateWorkingPresentation(
         
         fileSystem.CopyFile(templatePath, outputPath, overwrite: true);
 
-        var workingPresentation = slideRegistry.GetOrOpen(outputPath, isEditable: true);
+        var workingPresentation = slideRegistry.GetOrOpen(outputPath, true);
         var totalSlides = workingPresentation.EnumerateSlides().Count();
         for (var index = totalSlides; index >= 1; index--)
         {

@@ -18,7 +18,7 @@ public sealed class SettingManager(IRegistry<ITextFile> textFileRegistry, ISeria
     {
         try
         {
-            var textFile = textFileRegistry.GetOrOpen(FilePath);
+            var textFile = textFileRegistry.GetOrOpen(FilePath, false);
             var source = textFile.Read();
             var loaded = serializer.Deserialize<Setting>(source);
 
@@ -29,6 +29,10 @@ public sealed class SettingManager(IRegistry<ITextFile> textFileRegistry, ISeria
         {
             // TODO: log the error
         }
+        finally
+        {
+            textFileRegistry.Close(FilePath);
+        }
 
         return false;
     }
@@ -37,7 +41,7 @@ public sealed class SettingManager(IRegistry<ITextFile> textFileRegistry, ISeria
     {
         try
         {
-            var textFile = textFileRegistry.GetOrOpen(FilePath);
+            var textFile = textFileRegistry.GetOrOpen(FilePath, true);
             var content = serializer.Serialize(Current);
             textFile.Write(content);
             return true;
@@ -45,6 +49,10 @@ public sealed class SettingManager(IRegistry<ITextFile> textFileRegistry, ISeria
         catch
         {
             return false;
+        }
+        finally
+        {
+            textFileRegistry.Close(FilePath);
         }
     }
 

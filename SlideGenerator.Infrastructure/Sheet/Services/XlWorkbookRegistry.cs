@@ -14,7 +14,7 @@ public sealed class XlWorkbookRegistry : IRegistry<IReadOnlyWorkbook>, IDisposab
     private readonly ConcurrentDictionary<string, IReadOnlyWorkbook> _workbooks =
         new(StringComparer.OrdinalIgnoreCase);
 
-    public IReadOnlyWorkbook GetOrOpen(string filePath, bool isEditable = true)
+    public IReadOnlyWorkbook GetOrOpen(string filePath, bool isEditable)
     {
         var normalizedPath = Path.GetFullPath(filePath);
         return _workbooks.GetOrAdd(normalizedPath, path => new ReadOnlyWorkbook(path));

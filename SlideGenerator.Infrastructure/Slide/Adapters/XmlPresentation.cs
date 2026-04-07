@@ -1,27 +1,27 @@
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Presentation;
 using LinqKit;
-using SlideGenerator.Domain.Slide.Entities;
+using SlideGenerator.Domain.Slide.Entities.Presentation;
+using SlideGenerator.Domain.Slide.Entities.Slide;
+using SlideGenerator.Domain.Slide.Models.Identifiers;
 using PresentationExtension = SlideGenerator.Domain.Slide.Rules.PresentationExtension;
 
 namespace SlideGenerator.Infrastructure.Slide.Adapters;
 
 public class XmlPresentation(string filePath, bool isEditable = true) : IPresentation, IDisposable
 {
-    public string FilePath { get; } = filePath;
+    public PresentationIdentifier Identifier { get; } = new(filePath);
 
-    public bool IsEditable { get; } = isEditable;
-
-    internal readonly Lazy<PresentationDocument> Document = new(() =>
+    private readonly Lazy<PresentationDocument> _core = new(() =>
     {
-        var docFs = new FileStream(filePath, FileMode.Open,
+        var docFs = new FileStream(filePath, FileMode.Open, 
             isEditable ? FileAccess.ReadWrite : FileAccess.Read, FileShare.ReadWrite);
-        return PresentationDocument.Open(docFs, true);
+        return PresentationDocument.Open(docFs, isEditable);
     }, LazyThreadSafetyMode.ExecutionAndPublication);
 
     public IEnumerable<ISlide> EnumerateSlides()
     {
-        var presentationPart = Document.Value.PresentationPart
+        var presentationPart = _core.Value.PresentationPart
                                ?? throw new InvalidOperationException(
                                    "Invalid presentation: missing presentation part.");
         var presentation = presentationPart.Presentation ??
@@ -36,10 +36,9 @@ public class XmlPresentation(string filePath, bool isEditable = true) : IPresent
                 continue;
 
             var slidePart = (SlidePart)presentationPart.GetPartById(relId);
-            yield return new XmlSlide(slidePart)
+            yield return new XmlSlide(this, slidePart)
             {
                 Id = slideId.Id.Value,
-                Parent = this,
                 Index = index
             };
         }
@@ -53,15 +52,15 @@ public class XmlPresentation(string filePath, bool isEditable = true) : IPresent
                           ?? throw new ArgumentException("Invalid source slide position.", nameof(from));
 
         var insertAt = to - 1; // convert to 0-based index for easier handling
-        var presentationPart = Document.Value.PresentationPart ?? throw new InvalidOperationException(
+        var presentationPart = _core.Value.PresentationPart ?? throw new InvalidOperationException(
             "Invalid presentation: missing presentation part.");
 
         var oldSlide = sourceSlide.Core.Slide ??
                        throw new InvalidOperationException("Invalid slide: missing slide content.");
         var newSlide = presentationPart.AddNewPart<SlidePart>();
         newSlide.Slide = (DocumentFormat.OpenXml.Presentation.Slide)(oldSlide.CloneNode(true)
-                                                                      ?? throw new InvalidOperationException(
-                                                                          "Failed to clone slide content."));
+                                                                     ?? throw new InvalidOperationException(
+                                                                         "Failed to clone slide content."));
         var ridMap = new Dictionary<string, string>(StringComparer.Ordinal);
 
         // reuse OpenXmlPart (image/layout/chart/...) but re-create relationships (new rId)
@@ -85,7 +84,7 @@ public class XmlPresentation(string filePath, bool isEditable = true) : IPresent
         var unsupportedDataRelIds = new HashSet<string>(StringComparer.Ordinal);
         foreach (var dpr in sourceSlide.Core.DataPartReferenceRelationships)
         {
-            var oldRid = dpr.Id; // rId in slide xml
+            var oldRid = dpr.Id; // rId in slide XML
             if (string.IsNullOrWhiteSpace(oldRid))
                 continue;
 
@@ -176,22 +175,21 @@ public class XmlPresentation(string filePath, bool isEditable = true) : IPresent
 
         Save();
 
-        return new XmlSlide(newSlide)
+        return new XmlSlide(this, newSlide)
         {
-            Parent = this,
             Id = nextId,
             Index = index
         };
     }
 
-    public bool RemoveSlide(int position)
+    public bool RemoveSlide(int index)
     {
-        if (position <= 0)
+        if (index <= 0)
             return false;
 
-        var slideIdList = Document.Value.PresentationPart?.Presentation?.SlideIdList;
+        var slideIdList = _core.Value.PresentationPart?.Presentation?.SlideIdList;
 
-        var target = slideIdList?.Elements<SlideId>().ElementAtOrDefault(position - 1);
+        var target = slideIdList?.Elements<SlideId>().ElementAtOrDefault(index - 1);
         if (target == null)
             return false;
 
@@ -202,16 +200,16 @@ public class XmlPresentation(string filePath, bool isEditable = true) : IPresent
 
     public void Save(PresentationExtension? extension = null)
     {
-        if (!Document.IsValueCreated) return;
+        if (!_core.IsValueCreated) return;
         if (extension is not null)
-            Document.Value.ChangeDocumentType(extension.ToXmlDocType());
-        Document.Value.Save();
+            _core.Value.ChangeDocumentType(extension.ToXmlDocType());
+        _core.Value.Save();
     }
 
     public void Dispose()
     {
-        if (Document.IsValueCreated)
-            Document.Value.Dispose();
+        if (_core.IsValueCreated)
+            _core.Value.Dispose();
     }
 
     private static void RemapRelIds(DocumentFormat.OpenXml.OpenXmlElement root, Dictionary<string, string> ridMap)
@@ -235,7 +233,8 @@ public class XmlPresentation(string filePath, bool isEditable = true) : IPresent
                 if (ridMap.TryGetValue(a.Value, out var newRid) &&
                     !string.Equals(a.Value, newRid, StringComparison.Ordinal))
                 {
-                    attrs[i] = new DocumentFormat.OpenXml.OpenXmlAttribute(a.Prefix, a.LocalName, a.NamespaceUri, newRid);
+                    attrs[i] = new DocumentFormat.OpenXml.OpenXmlAttribute(a.Prefix, a.LocalName, a.NamespaceUri,
+                        newRid);
                     changed = true;
                 }
             }
@@ -245,7 +244,8 @@ public class XmlPresentation(string filePath, bool isEditable = true) : IPresent
         }
     }
 
-    private static void RemoveElementsReferencingRelIds(DocumentFormat.OpenXml.OpenXmlElement root, HashSet<string> relIds)
+    private static void RemoveElementsReferencingRelIds(DocumentFormat.OpenXml.OpenXmlElement root,
+        HashSet<string> relIds)
     {
         // r:id, r:embed, r:link are in namespace relationships
         const string relNs = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";

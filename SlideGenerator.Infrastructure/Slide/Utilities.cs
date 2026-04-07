@@ -1,6 +1,6 @@
+using System.Xml;
 using DocumentFormat.OpenXml;
 using SlideGenerator.Domain.Slide.Rules;
-using Spire.Presentation;
 
 namespace SlideGenerator.Infrastructure.Slide;
 
@@ -10,18 +10,6 @@ public static class Utilities
     
     extension(PresentationExtension? extension)
     {
-        public FileFormat ToSpireDocType()
-        {
-            return extension switch
-            {
-                null => FileFormat.Auto,
-                PresentationExtension.Pptx => FileFormat.Pptx2019,
-                PresentationExtension.Ppsx => FileFormat.Ppsx2019,
-                PresentationExtension.Potx => FileFormat.Potx,
-                _ => throw new ArgumentOutOfRangeException(nameof(extension), extension, null)
-            };
-        }
-
         public PresentationDocumentType ToXmlDocType()
         {
             return extension switch
@@ -35,4 +23,21 @@ public static class Utilities
         }
     }
 
+    public static Dictionary<string, string> SanitizeXmlValues(IReadOnlyDictionary<string, string> replacements)
+    {
+        return replacements.ToDictionary(kvp => kvp.Key, kvp => SanitizeXmlValue(kvp.Value));
+    }
+
+    public static string SanitizeXmlValue(string value)
+    {
+        if (string.IsNullOrEmpty(value) || value.All(XmlConvert.IsXmlChar))
+            return value;
+
+        var buffer = new char[value.Length];
+        var count = 0;
+        foreach (var ch in value.Where(XmlConvert.IsXmlChar))
+            buffer[count++] = ch;
+
+        return new string(buffer, 0, count);
+    }
 }

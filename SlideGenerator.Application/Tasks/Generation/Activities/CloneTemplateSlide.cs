@@ -1,8 +1,8 @@
 using Elsa.Workflows;
 using Elsa.Workflows.Models;
 using SlideGenerator.Application.Common;
-using SlideGenerator.Domain.Slide.Entities;
-using SlideGenerator.Domain.Slide.Models;
+using SlideGenerator.Domain.Slide.Entities.Presentation;
+using SlideGenerator.Domain.Slide.Models.Identifiers;
 
 namespace SlideGenerator.Application.Tasks.Generation.Activities;
 
@@ -33,7 +33,7 @@ public sealed class CloneTemplateSlide(IRegistry<IPresentation> slideRegistry) :
         if (templateSlideIdentifier is null || insertAtIndex < 1)
             throw new InvalidOperationException("template slide identifier and insert index must be valid.");
 
-        var presentation = slideRegistry.GetOrOpen(templateSlideIdentifier.Presentation.FilePath, isEditable: true);
+        var presentation = slideRegistry.GetOrOpen(templateSlideIdentifier.Presentation.FilePath, true);
         if (presentation.EnumerateSlides().ElementAtOrDefault(templateSlideIdentifier.Index - 1) == null)
             throw new InvalidOperationException(
                 $"Cannot clone slide {templateSlideIdentifier.Index}: source slide does not exist.");

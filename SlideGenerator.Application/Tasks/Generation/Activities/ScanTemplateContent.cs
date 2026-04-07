@@ -2,8 +2,8 @@ using Elsa.Workflows;
 using Elsa.Workflows.Models;
 using SlideGenerator.Application.Common;
 using SlideGenerator.Application.Slide.Abstractions;
-using SlideGenerator.Domain.Slide.Entities;
-using SlideGenerator.Domain.Slide.Models;
+using SlideGenerator.Domain.Slide.Entities.Presentation;
+using SlideGenerator.Domain.Slide.Models.Identifiers;
 
 namespace SlideGenerator.Application.Tasks.Generation.Activities;
 
@@ -21,7 +21,7 @@ namespace SlideGenerator.Application.Tasks.Generation.Activities;
 /// </remarks>
 public sealed class ScanTemplateContent(
     IRegistry<IPresentation> slideRegistry,
-    ISlideContentOperator slideContentOperator) : Activity
+    ITextReplacer textReplacer) : Activity
 {
     /// <summary>
     ///     Input target slide descriptor in working presentation.
@@ -44,13 +44,20 @@ public sealed class ScanTemplateContent(
         if (slideIdentifier is null)
             throw new ArgumentException("Template slide must be provided.");
 
-        var presentation = slideRegistry.GetOrOpen(slideIdentifier.Presentation.FilePath, isEditable: true);
+        var presentation = slideRegistry.GetOrOpen(slideIdentifier.Presentation.FilePath, true);
         var targetSlide = presentation.EnumerateSlides().ElementAtOrDefault(slideIdentifier.Index - 1);
         if (targetSlide == null)
             throw new InvalidOperationException(
                 $"Cannot scan template content: slide {slideIdentifier.Index} does not exist.");
 
-        var (placeholders, imageShapeIds) = slideContentOperator.ScanTemplateContent(targetSlide);
+        var shapes = targetSlide.DescendShapes().ToList();
+        var placeholders = shapes
+            .SelectMany(textReplacer.Scan);
+        var imageShapeIds = shapes
+            .Where(shape => shape.IsPicture || shape.HasBlipFill)
+            .Select(shape => shape.Id)
+            .ToHashSet();
+
         context.Set(Placeholders, placeholders);
         context.Set(ImageShapeIds, imageShapeIds);
         return ValueTask.CompletedTask;

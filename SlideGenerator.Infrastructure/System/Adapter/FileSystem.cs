@@ -6,6 +6,6 @@ public class FileSystem : IFileSystem
 {
     public void CopyFile(string sourcePath, string destinationPath, bool overwrite = true)
     {
-        File.Copy(sourcePath, destinationPath, overwrite: true);
+        File.Copy(sourcePath, destinationPath, overwrite);
     }
 }

@@ -1,8 +1,8 @@
+using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
-using DocumentFormat.OpenXml.Presentation;
-using SlideGenerator.Domain.Slide.Entities;
-using Picture = DocumentFormat.OpenXml.Presentation.Picture;
-using Shape = DocumentFormat.OpenXml.Presentation.Shape;
+using SlideGenerator.Domain.Slide.Entities.Presentation;
+using SlideGenerator.Domain.Slide.Entities.Shape;
+using SlideGenerator.Domain.Slide.Entities.Slide;
 
 namespace SlideGenerator.Infrastructure.Slide.Adapters;
 
@@ -10,27 +10,26 @@ public class XmlSlide : ISlide
 {
     internal readonly SlidePart Core;
 
-    internal XmlSlide(SlidePart core)
+    internal XmlSlide(XmlPresentation presentation, SlidePart core)
     {
+        _xmlPresentation = presentation;
         Core = core;
     }
-    
-    public required XmlPresentation Parent { get; init; }
+
+    private readonly XmlPresentation _xmlPresentation;
+
+    public IPresentation Presentation => _xmlPresentation;
     public required int Index { get; init; }
     public required uint Id { get; init; }
+    public string? Name => Core.Slide?.CommonSlideData?.Name?.ToString();
 
-    public IEnumerable<IImageShape> EnumerateImageShapes()
+    public IEnumerable<IShape> DescendShapes()
     {
-        var slide = Core.Slide;
-        if (slide == null) yield break;
+        var shapeTree = Core.Slide?.CommonSlideData?.ShapeTree;
+        if (shapeTree == null)
+            return [];
 
-        var pictures = slide.Descendants<Picture>();
-        var shapes = slide.Descendants<Shape>()
-            .Where(s => s.ShapeProperties?.GetFirstChild<BlipFill>()?.Blip?.Embed != null);
-
-        foreach (var pic in pictures)
-            yield return new XmlImageShape(pic) { Parent = this };
-        foreach (var shape in shapes)
-            yield return new XmlImageShape(shape) { Parent = this };
+        return shapeTree.Descendants<OpenXmlCompositeElement>()
+            .Select(e => new XmlShape(this, e));
     }
 }

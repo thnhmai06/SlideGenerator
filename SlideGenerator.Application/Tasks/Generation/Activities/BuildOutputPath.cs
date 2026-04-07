@@ -52,8 +52,8 @@ public sealed class BuildOutputPath(IRegistry<IReadOnlyWorkbook> workbookRegistr
         if (string.IsNullOrWhiteSpace(saveFolder) || worksheet is null)
             throw new InvalidOperationException("Save folder and worksheet must be provided.");
 
-        var workbookName = Utilities.NormalizeFileName(worksheet.Workbook.Name, NamingRules.DEFAULT_WORKBOOK_NAME);
-        var worksheetName = Utilities.NormalizeFileName(worksheet.Name, NamingRules.DEFAULT_WORKSHEET_NAME);
+        var workbookName = Utilities.NormalizeFileName(worksheet.Workbook.Name, NamingRules.DefaultWorkbookName);
+        var worksheetName = Utilities.NormalizeFileName(worksheet.Name, NamingRules.DefaultWorksheetName);
 
         var outputPath = Path.Combine(saveFolder, workbookName, worksheetName + extension);
         context.Set(OutputPath, outputPath);

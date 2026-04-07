@@ -1,4 +1,4 @@
-using SlideGenerator.Domain.Slide.Models;
+using SlideGenerator.Domain.Slide.Models.Previews;
 
 namespace SlideGenerator.Domain.Slide.Interfaces;
 

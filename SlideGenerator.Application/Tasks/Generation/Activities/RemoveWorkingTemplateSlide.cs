@@ -1,8 +1,8 @@
 using Elsa.Workflows;
 using Elsa.Workflows.Models;
 using SlideGenerator.Application.Common;
-using SlideGenerator.Domain.Slide.Entities;
-using SlideGenerator.Domain.Slide.Models;
+using SlideGenerator.Domain.Slide.Entities.Presentation;
+using SlideGenerator.Domain.Slide.Models.Identifiers;
 
 namespace SlideGenerator.Application.Tasks.Generation.Activities;
 
@@ -32,7 +32,7 @@ public sealed class RemoveWorkingTemplateSlide(IRegistry<IPresentation> slideReg
         if (slideIdentifier is null)
             throw new InvalidOperationException("Template slide identifier is not provided.");
 
-        var presentation = slideRegistry.GetOrOpen(slideIdentifier.Presentation.FilePath, isEditable: true);
+        var presentation = slideRegistry.GetOrOpen(slideIdentifier.Presentation.FilePath, true);
         context.Set(Removed, presentation.RemoveSlide(slideIdentifier.Index));
         return ValueTask.CompletedTask;
     }

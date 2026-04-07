@@ -3,8 +3,8 @@ using Elsa.Workflows.Models;
 using SlideGenerator.Application.Common;
 using SlideGenerator.Domain.Sheet.Entities;
 using SlideGenerator.Domain.Sheet.Models;
-using SlideGenerator.Domain.Slide.Entities;
-using SlideGenerator.Domain.Slide.Models;
+using SlideGenerator.Domain.Slide.Entities.Presentation;
+using SlideGenerator.Domain.Slide.Models.Identifiers;
 
 namespace SlideGenerator.Application.Tasks.Generation.Activities;
 

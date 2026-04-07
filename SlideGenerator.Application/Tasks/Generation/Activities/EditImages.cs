@@ -1,6 +1,6 @@
 using Elsa.Workflows;
 using Elsa.Workflows.Models;
-using SlideGenerator.Domain.Tasks.Models.Image;
+using SlideGenerator.Domain.Tasks.Models.Generation.Image;
 
 namespace SlideGenerator.Application.Tasks.Generation.Activities;
 
