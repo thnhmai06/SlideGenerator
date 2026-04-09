@@ -15,7 +15,7 @@
 
     <ItemGroup>
         <Folder Include="Cloud\" />
-        <Folder Include="Tasks\Generation\" />
+        <Folder Include="Workflows\Generating\" />
     </ItemGroup>
 
     <ItemGroup>
