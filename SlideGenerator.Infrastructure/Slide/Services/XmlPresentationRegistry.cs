@@ -1,4 +1,4 @@
-using SlideGenerator.Application.Common;
+using SlideGenerator.Application.Resources;
 using SlideGenerator.Domain.Slide.Entities.Presentation;
 using SlideGenerator.Infrastructure.Slide.Adapters;
 

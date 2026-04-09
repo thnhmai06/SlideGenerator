@@ -6,7 +6,22 @@ public sealed partial class Setting
 
     public sealed class JobSetting
     {
-        public int MaxConcurrentJobs = 5;
+        /// <summary>
+        ///     Gets or sets the maximum number of concurrent image-processing flows.
+        /// </summary>
+        /// <remarks>
+        ///     This controls runtime admission for image download and image editing operations.
+        /// </remarks>
+        public int MaxConcurrentPreparingFlows = 5;
+
+        /// <summary>
+        ///     Gets or sets the maximum number of concurrent slide-editing flows.
+        /// </summary>
+        /// <remarks>
+        ///     This controls runtime admission for slide clone and slide content replacement operations.
+        /// </remarks>
+        public int MaxConcurrentEditingFlows = 5;
+
         public int MaxRetries = 3;
     }
 }

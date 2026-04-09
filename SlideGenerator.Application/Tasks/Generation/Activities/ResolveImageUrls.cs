@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using Elsa.Workflows;
 using Elsa.Workflows.Models;
-using SlideGenerator.Application.Common;
+using SlideGenerator.Application.Resources;
 using SlideGenerator.Domain.Cloud.Abstractions;
 using SlideGenerator.Domain.Sheet.Entities;
 using SlideGenerator.Domain.Sheet.Models;

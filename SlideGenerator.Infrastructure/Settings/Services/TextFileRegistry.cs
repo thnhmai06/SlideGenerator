@@ -1,4 +1,4 @@
-using SlideGenerator.Application.Common;
+using SlideGenerator.Application.Resources;
 using SlideGenerator.Application.Settings.Abstractions;
 using SlideGenerator.Infrastructure.Settings.Adapters;
 

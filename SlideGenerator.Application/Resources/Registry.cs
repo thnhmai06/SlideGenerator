@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 
-namespace SlideGenerator.Application.Common;
+namespace SlideGenerator.Application.Resources;
 
 /// <summary>
 ///     Provides a shared, reference-counted registry for reusable resources.
@@ -71,13 +71,16 @@ public abstract class Registry<T> : IDisposable
     /// <param name="filePath">The file path used as the registry key.</param>
     /// <param name="resource">When this method returns, contains the cached resource if it exists; otherwise, <c>null</c>.</param>
     /// <returns><c>true</c> if a cached resource was found; otherwise, <c>false</c>.</returns>
-    public virtual bool TryGet(string filePath, [MaybeNullWhen(false)] out T? resource)
+    public virtual bool TryGet(string filePath, [MaybeNullWhen(false)] out T resource)
     {
         var normalizedPath = NormalizeKey(filePath);
-        if (_resources.TryGetValue(normalizedPath, out var entry))
+        lock (_syncRoot)
         {
-            resource = entry.Resource;
-            return true;
+            if (_resources.TryGetValue(normalizedPath, out var entry))
+            {
+                resource = entry.Resource;
+                return true;
+            }
         }
 
         resource = default;

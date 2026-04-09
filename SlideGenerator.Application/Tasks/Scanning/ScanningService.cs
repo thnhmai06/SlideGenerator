@@ -1,4 +1,4 @@
-using SlideGenerator.Application.Common;
+using SlideGenerator.Application.Resources;
 using SlideGenerator.Application.Slide.Abstractions;
 using SlideGenerator.Domain.Sheet.Entities;
 using SlideGenerator.Domain.Slide.Entities.Presentation;
