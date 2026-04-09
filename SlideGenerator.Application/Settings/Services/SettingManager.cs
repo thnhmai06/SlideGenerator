@@ -6,7 +6,7 @@ using SlideGenerator.Domain.Settings.Rules;
 
 namespace SlideGenerator.Application.Settings.Services;
 
-public sealed class SettingManager(IRegistry<ITextFile> textFileRegistry, ISerializer serializer)
+public sealed class SettingManager(Registry<ITextFile> textFileRegistry, ISerializer serializer)
     : ISettingManager
 {
     public string FilePath =>
@@ -18,7 +18,8 @@ public sealed class SettingManager(IRegistry<ITextFile> textFileRegistry, ISeria
     {
         try
         {
-            var textFile = textFileRegistry.GetOrOpen(FilePath, false);
+            using var textFileLease = textFileRegistry.Acquire(FilePath, false);
+            var textFile = textFileLease.Value;
             var source = textFile.Read();
             var loaded = serializer.Deserialize<Setting>(source);
 
@@ -29,10 +30,6 @@ public sealed class SettingManager(IRegistry<ITextFile> textFileRegistry, ISeria
         {
             // TODO: log the error
         }
-        finally
-        {
-            textFileRegistry.Close(FilePath);
-        }
 
         return false;
     }
@@ -41,7 +38,8 @@ public sealed class SettingManager(IRegistry<ITextFile> textFileRegistry, ISeria
     {
         try
         {
-            var textFile = textFileRegistry.GetOrOpen(FilePath, true);
+            using var textFileLease = textFileRegistry.Acquire(FilePath, true);
+            var textFile = textFileLease.Value;
             var content = serializer.Serialize(Current);
             textFile.Write(content);
             return true;
@@ -49,10 +47,6 @@ public sealed class SettingManager(IRegistry<ITextFile> textFileRegistry, ISeria
         catch
         {
             return false;
-        }
-        finally
-        {
-            textFileRegistry.Close(FilePath);
         }
     }
 

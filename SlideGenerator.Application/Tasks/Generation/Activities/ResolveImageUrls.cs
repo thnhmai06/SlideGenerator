@@ -14,7 +14,7 @@ namespace SlideGenerator.Application.Tasks.Generation.Activities;
 /// </summary>
 public sealed class ResolveImageUrls(
     ICloudResolver cloudResolver,
-    IRegistry<IReadOnlyWorkbook> workbookRegistry) : Activity
+    Registry<IReadOnlyWorkbook> workbookRegistry) : Activity
 {
     /// <summary>Input: Image replacement instructions specialized for the current row and slide.</summary>
     public required Input<IReadOnlyList<SpecializedInstruction>> ImageInstructions { get; init; }
@@ -38,7 +38,8 @@ public sealed class ResolveImageUrls(
         if (worksheetInfo is null || rowIndex <= 0)
             throw new ArgumentException("Worksheet identifier and row index must be valid.");
 
-        var workbook = workbookRegistry.GetOrOpen(worksheetInfo.Workbook.FilePath, true);
+        using var workbookLease = workbookRegistry.Acquire(worksheetInfo.Workbook.FilePath, true);
+        var workbook = workbookLease.Value;
         var rowContent = !workbook.TryGetWorksheet(worksheetInfo.Name, out var worksheet)
             ? throw new InvalidOperationException($"Worksheet '{worksheetInfo.Name}' does not exist in workbook.")
             : new Dictionary<string, string>(worksheet.GetRowContent(rowIndex), StringComparer.Ordinal);

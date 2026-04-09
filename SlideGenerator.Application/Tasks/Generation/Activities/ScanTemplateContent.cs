@@ -20,7 +20,7 @@ namespace SlideGenerator.Application.Tasks.Generation.Activities;
 ///     </list>
 /// </remarks>
 public sealed class ScanTemplateContent(
-    IRegistry<IPresentation> slideRegistry,
+    Registry<IPresentation> slideRegistry,
     ITextReplacer textReplacer) : Activity
 {
     /// <summary>

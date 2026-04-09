@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CopilotDiffPersistence">
+    <option name="pendingDiffs">
+      <map>
+        <entry key="$PROJECT_DIR$/SlideGenerator.Application/Scanning/Models/ScanningInfo.cs">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/SlideGenerator.Application/Scanning/Models/ScanningInfo.cs" />
+              <option name="updatedContent" value="using SlideGenerator.Application.Scanning.Models.Sheets;&#10;using SlideGenerator.Application.Scanning.Models.Slides;&#10;&#10;namespace SlideGenerator.Application.Scanning.Models;&#10;&#10;/// &lt;summary&gt;&#10;///     Aggregated scan result for one presentation and one workbook.&#10;/// &lt;/summary&gt;&#10;public sealed record ScanningInfo(PresentationInfo Presentation, WorkbookInfo Workbook);&#10;" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>

@@ -14,7 +14,7 @@ namespace SlideGenerator.Application.Tasks.Generation.Activities;
 ///         The activity resolves target presentation through registry by file path.
 ///     </para>
 /// </remarks>
-public sealed class CloneTemplateSlide(IRegistry<IPresentation> slideRegistry) : Activity
+public sealed class CloneTemplateSlide(Registry<IPresentation> slideRegistry) : Activity
 {
     /// <summary>
     ///    Path to presentation file where slide should be cloned.

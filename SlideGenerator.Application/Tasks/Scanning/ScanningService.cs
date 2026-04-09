@@ -9,9 +9,9 @@ using SlideGenerator.Domain.Tasks.Models.Scanning.Slides;
 namespace SlideGenerator.Application.Tasks.Scanning;
 
 public sealed class ScanningService(
-    IRegistry<IPresentation> slideRegistry,
+    Registry<IPresentation> slideRegistry,
     ITextReplacer textReplacer,
-    IRegistry<IReadOnlyWorkbook> workbookRegistry)
+    Registry<IReadOnlyWorkbook> workbookRegistry)
 {
     public PresentationSummary ScanPresentation(string filePath)
     {
@@ -75,18 +75,13 @@ public sealed class ScanningService(
         if (!File.Exists(filePath))
             throw new FileNotFoundException("Workbook file not found.", filePath);
 
-        var workbook = workbookRegistry.GetOrOpen(filePath, true);
-        try
-        {
-            var worksheets = workbook.Worksheets
-                .Select(worksheet => new WorksheetSummary(worksheet.Name, worksheet.Headers, worksheet.RowsCount))
-                .ToList();
+        using var workbookLease = workbookRegistry.Acquire(filePath, true);
+        var workbook = workbookLease.Value;
 
-            return new WorkbookSummary(workbook.FilePath, workbook.Name, worksheets);
-        }
-        finally
-        {
-            workbookRegistry.Close(filePath);
-        }
+        var worksheets = workbook.Worksheets
+            .Select(worksheet => new WorksheetSummary(worksheet.Name, worksheet.Headers, worksheet.RowsCount))
+            .ToList();
+
+        return new WorkbookSummary(workbook.FilePath, workbook.Name, worksheets);
     }
 }

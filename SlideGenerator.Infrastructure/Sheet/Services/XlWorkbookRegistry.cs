@@ -1,5 +1,3 @@
-using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
 using SlideGenerator.Application.Common;
 using SlideGenerator.Domain.Sheet.Entities;
 using SlideGenerator.Infrastructure.Sheet.Adapter;
@@ -9,36 +7,16 @@ namespace SlideGenerator.Infrastructure.Sheet.Services;
 /// <summary>
 ///     Manages opened workbooks backed by file system paths.
 /// </summary>
-public sealed class XlWorkbookRegistry : IRegistry<IReadOnlyWorkbook>, IDisposable
+public sealed class XlWorkbookRegistry : Registry<IReadOnlyWorkbook>
 {
-    private readonly ConcurrentDictionary<string, IReadOnlyWorkbook> _workbooks =
-        new(StringComparer.OrdinalIgnoreCase);
-
-    public IReadOnlyWorkbook GetOrOpen(string filePath, bool isEditable)
+    /// <summary>
+    ///     Opens a read-only workbook adapter for the normalized file path.
+    /// </summary>
+    /// <param name="normalizedPath">The normalized workbook file path.</param>
+    /// <param name="isEditable">A value indicating whether the caller requested editable access.</param>
+    /// <returns>A new workbook adapter instance.</returns>
+    protected override IReadOnlyWorkbook OpenResource(string normalizedPath, bool isEditable)
     {
-        var normalizedPath = Path.GetFullPath(filePath);
-        return _workbooks.GetOrAdd(normalizedPath, path => new ReadOnlyWorkbook(path));
-    }
-
-    public bool TryGet(string filePath, [MaybeNullWhen(false)] out IReadOnlyWorkbook workbook)
-    {
-        var normalizedPath = Path.GetFullPath(filePath);
-        return _workbooks.TryGetValue(normalizedPath, out workbook);
-    }
-
-    public bool Close(string filePath)
-    {
-        var normalizedPath = Path.GetFullPath(filePath);
-        if (!_workbooks.TryRemove(normalizedPath, out var workbook))
-            return false;
-
-        workbook.Dispose();
-        return true;
-    }
-
-    public void Dispose()
-    {
-        foreach (var path in _workbooks.Keys.ToList())
-            Close(path);
+        return new ReadOnlyWorkbook(normalizedPath);
     }
 }

@@ -28,8 +28,8 @@ namespace SlideGenerator.Application.Tasks.Generation.Activities;
 ///     </list>
 /// </remarks>
 public sealed class CreateWorkingPresentation(
-    IRegistry<IPresentation> slideRegistry,
-    IRegistry<IReadOnlyWorkbook> workbookRegistry,
+    Registry<IPresentation> slideRegistry,
+    Registry<IReadOnlyWorkbook> workbookRegistry,
     IFileSystem fileSystem) : Activity
 {
     /// <summary>
@@ -68,7 +68,8 @@ public sealed class CreateWorkingPresentation(
         if (!File.Exists(workbookPath))
             throw new FileNotFoundException("Workbook file not found.", workbookPath);
 
-        var workbook = workbookRegistry.GetOrOpen(workbookPath, true);
+        using var workbookLease = workbookRegistry.Acquire(workbookPath, true);
+        var workbook = workbookLease.Value;
         if (!workbook.TryGetWorksheet(worksheet.Name, out _))
             throw new InvalidOperationException(
                 $"Worksheet '{worksheet.Name}' does not exist in workbook '{workbook.Name}'.");

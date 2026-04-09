@@ -14,7 +14,7 @@ namespace SlideGenerator.Application.Tasks.Generation.Activities;
 ///     This activity executes two internal tasks in order: <c>ReplaceTexts</c>, then <c>ReplaceImages</c>.
 /// </remarks>
 public sealed class ReplaceSlideContents(
-    IRegistry<IPresentation> slideRegistry,
+    Registry<IPresentation> slideRegistry,
     ITextReplacer textReplacer,
     IEnumerable<IImageReplacer> imageReplacers) : Activity
 {

@@ -1,6 +1,5 @@
 using Elsa.Workflows;
 using Elsa.Workflows.Models;
-using SlideGenerator.Application.Common;
 using SlideGenerator.Domain.Sheet.Entities;
 using SlideGenerator.Domain.Sheet.Models;
 using SlideGenerator.Domain.Slide.Rules;
@@ -21,7 +20,7 @@ namespace SlideGenerator.Application.Tasks.Generation.Activities;
 ///         This activity is idempotent and side effect free.
 ///     </para>
 /// </remarks>
-public sealed class BuildOutputPath(IRegistry<IReadOnlyWorkbook> workbookRegistry) : Activity
+public sealed class BuildOutputPath : Activity
 {
     /// <summary>
     ///     Input output root folder.

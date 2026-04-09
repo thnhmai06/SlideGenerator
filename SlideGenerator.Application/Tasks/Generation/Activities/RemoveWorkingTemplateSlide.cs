@@ -14,7 +14,7 @@ namespace SlideGenerator.Application.Tasks.Generation.Activities;
 ///         This activity resolves target presentation through registry by file path.
 ///     </para>
 /// </remarks>
-public sealed class RemoveWorkingTemplateSlide(IRegistry<IPresentation> slideRegistry) : Activity
+public sealed class RemoveWorkingTemplateSlide(Registry<IPresentation> slideRegistry) : Activity
 {
     /// <summary>
     ///    Input working template slide identifier.

@@ -1,5 +1,3 @@
-using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
 using SlideGenerator.Application.Common;
 using SlideGenerator.Domain.Slide.Entities.Presentation;
 using SlideGenerator.Infrastructure.Slide.Adapters;
@@ -9,39 +7,16 @@ namespace SlideGenerator.Infrastructure.Slide.Services;
 /// <summary>
 ///     Manages opened XML-based presentations for workflow execution.
 /// </summary>
-public sealed class XmlPresentationRegistry : IRegistry<IPresentation>, IDisposable
+public sealed class XmlPresentationRegistry : Registry<IPresentation>
 {
-    private readonly ConcurrentDictionary<string, IPresentation> _presentations =
-        new(StringComparer.OrdinalIgnoreCase);
-
-    public IPresentation GetOrOpen(string filePath, bool isEditable = true)
+    /// <summary>
+    ///     Opens an XML-based presentation from the normalized file path.
+    /// </summary>
+    /// <param name="normalizedPath">The normalized presentation file path.</param>
+    /// <param name="isEditable">A value indicating whether the presentation should be opened for editing.</param>
+    /// <returns>A new presentation adapter instance.</returns>
+    protected override IPresentation OpenResource(string normalizedPath, bool isEditable)
     {
-        return _presentations.GetOrAdd(
-            filePath, 
-            static (path, editable) => new XmlPresentation(path, editable),
-            isEditable
-        );
-    }
-
-    public bool TryGet(string filePath, [MaybeNullWhen(false)] out IPresentation presentation)
-    {
-        return _presentations.TryGetValue(filePath, out presentation);
-    }
-
-    public bool Close(string filePath)
-    {
-        if (!_presentations.TryRemove(filePath, out var presentation))
-            return false;
-
-        if (presentation is IDisposable disposable)
-            disposable.Dispose();
-
-        return true;
-    }
-
-    public void Dispose()
-    {
-        foreach (var key in _presentations.Keys.ToList())
-            Close(key);
+        return new XmlPresentation(normalizedPath, isEditable);
     }
 }

@@ -29,7 +29,7 @@ using SpecializedTextInstruction = Domain.Tasks.Models.Generation.Text.Specializ
 ///         No temporary runtime resources are persisted.
 ///     </para>
 /// </remarks>
-public sealed class SpecializeInstructions(IRegistry<IReadOnlyWorkbook> workbookRegistry) : Activity
+public sealed class SpecializeInstructions(Registry<IReadOnlyWorkbook> workbookRegistry) : Activity
 {
     /// <summary>
     ///     Input target worksheet identifier.
@@ -83,7 +83,8 @@ public sealed class SpecializeInstructions(IRegistry<IReadOnlyWorkbook> workbook
         if (worksheetIdentifier is null || templateSlideIdentifier is null)
             throw new ArgumentException("Worksheet and template slide must be provided.");
 
-        var workbook = workbookRegistry.GetOrOpen(worksheetIdentifier.Workbook.FilePath, true);
+        using var workbookLease = workbookRegistry.Acquire(worksheetIdentifier.Workbook.FilePath, true);
+        var workbook = workbookLease.Value;
         if (!workbook.TryGetWorksheet(worksheetIdentifier.Name, out var worksheetInstance))
             throw new InvalidOperationException(
                 $"Cannot specialize instructions: worksheet '{worksheetIdentifier.Name}' does not exist in workbook.");

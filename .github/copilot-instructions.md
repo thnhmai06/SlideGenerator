@@ -59,6 +59,7 @@ Naming interfaces and classes:
 - Prefer one top-level type per file (SA1402 is set to suggestion).
 - Minimize style noise; focus on clarity and stability.
 - Add XML docs for many public APIs (summary/param/returns).
+- For any new or modified public API, always add clear XML documentation in English.
 
 3. Data types and models
 - Prefer record for data-centric models (identifier/instruction/request).

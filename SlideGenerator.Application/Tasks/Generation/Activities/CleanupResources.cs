@@ -12,8 +12,8 @@ namespace SlideGenerator.Application.Tasks.Generation.Activities;
 ///     Disposes temporary presentation and workbook resources used by workflow execution.
 /// </summary>
 public sealed class CleanupResources(
-    IRegistry<IReadOnlyWorkbook> workbookRegistry,
-    IRegistry<IPresentation> slideRegistry) : Activity
+    Registry<IReadOnlyWorkbook> workbookRegistry,
+    Registry<IPresentation> slideRegistry) : Activity
 {
     /// <summary>
     ///     Optional collection of presentation keys/paths to close from presentation registry.

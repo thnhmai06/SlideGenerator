@@ -20,8 +20,8 @@ using ImageSpecializedInstruction = SlideGenerator.Domain.Tasks.Models.Generatio
 namespace SlideGenerator.Application.Tasks.Generation;
 
 public sealed class GenerationWorkflow(
-    IRegistry<IReadOnlyWorkbook> workbookRegistry,
-    IRegistry<IPresentation> slideRegistry,
+    Registry<IReadOnlyWorkbook> workbookRegistry,
+    Registry<IPresentation> slideRegistry,
     ITextReplacer textReplacer,
     IEnumerable<IImageReplacer> imageReplacers,
     IFileSystem fileSystem,
@@ -65,7 +65,7 @@ public sealed class GenerationWorkflow(
                         Name = "GenerateByWorksheet",
                         Activities =
                         {
-                            new BuildOutputPath(workbookRegistry)
+                            new BuildOutputPath()
                             {
                                 SaveFolder = new(context => GetRequest(context)!.SaveFolder),
                                 Worksheet = new(context => context.GetVariable<WorksheetIdentifier>("CurrentValue")!),
@@ -128,7 +128,9 @@ public sealed class GenerationWorkflow(
                                 Items = new(context =>
                                 {
                                     var worksheet = context.GetVariable<WorksheetIdentifier>("CurrentValue")!;
-                                    var workbook = workbookRegistry.GetOrOpen(worksheet.Workbook.FilePath, true);
+                                    using var workbookLease = workbookRegistry.Acquire(worksheet.Workbook.FilePath,
+                                        true);
+                                    var workbook = workbookLease.Value;
 
                                     if (!workbook.TryGetWorksheet(worksheet.Name, out var readOnlyWorksheet))
                                         throw new InvalidOperationException(
@@ -171,7 +173,9 @@ public sealed class GenerationWorkflow(
                                                     context.GetVariable<WorksheetIdentifier>("CurrentValue")!;
                                                 var rowIndex =
                                                     context.Get<int>(Utilities.GetRef(currentRowIndexRefKey));
-                                                var workbook = workbookRegistry.GetOrOpen(worksheet.Workbook.FilePath, true);
+                                                using var workbookLease = workbookRegistry.Acquire(
+                                                    worksheet.Workbook.FilePath, true);
+                                                var workbook = workbookLease.Value;
 
                                                 if (!workbook.TryGetWorksheet(worksheet.Name,
                                                         out var readOnlyWorksheet))
@@ -222,15 +226,6 @@ public sealed class GenerationWorkflow(
                         }
                     }
                 },
-                new CleanupResources(workbookRegistry, slideRegistry)
-                {
-                    Workbooks = new(context =>
-                        GetRequest(context)!
-                            .Graph.Keys
-                            .Select(x => x.Workbook)
-                            .Distinct()
-                            .ToHashSet())
-                }
             }
         };
     }

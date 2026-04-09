@@ -1,54 +1,33 @@
-using System.Collections.Concurrent;
 using SlideGenerator.Application.Common;
 using SlideGenerator.Application.Settings.Abstractions;
 using SlideGenerator.Infrastructure.Settings.Adapters;
 
 namespace SlideGenerator.Infrastructure.Settings.Services;
 
-public sealed class TextFileRegistry : IRegistry<ITextFile>
+/// <summary>
+///     Manages opened text files backed by the file system.
+/// </summary>
+public sealed class TextFileRegistry : Registry<ITextFile>
 {
-    private readonly Lock _syncRoot = new();
-    private readonly ConcurrentDictionary<string, ITextFile> _files =
-        new(StringComparer.OrdinalIgnoreCase);
-
-    public ITextFile GetOrOpen(string filePath, bool isEditable = true)
+    /// <summary>
+    ///     Opens a text file adapter for the normalized file path.
+    /// </summary>
+    /// <param name="normalizedPath">The normalized text file path.</param>
+    /// <param name="isEditable">A value indicating whether the file should be opened for editing.</param>
+    /// <returns>A new text file adapter instance.</returns>
+    protected override ITextFile OpenResource(string normalizedPath, bool isEditable)
     {
-        var normalizedPath = Path.GetFullPath(filePath);
-
-        lock (_syncRoot)
-        {
-            if (_files.TryGetValue(normalizedPath, out var existing))
-            {
-                if (isEditable && existing is StreamTextFile { IsEditable: false })
-                {
-                    existing.Dispose();
-                    var upgraded = new StreamTextFile(normalizedPath, isEditable: true);
-                    _files[normalizedPath] = upgraded;
-                    return upgraded;
-                }
-
-                return existing;
-            }
-
-            var opened = new StreamTextFile(normalizedPath, isEditable);
-            _files[normalizedPath] = opened;
-            return opened;
-        }
+        return new StreamTextFile(normalizedPath, isEditable);
     }
 
-    public bool TryGet(string filePath, out ITextFile? textFile)
+    /// <summary>
+    ///     Allows a cached read-only text file to be replaced when an editable lease is requested.
+    /// </summary>
+    /// <param name="existing">The current cached entry.</param>
+    /// <param name="isEditable">A value indicating whether the caller requested editable access.</param>
+    /// <returns><c>true</c> when the cached resource should be reopened in editable mode; otherwise, <c>false</c>.</returns>
+    protected override bool ShouldReplace(Entry existing, bool isEditable)
     {
-        var normalizedPath = Path.GetFullPath(filePath);
-        return _files.TryGetValue(normalizedPath, out textFile);
-    }
-
-    public bool Close(string filePath)
-    {
-        var normalizedPath = Path.GetFullPath(filePath);
-        if (!_files.TryRemove(normalizedPath, out var textFile))
-            return false;
-
-        textFile.Dispose();
-        return true;
+        return isEditable && existing.Resource is StreamTextFile { IsEditable: false };
     }
 }
