@@ -1,4 +1,5 @@
 using System.Drawing;
+using System.Numerics;
 using Point = System.Drawing.Point;
 using Size = System.Drawing.Size;
 
@@ -103,5 +104,56 @@ public static class Utilities
         width = Math.Min(width, original.Width);
         height = Math.Min(height, original.Height);
         return new Size(width, height);
+    }
+    public static Point CenterPoint(this Size size) => new(size.Width / 2, size.Height / 2);
+
+    /// <summary>
+    ///     Calculates an anchored rectangle of the specified size inside the source image,
+    ///     with the specified anchor point and Pivot.
+    /// </summary>
+    /// <param name="sourceSize">The source size.</param>
+    /// <param name="cropSize">The desired crop size.</param>
+    /// <param name="anchorPoint">The point in the source image that should be placed inside the cropped rectangle.</param>
+    /// <param name="pivot">The relative position of the anchor point inside the cropped rectangle.</param>
+    /// <returns>A rectangle of the requested size, clamped to image bounds.</returns>
+    public static Rectangle CalculateAnchoredRectangle(
+        Size sourceSize, Size cropSize,
+        Point? anchorPoint = null, Vector2? pivot = null)
+    {
+        anchorPoint ??= sourceSize.CenterPoint();
+        pivot ??= new(1 / 2f, 1 / 2f);
+
+        var imageBounds = new Rectangle(Point.Empty, sourceSize);
+        var boundedSize = new Size(
+            Math.Min(cropSize.Width, imageBounds.Width),
+            Math.Min(cropSize.Height, imageBounds.Height));
+
+        var x = (int)MathF.Round(anchorPoint.Value.X - boundedSize.Width * pivot.Value.X);
+        var y = (int)MathF.Round(anchorPoint.Value.Y - boundedSize.Height * pivot.Value.Y);
+
+        return new Rectangle(x, y, boundedSize.Width, boundedSize.Height).ClampIn(imageBounds);
+    }
+
+    public static Vector2 ToVector2(this Point point) => new(point.X, point.Y);
+
+    public static Point ToPoint(this Vector2 vector) =>
+        new(
+            (int)MathF.Round(vector.X, MidpointRounding.AwayFromZero),
+            (int)MathF.Round(vector.Y, MidpointRounding.AwayFromZero)
+        );
+    
+    public static Point? Centroid<TSource>(
+        this IReadOnlyList<TSource> containers,
+        Func<TSource, Point?> selector)
+    {
+        var sources = containers
+            .Select(selector)
+            .Where(p => p.HasValue)
+            .Select(p => p!.Value.ToVector2())
+            .ToList();
+        if (sources.Count == 0) return null;
+        
+        var sum  = sources.Aggregate(Vector2.Zero, (acc, v) => acc + v);
+        return (sum / containers.Count).ToPoint();
     }
 }

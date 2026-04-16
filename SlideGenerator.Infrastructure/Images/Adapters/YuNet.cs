@@ -20,7 +20,7 @@ namespace SlideGenerator.Infrastructure.Images.Adapters;
 /// <param name="targetId">The id of backend</param>
 /// <param name="targetId">The id of target device</param>
 /// Reviewed by @thnhmai06 at 02/03/2026 11:41:42 GMT+7
-public sealed class YuNetModel(
+public sealed class YuNet(
     string modelPath,
     Size inputSize,
     string? configPath = null,
@@ -28,7 +28,7 @@ public sealed class YuNetModel(
     float nmsThreshold = 0.3f,
     int topK = 5000,
     Backend backendId = Backend.DEFAULT,
-    Target targetId = Target.CPU) : FaceDetectorModel
+    Target targetId = Target.CPU) : FaceDetector
 {
     private FaceDetectorYN? _model;
 
@@ -72,9 +72,9 @@ public sealed class YuNetModel(
         return !IsModelAvailable;
     }
 
-    public override Task<List<FaceInfo>> DetectAsync(IMat mat)
+    public override async Task<IReadOnlyList<Face>> DetectAsync(IMat mat)
     {
-        return DetectAsync(((Mat)mat).Core);
+        return await DetectAsync(((Mat)mat).Core).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -83,12 +83,12 @@ public sealed class YuNetModel(
     /// <param name="mat">Input mat to run detection on.</param>
     /// <returns>All faces detected by the model without score filtering.</returns>
     /// <exception cref="InvalidOperationException">Thrown when the model has not been initialized.</exception>
-    public async Task<List<FaceInfo>> DetectAsync(OpenCvSharp.Mat mat)
+    public async Task<List<Face>> DetectAsync(OpenCvSharp.Mat mat)
     {
         if (!IsModelAvailable)
             throw new InvalidOperationException("The model is not initialized.");
 
-        var faces = new List<FaceInfo>();
+        var faces = new List<Face>();
         if (mat.Empty()) return faces;
 
         // Resize and pad mat to match InputSize
@@ -115,10 +115,10 @@ public sealed class YuNetModel(
         for (var faceIndex = 0; faceIndex < faceCount; faceIndex++)
         {
             var score = result.At<float>(faceIndex, 14);
-            var x = (int)MathF.Round(result.At<float>(faceIndex, 0));
-            var y = (int)MathF.Round(result.At<float>(faceIndex, 1));
-            var w = (int)MathF.Round(result.At<float>(faceIndex, 2));
-            var h = (int)MathF.Round(result.At<float>(faceIndex, 3));
+            var x = RoundToIntAwayFromZero(result.At<float>(faceIndex, 0));
+            var y = RoundToIntAwayFromZero(result.At<float>(faceIndex, 1));
+            var w = RoundToIntAwayFromZero(result.At<float>(faceIndex, 2));
+            var h = RoundToIntAwayFromZero(result.At<float>(faceIndex, 3));
 
             // Unmap bounding box back to original image coordinates
             var mappedRect = UnmapBoundingBox(new Rectangle(x, y, w, h), resizeAndPadInfo);
@@ -127,22 +127,22 @@ public sealed class YuNetModel(
 
             // Unmap landmarks back to original image coordinates
             var eyeRight = UnmapLandmark(new Point(
-                (int)MathF.Round(result.At<float>(faceIndex, 4)),
-                (int)MathF.Round(result.At<float>(faceIndex, 5))), resizeAndPadInfo);
+                RoundToIntAwayFromZero(result.At<float>(faceIndex, 4)),
+                RoundToIntAwayFromZero(result.At<float>(faceIndex, 5))), resizeAndPadInfo);
             var eyeLeft = UnmapLandmark(new Point(
-                (int)MathF.Round(result.At<float>(faceIndex, 6)),
-                (int)MathF.Round(result.At<float>(faceIndex, 7))), resizeAndPadInfo);
+                RoundToIntAwayFromZero(result.At<float>(faceIndex, 6)),
+                RoundToIntAwayFromZero(result.At<float>(faceIndex, 7))), resizeAndPadInfo);
             var nose = UnmapLandmark(new Point(
-                (int)MathF.Round(result.At<float>(faceIndex, 8)),
-                (int)MathF.Round(result.At<float>(faceIndex, 9))), resizeAndPadInfo);
+                RoundToIntAwayFromZero(result.At<float>(faceIndex, 8)),
+                RoundToIntAwayFromZero(result.At<float>(faceIndex, 9))), resizeAndPadInfo);
             var mouthRight = UnmapLandmark(new Point(
-                (int)MathF.Round(result.At<float>(faceIndex, 10)),
-                (int)MathF.Round(result.At<float>(faceIndex, 11))), resizeAndPadInfo);
+                RoundToIntAwayFromZero(result.At<float>(faceIndex, 10)),
+                RoundToIntAwayFromZero(result.At<float>(faceIndex, 11))), resizeAndPadInfo);
             var mouthLeft = UnmapLandmark(new Point(
-                (int)MathF.Round(result.At<float>(faceIndex, 12)),
-                (int)MathF.Round(result.At<float>(faceIndex, 13))), resizeAndPadInfo);
+                RoundToIntAwayFromZero(result.At<float>(faceIndex, 12)),
+                RoundToIntAwayFromZero(result.At<float>(faceIndex, 13))), resizeAndPadInfo);
 
-            faces.Add(new FaceInfo(rect, score, eyeRight, eyeLeft, nose, mouthRight, mouthLeft));
+            faces.Add(new Face(rect, score, eyeRight, eyeLeft, nose, mouthRight, mouthLeft));
         }
 
         return faces;
@@ -164,8 +164,8 @@ public sealed class YuNetModel(
 
         // Calculate scale and new dimensions
         var scale = MathF.Min((float)targetWidth / originalWidth, (float)targetHeight / originalHeight);
-        var newWidth = (int)MathF.Round(originalWidth * scale);
-        var newHeight = (int)MathF.Round(originalHeight * scale);
+        var newWidth = RoundToIntAwayFromZero(originalWidth * scale);
+        var newHeight = RoundToIntAwayFromZero(originalHeight * scale);
 
         // Resize if necessary
         var resizedMat = mat.Clone();
@@ -206,10 +206,10 @@ public sealed class YuNetModel(
         if (resizeAndPadInfo.Scale >= 1.0f)
             return rect; // No scaling was applied, only padding
 
-        var x = (int)MathF.Round((rect.X - resizeAndPadInfo.PadLeft) / resizeAndPadInfo.Scale);
-        var y = (int)MathF.Round((rect.Y - resizeAndPadInfo.PadTop) / resizeAndPadInfo.Scale);
-        var w = (int)MathF.Round(rect.Width / resizeAndPadInfo.Scale);
-        var h = (int)MathF.Round(rect.Height / resizeAndPadInfo.Scale);
+        var x = RoundToIntAwayFromZero((rect.X - resizeAndPadInfo.PadLeft) / resizeAndPadInfo.Scale);
+        var y = RoundToIntAwayFromZero((rect.Y - resizeAndPadInfo.PadTop) / resizeAndPadInfo.Scale);
+        var w = RoundToIntAwayFromZero(rect.Width / resizeAndPadInfo.Scale);
+        var h = RoundToIntAwayFromZero(rect.Height / resizeAndPadInfo.Scale);
 
         return new Rectangle(Math.Max(0, x), Math.Max(0, y), w, h);
     }
@@ -225,8 +225,8 @@ public sealed class YuNetModel(
         if (resizeAndPadInfo.Scale >= 1.0f)
             return point; // No scaling was applied, only padding
 
-        var x = (int)MathF.Round((point.X - resizeAndPadInfo.PadLeft) / resizeAndPadInfo.Scale);
-        var y = (int)MathF.Round((point.Y - resizeAndPadInfo.PadTop) / resizeAndPadInfo.Scale);
+        var x = RoundToIntAwayFromZero((point.X - resizeAndPadInfo.PadLeft) / resizeAndPadInfo.Scale);
+        var y = RoundToIntAwayFromZero((point.Y - resizeAndPadInfo.PadTop) / resizeAndPadInfo.Scale);
 
         // Check if point is within original image bounds
         if (x >= 0 && x < resizeAndPadInfo.OriginalSize.Width && y >= 0 && y < resizeAndPadInfo.OriginalSize.Height)
@@ -246,4 +246,7 @@ public sealed class YuNetModel(
         public required int PadTop { get; init; }
         public required Size OriginalSize { get; init; }
     }
+
+    private static int RoundToIntAwayFromZero(float value)
+        => (int)Math.Round(value, MidpointRounding.AwayFromZero);
 }

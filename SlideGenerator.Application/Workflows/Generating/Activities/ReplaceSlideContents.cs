@@ -4,6 +4,7 @@ using SlideGenerator.Application.Resources;
 using SlideGenerator.Application.Slides.Abstractions;
 using SlideGenerator.Domain.Slides.Entities.Presentation;
 using SlideGenerator.Domain.Slides.Models.Identifiers;
+using SlideGenerator.Domain.Workflows.Models.Generating.Images;
 
 namespace SlideGenerator.Application.Workflows.Generating.Activities;
 
@@ -29,9 +30,9 @@ public sealed class ReplaceSlideContents(
     public required Input<IReadOnlyDictionary<string, string>> TextInstructions { get; init; }
 
     /// <summary>
-    ///     Assignments from shape ID to local image file path.
+    ///     Assignments from specialized instruction to local image file path.
     /// </summary>
-    public required Input<IReadOnlyDictionary<uint, string>> ImageInstructions { get; init; }
+    public required Input<IReadOnlyDictionary<SpecializedInstruction, string>> ImageInstructions { get; init; }
 
     /// <summary>
     ///     Output count of text changes.
@@ -71,12 +72,18 @@ public sealed class ReplaceSlideContents(
             if (imageInstructions.Count > 0)
                 foreach (var shape in targetSlide.DescendShapes())
                 {
-                    if (!imageInstructions.TryGetValue(shape.Id, out var imagePath) || !File.Exists(imagePath))
+                    var imagePair = imageInstructions.FirstOrDefault(x => x.Key.Target.Id == shape.Id);
+                    if (imagePair.Key is null || string.IsNullOrWhiteSpace(imagePair.Value) || !File.Exists(imagePair.Value))
                         continue;
 
-                    using var imageStream = new FileStream(imagePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                    using var imageStream = new FileStream(imagePair.Value, FileMode.Open, FileAccess.Read,
+                        FileShare.Read);
+
                     foreach (var imageReplacer in imageReplacers)
                     {
+                        if (imageStream.CanSeek)
+                            imageStream.Position = 0;
+
                         var replaced = imageReplacer.Replace(shape, imageStream);
                         if (replaced <= 0)
                             continue;
@@ -88,6 +95,7 @@ public sealed class ReplaceSlideContents(
 
             context.Set(ReplacedImageCount, replacedImageCount);
         }
+
         return ValueTask.CompletedTask;
     }
 }

@@ -6,7 +6,7 @@ namespace SlideGenerator.Domain.Images.Abstractions;
 ///     A face detector model.
 /// </summary>
 /// Reviewed by @thnhmai06 at 01/03/2026 01:38:16 GMT+7
-public abstract class FaceDetectorModel : IAsyncDisposable
+public abstract class FaceDetector : IAsyncDisposable
 {
     /// <summary>
     ///     Gets a value indicating whether the face detection model is available for use.
@@ -40,7 +40,7 @@ public abstract class FaceDetectorModel : IAsyncDisposable
     ///     face candidates. The list is empty if no faces are detected or if detection fails.
     /// </returns>
     /// <exception cref="InvalidOperationException">Thrown when the model has not been initialized.</exception>
-    public abstract Task<List<FaceInfo>> DetectAsync(IMat mat);
+    public abstract Task<IReadOnlyList<Face>> DetectAsync(IMat mat);
 
     public abstract ValueTask DisposeAsync();
 }

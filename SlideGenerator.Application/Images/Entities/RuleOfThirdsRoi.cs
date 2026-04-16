@@ -1,75 +1,45 @@
 using System.Drawing;
+using System.Numerics;
 using SlideGenerator.Domain.Images.Abstractions;
 using SlideGenerator.Domain.Images.Entities;
-using SlideGenerator.Domain.Images.Models;
-using Point = System.Drawing.Point;
+using SlideGenerator.Domain.Images.Models.Roi;
+using SlideGenerator.Domain.Images.Rules;
 using Size = System.Drawing.Size;
 
 namespace SlideGenerator.Application.Images.Entities;
 
+/// <summary>
+///     Calculates rule-of-thirds ROI with face and eye landmark fallbacks.
+/// </summary>
 /// Reviewed by @thnhmai06 at 02/03/2026 11:28:25 GMT+7
-public sealed class RuleOfThirdsRoi(IFaceDetectorModelProvider faceDetectorProvider) : RoiCalculator
+public sealed class RuleOfThirdsRoi(IFaceDetectorProvider faceDetectorProvider) : RoiCalculator
 {
-    private const float DefaultEyeCenterRatioX = 1 / 2f;
-    private const float DefaultEyeCenterRatioY = 1 / 2f;
+    private static readonly Vector2 RuleOfThirdsPivot = new(1 / 2f, 1 / 3f);
 
-    public override async ValueTask<Rectangle> CalculateRoiAsync(IMat mat, Size targetSize)
+    /// <inheritdoc />
+    public override RoiType Type => RoiType.RuleOfThirds;
+
+    /// <inheritdoc />
+    public override async ValueTask<Rectangle> CalculateRoiAsync(IMat mat, Size targetSize, RoiOption? options = null)
     {
-        var croppedSize = new Size(
-            Math.Min(mat.Width, targetSize.Width),
-            Math.Min(mat.Height, targetSize.Height));
-        var eyeCenter = await GetEyeCenter(mat).ConfigureAwait(false);
-        var imageSize = new Size(mat.Width, mat.Height);
-        return FollowRuleOfThirds(imageSize, eyeCenter, croppedSize);
-    }
+        var ruleOption = options as RuleOfThirdsOption;
+        var relativePin = ruleOption?.Pivot ?? RuleOfThirdsPivot;
 
-    private async ValueTask<Point> GetEyeCenter(IMat mat)
-    {
-        var model = await faceDetectorProvider.GetCurrentModelAsync().ConfigureAwait(false);
+        var faceDetector = await faceDetectorProvider.GetCurrentDetectorAsync().ConfigureAwait(false);
+        var faces = await faceDetector.DetectAsync(mat).ConfigureAwait(false);
+        if (faces.Count <= 0)
+            return Utilities.CalculateAnchoredRectangle(mat.Size, targetSize); // fallback
 
-        if (!model.IsModelAvailable)
-            return GetDefaultEyeCenter(mat);
+        // Try to use eye center first
+        var eyeCenter = faces.Centroid(face => face.EyesCenter);
+        if (eyeCenter.HasValue)
+            return Utilities.CalculateAnchoredRectangle(mat.Size, targetSize, eyeCenter.Value, relativePin);
 
-        var faces = await model.DetectAsync(mat).ConfigureAwait(false);
-        if (faces.Count == 0)
-            return GetDefaultEyeCenter(mat);
-
-        var eyesCenter = new Point(0, 0);
-        foreach (var eyeCenter in faces.Select(GetEyeCenter))
-        {
-            eyesCenter.X += eyeCenter?.X ?? 0;
-            eyesCenter.Y += eyeCenter?.Y ?? 0;
-        }
-
-        eyesCenter.X /= faces.Count;
-        eyesCenter.Y /= faces.Count;
-        return eyesCenter;
-    }
-
-    private static Point GetDefaultEyeCenter(IMat mat)
-    {
-        return new Point(
-            (int)MathF.Round(mat.Width * DefaultEyeCenterRatioX),
-            (int)MathF.Round(mat.Height * DefaultEyeCenterRatioY));
-    }
-
-    private static Point? GetEyeCenter(FaceInfo faceInfo)
-    {
-        if (faceInfo is { RightEye: { } rightEye, LeftEye: { } leftEye })
-            return new Point(
-                (int)MathF.Round((rightEye.X + leftEye.X) / 2f),
-                (int)MathF.Round((rightEye.Y + leftEye.Y) / 2f));
-        return null;
-    }
-
-    private static Rectangle FollowRuleOfThirds(Size imageSize, Point eyeCenterPoint, Size croppedSize)
-    {
-        const float eyeLineRatioX = 1f / 2f;
-        const float eyeLineRatioY = 1f / 3f;
-
-        var x = (int)MathF.Round(eyeCenterPoint.X - croppedSize.Width * eyeLineRatioX);
-        var y = (int)MathF.Round(eyeCenterPoint.Y - croppedSize.Height * eyeLineRatioY);
-
-        return new Rectangle(x, y, croppedSize.Width, croppedSize.Height).ClampIn(new Rectangle(default, imageSize));
+        // Fall back to face center if eyes not available
+        var faceCenter = faces.Centroid(face => face.FaceCenter);
+        return faceCenter.HasValue
+            ? Utilities.CalculateAnchoredRectangle(mat.Size, targetSize, faceCenter.Value, relativePin)
+            // No faces detected, use image center
+            : Utilities.CalculateAnchoredRectangle(mat.Size, targetSize);
     }
 }

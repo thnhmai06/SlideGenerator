@@ -1,3 +1,5 @@
+using System.Drawing;
+
 namespace SlideGenerator.Domain.Images.Abstractions;
 
 public interface IMat : IDisposable
@@ -5,14 +7,15 @@ public interface IMat : IDisposable
     /// <summary>
     ///     Gets the width of the mat in pixels.
     /// </summary>
-    public int Width { get; }
+    int Width { get; }
 
     /// <summary>
     ///     Gets the height of the mat in pixels.
     /// </summary>
-    public int Height { get; }
+    int Height { get; }
 
-    public bool Empty();
-    public int Channels();
-    public IMat Clone();
+    Size Size => new(Width, Height);
+    bool Empty();
+    int Channels();
+    IMat Clone();
 }

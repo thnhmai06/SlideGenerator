@@ -1,5 +1,9 @@
-using SlideGenerator.Domain.Images.Rules;
+using SlideGenerator.Domain.Images.Models.Roi;
 
 namespace SlideGenerator.Domain.Workflows.Models.Generating.Images;
 
-public sealed record EditOptions(RoiType RoiType);
+/// <summary>
+///     Defines image edit configuration for one image instruction.
+/// </summary>
+/// <param name="RoiOption">ROI strategy with its type-specific options.</param>
+public sealed record EditOptions(RoiOption RoiOption);

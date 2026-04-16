@@ -6,12 +6,12 @@ namespace SlideGenerator.Domain.Images.Rules;
 public enum RoiType
 {
     /// <summary>
-    ///     Uses face detection (eye landmarks) to anchor a rule-of-thirds crop.
+    ///     Crops by keeping the visual center of the image.
     /// </summary>
-    RuleOfThirds,
+    Center,
 
     /// <summary>
-    ///     Uses the center region of the image.
+    ///     Crops by placing detected eye-line around the upper third area.
     /// </summary>
-    Center
+    RuleOfThirds
 }
