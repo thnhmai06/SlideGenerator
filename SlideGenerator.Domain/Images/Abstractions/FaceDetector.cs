@@ -13,6 +13,8 @@ public abstract class FaceDetector : IAsyncDisposable
     /// </summary>
     public abstract bool IsModelAvailable { get; }
 
+    public abstract ValueTask DisposeAsync();
+
     /// <summary>
     ///     Initializes the face detection model asynchronously.
     /// </summary>
@@ -41,6 +43,4 @@ public abstract class FaceDetector : IAsyncDisposable
     /// </returns>
     /// <exception cref="InvalidOperationException">Thrown when the model has not been initialized.</exception>
     public abstract Task<IReadOnlyList<Face>> DetectAsync(IMat mat);
-
-    public abstract ValueTask DisposeAsync();
 }

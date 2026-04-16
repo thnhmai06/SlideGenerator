@@ -31,10 +31,8 @@ public sealed class CleanupResources(
         var presentationPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var presentations = Presentations is null ? null : context.Get(Presentations);
         if (presentations is not null)
-        {
             foreach (var identifier in presentations)
                 _ = presentationPaths.Add(identifier.FilePath);
-        }
         foreach (var presentationPath in presentationPaths)
             slideRegistry.Close(presentationPath);
 
@@ -42,10 +40,8 @@ public sealed class CleanupResources(
         var workbookPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var workbooks = Workbooks is null ? null : context.Get(Workbooks);
         if (workbooks is not null)
-        {
             foreach (var identifier in workbooks)
                 _ = workbookPaths.Add(identifier.FilePath);
-        }
         foreach (var workbookPath in workbookPaths)
             workbookRegistry.Close(workbookPath);
 

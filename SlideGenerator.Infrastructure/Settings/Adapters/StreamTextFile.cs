@@ -5,8 +5,8 @@ namespace SlideGenerator.Infrastructure.Settings.Adapters;
 
 public sealed class StreamTextFile : ITextFile
 {
-    private readonly Lock _syncRoot = new();
     private readonly FileStream _stream;
+    private readonly Lock _syncRoot = new();
     private bool _disposed;
 
     public StreamTextFile(string filePath, bool isEditable = true)
@@ -25,9 +25,9 @@ public sealed class StreamTextFile : ITextFile
             FileShare.Read);
     }
 
-    public string FilePath { get; }
-
     public bool IsEditable { get; }
+
+    public string FilePath { get; }
 
     public string Read()
     {
@@ -39,9 +39,9 @@ public sealed class StreamTextFile : ITextFile
             using var reader = new StreamReader(
                 _stream,
                 Encoding.UTF8,
-                detectEncodingFromByteOrderMarks: true,
-                bufferSize: 1024,
-                leaveOpen: true);
+                true,
+                1024,
+                true);
             return reader.ReadToEnd();
         }
     }
@@ -59,8 +59,8 @@ public sealed class StreamTextFile : ITextFile
             using var writer = new StreamWriter(
                 _stream,
                 new UTF8Encoding(false),
-                bufferSize: 1024,
-                leaveOpen: true);
+                1024,
+                true);
             writer.Write(content ?? string.Empty);
             writer.Flush();
             _stream.Flush();

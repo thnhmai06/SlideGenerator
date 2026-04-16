@@ -19,10 +19,21 @@ using SpecializedTextInstruction = Domain.Workflows.Models.Generating.Texts.Spec
 /// <remarks>
 ///     <para>Specialization filters:</para>
 ///     <list type="bullet">
-///         <item><description>Source worksheet must match <see cref="Worksheet"/>.</description></item>
-///         <item><description>Source column must exist in the resolved worksheet instance headers.</description></item>
-///         <item><description>HasTextFrame placeholder must exist in <see cref="TemplatePlaceholders"/>.</description></item>
-///         <item><description>Image target shape must exist in <see cref="TemplateImageShapeIds"/> and target slide must match <see cref="TemplateSlide"/>.</description></item>
+///         <item>
+///             <description>Source worksheet must match <see cref="Worksheet" />.</description>
+///         </item>
+///         <item>
+///             <description>Source column must exist in the resolved worksheet instance headers.</description>
+///         </item>
+///         <item>
+///             <description>HasTextFrame placeholder must exist in <see cref="TemplatePlaceholders" />.</description>
+///         </item>
+///         <item>
+///             <description>
+///                 Image target shape must exist in <see cref="TemplateImageShapeIds" /> and target slide must
+///                 match <see cref="TemplateSlide" />.
+///             </description>
+///         </item>
 ///     </list>
 ///     <para>
 ///         This activity stores only lightweight specialized instruction lists in state.

@@ -17,7 +17,7 @@ namespace SlideGenerator.Application.Workflows.Generating.Activities;
 public sealed class CloneTemplateSlide(Registry<IPresentation> slideRegistry) : Activity
 {
     /// <summary>
-    ///    Path to presentation file where slide should be cloned.
+    ///     Path to presentation file where slide should be cloned.
     /// </summary>
     public required Input<SlideIdentifier> TemplateSlide { get; init; }
 

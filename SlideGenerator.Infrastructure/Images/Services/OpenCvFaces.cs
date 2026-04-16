@@ -17,8 +17,8 @@ public sealed class OpenCvFaces : FaceDetectorManager
         switch (model)
         {
             case FaceDetectorModel.YuNet:
-                // TODO: Define factory.
-                // return new YuNet();
+            // TODO: Define factory.
+            // return new YuNet();
             default:
                 throw new NotSupportedException($"The face detector model '{model}' is not supported.");
         }

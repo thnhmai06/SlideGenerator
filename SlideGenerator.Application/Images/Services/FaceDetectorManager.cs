@@ -10,7 +10,7 @@ namespace SlideGenerator.Application.Images.Services;
 /// Reviewed by @thnhmai06 at 02/03/2026 11:34:31 GMT+7
 public abstract class FaceDetectorManager : IFaceDetectorProvider, IAsyncDisposable
 {
-    private const FaceDetectorModel DefaultModel = FaceDetectorModel.YuNet; 
+    private const FaceDetectorModel DefaultModel = FaceDetectorModel.YuNet;
     private readonly ConcurrentDictionary<FaceDetectorModel, FaceDetector> _detectors = new();
     private bool _disposed;
 
@@ -18,6 +18,27 @@ public abstract class FaceDetectorManager : IFaceDetectorProvider, IAsyncDisposa
     ///     Gets current model key.
     /// </summary>
     public FaceDetectorModel CurrentModel { get; set; } = DefaultModel;
+
+    /// <summary>
+    ///     Gets all supported model for this manager implementation.
+    /// </summary>
+    /// <returns>A collection of supported face detector model keys.</returns>
+    public abstract ICollection<FaceDetectorModel> SupportedDetectors { get; }
+
+    /// <summary>
+    ///     Gets all initialized model for this manager implementation.
+    /// </summary>
+    /// <returns>A collection of initialized face detector model keys.</returns>
+    public ICollection<FaceDetectorModel> Detectors => _detectors.Keys;
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_disposed) return;
+        _disposed = true;
+
+        foreach (var model in _detectors.Keys)
+            await DeInitDetectorAsync(model).ConfigureAwait(false);
+    }
 
     /// <summary>
     ///     Gets current model instance and ensures it is initialized.
@@ -50,18 +71,6 @@ public abstract class FaceDetectorManager : IFaceDetectorProvider, IAsyncDisposa
         _detectors.TryRemove(model, out var detector);
         if (detector is not null) await detector.DeInitAsync().ConfigureAwait(false);
     }
-    
-    /// <summary>
-    ///     Gets all supported model for this manager implementation.
-    /// </summary>
-    /// <returns>A collection of supported face detector model keys.</returns>
-    public abstract ICollection<FaceDetectorModel> SupportedDetectors { get; }
-
-    /// <summary>
-    ///    Gets all initialized model for this manager implementation.
-    /// </summary>
-    /// <returns>A collection of initialized face detector model keys.</returns>
-    public ICollection<FaceDetectorModel> Detectors => _detectors.Keys;
 
     /// <summary>
     ///     Creates a face detector for the specified model key.
@@ -69,13 +78,4 @@ public abstract class FaceDetectorManager : IFaceDetectorProvider, IAsyncDisposa
     /// <param name="model">Model key to create.</param>
     /// <returns>A detector instance bound to the specified model key.</returns>
     protected abstract FaceDetector CreateDetector(FaceDetectorModel model);
-    
-    public async ValueTask DisposeAsync()
-    {
-        if (_disposed) return;
-        _disposed = true;
-
-        foreach (var model in _detectors.Keys)
-            await DeInitDetectorAsync(model).ConfigureAwait(false);
-    }
 }

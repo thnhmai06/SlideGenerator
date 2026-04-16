@@ -37,6 +37,12 @@ public sealed class ActivityGate : IDisposable
     /// </summary>
     public int AvailableSlots => _semaphore.CurrentCount;
 
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        _semaphore.Dispose();
+    }
+
     /// <summary>
     ///     Acquires one activity execution permit and returns a lease that releases it when disposed.
     /// </summary>
@@ -51,11 +57,5 @@ public sealed class ActivityGate : IDisposable
     internal void Release()
     {
         _semaphore.Release();
-    }
-
-    /// <inheritdoc />
-    public void Dispose()
-    {
-        _semaphore.Dispose();
     }
 }

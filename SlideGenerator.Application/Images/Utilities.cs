@@ -105,7 +105,11 @@ public static class Utilities
         height = Math.Min(height, original.Height);
         return new Size(width, height);
     }
-    public static Point CenterPoint(this Size size) => new(size.Width / 2, size.Height / 2);
+
+    public static Point CenterPoint(this Size size)
+    {
+        return new Point(size.Width / 2, size.Height / 2);
+    }
 
     /// <summary>
     ///     Calculates an anchored rectangle of the specified size inside the source image,
@@ -121,7 +125,7 @@ public static class Utilities
         Point? anchorPoint = null, Vector2? pivot = null)
     {
         anchorPoint ??= sourceSize.CenterPoint();
-        pivot ??= new(1 / 2f, 1 / 2f);
+        pivot ??= new Vector2(1 / 2f, 1 / 2f);
 
         var imageBounds = new Rectangle(Point.Empty, sourceSize);
         var boundedSize = new Size(
@@ -134,14 +138,19 @@ public static class Utilities
         return new Rectangle(x, y, boundedSize.Width, boundedSize.Height).ClampIn(imageBounds);
     }
 
-    public static Vector2 ToVector2(this Point point) => new(point.X, point.Y);
+    public static Vector2 ToVector2(this Point point)
+    {
+        return new Vector2(point.X, point.Y);
+    }
 
-    public static Point ToPoint(this Vector2 vector) =>
-        new(
+    public static Point ToPoint(this Vector2 vector)
+    {
+        return new Point(
             (int)MathF.Round(vector.X, MidpointRounding.AwayFromZero),
             (int)MathF.Round(vector.Y, MidpointRounding.AwayFromZero)
         );
-    
+    }
+
     public static Point? Centroid<TSource>(
         this IReadOnlyList<TSource> containers,
         Func<TSource, Point?> selector)
@@ -152,8 +161,8 @@ public static class Utilities
             .Select(p => p!.Value.ToVector2())
             .ToList();
         if (sources.Count == 0) return null;
-        
-        var sum  = sources.Aggregate(Vector2.Zero, (acc, v) => acc + v);
+
+        var sum = sources.Aggregate(Vector2.Zero, (acc, v) => acc + v);
         return (sum / containers.Count).ToPoint();
     }
 }

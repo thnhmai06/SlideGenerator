@@ -20,11 +20,6 @@ public sealed class Downloader : IDownloader, IDisposable, IAsyncDisposable
     private readonly Queue<string> _extension = new();
 
     /// <summary>
-    ///     Gets the underlying downloader service for managing the download process.
-    /// </summary>
-    private IDownloadService Service { get; init; } = null!;
-
-    /// <summary>
     ///     Initializes a new instance of the <see cref="Downloader" /> class.
     /// </summary>
     /// <param name="request">The information of file wants to download.</param>
@@ -51,6 +46,21 @@ public sealed class Downloader : IDownloader, IDisposable, IAsyncDisposable
         };
     }
 
+    /// <summary>
+    ///     Gets the underlying downloader service for managing the download process.
+    /// </summary>
+    private IDownloadService Service { get; } = null!;
+
+    public async ValueTask DisposeAsync()
+    {
+        await Service.DisposeAsync().ConfigureAwait(false);
+    }
+
+    public void Dispose()
+    {
+        Service.Dispose();
+    }
+
     public DownloadRequest Request { get; }
 
     public string FilePath => Path.Combine(Request.SaveFolder, Request.FileName + _extension.Peek());
@@ -61,12 +71,23 @@ public sealed class Downloader : IDownloader, IDisposable, IAsyncDisposable
         remove => Service.DownloadFileCompleted -= value;
     }
 
-    public async Task DownloadAsync() =>
+    public async Task DownloadAsync()
+    {
         await Service.DownloadFileTaskAsync(Request.Url, FilePath).ConfigureAwait(false);
-    public void Pause() => Service.Pause();
-    public void Resume() => Service.Resume();
-    public async Task Cancel() => await Service.CancelTaskAsync().ConfigureAwait(false);
+    }
 
-    public void Dispose() => Service.Dispose();
-    public async ValueTask DisposeAsync() => await Service.DisposeAsync().ConfigureAwait(false);
+    public void Pause()
+    {
+        Service.Pause();
+    }
+
+    public void Resume()
+    {
+        Service.Resume();
+    }
+
+    public async Task Cancel()
+    {
+        await Service.CancelTaskAsync().ConfigureAwait(false);
+    }
 }

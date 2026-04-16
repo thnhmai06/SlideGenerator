@@ -9,13 +9,12 @@ namespace SlideGenerator.Infrastructure.Sheets.Adapter;
 public class ReadOnlyWorkbook : IReadOnlyWorkbook
 {
     private readonly Lazy<IXLWorkbook> _workbookLazy;
-    private FileStream? _fileStream;
     private readonly ConcurrentDictionary<IXLWorksheet, ReadOnlyWorksheet> _worksheetCache = new();
-    private IXLWorkbook Core => _workbookLazy.Value;
+    private FileStream? _fileStream;
 
     public ReadOnlyWorkbook(string filePath)
     {
-        Identifier = new(filePath);
+        Identifier = new WorkbookIdentifier(filePath);
         _workbookLazy = new Lazy<IXLWorkbook>(() =>
         {
             _fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
@@ -24,6 +23,8 @@ public class ReadOnlyWorkbook : IReadOnlyWorkbook
 
         Worksheets = EnumerateWorksheets().ToList();
     }
+
+    private IXLWorkbook Core => _workbookLazy.Value;
 
     public WorkbookIdentifier Identifier { get; }
     public IReadOnlyList<IReadOnlyWorksheet> Worksheets { get; }
@@ -44,15 +45,6 @@ public class ReadOnlyWorkbook : IReadOnlyWorkbook
         return true;
     }
 
-    public IEnumerable<IReadOnlyWorksheet> EnumerateWorksheets()
-    {
-        return Core.Worksheets.Select(core => _worksheetCache.GetOrAdd(
-            core,
-            static (core, currentThis) => new ReadOnlyWorksheet(currentThis, core),
-            this
-        ));
-    }
-
 
     public void Dispose()
     {
@@ -60,5 +52,14 @@ public class ReadOnlyWorkbook : IReadOnlyWorkbook
             Core.Dispose();
 
         _fileStream?.Dispose();
+    }
+
+    public IEnumerable<IReadOnlyWorksheet> EnumerateWorksheets()
+    {
+        return Core.Worksheets.Select(core => _worksheetCache.GetOrAdd(
+            core,
+            static (core, currentThis) => new ReadOnlyWorksheet(currentThis, core),
+            this
+        ));
     }
 }

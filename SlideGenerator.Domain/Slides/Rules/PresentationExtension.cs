@@ -14,12 +14,23 @@ public static class PresentationExtensions
         PresentationExtension.Pptx,
         PresentationExtension.Potx
     };
-    
+
     internal static IReadOnlySet<PresentationExtension> OutputExtensions { get; } = new HashSet<PresentationExtension>
     {
         PresentationExtension.Pptx,
         PresentationExtension.Ppsx
     };
+
+    public static PresentationExtension FromFileExtension(string fileExtension)
+    {
+        return fileExtension.ToLower() switch
+        {
+            ".potx" => PresentationExtension.Potx,
+            ".pptx" => PresentationExtension.Pptx,
+            ".ppsx" => PresentationExtension.Ppsx,
+            _ => throw new ArgumentException($"Unsupported file extension: {fileExtension}", nameof(fileExtension))
+        };
+    }
 
     extension(PresentationExtension extension)
     {
@@ -33,16 +44,5 @@ public static class PresentationExtensions
                 _ => throw new ArgumentOutOfRangeException(nameof(extension), extension, null)
             };
         }
-    }
-
-    public static PresentationExtension FromFileExtension(string fileExtension)
-    {
-        return fileExtension.ToLower() switch
-        {
-            ".potx" => PresentationExtension.Potx,
-            ".pptx" => PresentationExtension.Pptx,
-            ".ppsx" => PresentationExtension.Ppsx,
-            _ => throw new ArgumentException($"Unsupported file extension: {fileExtension}", nameof(fileExtension))
-        };
     }
 }

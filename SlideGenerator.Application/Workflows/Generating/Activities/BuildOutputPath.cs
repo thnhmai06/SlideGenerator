@@ -12,8 +12,12 @@ namespace SlideGenerator.Application.Workflows.Generating.Activities;
 /// <remarks>
 ///     <para>State usage:</para>
 ///     <list type="bullet">
-///         <item><description>Reads lightweight inputs only.</description></item>
-///         <item><description>Writes final output path string to <see cref="OutputPath"/>.</description></item>
+///         <item>
+///             <description>Reads lightweight inputs only.</description>
+///         </item>
+///         <item>
+///             <description>Writes final output path string to <see cref="OutputPath" />.</description>
+///         </item>
 ///     </list>
 ///     <para>
 ///         This activity is idempotent and side effect free.

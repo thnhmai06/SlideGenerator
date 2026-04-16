@@ -1,3 +1,4 @@
+using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Presentation;
 using LinqKit;
@@ -10,14 +11,20 @@ namespace SlideGenerator.Infrastructure.Slides.Adapters;
 
 public class XmlPresentation(string filePath, bool isEditable = true) : IPresentation, IDisposable
 {
-    public PresentationIdentifier Identifier { get; } = new(filePath);
-
     private readonly Lazy<PresentationDocument> _core = new(() =>
     {
-        var docFs = new FileStream(filePath, FileMode.Open, 
+        var docFs = new FileStream(filePath, FileMode.Open,
             isEditable ? FileAccess.ReadWrite : FileAccess.Read, FileShare.ReadWrite);
         return PresentationDocument.Open(docFs, isEditable);
     }, LazyThreadSafetyMode.ExecutionAndPublication);
+
+    public void Dispose()
+    {
+        if (_core.IsValueCreated)
+            _core.Value.Dispose();
+    }
+
+    public PresentationIdentifier Identifier { get; } = new(filePath);
 
     public IEnumerable<ISlide> EnumerateSlides()
     {
@@ -58,9 +65,9 @@ public class XmlPresentation(string filePath, bool isEditable = true) : IPresent
         var oldSlide = sourceSlide.Core.Slide ??
                        throw new InvalidOperationException("Invalid slide: missing slide content.");
         var newSlide = presentationPart.AddNewPart<SlidePart>();
-        newSlide.Slide = (DocumentFormat.OpenXml.Presentation.Slide)(oldSlide.CloneNode(true)
-                                                                     ?? throw new InvalidOperationException(
-                                                                         "Failed to clone slide content."));
+        newSlide.Slide = (Slide)(oldSlide.CloneNode(true)
+                                 ?? throw new InvalidOperationException(
+                                     "Failed to clone slide content."));
         var ridMap = new Dictionary<string, string>(StringComparer.Ordinal);
 
         // reuse OpenXmlPart (image/layout/chart/...) but re-create relationships (new rId)
@@ -206,13 +213,7 @@ public class XmlPresentation(string filePath, bool isEditable = true) : IPresent
         _core.Value.Save();
     }
 
-    public void Dispose()
-    {
-        if (_core.IsValueCreated)
-            _core.Value.Dispose();
-    }
-
-    private static void RemapRelIds(DocumentFormat.OpenXml.OpenXmlElement root, Dictionary<string, string> ridMap)
+    private static void RemapRelIds(OpenXmlElement root, Dictionary<string, string> ridMap)
     {
         const string relNs = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
 
@@ -233,7 +234,7 @@ public class XmlPresentation(string filePath, bool isEditable = true) : IPresent
                 if (ridMap.TryGetValue(a.Value, out var newRid) &&
                     !string.Equals(a.Value, newRid, StringComparison.Ordinal))
                 {
-                    attrs[i] = new DocumentFormat.OpenXml.OpenXmlAttribute(a.Prefix, a.LocalName, a.NamespaceUri,
+                    attrs[i] = new OpenXmlAttribute(a.Prefix, a.LocalName, a.NamespaceUri,
                         newRid);
                     changed = true;
                 }
@@ -244,7 +245,7 @@ public class XmlPresentation(string filePath, bool isEditable = true) : IPresent
         }
     }
 
-    private static void RemoveElementsReferencingRelIds(DocumentFormat.OpenXml.OpenXmlElement root,
+    private static void RemoveElementsReferencingRelIds(OpenXmlElement root,
         HashSet<string> relIds)
     {
         // r:id, r:embed, r:link are in namespace relationships

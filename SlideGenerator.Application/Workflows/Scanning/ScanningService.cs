@@ -37,15 +37,15 @@ public sealed class ScanningService(
                     var imageShapePreviews = shapes
                         .Where(shape => shape.IsPicture || shape.HasBlipFill)
                         .Select(shape =>
-                    {
-                        var image = shape.TryGetPicture(out var picture)
-                            ? picture
-                            : shape.TryGetBlipFill(out var blipFill)
-                                ? blipFill
-                                : [];
+                        {
+                            var image = shape.TryGetPicture(out var picture)
+                                ? picture
+                                : shape.TryGetBlipFill(out var blipFill)
+                                    ? blipFill
+                                    : [];
 
-                        return new ShapePreview(shape.Id, shape.Name, shape.Bounds, image);
-                    })
+                            return new ShapePreview(shape.Id, shape.Name, shape.Bounds, image);
+                        })
                         .ToList();
 
                     var slidePreview = new SlidePreview(

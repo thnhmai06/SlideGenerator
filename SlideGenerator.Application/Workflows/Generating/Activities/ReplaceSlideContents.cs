@@ -21,7 +21,8 @@ public sealed class ReplaceSlideContents(
 {
     /// <summary>
     ///     Identifier of target slide to replace contents on.
-    /// / </summary>
+    ///     /
+    /// </summary>
     public required Input<SlideIdentifier> SlideIdentifier { get; init; }
 
     /// <summary>
@@ -73,7 +74,8 @@ public sealed class ReplaceSlideContents(
                 foreach (var shape in targetSlide.DescendShapes())
                 {
                     var imagePair = imageInstructions.FirstOrDefault(x => x.Key.Target.Id == shape.Id);
-                    if (imagePair.Key is null || string.IsNullOrWhiteSpace(imagePair.Value) || !File.Exists(imagePair.Value))
+                    if (imagePair.Key is null || string.IsNullOrWhiteSpace(imagePair.Value) ||
+                        !File.Exists(imagePair.Value))
                         continue;
 
                     using var imageStream = new FileStream(imagePair.Value, FileMode.Open, FileAccess.Read,

@@ -22,10 +22,10 @@ public class DownloadImages(
 
     /// <summary>Input: Target worksheet identifier used to derive workbook/worksheet names for download folder.</summary>
     public required Input<WorksheetIdentifier> Worksheet { get; init; }
-    
+
     /// <summary>Input: 1-based row index in the target worksheet.</summary>
     public required Input<int> RowIndex { get; init; }
-    
+
     /// <summary>
     ///     Output downloaded file paths keyed by specialized image instruction.
     /// </summary>

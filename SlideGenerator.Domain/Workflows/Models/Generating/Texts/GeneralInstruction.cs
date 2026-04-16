@@ -10,5 +10,7 @@ public sealed record GeneralInstruction(string Placeholder, IReadOnlyList<Column
     : Instruction(Placeholder), ISpecializable<GeneralInstruction, SpecializedInstruction>
 {
     public IEnumerable<SpecializedInstruction> Flatten(GeneralInstruction general)
-        => general.Sources.Select(source => new SpecializedInstruction(general.Placeholder, source));
+    {
+        return general.Sources.Select(source => new SpecializedInstruction(general.Placeholder, source));
+    }
 }

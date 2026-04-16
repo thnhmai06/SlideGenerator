@@ -23,10 +23,11 @@ public readonly record struct Face(
     Point? LeftMouth = null)
 {
     public Point FaceCenter => new(Rect.X + Rect.Width / 2, Rect.Y + Rect.Height / 2);
+
     public Point? EyesCenter => RightEye.HasValue && LeftEye.HasValue
         ? new Point((RightEye.Value.X + LeftEye.Value.X) / 2, (RightEye.Value.Y + LeftEye.Value.Y) / 2)
         : null;
-    
+
     public Point? MouthCenter => RightMouth.HasValue && LeftMouth.HasValue
         ? new Point((RightMouth.Value.X + LeftMouth.Value.X) / 2, (RightMouth.Value.Y + LeftMouth.Value.Y) / 2)
         : null;

@@ -12,6 +12,7 @@ namespace SlideGenerator.Infrastructure.Slides.Adapters;
 
 public class XmlShape : IShape
 {
+    private readonly XmlSlide _xmlSlide;
     internal readonly OpenXmlCompositeElement Core;
 
     internal XmlShape(XmlSlide slide, OpenXmlCompositeElement element)
@@ -20,21 +21,20 @@ public class XmlShape : IShape
         Core = element;
     }
 
-    private readonly XmlSlide _xmlSlide;
     public ISlide Slide => _xmlSlide;
 
     public uint Id => Core switch
     {
         Picture picture => picture.NonVisualPictureProperties?.NonVisualDrawingProperties?.Id?.Value,
         Shape shape => shape.NonVisualShapeProperties?.NonVisualDrawingProperties?.Id?.Value,
-        _ => null,
+        _ => null
     } ?? uint.MaxValue;
 
     public string Name => Core switch
     {
         Picture picture => picture.NonVisualPictureProperties?.NonVisualDrawingProperties?.Name?.ToString(),
         Shape shape => shape.NonVisualShapeProperties?.NonVisualDrawingProperties?.Name?.ToString(),
-        _ => null,
+        _ => null
     } ?? string.Empty;
 
     public RectangleF Bounds

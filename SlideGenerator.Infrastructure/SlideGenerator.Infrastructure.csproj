@@ -12,11 +12,11 @@
         <PackageReference Include="Elsa" Version="3.6.0"/>
         <PackageReference Include="Serilog.Sinks.File" Version="7.0.0"/>
         <PackageReference Include="YamlDotNet" Version="16.3.0"/>
-        <PackageReference Include="Magick.NET-Q8-AnyCPU" Version="14.11.1" />
+        <PackageReference Include="Magick.NET-Q8-AnyCPU" Version="14.11.1"/>
         <PackageReference Include="DocumentFormat.OpenXml" Version="3.5.1"/>
-        <PackageReference Include="OpenCvSharp4" Version="4.13.0.20260330" />
+        <PackageReference Include="OpenCvSharp4" Version="4.13.0.20260330"/>
         <PackageReference Include="Stubble.Core" Version="1.10.8"/>
-        <PackageReference Remove="StyleCop.Analyzers" />
+        <PackageReference Remove="StyleCop.Analyzers"/>
     </ItemGroup>
 
     <ItemGroup>

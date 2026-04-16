@@ -11,6 +11,9 @@ public record WorkbookIdentifier(string FilePath)
     public string FilePath { get; init; } = string.IsNullOrWhiteSpace(FilePath)
         ? throw new ArgumentException("File path cannot be null or whitespace.", nameof(FilePath))
         : FilePath;
-    
-    public WorksheetIdentifier GetWorksheet(string name) => new(this, name);
+
+    public WorksheetIdentifier GetWorksheet(string name)
+    {
+        return new WorksheetIdentifier(this, name);
+    }
 }

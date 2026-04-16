@@ -2,6 +2,7 @@ using Elsa.Expressions.Models;
 using Elsa.Extensions;
 using Elsa.Workflows;
 using Elsa.Workflows.Activities;
+using Elsa.Workflows.Models;
 using SlideGenerator.Application.Cloud.Services;
 using SlideGenerator.Application.Resources;
 using SlideGenerator.Application.Slides.Abstractions;
@@ -13,7 +14,9 @@ using SlideGenerator.Domain.Sheets.Entities;
 using SlideGenerator.Domain.Sheets.Models;
 using SlideGenerator.Domain.Slides.Entities.Presentation;
 using SlideGenerator.Domain.Slides.Models.Identifiers;
+using SlideGenerator.Domain.Slides.Rules;
 using SlideGenerator.Domain.Workflows.Models.Generating;
+using SlideGenerator.Domain.Workflows.Models.Generating.Texts;
 using TextSpecializedInstruction = SlideGenerator.Domain.Workflows.Models.Generating.Texts.SpecializedInstruction;
 using ImageSpecializedInstruction = SlideGenerator.Domain.Workflows.Models.Generating.Images.SpecializedInstruction;
 
@@ -63,7 +66,7 @@ public sealed class GeneratingWorkflow(
                 new ParallelForEach<WorksheetIdentifier>
                 {
                     Name = "GenerateByWorksheets",
-                    Items = new(context => GetRequest(context)!.Graph.Keys.ToList()),
+                    Items = new Input<object>(context => GetRequest(context)!.Graph.Keys.ToList()),
                     Body = new Sequence
                     {
                         Name = "GenerateByWorksheet",
@@ -74,65 +77,94 @@ public sealed class GeneratingWorkflow(
                                 Name = "Preparing",
                                 Activities =
                                 {
-                                    new BuildOutputPath()
+                                    new BuildOutputPath
                                     {
-                                        SaveFolder = new(context => GetRequest(context)!.SaveFolder),
-                                        Worksheet = new(context =>
+                                        SaveFolder = new Input<string>(context => GetRequest(context)!.SaveFolder),
+                                        Worksheet = new Input<WorksheetIdentifier>(context =>
                                             context.GetVariable<WorksheetIdentifier>("CurrentValue")!),
-                                        Extension = new(context => GetRequest(context)!.OutputExtension),
-                                        OutputPath = new(Utilities.GetRef(outputPathRefKey))
+                                        Extension = new Input<PresentationExtension>(context =>
+                                            GetRequest(context)!.OutputExtension),
+                                        OutputPath = new Output<string>(Utilities.GetRef(outputPathRefKey))
                                     },
                                     new CreateWorkingPresentation(slideRegistry, workbookRegistry, fileSystem)
                                     {
-                                        TemplateSlide = new(context =>
+                                        TemplateSlide = new Input<SlideIdentifier>(context =>
                                         {
                                             var request = GetRequest(context)!;
                                             var worksheet = context.GetVariable<WorksheetIdentifier>("CurrentValue")!;
                                             return request.Graph[worksheet];
                                         }),
-                                        Worksheet = new(context =>
+                                        Worksheet = new Input<WorksheetIdentifier>(context =>
                                             context.GetVariable<WorksheetIdentifier>("CurrentValue")!),
-                                        OutputPath = new(Utilities.GetRef(outputPathRefKey)),
-                                        WorkingTemplateSlide = new(Utilities.GetRef(workingTemplateSlideRefKey))
+                                        OutputPath = new Input<string>(Utilities.GetRef(outputPathRefKey)),
+                                        WorkingTemplateSlide =
+                                            new Output<SlideIdentifier>(Utilities.GetRef(workingTemplateSlideRefKey))
                                     },
                                     new ScanTemplateContent(slideRegistry, textReplacer)
                                     {
-                                        TemplateSlide = new(Utilities.GetRef(workingTemplateSlideRefKey)),
-                                        Placeholders = new(Utilities.GetRef(templatePlaceholdersRefKey)),
-                                        ImageShapeIds = new(Utilities.GetRef(templateImageShapeIdsRefKey))
+                                        TemplateSlide =
+                                            new Input<SlideIdentifier>(Utilities.GetRef(workingTemplateSlideRefKey)),
+                                        Placeholders =
+                                            new Output<IReadOnlySet<string>>(
+                                                Utilities.GetRef(templatePlaceholdersRefKey)),
+                                        ImageShapeIds =
+                                            new Output<IReadOnlySet<uint>>(
+                                                Utilities.GetRef(templateImageShapeIdsRefKey))
                                     },
                                     new SpecializeInstructions(workbookRegistry)
                                     {
-                                        Worksheet = new(context =>
+                                        Worksheet = new Input<WorksheetIdentifier>(context =>
                                             context.GetVariable<WorksheetIdentifier>("CurrentValue")!),
-                                        TemplateSlide = new(Utilities.GetRef(workingTemplateSlideRefKey)),
-                                        RawTextInstructions = new(context => GetRequest(context)!.TextInstructions),
-                                        RawImageInstructions = new(context => GetRequest(context)!.ImageInstructions),
-                                        TemplatePlaceholders = new(Utilities.GetRef(templatePlaceholdersRefKey)),
-                                        TemplateImageShapeIds = new(Utilities.GetRef(templateImageShapeIdsRefKey)),
-                                        TextInstructions = new(Utilities.GetRef(specializedTextInstructionsRefKey)),
-                                        ImageInstructions = new(Utilities.GetRef(specializedImageInstructionsRefKey))
+                                        TemplateSlide =
+                                            new Input<SlideIdentifier>(Utilities.GetRef(workingTemplateSlideRefKey)),
+                                        RawTextInstructions =
+                                            new Input<IReadOnlyList<GeneralInstruction>>(context =>
+                                                GetRequest(context)!.TextInstructions),
+                                        RawImageInstructions =
+                                            new Input<IReadOnlyList<Domain.Workflows.Models.Generating.Images.
+                                                GeneralInstruction>>(context => GetRequest(context)!.ImageInstructions),
+                                        TemplatePlaceholders =
+                                            new Input<IReadOnlySet<string>>(
+                                                Utilities.GetRef(templatePlaceholdersRefKey)),
+                                        TemplateImageShapeIds =
+                                            new Input<IReadOnlySet<uint>>(
+                                                Utilities.GetRef(templateImageShapeIdsRefKey)),
+                                        TextInstructions =
+                                            new Output<IReadOnlyList<SpecializedInstruction>>(
+                                                Utilities.GetRef(specializedTextInstructionsRefKey)),
+                                        ImageInstructions =
+                                            new Output<IReadOnlyList<ImageSpecializedInstruction>>(
+                                                Utilities.GetRef(specializedImageInstructionsRefKey))
                                     },
                                     new ResolveImageUrls(cloudResolver, workbookRegistry)
                                     {
-                                        ImageInstructions = new(Utilities.GetRef(specializedImageInstructionsRefKey)),
-                                        RowIndex = new(1),
-                                        WorksheetInfo = new(context =>
+                                        ImageInstructions =
+                                            new Input<IReadOnlyList<ImageSpecializedInstruction>>(
+                                                Utilities.GetRef(specializedImageInstructionsRefKey)),
+                                        RowIndex = new Input<int>(1),
+                                        WorksheetInfo = new Input<WorksheetIdentifier>(context =>
                                             context.GetVariable<WorksheetIdentifier>("CurrentValue")!),
-                                        ResolvedImageUrls = new(Utilities.GetRef(resolvedImageUrlsRefKey))
+                                        ResolvedImageUrls =
+                                            new Output<IReadOnlyDictionary<ImageSpecializedInstruction, string>>(
+                                                Utilities.GetRef(resolvedImageUrlsRefKey))
                                     },
                                     new AcquirePreparingSlot(settingProvider),
                                     new DownloadImages(downloadRegistry, settingProvider)
                                     {
-                                        ImageUrls = new(Utilities.GetRef(resolvedImageUrlsRefKey)),
-                                        Worksheet = new(context =>
+                                        ImageUrls = new Input<IReadOnlyDictionary<ImageSpecializedInstruction, string>>(
+                                            Utilities.GetRef(resolvedImageUrlsRefKey)),
+                                        Worksheet = new Input<WorksheetIdentifier>(context =>
                                             context.GetVariable<WorksheetIdentifier>("CurrentValue")!),
-                                        RowIndex = new(1),
-                                        ImagePaths = new(Utilities.GetRef(downloadedImagePathsRefKey))
+                                        RowIndex = new Input<int>(1),
+                                        ImagePaths =
+                                            new Output<IReadOnlyDictionary<ImageSpecializedInstruction, string>>(
+                                                Utilities.GetRef(downloadedImagePathsRefKey))
                                     },
                                     new EditImages
                                     {
-                                        DownloadedImagePaths = new(Utilities.GetRef(downloadedImagePathsRefKey))
+                                        DownloadedImagePaths =
+                                            new Input<IReadOnlyDictionary<ImageSpecializedInstruction, string>>(
+                                                Utilities.GetRef(downloadedImagePathsRefKey))
                                     },
                                     new ReleasePreparingSlot()
                                 }
@@ -146,7 +178,7 @@ public sealed class GeneratingWorkflow(
                                     new ForEach<int>
                                     {
                                         Name = "GenerateSlidesByRecord",
-                                        Items = new(context =>
+                                        Items = new Input<ICollection<int>>(context =>
                                         {
                                             var worksheet = context.GetVariable<WorksheetIdentifier>("CurrentValue")!;
                                             using var workbookLease =
@@ -160,7 +192,7 @@ public sealed class GeneratingWorkflow(
                                             var rowCount = readOnlyWorksheet.RowsCount;
                                             return Enumerable.Range(1, rowCount).ToList();
                                         }),
-                                        CurrentValue = new(Utilities.GetRef(currentRowIndexRefKey)),
+                                        CurrentValue = new Output<int>(Utilities.GetRef(currentRowIndexRefKey)),
                                         Body = new Sequence
                                         {
                                             Name = "CloneThenReplaceByRecord",
@@ -168,8 +200,10 @@ public sealed class GeneratingWorkflow(
                                             {
                                                 new CloneTemplateSlide(slideRegistry)
                                                 {
-                                                    TemplateSlide = new(Utilities.GetRef(workingTemplateSlideRefKey)),
-                                                    InsertAtIndex = new(context =>
+                                                    TemplateSlide =
+                                                        new Input<SlideIdentifier>(
+                                                            Utilities.GetRef(workingTemplateSlideRefKey)),
+                                                    InsertAtIndex = new Input<int>(context =>
                                                     {
                                                         var rowIndex =
                                                             context.Get<int>(Utilities.GetRef(currentRowIndexRefKey));
@@ -178,7 +212,7 @@ public sealed class GeneratingWorkflow(
                                                 },
                                                 new ReplaceSlideContents(slideRegistry, textReplacer, imageReplacers)
                                                 {
-                                                    SlideIdentifier = new(context =>
+                                                    SlideIdentifier = new Input<SlideIdentifier>(context =>
                                                     {
                                                         var rowIndex =
                                                             context.Get<int>(Utilities.GetRef(currentRowIndexRefKey));
@@ -187,51 +221,57 @@ public sealed class GeneratingWorkflow(
                                                         return workingTemplateSlide.Presentation.GetSlide(
                                                             WorkingTemplateSlideIndex + rowIndex);
                                                     }),
-                                                    TextInstructions = new(context =>
-                                                    {
-                                                        var worksheet =
-                                                            context.GetVariable<WorksheetIdentifier>("CurrentValue")!;
-                                                        var rowIndex =
-                                                            context.Get<int>(Utilities.GetRef(currentRowIndexRefKey));
-                                                        using var workbookLease = workbookRegistry.Acquire(
-                                                            worksheet.Workbook.FilePath, true);
-                                                        var workbook = workbookLease.Value;
+                                                    TextInstructions =
+                                                        new Input<IReadOnlyDictionary<string, string>>(context =>
+                                                        {
+                                                            var worksheet =
+                                                                context.GetVariable<WorksheetIdentifier>("CurrentValue")
+                                                                !;
+                                                            var rowIndex =
+                                                                context.Get<int>(
+                                                                    Utilities.GetRef(currentRowIndexRefKey));
+                                                            using var workbookLease = workbookRegistry.Acquire(
+                                                                worksheet.Workbook.FilePath, true);
+                                                            var workbook = workbookLease.Value;
 
-                                                        if (!workbook.TryGetWorksheet(worksheet.Name,
-                                                                out var readOnlyWorksheet))
-                                                            throw new InvalidOperationException(
-                                                                $"Worksheet '{worksheet.Name}' does not exist in workbook.");
+                                                            if (!workbook.TryGetWorksheet(worksheet.Name,
+                                                                    out var readOnlyWorksheet))
+                                                                throw new InvalidOperationException(
+                                                                    $"Worksheet '{worksheet.Name}' does not exist in workbook.");
 
-                                                        var rowContent = readOnlyWorksheet.GetRowContent(rowIndex);
-                                                        var instructions =
-                                                            (IReadOnlyList<TextSpecializedInstruction>)context.Get(
-                                                                specializedTextInstructionsRefKey)!;
+                                                            var rowContent = readOnlyWorksheet.GetRowContent(rowIndex);
+                                                            var instructions =
+                                                                (IReadOnlyList<TextSpecializedInstruction>)context.Get(
+                                                                    specializedTextInstructionsRefKey)!;
 
-                                                        return instructions
-                                                            .GroupBy(x => x.Placeholder, StringComparer.Ordinal)
-                                                            .ToDictionary(
-                                                                x => x.Key,
-                                                                x => rowContent.TryGetValue(x.First().Source.Name,
-                                                                    out var value)
-                                                                    ? value
-                                                                    : string.Empty,
-                                                                StringComparer.Ordinal);
-                                                    }),
-                                                    ImageInstructions = new(context =>
-                                                        (IReadOnlyDictionary<ImageSpecializedInstruction, string>)
-                                                        context.Get(downloadedImagePathsRefKey)!)
-                                                },
+                                                            return instructions
+                                                                .GroupBy(x => x.Placeholder, StringComparer.Ordinal)
+                                                                .ToDictionary(
+                                                                    x => x.Key,
+                                                                    x => rowContent.TryGetValue(x.First().Source.Name,
+                                                                        out var value)
+                                                                        ? value
+                                                                        : string.Empty,
+                                                                    StringComparer.Ordinal);
+                                                        }),
+                                                    ImageInstructions =
+                                                        new Input<IReadOnlyDictionary<ImageSpecializedInstruction,
+                                                            string>>(context =>
+                                                            (IReadOnlyDictionary<ImageSpecializedInstruction, string>)
+                                                            context.Get(downloadedImagePathsRefKey)!)
+                                                }
                                             }
                                         }
                                     },
                                     new ReleaseEditingSlot(),
                                     new RemoveWorkingTemplateSlide(slideRegistry)
                                     {
-                                        WorkingTemplateSlide = new(Utilities.GetRef(workingTemplateSlideRefKey))
+                                        WorkingTemplateSlide =
+                                            new Input<SlideIdentifier>(Utilities.GetRef(workingTemplateSlideRefKey))
                                     },
                                     new CleanupResources(workbookRegistry, slideRegistry)
                                     {
-                                        Presentations = new(context =>
+                                        Presentations = new Input<IReadOnlySet<PresentationIdentifier>>(context =>
                                             new HashSet<PresentationIdentifier>
                                             {
                                                 new((string)context.Get(outputPathRefKey)!)
@@ -241,7 +281,7 @@ public sealed class GeneratingWorkflow(
                             }
                         }
                     }
-                },
+                }
             }
         };
     }

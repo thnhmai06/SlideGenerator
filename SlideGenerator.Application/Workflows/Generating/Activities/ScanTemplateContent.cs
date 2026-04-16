@@ -15,8 +15,12 @@ namespace SlideGenerator.Application.Workflows.Generating.Activities;
 ///         Reads an opened working presentation from registry and scans one slide.
 ///     </para>
 ///     <list type="bullet">
-///         <item><description>Writes lightweight sets: <see cref="Placeholders"/> and <see cref="ImageShapeIds"/>.</description></item>
-///         <item><description>Does not persist OpenXml document objects in workflow state.</description></item>
+///         <item>
+///             <description>Writes lightweight sets: <see cref="Placeholders" /> and <see cref="ImageShapeIds" />.</description>
+///         </item>
+///         <item>
+///             <description>Does not persist OpenXml document objects in workflow state.</description>
+///         </item>
 ///     </list>
 /// </remarks>
 public sealed class ScanTemplateContent(

@@ -180,7 +180,8 @@ public sealed class YuNet(
         var padTop = (targetHeight - newHeight) / 2;
 
         // Create output mat with black background
-        using var processedMat = new OpenCvSharp.Mat(new Size(targetWidth, targetHeight), mat.Type(), new Scalar(0, 0, 0));
+        using var processedMat =
+            new OpenCvSharp.Mat(new Size(targetWidth, targetHeight), mat.Type(), new Scalar(0, 0, 0));
         var roi = new Rect(padLeft, padTop, newWidth, newHeight);
         resizedMat.CopyTo(processedMat[roi]);
         resizedMat.Dispose();
@@ -235,6 +236,11 @@ public sealed class YuNet(
         return null;
     }
 
+    private static int RoundToIntAwayFromZero(float value)
+    {
+        return (int)Math.Round(value, MidpointRounding.AwayFromZero);
+    }
+
     /// <summary>
     ///     Contains transformation information from resizing and padding operation for coordinate unmapping.
     /// </summary>
@@ -246,7 +252,4 @@ public sealed class YuNet(
         public required int PadTop { get; init; }
         public required Size OriginalSize { get; init; }
     }
-
-    private static int RoundToIntAwayFromZero(float value)
-        => (int)Math.Round(value, MidpointRounding.AwayFromZero);
 }

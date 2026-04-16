@@ -8,6 +8,7 @@ namespace SlideGenerator.Infrastructure.Slides.Adapters;
 
 public class XmlSlide : ISlide
 {
+    private readonly XmlPresentation _xmlPresentation;
     internal readonly SlidePart Core;
 
     internal XmlSlide(XmlPresentation presentation, SlidePart core)
@@ -16,10 +17,9 @@ public class XmlSlide : ISlide
         Core = core;
     }
 
-    private readonly XmlPresentation _xmlPresentation;
+    public required int Index { get; init; }
 
     public IPresentation Presentation => _xmlPresentation;
-    public required int Index { get; init; }
     public required uint Id { get; init; }
     public string? Name => Core.Slide?.CommonSlideData?.Name?.ToString();
 

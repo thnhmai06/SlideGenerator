@@ -16,7 +16,7 @@ public static class Utilities
     public static string NormalizeFileName(string? value, string? defaultValue = null)
     {
         defaultValue ??= string.Empty;
-        
+
         if (string.IsNullOrWhiteSpace(value))
             return defaultValue;
 
@@ -26,6 +26,9 @@ public static class Utilities
 
         return string.IsNullOrWhiteSpace(normalized) ? defaultValue : normalized;
     }
-    
-    public static MemoryBlockReference GetRef(string name) => new(name);
+
+    public static MemoryBlockReference GetRef(string name)
+    {
+        return new MemoryBlockReference(name);
+    }
 }

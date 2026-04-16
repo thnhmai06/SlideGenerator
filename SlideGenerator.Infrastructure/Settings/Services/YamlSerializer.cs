@@ -1,22 +1,23 @@
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
+using ISerializer = SlideGenerator.Application.Settings.Abstractions.ISerializer;
 
 namespace SlideGenerator.Infrastructure.Settings.Services;
 
-public class YamlSerializer : Application.Settings.Abstractions.ISerializer
+public class YamlSerializer : ISerializer
 {
-    public string FileExtension => ".yaml";
-
     private readonly IDeserializer _deserializer =
         new DeserializerBuilder()
             .WithNamingConvention(UnderscoredNamingConvention.Instance)
             .IgnoreUnmatchedProperties()
             .Build();
 
-    private readonly ISerializer _serializer =
+    private readonly YamlDotNet.Serialization.ISerializer _serializer =
         new SerializerBuilder()
             .WithNamingConvention(UnderscoredNamingConvention.Instance)
             .Build();
+
+    public string FileExtension => ".yaml";
 
     public T Deserialize<T>(string input)
     {

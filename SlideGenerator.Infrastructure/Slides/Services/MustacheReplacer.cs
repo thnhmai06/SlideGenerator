@@ -12,11 +12,11 @@ namespace SlideGenerator.Infrastructure.Slides.Services;
 
 public partial class MustacheReplacer : ITextReplacer
 {
+    private static readonly Regex MustachePattern = MustacheRegex();
+
     private readonly StubbleVisitorRenderer _renderer = new StubbleBuilder()
         .Configure(settings => settings.SetEncodingFunction(value => value))
         .Build();
-
-    private static readonly Regex MustachePattern = MustacheRegex();
 
     public IEnumerable<string> Scan(IReadOnlyShape sample)
     {

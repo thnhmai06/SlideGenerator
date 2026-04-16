@@ -7,7 +7,11 @@ public interface ISlide : IReadOnlySlide
 {
     new IPresentation Presentation { get; }
     IReadOnlyPresentation IReadOnlySlide.Presentation => Presentation;
-    
+
+    IEnumerable<IReadOnlyShape> IReadOnlySlide.DescendShapes()
+    {
+        return DescendShapes();
+    }
+
     new IEnumerable<IShape> DescendShapes();
-    IEnumerable<IReadOnlyShape> IReadOnlySlide.DescendShapes() => DescendShapes();
 }

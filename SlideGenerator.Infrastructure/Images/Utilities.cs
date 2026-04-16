@@ -35,7 +35,7 @@ public static class Utilities
         mat.Dispose();
         mat = resizedMat;
     }
-    
+
     /// <summary>
     ///     Get the largest size that has the same aspect ratio with the target size and fits within the original size.
     /// </summary>

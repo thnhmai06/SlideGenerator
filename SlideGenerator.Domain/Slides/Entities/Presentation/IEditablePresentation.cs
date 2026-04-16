@@ -5,9 +5,13 @@ namespace SlideGenerator.Domain.Slides.Entities.Presentation;
 
 public interface IPresentation : IReadOnlyPresentation
 {
+    IEnumerable<IReadOnlySlide> IReadOnlyPresentation.EnumerateSlides()
+    {
+        return EnumerateSlides();
+    }
+
     new IEnumerable<ISlide> EnumerateSlides();
-    IEnumerable<IReadOnlySlide> IReadOnlyPresentation.EnumerateSlides() => EnumerateSlides();
-    
+
     ISlide CopySlide(int from, int to);
     bool RemoveSlide(int index);
     void Save(PresentationExtension? extension = null);

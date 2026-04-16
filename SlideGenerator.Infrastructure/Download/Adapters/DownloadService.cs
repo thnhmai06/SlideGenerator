@@ -6,19 +6,25 @@ using IDownloadService = SlideGenerator.Application.Download.Abstractions.IDownl
 namespace SlideGenerator.Infrastructure.Download.Adapters;
 
 /// <summary>
-/// Adapts the external downloader service to the application download service abstraction.
+///     Adapts the external downloader service to the application download service abstraction.
 /// </summary>
-public class DownloadService(global::Downloader.DownloadService core) : IDownloadService
+public class DownloadService(Downloader.DownloadService core) : IDownloadService
 {
     private readonly
-        ConcurrentDictionary<EventHandler<IDownloadStartedEventArgs>, EventHandler<global::Downloader.DownloadStartedEventArgs>>
+        ConcurrentDictionary<EventHandler<IDownloadStartedEventArgs>, EventHandler<Downloader.DownloadStartedEventArgs>>
         _downloadStartedHandlers = new();
 
     /// <inheritdoc />
-    public void Dispose() => core.Dispose();
+    public void Dispose()
+    {
+        core.Dispose();
+    }
 
     /// <inheritdoc />
-    public ValueTask DisposeAsync() => core.DisposeAsync();
+    public ValueTask DisposeAsync()
+    {
+        return core.DisposeAsync();
+    }
 
     /// <inheritdoc />
     public event EventHandler<AsyncCompletedEventArgs>? DownloadFileCompleted
@@ -34,7 +40,7 @@ public class DownloadService(global::Downloader.DownloadService core) : IDownloa
         {
             if (value is null) return;
 
-            EventHandler<global::Downloader.DownloadStartedEventArgs> coreHandler = (sender, args) =>
+            EventHandler<Downloader.DownloadStartedEventArgs> coreHandler = (sender, args) =>
                 value(sender, new DownloadStartedEventArgs(args));
             if (_downloadStartedHandlers.TryAdd(value, coreHandler)) core.DownloadStarted += coreHandler;
         }

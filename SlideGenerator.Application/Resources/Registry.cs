@@ -9,30 +9,23 @@ namespace SlideGenerator.Application.Resources;
 /// <typeparam name="T">The resource type stored by the registry.</typeparam>
 public abstract class Registry<T> : IDisposable
 {
-    /// <summary>
-    ///     Represents a cached resource entry together with its current lifecycle metadata.
-    /// </summary>
-    protected sealed class Entry(T resource, bool isEditable)
-    {
-        /// <summary>
-        ///     Gets or sets the cached resource instance.
-        /// </summary>
-        public T Resource { get; set; } = resource;
-
-        /// <summary>
-        ///     Gets or sets a value indicating whether the cached resource was opened in editable mode.
-        /// </summary>
-        public bool IsEditable { get; set; } = isEditable;
-
-        /// <summary>
-        ///     Gets or sets the number of active consumers currently using the cached resource.
-        /// </summary>
-        public int ReferenceCount { get; set; } = 1;
-    }
-
-    private readonly Lock _syncRoot = new();
     private readonly ConcurrentDictionary<string, Entry> _resources =
         new(StringComparer.OrdinalIgnoreCase);
+
+    private readonly Lock _syncRoot = new();
+
+    /// <summary>
+    ///     Disposes every cached resource currently held by the registry.
+    /// </summary>
+    public void Dispose()
+    {
+        lock (_syncRoot)
+        {
+            foreach (var key in _resources.Keys.ToList())
+                if (_resources.TryRemove(key, out var removed))
+                    DisposeResource(removed.Resource);
+        }
+    }
 
     /// <summary>
     ///     Gets an existing resource for the specified file path or opens a new one when none is cached.
@@ -125,21 +118,6 @@ public abstract class Registry<T> : IDisposable
     }
 
     /// <summary>
-    ///     Disposes every cached resource currently held by the registry.
-    /// </summary>
-    public void Dispose()
-    {
-        lock (_syncRoot)
-        {
-            foreach (var key in _resources.Keys.ToList())
-            {
-                if (_resources.TryRemove(key, out var removed))
-                    DisposeResource(removed.Resource);
-            }
-        }
-    }
-
-    /// <summary>
     ///     Normalizes a file path into the key used by the registry.
     /// </summary>
     /// <param name="filePath">The original file path.</param>
@@ -169,12 +147,33 @@ public abstract class Registry<T> : IDisposable
     }
 
     /// <summary>
-    ///     Disposes a resource instance if it supports <see cref="IDisposable"/>.
+    ///     Disposes a resource instance if it supports <see cref="IDisposable" />.
     /// </summary>
     /// <param name="resource">The resource to dispose.</param>
     protected virtual void DisposeResource(T resource)
     {
         if (resource is IDisposable disposable)
             disposable.Dispose();
+    }
+
+    /// <summary>
+    ///     Represents a cached resource entry together with its current lifecycle metadata.
+    /// </summary>
+    protected sealed class Entry(T resource, bool isEditable)
+    {
+        /// <summary>
+        ///     Gets or sets the cached resource instance.
+        /// </summary>
+        public T Resource { get; set; } = resource;
+
+        /// <summary>
+        ///     Gets or sets a value indicating whether the cached resource was opened in editable mode.
+        /// </summary>
+        public bool IsEditable { get; set; } = isEditable;
+
+        /// <summary>
+        ///     Gets or sets the number of active consumers currently using the cached resource.
+        /// </summary>
+        public int ReferenceCount { get; set; } = 1;
     }
 }

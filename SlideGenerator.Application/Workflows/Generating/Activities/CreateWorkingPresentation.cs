@@ -77,19 +77,17 @@ public sealed class CreateWorkingPresentation(
         var templatePath = Path.GetFullPath(templateSlideIdentifier.Presentation.FilePath);
         if (!File.Exists(templatePath))
             throw new FileNotFoundException("Template presentation file not found.", templatePath);
-        
-        fileSystem.CopyFile(templatePath, outputPath, overwrite: true);
+
+        fileSystem.CopyFile(templatePath, outputPath, true);
 
         var workingPresentation = slideRegistry.GetOrOpen(outputPath, true);
         var totalSlides = workingPresentation.EnumerateSlides().Count();
         for (var index = totalSlides; index >= 1; index--)
-        {
             if (index != templateSlideIdentifier.Index)
                 workingPresentation.RemoveSlide(index);
-        }
         var outputExtensionType = PresentationExtensions.FromFileExtension(Path.GetExtension(outputPath));
         workingPresentation.Save(outputExtensionType);
-        
+
         context.Set(WorkingTemplateSlide, new PresentationIdentifier(outputPath).GetSlide(1));
         return ValueTask.CompletedTask;
     }

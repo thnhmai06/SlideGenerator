@@ -7,21 +7,6 @@ namespace SlideGenerator.Infrastructure.Slides;
 public static class Utilities
 {
     public const int EmuPerPixel = 9525;
-    
-    extension(PresentationExtension? extension)
-    {
-        public PresentationDocumentType ToXmlDocType()
-        {
-            return extension switch
-            {
-                null => PresentationDocumentType.Presentation,
-                PresentationExtension.Potx => PresentationDocumentType.Template,
-                PresentationExtension.Pptx => PresentationDocumentType.Presentation,
-                PresentationExtension.Ppsx => PresentationDocumentType.Slideshow,
-                _ => throw new ArgumentOutOfRangeException(nameof(extension), extension, null)
-            };
-        }
-    }
 
     public static Dictionary<string, string> SanitizeXmlValues(IReadOnlyDictionary<string, string> replacements)
     {
@@ -39,5 +24,20 @@ public static class Utilities
             buffer[count++] = ch;
 
         return new string(buffer, 0, count);
+    }
+
+    extension(PresentationExtension? extension)
+    {
+        public PresentationDocumentType ToXmlDocType()
+        {
+            return extension switch
+            {
+                null => PresentationDocumentType.Presentation,
+                PresentationExtension.Potx => PresentationDocumentType.Template,
+                PresentationExtension.Pptx => PresentationDocumentType.Presentation,
+                PresentationExtension.Ppsx => PresentationDocumentType.Slideshow,
+                _ => throw new ArgumentOutOfRangeException(nameof(extension), extension, null)
+            };
+        }
     }
 }

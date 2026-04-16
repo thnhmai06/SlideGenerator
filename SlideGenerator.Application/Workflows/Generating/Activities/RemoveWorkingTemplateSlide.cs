@@ -17,7 +17,7 @@ namespace SlideGenerator.Application.Workflows.Generating.Activities;
 public sealed class RemoveWorkingTemplateSlide(Registry<IPresentation> slideRegistry) : Activity
 {
     /// <summary>
-    ///    Input working template slide identifier.
+    ///     Input working template slide identifier.
     /// </summary>
     public required Input<SlideIdentifier> WorkingTemplateSlide { get; init; }
 

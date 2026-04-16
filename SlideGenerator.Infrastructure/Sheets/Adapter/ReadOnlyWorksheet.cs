@@ -12,17 +12,17 @@ public class ReadOnlyWorksheet : IReadOnlyWorksheet
     {
         Workbook = workbook;
         _core = core;
-        
+
         Headers = ContentRange?.FirstRow().Cells()
             .Select(cell => cell.GetString())
             .ToList() ?? [];
     }
 
+    private IXLRange? ContentRange => _core.RangeUsed(XLCellsUsedOptions.Contents);
+
     public IReadOnlyWorkbook Workbook { get; }
     public IReadOnlyList<string> Headers { get; }
     public WorksheetIdentifier Identifier => new(Workbook.Identifier, _core.Name);
-
-    private IXLRange? ContentRange => _core.RangeUsed(XLCellsUsedOptions.Contents);
 
     public int RowsCount => Math.Max(0, ContentRange?.RowCount() - 1 ?? 0);
 

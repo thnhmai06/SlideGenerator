@@ -16,5 +16,7 @@ public sealed record GeneralInstruction(
     : Instruction(Target, Edit), ISpecializable<GeneralInstruction, SpecializedInstruction>
 {
     public IEnumerable<SpecializedInstruction> Flatten(GeneralInstruction general)
-        => general.Sources.Select(source => new SpecializedInstruction(general.Target, source, general.Edit));
+    {
+        return general.Sources.Select(source => new SpecializedInstruction(general.Target, source, general.Edit));
+    }
 }
