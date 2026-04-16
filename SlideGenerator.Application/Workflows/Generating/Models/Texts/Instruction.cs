@@ -1,4 +1,4 @@
-namespace SlideGenerator.Domain.Workflows.Models.Generating.Texts;
+namespace SlideGenerator.Application.Workflows.Generating.Models.Texts;
 
 /// <param name="Placeholder">Placeholder token to replace in slide content.</param>
 public abstract record Instruction(string Placeholder);

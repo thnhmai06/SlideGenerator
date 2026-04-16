@@ -15,7 +15,7 @@
 
     <ItemGroup>
         <Folder Include="Cloud\"/>
-        <Folder Include="Workflows\Generating\"/>
+        <Folder Include="Workflows\Scanning\Models\" />
     </ItemGroup>
 
     <ItemGroup>

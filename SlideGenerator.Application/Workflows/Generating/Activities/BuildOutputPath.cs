@@ -1,8 +1,8 @@
 using Elsa.Workflows;
 using Elsa.Workflows.Models;
+using SlideGenerator.Application.Workflows.Generating.Rules;
 using SlideGenerator.Domain.Sheets.Models;
 using SlideGenerator.Domain.Slides.Rules;
-using SlideGenerator.Domain.Workflows.Rules;
 
 namespace SlideGenerator.Application.Workflows.Generating.Activities;
 

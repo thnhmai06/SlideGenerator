@@ -9,13 +9,13 @@ public enum PresentationExtension
 
 public static class PresentationExtensions
 {
-    internal static IReadOnlySet<PresentationExtension> InputExtensions { get; } = new HashSet<PresentationExtension>
+    public static IReadOnlySet<PresentationExtension> InputExtensions { get; } = new HashSet<PresentationExtension>
     {
         PresentationExtension.Pptx,
         PresentationExtension.Potx
     };
 
-    internal static IReadOnlySet<PresentationExtension> OutputExtensions { get; } = new HashSet<PresentationExtension>
+    public static IReadOnlySet<PresentationExtension> OutputExtensions { get; } = new HashSet<PresentationExtension>
     {
         PresentationExtension.Pptx,
         PresentationExtension.Ppsx

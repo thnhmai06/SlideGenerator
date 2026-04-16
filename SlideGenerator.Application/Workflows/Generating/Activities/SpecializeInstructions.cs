@@ -1,17 +1,17 @@
 using Elsa.Workflows;
 using Elsa.Workflows.Models;
 using SlideGenerator.Application.Resources;
+using SlideGenerator.Application.Workflows.Generating.Models.Images;
 using SlideGenerator.Domain.Sheets.Entities;
 using SlideGenerator.Domain.Sheets.Models;
 using SlideGenerator.Domain.Slides.Models.Identifiers;
-using SlideGenerator.Domain.Workflows.Models.Generating.Images;
-using TextGeneralInstruction = SlideGenerator.Domain.Workflows.Models.Generating.Texts.GeneralInstruction;
-using ImageGeneralInstruction = SlideGenerator.Domain.Workflows.Models.Generating.Images.GeneralInstruction;
+using TextGeneralInstruction = SlideGenerator.Application.Workflows.Generating.Models.Texts.GeneralInstruction;
+using ImageGeneralInstruction = SlideGenerator.Application.Workflows.Generating.Models.Images.GeneralInstruction;
 
 namespace SlideGenerator.Application.Workflows.Generating.Activities;
 
 using SpecializedImageInstruction = SpecializedInstruction;
-using SpecializedTextInstruction = Domain.Workflows.Models.Generating.Texts.SpecializedInstruction;
+using SpecializedTextInstruction = Models.Texts.SpecializedInstruction;
 
 /// <summary>
 ///     Converts general instructions into worksheet-specific specialized instructions.

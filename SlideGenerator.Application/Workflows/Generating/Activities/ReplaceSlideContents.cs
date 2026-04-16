@@ -2,9 +2,9 @@ using Elsa.Workflows;
 using Elsa.Workflows.Models;
 using SlideGenerator.Application.Resources;
 using SlideGenerator.Application.Slides.Abstractions;
+using SlideGenerator.Application.Workflows.Generating.Models.Images;
 using SlideGenerator.Domain.Slides.Entities.Presentation;
 using SlideGenerator.Domain.Slides.Models.Identifiers;
-using SlideGenerator.Domain.Workflows.Models.Generating.Images;
 
 namespace SlideGenerator.Application.Workflows.Generating.Activities;
 

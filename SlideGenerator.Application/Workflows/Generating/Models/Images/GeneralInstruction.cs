@@ -1,7 +1,7 @@
 using SlideGenerator.Domain.Sheets.Models;
 using SlideGenerator.Domain.Slides.Models.Identifiers;
 
-namespace SlideGenerator.Domain.Workflows.Models.Generating.Images;
+namespace SlideGenerator.Application.Workflows.Generating.Models.Images;
 
 /// <summary>
 ///     Represents an image binding configuration for replacement.

@@ -1,6 +1,6 @@
 using SlideGenerator.Domain.Slides.Models.Previews;
 
-namespace SlideGenerator.Domain.Workflows.Models.Scanning.Slides;
+namespace SlideGenerator.Application.Workflows.Scanning.Models.Slides;
 
 /// <summary>
 ///     Describes one slide and template markers discovered during scanning.

@@ -1,4 +1,4 @@
-namespace SlideGenerator.Domain.Workflows.Models.Scanning.Slides;
+namespace SlideGenerator.Application.Workflows.Scanning.Models.Slides;
 
 /// <summary>
 ///     Presentation scan result.

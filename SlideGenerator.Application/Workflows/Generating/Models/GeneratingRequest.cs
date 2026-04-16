@@ -1,9 +1,9 @@
+using SlideGenerator.Application.Workflows.Generating.Models.Texts;
 using SlideGenerator.Domain.Sheets.Models;
 using SlideGenerator.Domain.Slides.Models.Identifiers;
 using SlideGenerator.Domain.Slides.Rules;
-using SlideGenerator.Domain.Workflows.Models.Generating.Texts;
 
-namespace SlideGenerator.Domain.Workflows.Models.Generating;
+namespace SlideGenerator.Application.Workflows.Generating.Models;
 
 /// <summary>
 ///     Represents a generation request payload consumed by endpoint.

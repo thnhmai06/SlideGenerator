@@ -3,9 +3,9 @@ using Elsa.Workflows;
 using Elsa.Workflows.Models;
 using SlideGenerator.Application.Cloud.Services;
 using SlideGenerator.Application.Resources;
+using SlideGenerator.Application.Workflows.Generating.Models.Images;
 using SlideGenerator.Domain.Sheets.Entities;
 using SlideGenerator.Domain.Sheets.Models;
-using SlideGenerator.Domain.Workflows.Models.Generating.Images;
 
 namespace SlideGenerator.Application.Workflows.Generating.Activities;
 

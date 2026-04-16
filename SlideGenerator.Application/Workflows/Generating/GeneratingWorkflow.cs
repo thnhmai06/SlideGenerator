@@ -8,6 +8,8 @@ using SlideGenerator.Application.Resources;
 using SlideGenerator.Application.Slides.Abstractions;
 using SlideGenerator.Application.Systems.Abstractions;
 using SlideGenerator.Application.Workflows.Generating.Activities;
+using SlideGenerator.Application.Workflows.Generating.Models;
+using SlideGenerator.Application.Workflows.Generating.Models.Texts;
 using SlideGenerator.Domain.Download.Abstractions;
 using SlideGenerator.Domain.Settings.Interfaces;
 using SlideGenerator.Domain.Sheets.Entities;
@@ -15,10 +17,8 @@ using SlideGenerator.Domain.Sheets.Models;
 using SlideGenerator.Domain.Slides.Entities.Presentation;
 using SlideGenerator.Domain.Slides.Models.Identifiers;
 using SlideGenerator.Domain.Slides.Rules;
-using SlideGenerator.Domain.Workflows.Models.Generating;
-using SlideGenerator.Domain.Workflows.Models.Generating.Texts;
-using TextSpecializedInstruction = SlideGenerator.Domain.Workflows.Models.Generating.Texts.SpecializedInstruction;
-using ImageSpecializedInstruction = SlideGenerator.Domain.Workflows.Models.Generating.Images.SpecializedInstruction;
+using TextSpecializedInstruction = SlideGenerator.Application.Workflows.Generating.Models.Texts.SpecializedInstruction;
+using ImageSpecializedInstruction = SlideGenerator.Application.Workflows.Generating.Models.Images.SpecializedInstruction;
 
 namespace SlideGenerator.Application.Workflows.Generating;
 
@@ -121,8 +121,7 @@ public sealed class GeneratingWorkflow(
                                             new Input<IReadOnlyList<GeneralInstruction>>(context =>
                                                 GetRequest(context)!.TextInstructions),
                                         RawImageInstructions =
-                                            new Input<IReadOnlyList<Domain.Workflows.Models.Generating.Images.
-                                                GeneralInstruction>>(context => GetRequest(context)!.ImageInstructions),
+                                            new Input<IReadOnlyList<Models.Images.GeneralInstruction>>(context => GetRequest(context)!.ImageInstructions),
                                         TemplatePlaceholders =
                                             new Input<IReadOnlySet<string>>(
                                                 Utilities.GetRef(templatePlaceholdersRefKey)),

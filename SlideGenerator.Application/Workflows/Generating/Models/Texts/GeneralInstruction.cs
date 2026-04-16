@@ -1,6 +1,6 @@
 using SlideGenerator.Domain.Sheets.Models;
 
-namespace SlideGenerator.Domain.Workflows.Models.Generating.Texts;
+namespace SlideGenerator.Application.Workflows.Generating.Models.Texts;
 
 /// <summary>
 ///     Represents a text binding configuration for replacement.

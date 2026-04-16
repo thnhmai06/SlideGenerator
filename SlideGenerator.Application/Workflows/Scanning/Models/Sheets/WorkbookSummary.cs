@@ -1,4 +1,4 @@
-namespace SlideGenerator.Domain.Workflows.Models.Scanning.Sheets;
+namespace SlideGenerator.Application.Workflows.Scanning.Models.Sheets;
 
 /// <summary>
 ///     Workbook scan result.

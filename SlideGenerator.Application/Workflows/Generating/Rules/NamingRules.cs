@@ -1,4 +1,4 @@
-namespace SlideGenerator.Domain.Workflows.Rules;
+namespace SlideGenerator.Application.Workflows.Generating.Rules;
 
 public static class NamingRules
 {

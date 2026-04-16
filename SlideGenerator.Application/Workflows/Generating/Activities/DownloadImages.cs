@@ -1,12 +1,12 @@
 using System.Collections.Concurrent;
 using Elsa.Workflows;
 using Elsa.Workflows.Models;
+using SlideGenerator.Application.Workflows.Generating.Models.Images;
+using SlideGenerator.Application.Workflows.Generating.Rules;
 using SlideGenerator.Domain.Download.Abstractions;
 using SlideGenerator.Domain.Download.Models;
 using SlideGenerator.Domain.Settings.Interfaces;
 using SlideGenerator.Domain.Sheets.Models;
-using SlideGenerator.Domain.Workflows.Models.Generating.Images;
-using SlideGenerator.Domain.Workflows.Rules;
 
 namespace SlideGenerator.Application.Workflows.Generating.Activities;
 

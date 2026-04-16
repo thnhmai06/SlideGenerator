@@ -9,35 +9,28 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3a1f1c77-0578-40bf-9d5d-a0e8452562c2" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Images/Interfaces/IRoiProvider.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Images/Services/RoiManager.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Images/Abstractions/IFaceDetectorProvider.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Images/Models/Roi/CenterOption.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Images/Models/Roi/RuleOfThirdsOption.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Images/Utilities.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Images/Services/OpenCvFaces.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.SlideGenerator/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.SlideGenerator/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Images/Abstractions/IImageRegistry.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Images/Abstractions/IVisionComputer.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Images/Entities/CenterRoi.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Images/Entities/CenterRoi.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Images/Entities/RuleOfThirdsRoi.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Images/Entities/RuleOfThirdsRoi.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Images/Services/FaceDetectorModelManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Images/Services/FaceDetectorManager.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Images/Utilities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Images/Utilities.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/SlideGenerator.Application.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/SlideGenerator.Application.csproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Generating/Activities/DownloadImages.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Generating/Activities/DownloadImages.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Generating/Activities/EditImages.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Generating/Activities/EditImages.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Generating/Activities/ReplaceSlideContents.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Generating/Activities/ReplaceSlideContents.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Generating/Activities/ResolveImageUrls.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Generating/Activities/ResolveImageUrls.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Generating/Activities/SpecializeInstructions.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Generating/Activities/SpecializeInstructions.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Generating/GeneratingWorkflow.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Generating/GeneratingWorkflow.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Images/Abstractions/IFaceDetectionModel.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Images/Abstractions/FaceDetector.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Images/Abstractions/IFaceDetectorModelFactory.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Images/Abstractions/IFaceDetectorModelProvider.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Images/Abstractions/IMat.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Images/Abstractions/IMat.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Images/Entities/RoiCalculator.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Images/Entities/RoiCalculator.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Images/Models/FaceInfo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Images/Models/Face.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Images/Rules/FaceDetectorModelKey.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Images/Rules/FaceDetectorModel.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Images/Rules/RoiType.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Images/Rules/RoiType.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Workflows/Models/Generating/Images/EditOptions.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Workflows/Models/Generating/Images/EditOptions.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Images/Adapters/YuNetModel.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Images/Adapters/YuNet.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Images/Services/Cv2Computer.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Images/Services/FileSystem.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.sln.DotSettings.user" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.sln.DotSettings.user" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Scanning/ScanningService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Scanning/ScanningService.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Slides/Rules/PresentationExtension.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Slides/Rules/PresentationExtension.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Workflows/Models/Generating/GeneratingRequest.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Generating/Models/GeneratingRequest.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Workflows/Models/Generating/ISpecializable.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Generating/Models/ISpecializable.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Workflows/Models/Generating/Images/EditOptions.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Generating/Models/Images/EditOptions.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Workflows/Models/Generating/Images/GeneralInstruction.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Generating/Models/Images/GeneralInstruction.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Workflows/Models/Generating/Images/Instruction.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Generating/Models/Images/Instruction.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Workflows/Models/Generating/Images/SpecializedInstruction.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Generating/Models/Images/SpecializedInstruction.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Workflows/Models/Generating/Texts/GeneralInstruction.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Generating/Models/Texts/GeneralInstruction.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Workflows/Models/Generating/Texts/Instruction.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Generating/Models/Texts/Instruction.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Workflows/Models/Generating/Texts/SpecializedInstruction.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Generating/Models/Texts/SpecializedInstruction.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Workflows/Models/Scanning/Sheets/WorkbookSummary.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Scanning/Models/Sheets/WorkbookSummary.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Workflows/Models/Scanning/Sheets/WorksheetSummary.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Scanning/Models/Sheets/WorksheetSummary.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Workflows/Models/Scanning/Slides/PresentationSummary.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Scanning/Models/Slides/PresentationSummary.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Workflows/Models/Scanning/Slides/SlideSummary.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Scanning/Models/Slides/SlideSummary.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -425,7 +418,23 @@
       <option name="project" value="LOCAL" />
       <updated>1775726291302</updated>
     </task>
-    <option name="localTasksCounter" value="21" />
+    <task id="LOCAL-00021" summary="refactor: refactoring Images module&#10;&#10;- Renamed FaceDetectorModelKey to FaceDetectorModel for clarity.&#10;- Updated RoiType enum values for better understanding (RuleOfThirds to Center and vice versa).&#10;- Introduced new classes for CenterOption and RuleOfThirdsOption to encapsulate ROI strategies.&#10;- Refactored FaceDetector and related classes to improve maintainability and readability.">
+      <option name="closed" value="true" />
+      <created>1776331220052</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1776331220052</updated>
+    </task>
+    <task id="LOCAL-00022" summary="[skip ci] chore(backend): cleanup and reformat">
+      <option name="closed" value="true" />
+      <created>1776331403569</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1776331403569</updated>
+    </task>
+    <option name="localTasksCounter" value="23" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -477,7 +486,9 @@
     <MESSAGE value="feat: add GenerationWorkflow workflow, rename Generating -&gt; Generation&#10;&#10;- Moved various activity classes to the new Generation namespace for better organization and clarity (improves maintainability).&#10;- Updated constructors in several activities to use required properties instead of nullable ones (enhances type safety).&#10;- Updated CleanupResources activity to manage multi temporary resources during workflow execution (promotes resource management)." />
     <MESSAGE value="feat(backend)!: add ScanningService, refactoring Slide entities&#10;&#10;- Updated namespaces for clarity and consistency (e.g., SlideGenerator.Domain.Slide.Models to SlideGenerator.Domain.Slide.Models.Previews).&#10;- Modified method signatures to remove default parameters for better readability (e.g., GetOrOpen method).&#10;- Introduced new interfaces and classes for better abstraction (e.g., IImageReplacer, ITextReplacer)." />
     <MESSAGE value="chore(backend): update packages" />
-    <option name="LAST_COMMIT_MESSAGE" value="chore(backend): update packages" />
+    <MESSAGE value="refactor: refactoring Images module&#10;&#10;- Renamed FaceDetectorModelKey to FaceDetectorModel for clarity.&#10;- Updated RoiType enum values for better understanding (RuleOfThirds to Center and vice versa).&#10;- Introduced new classes for CenterOption and RuleOfThirdsOption to encapsulate ROI strategies.&#10;- Refactored FaceDetector and related classes to improve maintainability and readability." />
+    <MESSAGE value="[skip ci] chore(backend): cleanup and reformat" />
+    <option name="LAST_COMMIT_MESSAGE" value="[skip ci] chore(backend): cleanup and reformat" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

@@ -1,10 +1,10 @@
 using SlideGenerator.Application.Resources;
 using SlideGenerator.Application.Slides.Abstractions;
+using SlideGenerator.Application.Workflows.Scanning.Models.Sheets;
+using SlideGenerator.Application.Workflows.Scanning.Models.Slides;
 using SlideGenerator.Domain.Sheets.Entities;
 using SlideGenerator.Domain.Slides.Entities.Presentation;
 using SlideGenerator.Domain.Slides.Models.Previews;
-using SlideGenerator.Domain.Workflows.Models.Scanning.Sheets;
-using SlideGenerator.Domain.Workflows.Models.Scanning.Slides;
 
 namespace SlideGenerator.Application.Workflows.Scanning;
 

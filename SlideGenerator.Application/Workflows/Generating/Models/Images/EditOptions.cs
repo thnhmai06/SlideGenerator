@@ -1,6 +1,6 @@
 using SlideGenerator.Domain.Images.Models.Roi;
 
-namespace SlideGenerator.Domain.Workflows.Models.Generating.Images;
+namespace SlideGenerator.Application.Workflows.Generating.Models.Images;
 
 /// <summary>
 ///     Defines image edit configuration for one image instruction.
