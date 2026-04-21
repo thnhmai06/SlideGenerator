@@ -1,22 +1,19 @@
-using SlideGenerator.Application.Resources;
+using SlideGenerator.Application.Resources.Abstractions;
+using SlideGenerator.Application.Resources.Services;
 using SlideGenerator.Domain.Slides.Entities.Presentation;
 using SlideGenerator.Infrastructure.Slides.Adapters;
 
 namespace SlideGenerator.Infrastructure.Slides.Services;
 
 /// <summary>
-///     Manages opened XML-based presentations for workflow execution.
+///     Manages open XML-based presentations for workflow execution.
+///     Each presentation file is accessed exclusively (max-count = 1) so that concurrent
+///     slide-editing activities are serialised per output file.
 /// </summary>
-public sealed class XmlPresentationRegistry : Registry<IPresentation>
+public sealed class XmlPresentationRegistry(IAsyncKeyedLocker<string> locker)
+    : FileRegistry<IPresentation>(locker)
 {
-    /// <summary>
-    ///     Opens an XML-based presentation from the normalized file path.
-    /// </summary>
-    /// <param name="normalizedPath">The normalized presentation file path.</param>
-    /// <param name="isEditable">A value indicating whether the presentation should be opened for editing.</param>
-    /// <returns>A new presentation adapter instance.</returns>
+    /// <inheritdoc />
     protected override IPresentation OpenResource(string normalizedPath, bool isEditable)
-    {
-        return new XmlPresentation(normalizedPath, isEditable);
-    }
+        => new XmlPresentation(normalizedPath, isEditable);
 }

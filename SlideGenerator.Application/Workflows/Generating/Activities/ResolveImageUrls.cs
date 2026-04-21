@@ -1,8 +1,8 @@
 using System.Collections.Concurrent;
 using Elsa.Workflows;
 using Elsa.Workflows.Models;
-using SlideGenerator.Application.Cloud.Services;
-using SlideGenerator.Application.Resources;
+using SlideGenerator.Application.Cloud.Abstractions;
+using SlideGenerator.Application.Resources.Services;
 using SlideGenerator.Application.Workflows.Generating.Models.Images;
 using SlideGenerator.Domain.Sheets.Entities;
 using SlideGenerator.Domain.Sheets.Models;
@@ -14,7 +14,7 @@ namespace SlideGenerator.Application.Workflows.Generating.Activities;
 /// </summary>
 public sealed class ResolveImageUrls(
     ICloudResolver cloudResolver,
-    Registry<IReadOnlyWorkbook> workbookRegistry) : Activity
+    FileRegistry<IReadOnlyWorkbook> workbookRegistry) : Activity
 {
     /// <summary>Input: Image replacement instructions specialized for the current row and slide.</summary>
     public required Input<IReadOnlyList<SpecializedInstruction>> ImageInstructions { get; init; }
@@ -38,7 +38,9 @@ public sealed class ResolveImageUrls(
         if (worksheetInfo is null || rowIndex <= 0)
             throw new ArgumentException("Worksheet identifier and row index must be valid.");
 
-        using var workbookLease = workbookRegistry.Acquire(worksheetInfo.Workbook.FilePath, true);
+        using var workbookLease = await workbookRegistry
+            .AcquireAsync(worksheetInfo.Workbook.FilePath, false, context.CancellationToken)
+            .ConfigureAwait(false);
         var workbook = workbookLease.Value;
         var rowContent = !workbook.TryGetWorksheet(worksheetInfo.Name, out var worksheet)
             ? throw new InvalidOperationException($"Worksheet '{worksheetInfo.Name}' does not exist in workbook.")
@@ -56,7 +58,7 @@ public sealed class ResolveImageUrls(
             if (!Uri.TryCreate(sourceValue, UriKind.Absolute, out var sourceUri))
                 continue;
 
-            var resolved = cloudResolver.IsUriSupported(sourceUri)
+            var resolved = cloudResolver.TryIsUriSupported(sourceUri, out _)
                 ? await cloudResolver.ResolveUriAsync(sourceUri).ConfigureAwait(false)
                 : sourceUri;
 

@@ -1,7 +1,6 @@
 ﻿using SlideGenerator.Application.Download.Abstractions;
-using SlideGenerator.Domain.Download.Entities;
-using SlideGenerator.Domain.Download.Models;
-using SlideGenerator.Domain.Download.Rules;
+using SlideGenerator.Application.Download.Models;
+using SlideGenerator.Application.Download.Rules;
 
 namespace SlideGenerator.Application.Download.Entities;
 
@@ -15,7 +14,7 @@ namespace SlideGenerator.Application.Download.Entities;
 ///     The class must be disposed to clean up the underlying <see cref="Service" /> service.
 /// </remarks>
 /// Reviewed by @thnhmai06 at 20/03/2026
-public sealed class Downloader : IDownloader, IDisposable, IAsyncDisposable
+public sealed class Downloader : IDisposable, IAsyncDisposable
 {
     private readonly Queue<string> _extension = new();
 

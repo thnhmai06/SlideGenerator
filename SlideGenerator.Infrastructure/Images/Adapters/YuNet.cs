@@ -2,6 +2,7 @@ using System.Drawing;
 using OpenCvSharp;
 using OpenCvSharp.Dnn;
 using SlideGenerator.Domain.Images.Abstractions;
+using SlideGenerator.Domain.Images.Entities;
 using SlideGenerator.Domain.Images.Models;
 using Point = System.Drawing.Point;
 using Size = OpenCvSharp.Size;
@@ -12,7 +13,7 @@ namespace SlideGenerator.Infrastructure.Images.Adapters;
 ///     Asynchronous wrapper for <see cref="FaceDetectorYN" />.
 /// </summary>
 /// <param name="inputSize">The path to the requested model</param>
-/// <param name="configPath">The size of the input image that Mat will resize to in detection</param>
+/// <param name="configPath">The size of the input image that Image will resize to in detection</param>
 /// <param name="scoreThreshold">The path to the config file for compatibility, which is not requested for ONNX models</param>
 /// <param name="nmsThreshold">The threshold to filter out bounding boxes of score smaller than the given value</param>
 /// <param name="topK">The threshold to suppress bounding boxes of IoU bigger than the given value</param>
@@ -72,15 +73,15 @@ public sealed class YuNet(
         return !IsModelAvailable;
     }
 
-    public override async Task<IReadOnlyList<Face>> DetectAsync(IMat mat)
+    public override async Task<IReadOnlyList<Face>> DetectAsync(IImage image)
     {
-        return await DetectAsync(((Mat)mat).Core).ConfigureAwait(false);
+        return await DetectAsync(((Mat)image).Core).ConfigureAwait(false);
     }
 
     /// <summary>
-    ///     Detects faces from the provided mat using initialized YuNet model instance.
+    ///     Detects faces from the provided image using initialized YuNet model instance.
     /// </summary>
-    /// <param name="mat">Input mat to run detection on.</param>
+    /// <param name="mat">Input image to run detection on.</param>
     /// <returns>All faces detected by the model without score filtering.</returns>
     /// <exception cref="InvalidOperationException">Thrown when the model has not been initialized.</exception>
     public async Task<List<Face>> DetectAsync(OpenCvSharp.Mat mat)
@@ -91,7 +92,7 @@ public sealed class YuNet(
         var faces = new List<Face>();
         if (mat.Empty()) return faces;
 
-        // Resize and pad mat to match InputSize
+        // Resize and pad image to match InputSize
         var resizeAndPadInfo = ResizeAndPadMat(mat);
         using var processedMat = resizeAndPadInfo.ProcessedMat;
 
@@ -149,12 +150,12 @@ public sealed class YuNet(
     }
 
     /// <summary>
-    ///     Resizes and pads the input mat to match InputSize with black padding.
+    ///     Resizes and pads the input image to match InputSize with black padding.
     ///     If input is smaller than InputSize, only adds black padding.
     ///     If input is larger, resizes proportionally while maintaining aspect ratio, then adds black padding.
     /// </summary>
-    /// <param name="mat">Original input mat.</param>
-    /// <returns>Resize and pad transformation information containing the processed mat and parameters for unmapping.</returns>
+    /// <param name="mat">Original input image.</param>
+    /// <returns>Resize and pad transformation information containing the processed image and parameters for unmapping.</returns>
     private ResizeAndPadInfo ResizeAndPadMat(OpenCvSharp.Mat mat)
     {
         var originalWidth = mat.Width;
@@ -179,7 +180,7 @@ public sealed class YuNet(
         var padLeft = (targetWidth - newWidth) / 2;
         var padTop = (targetHeight - newHeight) / 2;
 
-        // Create output mat with black background
+        // Create output image with black background
         using var processedMat =
             new OpenCvSharp.Mat(new Size(targetWidth, targetHeight), mat.Type(), new Scalar(0, 0, 0));
         var roi = new Rect(padLeft, padTop, newWidth, newHeight);

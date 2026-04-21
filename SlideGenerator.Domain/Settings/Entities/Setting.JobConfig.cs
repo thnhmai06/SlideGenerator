@@ -12,15 +12,23 @@ public sealed partial class Setting
         /// <remarks>
         ///     This controls runtime admission for slide clone and slide content replacement operations.
         /// </remarks>
-        public int MaxConcurrentEditingFlows = 5;
+        public int MaxConcurrentSlideEditingFlows = 5;
 
         /// <summary>
-        ///     Gets or sets the maximum number of concurrent image-processing flows.
+        ///     Gets or sets the maximum number of concurrent image-download flows.
         /// </summary>
         /// <remarks>
-        ///     This controls runtime admission for image download and image editing operations.
+        ///     This controls runtime admission for image download operations.
         /// </remarks>
-        public int MaxConcurrentPreparingFlows = 5;
+        public int MaxConcurrentDownloadFlows = 5;
+
+        /// <summary>
+        ///     Gets or sets the maximum number of concurrent image-editing flows.
+        /// </summary>
+        /// <remarks>
+        ///     This controls runtime admission for image editing operations.
+        /// </remarks>
+        public int MaxConcurrentImageEditingFlows = 5;
 
         public int MaxRetries = 3;
     }

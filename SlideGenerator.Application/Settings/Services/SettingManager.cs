@@ -1,24 +1,25 @@
-using SlideGenerator.Application.Resources;
+using SlideGenerator.Application.Resources.Services;
 using SlideGenerator.Application.Settings.Abstractions;
-using SlideGenerator.Domain.Settings.Abstractions;
+using SlideGenerator.Application.Settings.Interfaces;
+using SlideGenerator.Application.Settings.Rules;
 using SlideGenerator.Domain.Settings.Entities;
-using SlideGenerator.Domain.Settings.Rules;
 
 namespace SlideGenerator.Application.Settings.Services;
 
-public sealed class SettingManager(Registry<ITextFile> textFileRegistry, ISerializer serializer)
-    : ISettingManager
+public sealed class SettingManager(FileRegistry<ITextFile> textFileRegistry, ISerializer serializer)
+    : ISettingProvider
 {
     public string FilePath =>
         Path.Combine(AppContext.BaseDirectory, NamingRules.SettingFileName + serializer.FileExtension);
 
     public Setting Current { get; private set; } = new();
 
-    public bool Load()
+    public async Task<bool> Load()
     {
         try
         {
-            using var textFileLease = textFileRegistry.Acquire(FilePath, false);
+            // Acquire is safe here: TextFileRegistry uses maxCount = int.MaxValue (no blocking).
+            using var textFileLease = await textFileRegistry.Acquire(FilePath, false);
             var textFile = textFileLease.Value;
             var source = textFile.Read();
             var loaded = serializer.Deserialize<Setting>(source);
@@ -34,11 +35,11 @@ public sealed class SettingManager(Registry<ITextFile> textFileRegistry, ISerial
         return false;
     }
 
-    public bool Save()
+    public async Task<bool> Save()
     {
         try
         {
-            using var textFileLease = textFileRegistry.Acquire(FilePath, true);
+            using var textFileLease = await textFileRegistry.Acquire(FilePath, true);
             var textFile = textFileLease.Value;
             var content = serializer.Serialize(Current);
             textFile.Write(content);
@@ -50,9 +51,9 @@ public sealed class SettingManager(Registry<ITextFile> textFileRegistry, ISerial
         }
     }
 
-    public bool ResetToDefaults()
+    public async Task<bool> ResetToDefaults()
     {
         Current = new Setting();
-        return Save();
+        return await Save();
     }
 }

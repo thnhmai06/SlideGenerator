@@ -10,5 +10,5 @@ public interface IFaceDetectorProvider
     ///     Gets the current face detector model instance and ensures it is initialized.
     /// </summary>
     /// <returns>The initialized face detector model, or <see langword="null" /> when initialization fails.</returns>
-    Task<FaceDetector> GetCurrentDetectorAsync();
+    Task<FaceDetector> GetDetectorAsync();
 }

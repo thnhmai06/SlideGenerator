@@ -1,4 +1,4 @@
-using SlideGenerator.Application.Resources;
+using SlideGenerator.Application.Resources.Services;
 using SlideGenerator.Application.Slides.Abstractions;
 using SlideGenerator.Application.Workflows.Scanning.Models.Sheets;
 using SlideGenerator.Application.Workflows.Scanning.Models.Slides;
@@ -9,11 +9,13 @@ using SlideGenerator.Domain.Slides.Models.Previews;
 namespace SlideGenerator.Application.Workflows.Scanning;
 
 public sealed class ScanningService(
-    Registry<IPresentation> slideRegistry,
+    FileRegistry<IPresentation> slideRegistry,
     ITextReplacer textReplacer,
-    Registry<IReadOnlyWorkbook> workbookRegistry)
+    FileRegistry<IReadOnlyWorkbook> workbookRegistry)
 {
-    public PresentationSummary ScanPresentation(string filePath)
+    public async Task<PresentationSummary> ScanPresentationAsync(
+        string filePath,
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(filePath))
             throw new ArgumentException("Presentation file path must be provided.", nameof(filePath));
@@ -22,51 +24,50 @@ public sealed class ScanningService(
         if (!File.Exists(filePath))
             throw new FileNotFoundException("Presentation file not found.", filePath);
 
-        var presentation = slideRegistry.GetOrOpen(filePath, true);
-        try
-        {
-            var slides = presentation.EnumerateSlides()
-                .Select((slide, index) =>
-                {
-                    var shapes = slide.DescendShapes().ToList();
-                    var placeholders = shapes
-                        .SelectMany(textReplacer.Scan)
-                        .Distinct(StringComparer.Ordinal)
-                        .ToList();
+        using var lease = await slideRegistry
+            .AcquireAsync(filePath, false, cancellationToken)
+            .ConfigureAwait(false);
 
-                    var imageShapePreviews = shapes
-                        .Where(shape => shape.IsPicture || shape.HasBlipFill)
-                        .Select(shape =>
-                        {
-                            var image = shape.TryGetPicture(out var picture)
-                                ? picture
-                                : shape.TryGetBlipFill(out var blipFill)
-                                    ? blipFill
-                                    : [];
+        var presentation = lease.Value;
+        var slides = presentation.EnumerateSlides()
+            .Select((slide, index) =>
+            {
+                var shapes = slide.DescendShapes().ToList();
+                var placeholders = shapes
+                    .SelectMany(textReplacer.Scan)
+                    .Distinct(StringComparer.Ordinal)
+                    .ToList();
 
-                            return new ShapePreview(shape.Id, shape.Name, shape.Bounds, image);
-                        })
-                        .ToList();
+                var imageShapePreviews = shapes
+                    .Where(shape => shape.IsPicture || shape.HasBlipFill)
+                    .Select(shape =>
+                    {
+                        var image = shape.TryGetPicture(out var picture)
+                            ? picture
+                            : shape.TryGetBlipFill(out var blipFill)
+                                ? blipFill
+                                : [];
 
-                    var slidePreview = new SlidePreview(
-                        index + 1,
-                        slide.Id,
-                        slide.Name ?? string.Empty,
-                        imageShapePreviews.FirstOrDefault()?.Image ?? []);
+                        return new ShapePreview(shape.Id, shape.Name, shape.Bounds, image);
+                    })
+                    .ToList();
 
-                    return new SlideSummary(index + 1, slidePreview, placeholders, imageShapePreviews);
-                })
-                .ToList();
+                var slidePreview = new SlidePreview(
+                    index + 1,
+                    slide.Id,
+                    slide.Name ?? string.Empty,
+                    imageShapePreviews.FirstOrDefault()?.Image ?? []);
 
-            return new PresentationSummary(filePath, slides);
-        }
-        finally
-        {
-            slideRegistry.Close(filePath);
-        }
+                return new SlideSummary(index + 1, slidePreview, placeholders, imageShapePreviews);
+            })
+            .ToList();
+
+        return new PresentationSummary(filePath, slides);
     }
 
-    public WorkbookSummary ScanWorkbook(string filePath)
+    public async Task<WorkbookSummary> ScanWorkbookAsync(
+        string filePath,
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(filePath))
             throw new ArgumentException("Workbook file path must be provided.", nameof(filePath));
@@ -75,9 +76,11 @@ public sealed class ScanningService(
         if (!File.Exists(filePath))
             throw new FileNotFoundException("Workbook file not found.", filePath);
 
-        using var workbookLease = workbookRegistry.Acquire(filePath, true);
-        var workbook = workbookLease.Value;
+        using var workbookLease = await workbookRegistry
+            .AcquireAsync(filePath, false, cancellationToken)
+            .ConfigureAwait(false);
 
+        var workbook = workbookLease.Value;
         var worksheets = workbook.Worksheets
             .Select(worksheet => new WorksheetSummary(worksheet.Name, worksheet.Headers, worksheet.RowsCount))
             .ToList();

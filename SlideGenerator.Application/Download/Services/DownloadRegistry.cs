@@ -1,19 +1,17 @@
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using SlideGenerator.Application.Download.Entities;
-using SlideGenerator.Domain.Download.Abstractions;
-using SlideGenerator.Domain.Download.Entities;
-using SlideGenerator.Domain.Download.Models;
-using SlideGenerator.Domain.Download.Rules;
+using SlideGenerator.Application.Download.Models;
+using SlideGenerator.Application.Download.Rules;
 
 namespace SlideGenerator.Application.Download.Services;
 
-public sealed class DownloadRegistry : IDownloadRegistry
+public sealed class DownloadRegistry
 {
-    private readonly ConcurrentDictionary<DownloadRequest, IDownloader> _registry = new();
-    public IReadOnlyDictionary<DownloadRequest, IDownloader> RegistryView => _registry;
+    private readonly ConcurrentDictionary<DownloadRequest, Downloader> _registry = new();
+    public IReadOnlyDictionary<DownloadRequest, Downloader> RegistryView => _registry;
 
-    public bool TryGetCompletedDownloadFilePath(DownloadRequest request,
+    public static bool TryGetCompletedDownloadFilePath(DownloadRequest request,
         [MaybeNullWhen(false)] out string filePath)
     {
         var files = Directory.GetFiles(request.SaveFolder, $"{request.FileName}.*");
@@ -30,7 +28,7 @@ public sealed class DownloadRegistry : IDownloadRegistry
     }
 
     public bool TryGetOrCreateDownloader(DownloadRequest request, DownloadConfiguration? config,
-        [MaybeNullWhen(false)] out IDownloader downloader)
+        [MaybeNullWhen(false)] out Downloader downloader)
     {
         if (TryGetCompletedDownloadFilePath(request, out _))
         {

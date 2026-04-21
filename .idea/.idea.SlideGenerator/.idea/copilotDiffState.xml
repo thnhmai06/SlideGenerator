@@ -11,6 +11,14 @@
             </PendingDiffInfo>
           </value>
         </entry>
+        <entry key="$PROJECT_DIR$/SlideGenerator.Application/Systems/Abstractions/IHttpClientService.cs">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/SlideGenerator.Application/Systems/Abstractions/IHttpClientService.cs" />
+              <option name="updatedContent" value="namespace SlideGenerator.Application.Systems.Abstractions;&#10;&#10;/// &lt;summary&gt;&#10;///     Provides HTTP operations required by application-level cloud resolvers.&#10;/// &lt;/summary&gt;&#10;public interface IHttpClientService&#10;{&#10;    /// &lt;summary&gt;&#10;    ///     Resolves a URI to its final request URI after redirect handling.&#10;    /// &lt;/summary&gt;&#10;    /// &lt;param name=&quot;uri&quot;&gt;The URI to request.&lt;/param&gt;&#10;    /// &lt;param name=&quot;cancellationToken&quot;&gt;Cancellation token for the asynchronous operation.&lt;/param&gt;&#10;    /// &lt;returns&gt;The final request URI after redirect handling, or the original URI if unavailable.&lt;/returns&gt;&#10;    Task&lt;Uri&gt; ResolveFinalUriAsync(Uri uri, CancellationToken cancellationToken = default);&#10;&#10;    /// &lt;summary&gt;&#10;    ///     Downloads the response body as a string.&#10;    /// &lt;/summary&gt;&#10;    /// &lt;param name=&quot;uri&quot;&gt;The URI to request.&lt;/param&gt;&#10;    /// &lt;param name=&quot;cancellationToken&quot;&gt;Cancellation token for the asynchronous operation.&lt;/param&gt;&#10;    /// &lt;returns&gt;The response body as a string.&lt;/returns&gt;&#10;    Task&lt;string&gt; GetStringAsync(Uri uri, CancellationToken cancellationToken = default);&#10;}&#10;" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
       </map>
     </option>
   </component>

@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using SlideGenerator.Application.Download.Models;
 
 namespace SlideGenerator.Application.Download.Abstractions;
 

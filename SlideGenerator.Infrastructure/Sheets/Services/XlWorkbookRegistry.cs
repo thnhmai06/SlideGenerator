@@ -1,22 +1,18 @@
-using SlideGenerator.Application.Resources;
+using SlideGenerator.Application.Resources.Abstractions;
+using SlideGenerator.Application.Resources.Services;
 using SlideGenerator.Domain.Sheets.Entities;
-using SlideGenerator.Infrastructure.Sheets.Adapter;
+using SlideGenerator.Infrastructure.Sheets.Adapters;
 
 namespace SlideGenerator.Infrastructure.Sheets.Services;
 
 /// <summary>
-///     Manages opened workbooks backed by file system paths.
+///     Manages open workbooks backed by file system paths.
+///     Workbooks are read-only so concurrent access is unrestricted (max-count = <see cref="int.MaxValue" />).
 /// </summary>
-public sealed class XlWorkbookRegistry : Registry<IReadOnlyWorkbook>
+public sealed class XlWorkbookRegistry(IAsyncKeyedLocker<string> locker)
+    : FileRegistry<IReadOnlyWorkbook>(locker)
 {
-    /// <summary>
-    ///     Opens a read-only workbook adapter for the normalized file path.
-    /// </summary>
-    /// <param name="normalizedPath">The normalized workbook file path.</param>
-    /// <param name="isEditable">A value indicating whether the caller requested editable access.</param>
-    /// <returns>A new workbook adapter instance.</returns>
+    /// <inheritdoc />
     protected override IReadOnlyWorkbook OpenResource(string normalizedPath, bool isEditable)
-    {
-        return new ReadOnlyWorkbook(normalizedPath);
-    }
+        => new XlReadOnlyWorkbook(normalizedPath);
 }

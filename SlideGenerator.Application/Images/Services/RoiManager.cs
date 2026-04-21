@@ -1,25 +1,27 @@
 using System.Drawing;
-using SlideGenerator.Application.Images.Entities;
-using SlideGenerator.Application.Images.Interfaces;
-using SlideGenerator.Domain.Images.Abstractions;
-using SlideGenerator.Domain.Images.Models.Roi;
+using SlideGenerator.Domain.Images.Entities;
+using SlideGenerator.Domain.Images.Models;
 using SlideGenerator.Domain.Images.Rules;
 
 namespace SlideGenerator.Application.Images.Services;
 
 /// <summary>
-///     Routes ROI calculation requests to singleton ROI calculators by ROI type.
+///     Routes ROI calculation requests to keyed ROI calculators.
 /// </summary>
-public sealed class RoiManager(CenterRoi centerRoi, RuleOfThirdsRoi ruleOfThirdsRoi) : IRoiProvider
+public sealed class RoiManager(IReadOnlyDictionary<RoiType, IRoiCalculator> roiCalculators) : IRoiCalculator
 {
     /// <inheritdoc />
-    public ValueTask<Rectangle> CalculateRoiAsync(IMat mat, Size targetSize, RoiOption roiOption)
+    public ValueTask<Rectangle> CalculateRoiAsync(
+        IImage mat, Size targetSize, RoiType type,
+        RoiOption? roiOption = null)
     {
-        return roiOption.Type switch
-        {
-            RoiType.Center => centerRoi.CalculateRoiAsync(mat, targetSize, roiOption),
-            RoiType.RuleOfThirds => ruleOfThirdsRoi.CalculateRoiAsync(mat, targetSize, roiOption),
-            _ => throw new NotSupportedException($"ROI calculator '{roiOption.Type}' is not supported.")
-        };
+        return GetCalculator(type).CalculateRoiAsync(mat, targetSize, type, roiOption);
+    }
+
+    private IRoiCalculator GetCalculator(RoiType key)
+    {
+        return roiCalculators.TryGetValue(key, out var calculator)
+            ? calculator
+            : throw new NotSupportedException($"ROI calculator '{key}' is not supported.");
     }
 }

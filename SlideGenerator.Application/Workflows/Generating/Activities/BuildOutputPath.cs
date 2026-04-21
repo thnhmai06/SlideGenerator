@@ -7,7 +7,7 @@ using SlideGenerator.Domain.Slides.Rules;
 namespace SlideGenerator.Application.Workflows.Generating.Activities;
 
 /// <summary>
-///     Builds the final output file path for one worksheet with normalized file name.
+///     Builds the final output file path for one worksheet with a normalized file name.
 /// </summary>
 /// <remarks>
 ///     <para>State usage:</para>
@@ -31,7 +31,7 @@ public sealed class BuildOutputPath : Activity
     public required Input<string> SaveFolder { get; init; }
 
     /// <summary>
-    ///     Input worksheet identifier used to derive output file name.
+    ///     Input worksheet identifier used to derive the output file name.
     /// </summary>
     public required Input<WorksheetIdentifier> Worksheet { get; init; }
 
@@ -41,7 +41,7 @@ public sealed class BuildOutputPath : Activity
     public required Input<PresentationExtension> Extension { get; init; }
 
     /// <summary>
-    ///     Output normalized full file path.
+    ///     Output normalized the full file path.
     /// </summary>
     public Output<string> OutputPath { get; init; } = null!;
 

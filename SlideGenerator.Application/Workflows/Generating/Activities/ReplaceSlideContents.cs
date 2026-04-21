@@ -1,6 +1,6 @@
 using Elsa.Workflows;
 using Elsa.Workflows.Models;
-using SlideGenerator.Application.Resources;
+using SlideGenerator.Application.Resources.Services;
 using SlideGenerator.Application.Slides.Abstractions;
 using SlideGenerator.Application.Workflows.Generating.Models.Images;
 using SlideGenerator.Domain.Slides.Entities.Presentation;
@@ -11,47 +11,37 @@ namespace SlideGenerator.Application.Workflows.Generating.Activities;
 /// <summary>
 ///     Replaces both text and image contents on a target slide in sequence.
 /// </summary>
-/// <remarks>
-///     This activity executes two internal tasks in order: <c>ReplaceTexts</c>, then <c>ReplaceImages</c>.
-/// </remarks>
 public sealed class ReplaceSlideContents(
-    Registry<IPresentation> slideRegistry,
+    FileRegistry<IPresentation> slideRegistry,
     ITextReplacer textReplacer,
     IEnumerable<IImageReplacer> imageReplacers) : Activity
 {
-    /// <summary>
-    ///     Identifier of target slide to replace contents on.
-    ///     /
-    /// </summary>
+    /// <summary>Identifier of the target slide to replace contents on.</summary>
     public required Input<SlideIdentifier> SlideIdentifier { get; init; }
 
-    /// <summary>
-    ///     Replacement values by placeholder key (without braces).
-    /// </summary>
+    /// <summary>Replacement values by placeholder key (without braces).</summary>
     public required Input<IReadOnlyDictionary<string, string>> TextInstructions { get; init; }
 
-    /// <summary>
-    ///     Assignments from specialized instruction to local image file path.
-    /// </summary>
+    /// <summary>Assignments from specialized instruction to local image file path.</summary>
     public required Input<IReadOnlyDictionary<SpecializedInstruction, string>> ImageInstructions { get; init; }
 
-    /// <summary>
-    ///     Output count of text changes.
-    /// </summary>
+    /// <summary>Output count of text changes.</summary>
     public Output<int> ReplacedTextCount { get; init; } = null!;
 
-    /// <summary>
-    ///     Output count of image replacements.
-    /// </summary>
+    /// <summary>Output count of image replacements.</summary>
     public Output<int> ReplacedImageCount { get; init; } = null!;
 
-    protected override ValueTask ExecuteAsync(ActivityExecutionContext context)
+    protected override async ValueTask ExecuteAsync(ActivityExecutionContext context)
     {
         var slideIdentifier = context.Get(SlideIdentifier);
         if (slideIdentifier is null)
             throw new ArgumentException("Presentation path and slide index must be valid.");
 
-        var presentation = slideRegistry.GetOrOpen(slideIdentifier.Presentation.FilePath, true);
+        using var lease = await slideRegistry
+            .AcquireAsync(slideIdentifier.Presentation.FilePath, true, context.CancellationToken)
+            .ConfigureAwait(false);
+
+        var presentation = lease.Value;
         var targetSlide = presentation.EnumerateSlides().ElementAtOrDefault(slideIdentifier.Index - 1)
                           ?? throw new InvalidOperationException(
                               $"Cannot replace contents: slide {slideIdentifier.Index} does not exist.");
@@ -97,7 +87,5 @@ public sealed class ReplaceSlideContents(
 
             context.Set(ReplacedImageCount, replacedImageCount);
         }
-
-        return ValueTask.CompletedTask;
     }
 }

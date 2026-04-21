@@ -1,3 +1,4 @@
+using SlideGenerator.Domain.Images.Entities;
 using SlideGenerator.Domain.Images.Models;
 
 namespace SlideGenerator.Domain.Images.Abstractions;
@@ -42,5 +43,5 @@ public abstract class FaceDetector : IAsyncDisposable
     ///     face candidates. The list is empty if no faces are detected or if detection fails.
     /// </returns>
     /// <exception cref="InvalidOperationException">Thrown when the model has not been initialized.</exception>
-    public abstract Task<IReadOnlyList<Face>> DetectAsync(IMat mat);
+    public abstract Task<IReadOnlyList<Face>> DetectAsync(IImage mat);
 }

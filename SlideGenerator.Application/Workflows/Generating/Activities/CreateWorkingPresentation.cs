@@ -1,6 +1,7 @@
 using Elsa.Workflows;
 using Elsa.Workflows.Models;
-using SlideGenerator.Application.Resources;
+using Elsa.Workflows.Runtime;
+using SlideGenerator.Application.Resources.Services;
 using SlideGenerator.Application.Systems.Abstractions;
 using SlideGenerator.Domain.Sheets.Entities;
 using SlideGenerator.Domain.Sheets.Models;
@@ -22,37 +23,36 @@ namespace SlideGenerator.Application.Workflows.Generating.Activities;
 ///             <description>
 ///                 <c>PreparePresentation</c> loads the template into memory, keeps only <see cref="TemplateSlide" />,
 ///                 converts to <see cref="PresentationExtension" />, writes the result to <see cref="OutputPath" />,
-///                 and opens the cloned output via presentation registry.
+///                 and opens the cloned output via presentation registry. The registry lease is stored in
+///                 <see cref="WorkflowExecutionContext.TransientProperties" /> under <see cref="GetLeaseKey" /> so
+///                 downstream activities share the same in-memory instance and
+///                 <see cref="CleanupResources" /> can dispose it.
 ///             </description>
 ///         </item>
 ///     </list>
 /// </remarks>
 public sealed class CreateWorkingPresentation(
-    Registry<IPresentation> slideRegistry,
-    Registry<IReadOnlyWorkbook> workbookRegistry,
+    FileRegistry<IPresentation> slideRegistry,
+    FileRegistry<IReadOnlyWorkbook> workbookRegistry,
     IFileSystem fileSystem) : Activity
 {
-    /// <summary>
-    ///     Input: File path and index of the template slide to use.
-    /// </summary>
+    /// <summary>Input: File path and index of the template slide to use.</summary>
     public required Input<SlideIdentifier> TemplateSlide { get; init; }
 
-    /// <summary>
-    ///     Input: Target worksheet that must exist in the source workbook before creating output presentation.
-    /// </summary>
+    /// <summary>Input: Target a worksheet that must exist in the source workbook before creating an output presentation.</summary>
     public required Input<WorksheetIdentifier> Worksheet { get; init; }
 
-    /// <summary>
-    ///     Input: Full output path for the generated presentation file.
-    /// </summary>
+    /// <summary>Input: Full output path for the generated presentation file.</summary>
     public required Input<string> OutputPath { get; init; }
 
-    /// <summary>
-    ///     Output: The only template slide kept in the working presentation.
-    /// </summary>
+    /// <summary>Output: The only template slide kept in the working presentation.</summary>
     public Output<SlideIdentifier> WorkingTemplateSlide { get; init; } = null!;
 
-    protected override ValueTask ExecuteAsync(ActivityExecutionContext context)
+    /// <summary>Returns the <see cref="WorkflowExecutionContext.TransientProperties" /> key for the long-lived presentation lease.</summary>
+    /// <param name="normalizedPath">The canonical (normalized) output file path.</param>
+    internal static string GetLeaseKey(string normalizedPath) => $"slide-registry-lease:{normalizedPath}";
+
+    protected override async ValueTask ExecuteAsync(ActivityExecutionContext context)
     {
         var templateSlideIdentifier = context.Get(TemplateSlide);
         if (templateSlideIdentifier is null)
@@ -68,7 +68,10 @@ public sealed class CreateWorkingPresentation(
         if (!File.Exists(workbookPath))
             throw new FileNotFoundException("Workbook file not found.", workbookPath);
 
-        using var workbookLease = workbookRegistry.Acquire(workbookPath, true);
+        using var workbookLease = await workbookRegistry
+            .AcquireAsync(workbookPath, false, context.CancellationToken)
+            .ConfigureAwait(false);
+
         var workbook = workbookLease.Value;
         if (!workbook.TryGetWorksheet(worksheet.Name, out _))
             throw new InvalidOperationException(
@@ -78,17 +81,31 @@ public sealed class CreateWorkingPresentation(
         if (!File.Exists(templatePath))
             throw new FileNotFoundException("Template presentation file not found.", templatePath);
 
-        fileSystem.CopyFile(templatePath, outputPath, true);
+        fileSystem.CopyFile(templatePath, outputPath);
 
-        var workingPresentation = slideRegistry.GetOrOpen(outputPath, true);
+        var normalizedOutput = Path.GetFullPath(outputPath);
+        var presentationLease = await slideRegistry
+            .AcquireAsync(normalizedOutput, true, context.CancellationToken)
+            .ConfigureAwait(false);
+
+        var workingPresentation = presentationLease.Value;
         var totalSlides = workingPresentation.EnumerateSlides().Count();
         for (var index = totalSlides; index >= 1; index--)
             if (index != templateSlideIdentifier.Index)
                 workingPresentation.RemoveSlide(index);
+
         var outputExtensionType = PresentationExtensions.FromFileExtension(Path.GetExtension(outputPath));
         workingPresentation.Save(outputExtensionType);
 
+        // Store the lease so downstream activities share the same in-memory instance.
+        context.WorkflowExecutionContext.TransientProperties[GetLeaseKey(normalizedOutput)] = presentationLease;
+        context.WorkflowExecutionContext.DeferTask(() =>
+        {
+            presentationLease.Dispose();
+            context.WorkflowExecutionContext.TransientProperties.Remove(GetLeaseKey(normalizedOutput));
+            return Task.CompletedTask;
+        });
+
         context.Set(WorkingTemplateSlide, new PresentationIdentifier(outputPath).GetSlide(1));
-        return ValueTask.CompletedTask;
     }
 }

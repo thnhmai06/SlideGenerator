@@ -1,4 +1,4 @@
-using SlideGenerator.Domain.Images.Models.Roi;
+using SlideGenerator.Domain.Images.Models;
 
 namespace SlideGenerator.Application.Workflows.Generating.Models.Images;
 

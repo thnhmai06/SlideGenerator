@@ -1,6 +1,6 @@
 using Elsa.Workflows;
 using Elsa.Workflows.Models;
-using SlideGenerator.Application.Resources;
+using SlideGenerator.Application.Resources.Services;
 using SlideGenerator.Application.Workflows.Generating.Models.Images;
 using SlideGenerator.Domain.Sheets.Entities;
 using SlideGenerator.Domain.Sheets.Models;
@@ -36,11 +36,11 @@ using SpecializedTextInstruction = Models.Texts.SpecializedInstruction;
 ///         </item>
 ///     </list>
 ///     <para>
-///         This activity stores only lightweight specialized instruction lists in state.
+///         This activity stores only lightweight specialized instruction lists in the state.
 ///         No temporary runtime resources are persisted.
 ///     </para>
 /// </remarks>
-public sealed class SpecializeInstructions(Registry<IReadOnlyWorkbook> workbookRegistry) : Activity
+public sealed class SpecializeInstructions(FileRegistry<IReadOnlyWorkbook> workbookRegistry) : Activity
 {
     /// <summary>
     ///     Input target worksheet identifier.
@@ -68,7 +68,7 @@ public sealed class SpecializeInstructions(Registry<IReadOnlyWorkbook> workbookR
     public required Input<IReadOnlySet<string>> TemplatePlaceholders { get; init; }
 
     /// <summary>
-    ///     Input image shape IDs scanned from template slide.
+    ///     Input image shape IDs scanned from the template slide.
     /// </summary>
     public required Input<IReadOnlySet<uint>> TemplateImageShapeIds { get; init; }
 
@@ -82,7 +82,7 @@ public sealed class SpecializeInstructions(Registry<IReadOnlyWorkbook> workbookR
     /// </summary>
     public Output<IReadOnlyList<SpecializedImageInstruction>> ImageInstructions { get; init; } = null!;
 
-    protected override ValueTask ExecuteAsync(ActivityExecutionContext context)
+    protected override async ValueTask ExecuteAsync(ActivityExecutionContext context)
     {
         var worksheetIdentifier = context.Get(Worksheet);
         var templateSlideIdentifier = context.Get(TemplateSlide);
@@ -94,7 +94,9 @@ public sealed class SpecializeInstructions(Registry<IReadOnlyWorkbook> workbookR
         if (worksheetIdentifier is null || templateSlideIdentifier is null)
             throw new ArgumentException("Worksheet and template slide must be provided.");
 
-        using var workbookLease = workbookRegistry.Acquire(worksheetIdentifier.Workbook.FilePath, true);
+        using var workbookLease = await workbookRegistry
+            .AcquireAsync(worksheetIdentifier.Workbook.FilePath, false, context.CancellationToken)
+            .ConfigureAwait(false);
         var workbook = workbookLease.Value;
         if (!workbook.TryGetWorksheet(worksheetIdentifier.Name, out var worksheetInstance))
             throw new InvalidOperationException(
@@ -120,6 +122,5 @@ public sealed class SpecializeInstructions(Registry<IReadOnlyWorkbook> workbookR
 
         context.Set(TextInstructions, textInstructions);
         context.Set(ImageInstructions, imageInstructions);
-        return ValueTask.CompletedTask;
     }
 }
