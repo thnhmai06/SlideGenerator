@@ -7,12 +7,14 @@ using SlideGenerator.Domain.Slides.Models.Identifiers;
 
 namespace SlideGenerator.Application.Services.Generating.Activities;
 
-/// <summary>
-///     Clones a source slide inside a presentation and inserts the copy at a target 1-based position.
-/// </summary>
+/// <summary>Clones a slide within a presentation.</summary>
+/// <remarks>Inserts the copy at a 1-based position calculated from the template index and current row.</remarks>
+/// <param name="slideRegistry">The presentation file registry.</param>
+/// <param name="templateSlideIndex">The 1-based index of the template slide.</param>
 public sealed class CloneTemplateSlide(FileRegistry<IPresentation> slideRegistry, int templateSlideIndex) : Activity
 {
     /// <inheritdoc />
+    /// <exception cref="InvalidOperationException">Thrown if the template slide is missing or the insert index is invalid.</exception>
     public override async ValueTask ExecuteAsync(IExecutionContext context, CancellationToken cancellationToken = default)
     {
         var templateSlideIdentifier = context.GetVariable<SlideIdentifier>(WorksheetContextRules.WorkingTemplateSlide)

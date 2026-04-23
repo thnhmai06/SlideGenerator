@@ -10,14 +10,28 @@ using Shape = DocumentFormat.OpenXml.Presentation.Shape;
 
 namespace SlideGenerator.Infrastructure.Slides.Services;
 
+/// <summary>
+/// Replaces mustache-style placeholders in Open XML shapes using the Stubble library.
+/// </summary>
 public partial class MustacheReplacer : ITextReplacer
 {
+    /// <summary>
+    /// Regular expression pattern for matching mustache placeholders.
+    /// </summary>
     private static readonly Regex MustachePattern = MustacheRegex();
 
+    /// <summary>
+    /// The Stubble renderer used for processing templates.
+    /// </summary>
     private readonly StubbleVisitorRenderer _renderer = new StubbleBuilder()
         .Configure(settings => settings.SetEncodingFunction(value => value))
         .Build();
 
+    /// <summary>
+    /// Scans a shape for mustache-style keys.
+    /// </summary>
+    /// <param name="sample">The shape to scan.</param>
+    /// <returns>An enumerable collection of keys found in the shape's text content.</returns>
     public IEnumerable<string> Scan(IReadOnlyShape sample)
     {
         return
@@ -26,6 +40,13 @@ public partial class MustacheReplacer : ITextReplacer
                 : [];
     }
 
+    /// <summary>
+    /// Replaces placeholders in a shape with values provided in the instructions.
+    /// </summary>
+    /// <param name="sample">The shape to update.</param>
+    /// <param name="instructions">A dictionary of keys and their replacement values.</param>
+    /// <returns>The number of placeholders successfully replaced.</returns>
+    /// <exception cref="ArgumentException">Thrown when the shape is not supported.</exception>
     public int Replace(IShape sample, IReadOnlyDictionary<string, string> instructions)
     {
         if (sample is not XmlShape xmlShape)
@@ -65,6 +86,12 @@ public partial class MustacheReplacer : ITextReplacer
         return changed;
     }
 
+    /// <summary>
+    /// Renders the text by replacing mustache placeholders with values.
+    /// </summary>
+    /// <param name="text">The template text.</param>
+    /// <param name="instructions">The replacement values.</param>
+    /// <returns>The rendered text.</returns>
     private string RenderText(string text, Dictionary<string, string> instructions)
     {
         if (string.IsNullOrEmpty(text) || !text.Contains("{{", StringComparison.Ordinal))
@@ -89,6 +116,11 @@ public partial class MustacheReplacer : ITextReplacer
         }
     }
 
+    /// <summary>
+    /// Extracts mustache keys from a given text string.
+    /// </summary>
+    /// <param name="text">The text to scan.</param>
+    /// <returns>An enumerable collection of unique keys.</returns>
     private static IEnumerable<string> ExtractKeys(string text)
     {
         return MustachePattern.Matches(text)
@@ -98,12 +130,21 @@ public partial class MustacheReplacer : ITextReplacer
             .Distinct();
     }
 
+    /// <summary>
+    /// Normalizes a mustache key by trimming whitespace and removing special characters.
+    /// </summary>
+    /// <param name="key">The key to normalize.</param>
+    /// <returns>The normalized key.</returns>
     private static string NormalizeKey(string key)
     {
         return key.Trim().TrimStart('#', '/', '^', '&', '>');
     }
 
 
+    /// <summary>
+    /// Gets the compiled regular expression for mustache placeholders.
+    /// </summary>
+    /// <returns>A <see cref="Regex"/> object.</returns>
     [GeneratedRegex(@"\{\{\s*(\w+)\s*\}\}", RegexOptions.Compiled)]
     private static partial Regex MustacheRegex();
 }

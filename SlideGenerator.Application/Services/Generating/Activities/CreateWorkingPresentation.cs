@@ -11,14 +11,15 @@ using SlideGenerator.Domain.Slides.Rules;
 
 namespace SlideGenerator.Application.Services.Generating.Activities;
 
-/// <summary>
-///     Copies a template presentation to the output path, strips it to a single template slide,
-///     opens the result via the slide registry, and keeps the registry lease alive for downstream activities.
-/// </summary>
+/// <summary>Creates a working copy of a presentation.</summary>
 /// <remarks>
-///     The caller is responsible for disposing the lease stored in <see cref="WorksheetContextRules.PresentationLease" />
-///     when downstream processing is complete.
+///     Copies the template, strips it to a single slide, and manages the registry lease.
+///     The caller is responsible for disposing the lease stored in <see cref="WorksheetContextRules.PresentationLease" />.
 /// </remarks>
+/// <param name="slideRegistry">The presentation file registry.</param>
+/// <param name="workbookRegistry">The workbook file registry.</param>
+/// <param name="fileSystem">The file system abstraction.</param>
+/// <param name="graph">The worksheet-to-slide mapping.</param>
 public sealed class CreateWorkingPresentation(
     FileRegistry<IPresentation> slideRegistry,
     FileRegistry<IReadOnlyWorkbook> workbookRegistry,
@@ -26,6 +27,9 @@ public sealed class CreateWorkingPresentation(
     IReadOnlyDictionary<WorksheetIdentifier, SlideIdentifier> graph) : Activity
 {
     /// <inheritdoc />
+    /// <exception cref="ArgumentException">Thrown if template slide or output path is invalid.</exception>
+    /// <exception cref="FileNotFoundException">Thrown if workbook or template file is missing.</exception>
+    /// <exception cref="InvalidOperationException">Thrown if worksheet does not exist.</exception>
     public override async ValueTask ExecuteAsync(IExecutionContext context, CancellationToken cancellationToken = default)
     {
         var worksheet = context.GetVariable<WorksheetIdentifier>(WorksheetContextRules.Worksheet)!;

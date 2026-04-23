@@ -1,14 +1,22 @@
+using SlideGenerator.Application.Cloud.Abstractions;
 using SlideGenerator.Application.Settings.Interfaces;
 using SlideGenerator.Application.Systems.Abstractions;
 
 namespace SlideGenerator.Infrastructure.Systems.Adapters;
 
 /// <summary>
-///     Implements HTTP operations used by application-level cloud resolvers.
+/// Implements HTTP operations used by application-level cloud resolvers.
 /// </summary>
+/// <param name="settingProvider">The setting provider to retrieve proxy configuration.</param>
 public sealed class HttpClientService(ISettingProvider settingProvider) : IClientService
 {
-    /// <inheritdoc />
+    /// <summary>
+    /// Gets the final URI after following redirects.
+    /// </summary>
+    /// <param name="uri">The initial URI.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>The final <see cref="Uri"/>.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="uri"/> is null.</exception>
     public async Task<Uri> GetForwardedUriAsync(Uri uri, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(uri);
@@ -26,7 +34,13 @@ public sealed class HttpClientService(ISettingProvider settingProvider) : IClien
         return response.RequestMessage?.RequestUri ?? uri;
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Gets the response body of a URI as a string.
+    /// </summary>
+    /// <param name="uri">The URI to request.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>The response body as a <see langword="string"/>.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="uri"/> is null.</exception>
     public async Task<string> GetBodyAsync(Uri uri, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(uri);

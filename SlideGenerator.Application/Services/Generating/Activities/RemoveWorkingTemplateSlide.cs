@@ -7,12 +7,13 @@ using SlideGenerator.Domain.Slides.Models.Identifiers;
 
 namespace SlideGenerator.Application.Services.Generating.Activities;
 
-/// <summary>
-///     Removes the working template slide (index 1) from the output presentation once all rows have been processed.
-/// </summary>
+/// <summary>Removes the working template slide.</summary>
+/// <remarks>Deletes the template slide after processing all rows.</remarks>
+/// <param name="slideRegistry">The presentation file registry.</param>
 public sealed class RemoveWorkingTemplateSlide(FileRegistry<IPresentation> slideRegistry) : Activity
 {
     /// <inheritdoc />
+    /// <exception cref="InvalidOperationException">Thrown if template slide identifier is missing.</exception>
     public override async ValueTask ExecuteAsync(IExecutionContext context, CancellationToken cancellationToken = default)
     {
         var slideIdentifier = context.GetVariable<SlideIdentifier>(WorksheetContextRules.WorkingTemplateSlide)

@@ -7,11 +7,18 @@ using Mat = SlideGenerator.Infrastructure.Images.Adapters.Mat;
 namespace SlideGenerator.Infrastructure.Images.Services;
 
 /// <summary>
-///     ImageMagick-backed Image decoder that normalizes image input to PNG format for OpenCV processing.
+///     ImageMagick-backed image decoder that normalizes image input to PNG format for OpenCV processing.
 /// </summary>
 public sealed class MatDecoder : IImageDecoder
 {
     /// <inheritdoc />
+    /// <summary>
+    ///     Decodes the provided byte array into an <see cref="IImage" /> instance.
+    /// </summary>
+    /// <param name="imageBytes">The raw image data to decode.</param>
+    /// <returns>An <see cref="IImage" /> instance representing the decoded image.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="imageBytes" /> is empty.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when decoding fails.</exception>
     public IImage Decode(byte[] imageBytes)
     {
         if (imageBytes.Length == 0)

@@ -6,12 +6,24 @@ using SlideGenerator.Domain.Sheets.Models;
 
 namespace SlideGenerator.Infrastructure.Sheets.Adapters;
 
+/// <summary>
+///     Represents an Excel workbook implemented using ClosedXML for read-only access.
+/// </summary>
 public class XlReadOnlyWorkbook : IReadOnlyWorkbook
 {
+    /// <summary>Lazily loads the underlying ClosedXML workbook instance.</summary>
     private readonly Lazy<IXLWorkbook> _workbookLazy;
+
+    /// <summary>Caches created read-only worksheet instances.</summary>
     private readonly ConcurrentDictionary<IXLWorksheet, XlReadOnlyWorksheet> _worksheetCache = new();
+
+    /// <summary>Holds the active file stream reading the workbook data.</summary>
     private FileStream? _fileStream;
 
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="XlReadOnlyWorkbook" /> class.
+    /// </summary>
+    /// <param name="filePath">The file path to the Excel workbook.</param>
     public XlReadOnlyWorkbook(string filePath)
     {
         Identifier = new WorkbookIdentifier(filePath);
@@ -24,11 +36,16 @@ public class XlReadOnlyWorkbook : IReadOnlyWorkbook
         Worksheets = EnumerateWorksheets().ToList();
     }
 
+    /// <summary>Gets the core ClosedXML workbook instance.</summary>
     private IXLWorkbook Core => _workbookLazy.Value;
 
+    /// <inheritdoc />
     public WorkbookIdentifier Identifier { get; }
+
+    /// <inheritdoc />
     public IReadOnlyList<IReadOnlyWorksheet> Worksheets { get; }
 
+    /// <inheritdoc />
     public bool TryGetWorksheet(string name, [MaybeNullWhen(false)] out IReadOnlyWorksheet readOnlyWorksheet)
     {
         if (!Core.TryGetWorksheet(name, out var core))
@@ -45,7 +62,7 @@ public class XlReadOnlyWorkbook : IReadOnlyWorkbook
         return true;
     }
 
-
+    /// <inheritdoc />
     public void Dispose()
     {
         if (_workbookLazy.IsValueCreated)
@@ -54,6 +71,10 @@ public class XlReadOnlyWorkbook : IReadOnlyWorkbook
         _fileStream?.Dispose();
     }
 
+    /// <summary>
+    ///     Enumerates the worksheets available in this workbook.
+    /// </summary>
+    /// <returns>A collection of <see cref="IReadOnlyWorksheet" /> instances.</returns>
     public IEnumerable<IReadOnlyWorksheet> EnumerateWorksheets()
     {
         return Core.Worksheets.Select(core => _worksheetCache.GetOrAdd(

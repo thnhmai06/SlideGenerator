@@ -20,10 +20,19 @@ using ImageSpecializedInstruction = SlideGenerator.Application.Services.Generati
 
 namespace SlideGenerator.Application.Services.Generating;
 
-/// <summary>
-///     Encapsulates the high-level workflow for generating presentations from worksheet data.
-///     Infrastructure executes the activity tree built by this class.
-/// </summary>
+/// <summary>Generates presentations from worksheet data.</summary>
+/// <remarks>Infrastructure executes the activity tree built by this class.</remarks>
+/// <param name="activities">The activity factory.</param>
+/// <param name="slideRegistry">The presentation file registry.</param>
+/// <param name="workbookRegistry">The workbook file registry.</param>
+/// <param name="textReplacer">The text replacement service.</param>
+/// <param name="imageReplacers">The collection of image replacement services.</param>
+/// <param name="cloudResolver">The cloud URL resolver.</param>
+/// <param name="downloadRegistry">The image download registry.</param>
+/// <param name="roiCalculator">The region of interest calculator.</param>
+/// <param name="imageDecoder">The image decoding service.</param>
+/// <param name="settingProvider">The settings provider.</param>
+/// <param name="fileSystem">The file system abstraction.</param>
 public sealed class GeneratingWorkflow(
     IActivityFactory activities,
     FileRegistry<IPresentation> slideRegistry,
@@ -37,9 +46,12 @@ public sealed class GeneratingWorkflow(
     ISettingProvider settingProvider,
     IFileSystem fileSystem) : Workflow<GeneratingRequest>
 {
+    /// <summary>Index of the working template slide.</summary>
     private const int WorkingTemplateSlideIndex = 1;
 
-    /// <summary>Builds the complete generation activity tree for the given request.</summary>
+    /// <summary>Builds the activity tree.</summary>
+    /// <param name="request">The generation request.</param>
+    /// <returns>The workflow <see cref="Activity" />.</returns>
     public override Activity Build(GeneratingRequest request)
     {
         var worksheetState = CreateVariable<WorksheetIdentifier?>(WorksheetContextRules.Worksheet);
@@ -56,6 +68,9 @@ public sealed class GeneratingWorkflow(
         ], name: "Generation");
     }
 
+    /// <summary>Builds the preparation sequence.</summary>
+    /// <param name="request">The generation request.</param>
+    /// <returns>A <see cref="Sequence" /> for preparation tasks.</returns>
     private Sequence BuildPreparingSequence(GeneratingRequest request)
     {
         var downloadState = CreateVariable<KeyValuePair<ImageSpecializedInstruction, string>>(WorksheetContextRules.DownloadItem);
@@ -81,6 +96,8 @@ public sealed class GeneratingWorkflow(
         ], name: "Preparing");
     }
 
+    /// <summary>Builds the editing sequence.</summary>
+    /// <returns>A <see cref="Sequence" /> for editing tasks.</returns>
     private Sequence BuildEditingSequence()
     {
         var rowState = CreateVariable<int>(WorksheetContextRules.Row);
@@ -121,8 +138,15 @@ public sealed class GeneratingWorkflow(
         ], name: "Editing");
     }
 
+    /// <summary>Creates a workflow variable.</summary>
+    /// <typeparam name="T">The variable type.</typeparam>
+    /// <param name="name">The variable name.</param>
+    /// <returns>A new <see cref="Variable{T}" />.</returns>
     private static Variable<T> CreateVariable<T>(string? name = null) => new Variable<T> { Name = name };
 
+    /// <summary>Provides an empty lazy enumerable for iteration.</summary>
+    /// <typeparam name="T">The item type.</typeparam>
+    /// <returns>An empty <see cref="IEnumerable{T}" />.</returns>
     private static IEnumerable<T> LazyItems<T>()
     {
         // This is a placeholder. The actual implementation will be in the infrastructure.

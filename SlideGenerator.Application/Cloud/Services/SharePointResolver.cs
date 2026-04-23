@@ -5,7 +5,7 @@ using SlideGenerator.Application.Cloud.Rules;
 namespace SlideGenerator.Application.Cloud.Services;
 
 /// <summary>
-///     Provides access to SharePoint as a cloud provider.
+///     Provides access to Microsoft SharePoint as a cloud provider, resolving file URIs to direct download links.
 /// </summary>
 public sealed class SharePointResolver : ICloudResolver
 {

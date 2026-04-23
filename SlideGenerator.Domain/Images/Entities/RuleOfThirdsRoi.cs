@@ -13,6 +13,9 @@ namespace SlideGenerator.Domain.Images.Entities;
 /// Reviewed by @thnhmai06 at 02/03/2026 11:28:25 GMT+7
 public sealed class RuleOfThirdsRoi(IFaceDetectorProvider faceDetectorProvider) : IRoiCalculator
 {
+    /// <summary>
+    ///     The default pivot point for the rule-of-thirds (x: 0.5, y: 0.333).
+    /// </summary>
     private static readonly Vector2 RuleOfThirdsPivot = new(1 / 2f, 1 / 3f);
 
     /// <inheritdoc />

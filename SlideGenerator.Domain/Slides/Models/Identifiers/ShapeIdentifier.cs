@@ -1,8 +1,8 @@
-﻿namespace SlideGenerator.Domain.Slides.Models.Identifiers;
+namespace SlideGenerator.Domain.Slides.Models.Identifiers;
 
 /// <summary>
-///     Represents a shape source.
+///     Identifies a specific shape within a slide.
 /// </summary>
-/// <param name="Slide">The slide contains this shape.</param>
-/// <param name="Id">The ID of shape in Slide.</param>
+/// <param name="Slide">The identifier of the parent slide containing this shape.</param>
+/// <param name="Id">The unique ID of the shape within the slide.</param>
 public record ShapeIdentifier(SlideIdentifier Slide, uint Id);

@@ -9,6 +9,7 @@ namespace SlideGenerator.Infrastructure.Settings.Services;
 ///     Manages opened text files backed by the file system.
 ///     Concurrent reads are unrestricted (max-count = <see cref="int.MaxValue" />).
 /// </summary>
+/// <param name="locker">The locker used to coordinate access to files based on their paths.</param>
 public sealed class TextFileRegistry(IAsyncKeyedLocker<string> locker)
     : FileRegistry<ITextFile>(locker)
 {

@@ -10,15 +10,16 @@ using SpecializedInstruction = SlideGenerator.Application.Services.Generating.Mo
 
 namespace SlideGenerator.Application.Services.Generating.Activities;
 
-/// <summary>
-///     Resolves source URLs for image instructions by reading the specified row from the worksheet
-///     and running each raw URL through the cloud resolver chain.
-/// </summary>
+/// <summary>Resolves source URLs for images.</summary>
+/// <remarks>Reads row data and processes URLs through the cloud resolver chain.</remarks>
+/// <param name="cloudResolver">The cloud URL resolver.</param>
+/// <param name="workbookRegistry">The workbook file registry.</param>
 public sealed class ResolveImageUrls(
     ICloudResolver cloudResolver,
     FileRegistry<IReadOnlyWorkbook> workbookRegistry) : Activity
 {
     /// <inheritdoc />
+    /// <exception cref="InvalidOperationException">Thrown if the worksheet is missing.</exception>
     public override async ValueTask ExecuteAsync(IExecutionContext context, CancellationToken cancellationToken = default)
     {
         var worksheetInfo = context.GetVariable<WorksheetIdentifier>(WorksheetContextRules.Worksheet)!;

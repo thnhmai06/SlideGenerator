@@ -11,6 +11,7 @@ namespace SlideGenerator.Application.Services.Generating.Models;
 /// <param name="Graph">Sheet-to-template-slide mapping.</param>
 /// <param name="TextInstructions">HasTextFrame replacement bindings.</param>
 /// <param name="ImageInstructions">Image replacement bindings.</param>
+/// <param name="OutputExtension">The desired presentation format extension.</param>
 /// <param name="SaveFolder">Save folder for generated presentations.</param>
 /// <remarks>
 ///     Reviewed by @thnhmai06 at 01/03/2026 00:58:42 GMT+7

@@ -12,15 +12,14 @@ namespace SlideGenerator.Infrastructure.Images.Adapters;
 /// <summary>
 ///     Asynchronous wrapper for <see cref="FaceDetectorYN" />.
 /// </summary>
-/// <param name="inputSize">The path to the requested model</param>
-/// <param name="configPath">The size of the input image that Image will resize to in detection</param>
-/// <param name="scoreThreshold">The path to the config file for compatibility, which is not requested for ONNX models</param>
-/// <param name="nmsThreshold">The threshold to filter out bounding boxes of score smaller than the given value</param>
-/// <param name="topK">The threshold to suppress bounding boxes of IoU bigger than the given value</param>
-/// <param name="backendId">Keep top K b-boxes before NMS</param>
-/// <param name="targetId">The id of backend</param>
-/// <param name="targetId">The id of target device</param>
-/// Reviewed by @thnhmai06 at 02/03/2026 11:41:42 GMT+7
+/// <param name="modelPath">The path to the requested model.</param>
+/// <param name="inputSize">The size of the input image that the model will resize to in detection.</param>
+/// <param name="configPath">The path to the configuration file for compatibility; not required for ONNX models.</param>
+/// <param name="scoreThreshold">The threshold to filter out bounding boxes with a score smaller than the given value.</param>
+/// <param name="nmsThreshold">The threshold to suppress bounding boxes with an IoU larger than the given value.</param>
+/// <param name="topK">The maximum number of bounding boxes to keep before Non-Maximum Suppression (NMS).</param>
+/// <param name="backendId">The identifier of the backend to be used.</param>
+/// <param name="targetId">The identifier of the target device to be used.</param>
 public sealed class YuNet(
     string modelPath,
     Size inputSize,
@@ -31,26 +30,43 @@ public sealed class YuNet(
     Backend backendId = Backend.DEFAULT,
     Target targetId = Target.CPU) : FaceDetector
 {
+    /// <summary>
+    ///     The underlying OpenCV <see cref="FaceDetectorYN" /> instance.
+    /// </summary>
     private FaceDetectorYN? _model;
 
     /// <summary>
     ///     Gets the semaphore used to coordinate access to lock detection operations.
     /// </summary>
     /// <remarks>
-    ///     Use this semaphore to ensure that lock detection logic is executed in a thread-safe manner.
+    ///     Use this semaphore to ensure that face detection logic is executed in a thread-safe manner.
     ///     The semaphore is initialized with a single slot, allowing only one concurrent operation. This property is
     ///     immutable and set during object initialization.
     /// </remarks>
     public SemaphoreSlim DetectLock { private get; init; } = new(1, 1);
 
+    /// <inheritdoc />
+    /// <summary>
+    ///     Gets a value indicating whether the face detection model is currently available and not disposed.
+    /// </summary>
     public override bool IsModelAvailable => _model is { IsDisposed: false };
 
+    /// <inheritdoc />
+    /// <summary>
+    ///     Asynchronously disposes the model and releases associated resources.
+    /// </summary>
     public override async ValueTask DisposeAsync()
     {
-        await DeInitAsync();
+        await DeInitAsync().ConfigureAwait(false);
         DetectLock.Dispose();
+        GC.SuppressFinalize(this);
     }
 
+    /// <inheritdoc />
+    /// <summary>
+    ///     Initializes the <see cref="FaceDetectorYN" /> model instance.
+    /// </summary>
+    /// <returns>A task representing the initialization operation, yielding <see langword="true" /> if initialization was successful; otherwise, <see langword="false" />.</returns>
     public override Task<bool> InitAsync()
     {
         if (!IsModelAvailable)
@@ -61,29 +77,47 @@ public sealed class YuNet(
         return Task.FromResult(IsModelAvailable);
     }
 
+    /// <inheritdoc />
+    /// <summary>
+    ///     De-initializes the <see cref="FaceDetectorYN" /> model and releases its resources.
+    /// </summary>
+    /// <returns>A task representing the de-initialization operation, yielding <see langword="true" /> if the model was successfully de-initialized; otherwise, <see langword="false" />.</returns>
     public override async Task<bool> DeInitAsync()
     {
         await DetectLock.WaitAsync().ConfigureAwait(false);
-        if (IsModelAvailable)
+        try
         {
-            _model?.Dispose();
-            _model = null;
+            if (IsModelAvailable)
+            {
+                _model?.Dispose();
+                _model = null;
+            }
+        }
+        finally
+        {
+            DetectLock.Release();
         }
 
         return !IsModelAvailable;
     }
 
+    /// <inheritdoc />
+    /// <summary>
+    ///     Detects faces in the provided <see cref="IImage" /> instance.
+    /// </summary>
+    /// <param name="image">The image to process. Must be an instance of <see cref="Mat" />.</param>
+    /// <returns>A task yielding a list of detected <see cref="Face" /> instances.</returns>
     public override async Task<IReadOnlyList<Face>> DetectAsync(IImage image)
     {
         return await DetectAsync(((Mat)image).Core).ConfigureAwait(false);
     }
 
     /// <summary>
-    ///     Detects faces from the provided image using initialized YuNet model instance.
+    ///     Detects faces from the provided <see cref="OpenCvSharp.Mat" /> using the initialized model.
     /// </summary>
-    /// <param name="mat">Input image to run detection on.</param>
-    /// <returns>All faces detected by the model without score filtering.</returns>
-    /// <exception cref="InvalidOperationException">Thrown when the model has not been initialized.</exception>
+    /// <param name="mat">The input image matrix.</param>
+    /// <returns>A task yielding a list of detected <see cref="Face" /> instances.</returns>
+    /// <exception cref="InvalidOperationException">Thrown if the model is not initialized.</exception>
     public async Task<List<Face>> DetectAsync(OpenCvSharp.Mat mat)
     {
         if (!IsModelAvailable)
@@ -150,12 +184,14 @@ public sealed class YuNet(
     }
 
     /// <summary>
-    ///     Resizes and pads the input image to match InputSize with black padding.
-    ///     If input is smaller than InputSize, only adds black padding.
-    ///     If input is larger, resizes proportionally while maintaining aspect ratio, then adds black padding.
+    ///     Resizes and pads the input image to match <c>inputSize</c> with black padding.
     /// </summary>
+    /// <remarks>
+    ///     If input is smaller than <c>inputSize</c>, only adds black padding.
+    ///     If input is larger, resizes proportionally while maintaining aspect ratio, then adds black padding.
+    /// </remarks>
     /// <param name="mat">Original input image.</param>
-    /// <returns>Resize and pad transformation information containing the processed image and parameters for unmapping.</returns>
+    /// <returns>A <see cref="ResizeAndPadInfo" /> containing the processed image and parameters for unmapping coordinates.</returns>
     private ResizeAndPadInfo ResizeAndPadMat(OpenCvSharp.Mat mat)
     {
         var originalWidth = mat.Width;
@@ -221,7 +257,7 @@ public sealed class YuNet(
     /// </summary>
     /// <param name="point">Point in processed image coordinates.</param>
     /// <param name="resizeAndPadInfo">Resize and pad transformation information.</param>
-    /// <returns>Point in original image coordinates, or null if outside bounds.</returns>
+    /// <returns>Point in original image coordinates, or <see langword="null" /> if outside bounds.</returns>
     private static Point? UnmapLandmark(Point point, ResizeAndPadInfo resizeAndPadInfo)
     {
         if (resizeAndPadInfo.Scale >= 1.0f)
@@ -237,6 +273,11 @@ public sealed class YuNet(
         return null;
     }
 
+    /// <summary>
+    ///     Rounds a floating-point value to the nearest integer, rounding away from zero for midpoints.
+    /// </summary>
+    /// <param name="value">The value to round.</param>
+    /// <returns>The rounded integer value.</returns>
     private static int RoundToIntAwayFromZero(float value)
     {
         return (int)Math.Round(value, MidpointRounding.AwayFromZero);
@@ -247,10 +288,29 @@ public sealed class YuNet(
     /// </summary>
     private sealed class ResizeAndPadInfo
     {
+        /// <summary>
+        ///     Gets the processed <see cref="OpenCvSharp.Mat" /> instance.
+        /// </summary>
         public required OpenCvSharp.Mat ProcessedMat { get; init; }
+
+        /// <summary>
+        ///     Gets the scale factor applied to the original image.
+        /// </summary>
         public required float Scale { get; init; }
+
+        /// <summary>
+        ///     Gets the number of pixels padded on the left side.
+        /// </summary>
         public required int PadLeft { get; init; }
+
+        /// <summary>
+        ///     Gets the number of pixels padded on the top side.
+        /// </summary>
         public required int PadTop { get; init; }
+
+        /// <summary>
+        ///     Gets the original size of the image before resizing and padding.
+        /// </summary>
         public required Size OriginalSize { get; init; }
     }
 }

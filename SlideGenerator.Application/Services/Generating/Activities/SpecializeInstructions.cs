@@ -13,15 +13,22 @@ using TextSpecializedInstruction = SlideGenerator.Application.Services.Generatin
 namespace SlideGenerator.Application.Services.Generating.Activities;
 
 /// <summary>
-///     Converts general instructions into worksheet-specific specialized instructions,
-///     filtering by matching worksheet, column headers, placeholders, and image shape IDs.
+///     Specializes general instructions for a specific worksheet.
 /// </summary>
+/// <remarks>
+///     Filters instructions based on matching worksheet, column headers, and template content.
+/// </remarks>
+/// <param name="workbookRegistry">The workbook file registry for acquiring workbook access.</param>
+/// <param name="rawTextInstructions">The raw list of general text replacement instructions.</param>
+/// <param name="rawImageInstructions">The raw list of general image replacement instructions.</param>
 public sealed class SpecializeInstructions(
     FileRegistry<IReadOnlyWorkbook> workbookRegistry,
     IReadOnlyList<TextGeneralInstruction> rawTextInstructions,
     IReadOnlyList<ImageGeneralInstruction> rawImageInstructions) : Activity
 {
     /// <inheritdoc />
+    /// <exception cref="ArgumentException">Thrown if the template slide is missing in context.</exception>
+    /// <exception cref="InvalidOperationException">Thrown if the targeted worksheet does not exist in the workbook.</exception>
     public override async ValueTask ExecuteAsync(IExecutionContext context, CancellationToken cancellationToken = default)
     {
         var worksheetIdentifier = context.GetVariable<WorksheetIdentifier>(WorksheetContextRules.Worksheet)!;

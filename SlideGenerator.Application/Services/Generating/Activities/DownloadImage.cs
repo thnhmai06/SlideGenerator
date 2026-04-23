@@ -9,10 +9,10 @@ using SlideGenerator.Application.Workflows.Entities.Contexts;
 
 namespace SlideGenerator.Application.Services.Generating.Activities;
 
-/// <summary>
-///     Downloads one image item to the configured storage folder.
-///     Concurrency throttling is expected to be applied externally via <see cref="SlotGated" />.
-/// </summary>
+/// <summary>Downloads an image to the storage folder.</summary>
+/// <remarks>Concurrency throttling is expected to be applied externally.</remarks>
+/// <param name="downloadRegistry">The image download registry.</param>
+/// <param name="settingProvider">The settings provider.</param>
 public sealed class DownloadImage(
     DownloadRegistry downloadRegistry,
     ISettingProvider settingProvider) : Activity

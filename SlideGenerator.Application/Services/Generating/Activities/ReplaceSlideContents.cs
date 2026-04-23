@@ -10,9 +10,13 @@ using SlideGenerator.Domain.Slides.Models.Identifiers;
 
 namespace SlideGenerator.Application.Services.Generating.Activities;
 
-/// <summary>
-///     Replaces both text placeholders and image shapes on the cloned slide that corresponds to the current row.
-/// </summary>
+/// <summary>Replaces placeholders on a slide.</summary>
+/// <remarks>Updates both text and image content for the current row.</remarks>
+/// <param name="slideRegistry">The presentation file registry.</param>
+/// <param name="textReplacer">The text replacement service.</param>
+/// <param name="imageReplacers">The collection of image replacement services.</param>
+/// <param name="workbookRegistry">The workbook file registry.</param>
+/// <param name="templateSlideIndex">The 1-based index of the template slide.</param>
 public sealed class ReplaceSlideContents(
     FileRegistry<IPresentation> slideRegistry,
     ITextReplacer textReplacer,
@@ -21,6 +25,8 @@ public sealed class ReplaceSlideContents(
     int templateSlideIndex) : Activity
 {
     /// <inheritdoc />
+    /// <exception cref="ArgumentException">Thrown if template slide is missing in context.</exception>
+    /// <exception cref="InvalidOperationException">Thrown if target slide does not exist.</exception>
     public override async ValueTask ExecuteAsync(IExecutionContext context, CancellationToken cancellationToken = default)
     {
         var row = context.GetVariable<int>(WorksheetContextRules.Row);
@@ -63,6 +69,11 @@ public sealed class ReplaceSlideContents(
             }
     }
 
+    /// <summary>Builds the text replacement map for the current row.</summary>
+    /// <param name="context">The execution context.</param>
+    /// <param name="row">The current row index.</param>
+    /// <param name="ct">The cancellation token.</param>
+    /// <returns>A dictionary of placeholders and their replacement values.</returns>
     private async ValueTask<IReadOnlyDictionary<string, string>?> BuildTextMapAsync(IExecutionContext context, int row, CancellationToken ct)
     {
         var worksheet = context.GetVariable<WorksheetIdentifier>(WorksheetContextRules.Worksheet)!;

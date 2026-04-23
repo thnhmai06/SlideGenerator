@@ -8,14 +8,17 @@ using SlideGenerator.Domain.Slides.Models.Identifiers;
 
 namespace SlideGenerator.Application.Services.Generating.Activities;
 
-/// <summary>
-///     Scans one template slide and writes placeholder names and image shape IDs into the worksheet context.
-/// </summary>
+/// <summary>Scans a template slide for placeholders.</summary>
+/// <remarks>Identifies text placeholders and image shape IDs.</remarks>
+/// <param name="slideRegistry">The presentation file registry.</param>
+/// <param name="textReplacer">The text replacement service.</param>
 public sealed class ScanTemplateContent(
     FileRegistry<IPresentation> slideRegistry,
     ITextReplacer textReplacer) : Activity
 {
     /// <inheritdoc />
+    /// <exception cref="ArgumentException">Thrown if template slide is missing in context.</exception>
+    /// <exception cref="InvalidOperationException">Thrown if template slide does not exist.</exception>
     public override async ValueTask ExecuteAsync(IExecutionContext context, CancellationToken cancellationToken = default)
     {
         var slideIdentifier = context.GetVariable<SlideIdentifier>(WorksheetContextRules.WorkingTemplateSlide)

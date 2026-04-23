@@ -7,13 +7,29 @@ using AppExecutionContext = SlideGenerator.Application.Workflows.Entities.Contex
 
 namespace SlideGenerator.Infrastructure.Workflows.Adapters;
 
+/// <summary>
+///     Infrastructure implementation of <see cref="ParallelForEach{T}" /> that converts to an Elsa-native <see cref="Elsa.Workflows.Activities.ParallelForEach{T}" />.
+/// </summary>
+/// <typeparam name="T">The type of items to iterate over.</typeparam>
 public sealed class ElsaParallelForEach<T> : ParallelForEach<T> where T : notnull
 {
+    /// <summary>
+    ///     The key used by Elsa to store the current item in the iteration.
+    /// </summary>
     private const string ElsaCurrentValue = "CurrentValue";
 
+    /// <inheritdoc />
+    /// <remarks>
+    ///     This method is not supported because the activity is designed to be converted to an Elsa-native equivalent via <see cref="ToElsaActivity" />.
+    /// </remarks>
     public override ValueTask ExecuteAsync(AppExecutionContext context, CancellationToken cancellationToken = default) =>
         throw new NotSupportedException();
 
+    /// <summary>
+    ///     Converts this activity to its Elsa-native equivalent.
+    /// </summary>
+    /// <param name="converter">The activity converter used to transform child activities.</param>
+    /// <returns>An Elsa-native <see cref="Elsa.Workflows.Activities.ParallelForEach{T}" /> activity.</returns>
     internal ElsaActivity ToElsaActivity(Func<AppActivity, ElsaActivity> converter)
     {
         return new Elsa.Workflows.Activities.ParallelForEach<T>

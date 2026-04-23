@@ -6,6 +6,9 @@ using SlideGenerator.Infrastructure.Workflows.Adapters;
 
 namespace SlideGenerator.Infrastructure.Workflows.Services;
 
+/// <summary>
+///     Infrastructure implementation of <see cref="IActivityFactory" /> that creates Elsa-compatible workflow activities.
+/// </summary>
 public sealed class ElsaActivityFactory : IActivityFactory
 {
     /// <inheritdoc />

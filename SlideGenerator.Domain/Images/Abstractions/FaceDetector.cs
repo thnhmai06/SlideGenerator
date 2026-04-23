@@ -14,14 +14,17 @@ public abstract class FaceDetector : IAsyncDisposable
     /// </summary>
     public abstract bool IsModelAvailable { get; }
 
+    /// <summary>
+    ///     Asynchronously disposes the face detector.
+    /// </summary>
+    /// <returns>A <see cref="ValueTask" /> representing the disposal operation.</returns>
     public abstract ValueTask DisposeAsync();
 
     /// <summary>
     ///     Initializes the face detection model asynchronously.
     /// </summary>
     /// <returns>
-    ///     A task that represents the asynchronous initialization operation. The task result is <see langword="true" /> if the
-    ///     model was successfully initialized; otherwise, <see langword="false" />.
+    ///     <see langword="true" /> if initialized successfully; otherwise, <see langword="false" />.
     /// </returns>
     public abstract Task<bool> InitAsync();
 
@@ -29,19 +32,17 @@ public abstract class FaceDetector : IAsyncDisposable
     ///     Deinitializes the face detection model asynchronously.
     /// </summary>
     /// <returns>
-    ///     A task that represents the asynchronous deinitialization operation. The task result is <see langword="true" /> if
-    ///     the deinitialization completed successfully; otherwise, <see langword="false" />.
+    ///     <see langword="true" /> if deinitialized successfully; otherwise, <see langword="false" />.
     /// </returns>
     public abstract Task<bool> DeInitAsync();
 
     /// <summary>
-    ///     Attempts to detect faces in the specified image.
+    ///     Detects faces in the specified image.
     /// </summary>
-    /// <param name="mat">The mat in which to search for faces. Must not be null.</param>
+    /// <param name="mat">The image to search for faces.</param>
     /// <returns>
-    ///     A task that represents the asynchronous operation. The task result is a list of detected
-    ///     face candidates. The list is empty if no faces are detected or if detection fails.
+    ///     A list of detected <see cref="Face" /> candidates.
     /// </returns>
-    /// <exception cref="InvalidOperationException">Thrown when the model has not been initialized.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when the model is not initialized.</exception>
     public abstract Task<IReadOnlyList<Face>> DetectAsync(IImage mat);
 }

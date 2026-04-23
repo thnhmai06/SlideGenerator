@@ -3,11 +3,22 @@ using System.Numerics;
 
 namespace SlideGenerator.Domain.Images;
 
+/// <summary>
+///     Provides utility methods for image and geometric calculations.
+/// </summary>
 public static class Utilities
 {
-    /// <param name="rect">The rectangle to be clamped within the border.</param>
+    /// <summary>
+    ///     Provides extension methods for the <see cref="Rectangle" /> struct.
+    /// </summary>
+    /// <param name="rect">The rectangle instance.</param>
     extension(Rectangle rect)
     {
+        /// <summary>
+        ///     Linearly interpolates a point within the rectangle based on a pivot.
+        /// </summary>
+        /// <param name="pivot">The relative pivot point (0.0 to 1.0).</param>
+        /// <returns>The interpolated <see cref="Point" />.</returns>
         public Point Lerp(Vector2 pivot)
         {
             return new Point(
@@ -82,7 +93,10 @@ public static class Utilities
         return new Point(x, y);
     }
 
-    /// <param name="original">The original size.</param>
+    /// <summary>
+    ///     Provides extension methods for the <see cref="Size" /> struct.
+    /// </summary>
+    /// <param name="original">The size instance.</param>
     extension(Size original)
     {
         /// <summary>
@@ -112,11 +126,20 @@ public static class Utilities
             return new Size(width, height);
         }
 
+        /// <summary>
+        ///     Gets the center point of the size.
+        /// </summary>
+        /// <returns>The center <see cref="Point" />.</returns>
         public Point CenterPoint()
         {
             return new Point(original.Width / 2, original.Height / 2);
         }
 
+        /// <summary>
+        ///     Linearly interpolates a point within the size based on a pivot.
+        /// </summary>
+        /// <param name="pivot">The relative pivot point (0.0 to 1.0).</param>
+        /// <returns>The interpolated <see cref="Point" />.</returns>
         public Point Lerp(Vector2 pivot)
         {
             return new Point(
@@ -153,11 +176,21 @@ public static class Utilities
         return new Rectangle(x, y, boundedSize.Width, boundedSize.Height).ClampIn(imageBounds);
     }
 
+    /// <summary>
+    ///     Converts a <see cref="Point" /> to a <see cref="Vector2" />.
+    /// </summary>
+    /// <param name="point">The point to convert.</param>
+    /// <returns>A <see cref="Vector2" /> representing the point.</returns>
     public static Vector2 ToVector2(this Point point)
     {
         return new Vector2(point.X, point.Y);
     }
 
+    /// <summary>
+    ///     Converts a <see cref="Vector2" /> to a <see cref="Point" />.
+    /// </summary>
+    /// <param name="vector">The vector to convert.</param>
+    /// <returns>A <see cref="Point" /> representing the vector.</returns>
     public static Point ToPoint(this Vector2 vector)
     {
         return new Point(
@@ -166,6 +199,13 @@ public static class Utilities
         );
     }
 
+    /// <summary>
+    ///     Calculates the centroid of a collection of points.
+    /// </summary>
+    /// <typeparam name="TSource">The type of the elements in the source collection.</typeparam>
+    /// <param name="containers">The collection of containers.</param>
+    /// <param name="selector">A function to select the point from each container.</param>
+    /// <returns>The centroid <see cref="Point" />, or <see langword="null" /> if no points are available.</returns>
     public static Point? Centroid<TSource>(
         this IReadOnlyList<TSource> containers,
         Func<TSource, Point?> selector)

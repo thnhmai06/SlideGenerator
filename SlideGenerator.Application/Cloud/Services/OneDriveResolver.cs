@@ -5,7 +5,7 @@ using SlideGenerator.Application.Cloud.Rules;
 namespace SlideGenerator.Application.Cloud.Services;
 
 /// <summary>
-///     Provides access to OneDrive as a cloud provider.
+///     Provides access to Microsoft OneDrive as a cloud provider, converting sharing links to direct API download links.
 /// </summary>
 public sealed class OneDriveResolver : ICloudResolver
 {

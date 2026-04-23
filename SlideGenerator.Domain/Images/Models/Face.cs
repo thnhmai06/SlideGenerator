@@ -22,12 +22,23 @@ public readonly record struct Face(
     Point? RightMouth = null,
     Point? LeftMouth = null)
 {
+    /// <summary>
+    ///     Gets the center point of the face bounding box.
+    /// </summary>
     public Point FaceCenter => new(Rect.X + Rect.Width / 2, Rect.Y + Rect.Height / 2);
 
+    /// <summary>
+    ///     Gets the center point between the left and right eyes, if both landmarks are available.
+    /// </summary>
+    /// <returns>A <see cref="Point" /> if both eyes are present; otherwise, <see langword="null" />.</returns>
     public Point? EyesCenter => RightEye.HasValue && LeftEye.HasValue
         ? new Point((RightEye.Value.X + LeftEye.Value.X) / 2, (RightEye.Value.Y + LeftEye.Value.Y) / 2)
         : null;
 
+    /// <summary>
+    ///     Gets the center point between the left and right mouth corners, if both landmarks are available.
+    /// </summary>
+    /// <returns>A <see cref="Point" /> if both mouth corners are present; otherwise, <see langword="null" />.</returns>
     public Point? MouthCenter => RightMouth.HasValue && LeftMouth.HasValue
         ? new Point((RightMouth.Value.X + LeftMouth.Value.X) / 2, (RightMouth.Value.Y + LeftMouth.Value.Y) / 2)
         : null;

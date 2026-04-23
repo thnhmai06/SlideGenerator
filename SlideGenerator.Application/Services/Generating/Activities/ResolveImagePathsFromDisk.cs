@@ -7,9 +7,10 @@ using SlideGenerator.Application.Workflows.Entities.Contexts;
 
 namespace SlideGenerator.Application.Services.Generating.Activities;
 
-/// <summary>
-///     Resolves stored image files from disk for each specialized instruction and writes the result to the context.
-/// </summary>
+/// <summary>Resolves image file paths from disk.</summary>
+/// <remarks>Maps specialized instructions to actual file paths on the local file system.</remarks>
+/// <param name="settingProvider">The settings provider.</param>
+/// <param name="useEditPath">Whether to use edited image paths instead of downloaded ones.</param>
 public sealed class ResolveImagePathsFromDisk(ISettingProvider settingProvider, bool useEditPath) : Activity
 {
     /// <inheritdoc />
@@ -54,9 +55,15 @@ public sealed class ResolveImagePathsFromDisk(ISettingProvider settingProvider, 
         return ValueTask.CompletedTask;
     }
 
+    /// <summary>Tries to resolve an edited image path.</summary>
+    /// <param name="desiredPath">The desired file path.</param>
+    /// <returns>The resolved path if it exists; otherwise, <see langword="null" />.</returns>
     private static string? TryResolveEditedPath(string desiredPath) =>
         File.Exists(desiredPath) ? desiredPath : null;
 
+    /// <summary>Tries to resolve a downloaded image path by checking for various extensions.</summary>
+    /// <param name="desiredPathWithoutExtension">The desired file path without its extension.</param>
+    /// <returns>The resolved path if found; otherwise, <see langword="null" />.</returns>
     private static string? TryResolveDownloadedPath(string desiredPathWithoutExtension)
     {
         var folder = Path.GetDirectoryName(desiredPathWithoutExtension);

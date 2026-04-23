@@ -7,8 +7,16 @@ using Picture = DocumentFormat.OpenXml.Presentation.Picture;
 
 namespace SlideGenerator.Infrastructure.Slides.Services;
 
+/// <summary>
+/// Replaces picture images in Open XML shapes.
+/// </summary>
 public sealed class PictureReplacer : IImageReplacer
 {
+    /// <summary>
+    /// Scans a shape for picture image data.
+    /// </summary>
+    /// <param name="sample">The shape to scan.</param>
+    /// <returns>The image data as a byte array if found; otherwise, an empty array.</returns>
     public byte[]? Scan(IReadOnlyShape sample)
     {
         if (!sample.IsPicture || sample is not XmlShape { Slide: XmlSlide xmlSlide, Core: Picture picture })
@@ -19,6 +27,13 @@ public sealed class PictureReplacer : IImageReplacer
         return TryReadPartBytes(slidePart, relationshipId, out var imageBytes) ? imageBytes : [];
     }
 
+    /// <summary>
+    /// Replaces the picture image in a shape with data from a stream.
+    /// </summary>
+    /// <param name="sample">The shape to update.</param>
+    /// <param name="imageStream">The stream containing the new image data.</param>
+    /// <returns>The number of shapes updated (1 if successful, 0 otherwise).</returns>
+    /// <exception cref="ArgumentException">Thrown when the shape or stream is invalid.</exception>
     public int Replace(IShape sample, Stream imageStream)
     {
         if (sample is not XmlShape xmlShape)
@@ -45,6 +60,13 @@ public sealed class PictureReplacer : IImageReplacer
         return 1;
     }
 
+    /// <summary>
+    /// Attempts to read the bytes of an image part from a slide part using a relationship ID.
+    /// </summary>
+    /// <param name="slidePart">The slide part containing the image.</param>
+    /// <param name="relationshipId">The relationship identifier.</param>
+    /// <param name="imageBytes">The resulting image data as a byte array.</param>
+    /// <returns><see langword="true" /> if the image data was successfully read; otherwise, <see langword="false" />.</returns>
     private static bool TryReadPartBytes(SlidePart slidePart, string? relationshipId, out byte[] imageBytes)
     {
         if (string.IsNullOrWhiteSpace(relationshipId)

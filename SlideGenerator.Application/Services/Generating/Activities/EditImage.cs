@@ -13,10 +13,12 @@ using Size = System.Drawing.Size;
 
 namespace SlideGenerator.Application.Services.Generating.Activities;
 
-/// <summary>
-///     Edits one downloaded image with ROI calculation and saves the processed result to disk.
-///     Concurrency throttling is expected to be applied externally via <see cref="SlotGated" />.
-/// </summary>
+/// <summary>Edits a downloaded image.</summary>
+/// <remarks>Calculates ROI and saves the processed image. Throttling is applied externally.</remarks>
+/// <param name="slideRegistry">The presentation file registry.</param>
+/// <param name="roiCalculator">The ROI calculator.</param>
+/// <param name="imageDecoder">The image decoder.</param>
+/// <param name="settingProvider">The settings provider.</param>
 public sealed class EditImage(
     FileRegistry<IPresentation> slideRegistry,
     IRoiCalculator roiCalculator,
@@ -47,6 +49,11 @@ public sealed class EditImage(
         }
     }
 
+    /// <summary>Processes an image with ROI calculation.</summary>
+    /// <param name="sourcePath">The source image path.</param>
+    /// <param name="destinationPath">The destination image path.</param>
+    /// <param name="targetSize">The target image size.</param>
+    /// <param name="roiOption">The ROI option.</param>
     private async ValueTask ProcessWithRoiAsync(string sourcePath, string destinationPath, Size targetSize, RoiOption roiOption)
     {
         var sourceBytes = await File.ReadAllBytesAsync(sourcePath).ConfigureAwait(false);
@@ -70,6 +77,10 @@ public sealed class EditImage(
         await File.WriteAllBytesAsync(destinationPath, sourceMat.ToByteArray()).ConfigureAwait(false);
     }
 
+    /// <summary>Resolves the target size for an image shape.</summary>
+    /// <param name="instruction">The image instruction.</param>
+    /// <param name="ct">The cancellation token.</param>
+    /// <returns>The target <see cref="Size" />.</returns>
     private async ValueTask<Size> ResolveTargetSizeAsync(SpecializedInstruction instruction, CancellationToken ct)
     {
         using var lease = await slideRegistry

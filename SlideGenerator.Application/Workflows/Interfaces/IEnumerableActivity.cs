@@ -4,10 +4,12 @@ using SlideGenerator.Application.Workflows.Entities.Contexts;
 namespace SlideGenerator.Application.Workflows.Interfaces;
 
 /// <summary>
-///     Typed contract for an iteration descriptor (<see cref="ForEach{T}" /> or <see cref="ParallelForEach{T}" />).
+///     Defines a contract for iteration activities.
+/// </summary>
+/// <remarks>
 ///     The executor reads <see cref="Items" />, writes <see cref="CurrentValue" />.Value before each iteration,
 ///     and executes <see cref="ICompositeActivity.Body" />.
-/// </summary>
+/// </remarks>
 /// <typeparam name="T">The element type of the iterated collection.</typeparam>
 public interface IEnumerableActivity<T> : ICompositeActivity
 {

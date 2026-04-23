@@ -6,26 +6,27 @@ namespace SlideGenerator.Infrastructure.Resources.Adapters;
 /// <summary>
 ///     <see cref="IAsyncKeyedLocker{TKey}" /> implementation backed by
 ///     <see cref="AsyncKeyedLock.AsyncKeyedLocker{TKey}" /> from the <c>AsyncKeyedLock</c> package.
-///     Each call to <see cref="LockAsync" /> waits on the per-key
-///     <see cref="System.Threading.SemaphoreSlim" />; the slim is automatically returned to the
-///     pool (and disposed) by the library when the count returns to its maximum value,
-///     i.e., when no more holders or waiters remain for that key.
 /// </summary>
+/// <remarks>
+///     Each call to <see cref="LockAsync" /> waits on the per-key <see cref="System.Threading.SemaphoreSlim" />; 
+///     the slim is automatically returned to the pool (and disposed) by the library when the count returns to its maximum value,
+///     i.e., when no more holders or waiters remain for that key.
+/// </remarks>
 /// <typeparam name="TKey">The lock key type.</typeparam>
 public sealed class AsyncKeyedLocker<TKey> : IAsyncKeyedLocker<TKey>
     where TKey : notnull
 {
+    /// <summary>
+    ///     The underlying <see cref="AsyncKeyedLock.AsyncKeyedLocker{TKey}" /> instance.
+    /// </summary>
     private readonly AsyncKeyedLock.AsyncKeyedLocker<TKey> _locker;
 
     /// <summary>
-    ///     Initializes the adapter.
+    ///     Initializes a new instance of the <see cref="AsyncKeyedLocker{TKey}" /> class.
     /// </summary>
     /// <param name="configure">
-    ///     Optional delegate to configure <see cref="AsyncKeyedLockOptions" />
-    ///     (pool size, max-count, etc.).  When <see langword="null" />, the library defaults are
-    ///     used.  Pass <c>opt =&gt; opt.MaxCount = <see cref="int.MaxValue" /></c> for registries
-    ///     where the per-key slim must never block (e.g., read-only workbooks or presentations
-    ///     whose concurrency is gated externally by <see cref="SemaphoreSlimRegistry" />).
+    ///     Optional delegate to configure <see cref="AsyncKeyedLockOptions" /> (pool size, max-count, etc.). 
+    ///     When <see langword="null" />, the library defaults are used.
     /// </param>
     public AsyncKeyedLocker(Action<AsyncKeyedLockOptions>? configure = null)
     {
@@ -35,6 +36,12 @@ public sealed class AsyncKeyedLocker<TKey> : IAsyncKeyedLocker<TKey>
     }
 
     /// <inheritdoc />
+    /// <summary>
+    ///     Asynchronously acquires an exclusive lock for the specified key.
+    /// </summary>
+    /// <param name="key">The key to lock.</param>
+    /// <param name="cancellationToken">A token to cancel the lock operation.</param>
+    /// <returns>A task yielding an <see cref="IKeyedLockHandle" /> that releases the lock when disposed.</returns>
     public async ValueTask<IKeyedLockHandle> LockAsync(
         TKey key,
         CancellationToken cancellationToken = default)
@@ -47,13 +54,26 @@ public sealed class AsyncKeyedLocker<TKey> : IAsyncKeyedLocker<TKey>
     }
 
     /// <inheritdoc />
+    /// <summary>
+    ///     Disposes the underlying locker and releases all associated resources.
+    /// </summary>
     public void Dispose() => _locker.Dispose();
 
-    // Wraps the library releaser behind IDisposable so the caller never references AsyncKeyedLock types.
+    /// <summary>
+    ///     Wraps the library-specific releaser to implement <see cref="IKeyedLockHandle" />.
+    /// </summary>
+    /// <param name="releaser">The underlying <see cref="IDisposable" /> that releases the lock.</param>
     private sealed class Handle(IDisposable releaser) : IKeyedLockHandle
     {
+        /// <summary>
+        ///     Track if the handle has been disposed to avoid double disposal.
+        /// </summary>
         private int _disposed;
 
+        /// <inheritdoc />
+        /// <summary>
+        ///     Releases the acquired lock.
+        /// </summary>
         public void Dispose()
         {
             if (Interlocked.Exchange(ref _disposed, 1) != 0) return;

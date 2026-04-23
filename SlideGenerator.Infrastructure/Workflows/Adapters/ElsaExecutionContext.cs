@@ -6,10 +6,16 @@ using AppVariable = SlideGenerator.Application.Workflows.Entities.Contexts.Varia
 namespace SlideGenerator.Infrastructure.Workflows.Adapters;
 
 /// <summary>
-///     Infrastructure implementation of IExecutionContext that wraps Elsa's ActivityExecutionContext.
+///     Wraps Elsa's <see cref="ActivityExecutionContext" /> to provide an application-layer <see cref="IExecutionContext" />.
 /// </summary>
+/// <param name="context">The underlying Elsa <see cref="ActivityExecutionContext" />.</param>
 public sealed class ElsaExecutionContext(ActivityExecutionContext context) : IExecutionContext
 {
+    /// <summary>
+    ///     The underlying Elsa <see cref="ActivityExecutionContext" />.
+    /// </summary>
+    private readonly ActivityExecutionContext context = context;
+
     /// <inheritdoc />
     public string WorkflowInstanceId => context.WorkflowExecutionContext.Id;
 

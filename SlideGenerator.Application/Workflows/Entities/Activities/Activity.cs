@@ -9,6 +9,10 @@ namespace SlideGenerator.Application.Workflows.Entities.Activities;
 /// </summary>
 public abstract class Activity : Entry
 {
+    /// <summary>Executes the activity asynchronously.</summary>
+    /// <param name="context">The execution context providing access to workflow state.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>A <see cref="ValueTask" /> representing the asynchronous operation.</returns>
     /// <remarks>
     ///     Composite activities (<see cref="Sequence" />, <see cref="ForEach{T}" />, etc.) are handled
     ///     structurally by the executor and never reach this method. Override in leaf activities.

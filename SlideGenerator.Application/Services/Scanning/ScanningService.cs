@@ -8,11 +8,25 @@ using SlideGenerator.Domain.Slides.Models.Previews;
 
 namespace SlideGenerator.Application.Services.Scanning;
 
+/// <summary>
+///     Provides scanning services for presentations and workbooks to extract structure and metadata.
+/// </summary>
+/// <param name="slideRegistry">The registry for accessing presentation files.</param>
+/// <param name="textReplacer">The replacer service used to scan text placeholders.</param>
+/// <param name="workbookRegistry">The registry for accessing workbook files.</param>
 public sealed class ScanningService(
     FileRegistry<IPresentation> slideRegistry,
     ITextReplacer textReplacer,
     FileRegistry<IReadOnlyWorkbook> workbookRegistry)
 {
+    /// <summary>
+    ///     Scans a presentation to extract its slides, placeholders, and image shapes.
+    /// </summary>
+    /// <param name="filePath">The file path to the presentation.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>A <see cref="PresentationSummary" /> containing the scanned metadata.</returns>
+    /// <exception cref="ArgumentException">Thrown when the file path is null or whitespace.</exception>
+    /// <exception cref="FileNotFoundException">Thrown when the presentation file does not exist.</exception>
     public async Task<PresentationSummary> ScanPresentationAsync(
         string filePath,
         CancellationToken cancellationToken = default)
@@ -65,6 +79,14 @@ public sealed class ScanningService(
         return new PresentationSummary(filePath, slides);
     }
 
+    /// <summary>
+    ///     Scans a workbook to extract its worksheets, headers, and row counts.
+    /// </summary>
+    /// <param name="filePath">The file path to the workbook.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>A <see cref="WorkbookSummary" /> containing the scanned metadata.</returns>
+    /// <exception cref="ArgumentException">Thrown when the file path is null or whitespace.</exception>
+    /// <exception cref="FileNotFoundException">Thrown when the workbook file does not exist.</exception>
     public async Task<WorkbookSummary> ScanWorkbookAsync(
         string filePath,
         CancellationToken cancellationToken = default)

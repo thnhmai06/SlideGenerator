@@ -5,8 +5,12 @@ using SlideGenerator.Application.Systems.Abstractions;
 namespace SlideGenerator.Application.Cloud.Services;
 
 /// <summary>
-///     Resolves cloud-hosted URIs by routing to keyed cloud URI resolvers.
+///     Manages multiple <see cref="ICloudResolver" /> instances and routes URIs to the appropriate resolver.
 /// </summary>
+/// <remarks>
+///     This manager iterates through all registered resolvers to find one that supports the provided URI.
+///     If no specific resolver matches, it returns the original or redirected URI.
+/// </remarks>
 public sealed class CloudResolversManager(IEnumerable<ICloudResolver> cloudResolvers, IClientService clientService)
     : ICloudResolver
 {

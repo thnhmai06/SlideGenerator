@@ -9,6 +9,7 @@ namespace SlideGenerator.Infrastructure.Sheets.Services;
 ///     Manages open workbooks backed by file system paths.
 ///     Workbooks are read-only so concurrent access is unrestricted (max-count = <see cref="int.MaxValue" />).
 /// </summary>
+/// <param name="locker">The locker used to coordinate access to workbooks based on their paths.</param>
 public sealed class XlWorkbookRegistry(IAsyncKeyedLocker<string> locker)
     : FileRegistry<IReadOnlyWorkbook>(locker)
 {

@@ -10,14 +10,25 @@ using AppExecutionContext = SlideGenerator.Application.Workflows.Entities.Contex
 namespace SlideGenerator.Infrastructure.Workflows.Adapters;
 
 /// <summary>
-///     Adapter for SlotGated activity that converts to an Elsa-native Sequence
-///     that handles locking and unlocking automatically.
+///     Infrastructure implementation of <see cref="SlotGated" /> that converts to an Elsa-native <see cref="Elsa.Workflows.Activities.Sequence" />.
 /// </summary>
+/// <remarks>
+///     The resulting sequence handles acquiring and releasing a lock via <see cref="IAsyncKeyedLocker{TKey}" /> automatically.
+/// </remarks>
 public sealed class ElsaSlotGated : SlotGated
 {
+    /// <inheritdoc />
+    /// <remarks>
+    ///     This method is not supported because the activity is designed to be converted to an Elsa-native equivalent via <see cref="ToElsaActivity" />.
+    /// </remarks>
     public override ValueTask ExecuteAsync(AppExecutionContext context, CancellationToken cancellationToken = default) =>
         throw new NotSupportedException();
 
+    /// <summary>
+    ///     Converts this activity to its Elsa-native equivalent.
+    /// </summary>
+    /// <param name="converter">The activity converter used to transform child activities.</param>
+    /// <returns>An Elsa-native <see cref="Elsa.Workflows.Activities.Sequence" /> that manages the gate lifecycle.</returns>
     internal ElsaActivity ToElsaActivity(Func<AppActivity, ElsaActivity> converter)
     {
         // Use an Elsa variable to pass the lock handle between inline activities

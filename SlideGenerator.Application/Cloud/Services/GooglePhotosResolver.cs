@@ -6,10 +6,13 @@ using SlideGenerator.Application.Systems.Abstractions;
 namespace SlideGenerator.Application.Cloud.Services;
 
 /// <summary>
-///     Provides access to Google Photos as a cloud provider.
+///     Provides access to Google Photos as a cloud provider, resolving album URLs to direct image links.
 /// </summary>
 public sealed partial class GooglePhotosResolver(IClientService clientService) : ICloudResolver
 {
+    /// <summary>
+    ///     A compiled regular expression for extracting direct image URLs from Google Photos HTML content.
+    /// </summary>
     private static readonly Regex GooglePhotosUrlPattern = GooglePhotosUrlRegex();
 
     /// <inheritdoc />
@@ -44,6 +47,10 @@ public sealed partial class GooglePhotosResolver(IClientService clientService) :
         return false;
     }
 
+    /// <summary>
+    ///     Generates the regular expression used to find the direct image URL in Google Photos HTML.
+    /// </summary>
+    /// <returns>A compiled <see cref="Regex" /> instance.</returns>
     [GeneratedRegex(@"https://lh3\.googleusercontent\.com/pw/[^""\s?]+", RegexOptions.Compiled)]
     private static partial Regex GooglePhotosUrlRegex();
 }

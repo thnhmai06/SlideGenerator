@@ -4,9 +4,11 @@ using SlideGenerator.Application.Workflows.Interfaces;
 namespace SlideGenerator.Application.Workflows.Entities.Activities;
 
 /// <summary>
-///     Describes a body activity wrapped with a concurrency gate.
-///     Infrastructure acquires a slot before running <see cref="Body" /> and releases it afterward.
+///     Executes an activity within a concurrency gate.
 /// </summary>
+/// <remarks>
+///     Infrastructure acquires a slot before running <see cref="Body" /> and releases it afterward.
+/// </remarks>
 public abstract class SlotGated : Activity, ICompositeActivity
 {
     /// <summary>Gets the concurrency gate to acquire before executing <see cref="Body" />.</summary>

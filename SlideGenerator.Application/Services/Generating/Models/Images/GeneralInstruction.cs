@@ -15,6 +15,7 @@ public sealed record GeneralInstruction(
     EditOptions Edit)
     : Instruction(Target, Edit), ISpecializable<GeneralInstruction, SpecializedInstruction>
 {
+    /// <inheritdoc />
     public IEnumerable<SpecializedInstruction> Flatten(GeneralInstruction general)
     {
         return general.Sources.Select(source => new SpecializedInstruction(general.Target, source, general.Edit));

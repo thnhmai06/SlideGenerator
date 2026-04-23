@@ -4,10 +4,12 @@ using SlideGenerator.Application.Workflows.Interfaces;
 namespace SlideGenerator.Application.Workflows.Entities.Activities;
 
 /// <summary>
-///     Describes sequential iteration over a collection of items.
+///     Sequentially iterates over a collection of items.
+/// </summary>
+/// <remarks>
 ///     The single <see cref="Body" /> activity is executed once per iteration.
 ///     Infrastructure provides a concrete executable form and writes <see cref="CurrentValue" />.Value before each run.
-/// </summary>
+/// </remarks>
 /// <typeparam name="T">The element type of the iterated collection.</typeparam>
 public abstract class ForEach<T> : Activity, IEnumerableActivity<T>
 {
@@ -19,7 +21,9 @@ public abstract class ForEach<T> : Activity, IEnumerableActivity<T>
 
     /// <summary>
     ///     Variable written by the executor with the current item before each body run.
-    ///     Activities inside <see cref="Body" /> read from this variable.
     /// </summary>
+    /// <remarks>
+    ///     Activities inside <see cref="Body" /> read from this variable.
+    /// </remarks>
     public required Variable<T?> CurrentValue { get; init; }
 }

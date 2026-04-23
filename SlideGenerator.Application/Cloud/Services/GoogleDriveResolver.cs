@@ -11,6 +11,9 @@ namespace SlideGenerator.Application.Cloud.Services;
 /// </summary>
 public sealed partial class GoogleDriveResolver(IClientService clientService) : ICloudResolver
 {
+    /// <summary>
+    ///     A compiled regular expression for extracting Google Drive file IDs from URLs.
+    /// </summary>
     private static readonly Regex GoogleDriveFileIdPattern = GoogleDriveFileIdRegex();
 
     /// <inheritdoc />
@@ -58,6 +61,10 @@ public sealed partial class GoogleDriveResolver(IClientService clientService) : 
         return false;
     }
 
+    /// <summary>
+    ///     Generates the regular expression used to find the file ID in a Google Drive URL.
+    /// </summary>
+    /// <returns>A compiled <see cref="Regex" /> instance.</returns>
     [GeneratedRegex(@"/file/d/([^/?]+)", RegexOptions.Compiled)]
     private static partial Regex GoogleDriveFileIdRegex();
 }
