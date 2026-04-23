@@ -31,7 +31,7 @@ Three layers with strict dependency rules:
 | **Application** | `SlideGenerator.Application` | Depends on Domain; defines abstractions for Infrastructure |
 | **Infrastructure** | `SlideGenerator.Infrastructure` | Implements Application abstractions using external libs |
 
-**Explicit exception**: Elsa Workflows dependencies are allowed in Application but must not appear in Domain.
+Elsa Workflows lives exclusively in Infrastructure. Application must not reference Elsa.
 
 ### Module Folder Convention
 
@@ -41,14 +41,14 @@ Each module uses consistent subfolders:
 - `Models/` — DTOs, value objects, records
 - `Rules/` — constants, enums, domain rules, extension mappings
 - `Services/` — use-case/module logic
-- `Activities/` — Elsa workflow activities (Application only)
+- `Activities/` — Application-layer workflow leaf activities (pure C#, no Elsa)
 - `Adapters/` — external library wrappers (Infrastructure only)
 
 ## Key Technologies
 
 | Library | Purpose |
 |---|---|
-| **Elsa Workflows 3.6** | Primary execution engine for slide generation pipeline |
+| **Elsa Workflows 3.6** | Owned by Infrastructure; Application defines its own DSL (`Activity`, `Sequence`, `ForEach<T>`, `ParallelForEach<T>`, `SlotGated`) |
 | **ClosedXML** | Reading Excel workbooks |
 | **DocumentFormat.OpenXml** | PowerPoint XML manipulation (never use Spire for slide editing) |
 | **OpenCvSharp4 + YuNet** | Face detection for image ROI |
@@ -62,11 +62,12 @@ Each module uses consistent subfolders:
 ### Registry Pattern (Reference-Counted Resources)
 `Registry<TKey, TResource>` base with `FileRegistry<T>`. Always acquire resources via `Acquire()` — auto-disposes when reference count hits zero. Never hold raw file handles across activities.
 
-### Workflow-as-Code (Elsa)
-- Inherit from `WorkflowBase`, build graphs with `Sequence`/`ParallelForEach`/`Inline`
-- Store temporary objects (workbooks, streams, file handles) in `WorkflowExecutionContext.TransientProperties` — **not** in persisted workflow state
-- Activities that must be re-run on recovery should be idempotent and marked compensable
-- Use `AcquireSlot`/`ReleaseSlot` activities to gate concurrency via `SemaphoreSlimRegistry`
+### Workflow-as-Code (Application DSL)
+- Application defines `Activity` / `Sequence` / `ForEach<T>` / `ParallelForEach<T>` / `SlotGated` — no Elsa dependency
+- Leaf activities implement `ILeafActivity`; composite iteration types implement `IIterableActivity`
+- `GeneratingWorkflow.Build(request)` composes the pipeline using the DSL and closures; state is shared via `WorksheetContext`
+- Infrastructure's `ApplicationWorkflowExecutor` interprets the tree; `ElsaGeneratingRunner` implements `IWorkflowRunner<GeneratingRequest>`
+- Concurrency gates use `IAsyncKeyedLocker<SlotType>` wrapped by `SlotGated` (Application) and acquired by the executor (Infrastructure)
 
 ### Cloud Resolver Chain
 `CloudResolversManager` routes cloud storage URLs (Google Drive, Google Photos, OneDrive, SharePoint) to direct download URLs before `DownloadRegistry` fetches them.

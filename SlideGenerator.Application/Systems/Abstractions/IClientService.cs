@@ -1,7 +1,7 @@
 namespace SlideGenerator.Application.Systems.Abstractions;
 
 /// <summary>
-///     Provides operations to get information from server.
+///     Provides operations to get information from the server.
 /// </summary>
 public interface IClientService
 {
