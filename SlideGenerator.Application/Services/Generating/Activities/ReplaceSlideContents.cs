@@ -1,4 +1,5 @@
 using SlideGenerator.Application.Resources.Services;
+using SlideGenerator.Application.Services.Generating.Models.Images;
 using SlideGenerator.Application.Services.Generating.Rules;
 using SlideGenerator.Application.Slides.Abstractions;
 using SlideGenerator.Application.Workflows.Entities.Activities;
@@ -27,11 +28,14 @@ public sealed class ReplaceSlideContents(
     /// <inheritdoc />
     /// <exception cref="ArgumentException">Thrown if template slide is missing in context.</exception>
     /// <exception cref="InvalidOperationException">Thrown if target slide does not exist.</exception>
-    public override async ValueTask ExecuteAsync(IExecutionContext context, CancellationToken cancellationToken = default)
+    public override async ValueTask ExecuteAsync(IExecutionContext context,
+        CancellationToken cancellationToken = default)
     {
         var row = context.GetVariable<int>(WorksheetContextRules.Row);
-        var slideIdentifier = context.GetVariable<SlideIdentifier>(WorksheetContextRules.WorkingTemplateSlide)?.Presentation.GetSlide(templateSlideIndex + row)
-                              ?? throw new ArgumentException("Template slide must be set in context before replacing slide contents.");
+        var slideIdentifier = context.GetVariable<SlideIdentifier>(WorksheetContextRules.WorkingTemplateSlide)
+                                  ?.Presentation.GetSlide(templateSlideIndex + row)
+                              ?? throw new ArgumentException(
+                                  "Template slide must be set in context before replacing slide contents.");
 
         using var lease = await slideRegistry
             .AcquireAsync(slideIdentifier.Presentation.FilePath, true, cancellationToken)
@@ -47,7 +51,9 @@ public sealed class ReplaceSlideContents(
             foreach (var shape in targetSlide.DescendShapes())
                 textReplacer.Replace(shape, textMap);
 
-        var imageInstructions = context.GetVariable<IReadOnlyDictionary<SlideGenerator.Application.Services.Generating.Models.Images.SpecializedInstruction, string>>(WorksheetContextRules.EditedImagePaths);
+        var imageInstructions =
+            context.GetVariable<IReadOnlyDictionary<SpecializedInstruction, string>>(WorksheetContextRules
+                .EditedImagePaths);
         if (imageInstructions is { Count: > 0 })
             foreach (var shape in targetSlide.DescendShapes())
             {
@@ -74,7 +80,8 @@ public sealed class ReplaceSlideContents(
     /// <param name="row">The current row index.</param>
     /// <param name="ct">The cancellation token.</param>
     /// <returns>A dictionary of placeholders and their replacement values.</returns>
-    private async ValueTask<IReadOnlyDictionary<string, string>?> BuildTextMapAsync(IExecutionContext context, int row, CancellationToken ct)
+    private async ValueTask<IReadOnlyDictionary<string, string>?> BuildTextMapAsync(IExecutionContext context, int row,
+        CancellationToken ct)
     {
         var worksheet = context.GetVariable<WorksheetIdentifier>(WorksheetContextRules.Worksheet)!;
         using var lease = await workbookRegistry
@@ -86,7 +93,9 @@ public sealed class ReplaceSlideContents(
             throw new InvalidOperationException($"Worksheet '{worksheet.Name}' does not exist in workbook.");
 
         var rowContent = ws.GetRowContent(row);
-        var textInstructions = context.GetVariable<IReadOnlyList<SlideGenerator.Application.Services.Generating.Models.Texts.SpecializedInstruction>>(WorksheetContextRules.TextInstructions) ?? [];
+        var textInstructions =
+            context.GetVariable<IReadOnlyList<Models.Texts.SpecializedInstruction>>(WorksheetContextRules
+                .TextInstructions) ?? [];
         return textInstructions
             .GroupBy(x => x.Placeholder, StringComparer.Ordinal)
             .ToDictionary(

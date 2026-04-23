@@ -24,7 +24,10 @@ public interface IReadOnlyWorkbook : IDisposable
     ///     Attempts to retrieve a worksheet by its name.
     /// </summary>
     /// <param name="name">The exact name of the worksheet to find.</param>
-    /// <param name="readOnlyWorksheet">When this method returns, contains the worksheet if found; otherwise, <see langword="null" />.</param>
+    /// <param name="readOnlyWorksheet">
+    ///     When this method returns, contains the worksheet if found; otherwise,
+    ///     <see langword="null" />.
+    /// </param>
     /// <returns><see langword="true" /> if the worksheet was successfully found; otherwise, <see langword="false" />.</returns>
     bool TryGetWorksheet(string name, [MaybeNullWhen(false)] out IReadOnlyWorksheet readOnlyWorksheet);
 }

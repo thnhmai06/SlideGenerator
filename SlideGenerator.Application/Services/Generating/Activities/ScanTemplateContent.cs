@@ -19,7 +19,8 @@ public sealed class ScanTemplateContent(
     /// <inheritdoc />
     /// <exception cref="ArgumentException">Thrown if template slide is missing in context.</exception>
     /// <exception cref="InvalidOperationException">Thrown if template slide does not exist.</exception>
-    public override async ValueTask ExecuteAsync(IExecutionContext context, CancellationToken cancellationToken = default)
+    public override async ValueTask ExecuteAsync(IExecutionContext context,
+        CancellationToken cancellationToken = default)
     {
         var slideIdentifier = context.GetVariable<SlideIdentifier>(WorksheetContextRules.WorkingTemplateSlide)
                               ?? throw new ArgumentException("Template slide must be set in context before scanning.");
@@ -35,7 +36,8 @@ public sealed class ScanTemplateContent(
                 $"Cannot scan template content: slide {slideIdentifier.Index} does not exist.");
 
         var shapes = targetSlide.DescendShapes().ToList();
-        context.SetVariable(WorksheetContextRules.TemplatePlaceholders, shapes.SelectMany(textReplacer.Scan).ToHashSet(StringComparer.Ordinal));
+        context.SetVariable(WorksheetContextRules.TemplatePlaceholders,
+            shapes.SelectMany(textReplacer.Scan).ToHashSet(StringComparer.Ordinal));
         context.SetVariable(WorksheetContextRules.TemplateImageShapeIds, shapes
             .Where(s => s.IsPicture || s.HasBlipFill)
             .Select(s => s.Id)

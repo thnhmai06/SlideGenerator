@@ -14,7 +14,7 @@ public sealed class SharePointResolver : ICloudResolver
         Uri uri,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(uri.Query)) 
+        if (string.IsNullOrEmpty(uri.Query))
             return Task.FromResult(uri);
         var queryParams = HttpUtility.ParseQueryString(uri.Query);
         var fileIdPath = queryParams.Get("id");

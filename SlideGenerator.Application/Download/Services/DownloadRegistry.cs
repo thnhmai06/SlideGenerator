@@ -20,7 +20,10 @@ public sealed class DownloadRegistry
     ///     Checks if a requested file has already been completely downloaded to the target directory.
     /// </summary>
     /// <param name="request">The download request details.</param>
-    /// <param name="filePath">When this method returns <see langword="true" />, contains the absolute path to the completed file.</param>
+    /// <param name="filePath">
+    ///     When this method returns <see langword="true" />, contains the absolute path to the completed
+    ///     file.
+    /// </param>
     /// <returns><see langword="true" /> if the file exists and is not a temporary file; otherwise, <see langword="false" />.</returns>
     public static bool TryGetCompletedDownloadFilePath(DownloadRequest request,
         [MaybeNullWhen(false)] out string filePath)
@@ -39,12 +42,19 @@ public sealed class DownloadRegistry
     }
 
     /// <summary>
-    ///     Attempts to get an existing downloader for the request, or creates a new one if it doesn't exist and hasn't been completed.
+    ///     Attempts to get an existing downloader for the request, or creates a new one if it doesn't exist and hasn't been
+    ///     completed.
     /// </summary>
     /// <param name="request">The download request details.</param>
     /// <param name="config">The download configuration to apply if a new downloader is created.</param>
-    /// <param name="downloader">When this method returns, contains the <see cref="Downloader" /> instance, or <see langword="null" /> if the file was already completed.</param>
-    /// <returns><see langword="true" /> if a new or existing downloader is returned; <see langword="false" /> if the download is already finished.</returns>
+    /// <param name="downloader">
+    ///     When this method returns, contains the <see cref="Downloader" /> instance, or
+    ///     <see langword="null" /> if the file was already completed.
+    /// </param>
+    /// <returns>
+    ///     <see langword="true" /> if a new or existing downloader is returned; <see langword="false" /> if the download
+    ///     is already finished.
+    /// </returns>
     public bool TryGetOrCreateDownloader(DownloadRequest request, DownloadConfiguration? config,
         [MaybeNullWhen(false)] out Downloader downloader)
     {

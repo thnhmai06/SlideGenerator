@@ -15,5 +15,7 @@ public sealed class TextFileRegistry(IAsyncKeyedLocker<string> locker)
 {
     /// <inheritdoc />
     protected override ITextFile OpenResource(string normalizedPath, bool isEditable)
-        => new StreamTextFile(normalizedPath, isEditable);
+    {
+        return new StreamTextFile(normalizedPath, isEditable);
+    }
 }

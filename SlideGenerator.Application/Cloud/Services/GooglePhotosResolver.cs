@@ -1,7 +1,6 @@
 using System.Text.RegularExpressions;
 using SlideGenerator.Application.Cloud.Abstractions;
 using SlideGenerator.Application.Cloud.Rules;
-using SlideGenerator.Application.Systems.Abstractions;
 
 namespace SlideGenerator.Application.Cloud.Services;
 
@@ -23,7 +22,7 @@ public sealed partial class GooglePhotosResolver(IClientService clientService) :
         var html = await clientService.GetBodyAsync(uri, cancellationToken).ConfigureAwait(false);
         var match = GooglePhotosUrlPattern.Match(html);
         if (!match.Success) return uri;
-        
+
         var directUrl = match.Value;
         if (!directUrl.Contains('=') && !directUrl.EndsWith("=d"))
             directUrl += "=d"; // for raw quality

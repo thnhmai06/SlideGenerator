@@ -10,14 +10,14 @@ using PresentationExtension = SlideGenerator.Domain.Slides.Rules.PresentationExt
 namespace SlideGenerator.Infrastructure.Slides.Adapters;
 
 /// <summary>
-/// Represents a PowerPoint presentation implementation based on Open XML SDK.
+///     Represents a PowerPoint presentation implementation based on Open XML SDK.
 /// </summary>
 /// <param name="filePath">The absolute path to the presentation file.</param>
 /// <param name="isEditable">Indicates whether the presentation is opened in read-write mode.</param>
 public class XmlPresentation(string filePath, bool isEditable = true) : IPresentation, IDisposable
 {
     /// <summary>
-    /// Lazy initializer for the underlying <see cref="PresentationDocument"/>.
+    ///     Lazy initializer for the underlying <see cref="PresentationDocument" />.
     /// </summary>
     private readonly Lazy<PresentationDocument> _core = new(() =>
     {
@@ -27,7 +27,7 @@ public class XmlPresentation(string filePath, bool isEditable = true) : IPresent
     }, LazyThreadSafetyMode.ExecutionAndPublication);
 
     /// <summary>
-    /// Releases the resources used by the <see cref="XmlPresentation"/>.
+    ///     Releases the resources used by the <see cref="XmlPresentation" />.
     /// </summary>
     public void Dispose()
     {
@@ -36,14 +36,14 @@ public class XmlPresentation(string filePath, bool isEditable = true) : IPresent
     }
 
     /// <summary>
-    /// Gets the unique identifier for this presentation.
+    ///     Gets the unique identifier for this presentation.
     /// </summary>
     public PresentationIdentifier Identifier { get; } = new(filePath);
 
     /// <summary>
-    /// Enumerates all slides in the presentation.
+    ///     Enumerates all slides in the presentation.
     /// </summary>
-    /// <returns>An enumerable collection of <see cref="ISlide"/> objects.</returns>
+    /// <returns>An enumerable collection of <see cref="ISlide" /> objects.</returns>
     /// <exception cref="InvalidOperationException">Thrown when the presentation structure is invalid.</exception>
     public IEnumerable<ISlide> EnumerateSlides()
     {
@@ -71,12 +71,12 @@ public class XmlPresentation(string filePath, bool isEditable = true) : IPresent
     }
 
     /// <summary>
-    /// Copies a slide from one position to another.
+    ///     Copies a slide from one position to another.
     /// </summary>
     /// <param name="from">The 1-based index of the source slide.</param>
     /// <param name="to">The 1-based index where the slide should be inserted.</param>
-    /// <returns>The newly created <see cref="ISlide"/>.</returns>
-    /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="from"/> is less than or equal to zero.</exception>
+    /// <returns>The newly created <see cref="ISlide" />.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="from" /> is less than or equal to zero.</exception>
     /// <exception cref="ArgumentException">Thrown when the source slide position is invalid.</exception>
     /// <exception cref="InvalidOperationException">Thrown when the presentation or slide part is missing or corrupted.</exception>
     public ISlide CopySlide(int from, int to)
@@ -218,7 +218,7 @@ public class XmlPresentation(string filePath, bool isEditable = true) : IPresent
     }
 
     /// <summary>
-    /// Removes a slide from the presentation.
+    ///     Removes a slide from the presentation.
     /// </summary>
     /// <param name="index">The 1-based index of the slide to remove.</param>
     /// <returns><see langword="true" /> if the slide was successfully removed; otherwise, <see langword="false" />.</returns>
@@ -239,7 +239,7 @@ public class XmlPresentation(string filePath, bool isEditable = true) : IPresent
     }
 
     /// <summary>
-    /// Saves the presentation changes.
+    ///     Saves the presentation changes.
     /// </summary>
     /// <param name="extension">Optional document extension to change the presentation type.</param>
     public void Save(PresentationExtension? extension = null)
@@ -251,9 +251,9 @@ public class XmlPresentation(string filePath, bool isEditable = true) : IPresent
     }
 
     /// <summary>
-    /// Remaps relationship identifiers in the XML content.
+    ///     Remaps relationship identifiers in the XML content.
     /// </summary>
-    /// <param name="root">The root <see cref="OpenXmlElement"/> to process.</param>
+    /// <param name="root">The root <see cref="OpenXmlElement" /> to process.</param>
     /// <param name="ridMap">A dictionary mapping old relationship IDs to new ones.</param>
     private static void RemapRelIds(OpenXmlElement root, Dictionary<string, string> ridMap)
     {
@@ -288,9 +288,9 @@ public class XmlPresentation(string filePath, bool isEditable = true) : IPresent
     }
 
     /// <summary>
-    /// Removes elements that reference specific relationship identifiers.
+    ///     Removes elements that reference specific relationship identifiers.
     /// </summary>
-    /// <param name="root">The root <see cref="OpenXmlElement"/> to process.</param>
+    /// <param name="root">The root <see cref="OpenXmlElement" /> to process.</param>
     /// <param name="relIds">A set of relationship IDs to remove.</param>
     private static void RemoveElementsReferencingRelIds(OpenXmlElement root,
         HashSet<string> relIds)

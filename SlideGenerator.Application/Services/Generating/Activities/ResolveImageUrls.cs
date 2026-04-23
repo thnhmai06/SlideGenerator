@@ -20,7 +20,8 @@ public sealed class ResolveImageUrls(
 {
     /// <inheritdoc />
     /// <exception cref="InvalidOperationException">Thrown if the worksheet is missing.</exception>
-    public override async ValueTask ExecuteAsync(IExecutionContext context, CancellationToken cancellationToken = default)
+    public override async ValueTask ExecuteAsync(IExecutionContext context,
+        CancellationToken cancellationToken = default)
     {
         var worksheetInfo = context.GetVariable<WorksheetIdentifier>(WorksheetContextRules.Worksheet)!;
 
@@ -28,7 +29,7 @@ public sealed class ResolveImageUrls(
         // as a default when preparing, or perhaps we don't need RowIndex here if we are just resolving
         // for row 1 during preparation phase to find all URLs?
         // Wait, looking at the previous file content, RowIndex was hardcoded to 1. I'll leave it as 1 for now.
-        int rowIndex = 1;
+        var rowIndex = 1;
 
         using var workbookLease = await workbookRegistry
             .AcquireAsync(worksheetInfo.Workbook.FilePath, false, cancellationToken)
@@ -38,7 +39,8 @@ public sealed class ResolveImageUrls(
             ? throw new InvalidOperationException($"Worksheet '{worksheetInfo.Name}' does not exist in workbook.")
             : new Dictionary<string, string>(worksheet.GetRowContent(rowIndex), StringComparer.Ordinal);
 
-        var imageInstructions = context.GetVariable<IReadOnlyList<SpecializedInstruction>>(WorksheetContextRules.ImageInstructions) ?? [];
+        var imageInstructions =
+            context.GetVariable<IReadOnlyList<SpecializedInstruction>>(WorksheetContextRules.ImageInstructions) ?? [];
         var resolvedUrls = new ConcurrentDictionary<SpecializedInstruction, string>();
 
         foreach (var imageInstruction in imageInstructions)
@@ -56,6 +58,7 @@ public sealed class ResolveImageUrls(
             resolvedUrls.TryAdd(imageInstruction, resolved.ToString());
         }
 
-        context.SetVariable<IReadOnlyDictionary<SpecializedInstruction, string>>(WorksheetContextRules.ResolvedImageUrls, new Dictionary<SpecializedInstruction, string>(resolvedUrls));
+        context.SetVariable<IReadOnlyDictionary<SpecializedInstruction, string>>(
+            WorksheetContextRules.ResolvedImageUrls, new Dictionary<SpecializedInstruction, string>(resolvedUrls));
     }
 }

@@ -15,5 +15,7 @@ public sealed class XlWorkbookRegistry(IAsyncKeyedLocker<string> locker)
 {
     /// <inheritdoc />
     protected override IReadOnlyWorkbook OpenResource(string normalizedPath, bool isEditable)
-        => new XlReadOnlyWorkbook(normalizedPath);
+    {
+        return new XlReadOnlyWorkbook(normalizedPath);
+    }
 }

@@ -18,16 +18,30 @@ namespace SlideGenerator.Application.Resources.Services;
 /// <param name="comparer">Optional equality comparer for <typeparamref name="TKey" />.</param>
 public class Registry<TKey, TValue>(
     IAsyncKeyedLocker<TKey> locker,
-    
     IEqualityComparer<TKey>? comparer = null) : IDisposable
     where TKey : notnull
 {
-    private readonly Lock _lock = new();
     private readonly Dictionary<TKey, Entry> _entries =
         comparer is null ? [] : new Dictionary<TKey, Entry>(comparer);
 
+    private readonly Lock _lock = new();
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        lock (_lock)
+        {
+            foreach (var entry in _entries.Values)
+                DisposeEntryResource(entry);
+            _entries.Clear();
+        }
+    }
+
     /// <summary>Normalises <paramref name="rawKey" /> before it is used as a registry key.</summary>
-    protected virtual TKey NormalizeKey(TKey rawKey) => rawKey;
+    protected virtual TKey NormalizeKey(TKey rawKey)
+    {
+        return rawKey;
+    }
 
     /// <summary>
     ///     Acquires the lock for <paramref name="key" /> and returns a lease over its cached resource.
@@ -85,7 +99,10 @@ public class Registry<TKey, TValue>(
         catch
         {
             lock (_lock)
+            {
                 DecrementAndCleanup(key, entry);
+            }
+
             throw;
         }
 
@@ -111,21 +128,13 @@ public class Registry<TKey, TValue>(
         return new Lease(this, key, entry, handle, value);
     }
 
-    /// <inheritdoc />
-    public void Dispose()
-    {
-        lock (_lock)
-        {
-            foreach (var entry in _entries.Values)
-                DisposeEntryResource(entry);
-            _entries.Clear();
-        }
-    }
-
     private void Release(TKey key, Entry entry, IKeyedLockHandle handle)
     {
         handle.Dispose(); // releases slim permit; locker disposes slim when the count returns to max
-        lock (_lock) DecrementAndCleanup(key, entry);
+        lock (_lock)
+        {
+            DecrementAndCleanup(key, entry);
+        }
     }
 
     /// <summary>Decrements <see cref="Entry.PendingUsers" /> and tears down the entry when it hits zero.</summary>
@@ -168,10 +177,10 @@ public class Registry<TKey, TValue>(
     /// </summary>
     public sealed class Lease : IDisposable
     {
-        private readonly Registry<TKey, TValue> _owner;
-        private readonly TKey _key;
         private readonly Entry _entry;
         private readonly IKeyedLockHandle _handle;
+        private readonly TKey _key;
+        private readonly Registry<TKey, TValue> _owner;
         private int _disposed;
 
         internal Lease(Registry<TKey, TValue> owner, TKey key, Entry entry, IKeyedLockHandle handle, TValue value)

@@ -9,12 +9,12 @@ using Shape = DocumentFormat.OpenXml.Presentation.Shape;
 namespace SlideGenerator.Infrastructure.Slides.Services;
 
 /// <summary>
-/// Replaces blip fill images in Open XML shapes.
+///     Replaces blip fill images in Open XML shapes.
 /// </summary>
 public sealed class BlipFillReplacer : IImageReplacer
 {
     /// <summary>
-    /// Scans a shape for blip fill image data.
+    ///     Scans a shape for blip fill image data.
     /// </summary>
     /// <param name="sample">The shape to scan.</param>
     /// <returns>The image data as a byte array if found; otherwise, <see langword="null" />.</returns>
@@ -29,7 +29,7 @@ public sealed class BlipFillReplacer : IImageReplacer
     }
 
     /// <summary>
-    /// Replaces the blip fill image in a shape with data from a stream.
+    ///     Replaces the blip fill image in a shape with data from a stream.
     /// </summary>
     /// <param name="sample">The shape to update.</param>
     /// <param name="imageStream">The stream containing the new image data.</param>
@@ -62,7 +62,7 @@ public sealed class BlipFillReplacer : IImageReplacer
     }
 
     /// <summary>
-    /// Attempts to read the bytes of an image part from a slide part using a relationship ID.
+    ///     Attempts to read the bytes of an image part from a slide part using a relationship ID.
     /// </summary>
     /// <param name="slidePart">The slide part containing the image.</param>
     /// <param name="relationshipId">The relationship identifier.</param>

@@ -14,7 +14,8 @@ public sealed class RemoveWorkingTemplateSlide(FileRegistry<IPresentation> slide
 {
     /// <inheritdoc />
     /// <exception cref="InvalidOperationException">Thrown if template slide identifier is missing.</exception>
-    public override async ValueTask ExecuteAsync(IExecutionContext context, CancellationToken cancellationToken = default)
+    public override async ValueTask ExecuteAsync(IExecutionContext context,
+        CancellationToken cancellationToken = default)
     {
         var slideIdentifier = context.GetVariable<SlideIdentifier>(WorksheetContextRules.WorkingTemplateSlide)
                               ?? throw new InvalidOperationException("Template slide identifier is not provided.");

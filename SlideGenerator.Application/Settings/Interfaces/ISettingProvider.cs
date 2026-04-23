@@ -1,4 +1,4 @@
-using SlideGenerator.Domain.Settings.Entities;
+﻿using SlideGenerator.Domain.Settings.Entities;
 
 namespace SlideGenerator.Application.Settings.Interfaces;
 

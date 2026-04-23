@@ -18,14 +18,16 @@ public sealed class DownloadImage(
     ISettingProvider settingProvider) : Activity
 {
     /// <inheritdoc />
-    public override async ValueTask ExecuteAsync(IExecutionContext context, CancellationToken cancellationToken = default)
+    public override async ValueTask ExecuteAsync(IExecutionContext context,
+        CancellationToken cancellationToken = default)
     {
-        var (imageInstruction, downloadUrl) = context.GetVariable<KeyValuePair<SpecializedInstruction, string>>(WorksheetContextRules.DownloadItem);
+        var (imageInstruction, downloadUrl) =
+            context.GetVariable<KeyValuePair<SpecializedInstruction, string>>(WorksheetContextRules.DownloadItem);
         if (string.IsNullOrWhiteSpace(downloadUrl))
             return;
 
         // As before, hardcoding to 1 for the preparation phase.
-        int rowIndex = 1;
+        var rowIndex = 1;
 
         var worksheetInfo = imageInstruction.Source.Worksheet;
         var downloadFolder = settingProvider.Current.Download.DownloadFolder;

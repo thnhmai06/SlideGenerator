@@ -15,7 +15,8 @@ public sealed class CloneTemplateSlide(FileRegistry<IPresentation> slideRegistry
 {
     /// <inheritdoc />
     /// <exception cref="InvalidOperationException">Thrown if the template slide is missing or the insert index is invalid.</exception>
-    public override async ValueTask ExecuteAsync(IExecutionContext context, CancellationToken cancellationToken = default)
+    public override async ValueTask ExecuteAsync(IExecutionContext context,
+        CancellationToken cancellationToken = default)
     {
         var templateSlideIdentifier = context.GetVariable<SlideIdentifier>(WorksheetContextRules.WorkingTemplateSlide)
                                       ?? throw new InvalidOperationException("Template slide must be set in context.");

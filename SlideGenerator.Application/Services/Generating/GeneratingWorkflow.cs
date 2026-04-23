@@ -64,8 +64,8 @@ public sealed class GeneratingWorkflow(
                 [
                     BuildPreparingSequence(request),
                     BuildEditingSequence()
-                ], name: "GenerateByWorksheet"), name: "GenerateByWorksheets")
-        ], name: "Generation");
+                ], "GenerateByWorksheet"), "GenerateByWorksheets")
+        ], "Generation");
     }
 
     /// <summary>Builds the preparation sequence.</summary>
@@ -73,8 +73,10 @@ public sealed class GeneratingWorkflow(
     /// <returns>A <see cref="Sequence" /> for preparation tasks.</returns>
     private Sequence BuildPreparingSequence(GeneratingRequest request)
     {
-        var downloadState = CreateVariable<KeyValuePair<ImageSpecializedInstruction, string>>(WorksheetContextRules.DownloadItem);
-        var editState = CreateVariable<KeyValuePair<ImageSpecializedInstruction, string>>(WorksheetContextRules.EditItem);
+        var downloadState =
+            CreateVariable<KeyValuePair<ImageSpecializedInstruction, string>>(WorksheetContextRules.DownloadItem);
+        var editState =
+            CreateVariable<KeyValuePair<ImageSpecializedInstruction, string>>(WorksheetContextRules.EditItem);
 
         return activities.Sequence(
         [
@@ -86,14 +88,15 @@ public sealed class GeneratingWorkflow(
             activities.ParallelForEach(LazyItems<KeyValuePair<ImageSpecializedInstruction, string>>(),
                 downloadState,
                 activities.SlotGated(SlotType.Download,
-                    new DownloadImage(downloadRegistry, settingProvider), name: "DownloadImagesInParallel")),
+                    new DownloadImage(downloadRegistry, settingProvider), "DownloadImagesInParallel")),
             new ResolveImagePathsFromDisk(settingProvider, false),
             activities.ParallelForEach(LazyItems<KeyValuePair<ImageSpecializedInstruction, string>>(),
                 editState,
                 activities.SlotGated(SlotType.EditImage,
-                    new EditImage(slideRegistry, roiCalculator, imageDecoder, settingProvider), name: "EditImagesInParallel")),
+                    new EditImage(slideRegistry, roiCalculator, imageDecoder, settingProvider),
+                    "EditImagesInParallel")),
             new ResolveImagePathsFromDisk(settingProvider, true)
-        ], name: "Preparing");
+        ], "Preparing");
     }
 
     /// <summary>Builds the editing sequence.</summary>
@@ -118,31 +121,34 @@ public sealed class GeneratingWorkflow(
                             throw new InvalidOperationException(
                                 $"Worksheet '{worksheet.Name}' does not exist in workbook.");
                         context.SetVariable(WorksheetContextRules.RowCount, ws.RowsCount);
-                    }, name: "LoadRowCount"),
+                    }, "LoadRowCount"),
                     activities.ForEach(LazyItems<int>(),
                         rowState,
                         activities.Sequence(
                         [
                             new CloneTemplateSlide(slideRegistry, WorkingTemplateSlideIndex),
                             new ReplaceSlideContents(
-                                slideRegistry, textReplacer, imageReplacers, workbookRegistry, WorkingTemplateSlideIndex)
-                        ], name: "CloneThenReplaceByRecord"), name: "GenerateSlidesByRecord")
-                ]))
-            ,
+                                slideRegistry, textReplacer, imageReplacers, workbookRegistry,
+                                WorkingTemplateSlideIndex)
+                        ], "CloneThenReplaceByRecord"), "GenerateSlidesByRecord")
+                ])),
             new RemoveWorkingTemplateSlide(slideRegistry),
             activities.Inline((context, _) =>
             {
                 context.GetVariable<IDisposable>(WorksheetContextRules.PresentationLease)?.Dispose();
                 return ValueTask.CompletedTask;
-            }, name: "CleanupResources")
-        ], name: "Editing");
+            }, "CleanupResources")
+        ], "Editing");
     }
 
     /// <summary>Creates a workflow variable.</summary>
     /// <typeparam name="T">The variable type.</typeparam>
     /// <param name="name">The variable name.</param>
     /// <returns>A new <see cref="Variable{T}" />.</returns>
-    private static Variable<T> CreateVariable<T>(string? name = null) => new Variable<T> { Name = name };
+    private static Variable<T> CreateVariable<T>(string? name = null)
+    {
+        return new Variable<T> { Name = name };
+    }
 
     /// <summary>Provides an empty lazy enumerable for iteration.</summary>
     /// <typeparam name="T">The item type.</typeparam>

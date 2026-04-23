@@ -45,10 +45,15 @@ public abstract class FileRegistry<T>(IAsyncKeyedLocker<string> locker)
     /// <param name="isEditable">Passed to <see cref="OpenResource" /> for the first caller on a new entry.</param>
     /// <returns>A lease whose <see cref="Registry{TKey,TValue}.Lease.Value" /> is the open resource.</returns>
     public async Task<Lease> Acquire(string filePath, bool isEditable)
-        => await AcquireAsync(filePath, isEditable);
+    {
+        return await AcquireAsync(filePath, isEditable);
+    }
 
     /// <summary>Normalizes <paramref name="filePath" /> to the canonical registry key.</summary>
-    protected override string NormalizeKey(string filePath) => Path.GetFullPath(filePath);
+    protected override string NormalizeKey(string filePath)
+    {
+        return Path.GetFullPath(filePath);
+    }
 
     /// <summary>
     ///     Opens a new resource instance for <paramref name="normalizedPath" />.

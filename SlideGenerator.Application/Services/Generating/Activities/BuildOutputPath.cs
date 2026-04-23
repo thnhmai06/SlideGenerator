@@ -22,7 +22,8 @@ public sealed class BuildOutputPath(string saveFolder, PresentationExtension ext
 
         var workbookName = NamingRules.NormalizeFileName(worksheet.Workbook.Name, NamingRules.DefaultWorkbookName);
         var worksheetName = NamingRules.NormalizeFileName(worksheet.Name, NamingRules.DefaultWorksheetName);
-        context.SetVariable(WorksheetContextRules.OutputPath, Path.Combine(saveFolder, workbookName, worksheetName + extension.ToFileExtension()));
+        context.SetVariable(WorksheetContextRules.OutputPath,
+            Path.Combine(saveFolder, workbookName, worksheetName + extension.ToFileExtension()));
 
         return ValueTask.CompletedTask;
     }

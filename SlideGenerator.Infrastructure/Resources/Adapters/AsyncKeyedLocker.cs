@@ -8,8 +8,9 @@ namespace SlideGenerator.Infrastructure.Resources.Adapters;
 ///     <see cref="AsyncKeyedLock.AsyncKeyedLocker{TKey}" /> from the <c>AsyncKeyedLock</c> package.
 /// </summary>
 /// <remarks>
-///     Each call to <see cref="LockAsync" /> waits on the per-key <see cref="System.Threading.SemaphoreSlim" />; 
-///     the slim is automatically returned to the pool (and disposed) by the library when the count returns to its maximum value,
+///     Each call to <see cref="LockAsync" /> waits on the per-key <see cref="System.Threading.SemaphoreSlim" />;
+///     the slim is automatically returned to the pool (and disposed) by the library when the count returns to its maximum
+///     value,
 ///     i.e., when no more holders or waiters remain for that key.
 /// </remarks>
 /// <typeparam name="TKey">The lock key type.</typeparam>
@@ -25,7 +26,7 @@ public sealed class AsyncKeyedLocker<TKey> : IAsyncKeyedLocker<TKey>
     ///     Initializes a new instance of the <see cref="AsyncKeyedLocker{TKey}" /> class.
     /// </summary>
     /// <param name="configure">
-    ///     Optional delegate to configure <see cref="AsyncKeyedLockOptions" /> (pool size, max-count, etc.). 
+    ///     Optional delegate to configure <see cref="AsyncKeyedLockOptions" /> (pool size, max-count, etc.).
     ///     When <see langword="null" />, the library defaults are used.
     /// </param>
     public AsyncKeyedLocker(Action<AsyncKeyedLockOptions>? configure = null)
@@ -57,7 +58,10 @@ public sealed class AsyncKeyedLocker<TKey> : IAsyncKeyedLocker<TKey>
     /// <summary>
     ///     Disposes the underlying locker and releases all associated resources.
     /// </summary>
-    public void Dispose() => _locker.Dispose();
+    public void Dispose()
+    {
+        _locker.Dispose();
+    }
 
     /// <summary>
     ///     Wraps the library-specific releaser to implement <see cref="IKeyedLockHandle" />.

@@ -46,7 +46,8 @@ public static class Utilities
     extension(PresentationExtension? extension)
     {
         /// <summary>
-        ///     Converts a <see cref="PresentationExtension" /> to its corresponding OpenXML <see cref="PresentationDocumentType" />.
+        ///     Converts a <see cref="PresentationExtension" /> to its corresponding OpenXML
+        ///     <see cref="PresentationDocumentType" />.
         /// </summary>
         /// <returns>The OpenXML document type enum value.</returns>
         /// <exception cref="ArgumentOutOfRangeException">Thrown if the extension is unknown.</exception>

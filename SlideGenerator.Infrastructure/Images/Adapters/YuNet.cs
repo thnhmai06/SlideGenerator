@@ -66,7 +66,10 @@ public sealed class YuNet(
     /// <summary>
     ///     Initializes the <see cref="FaceDetectorYN" /> model instance.
     /// </summary>
-    /// <returns>A task representing the initialization operation, yielding <see langword="true" /> if initialization was successful; otherwise, <see langword="false" />.</returns>
+    /// <returns>
+    ///     A task representing the initialization operation, yielding <see langword="true" /> if initialization was
+    ///     successful; otherwise, <see langword="false" />.
+    /// </returns>
     public override Task<bool> InitAsync()
     {
         if (!IsModelAvailable)
@@ -81,7 +84,10 @@ public sealed class YuNet(
     /// <summary>
     ///     De-initializes the <see cref="FaceDetectorYN" /> model and releases its resources.
     /// </summary>
-    /// <returns>A task representing the de-initialization operation, yielding <see langword="true" /> if the model was successfully de-initialized; otherwise, <see langword="false" />.</returns>
+    /// <returns>
+    ///     A task representing the de-initialization operation, yielding <see langword="true" /> if the model was
+    ///     successfully de-initialized; otherwise, <see langword="false" />.
+    /// </returns>
     public override async Task<bool> DeInitAsync()
     {
         await DetectLock.WaitAsync().ConfigureAwait(false);

@@ -1,4 +1,4 @@
-namespace SlideGenerator.Application.Download.Services;
+﻿namespace SlideGenerator.Application.Download.Services;
 
 /// <summary>
 ///     Provides validation services for URLs and network resources.
@@ -11,7 +11,10 @@ public sealed class ValidateService
     /// </summary>
     /// <param name="uri">The <see cref="Uri" /> to validate.</param>
     /// <param name="httpClient">The <see cref="HttpClient" /> used to send the request.</param>
-    /// <returns><see langword="true" /> if the URI returns a success status and an "image/*" content type; otherwise, <see langword="false" />.</returns>
+    /// <returns>
+    ///     <see langword="true" /> if the URI returns a success status and an "image/*" content type; otherwise,
+    ///     <see langword="false" />.
+    /// </returns>
     public static async Task<bool> IsImageUri(Uri uri, HttpClient httpClient)
     {
         var response = await httpClient.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead);

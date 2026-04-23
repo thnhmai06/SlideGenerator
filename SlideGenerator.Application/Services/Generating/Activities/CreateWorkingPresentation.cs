@@ -30,7 +30,8 @@ public sealed class CreateWorkingPresentation(
     /// <exception cref="ArgumentException">Thrown if template slide or output path is invalid.</exception>
     /// <exception cref="FileNotFoundException">Thrown if workbook or template file is missing.</exception>
     /// <exception cref="InvalidOperationException">Thrown if worksheet does not exist.</exception>
-    public override async ValueTask ExecuteAsync(IExecutionContext context, CancellationToken cancellationToken = default)
+    public override async ValueTask ExecuteAsync(IExecutionContext context,
+        CancellationToken cancellationToken = default)
     {
         var worksheet = context.GetVariable<WorksheetIdentifier>(WorksheetContextRules.Worksheet)!;
         var templateSlideIdentifier = graph[worksheet];
@@ -76,6 +77,7 @@ public sealed class CreateWorkingPresentation(
         workingPresentation.Save(outputExtensionType);
 
         context.SetVariable(WorksheetContextRules.PresentationLease, presentationLease);
-        context.SetVariable(WorksheetContextRules.WorkingTemplateSlide, new PresentationIdentifier(outputPath).GetSlide(1));
+        context.SetVariable(WorksheetContextRules.WorkingTemplateSlide,
+            new PresentationIdentifier(outputPath).GetSlide(1));
     }
 }

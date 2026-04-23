@@ -10,6 +10,9 @@ public interface IFileSystem
     /// </summary>
     /// <param name="sourcePath">The path of the file to copy.</param>
     /// <param name="destinationPath">The path of the destination file.</param>
-    /// <param name="overwrite"><see langword="true" /> if the destination file can be overwritten; otherwise, <see langword="false" />.</param>
+    /// <param name="overwrite">
+    ///     <see langword="true" /> if the destination file can be overwritten; otherwise,
+    ///     <see langword="false" />.
+    /// </param>
     void CopyFile(string sourcePath, string destinationPath, bool overwrite = true);
 }

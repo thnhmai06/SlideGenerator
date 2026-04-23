@@ -29,13 +29,17 @@ public sealed class SpecializeInstructions(
     /// <inheritdoc />
     /// <exception cref="ArgumentException">Thrown if the template slide is missing in context.</exception>
     /// <exception cref="InvalidOperationException">Thrown if the targeted worksheet does not exist in the workbook.</exception>
-    public override async ValueTask ExecuteAsync(IExecutionContext context, CancellationToken cancellationToken = default)
+    public override async ValueTask ExecuteAsync(IExecutionContext context,
+        CancellationToken cancellationToken = default)
     {
         var worksheetIdentifier = context.GetVariable<WorksheetIdentifier>(WorksheetContextRules.Worksheet)!;
         var templateSlideIdentifier = context.GetVariable<SlideIdentifier>(WorksheetContextRules.WorkingTemplateSlide)
-                                      ?? throw new ArgumentException("Template slide must be set in context before specializing.");
-        var placeholders = context.GetVariable<IReadOnlySet<string>>(WorksheetContextRules.TemplatePlaceholders) ?? new HashSet<string>();
-        var imageShapeIds = context.GetVariable<IReadOnlySet<uint>>(WorksheetContextRules.TemplateImageShapeIds) ?? new HashSet<uint>();
+                                      ?? throw new ArgumentException(
+                                          "Template slide must be set in context before specializing.");
+        var placeholders = context.GetVariable<IReadOnlySet<string>>(WorksheetContextRules.TemplatePlaceholders) ??
+                           new HashSet<string>();
+        var imageShapeIds = context.GetVariable<IReadOnlySet<uint>>(WorksheetContextRules.TemplateImageShapeIds) ??
+                            new HashSet<uint>();
 
         using var workbookLease = await workbookRegistry
             .AcquireAsync(worksheetIdentifier.Workbook.FilePath, false, cancellationToken)
@@ -47,19 +51,21 @@ public sealed class SpecializeInstructions(
 
         var headerSet = worksheetInstance.Headers.ToHashSet(StringComparer.Ordinal);
 
-        context.SetVariable<IReadOnlyList<TextSpecializedInstruction>>(WorksheetContextRules.TextInstructions, rawTextInstructions
-            .Where(instruction => placeholders.Contains(instruction.Placeholder))
-            .SelectMany(instruction => instruction.Flatten(instruction))
-            .Where(instruction => Equals(instruction.Source.Worksheet, worksheetIdentifier))
-            .Where(instruction => headerSet.Contains(instruction.Source.Name))
-            .ToList());
+        context.SetVariable<IReadOnlyList<TextSpecializedInstruction>>(WorksheetContextRules.TextInstructions,
+            rawTextInstructions
+                .Where(instruction => placeholders.Contains(instruction.Placeholder))
+                .SelectMany(instruction => instruction.Flatten(instruction))
+                .Where(instruction => Equals(instruction.Source.Worksheet, worksheetIdentifier))
+                .Where(instruction => headerSet.Contains(instruction.Source.Name))
+                .ToList());
 
-        context.SetVariable<IReadOnlyList<ImageSpecializedInstruction>>(WorksheetContextRules.ImageInstructions, rawImageInstructions
-            .Where(instruction => Equals(instruction.Target.Slide, templateSlideIdentifier))
-            .Where(instruction => imageShapeIds.Contains(instruction.Target.Id))
-            .SelectMany(instruction => instruction.Flatten(instruction))
-            .Where(instruction => Equals(instruction.Source.Worksheet, worksheetIdentifier))
-            .Where(instruction => headerSet.Contains(instruction.Source.Name))
-            .ToList());
+        context.SetVariable<IReadOnlyList<ImageSpecializedInstruction>>(WorksheetContextRules.ImageInstructions,
+            rawImageInstructions
+                .Where(instruction => Equals(instruction.Target.Slide, templateSlideIdentifier))
+                .Where(instruction => imageShapeIds.Contains(instruction.Target.Id))
+                .SelectMany(instruction => instruction.Flatten(instruction))
+                .Where(instruction => Equals(instruction.Source.Worksheet, worksheetIdentifier))
+                .Where(instruction => headerSet.Contains(instruction.Source.Name))
+                .ToList());
     }
 }

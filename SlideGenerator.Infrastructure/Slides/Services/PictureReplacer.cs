@@ -8,12 +8,12 @@ using Picture = DocumentFormat.OpenXml.Presentation.Picture;
 namespace SlideGenerator.Infrastructure.Slides.Services;
 
 /// <summary>
-/// Replaces picture images in Open XML shapes.
+///     Replaces picture images in Open XML shapes.
 /// </summary>
 public sealed class PictureReplacer : IImageReplacer
 {
     /// <summary>
-    /// Scans a shape for picture image data.
+    ///     Scans a shape for picture image data.
     /// </summary>
     /// <param name="sample">The shape to scan.</param>
     /// <returns>The image data as a byte array if found; otherwise, an empty array.</returns>
@@ -28,7 +28,7 @@ public sealed class PictureReplacer : IImageReplacer
     }
 
     /// <summary>
-    /// Replaces the picture image in a shape with data from a stream.
+    ///     Replaces the picture image in a shape with data from a stream.
     /// </summary>
     /// <param name="sample">The shape to update.</param>
     /// <param name="imageStream">The stream containing the new image data.</param>
@@ -61,7 +61,7 @@ public sealed class PictureReplacer : IImageReplacer
     }
 
     /// <summary>
-    /// Attempts to read the bytes of an image part from a slide part using a relationship ID.
+    ///     Attempts to read the bytes of an image part from a slide part using a relationship ID.
     /// </summary>
     /// <param name="slidePart">The slide part containing the image.</param>
     /// <param name="relationshipId">The relationship identifier.</param>

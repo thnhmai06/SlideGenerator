@@ -16,15 +16,18 @@ public sealed class ResolveImagePathsFromDisk(ISettingProvider settingProvider, 
     /// <inheritdoc />
     public override ValueTask ExecuteAsync(IExecutionContext context, CancellationToken cancellationToken = default)
     {
-        int rowIndex = 1;
+        var rowIndex = 1;
 
-        var instructions = context.GetVariable<IReadOnlyList<SpecializedInstruction>>(WorksheetContextRules.ImageInstructions) ?? [];
+        var instructions =
+            context.GetVariable<IReadOnlyList<SpecializedInstruction>>(WorksheetContextRules.ImageInstructions) ?? [];
         if (instructions.Count == 0)
         {
             if (useEditPath)
-                context.SetVariable<IReadOnlyDictionary<SpecializedInstruction, string>>(WorksheetContextRules.EditedImagePaths, new Dictionary<SpecializedInstruction, string>());
+                context.SetVariable<IReadOnlyDictionary<SpecializedInstruction, string>>(
+                    WorksheetContextRules.EditedImagePaths, new Dictionary<SpecializedInstruction, string>());
             else
-                context.SetVariable<IReadOnlyDictionary<SpecializedInstruction, string>>(WorksheetContextRules.DownloadedImagePaths, new Dictionary<SpecializedInstruction, string>());
+                context.SetVariable<IReadOnlyDictionary<SpecializedInstruction, string>>(
+                    WorksheetContextRules.DownloadedImagePaths, new Dictionary<SpecializedInstruction, string>());
             return ValueTask.CompletedTask;
         }
 
@@ -48,9 +51,11 @@ public sealed class ResolveImagePathsFromDisk(ISettingProvider settingProvider, 
         }
 
         if (useEditPath)
-            context.SetVariable<IReadOnlyDictionary<SpecializedInstruction, string>>(WorksheetContextRules.EditedImagePaths, resolved);
+            context.SetVariable<IReadOnlyDictionary<SpecializedInstruction, string>>(
+                WorksheetContextRules.EditedImagePaths, resolved);
         else
-            context.SetVariable<IReadOnlyDictionary<SpecializedInstruction, string>>(WorksheetContextRules.DownloadedImagePaths, resolved);
+            context.SetVariable<IReadOnlyDictionary<SpecializedInstruction, string>>(
+                WorksheetContextRules.DownloadedImagePaths, resolved);
 
         return ValueTask.CompletedTask;
     }
@@ -58,8 +63,10 @@ public sealed class ResolveImagePathsFromDisk(ISettingProvider settingProvider, 
     /// <summary>Tries to resolve an edited image path.</summary>
     /// <param name="desiredPath">The desired file path.</param>
     /// <returns>The resolved path if it exists; otherwise, <see langword="null" />.</returns>
-    private static string? TryResolveEditedPath(string desiredPath) =>
-        File.Exists(desiredPath) ? desiredPath : null;
+    private static string? TryResolveEditedPath(string desiredPath)
+    {
+        return File.Exists(desiredPath) ? desiredPath : null;
+    }
 
     /// <summary>Tries to resolve a downloaded image path by checking for various extensions.</summary>
     /// <param name="desiredPathWithoutExtension">The desired file path without its extension.</param>

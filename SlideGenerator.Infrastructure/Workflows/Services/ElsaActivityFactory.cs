@@ -12,26 +12,37 @@ namespace SlideGenerator.Infrastructure.Workflows.Services;
 public sealed class ElsaActivityFactory : IActivityFactory
 {
     /// <inheritdoc />
-    public Sequence Sequence(ICollection<Activity> activities, string? name = null) 
-        => new ElsaSequence { Name = name, Activities = activities };
+    public Sequence Sequence(ICollection<Activity> activities, string? name = null)
+    {
+        return new ElsaSequence { Name = name, Activities = activities };
+    }
 
     /// <inheritdoc />
-    public Inline Inline(Func<IExecutionContext, CancellationToken, ValueTask> function, string? name = null) 
-        => new ElsaInline { Name = name, Function = function };
+    public Inline Inline(Func<IExecutionContext, CancellationToken, ValueTask> function, string? name = null)
+    {
+        return new ElsaInline { Name = name, Function = function };
+    }
 
     /// <inheritdoc />
     public ForEach<T> ForEach<T>(
         IEnumerable<T> items, Variable<T?> container, Activity body,
-        string? name = null) where T : notnull 
-        => new ElsaForEach<T> { Name = name, CurrentValue = container, Items = items.ToList(), Body = body };
+        string? name = null) where T : notnull
+    {
+        return new ElsaForEach<T> { Name = name, CurrentValue = container, Items = items.ToList(), Body = body };
+    }
 
     /// <inheritdoc />
     public ParallelForEach<T> ParallelForEach<T>(IEnumerable<T> items,
         Variable<T?> container,
-        Activity body, string? name = null) where T : notnull 
-        => new ElsaParallelForEach<T> { Name = name, CurrentValue = container, Items = items.ToList(), Body = body };
+        Activity body, string? name = null) where T : notnull
+    {
+        return new ElsaParallelForEach<T>
+            { Name = name, CurrentValue = container, Items = items.ToList(), Body = body };
+    }
 
     /// <inheritdoc />
-    public SlotGated SlotGated(SlotType gate, Activity body, string? name = null) 
-        => new ElsaSlotGated { Name = name, Gate = gate, Body = body };
+    public SlotGated SlotGated(SlotType gate, Activity body, string? name = null)
+    {
+        return new ElsaSlotGated { Name = name, Gate = gate, Body = body };
+    }
 }

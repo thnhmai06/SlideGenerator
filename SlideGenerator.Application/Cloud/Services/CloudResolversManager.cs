@@ -1,6 +1,5 @@
 using SlideGenerator.Application.Cloud.Abstractions;
 using SlideGenerator.Application.Cloud.Rules;
-using SlideGenerator.Application.Systems.Abstractions;
 
 namespace SlideGenerator.Application.Cloud.Services;
 
@@ -38,10 +37,8 @@ public sealed class CloudResolversManager(IEnumerable<ICloudResolver> cloudResol
     public bool TryIsUriSupported(Uri uri, out CloudResolverKey key)
     {
         foreach (var resolver in cloudResolvers)
-        {
             if (resolver.TryIsUriSupported(uri, out key))
                 return true;
-        }
 
         key = default;
         return false;

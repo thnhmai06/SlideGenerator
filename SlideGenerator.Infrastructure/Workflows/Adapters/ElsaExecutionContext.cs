@@ -6,7 +6,8 @@ using AppVariable = SlideGenerator.Application.Workflows.Entities.Contexts.Varia
 namespace SlideGenerator.Infrastructure.Workflows.Adapters;
 
 /// <summary>
-///     Wraps Elsa's <see cref="ActivityExecutionContext" /> to provide an application-layer <see cref="IExecutionContext" />.
+///     Wraps Elsa's <see cref="ActivityExecutionContext" /> to provide an application-layer
+///     <see cref="IExecutionContext" />.
 /// </summary>
 /// <param name="context">The underlying Elsa <see cref="ActivityExecutionContext" />.</param>
 public sealed class ElsaExecutionContext(ActivityExecutionContext context) : IExecutionContext
@@ -25,15 +26,15 @@ public sealed class ElsaExecutionContext(ActivityExecutionContext context) : IEx
         get
         {
             var currentContext = context;
-            
+
             while (currentContext != null)
             {
-                var contextVariables = 
+                var contextVariables =
                     from variable in currentContext.Variables
                     where !string.IsNullOrEmpty(variable.Name)
                     select new ElsaVariable<object>(context, variable.Name) { Name = variable.Name };
 
-                foreach (var variable in contextVariables) 
+                foreach (var variable in contextVariables)
                     yield return variable;
 
                 currentContext = currentContext.ParentActivityExecutionContext;

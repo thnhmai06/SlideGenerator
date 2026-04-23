@@ -6,11 +6,13 @@ namespace SlideGenerator.Domain.Slides.Rules;
 public enum PresentationExtension
 {
     /// <summary>PowerPoint Template (.potx)</summary>
-    Potx, 
+    Potx,
+
     /// <summary>Standard PowerPoint Presentation (.pptx)</summary>
-    Pptx, 
+    Pptx,
+
     /// <summary>PowerPoint Slideshow (.ppsx)</summary>
-    Ppsx 
+    Ppsx
 }
 
 /// <summary>

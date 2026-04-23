@@ -26,13 +26,15 @@ public sealed class EditImage(
     ISettingProvider settingProvider) : Activity
 {
     /// <inheritdoc />
-    public override async ValueTask ExecuteAsync(IExecutionContext context, CancellationToken cancellationToken = default)
+    public override async ValueTask ExecuteAsync(IExecutionContext context,
+        CancellationToken cancellationToken = default)
     {
-        var (instruction, downloadedPath) = context.GetVariable<KeyValuePair<SpecializedInstruction, string>>(WorksheetContextRules.EditItem);
+        var (instruction, downloadedPath) =
+            context.GetVariable<KeyValuePair<SpecializedInstruction, string>>(WorksheetContextRules.EditItem);
         if (string.IsNullOrWhiteSpace(downloadedPath) || !File.Exists(downloadedPath))
             return;
 
-        int rowIndex = 1; // As before, 1 during prepare phase.
+        var rowIndex = 1; // As before, 1 during prepare phase.
 
         var editedPath = instruction.GetEditPath(settingProvider.Current.Download.DownloadFolder, rowIndex);
         Directory.CreateDirectory(Path.GetDirectoryName(editedPath)!);
@@ -54,7 +56,8 @@ public sealed class EditImage(
     /// <param name="destinationPath">The destination image path.</param>
     /// <param name="targetSize">The target image size.</param>
     /// <param name="roiOption">The ROI option.</param>
-    private async ValueTask ProcessWithRoiAsync(string sourcePath, string destinationPath, Size targetSize, RoiOption roiOption)
+    private async ValueTask ProcessWithRoiAsync(string sourcePath, string destinationPath, Size targetSize,
+        RoiOption roiOption)
     {
         var sourceBytes = await File.ReadAllBytesAsync(sourcePath).ConfigureAwait(false);
         using var sourceMat = imageDecoder.Decode(sourceBytes);

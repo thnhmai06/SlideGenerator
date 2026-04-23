@@ -1,4 +1,4 @@
-using SlideGenerator.Application.Download.Abstractions;
+﻿using SlideGenerator.Application.Download.Abstractions;
 using SlideGenerator.Application.Download.Models;
 using SlideGenerator.Application.Download.Rules;
 
@@ -60,15 +60,6 @@ public sealed class Downloader : IDisposable, IAsyncDisposable
     /// </summary>
     public string FilePath => Path.Combine(Request.SaveFolder, Request.FileName + _extension.Peek());
 
-    /// <summary>
-    ///     Occurs when the file download is successfully completed.
-    /// </summary>
-    public event EventHandler<object> DownloadFileCompleted
-    {
-        add => Service.DownloadFileCompleted += value;
-        remove => Service.DownloadFileCompleted -= value;
-    }
-
     /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
@@ -79,6 +70,15 @@ public sealed class Downloader : IDisposable, IAsyncDisposable
     public void Dispose()
     {
         Service.Dispose();
+    }
+
+    /// <summary>
+    ///     Occurs when the file download is successfully completed.
+    /// </summary>
+    public event EventHandler<object> DownloadFileCompleted
+    {
+        add => Service.DownloadFileCompleted += value;
+        remove => Service.DownloadFileCompleted -= value;
     }
 
     /// <summary>

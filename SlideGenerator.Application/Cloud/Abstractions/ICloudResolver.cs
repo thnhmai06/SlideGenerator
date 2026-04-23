@@ -11,7 +11,10 @@ public interface ICloudResolver
     ///     Evaluates whether the specified URI is supported by this resolver.
     /// </summary>
     /// <param name="uri">The <see cref="Uri" /> to evaluate.</param>
-    /// <param name="key">When this method returns <see langword="true" />, contains the matched <see cref="CloudResolverKey" />.</param>
+    /// <param name="key">
+    ///     When this method returns <see langword="true" />, contains the matched
+    ///     <see cref="CloudResolverKey" />.
+    /// </param>
     /// <returns><see langword="true" /> if the URI is supported; otherwise, <see langword="false" />.</returns>
     bool TryIsUriSupported(Uri uri, out CloudResolverKey key);
 

@@ -8,7 +8,10 @@ namespace SlideGenerator.Application.Images.Services;
 /// <summary>
 ///     Routes region of interest (ROI) calculation requests to the appropriate configured <see cref="IRoiCalculator" />.
 /// </summary>
-/// <param name="roiCalculators">A dictionary mapping <see cref="RoiType" /> keys to their concrete <see cref="IRoiCalculator" /> implementations.</param>
+/// <param name="roiCalculators">
+///     A dictionary mapping <see cref="RoiType" /> keys to their concrete
+///     <see cref="IRoiCalculator" /> implementations.
+/// </param>
 public sealed class RoiManager(IReadOnlyDictionary<RoiType, IRoiCalculator> roiCalculators) : IRoiCalculator
 {
     /// <inheritdoc />

@@ -26,5 +26,4 @@ public abstract record RoiOption
             field = value;
         }
     } = new(1 / 2f, 1 / 2f);
-
 }

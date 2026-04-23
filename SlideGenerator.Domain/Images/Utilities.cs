@@ -9,69 +9,6 @@ namespace SlideGenerator.Domain.Images;
 public static class Utilities
 {
     /// <summary>
-    ///     Provides extension methods for the <see cref="Rectangle" /> struct.
-    /// </summary>
-    /// <param name="rect">The rectangle instance.</param>
-    extension(Rectangle rect)
-    {
-        /// <summary>
-        ///     Linearly interpolates a point within the rectangle based on a pivot.
-        /// </summary>
-        /// <param name="pivot">The relative pivot point (0.0 to 1.0).</param>
-        /// <returns>The interpolated <see cref="Point" />.</returns>
-        public Point Lerp(Vector2 pivot)
-        {
-            return new Point(
-                rect.X + (int)Math.Round(rect.Width * pivot.X, MidpointRounding.AwayFromZero),
-                rect.Y + (int)Math.Round(rect.Height * pivot.Y, MidpointRounding.AwayFromZero)
-            );
-        }
-
-        /// <summary>
-        ///     Clamps the specified rectangle so that it fits entirely within the bounds of the given border rectangle.
-        /// </summary>
-        /// <remarks>
-        ///     If the input rectangle is larger than the border in either dimension, the returned rectangle
-        ///     will be resized to match the border's corresponding dimension. The position is adjusted as needed to ensure the
-        ///     rectangle remains fully within the border.
-        /// </remarks>
-        /// <param name="border">
-        ///     The rectangle that defines the border limits. The returned rectangle will not extend outside this
-        ///     area.
-        /// </param>
-        /// <returns>
-        ///     A rectangle with the same size as the input rectangle, unless it exceeds the border's dimensions, in which case
-        ///     its size and position are adjusted to fit entirely within the border.
-        /// </returns>
-        public Rectangle ClampIn(Rectangle border)
-        {
-            var x = rect.X;
-            var y = rect.Y;
-            var w = rect.Width;
-            var h = rect.Height;
-
-            if (w > border.Width)
-            {
-                w = border.Width;
-                x = border.X;
-            }
-
-            if (h > border.Height)
-            {
-                h = border.Height;
-                y = border.Y;
-            }
-
-            if (x < border.Left) x = border.Left;
-            if (y < border.Top) y = border.Top;
-            if (x + w > border.Right) x = border.Right - w;
-            if (y + h > border.Bottom) y = border.Bottom - h;
-
-            return new Rectangle(x, y, w, h);
-        }
-    }
-
-    /// <summary>
     ///     Clamps the specified point so that its coordinates lie within the bounds of the given rectangle.
     /// </summary>
     /// <remarks>
@@ -91,62 +28,6 @@ public static class Utilities
         var y = Math.Clamp(point.Y, border.Top, border.Bottom - 1);
 
         return new Point(x, y);
-    }
-
-    /// <summary>
-    ///     Provides extension methods for the <see cref="Size" /> struct.
-    /// </summary>
-    /// <param name="original">The size instance.</param>
-    extension(Size original)
-    {
-        /// <summary>
-        ///     Get the largest size that has the same aspect ratio with the target size and fits within the original size.
-        /// </summary>
-        /// <param name="target">The target size.</param>
-        /// <returns>The largest size that has the same aspect ratio with the target size and fits within the original size.</returns>
-        public Size GetMaxAspectSize(Size target)
-        {
-            var originalAspect = original.Width / (double)original.Height;
-            var targetAspect = target.Width / (double)target.Height;
-
-            int width, height;
-            if (originalAspect >= targetAspect)
-            {
-                height = original.Height;
-                width = (int)Math.Round(height * targetAspect);
-            }
-            else
-            {
-                width = original.Width;
-                height = (int)Math.Round(width / targetAspect);
-            }
-
-            width = Math.Min(width, original.Width);
-            height = Math.Min(height, original.Height);
-            return new Size(width, height);
-        }
-
-        /// <summary>
-        ///     Gets the center point of the size.
-        /// </summary>
-        /// <returns>The center <see cref="Point" />.</returns>
-        public Point CenterPoint()
-        {
-            return new Point(original.Width / 2, original.Height / 2);
-        }
-
-        /// <summary>
-        ///     Linearly interpolates a point within the size based on a pivot.
-        /// </summary>
-        /// <param name="pivot">The relative pivot point (0.0 to 1.0).</param>
-        /// <returns>The interpolated <see cref="Point" />.</returns>
-        public Point Lerp(Vector2 pivot)
-        {
-            return new Point(
-                (int)Math.Round(original.Width * pivot.X, MidpointRounding.AwayFromZero),
-                (int)Math.Round(original.Height * pivot.Y, MidpointRounding.AwayFromZero)
-            );
-        }
     }
 
     /// <summary>
@@ -219,5 +100,124 @@ public static class Utilities
 
         var sum = sources.Aggregate(Vector2.Zero, (acc, v) => acc + v);
         return (sum / containers.Count).ToPoint();
+    }
+
+    /// <summary>
+    ///     Provides extension methods for the <see cref="Rectangle" /> struct.
+    /// </summary>
+    /// <param name="rect">The rectangle instance.</param>
+    extension(Rectangle rect)
+    {
+        /// <summary>
+        ///     Linearly interpolates a point within the rectangle based on a pivot.
+        /// </summary>
+        /// <param name="pivot">The relative pivot point (0.0 to 1.0).</param>
+        /// <returns>The interpolated <see cref="Point" />.</returns>
+        public Point Lerp(Vector2 pivot)
+        {
+            return new Point(
+                rect.X + (int)Math.Round(rect.Width * pivot.X, MidpointRounding.AwayFromZero),
+                rect.Y + (int)Math.Round(rect.Height * pivot.Y, MidpointRounding.AwayFromZero)
+            );
+        }
+
+        /// <summary>
+        ///     Clamps the specified rectangle so that it fits entirely within the bounds of the given border rectangle.
+        /// </summary>
+        /// <remarks>
+        ///     If the input rectangle is larger than the border in either dimension, the returned rectangle
+        ///     will be resized to match the border's corresponding dimension. The position is adjusted as needed to ensure the
+        ///     rectangle remains fully within the border.
+        /// </remarks>
+        /// <param name="border">
+        ///     The rectangle that defines the border limits. The returned rectangle will not extend outside this
+        ///     area.
+        /// </param>
+        /// <returns>
+        ///     A rectangle with the same size as the input rectangle, unless it exceeds the border's dimensions, in which case
+        ///     its size and position are adjusted to fit entirely within the border.
+        /// </returns>
+        public Rectangle ClampIn(Rectangle border)
+        {
+            var x = rect.X;
+            var y = rect.Y;
+            var w = rect.Width;
+            var h = rect.Height;
+
+            if (w > border.Width)
+            {
+                w = border.Width;
+                x = border.X;
+            }
+
+            if (h > border.Height)
+            {
+                h = border.Height;
+                y = border.Y;
+            }
+
+            if (x < border.Left) x = border.Left;
+            if (y < border.Top) y = border.Top;
+            if (x + w > border.Right) x = border.Right - w;
+            if (y + h > border.Bottom) y = border.Bottom - h;
+
+            return new Rectangle(x, y, w, h);
+        }
+    }
+
+    /// <summary>
+    ///     Provides extension methods for the <see cref="Size" /> struct.
+    /// </summary>
+    /// <param name="original">The size instance.</param>
+    extension(Size original)
+    {
+        /// <summary>
+        ///     Get the largest size that has the same aspect ratio with the target size and fits within the original size.
+        /// </summary>
+        /// <param name="target">The target size.</param>
+        /// <returns>The largest size that has the same aspect ratio with the target size and fits within the original size.</returns>
+        public Size GetMaxAspectSize(Size target)
+        {
+            var originalAspect = original.Width / (double)original.Height;
+            var targetAspect = target.Width / (double)target.Height;
+
+            int width, height;
+            if (originalAspect >= targetAspect)
+            {
+                height = original.Height;
+                width = (int)Math.Round(height * targetAspect);
+            }
+            else
+            {
+                width = original.Width;
+                height = (int)Math.Round(width / targetAspect);
+            }
+
+            width = Math.Min(width, original.Width);
+            height = Math.Min(height, original.Height);
+            return new Size(width, height);
+        }
+
+        /// <summary>
+        ///     Gets the center point of the size.
+        /// </summary>
+        /// <returns>The center <see cref="Point" />.</returns>
+        public Point CenterPoint()
+        {
+            return new Point(original.Width / 2, original.Height / 2);
+        }
+
+        /// <summary>
+        ///     Linearly interpolates a point within the size based on a pivot.
+        /// </summary>
+        /// <param name="pivot">The relative pivot point (0.0 to 1.0).</param>
+        /// <returns>The interpolated <see cref="Point" />.</returns>
+        public Point Lerp(Vector2 pivot)
+        {
+            return new Point(
+                (int)Math.Round(original.Width * pivot.X, MidpointRounding.AwayFromZero),
+                (int)Math.Round(original.Height * pivot.Y, MidpointRounding.AwayFromZero)
+            );
+        }
     }
 }

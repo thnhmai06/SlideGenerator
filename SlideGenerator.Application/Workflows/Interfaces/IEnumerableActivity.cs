@@ -1,4 +1,3 @@
-using SlideGenerator.Application.Workflows.Entities.Activities;
 using SlideGenerator.Application.Workflows.Entities.Contexts;
 
 namespace SlideGenerator.Application.Workflows.Interfaces;

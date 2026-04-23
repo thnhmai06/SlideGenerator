@@ -1,4 +1,4 @@
-namespace SlideGenerator.Domain.Slides.Models.Identifiers;
+﻿namespace SlideGenerator.Domain.Slides.Models.Identifiers;
 
 /// <summary>
 ///     Identifies a specific shape within a slide.

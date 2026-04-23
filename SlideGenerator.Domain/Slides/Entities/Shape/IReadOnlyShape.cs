@@ -33,14 +33,20 @@ public interface IReadOnlyShape
     /// <summary>
     ///     Attempts to retrieve the picture data associated with this shape.
     /// </summary>
-    /// <param name="image">When this method returns, contains the image data as a byte array if successful; otherwise, <see langword="null" />.</param>
+    /// <param name="image">
+    ///     When this method returns, contains the image data as a byte array if successful; otherwise,
+    ///     <see langword="null" />.
+    /// </param>
     /// <returns><see langword="true" /> if the picture data was successfully retrieved; otherwise, <see langword="false" />.</returns>
     bool TryGetPicture([MaybeNullWhen(false)] out byte[] image);
 
     /// <summary>
     ///     Attempts to retrieve the BLIP fill image data associated with this shape.
     /// </summary>
-    /// <param name="image">When this method returns, contains the image data as a byte array if successful; otherwise, <see langword="null" />.</param>
+    /// <param name="image">
+    ///     When this method returns, contains the image data as a byte array if successful; otherwise,
+    ///     <see langword="null" />.
+    /// </param>
     /// <returns><see langword="true" /> if the BLIP fill data was successfully retrieved; otherwise, <see langword="false" />.</returns>
     bool TryGetBlipFill([MaybeNullWhen(false)] out byte[] image);
 }

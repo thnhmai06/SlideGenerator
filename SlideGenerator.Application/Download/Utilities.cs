@@ -23,7 +23,7 @@ public static class Utilities
         config.ApplyRetrySetting(downloadSetting.Retry).ApplyProxySetting(downloadSetting.Proxy);
         return config;
     }
-    
+
     /// <summary>
     ///     Internal extension methods to apply specific setting groups to a <see cref="DownloadConfiguration" />.
     /// </summary>

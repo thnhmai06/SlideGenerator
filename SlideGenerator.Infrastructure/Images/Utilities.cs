@@ -12,7 +12,10 @@ public static class Utilities
     /// <summary>
     ///     Crops the specified <see cref="Mat" /> to the given dimensions in place.
     /// </summary>
-    /// <param name="mat">The <see cref="Mat" /> to crop. The original object is disposed and replaced with the cropped version.</param>
+    /// <param name="mat">
+    ///     The <see cref="Mat" /> to crop. The original object is disposed and replaced with the cropped
+    ///     version.
+    /// </param>
     /// <param name="rect">The <see cref="Rectangle" /> representing the region of interest to crop to.</param>
     public static void Crop(ref Mat mat, Rectangle rect)
     {
@@ -27,9 +30,15 @@ public static class Utilities
     /// <summary>
     ///     Resizes the specified <see cref="Mat" /> to the given dimensions in place.
     /// </summary>
-    /// <param name="mat">The <see cref="Mat" /> to resize. The original object is disposed and replaced with the resized version.</param>
+    /// <param name="mat">
+    ///     The <see cref="Mat" /> to resize. The original object is disposed and replaced with the resized
+    ///     version.
+    /// </param>
     /// <param name="size">The target <see cref="CvSize" /> to resize to.</param>
-    /// <param name="interpolation">The <see cref="InterpolationFlags" /> method to use for resizing. Defaults to <see cref="InterpolationFlags.Area" />.</param>
+    /// <param name="interpolation">
+    ///     The <see cref="InterpolationFlags" /> method to use for resizing. Defaults to
+    ///     <see cref="InterpolationFlags.Area" />.
+    /// </param>
     public static void Resize(ref Mat mat, CvSize size, InterpolationFlags interpolation = InterpolationFlags.Area)
     {
         var resizedMat = new Mat();
@@ -40,11 +49,15 @@ public static class Utilities
     }
 
     /// <summary>
-    ///     Calculates the largest <see cref="CvSize" /> that maintains the aspect ratio of the target size while fitting within the original size.
+    ///     Calculates the largest <see cref="CvSize" /> that maintains the aspect ratio of the target size while fitting
+    ///     within the original size.
     /// </summary>
     /// <param name="original">The original <see cref="CvSize" /> to fit within.</param>
     /// <param name="target">The target <see cref="CvSize" /> whose aspect ratio should be maintained.</param>
-    /// <returns>A <see cref="CvSize" /> representing the largest possible dimensions that fit within <paramref name="original" /> with <paramref name="target" />'s aspect ratio.</returns>
+    /// <returns>
+    ///     A <see cref="CvSize" /> representing the largest possible dimensions that fit within
+    ///     <paramref name="original" /> with <paramref name="target" />'s aspect ratio.
+    /// </returns>
     public static CvSize GetMaxAspectSize(this CvSize original, CvSize target)
     {
         var originalAspect = original.Width / (double)original.Height;

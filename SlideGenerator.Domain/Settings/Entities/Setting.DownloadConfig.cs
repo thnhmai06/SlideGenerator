@@ -98,7 +98,10 @@ public sealed partial class Setting
             /// <summary>
             ///     Creates and returns an <see cref="IWebProxy" /> instance if proxy usage is enabled.
             /// </summary>
-            /// <returns>An <see cref="IWebProxy" /> instance if <see cref="UseProxy" /> is <see langword="true" />; otherwise, <see langword="null" />.</returns>
+            /// <returns>
+            ///     An <see cref="IWebProxy" /> instance if <see cref="UseProxy" /> is <see langword="true" />; otherwise,
+            ///     <see langword="null" />.
+            /// </returns>
             public IWebProxy? GetWebProxy()
             {
                 if (!UseProxy || string.IsNullOrEmpty(ProxyAddress))
