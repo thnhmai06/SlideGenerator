@@ -15,6 +15,7 @@
 
     <ItemGroup>
         <Folder Include="Cloud\"/>
+        <Folder Include="Services\Generating\Abstractions\"/>
     </ItemGroup>
 
     <ItemGroup>

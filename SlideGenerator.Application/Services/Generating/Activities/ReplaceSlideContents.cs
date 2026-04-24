@@ -1,6 +1,6 @@
 using SlideGenerator.Application.Resources.Services;
-using SlideGenerator.Application.Services.Generating.Models.Images;
 using SlideGenerator.Application.Services.Generating.Rules;
+using SlideGenerator.Application.Services.Generating.Services;
 using SlideGenerator.Application.Slides.Abstractions;
 using SlideGenerator.Application.Workflows.Entities.Activities;
 using SlideGenerator.Application.Workflows.Entities.Contexts;
@@ -8,11 +8,14 @@ using SlideGenerator.Domain.Sheets.Entities;
 using SlideGenerator.Domain.Sheets.Models;
 using SlideGenerator.Domain.Slides.Entities.Presentation;
 using SlideGenerator.Domain.Slides.Models.Identifiers;
+using ImageSpecializedInstruction = SlideGenerator.Application.Services.Generating.Models.Images.SpecializedInstruction;
+using TextGeneralInstruction = SlideGenerator.Application.Services.Generating.Models.Texts.GeneralInstruction;
 
 namespace SlideGenerator.Application.Services.Generating.Activities;
 
-/// <summary>Replaces placeholders on a slide.</summary>
-/// <remarks>Updates both text and image content for the current row.</remarks>
+/// <summary>
+///     Replaces placeholders on a slide using resolved values for the current row.
+/// </summary>
 /// <param name="slideRegistry">The presentation file registry.</param>
 /// <param name="textReplacer">The text replacement service.</param>
 /// <param name="imageReplacers">The collection of image replacement services.</param>
@@ -26,8 +29,6 @@ public sealed class ReplaceSlideContents(
     int templateSlideIndex) : Activity
 {
     /// <inheritdoc />
-    /// <exception cref="ArgumentException">Thrown if template slide is missing in context.</exception>
-    /// <exception cref="InvalidOperationException">Thrown if target slide does not exist.</exception>
     public override async ValueTask ExecuteAsync(IExecutionContext context,
         CancellationToken cancellationToken = default)
     {
@@ -52,8 +53,9 @@ public sealed class ReplaceSlideContents(
                 textReplacer.Replace(shape, textMap);
 
         var imageInstructions =
-            context.GetVariable<IReadOnlyDictionary<SpecializedInstruction, string>>(WorksheetContextRules
+            context.GetVariable<IReadOnlyDictionary<ImageSpecializedInstruction, string>>(WorksheetContextRules
                 .EditedImagePaths);
+
         if (imageInstructions is { Count: > 0 })
             foreach (var shape in targetSlide.DescendShapes())
             {
@@ -75,12 +77,10 @@ public sealed class ReplaceSlideContents(
             }
     }
 
-    /// <summary>Builds the text replacement map for the current row.</summary>
-    /// <param name="context">The execution context.</param>
-    /// <param name="row">The current row index.</param>
-    /// <param name="ct">The cancellation token.</param>
-    /// <returns>A dictionary of placeholders and their replacement values.</returns>
-    private async ValueTask<IReadOnlyDictionary<string, string>?> BuildTextMapAsync(IExecutionContext context, int row,
+    /// <summary>
+    ///     Builds the text replacement map by resolving definitions against the current data row.
+    /// </summary>
+    private async ValueTask<IReadOnlyDictionary<string, string>> BuildTextMapAsync(IExecutionContext context, int row,
         CancellationToken ct)
     {
         var worksheet = context.GetVariable<WorksheetIdentifier>(WorksheetContextRules.Worksheet)!;
@@ -94,13 +94,13 @@ public sealed class ReplaceSlideContents(
 
         var rowContent = ws.GetRowContent(row);
         var textInstructions =
-            context.GetVariable<IReadOnlyList<Models.Texts.SpecializedInstruction>>(WorksheetContextRules
-                .TextInstructions) ?? [];
+            context.GetVariable<IReadOnlyList<TextGeneralInstruction>>(WorksheetContextRules.TextInstructions) ?? [];
+
         return textInstructions
-            .GroupBy(x => x.Placeholder, StringComparer.Ordinal)
+            .Select(x => InstructionResolver.ResolveText(x, rowContent))
             .ToDictionary(
-                g => g.Key,
-                g => rowContent.TryGetValue(g.First().Source.Name, out var v) ? v : string.Empty,
+                x => x.Placeholder,
+                x => x.Value,
                 StringComparer.Ordinal);
     }
 }

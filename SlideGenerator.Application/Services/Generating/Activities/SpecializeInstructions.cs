@@ -6,29 +6,22 @@ using SlideGenerator.Domain.Sheets.Entities;
 using SlideGenerator.Domain.Sheets.Models;
 using SlideGenerator.Domain.Slides.Models.Identifiers;
 using ImageGeneralInstruction = SlideGenerator.Application.Services.Generating.Models.Images.GeneralInstruction;
-using ImageSpecializedInstruction = SlideGenerator.Application.Services.Generating.Models.Images.SpecializedInstruction;
 using TextGeneralInstruction = SlideGenerator.Application.Services.Generating.Models.Texts.GeneralInstruction;
-using TextSpecializedInstruction = SlideGenerator.Application.Services.Generating.Models.Texts.SpecializedInstruction;
 
 namespace SlideGenerator.Application.Services.Generating.Activities;
 
 /// <summary>
-///     Specializes general instructions for a specific worksheet.
+///     Filters and stores general instruction definitions in the context for per-row resolution.
 /// </summary>
-/// <remarks>
-///     Filters instructions based on matching worksheet, column headers, and template content.
-/// </remarks>
-/// <param name="workbookRegistry">The workbook file registry for acquiring workbook access.</param>
-/// <param name="rawTextInstructions">The raw list of general text replacement instructions.</param>
-/// <param name="rawImageInstructions">The raw list of general image replacement instructions.</param>
+/// <param name="workbookRegistry">The workbook file registry.</param>
+/// <param name="rawTextInstructions">The raw list of general text instructions.</param>
+/// <param name="rawImageInstructions">The raw list of general image instructions.</param>
 public sealed class SpecializeInstructions(
     FileRegistry<IReadOnlyWorkbook> workbookRegistry,
     IReadOnlyList<TextGeneralInstruction> rawTextInstructions,
     IReadOnlyList<ImageGeneralInstruction> rawImageInstructions) : Activity
 {
     /// <inheritdoc />
-    /// <exception cref="ArgumentException">Thrown if the template slide is missing in context.</exception>
-    /// <exception cref="InvalidOperationException">Thrown if the targeted worksheet does not exist in the workbook.</exception>
     public override async ValueTask ExecuteAsync(IExecutionContext context,
         CancellationToken cancellationToken = default)
     {
@@ -51,21 +44,22 @@ public sealed class SpecializeInstructions(
 
         var headerSet = worksheetInstance.Headers.ToHashSet(StringComparer.Ordinal);
 
-        context.SetVariable<IReadOnlyList<TextSpecializedInstruction>>(WorksheetContextRules.TextInstructions,
+        // Filter and store the GENERAL instructions (definitions) themselves
+        context.SetVariable<IReadOnlyList<TextGeneralInstruction>>(WorksheetContextRules.TextInstructions,
             rawTextInstructions
                 .Where(instruction => placeholders.Contains(instruction.Placeholder))
-                .SelectMany(instruction => instruction.Flatten(instruction))
-                .Where(instruction => Equals(instruction.Source.Worksheet, worksheetIdentifier))
-                .Where(instruction => headerSet.Contains(instruction.Source.Name))
+                .Where(instruction =>
+                    instruction.Sources.Any(s =>
+                        Equals(s.Worksheet, worksheetIdentifier) && headerSet.Contains(s.Name)))
                 .ToList());
 
-        context.SetVariable<IReadOnlyList<ImageSpecializedInstruction>>(WorksheetContextRules.ImageInstructions,
+        context.SetVariable<IReadOnlyList<ImageGeneralInstruction>>(WorksheetContextRules.ImageInstructions,
             rawImageInstructions
                 .Where(instruction => Equals(instruction.Target.Slide, templateSlideIdentifier))
                 .Where(instruction => imageShapeIds.Contains(instruction.Target.Id))
-                .SelectMany(instruction => instruction.Flatten(instruction))
-                .Where(instruction => Equals(instruction.Source.Worksheet, worksheetIdentifier))
-                .Where(instruction => headerSet.Contains(instruction.Source.Name))
+                .Where(instruction =>
+                    instruction.Sources.Any(s =>
+                        Equals(s.Worksheet, worksheetIdentifier) && headerSet.Contains(s.Name)))
                 .ToList());
     }
 }
