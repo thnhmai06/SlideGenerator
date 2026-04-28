@@ -1,128 +1,226 @@
-# SlideGenerator Coding Instructions
+# SlideGenerator Project Instructions & Guidelines
 
-## Goal
-This document summarizes the conventions currently used across the three main projects:
-- SlideGenerator.Domain
-- SlideGenerator.Application
-- SlideGenerator.Infrastructure
+## 1. Project Overview
+SlideGenerator is an automation tool for generating PowerPoint slides from templates. Main workflow:
+- Read data from Excel (Workbook).
+- Use an existing PowerPoint template.
+- Replace placeholders (Mustache) with text and images (downloaded from the Cloud and processed via AI).
+- Export the finalized PowerPoint files.
 
-When creating or modifying code, prioritize following the rules below.
+## 2. System Architecture (Clean Architecture)
+The project strictly adheres to a 3-tier architecture with a unidirectional dependency rule:
 
-## Overall Architecture: Clean Architecture
+| Layer | Project | Dependency Rule | Responsibility |
+|---|---|---|---|
+| **Domain** | `SlideGenerator.Domain` | No dependencies on other layers | Contains Business Models, Rules, and core Abstractions. |
+| **Application** | `SlideGenerator.Application` | Depends on Domain | Business logic (Use-cases), Registry, Workflow DSL, and Interface definitions for Infrastructure. |
+| **Infrastructure** | `SlideGenerator.Infrastructure` | Depends on Application & Domain | Implements Interfaces using third-party libraries (WorkflowCore, OpenXml, OpenCV...). |
 
-This solution follows Clean Architecture with clear dependency rules:
+### Mandatory Rules:
+- **Application MUST NOT directly reference WorkflowCore.** The Application layer defines the DSL as a node record tree (`WorkflowNode`). The Infrastructure layer interprets this tree using `WcInterpreterStep` (a single `StepBodyAsync`).
+- **State-driven Monitoring**: The system uses a hierarchical `ExecutionState` tree to track state and logs. Logging must always go through `context.State.Logger.AddLog(...)`, never directly through the framework logger.
+- **Domain must be clean (framework-free)**: It must not contain technical logic from external libraries.
 
-Exception:
-- Elsa workflow dependencies are allowed in Application as an explicit architectural exception.
-- Domain must not depend on Elsa.
+## 3. Tech Stack
+- **Runtime**: .NET 10.0 (Nullable enabled, ImplicitUsings enabled).
+- **Workflow**: WorkflowCore (Daniel Gerlag) — strictly resides in Infrastructure. Application uses a custom DSL.
+- **Document Processing**:
+    - Excel: `ClosedXML`.
+    - PowerPoint: `DocumentFormat.OpenXml` (strictly NO Spire).
+- **Image Processing**:
+    - AI Face Detection: `OpenCvSharp4` + `YuNet`.
+    - Image Editing: `Magick.NET-Q8`.
+- **Others**:
+    - Download: `Downloader`.
+    - Template: `Stubble.Core`.
+    - Serialization: `YamlDotNet`.
 
-1. Domain is the innermost layer.
-- Contains business models, business rules, and domain abstractions.
-- Must not depend on Application or Infrastructure.
-- Should avoid framework-specific technical details whenever possible.
+## 4. Folder Structure & Naming Convention
+Each module within the layers should follow this structure:
+- `Abstractions/`: Interfaces (start with `I`).
+- `Entities/`: Objects with identity/behavior.
+- `Models/`: DTOs, Records, Value Objects.
+    - `States/`: Contains classes inheriting from `ExecutionState`.
+    - `Logging/`: Contains `Logger`, `LogEntry`, `LogLevel`.
+- `Rules/`: Enums, Constants, Extension mapping.
+- `Services/`: Business logic processing.
+- `Activities/`: Leaf activities (in Application) — implement `ILeafActivity`.
+- `Workflows/`: Process definitions — implement `IWorkflowDefinition<TData>`.
+- `Adapters/`: Wrappers for external libraries (Infrastructure only).
 
-2. Application is the use-case/orchestration layer.
-- Depends on Domain.
-- Contains orchestration services, registries, and workflow-level logic.
-- Defines abstractions that are implemented in Infrastructure (for example serializer, file registry, image compute service).
+## 5. Workflow DSL — Application Layer
 
-3. Infrastructure is the implementation/adapters layer.
-- May depend on Domain and Application to implement abstractions.
-- Contains integrations with external libraries (OpenXml, Spire, OpenCvSharp, ClosedXML, YamlDotNet, Downloader, ...).
-- Must not contain core business rules.
+The DSL is located in `Application/Workflows/DSL/`. When adding a new step to the workflow:
 
-## Folder Structure And Naming Conventions
+### Lexical Scope Tree — Variable\<T\>
 
-Use consistent naming by module:
-- Abstractions: interfaces/contracts (typically start with I).
-- Entities: business objects or implementation-level objects with identity/behavior.
-- Models: DTOs/value models/preview models.
-- Rules: constants, enums, extension mappings, domain rules.
-- Services: services for use-case/module processing.
-- Activities: workflow activities (Elsa).
-- Adapters: wrappers/converters between external libraries and internal abstractions.
+`Variable<T>` is a **pure typed key** (holds no state). Each `ForEachNode<TItem, TData>` iteration creates a **child scope** with its own local dictionary. `GetVariable` searches the local scope first, then traverses up the parent chain.
 
-Naming interfaces and classes:
-- Interface: I + Name (ISettingProvider, IReadOnlyWorkbook, IVisionComputer...).
-- Concrete class names should clearly describe their role (YamlSerializer, Cv2Computer, TextReplacer...).
-- Prefer sealed for concrete classes when inheritance is not needed.
+```csharp
+// Keys declared once as static readonly — safe because they hold no state
+public static class VariablesDeclaration
+{
+    public static readonly Variable<WorkbookIdentifier>     WorkbookItem     = new(nameof(WorkbookItem));
+    public static readonly Variable<PresentationIdentifier> PresentationItem = new(nameof(PresentationItem));
+    public static readonly Variable<WorksheetIdentifier>    WorksheetItem    = new(nameof(WorksheetItem));
+    public static readonly Variable<RowIdentifier>          RowItem          = new(nameof(RowItem));
+    public static readonly Variable<RowTask>                RowTaskItem      = new(nameof(RowTaskItem));
+}
+```
 
-## C# Coding Conventions
+`WorkbookIdentifier` and `PresentationIdentifier` are domain types (not wrapper structs). They are mapped directly from `Request.Graph` — no intermediate wrappers are needed.
 
-1. Platform/language settings
-- Target framework: net10.0.
-- Nullable: enable.
-- ImplicitUsings: enable.
-- File-scoped namespace.
+### Creating a New Activity
 
-2. General style
-- Prefer one top-level type per file (SA1402 is set to suggestion).
-- Minimize style noise; focus on clarity and stability.
-- Add XML docs for many public APIs (summary/param/returns).
-- For any new or modified public API, always add clear XML documentation in English.
+```csharp
+// Activity at the worksheet scope — inject Variable<WorksheetIdentifier> key via constructor
+public sealed class MyActivity(
+    IMyService service,
+    Variable<WorksheetIdentifier> worksheetVar) : ILeafActivity<WorkflowTask>
+{
+    public async Task ExecuteAsync(IActivityContext<WorkflowTask> context)
+    {
+        var data = context.Data;                              // typed, no cast needed
+        var ws = context.GetVariable(worksheetVar);           // read from scope chain
+        // ...
+    }
+}
+```
 
-3. Data types and models
-- Prefer record for data-centric models (identifier/instruction/request).
-- Use enum + extension method for technical mappings (for example file extension, document type).
-- Use readonly/required/init where appropriate to clarify intent.
+**Variable Scope Rules:**
 
-4. Asynchrony and resources
-- Prefer async/await for I/O or heavy operations.
-- Frequently use ConfigureAwait(false) in library/service code.
-- Use IDisposable/IAsyncDisposable when holding native resources/streams/models.
+| Scope in GeneratingWorkflow | Constructor Inject | Read Using |
+|---|---|---|
+| Workbook scan ForEach | `Variable<WorkbookIdentifier> workbookVar` | `context.GetVariable(workbookVar).FilePath` |
+| Presentation scan ForEach | `Variable<PresentationIdentifier> presentationVar` | `context.GetVariable(presentationVar).FilePath` |
+| Inside worksheet ForEach | `Variable<WorksheetIdentifier> worksheetVar` | `context.GetVariable(worksheetVar)` |
+| Inside row ForEach | `Variable<RowIdentifier> rowVar` | `context.GetVariable(rowVar)` |
+| Inside download/edit task ForEach | `Variable<RowTask> rowTaskVar` | `context.GetVariable(rowTaskVar)` |
 
-5. Input guards and null-safety
-- Validate inputs early (null/empty/file exists/valid range).
-- Prefer TryGet/Try... patterns for operations that may fail.
-- If an operation can fail safely, returning bool/null is preferred over excessive throwing.
+**DSL Lambda Rules** (`ForEachNode.Items`, `InlineNode.Action`, `ConditionNode.Predicate`):
+```csharp
+// Lambdas receive IActivityContext<TData> — ctx.Data is strongly typed
+new InlineNode<WorkflowTask>(ctx => {
+    var data = ctx.Data;
+    var ws   = ctx.GetVariable(VariablesDeclaration.WorksheetItem);
+    return Task.CompletedTask;
+})
 
-6. Concurrency
-- Use ConcurrentDictionary/locks when there is shared multi-threaded state.
-- For event/callback flows, ensure cleanup state (for example remove items from registry on completion).
+// Generic ForEachNode — Variable is the key to store the item in the child scope
+new ForEachNode<RowIdentifier, WorkflowTask>(
+    VariablesDeclaration.RowItem,
+    ctx => ctx.Data.SheetTasks[ctx.GetVariable(VariablesDeclaration.WorksheetItem)].RowIndices
+               .Select(r => new RowIdentifier(ctx.GetVariable(VariablesDeclaration.WorksheetItem), r)),
+    Parallel: false,
+    Body: new TryNode(...)
+)
+```
 
-## Layer-Specific Rules
+### Available DSL Nodes
 
-### Domain
-- Keep domain models/rules simple and business-focused.
-- Define abstractions for external capabilities (cloud/image/settings/sheet/slide...).
-- Do not include external-library implementation details in Domain.
+| Node | When to use |
+|---|---|
+| `ActivityNode<T>` | Calls an `ILeafActivity`. |
+| `SequenceNode([...])` | Executes steps sequentially. |
+| `ForEachNode<TItem, TData>(Variable, ctx => items, Parallel, Body)` | Loop; stores the item in the child scope via Variable. |
+| `ParallelNode([...])` | Executes branches in parallel and waits for all to complete. |
+| `TryNode(Body)` | Error isolation — swallows exceptions and logs them to the State. |
+| `SlotGatedNode(SlotType.X, Body)` | Throttles execution using `IAsyncKeyedLocker<SlotType>`. |
+| `InlineNode<TData>(ctx => ...)` | Small data mutations that do not require a separate class. |
+| `ConditionNode<TData>(predicate, Then, Else?)` | Conditional branching (file: `IfNode.cs`; interface `IConditionNode`). |
 
-### Application
-- Acts as the bridge for use-cases, workflows, and policies.
-- Use registry/provider/service patterns to manage runtime state.
-- Avoid pushing framework-specific technical logic too deep when it can be moved to Infrastructure.
+### Mandatory Rules
+- **100% Activity Architecture**: Absolutely NO `for/foreach` or `Task.WhenAll` inside `ILeafActivity` for orchestration. All orchestration must be handled by the node tree.
+- Do NOT use `RequireItem<T>()` or `GetData<T>()` — they have been removed. Use `Variable<T>` + `GetVariable()`.
+- `ForEachNode<TItem, TData>` creates a child scope per iteration. Parallel branches are physically isolated; `AsyncLocal` is not needed.
+- `SlotGatedNode` completely replaces the old `AcquireSlot`/`ReleaseSlot` approach.
+- Use `TryNode` to wrap the body of the row loop — an error in one row must not halt the entire worksheet.
+- **Checkpoint-safe**: Every `ActivityNode` must correspond to an actual disk I/O boundary. If an activity only manipulates RAM without touching a file, it shouldn't exist.
 
-### Infrastructure
-- Implement Domain/Application abstractions using concrete libraries.
-- Prefer adapter pattern to wrap external libraries.
-- Place technical handling (format conversion, OpenXml relationships, CV compute, YAML serializer...) here.
+## 6. Data Model — No Shared Mutable State
 
-## Workflow Conventions (Elsa)
+`WorkflowTask` (file: `Generating/Workflows/Models/WorkflowTask.cs`) **does not have** and **must not reintroduce**:
+- A `CurrentWorksheet` field or similar — this state must be read from the scope chain via `context.GetVariable(VariablesDeclaration.WorksheetItem)`.
+- Any field that shares mutable state between parallel worksheet branches.
 
-When implementing workflow activities:
-- Inherit from WorkflowBase.
-- Define Input/Output/Variable with clear names and semantics.
-- Build graphs with Sequence/ParallelForEach/Inline in a readable manner.
-- Store temporary runtime objects in WorkflowExecutionContext.TransientProperties when needed.
-- Validate inputs before I/O operations.
+`WorkflowTask` contains:
+- `WorkbookSummaries` — `ConcurrentDictionary<string, WorkbookSummary>` keyed by `Path.GetFullPath`. Used to filter `WorksheetKeys` and read `Headers`/`Count` in `SimplyInstructions`.
+- `PresentationSummaries` — `ConcurrentDictionary<string, PresentationSummary>` (similar to above).
+- `WorksheetKeys` — Filtered list containing only worksheets that actually exist in the scanned workbook.
+- `WorksheetData` — `ConcurrentDictionary<WorksheetIdentifier, WorksheetData>` (One context per worksheet branch).
 
-## Error Handling And Logging
+Each `WorksheetData` is completely independent among parallel worksheet branches. Isolation is guaranteed by the child scope tree.
 
-- Some places currently use broad catch for fail-safe behavior; when extending, add contextual logging.
-- Do not swallow errors silently in business-critical paths.
-- Prefer clear, action-oriented error messages.
+## 7. Pipeline GeneratingWorkflow
 
-## Dependency Rule Checklist (Mandatory)
+```
+ParallelNode
+├── ForEach<WorkbookIdentifier>   [ScanWorkbook per unique workbook]
+└── ForEach<PresentationIdentifier> [ScanPresentation per unique presentation]
 
-Before merging new code, self-check:
-- Does Domain reference Application/Infrastructure? If yes: incorrect.
-- Are core business rules placed in Infrastructure? If yes: incorrect.
-- Does Application call concrete implementations directly instead of abstractions? If yes: review required.
+InlineNode  → Filters WorksheetKeys, keeping only worksheets present in WorkbookSummaries
 
-## When Copilot Generates Code
+ForEach<WorksheetIdentifier> [Parallel, SlotType.Worksheet]
+├── InlineNode → Initializes WorksheetData
+├── ConditionNode (check if workbook file exists)
+│   └── Then: SequenceNode
+│       ├── CreateWorkingPresentation   ← calculates output path + copies template + strips slide
+│       ├── SimplyInstructions          ← reads from summaries (no file open); resolves instructions
+│       ├── ForEach<RowIdentifier> [Sequential, TryNode]
+│       │   ├── InlineNode → resets RowSpecializedInstructions
+│       │   ├── ForEach<RowTask> [Parallel, SlotType.Download] → DownloadImage
+│       │   ├── ForEach<RowTask> [Parallel, SlotType.EditImage] → EditImage
+│       │   │   (items built inline via disk scan for downloaded files)
+│       │   └── SlotGatedNode(SlotType.EditSlide)
+│       │       └── CloneTemplateSlide → EditSlide
+│       ├── RemoveWorkingTemplateSlide  ← deletes template slide + Save()
+│       └── InlineNode → disposes PresentationLease
+```
 
-- Always respect this solution's Clean Architecture dependency rules.
-- Keep naming/folder structure aligned with existing modules.
-- Prefer defining abstractions in Domain/Application first, then implement in Infrastructure.
-- Do not change existing public API/behavior without explicit request.
-- If adding a new library: add it only to the project that needs implementation; avoid leaking dependencies into Domain.
+## 8. Image Path Structure
+
+```
+{downloadFolder}/
+  Downloaded/
+    {workbookName}_{hash7}/        ← hash of the workbook's full path (removing non-alphanumeric)
+      {worksheetName}_{hash7}/     ← hash of the worksheet name
+        {columnName}_{hash7}/      ← hash of the column name
+          {rowIndex}.{ext}
+  Edited/
+    {workbookName}_{hash7}/
+      {worksheetName}_{hash7}/
+        {columnName}_{hash7}/
+          {rowIndex}.{ext}
+```
+
+*Hash: Base64 of UTF-8 bytes, taking the first 7 characters. `+/=` characters and any invalid filename characters are replaced with `-`.*
+
+## 9. Infrastructure — Interpreter
+
+`WcInterpreterStep<TDef, TData>` in `Infrastructure/Workflows/` is the sole bridge between WorkflowCore and the Application DSL. It:
+- Is a single `StepBodyAsync` invoked by WorkflowCore.
+- Runs `ExecuteNodeAsync(rootNode, ctx)` recursively.
+- Handles all node types in a switch statement.
+- `SlotGatedNode` → resolves `IAsyncKeyedLocker<SlotType>` from DI, acquiring/releasing it inside a try/finally block.
+
+**WorkflowCore registration workaround**: `IWorkflow<TData>` (generic) and `IWorkflow` (= `IWorkflow<object>`) in WC 3.17 cannot be implemented together on the same class. `WcWorkflowService.RunAsync` uses reflection to invoke `RegisterWorkflow`.
+
+## 10. Coding Style
+- **Namespace**: Use file-scoped namespaces.
+- **Class**: Prefer `sealed` unless intended for inheritance.
+- **Models**: Use `record` for value objects.
+- **Async**: Use `async/await` + `ConfigureAwait(false)` in all service/library code.
+- **XML docs**: Mandatory for public APIs — clearly document variables read/written, injected services, logging behaviors, and CancellationToken usage.
+
+## 11. Pre-Commit Checklist
+- [ ] Does the Domain layer reference Application/Infrastructure? **(NO)**
+- [ ] Does the Application layer reference WorkflowCore? **(NO)**
+- [ ] Do new Activities implement `ILeafActivity<TData>` (and not raw `StepBodyAsync` or `ILeafActivity`)?
+- [ ] Do new Workflows implement `IWorkflowDefinition<TData>` (and not `IWorkflow<TData>`)?
+- [ ] Do Activities use typed `context.Data` and `context.GetVariable(xVar)` instead of casting `object`?
+- [ ] Do DSL lambdas use `ctx.Data` directly (no `GetData<T>()` or raw `object`)?
+- [ ] Are scoped Activities injecting `Variable<T>` keys via the constructor and registered as Singleton?
+- [ ] Do new Activities actually perform disk I/O? (RAM-only activities are banned).
+- [ ] Is all logging routed through `context.State.Logger`?
+- [ ] Is `ConfigureAwait(false)` applied everywhere?
+- [ ] Are any Business rules leaking into the Infrastructure layer? **(MUST NOT happen)**

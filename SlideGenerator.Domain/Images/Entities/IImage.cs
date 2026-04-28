@@ -39,4 +39,13 @@ public interface IImage : IDisposable, ICloneable
     /// </summary>
     /// <returns>A <see langword="byte" /> array representing the image data.</returns>
     byte[] ToByteArray();
+
+    /// <summary>Crops the image to the specified rectangle.</summary>
+    IImage Crop(Rectangle region);
+
+    /// <summary>Resizes the image to the specified size.</summary>
+    IImage Resize(Size newSize);
+
+    /// <summary>Saves the image to the specified file path.</summary>
+    Task SaveAsync(string filePath, CancellationToken ct = default);
 }

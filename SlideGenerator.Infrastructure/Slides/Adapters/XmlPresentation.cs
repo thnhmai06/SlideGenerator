@@ -1,7 +1,6 @@
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Presentation;
-using LinqKit;
 using SlideGenerator.Domain.Slides.Entities.Presentation;
 using SlideGenerator.Domain.Slides.Entities.Slide;
 using SlideGenerator.Domain.Slides.Models.Identifiers;
@@ -302,7 +301,12 @@ public class XmlPresentation(string filePath, bool isEditable = true) : IPresent
             .Descendants()
             .Where(el => el.GetAttributes().Any(a =>
                 a is { NamespaceUri: relNs, LocalName: "id" or "embed" or "link", Value: not null } &&
-                relIds.Contains(a.Value)));
-        toRemove.ForEach(el => el.Remove());
+                relIds.Contains(a.Value)))
+            .ToList();
+
+        foreach (var el in toRemove)
+        {
+            el.Remove();
+        }
     }
 }

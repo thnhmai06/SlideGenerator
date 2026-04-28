@@ -1,4 +1,5 @@
 using System.Numerics;
+using SlideGenerator.Domain.Images.Rules;
 
 namespace SlideGenerator.Domain.Images.Models;
 
@@ -8,7 +9,7 @@ namespace SlideGenerator.Domain.Images.Models;
 public sealed record CenterOption : RoiOption
 {
     /// <summary>
-    ///     Initializes a new center option with default center pin.
+    ///     Initializes a new center option with the default center pin.
     /// </summary>
     public CenterOption()
     {
@@ -20,4 +21,7 @@ public sealed record CenterOption : RoiOption
     ///     When <see langword="false" />, the ROI is centered using the image bounds.
     /// </summary>
     public bool UseFaceAlignment { get; init; } = true;
+
+    /// <inheritdoc />
+    public override RoiType Type => RoiType.Center;
 }

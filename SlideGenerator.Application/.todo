@@ -1,0 +1,2 @@
+TODO:
+- Chuyển Registry sang dạng multi-instance ứng với mỗi thread thay vì single-instance rồi để các thread xâu xé instance đó.

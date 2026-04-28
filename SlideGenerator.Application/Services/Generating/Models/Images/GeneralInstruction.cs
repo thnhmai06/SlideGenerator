@@ -23,6 +23,7 @@ public sealed record GeneralInstruction(
         return general.Sources.Select(source => new SpecializedInstruction(
             general.Target,
             Utilities.NormalizeUri(rowContent.GetValueOrDefault(source.Name)),
-            general.Edit));
+            general.Edit,
+            source.Name));
     }
 }

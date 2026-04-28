@@ -8,7 +8,7 @@ namespace SlideGenerator.Domain.Slides.Entities.Slide;
 /// </summary>
 public interface ISlide : IReadOnlySlide
 {
-    /// <summary>Gets the parent editable presentation containing this slide.</summary>
+    /// <summary>Gets the parent-editable presentation containing this slide.</summary>
     new IPresentation Presentation { get; }
 
     /// <inheritdoc />

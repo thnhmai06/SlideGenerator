@@ -10,6 +10,9 @@ namespace SlideGenerator.Application.Services.Generating.Models.Texts;
 public sealed record GeneralInstruction(string Placeholder, IReadOnlyList<ColumnIdentifier> Sources)
     : Instruction(Placeholder), ISpecializable<GeneralInstruction, SpecializedInstruction>
 {
+    /// <summary>A specialized instruction with an empty value, used when no source column yields a match.</summary>
+    public SpecializedInstruction Empty => new(Placeholder, string.Empty);
+
     /// <inheritdoc />
     public IEnumerable<SpecializedInstruction> Flatten(GeneralInstruction general,
         IReadOnlyDictionary<string, string> rowContent)

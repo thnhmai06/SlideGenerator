@@ -9,20 +9,123 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3a1f1c77-0578-40bf-9d5d-a0e8452562c2" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Models/Utilities.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/.todo" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Properties/AssemblyInfo.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Models/States/GeneratingState.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Models/States/WorkbookState.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Models/States/WorksheetState.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Services/GeneratingService.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Workflows/Activities/CloneTemplateSlide.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Workflows/Activities/DownloadImage.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Workflows/Activities/EditSlide.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Workflows/Activities/RemoveWorkingTemplateSlide.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Workflows/Activities/SimplyInstructions.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Workflows/GeneratingWorkflow.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Workflows/Models/RowTask.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Workflows/Models/WorkflowTask.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Workflows/VariablesDeclaration.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Scanning/Workflows/Activities/ScanPresentation.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Scanning/Workflows/Activities/ScanWorkbook.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Utilities.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Abstractions/IWorkflowService.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/DSL/IActivityContext.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/DSL/ILeafActivity.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/DSL/IWorkflowDefinition.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/DSL/Nodes/ActivityNode.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/DSL/Nodes/ForEachNode.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/DSL/Nodes/IfNode.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/DSL/Nodes/InlineNode.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/DSL/Nodes/ParallelNode.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/DSL/Nodes/SequenceNode.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/DSL/Nodes/SlotGatedNode.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/DSL/Nodes/TryNode.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/DSL/Nodes/WorkflowNode.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/DSL/Variable.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Models/Logging/LogEntry.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Models/Logging/LogLevel.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Models/Logging/Logger.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Models/States/ActivityState.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Models/States/ExecutionState.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Models/States/WorkflowState.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Models/Status.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Rules/WorkflowConstants.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slides/Services/ImageComposer.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/WcExecutionContext.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/WcInterpreterContext.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/WcInterpreterStep.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/WcWorkflowAdapter.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/WcWorkflowService.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.SlideGenerator/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.SlideGenerator/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Activities/DownloadImage.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Activities/DownloadImage.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Activities/ReplaceSlideContents.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Activities/ReplaceSlideContents.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Activities/ResolveImagePathsFromDisk.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Activities/ResolveImagePathsFromDisk.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Activities/ResolveImageUrls.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Activities/ResolveImageUrls.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Activities/SpecializeInstructions.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Activities/SpecializeInstructions.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/GeneratingWorkflow.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/GeneratingWorkflow.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CLAUDE.md" beforeDir="false" afterPath="$PROJECT_DIR$/CLAUDE.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/INSTRUCTIONS.MD" beforeDir="false" afterPath="$PROJECT_DIR$/INSTRUCTIONS.MD" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Activities/BuildOutputPath.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Activities/CloneTemplateSlide.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Activities/CreateWorkingPresentation.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Workflows/Activities/CreateWorkingPresentation.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Activities/DownloadImage.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Activities/EditImage.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Workflows/Activities/EditImage.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Activities/RemoveWorkingTemplateSlide.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Activities/ReplaceSlideContents.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Activities/ResolveImagePathsFromDisk.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Activities/ResolveImageUrls.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Activities/ScanTemplateContent.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Activities/SpecializeInstructions.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/GeneratingWorkflow.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Models/GeneratingRequest.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Models/GeneratingRequest.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Models/ISpecializable.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Models/ISpecializable.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Models/Images/EditOptions.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Models/Images/EditOptions.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Models/Images/GeneralInstruction.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Models/Images/GeneralInstruction.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Models/Images/Instruction.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Models/Images/Instruction.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Models/Images/SpecializedInstruction.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Models/Images/SpecializedInstruction.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Models/Texts/GeneralInstruction.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Models/Texts/GeneralInstruction.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Models/Texts/Instruction.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Models/Texts/Instruction.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Models/Texts/SpecializedInstruction.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Models/Texts/SpecializedInstruction.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Models/Utilities.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Rules/ImagePathRules.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Rules/ImagePathRules.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Rules/NamingRules.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Rules/NamingRules.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Rules/SlotType.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Rules/SlotType.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Rules/WorksheetContextRules.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Services/InstructionResolver.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Scanning/Models/Sheets/WorkbookSummary.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Scanning/Models/Sheets/WorkbookSummary.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Scanning/Models/Sheets/WorksheetSummary.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Scanning/Models/Sheets/WorksheetSummary.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Scanning/Models/Slides/PresentationSummary.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Scanning/Models/Slides/PresentationSummary.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Scanning/Models/Slides/SlideSummary.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Scanning/Models/Slides/SlideSummary.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Scanning/ScanningService.cs" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/SlideGenerator.Application.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/SlideGenerator.Application.csproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Slides/Abstractions/IImageReplacer.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Slides/Abstractions/IImageComposer.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Slides/Abstractions/ITextReplacer.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Slides/Abstractions/ITextComposer.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Abstractions/IActivityFactory.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Entities/Activities/Activity.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Entities/Activities/ForEach.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Entities/Activities/Inline.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Entities/Activities/ParallelForEach.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Entities/Activities/Sequence.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Entities/Activities/SlotGated.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Entities/Contexts/IExecutionContext.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Entities/Contexts/IExecutionContext.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Entities/Contexts/Variable.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Entities/Entry.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Entities/Workflows/Workflow.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Interfaces/ICompositeActivity.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Workflows/Interfaces/IEnumerableActivity.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Images/Entities/IImage.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Images/Entities/IImage.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Images/Models/CenterOption.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Images/Models/CenterOption.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Images/Models/RoiOption.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Images/Models/RoiOption.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Images/Models/RuleOfThirdsOption.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Images/Models/RuleOfThirdsOption.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Slides/Entities/Slide/ISlide.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Slides/Entities/Slide/ISlide.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Images/Adapters/Mat.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Images/Adapters/Mat.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/SlideGenerator.Infrastructure.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/SlideGenerator.Infrastructure.csproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slides/Adapters/XmlPresentation.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slides/Adapters/XmlPresentation.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slides/Services/BlipFillReplacer.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slides/Services/BlipFillComposer.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slides/Services/MustacheReplacer.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slides/Services/MustacheComposer.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slides/Services/PictureReplacer.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slides/Services/PictureComposer.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/Adapters/ElsaExecutionContext.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/Adapters/ElsaForEach.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/Adapters/ElsaInline.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/Adapters/ElsaParallelForEach.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/Adapters/ElsaSequence.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/Adapters/ElsaSlotGated.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/Adapters/ElsaVariable.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/Services/ElsaActivityFactory.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.sln.DotSettings.user" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.sln.DotSettings.user" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -45,7 +148,7 @@
     </selectedModels>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="106" />
+    <option name="cachedIndexableFilesCount" value="120" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="FileTemplateManagerImpl">
@@ -92,9 +195,14 @@
   }
 }</component>
   <component name="HighlightingSettingsPerFile">
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/0931384e8ad84ecb9766b8ae7f864099bbc00/47/a04ca0b2/Activity.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/0931384e8ad84ecb9766b8ae7f864099bbc00/6c/acdde61a/Inline.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/0931384e8ad84ecb9766b8ae7f864099bbc00/e8/0a6937a1/ForEach`1.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/4e09f6ff7c574a38a6cb04165745f695f45908/44/3e534e70/AsyncLocal`1.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/a344d5234cda41fbb887e67f5efa58d0bba00/0b/71c40b3e/ForEach`1.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/a344d5234cda41fbb887e67f5efa58d0bba00/b9/0a942041/Container.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/SourcesCache/17f16a5814c3cb737befcff401e930e6fa815a6e07168dda4bbea848e4911/ConfiguredValueTaskAwaitable.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/SourcesCache/3cca26e6dd627c1a7919bec86cb05b6d975a30287456f7daa8773a92451a/List.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/6340b5fe53504d64abf787165f5fc155ad800/7c/7ae0de59/ParallelForEach`1.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/658a0e954f184e67b66bdd4634556e681b48cf0/18/abe1cf38/Shape.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/78884848959540a592c6ed676b77131279d7e0/29/321c8130/PresentationDocument.cs" root0="FORCE_HIGHLIGHTING" />
@@ -121,15 +229,8 @@
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Application/Cloud/Abstractions/ICloudResolver.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Application/Cloud/Rules/CloudResolverKey.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Application/Download/Utilities.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Models/Utilities.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Application/Settings/Rules/NamingRules.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/SlideGenerator.Application/Workflows/Interfaces/ICompositeActivity.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Domain/Settings/Rules/NamingRules.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/Adapters/ElsaForEach.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/Adapters/ElsaInline.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/Adapters/ElsaParallelForEach.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/Adapters/ElsaSlotGated.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/Adapters/ElsaVariable.cs" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="McpProjectServerCommands">
     <commands />
@@ -151,75 +252,41 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;develop/backend&quot;,
-    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
-    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "ShowUsagesActions.previewPropertyKey": "true",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "develop/backend",
+    "ignore.virus.scanning.warn.message": "true",
+    "junie.onboarding.icon.badge.shown": "true",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "to.speed.mode.migration.done": "true",
+    "vue.rearranger.settings.migration": "true"
+  },
+  "keyToStringList": {
+    "com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File": [
+      "TEXT"
+    ]
   }
-}</component>
+}]]></component>
   <component name="Push.Settings">
     <force-push-targets>
       <force-push-target remote-path="origin" branch="develop/backend" />
     </force-push-targets>
   </component>
-  <component name="RunManager" selected=".NET Launch Settings Profile.SlideGenerator.JsonRpc">
-    <configuration name="SlideGenerator.JsonRpc" type="LaunchSettings" factoryName=".NET Launch Settings Profile">
-      <option name="LAUNCH_PROFILE_PROJECT_FILE_PATH" value="$PROJECT_DIR$/SlideGenerator.Ipc/SlideGenerator.Ipc.csproj" />
-      <option name="LAUNCH_PROFILE_TFM" value="net10.0" />
-      <option name="LAUNCH_PROFILE_NAME" value="JsonRpc" />
-      <option name="USE_MONO" value="0" />
-      <option name="RUNTIME_ARGUMENTS" value="" />
-      <option name="GENERATE_APPLICATIONHOST_CONFIG" value="1" />
-      <option name="SHOW_IIS_EXPRESS_OUTPUT" value="0" />
-      <option name="SEND_DEBUG_REQUEST" value="1" />
-      <option name="ADDITIONAL_IIS_EXPRESS_ARGUMENTS" value="" />
-      <option name="AUTO_ATTACH_CHILDREN" value="0" />
-      <option name="MIXED_MODE_DEBUG" value="0" />
-      <method v="2">
-        <option name="Build" />
-      </method>
-    </configuration>
-    <configuration name="SlideGenerator.Ipc/Dockerfile" type="docker-deploy" factoryName="dockerfile" server-name="Docker">
-      <deployment type="dockerfile">
-        <settings>
-          <option name="containerName" value="slidegenerator.ipc" />
-          <option name="contextFolderPath" value="D:\Development\Code\.multi\SlideGenerator" />
-          <option name="envVars">
-            <list>
-              <DockerEnvVarImpl>
-                <option name="name" value="ASPNETCORE_HTTPS_PORTS" />
-                <option name="value" value="8081" />
-              </DockerEnvVarImpl>
-              <DockerEnvVarImpl>
-                <option name="name" value="ASPNETCORE_HTTP_PORTS" />
-                <option name="value" value="8080" />
-              </DockerEnvVarImpl>
-            </list>
-          </option>
-          <option name="publishAllPorts" value="true" />
-          <option name="sourceFilePath" value="SlideGenerator.Ipc/Dockerfile" />
-        </settings>
-      </deployment>
-      <EXTENSION ID="com.jetbrains.rider.docker.debug" isFastModeEnabled="true" isSslEnabled="true" />
-      <method v="2" />
-    </configuration>
+  <component name="RunManager">
     <configuration default="true" type="docker-deploy" factoryName="dockerfile" temporary="true">
       <deployment type="dockerfile">
         <settings />
@@ -227,10 +294,6 @@
       <EXTENSION ID="com.jetbrains.rider.docker.debug" isFastModeEnabled="true" isSslEnabled="false" />
       <method v="2" />
     </configuration>
-    <list>
-      <item itemvalue=".NET Launch Settings Profile.SlideGenerator.JsonRpc" />
-      <item itemvalue="Docker.SlideGenerator.Ipc/Dockerfile" />
-    </list>
   </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
@@ -296,7 +359,12 @@
       <workItem from="1776850960259" duration="8617000" />
       <workItem from="1776874915081" duration="12503000" />
       <workItem from="1776928088534" duration="21752000" />
-      <workItem from="1777000358167" duration="2567000" />
+      <workItem from="1777000358167" duration="30528000" />
+      <workItem from="1777052497146" duration="15460000" />
+      <workItem from="1777085500640" duration="376000" />
+      <workItem from="1777086751403" duration="14313000" />
+      <workItem from="1777183094350" duration="28661000" />
+      <workItem from="1777247833681" duration="58223000" />
     </task>
     <task id="LOCAL-00001" summary="feat: update LoadPresentation workflow&#10;&#10;- Updated LoadPresentation class to enhance documentation and streamline presentation preparation workflow (improves clarity and maintainability).">
       <option name="closed" value="true" />
@@ -514,7 +582,15 @@
       <option name="project" value="LOCAL" />
       <updated>1776949618430</updated>
     </task>
-    <option name="localTasksCounter" value="28" />
+    <task id="LOCAL-00028" summary="refactor(generating): resolve instructions per-row instead of pre-flattening&#10;&#10;- Introduced the `InstructionResolver` service to evaluate general instructions against row content and produce specialized instructions with actual values.&#10;- Updated the `ISpecializable.Flatten` method signature to require row data, shifting value resolution logic to the execution phase.&#10;- Modified `SpecializedInstruction` models for both images and texts to store resolved values (`Uri` and `string`) rather than column source definitions.&#10;- Refactored the `SpecializeInstructions` activity to filter and store general instructions in the context, removing premature flattening.&#10;- Adapted `ResolveImageUrls`, `DownloadImage`, `ResolveImagePathsFromDisk`, and `ReplaceSlideContents` activities to process the new instruction structure and per-row resolved values.&#10;- Added a `Utilities.NormalizeUri` helper to standardize URI formatting during image resolution.">
+      <option name="closed" value="true" />
+      <created>1777006114567</created>
+      <option name="number" value="00028" />
+      <option name="presentableId" value="LOCAL-00028" />
+      <option name="project" value="LOCAL" />
+      <updated>1777006114567</updated>
+    </task>
+    <option name="localTasksCounter" value="29" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -573,7 +649,8 @@
     <MESSAGE value="refactor(workflows): Decouple Application layer from Elsa workflow engine&#10;&#10;- Introduced a custom workflow DSL (`Activity`, `Sequence`, `ForEach`, `ParallelForEach`, `Inline`, `SlotGated`) and state management (`Variable`, `IExecutionContext`) in the Application layer.&#10;- Added `IActivityFactory` to abstract workflow activity creation.&#10;- Migrated all generation workflow activities to use the new Application-layer DSL, removing direct Elsa dependencies (e.g., `Input&lt;T&gt;`, `Output&lt;T&gt;`, `ActivityExecutionContext`).&#10;- Refactored `GeneratingWorkflow` to construct the execution tree using the new `IActivityFactory` and strongly-typed context variables.&#10;- Introduced `WorksheetContextRules` to standardize workflow variable keys for the generation process.&#10;- Implemented Elsa-specific adapters (`ElsaSequence`, `ElsaInline`, `ElsaForEach`, `ElsaParallelForEach`, `ElsaSlotGated`, `ElsaVariable`, `ElsaExecutionContext`) and `ElsaActivityFactory` in the Infrastructure layer.&#10;- Reorganized the project structure by moving generating and scanning components to the `Services` namespace.&#10;- Updated `CLAUDE.md` to document the architectural constraint that Elsa dependencies must reside exclusively in the Infrastructure layer." />
     <MESSAGE value="docs: add comprehensive XML documentation and minor refactorings&#10;&#10;- Added extensive XML documentation to interfaces, classes, properties, and methods across the Domain, Application, and Infrastructure layers to improve maintainability.&#10;- Relocated IClientService to the Cloud.Abstractions namespace for better logical organization.&#10;- Enhanced resource management by adding GC.SuppressFinalize(this) to the Dispose methods of Mat, StreamTextFile, and YuNet.&#10;- Improved thread safety in YuNet.DeInitAsync by ensuring the semaphore is released within a try-finally block.&#10;- Removed the obsolete ImageReplacer class in favor of using PictureReplacer and BlipFillReplacer directly.&#10;- Corrected an exception message typo in StreamTextFile.Write to accurately reflect read-only file states." />
     <MESSAGE value="chore(backend): clean up and reformat code" />
-    <option name="LAST_COMMIT_MESSAGE" value="chore(backend): clean up and reformat code" />
+    <MESSAGE value="refactor(generating): resolve instructions per-row instead of pre-flattening&#10;&#10;- Introduced the `InstructionResolver` service to evaluate general instructions against row content and produce specialized instructions with actual values.&#10;- Updated the `ISpecializable.Flatten` method signature to require row data, shifting value resolution logic to the execution phase.&#10;- Modified `SpecializedInstruction` models for both images and texts to store resolved values (`Uri` and `string`) rather than column source definitions.&#10;- Refactored the `SpecializeInstructions` activity to filter and store general instructions in the context, removing premature flattening.&#10;- Adapted `ResolveImageUrls`, `DownloadImage`, `ResolveImagePathsFromDisk`, and `ReplaceSlideContents` activities to process the new instruction structure and per-row resolved values.&#10;- Added a `Utilities.NormalizeUri` helper to standardize URI formatting during image resolution." />
+    <option name="LAST_COMMIT_MESSAGE" value="refactor(generating): resolve instructions per-row instead of pre-flattening&#10;&#10;- Introduced the `InstructionResolver` service to evaluate general instructions against row content and produce specialized instructions with actual values.&#10;- Updated the `ISpecializable.Flatten` method signature to require row data, shifting value resolution logic to the execution phase.&#10;- Modified `SpecializedInstruction` models for both images and texts to store resolved values (`Uri` and `string`) rather than column source definitions.&#10;- Refactored the `SpecializeInstructions` activity to filter and store general instructions in the context, removing premature flattening.&#10;- Adapted `ResolveImageUrls`, `DownloadImage`, `ResolveImagePathsFromDisk`, and `ReplaceSlideContents` activities to process the new instruction structure and per-row resolved values.&#10;- Added a `Utilities.NormalizeUri` helper to standardize URI formatting during image resolution." />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

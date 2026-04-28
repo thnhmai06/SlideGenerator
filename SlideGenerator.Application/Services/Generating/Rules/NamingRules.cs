@@ -1,33 +1,73 @@
+using System.Text;
+
 namespace SlideGenerator.Application.Services.Generating.Rules;
 
 /// <summary>
-///     Provides naming conventions and normalization logic for files and directories.
+///     Defines naming conventions and defaults for generated files and jobs.
 /// </summary>
 public static class NamingRules
 {
-    /// <summary>The default name used when a workbook name is missing.</summary>
-    public const string DefaultWorkbookName = "unnamed_workbook";
+    /// <summary>The default name used for workbooks when one cannot be resolved.</summary>
+    public const string DefaultWorkbookName = "Workbook";
 
-    /// <summary>The default name used when a worksheet name is missing.</summary>
-    public const string DefaultWorksheetName = "unnamed_worksheet";
+    /// <summary>The default name used for worksheets when one cannot be resolved.</summary>
+    public const string DefaultWorksheetName = "Worksheet";
+
+    /// <summary>The default name used for columns when one cannot be resolved.</summary>
+    public const string DefaultColumnName = "Column";
 
     /// <summary>
-    ///     Normalizes a file name by replacing invalid characters with underscores.
+    ///     Normalizes a string to be used as a safe file or folder name.
     /// </summary>
-    /// <param name="value">The original string to normalize.</param>
-    /// <param name="defaultValue">The default value to return if the input is null, empty, or whitespace.</param>
-    /// <returns>A safe string suitable for use as a file or directory name.</returns>
-    public static string NormalizeFileName(string? value, string? defaultValue = null)
+    public static string NormalizeFileName(string? name, string fallback)
     {
-        defaultValue ??= string.Empty;
+        if (string.IsNullOrWhiteSpace(name)) return fallback;
 
-        if (string.IsNullOrWhiteSpace(value))
-            return defaultValue;
+        var invalidChars = Path.GetInvalidFileNameChars();
+        return string.Join("_", name.Split(invalidChars, StringSplitOptions.RemoveEmptyEntries)).Trim();
+    }
 
-        var normalized = value.Trim();
-        normalized = Path.GetInvalidFileNameChars()
-            .Aggregate(normalized, (current, invalid) => current.Replace(invalid, '_'));
+    /// <summary>
+    ///     Builds a folder-name segment in the form <c>{cleanName}_{hash7}</c> where both the
+    ///     display name and the hash source are the same string.
+    /// </summary>
+    public static string BuildPathSegment(string? original, string fallback)
+        => BuildPathSegment(original, original, fallback);
 
-        return string.IsNullOrWhiteSpace(normalized) ? defaultValue : normalized;
+    /// <summary>
+    ///     Builds a folder-name segment in the form <c>{cleanDisplayName}_{hash7}</c>, where
+    ///     <c>hash7</c> is derived from <paramref name="hashSource" /> (special characters stripped,
+    ///     then first 7 characters of the plain Base64 of the UTF-8 bytes).  Use this overload when
+    ///     the display name should differ from what is hashed — e.g., showing the workbook file name
+    ///     while hashing its full path for uniqueness.
+    /// </summary>
+    public static string BuildPathSegment(string? displayName, string? hashSource, string fallback)
+    {
+        var name = string.IsNullOrWhiteSpace(displayName) ? fallback : displayName;
+        var source = string.IsNullOrWhiteSpace(hashSource) ? fallback : hashSource;
+        var clean = NormalizeFileName(name, fallback);
+        var hash7 = ComputeBase64Hash(StripSpecialChars(source));
+        return $"{clean}_{hash7}";
+    }
+
+    /// <summary>Removes every character that is not a letter or digit.</summary>
+    private static string StripSpecialChars(string value)
+        => new(value.Where(char.IsLetterOrDigit).ToArray());
+
+    private static string ComputeBase64Hash(string value, int length = 7)
+    {
+        var b64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
+        var segment = b64.Length >= length ? b64[..length] : b64;
+        return SanitizeBase64Segment(segment);
+    }
+
+    private static string SanitizeBase64Segment(string segment)
+    {
+        var invalidChars = Path.GetInvalidFileNameChars();
+        return new string(segment
+            .Select(c => Array.IndexOf(invalidChars, c) >= 0 || c is '+' or '/' or '='
+                ? '-'
+                : c)
+            .ToArray());
     }
 }

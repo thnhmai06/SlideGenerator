@@ -23,9 +23,6 @@ public sealed record GeneratingRequest(
     PresentationExtension OutputExtension,
     string SaveFolder)
 {
-    public const string Name = nameof(GeneratingRequest);
-    public const string Description = "A generating request payload";
-
     public IReadOnlyDictionary<WorksheetIdentifier, SlideIdentifier> Graph { get; init; } = Graph.Count == 0
         ? throw new ArgumentException("Graph cannot be empty.", nameof(Graph))
         : Graph;
