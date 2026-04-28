@@ -1,4 +1,4 @@
-using SlideGenerator.Application.Download.Rules;
+using SlideGenerator.Application.Modules.Download.Rules;
 
 namespace SlideGenerator.Application.Services.Generating.Rules;
 

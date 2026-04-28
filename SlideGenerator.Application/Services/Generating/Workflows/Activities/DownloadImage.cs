@@ -1,10 +1,10 @@
-using SlideGenerator.Application.Cloud.Abstractions;
-using SlideGenerator.Application.Download.Models;
-using SlideGenerator.Application.Download.Services;
-using SlideGenerator.Application.Resources.Services;
+using SlideGenerator.Application.Modules.Cloud.Abstractions;
+using SlideGenerator.Application.Modules.Download.Models;
+using SlideGenerator.Application.Modules.Download.Services;
+using SlideGenerator.Application.Modules.Resources.Services;
+using SlideGenerator.Application.Modules.Settings.Interfaces;
+using SlideGenerator.Application.Modules.Workflows.DSL;
 using SlideGenerator.Application.Services.Generating.Workflows.Models;
-using SlideGenerator.Application.Settings.Interfaces;
-using SlideGenerator.Application.Workflows.DSL;
 using SlideGenerator.Domain.Sheets.Entities;
 
 namespace SlideGenerator.Application.Services.Generating.Workflows.Activities;

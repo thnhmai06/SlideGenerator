@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
-using SlideGenerator.Application.Workflows.Models.States;
+using SlideGenerator.Application.Modules.Workflows.Models.States;
+using SlideGenerator.Infrastructure.Workflows.Adapters;
 
 namespace SlideGenerator.Infrastructure.Workflows;
 

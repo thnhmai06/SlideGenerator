@@ -14,7 +14,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Folder Include="Cloud\"/>
+        <Folder Include="Modules\" />
     </ItemGroup>
 
     <ItemGroup>

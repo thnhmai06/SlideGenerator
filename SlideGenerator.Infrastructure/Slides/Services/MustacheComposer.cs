@@ -1,7 +1,7 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using DocumentFormat.OpenXml.Drawing;
-using SlideGenerator.Application.Slides.Abstractions;
+using SlideGenerator.Application.Modules.Slides.Abstractions;
 using SlideGenerator.Domain.Slides.Entities.Shape;
 using SlideGenerator.Infrastructure.Slides.Adapters;
 using Stubble.Core;

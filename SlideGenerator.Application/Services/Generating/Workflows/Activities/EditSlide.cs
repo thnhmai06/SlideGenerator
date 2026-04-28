@@ -1,10 +1,10 @@
-using SlideGenerator.Application.Resources.Services;
+using SlideGenerator.Application.Modules.Resources.Services;
+using SlideGenerator.Application.Modules.Settings.Interfaces;
+using SlideGenerator.Application.Modules.Slides.Abstractions;
+using SlideGenerator.Application.Modules.Workflows.DSL;
+using SlideGenerator.Application.Modules.Workflows.Rules;
 using SlideGenerator.Application.Services.Generating.Models.Images;
 using SlideGenerator.Application.Services.Generating.Workflows.Models;
-using SlideGenerator.Application.Settings.Interfaces;
-using SlideGenerator.Application.Slides.Abstractions;
-using SlideGenerator.Application.Workflows.DSL;
-using SlideGenerator.Application.Workflows.Rules;
 using SlideGenerator.Domain.Sheets.Entities;
 using SlideGenerator.Domain.Sheets.Models;
 using SlideGenerator.Domain.Slides.Entities.Presentation;

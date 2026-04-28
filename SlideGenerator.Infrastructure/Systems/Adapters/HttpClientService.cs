@@ -1,5 +1,5 @@
-using SlideGenerator.Application.Cloud.Abstractions;
-using SlideGenerator.Application.Settings.Interfaces;
+using SlideGenerator.Application.Modules.Cloud.Abstractions;
+using SlideGenerator.Application.Modules.Settings.Interfaces;
 
 namespace SlideGenerator.Infrastructure.Systems.Adapters;
 

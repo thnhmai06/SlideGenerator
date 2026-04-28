@@ -1,8 +1,8 @@
-using SlideGenerator.Application.Resources.Services;
+using SlideGenerator.Application.Modules.Resources.Services;
+using SlideGenerator.Application.Modules.Workflows.DSL;
 using SlideGenerator.Application.Services.Generating.Workflows;
 using SlideGenerator.Application.Services.Generating.Workflows.Models;
 using SlideGenerator.Application.Services.Scanning.Models.Sheets;
-using SlideGenerator.Application.Workflows.DSL;
 using SlideGenerator.Domain.Sheets.Entities;
 using SlideGenerator.Domain.Sheets.Models;
 

@@ -1,8 +1,8 @@
-using SlideGenerator.Application.Images.Abstractions;
-using SlideGenerator.Application.Resources.Services;
+using SlideGenerator.Application.Modules.Images.Abstractions;
+using SlideGenerator.Application.Modules.Resources.Services;
+using SlideGenerator.Application.Modules.Settings.Interfaces;
+using SlideGenerator.Application.Modules.Workflows.DSL;
 using SlideGenerator.Application.Services.Generating.Workflows.Models;
-using SlideGenerator.Application.Settings.Interfaces;
-using SlideGenerator.Application.Workflows.DSL;
 using SlideGenerator.Domain.Images.Entities;
 using SlideGenerator.Domain.Images.Models;
 using SlideGenerator.Domain.Slides.Entities.Presentation;

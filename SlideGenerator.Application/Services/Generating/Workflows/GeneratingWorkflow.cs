@@ -1,11 +1,11 @@
+using SlideGenerator.Application.Modules.Settings.Interfaces;
+using SlideGenerator.Application.Modules.Workflows.DSL;
+using SlideGenerator.Application.Modules.Workflows.DSL.Nodes;
 using SlideGenerator.Application.Services.Generating.Models.Images;
 using SlideGenerator.Application.Services.Generating.Rules;
 using SlideGenerator.Application.Services.Generating.Workflows.Activities;
 using SlideGenerator.Application.Services.Generating.Workflows.Models;
 using SlideGenerator.Application.Services.Scanning.Workflows.Activities;
-using SlideGenerator.Application.Settings.Interfaces;
-using SlideGenerator.Application.Workflows.DSL;
-using SlideGenerator.Application.Workflows.DSL.Nodes;
 using SlideGenerator.Domain.Sheets.Models;
 using SlideGenerator.Domain.Slides.Models.Identifiers;
 

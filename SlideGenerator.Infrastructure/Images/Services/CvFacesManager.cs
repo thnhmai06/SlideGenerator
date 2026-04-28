@@ -1,4 +1,4 @@
-using SlideGenerator.Application.Images.Services;
+using SlideGenerator.Application.Modules.Images.Services;
 using SlideGenerator.Domain.Images.Abstractions;
 using SlideGenerator.Domain.Images.Rules;
 

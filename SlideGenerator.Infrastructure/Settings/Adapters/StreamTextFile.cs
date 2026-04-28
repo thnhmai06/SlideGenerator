@@ -1,5 +1,5 @@
 using System.Text;
-using SlideGenerator.Application.Settings.Abstractions;
+using SlideGenerator.Application.Modules.Settings.Abstractions;
 
 namespace SlideGenerator.Infrastructure.Settings.Adapters;
 

@@ -1,6 +1,6 @@
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
-using ISerializer = SlideGenerator.Application.Settings.Abstractions.ISerializer;
+using ISerializer = SlideGenerator.Application.Modules.Settings.Abstractions.ISerializer;
 
 namespace SlideGenerator.Infrastructure.Settings.Services;
 

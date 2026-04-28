@@ -1,6 +1,6 @@
-using SlideGenerator.Application.Resources.Abstractions;
-using SlideGenerator.Application.Resources.Services;
-using SlideGenerator.Application.Settings.Abstractions;
+using SlideGenerator.Application.Modules.Resources.Abstractions;
+using SlideGenerator.Application.Modules.Resources.Services;
+using SlideGenerator.Application.Modules.Settings.Abstractions;
 using SlideGenerator.Infrastructure.Settings.Adapters;
 
 namespace SlideGenerator.Infrastructure.Settings.Services;

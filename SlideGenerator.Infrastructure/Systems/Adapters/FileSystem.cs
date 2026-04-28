@@ -1,4 +1,4 @@
-using SlideGenerator.Application.Systems.Abstractions;
+using SlideGenerator.Application.Modules.Systems.Abstractions;
 
 namespace SlideGenerator.Infrastructure.Systems.Adapters;
 

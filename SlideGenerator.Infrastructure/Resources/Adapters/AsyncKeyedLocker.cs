@@ -1,5 +1,5 @@
 using AsyncKeyedLock;
-using SlideGenerator.Application.Resources.Abstractions;
+using SlideGenerator.Application.Modules.Resources.Abstractions;
 
 namespace SlideGenerator.Infrastructure.Resources.Adapters;
 

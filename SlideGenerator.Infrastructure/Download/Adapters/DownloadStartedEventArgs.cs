@@ -1,10 +1,11 @@
-using SlideGenerator.Application.Download.Models;
+using SlideGenerator.Application.Modules.Download.Abstractions;
+using SlideGenerator.Application.Modules.Download.Models;
 
 namespace SlideGenerator.Infrastructure.Download.Adapters;
 
 /// <summary>
 ///     Provides event data for the
-///     <see cref="SlideGenerator.Application.Download.Abstractions.IDownloadService.DownloadStarted" /> event.
+///     <see cref="IDownloadService.DownloadStarted" /> event.
 /// </summary>
 /// <param name="core">The original core event arguments containing download metadata.</param>
 public sealed class DownloadStartedEventArgs(Downloader.DownloadStartedEventArgs core) : IDownloadStartedEventArgs

@@ -1,5 +1,5 @@
-using SlideGenerator.Application.Resources.Abstractions;
-using SlideGenerator.Application.Resources.Services;
+using SlideGenerator.Application.Modules.Resources.Abstractions;
+using SlideGenerator.Application.Modules.Resources.Services;
 using SlideGenerator.Domain.Sheets.Entities;
 using SlideGenerator.Infrastructure.Sheets.Adapters;
 

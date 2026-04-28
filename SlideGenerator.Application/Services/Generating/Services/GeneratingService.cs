@@ -1,9 +1,9 @@
+using SlideGenerator.Application.Modules.Workflows.Abstractions;
+using SlideGenerator.Application.Modules.Workflows.Models.States;
 using SlideGenerator.Application.Services.Generating.Models;
 using SlideGenerator.Application.Services.Generating.Models.States;
 using SlideGenerator.Application.Services.Generating.Workflows;
 using SlideGenerator.Application.Services.Generating.Workflows.Models;
-using SlideGenerator.Application.Workflows.Abstractions;
-using SlideGenerator.Application.Workflows.Models.States;
 
 namespace SlideGenerator.Application.Services.Generating.Services;
 

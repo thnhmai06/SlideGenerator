@@ -1,4 +1,4 @@
-using SlideGenerator.Application.Slides.Abstractions;
+using SlideGenerator.Application.Modules.Slides.Abstractions;
 using SlideGenerator.Domain.Slides.Entities.Shape;
 
 namespace SlideGenerator.Infrastructure.Slides.Services;

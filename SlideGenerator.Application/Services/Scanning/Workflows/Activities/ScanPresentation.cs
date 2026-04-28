@@ -1,9 +1,9 @@
-using SlideGenerator.Application.Resources.Services;
+using SlideGenerator.Application.Modules.Resources.Services;
+using SlideGenerator.Application.Modules.Slides.Abstractions;
+using SlideGenerator.Application.Modules.Workflows.DSL;
 using SlideGenerator.Application.Services.Generating.Workflows;
 using SlideGenerator.Application.Services.Generating.Workflows.Models;
 using SlideGenerator.Application.Services.Scanning.Models.Slides;
-using SlideGenerator.Application.Slides.Abstractions;
-using SlideGenerator.Application.Workflows.DSL;
 using SlideGenerator.Domain.Slides.Entities.Presentation;
 using SlideGenerator.Domain.Slides.Models.Identifiers;
 using SlideGenerator.Domain.Slides.Models.Previews;

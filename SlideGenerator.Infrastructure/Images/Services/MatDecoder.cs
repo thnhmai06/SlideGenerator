@@ -1,6 +1,6 @@
 using ImageMagick;
 using OpenCvSharp;
-using SlideGenerator.Application.Images.Abstractions;
+using SlideGenerator.Application.Modules.Images.Abstractions;
 using SlideGenerator.Domain.Images.Entities;
 using Mat = SlideGenerator.Infrastructure.Images.Adapters.Mat;
 

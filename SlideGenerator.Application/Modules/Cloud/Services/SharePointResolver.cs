@@ -1,0 +1,43 @@
+using System.Web;
+using SlideGenerator.Application.Modules.Cloud.Abstractions;
+using SlideGenerator.Application.Modules.Cloud.Rules;
+
+namespace SlideGenerator.Application.Modules.Cloud.Services;
+
+/// <summary>
+///     Provides access to Microsoft SharePoint as a cloud provider, resolving file URIs to direct download links.
+/// </summary>
+public sealed class SharePointResolver : ICloudResolver
+{
+    /// <inheritdoc />
+    public Task<Uri> ResolveUriAsync(
+        Uri uri,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrEmpty(uri.Query))
+            return Task.FromResult(uri);
+        var queryParams = HttpUtility.ParseQueryString(uri.Query);
+        var fileIdPath = queryParams.Get("id");
+
+        if (!string.IsNullOrEmpty(fileIdPath) && fileIdPath.StartsWith('/'))
+        {
+            var fullHost = uri.GetLeftPart(UriPartial.Authority);
+            uri = new Uri($"{fullHost}{fileIdPath}?download=1");
+        }
+
+        return Task.FromResult(uri);
+    }
+
+    /// <inheritdoc />
+    public bool TryIsUriSupported(Uri uri, out CloudResolverKey key)
+    {
+        if (uri.Host.EndsWith(".sharepoint.com", StringComparison.OrdinalIgnoreCase))
+        {
+            key = CloudResolverKey.SharePoint;
+            return true;
+        }
+
+        key = default;
+        return false;
+    }
+}

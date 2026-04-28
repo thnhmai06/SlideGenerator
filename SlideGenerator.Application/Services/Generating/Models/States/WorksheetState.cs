@@ -1,5 +1,5 @@
-using SlideGenerator.Application.Workflows.Entities.Contexts;
-using SlideGenerator.Application.Workflows.Models.States;
+using SlideGenerator.Application.Modules.Workflows.Entities.Contexts;
+using SlideGenerator.Application.Modules.Workflows.Models.States;
 
 namespace SlideGenerator.Application.Services.Generating.Models.States;
 
