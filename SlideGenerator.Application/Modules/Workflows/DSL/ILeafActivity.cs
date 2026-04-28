@@ -19,10 +19,12 @@ public interface ILeafActivity
 /// <typeparam name="TData">The workflow data type this activity operates on.</typeparam>
 public interface ILeafActivity<TData> : ILeafActivity
 {
+    /// <summary>Non-generic dispatch — casts context to <see cref="IActivityContext{TData}" /> and delegates.</summary>
+    Task ILeafActivity.ExecuteAsync(IActivityContext context)
+    {
+        return ExecuteAsync((IActivityContext<TData>)context);
+    }
+
     /// <summary>Executes the activity with a typed context.</summary>
     Task ExecuteAsync(IActivityContext<TData> context);
-
-    /// <summary>Non-generic dispatch — casts context to <see cref="IActivityContext{TData}" /> and delegates.</summary>
-    Task ILeafActivity.ExecuteAsync(IActivityContext context) =>
-        ExecuteAsync((IActivityContext<TData>)context);
 }

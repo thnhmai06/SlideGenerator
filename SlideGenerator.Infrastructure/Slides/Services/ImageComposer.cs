@@ -16,15 +16,9 @@ public sealed class ImageComposer(
     public byte[]? Scan(IReadOnlyShape shape)
     {
         // Prioritize Picture over Blip as requested
-        if (shape.IsPicture)
-        {
-            return pictureComposer.Scan(shape);
-        }
+        if (shape.IsPicture) return pictureComposer.Scan(shape);
 
-        if (shape.HasBlipFill)
-        {
-            return blipFillComposer.Scan(shape);
-        }
+        if (shape.HasBlipFill) return blipFillComposer.Scan(shape);
 
         return null;
     }
@@ -33,15 +27,9 @@ public sealed class ImageComposer(
     public int Replace(IShape shape, Stream imageStream)
     {
         // Prioritize Picture over Blip as requested
-        if (shape.IsPicture)
-        {
-            return pictureComposer.Replace(shape, imageStream);
-        }
+        if (shape.IsPicture) return pictureComposer.Replace(shape, imageStream);
 
-        if (shape.HasBlipFill)
-        {
-            return blipFillComposer.Replace(shape, imageStream);
-        }
+        if (shape.HasBlipFill) return blipFillComposer.Replace(shape, imageStream);
 
         return 0;
     }

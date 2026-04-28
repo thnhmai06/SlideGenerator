@@ -6,7 +6,7 @@ namespace SlideGenerator.Application.Modules.Workflows.Models.Logging;
 /// <param name="Timestamp">The time the log was recorded.</param>
 /// <param name="Level">The severity level of the log.</param>
 /// <param name="Message">The log message.</param>
-public readonly record struct LogEntry(DateTimeOffset Timestamp, LogLevel Level, string Message) 
+public readonly record struct LogEntry(DateTimeOffset Timestamp, LogLevel Level, string Message)
     : IComparable<LogEntry>
 {
     /// <inheritdoc />
@@ -14,7 +14,7 @@ public readonly record struct LogEntry(DateTimeOffset Timestamp, LogLevel Level,
     {
         var timestampComparison = Timestamp.CompareTo(other.Timestamp);
         if (timestampComparison != 0) return timestampComparison;
-        
+
         var levelComparison = Level.CompareTo(other.Level);
         if (levelComparison != 0) return levelComparison;
 

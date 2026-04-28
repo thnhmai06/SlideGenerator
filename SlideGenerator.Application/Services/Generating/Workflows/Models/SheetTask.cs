@@ -1,8 +1,9 @@
 using System.Collections.Concurrent;
 using System.Text.Json.Serialization;
-using SlideGenerator.Application.Services.Generating.Models.Images;
+using SlideGenerator.Application.Services.Generating.Models.Texts;
 using SlideGenerator.Domain.Sheets.Models;
 using SlideGenerator.Domain.Slides.Models.Identifiers;
+using SpecializedInstruction = SlideGenerator.Application.Services.Generating.Models.Images.SpecializedInstruction;
 
 namespace SlideGenerator.Application.Services.Generating.Workflows.Models;
 
@@ -25,10 +26,10 @@ public class SheetTask
     public List<uint> SlideImageShapeIds { get; set; } = [];
 
     /// <summary>Text replacement instructions applicable to this worksheet's columns, set by <c>SimplyInstructions</c>.</summary>
-    public List<SlideGenerator.Application.Services.Generating.Models.Texts.GeneralInstruction> RowTextInstructions { get; set; } = [];
+    public List<GeneralInstruction> RowTextInstructions { get; set; } = [];
 
     /// <summary>Image replacement instructions applicable to this worksheet's columns, set by <c>SimplyInstructions</c>.</summary>
-    public List<GeneralInstruction> RowImageInstructions { get; set; } = [];
+    public List<Generating.Models.Images.GeneralInstruction> RowImageInstructions { get; set; } = [];
 
     /// <summary>Absolute output path for the generated presentation, set by <c>CreateWorkingPresentation</c>.</summary>
     public string? OutputPath { get; set; }

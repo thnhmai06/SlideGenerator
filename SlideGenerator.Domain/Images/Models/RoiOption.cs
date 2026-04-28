@@ -29,7 +29,7 @@ public abstract record RoiOption
     } = new(1 / 2f, 1 / 2f);
 
     /// <summary>
-    /// Gets the region of interest (ROI) detection type for image cropping.
+    ///     Gets the region of interest (ROI) detection type for image cropping.
     /// </summary>
     public abstract RoiType Type { get; }
 }

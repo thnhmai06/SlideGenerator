@@ -16,13 +16,13 @@ namespace SlideGenerator.Application.Services.Generating.Workflows.Activities;
 ///     values and edited images for the current row.
 /// </summary>
 /// <remarks>
-///     <b>Variables read:</b> <see cref="VariablesDeclaration.RowItem" />.<br/>
+///     <b>Variables read:</b> <see cref="VariablesDeclaration.RowItem" />.<br />
 ///     <b>Data read:</b> <see cref="SheetTask.WorkingTemplateSlide" />, <see cref="SheetTask.RowTextInstructions" />,
 ///     <see cref="SheetTask.RowSpecializedInstructions" /> (entry for the current row — edited file path derived via
-///     <see cref="SpecializedInstruction.GetEditPath" /> and checked with <see cref="File.Exists" />).<br/>
+///     <see cref="SpecializedInstruction.GetEditPath" /> and checked with <see cref="File.Exists" />).<br />
 ///     <b>Services:</b> <see cref="FileRegistry{IPresentation}" />, <see cref="FileRegistry{IReadOnlyWorkbook}" />,
-///     <c>ITextComposer</c>, <c>IImageComposer</c>, <c>ISettingProvider</c>.<br/>
-///     <b>Logging:</b> errors propagated as exceptions (caller's <c>TryNode</c> logs them).<br/>
+///     <c>ITextComposer</c>, <c>IImageComposer</c>, <c>ISettingProvider</c>.<br />
+///     <b>Logging:</b> errors propagated as exceptions (caller's <c>TryNode</c> logs them).<br />
 ///     <b>CancellationToken:</b> propagated to both registries acquired.
 /// </remarks>
 public sealed class EditSlide(
@@ -51,8 +51,8 @@ public sealed class EditSlide(
 
         var presentation = lease.Value;
         var slide = presentation.EnumerateSlides().ElementAtOrDefault(slideIdentifier.Index - 1)
-                          ?? throw new InvalidOperationException(
-                              $"Cannot replace contents: slide {slideIdentifier.Index} does not exist.");
+                    ?? throw new InvalidOperationException(
+                        $"Cannot replace contents: slide {slideIdentifier.Index} does not exist.");
 
         var textMap = await BuildTextMapAsync(sheetTask, rc.Index, context.CancellationToken)
             .ConfigureAwait(false);

@@ -12,10 +12,10 @@ namespace SlideGenerator.Application.Services.Scanning.Workflows.Activities;
 ///     Scans a single workbook file and stores the result in <see cref="WorkflowTask.WorkbookSummaries" />.
 /// </summary>
 /// <remarks>
-///     <b>Variables read:</b> <see cref="VariablesDeclaration.WorkbookItem" /> — the workbook identifier to scan.<br/>
-///     <b>Variables written:</b> none.<br/>
-///     <b>Services:</b> <see cref="FileRegistry{IReadOnlyWorkbook}" />.<br/>
-///     <b>Logging:</b> via <c>context.State.Logger</c>.<br/>
+///     <b>Variables read:</b> <see cref="VariablesDeclaration.WorkbookItem" /> — the workbook identifier to scan.<br />
+///     <b>Variables written:</b> none.<br />
+///     <b>Services:</b> <see cref="FileRegistry{IReadOnlyWorkbook}" />.<br />
+///     <b>Logging:</b> via <c>context.State.Logger</c>.<br />
 ///     <b>CancellationToken:</b> propagated to registry acquire.
 /// </remarks>
 public sealed class ScanWorkbook(

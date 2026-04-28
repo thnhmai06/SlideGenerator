@@ -5,13 +5,10 @@ namespace SlideGenerator.Application.Modules.Workflows.Models.Logging;
 /// </summary>
 public sealed class Logger
 {
-    private readonly SortedSet<LogEntry> _logs = [];
     private readonly Lock _lock = new();
-    
-    public static IReadOnlyCollection<LogEntry> Empty => [];
+    private readonly SortedSet<LogEntry> _logs = [];
 
-    /// <summary>Raised when a new log entry is added.</summary>
-    public event Action<LogEntry>? OnLog;
+    public static IReadOnlyCollection<LogEntry> Empty => [];
 
     /// <summary>Gets a snapshot of all log entries, sorted by timestamp and severity.</summary>
     public IReadOnlyCollection<LogEntry> Logs
@@ -25,6 +22,9 @@ public sealed class Logger
         }
     }
 
+    /// <summary>Raised when a new log entry is added.</summary>
+    public event Action<LogEntry>? OnLog;
+
     /// <summary>Adds a new log entry to the logger in a thread-safe manner.</summary>
     /// <param name="log">The log entry to add.</param>
     public void AddLog(LogEntry log)
@@ -33,12 +33,15 @@ public sealed class Logger
         {
             _logs.Add(log);
         }
+
         OnLog?.Invoke(log);
     }
 
     /// <summary>Adds a new log entry with the current timestamp in a thread-safe manner.</summary>
     /// <param name="level">The severity level.</param>
     /// <param name="message">The log message.</param>
-    public void AddLog(LogLevel level, string message) => 
+    public void AddLog(LogLevel level, string message)
+    {
         AddLog(new LogEntry(DateTimeOffset.Now, level, message));
+    }
 }

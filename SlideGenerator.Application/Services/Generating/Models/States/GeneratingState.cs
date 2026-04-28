@@ -20,6 +20,8 @@ public class GeneratingState(
     /// <summary>Retrieves the state of a specific workbook activity by its name.</summary>
     /// <param name="workbookName">The name of the workbook.</param>
     /// <returns>The state if found; otherwise, <see langword="null" />.</returns>
-    public WorkbookState? GetWorkbook(string workbookName) =>
-        WorkbookIds.TryGetValue(workbookName, out var id) ? GetActivity<WorkbookState>(id) : null;
+    public WorkbookState? GetWorkbook(string workbookName)
+    {
+        return WorkbookIds.TryGetValue(workbookName, out var id) ? GetActivity<WorkbookState>(id) : null;
+    }
 }

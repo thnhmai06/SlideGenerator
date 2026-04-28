@@ -9,13 +9,13 @@ namespace SlideGenerator.Application.Services.Generating.Workflows.Activities;
 ///     then filters text and image instructions to only those applicable to the current worksheet.
 /// </summary>
 /// <remarks>
-///     <b>Variables read:</b> <see cref="VariablesDeclaration.WorksheetItem" />.<br/>
+///     <b>Variables read:</b> <see cref="VariablesDeclaration.WorksheetItem" />.<br />
 ///     <b>Data read:</b> <see cref="WorkflowTask.WorkbookSummaries" />, <see cref="WorkflowTask.PresentationSummaries" />,
-///     <see cref="WorkflowTask.Request" />.<br/>
+///     <see cref="WorkflowTask.Request" />.<br />
 ///     <b>Data written:</b> <see cref="SheetTask.SlideTextPlaceholders" />, <see cref="SheetTask.SlideImageShapeIds" />,
 ///     <see cref="SheetTask.RowTextInstructions" />, <see cref="SheetTask.RowImageInstructions" />,
-///     <see cref="SheetTask.RowIndices" />.<br/>
-///     <b>Logging:</b> via <c>context.State.Logger</c>.<br/>
+///     <see cref="SheetTask.RowIndices" />.<br />
+///     <b>Logging:</b> via <c>context.State.Logger</c>.<br />
 ///     <b>CancellationToken:</b> not required — all data is read from pre-scanned in-memory summaries.
 /// </remarks>
 public sealed class SimplyInstructions(
@@ -47,7 +47,8 @@ public sealed class SimplyInstructions(
             throw new InvalidOperationException($"Workbook summary for '{workbookPath}' was not found.");
 
         var worksheetSummary = workbookSummary.Worksheets
-                                   .FirstOrDefault(w => string.Equals(w.Name, worksheet.Name, StringComparison.OrdinalIgnoreCase))
+                                   .FirstOrDefault(w =>
+                                       string.Equals(w.Name, worksheet.Name, StringComparison.OrdinalIgnoreCase))
                                ?? throw new InvalidOperationException(
                                    $"Worksheet '{worksheet.Name}' not found in workbook summary for '{workbookPath}'.");
 

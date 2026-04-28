@@ -16,6 +16,8 @@ public sealed class WcWorkflowAdapter<TDef, TData> : IWorkflow<TData>
     public string Id => Def.Id;
     public int Version => Def.Version;
 
-    public void Build(IWorkflowBuilder<TData> builder) =>
+    public void Build(IWorkflowBuilder<TData> builder)
+    {
         builder.StartWith<WcInterpreterStep<TDef, TData>>();
+    }
 }

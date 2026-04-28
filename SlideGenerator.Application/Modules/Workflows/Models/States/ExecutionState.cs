@@ -7,8 +7,8 @@ namespace SlideGenerator.Application.Modules.Workflows.Models.States;
 ///     Provides a common base for tracking the execution state of workflows and activities.
 /// </summary>
 public abstract class ExecutionState(
-    string id, 
-    IExecutionContext executionContext, 
+    string id,
+    IExecutionContext executionContext,
     IReadOnlyDictionary<string, ExecutionState>? activities = null)
 {
     private static readonly HashSet<string> MsgFinished = ["[[COMPLETED]]", "[[FINISHED]]"];
@@ -28,27 +28,31 @@ public abstract class ExecutionState(
     public Logger Logger { get; } = new();
 
     /// <summary>Gets the collection of child activities.</summary>
-    public IReadOnlyDictionary<string, ExecutionState> Activities { get; } = activities ?? new Dictionary<string, ExecutionState>();
+    public IReadOnlyDictionary<string, ExecutionState> Activities { get; } =
+        activities ?? new Dictionary<string, ExecutionState>();
 
     /// <summary>Retrieves a child activity state by its ID.</summary>
     /// <param name="activityId">The ID of the activity to retrieve.</param>
     /// <returns>The activity state if found; otherwise, <see langword="null" />.</returns>
-    public ExecutionState? GetActivity(string activityId) => Activities.GetValueOrDefault(activityId);
+    public ExecutionState? GetActivity(string activityId)
+    {
+        return Activities.GetValueOrDefault(activityId);
+    }
 
     /// <summary>Retrieves a child activity state of a specific type by its ID.</summary>
     /// <typeparam name="T">The type of the activity state.</typeparam>
     /// <param name="activityId">The ID of the activity to retrieve.</param>
     /// <returns>The activity state if found and matches the type; otherwise, <see langword="null" />.</returns>
-    public T? GetActivity<T>(string activityId) where T : ExecutionState => GetActivity(activityId) as T;
+    public T? GetActivity<T>(string activityId) where T : ExecutionState
+    {
+        return GetActivity(activityId) as T;
+    }
 
     /// <summary>Synchronizes the status based on the logs and children's states.</summary>
     public virtual void SyncStatus()
     {
         // 1. Sync children first (bottom-up)
-        foreach (var child in Activities.Values)
-        {
-            child.SyncStatus();
-        }
+        foreach (var child in Activities.Values) child.SyncStatus();
 
         // 2. Aggregate from children if any
         if (Activities.Count > 0)

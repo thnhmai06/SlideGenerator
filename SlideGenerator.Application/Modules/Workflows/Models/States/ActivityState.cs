@@ -6,7 +6,7 @@ namespace SlideGenerator.Application.Modules.Workflows.Models.States;
 ///     Represents the execution state of an activity.
 /// </summary>
 public class ActivityState(
-    string activityId, 
-    IExecutionContext executionContext, 
+    string activityId,
+    IExecutionContext executionContext,
     IReadOnlyDictionary<string, ExecutionState>? activities = null)
     : ExecutionState(activityId, executionContext, activities);

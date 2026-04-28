@@ -13,9 +13,9 @@ namespace SlideGenerator.Application.Services.Generating.Workflows.Activities;
 ///     <see cref="EditSlide" />.
 /// </summary>
 /// <remarks>
-///     <b>Variables read:</b> <see cref="VariablesDeclaration.RowItem" />.<br/>
-///     <b>Data read:</b> <see cref="SheetTask.WorkingTemplateSlide" />.<br/>
-///     <b>Services:</b> <see cref="FileRegistry{IPresentation}" />.<br/>
+///     <b>Variables read:</b> <see cref="VariablesDeclaration.RowItem" />.<br />
+///     <b>Data read:</b> <see cref="SheetTask.WorkingTemplateSlide" />.<br />
+///     <b>Services:</b> <see cref="FileRegistry{IPresentation}" />.<br />
 ///     <b>CancellationToken:</b> propagated to registry acquire.
 /// </remarks>
 public sealed class CloneTemplateSlide(

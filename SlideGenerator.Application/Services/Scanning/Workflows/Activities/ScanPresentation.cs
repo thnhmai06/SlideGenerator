@@ -14,10 +14,12 @@ namespace SlideGenerator.Application.Services.Scanning.Workflows.Activities;
 ///     Scans a single presentation file and stores the result in <see cref="WorkflowTask.PresentationSummaries" />.
 /// </summary>
 /// <remarks>
-///     <b>Variables read:</b> <see cref="VariablesDeclaration.PresentationItem" /> — the presentation identifier to scan.<br/>
-///     <b>Variables written:</b> none.<br/>
-///     <b>Services:</b> <see cref="FileRegistry{IPresentation}" />, <see cref="ITextComposer" />, <see cref="IImageComposer" />.<br/>
-///     <b>Logging:</b> via <c>context.State.Logger</c>.<br/>
+///     <b>Variables read:</b> <see cref="VariablesDeclaration.PresentationItem" /> — the presentation identifier to scan.
+///     <br />
+///     <b>Variables written:</b> none.<br />
+///     <b>Services:</b> <see cref="FileRegistry{IPresentation}" />, <see cref="ITextComposer" />,
+///     <see cref="IImageComposer" />.<br />
+///     <b>Logging:</b> via <c>context.State.Logger</c>.<br />
 ///     <b>CancellationToken:</b> propagated to registry acquire.
 /// </remarks>
 public sealed class ScanPresentation(

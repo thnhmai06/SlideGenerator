@@ -18,20 +18,29 @@ public class WcWorkflowService(
         // WorkflowCore's RegisterWorkflow<T> requires T: IWorkflow (non-generic alias for IWorkflow<object>),
         // which conflicts with IWorkflow<TData> at compile time. Use reflection to register at runtime.
         var registerMethod = workflowHost.GetType()
-            .GetMethod("RegisterWorkflow")
-            ?? typeof(IWorkflowController)
-                .GetMethod("RegisterWorkflow");
+                                 .GetMethod("RegisterWorkflow")
+                             ?? typeof(IWorkflowController)
+                                 .GetMethod("RegisterWorkflow");
         registerMethod?
             .MakeGenericMethod(typeof(WcWorkflowAdapter<TDef, TData>))
             .Invoke(workflowHost, null);
         return await workflowHost.StartWorkflow(adapter.Id, adapter.Version, data).ConfigureAwait(false);
     }
 
-    public Task PauseAsync(string id) => workflowController.SuspendWorkflow(id);
+    public Task PauseAsync(string id)
+    {
+        return workflowController.SuspendWorkflow(id);
+    }
 
-    public Task ResumeAsync(string id) => workflowController.ResumeWorkflow(id);
+    public Task ResumeAsync(string id)
+    {
+        return workflowController.ResumeWorkflow(id);
+    }
 
-    public Task CancelAsync(string id) => workflowController.TerminateWorkflow(id);
+    public Task CancelAsync(string id)
+    {
+        return workflowController.TerminateWorkflow(id);
+    }
 
     public IEnumerable<WorkflowState> Workflows => stateRegistry.All;
 

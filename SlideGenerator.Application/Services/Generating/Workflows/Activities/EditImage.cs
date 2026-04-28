@@ -2,6 +2,7 @@ using SlideGenerator.Application.Modules.Images.Abstractions;
 using SlideGenerator.Application.Modules.Resources.Services;
 using SlideGenerator.Application.Modules.Settings.Interfaces;
 using SlideGenerator.Application.Modules.Workflows.DSL;
+using SlideGenerator.Application.Services.Generating.Models.Images;
 using SlideGenerator.Application.Services.Generating.Workflows.Models;
 using SlideGenerator.Domain.Images.Entities;
 using SlideGenerator.Domain.Images.Models;
@@ -16,10 +17,10 @@ namespace SlideGenerator.Application.Services.Generating.Workflows.Activities;
 ///     Falls back to a plain file copy if processing fails.
 /// </summary>
 /// <remarks>
-///     <b>Variables read:</b> <see cref="VariablesDeclaration.RowTaskItem" />.<br/>
+///     <b>Variables read:</b> <see cref="VariablesDeclaration.RowTaskItem" />.<br />
 ///     <b>Services:</b> <c>IImageDecoder</c>, <c>IRoiCalculator</c>,
 ///     <see cref="FileRegistry{IPresentation}" /> (to read target shape bounds),
-///     <c>ISettingProvider</c> (for <c>DownloadFolder</c>).<br/>
+///     <c>ISettingProvider</c> (for <c>DownloadFolder</c>).<br />
 ///     <b>CancellationToken:</b> propagated to registry acquire.
 /// </remarks>
 public sealed class EditImage(
@@ -74,7 +75,7 @@ public sealed class EditImage(
     }
 
     private async ValueTask<Size> ResolveTargetSizeAsync(
-        SlideGenerator.Application.Services.Generating.Models.Images.SpecializedInstruction instruction,
+        SpecializedInstruction instruction,
         CancellationToken ct)
     {
         using var lease = await slideRegistry

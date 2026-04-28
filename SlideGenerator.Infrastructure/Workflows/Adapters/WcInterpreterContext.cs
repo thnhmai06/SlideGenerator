@@ -28,23 +28,30 @@ internal sealed class WcInterpreterContext<TData>(
     public ExecutionState State => state;
 
     /// <inheritdoc />
-    public T GetRequiredService<T>() where T : notnull => services.GetRequiredService<T>();
+    public T GetRequiredService<T>() where T : notnull
+    {
+        return services.GetRequiredService<T>();
+    }
 
     /// <inheritdoc />
     public TVar GetVariable<TVar>(Variable<TVar> key)
     {
         if (_locals.TryGetValue(key.Name, out var value))
             return (TVar)value!;
-        return parent is not null 
-            ? parent.GetVariable(key) 
+        return parent is not null
+            ? parent.GetVariable(key)
             : throw new KeyNotFoundException($"Variable '{key.Name}' is not defined in the scope chain.");
     }
 
     /// <inheritdoc />
-    public void SetVariable<TVar>(Variable<TVar> key, TVar value) =>
+    public void SetVariable<TVar>(Variable<TVar> key, TVar value)
+    {
         _locals[key.Name] = value;
+    }
 
     /// <inheritdoc />
-    public IActivityContext<TData> CreateChildScope() =>
-        new WcInterpreterContext<TData>(data, state, services, cancellationToken, parent: this);
+    public IActivityContext<TData> CreateChildScope()
+    {
+        return new WcInterpreterContext<TData>(data, state, services, cancellationToken, this);
+    }
 }

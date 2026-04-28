@@ -11,15 +11,16 @@ namespace SlideGenerator.Application.Services.Generating.Workflows.Activities;
 
 /// <summary>
 ///     Resolves the cloud storage URL for the current download task, downloads the image to the
-///     local download folder, then records the resolved <see cref="SlideGenerator.Application.Services.Generating.Models.Images.SpecializedInstruction" />
+///     local download folder, then records the resolved
+///     <see cref="SlideGenerator.Application.Services.Generating.Models.Images.SpecializedInstruction" />
 ///     in the row's accumulated instruction list.
 /// </summary>
 /// <remarks>
-///     <b>Variables read:</b> <see cref="VariablesDeclaration.RowTaskItem" />.<br/>
+///     <b>Variables read:</b> <see cref="VariablesDeclaration.RowTaskItem" />.<br />
 ///     <b>Data written:</b> <see cref="SheetTask.RowSpecializedInstructions" /> — the resolved instruction
-///     is appended (thread-safe via <c>lock</c>) to the entry for the current row.<br/>
+///     is appended (thread-safe via <c>lock</c>) to the entry for the current row.<br />
 ///     <b>Services:</b> <see cref="ICloudResolver" />, <see cref="FileRegistry{IReadOnlyWorkbook}" />,
-///     <c>DownloadRegistry</c>, <c>ISettingProvider</c>.<br/>
+///     <c>DownloadRegistry</c>, <c>ISettingProvider</c>.<br />
 ///     <b>CancellationToken:</b> propagated to cloud resolver and registry acquire.
 /// </remarks>
 public sealed class DownloadImage(

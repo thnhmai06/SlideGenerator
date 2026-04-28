@@ -17,9 +17,18 @@ public sealed class WorkflowStateRegistry
     public IEnumerable<WorkflowState> All => _states.Values;
 
     /// <summary>Looks up a workflow state by instance ID.</summary>
-    public bool TryGet(string id, out WorkflowState? state) => _states.TryGetValue(id, out state);
+    public bool TryGet(string id, out WorkflowState? state)
+    {
+        return _states.TryGetValue(id, out state);
+    }
 
-    internal void Register(string id, WorkflowState state) => _states[id] = state;
+    internal void Register(string id, WorkflowState state)
+    {
+        _states[id] = state;
+    }
 
-    internal void Unregister(string id) => _states.TryRemove(id, out _);
+    internal void Unregister(string id)
+    {
+        _states.TryRemove(id, out _);
+    }
 }

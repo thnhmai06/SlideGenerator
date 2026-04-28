@@ -11,10 +11,10 @@ namespace SlideGenerator.Application.Services.Generating.Workflows.Activities;
 ///     been generated, then saves the file in the requested output format.
 /// </summary>
 /// <remarks>
-///     <b>Variables read:</b> <see cref="VariablesDeclaration.WorksheetItem" />.<br/>
+///     <b>Variables read:</b> <see cref="VariablesDeclaration.WorksheetItem" />.<br />
 ///     <b>Data read:</b> <see cref="SheetTask.WorkingTemplateSlide" />;
-///     <see cref="WorkflowTask.Request" /> (<c>OutputExtension</c>).<br/>
-///     <b>Services:</b> <see cref="FileRegistry{IPresentation}" />.<br/>
+///     <see cref="WorkflowTask.Request" /> (<c>OutputExtension</c>).<br />
+///     <b>Services:</b> <see cref="FileRegistry{IPresentation}" />.<br />
 ///     <b>CancellationToken:</b> propagated to registry acquire.
 /// </remarks>
 public sealed class RemoveWorkingTemplateSlide(

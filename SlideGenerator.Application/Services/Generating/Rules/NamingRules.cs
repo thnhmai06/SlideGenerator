@@ -32,7 +32,9 @@ public static class NamingRules
     ///     display name and the hash source are the same string.
     /// </summary>
     public static string BuildPathSegment(string? original, string fallback)
-        => BuildPathSegment(original, original, fallback);
+    {
+        return BuildPathSegment(original, original, fallback);
+    }
 
     /// <summary>
     ///     Builds a folder-name segment in the form <c>{cleanDisplayName}_{hash7}</c>, where
@@ -52,7 +54,9 @@ public static class NamingRules
 
     /// <summary>Removes every character that is not a letter or digit.</summary>
     private static string StripSpecialChars(string value)
-        => new(value.Where(char.IsLetterOrDigit).ToArray());
+    {
+        return new string(value.Where(char.IsLetterOrDigit).ToArray());
+    }
 
     private static string ComputeBase64Hash(string value, int length = 7)
     {

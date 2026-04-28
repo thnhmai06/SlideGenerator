@@ -35,11 +35,16 @@ public record ForEachNode<TItem, TData>(
     bool Parallel,
     WorkflowNode Body) : WorkflowNode, IForEachNode
 {
-    /// <summary>Lists the typed items for this loop using the current parent context.</summary>
-    public IEnumerable<TItem> GetItems(IActivityContext<TData> ctx) => Items(ctx);
-
-    IReadOnlyList<Action<IActivityContext>> IForEachNode.ResolveSetters(IActivityContext ctx) =>
-        Items((IActivityContext<TData>)ctx)
+    IReadOnlyList<Action<IActivityContext>> IForEachNode.ResolveSetters(IActivityContext ctx)
+    {
+        return Items((IActivityContext<TData>)ctx)
             .Select<TItem, Action<IActivityContext>>(item => child => child.SetVariable(Variable, item))
             .ToList();
+    }
+
+    /// <summary>Lists the typed items for this loop using the current parent context.</summary>
+    public IEnumerable<TItem> GetItems(IActivityContext<TData> ctx)
+    {
+        return Items(ctx);
+    }
 }

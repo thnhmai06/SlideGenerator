@@ -6,7 +6,7 @@ namespace SlideGenerator.Application.Modules.Workflows.Models.States;
 ///     Represents the execution state of a workflow instance.
 /// </summary>
 public class WorkflowState(
-    string workflowId, 
-    IExecutionContext executionContext, 
+    string workflowId,
+    IExecutionContext executionContext,
     IReadOnlyDictionary<string, ExecutionState>? activities = null)
     : ExecutionState(workflowId, executionContext, activities);

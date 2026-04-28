@@ -304,9 +304,6 @@ public class XmlPresentation(string filePath, bool isEditable = true) : IPresent
                 relIds.Contains(a.Value)))
             .ToList();
 
-        foreach (var el in toRemove)
-        {
-            el.Remove();
-        }
+        foreach (var el in toRemove) el.Remove();
     }
 }

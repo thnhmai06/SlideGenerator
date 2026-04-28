@@ -6,14 +6,14 @@ namespace SlideGenerator.Application.Modules.Workflows.DSL.Nodes;
 /// </summary>
 public interface IConditionNode
 {
-    /// <summary>Evaluates the predicate using the provided context.</summary>
-    bool EvaluatePredicate(IActivityContext ctx);
-
     /// <summary>Gets the node to execute when the predicate is <see langword="true" />.</summary>
     WorkflowNode Then { get; }
 
     /// <summary>Gets the optional node to execute when the predicate is <see langword="false" />.</summary>
     WorkflowNode? Else { get; }
+
+    /// <summary>Evaluates the predicate using the provided context.</summary>
+    bool EvaluatePredicate(IActivityContext ctx);
 }
 
 /// <summary>
@@ -26,5 +26,8 @@ public record ConditionNode<TData>(
     WorkflowNode Then,
     WorkflowNode? Else = null) : WorkflowNode, IConditionNode
 {
-    bool IConditionNode.EvaluatePredicate(IActivityContext ctx) => Predicate((IActivityContext<TData>)ctx);
+    bool IConditionNode.EvaluatePredicate(IActivityContext ctx)
+    {
+        return Predicate((IActivityContext<TData>)ctx);
+    }
 }

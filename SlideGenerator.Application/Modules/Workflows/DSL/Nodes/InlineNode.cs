@@ -18,5 +18,8 @@ public interface IInlineNode
 /// <typeparam name="TData">The workflow data type.</typeparam>
 public record InlineNode<TData>(Func<IActivityContext<TData>, Task> Action) : WorkflowNode, IInlineNode
 {
-    Task IInlineNode.ExecuteAsync(IActivityContext ctx) => Action((IActivityContext<TData>)ctx);
+    Task IInlineNode.ExecuteAsync(IActivityContext ctx)
+    {
+        return Action((IActivityContext<TData>)ctx);
+    }
 }

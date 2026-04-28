@@ -70,6 +70,7 @@ public sealed class WcInterpreterStep<TDef, TData>(
                         setter(child);
                         await ExecuteNodeAsync(fe.Body, child).ConfigureAwait(false);
                     }
+
                 break;
 
             case ParallelNode par:
@@ -94,12 +95,16 @@ public sealed class WcInterpreterStep<TDef, TData>(
                         await ExecuteNodeAsync(tryNode.Catch, catchCtx).ConfigureAwait(false);
                     }
                 }
+
                 break;
 
             case SlotGatedNode sg:
                 var locker = ctx.GetRequiredService<IAsyncKeyedLocker<SlotType>>();
                 using (await locker.LockAsync(sg.Gate, ctx.CancellationToken).ConfigureAwait(false))
+                {
                     await ExecuteNodeAsync(sg.Body, ctx).ConfigureAwait(false);
+                }
+
                 break;
 
             case IInlineNode inline:

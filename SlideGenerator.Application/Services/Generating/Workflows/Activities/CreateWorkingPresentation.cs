@@ -17,14 +17,14 @@ namespace SlideGenerator.Application.Services.Generating.Workflows.Activities;
 ///     further editing steps.
 /// </summary>
 /// <remarks>
-///     <b>Variables read:</b> <see cref="VariablesDeclaration.WorksheetItem" />.<br/>
+///     <b>Variables read:</b> <see cref="VariablesDeclaration.WorksheetItem" />.<br />
 ///     <b>Data read:</b> <see cref="WorkflowTask.Request" /> (<c>Graph</c>, <c>OutputExtension</c>,
-///     <c>SaveFolder</c>).<br/>
+///     <c>SaveFolder</c>).<br />
 ///     <b>Data written:</b> <see cref="SheetTask.OutputPath" />, <see cref="SheetTask.WorkingTemplateSlide" />,
 ///     <see cref="SheetTask.PresentationLease" />
-///     — the lease is intentionally kept open and must be disposed by the workflow after all row edits complete.<br/>
+///     — the lease is intentionally kept open and must be disposed by the workflow after all row edits complete.<br />
 ///     <b>Services:</b> <see cref="FileRegistry{IPresentation}" />, <see cref="FileRegistry{IReadOnlyWorkbook}" />,
-///     <c>IFileSystem</c>.<br/>
+///     <c>IFileSystem</c>.<br />
 ///     <b>CancellationToken:</b> propagated to both registry acquires.
 /// </remarks>
 public sealed class CreateWorkingPresentation(

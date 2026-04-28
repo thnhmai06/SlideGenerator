@@ -19,6 +19,8 @@ public class WorksheetState(
     /// <summary>Retrieves the state of a specific row activity by its index.</summary>
     /// <param name="rowIndex">The index of the row.</param>
     /// <returns>The state if found; otherwise, <see langword="null" />.</returns>
-    public ActivityState? GetRow(int rowIndex) =>
-        RowIds.TryGetValue(rowIndex, out var id) ? GetActivity<ActivityState>(id) : null;
+    public ActivityState? GetRow(int rowIndex)
+    {
+        return RowIds.TryGetValue(rowIndex, out var id) ? GetActivity<ActivityState>(id) : null;
+    }
 }

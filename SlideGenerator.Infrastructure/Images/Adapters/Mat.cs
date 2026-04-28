@@ -1,3 +1,4 @@
+using System.Drawing;
 using OpenCvSharp;
 using SlideGenerator.Domain.Images.Entities;
 using Size = System.Drawing.Size;
@@ -14,10 +15,20 @@ public class Mat(OpenCvSharp.Mat? mat) : IImage
     public int Width => Core.Width;
     public int Height => Core.Height;
 
-    public bool Empty() => Core.Empty();
-    public int Channels() => Core.Channels();
+    public bool Empty()
+    {
+        return Core.Empty();
+    }
 
-    public object Clone() => new Mat(Core.Clone());
+    public int Channels()
+    {
+        return Core.Channels();
+    }
+
+    public object Clone()
+    {
+        return new Mat(Core.Clone());
+    }
 
     public byte[] ToByteArray()
     {
@@ -26,7 +37,7 @@ public class Mat(OpenCvSharp.Mat? mat) : IImage
             : throw new InvalidOperationException("Cannot encode mat to PNG bytes.");
     }
 
-    public IImage Crop(System.Drawing.Rectangle region)
+    public IImage Crop(Rectangle region)
     {
         var rect = new Rect(region.X, region.Y, region.Width, region.Height);
         return new Mat(new OpenCvSharp.Mat(Core, rect).Clone());

@@ -48,4 +48,3 @@ public interface IActivityContext<out TData> : IActivityContext
     /// </summary>
     IActivityContext<TData> CreateChildScope();
 }
-

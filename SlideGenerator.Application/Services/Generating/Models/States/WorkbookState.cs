@@ -20,6 +20,8 @@ public class WorkbookState(
     /// <summary>Retrieves the state of a specific worksheet activity by its name.</summary>
     /// <param name="worksheetName">The name of the worksheet.</param>
     /// <returns>The state if found; otherwise, <see langword="null" />.</returns>
-    public WorksheetState? GetWorksheet(string worksheetName) =>
-        WorksheetIds.TryGetValue(worksheetName, out var id) ? GetActivity<WorksheetState>(id) : null;
+    public WorksheetState? GetWorksheet(string worksheetName)
+    {
+        return WorksheetIds.TryGetValue(worksheetName, out var id) ? GetActivity<WorksheetState>(id) : null;
+    }
 }
