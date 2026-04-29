@@ -2,9 +2,9 @@
 	"name": "slide-generator",
 	"productName": "Slide Generator",
 	"version": "2.0.0",
-	"description": "Generate presentation slides from predefined template",
+	"description": "A template-based presentation generator for automated slide creation",
 	"type": "commonjs",
-    "license": "GPL-3.0-only",
+	"license": "GPL-3.0-only",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/thnhmai06/SlideGenerator.git"
@@ -28,16 +28,16 @@
 	"author": "thnhmai06",
 	"dependencies": {
 		"@tauri-apps/api": "^2.10.1",
-		"@tauri-apps/plugin-dialog": "^2.6.0",
-		"@tauri-apps/plugin-fs": "^2.4.5",
+		"@tauri-apps/plugin-dialog": "^2.7.0",
+		"@tauri-apps/plugin-fs": "^2.5.0",
 		"@tauri-apps/plugin-log": "^2.8.0",
 		"@tauri-apps/plugin-opener": "^2.5.3",
 		"@tauri-apps/plugin-os": "^2.3.2",
 		"@tauri-apps/plugin-process": "^2.3.1",
 		"@tauri-apps/plugin-shell": "^2.3.5",
-		"@tauri-apps/plugin-updater": "^2.10.0",
-		"react": "^19.2.4",
-		"react-dom": "^19.2.4",
+		"@tauri-apps/plugin-updater": "^2.10.1",
+		"react": "^19.2.5",
+		"react-dom": "^19.2.5",
 		"vscode-jsonrpc": "^8.2.1"
 	},
 	"devDependencies": {
@@ -45,17 +45,18 @@
 		"@testing-library/jest-dom": "^6.9.1",
 		"@testing-library/react": "^16.3.2",
 		"@testing-library/user-event": "^14.6.1",
+		"@types/node": "^25.6.0",
 		"@types/react": "^19.2.14",
 		"@types/react-dom": "^19.2.3",
-		"@types/node": "^25.3.5",
-		"@vitejs/plugin-react": "^5.1.4",
+		"@vitejs/plugin-react": "^6.0.1",
 		"concurrently": "^9.2.1",
-		"jsdom": "^28.1.0",
-		"msw": "^2.12.10",
-		"prettier": "^3.8.1",
-		"typescript": "^5.9.3",
-		"vite": "^7.3.1",
-		"vitest": "^4.0.18",
-		"wait-on": "^9.0.4"
+		"esbuild": "^0.28.0",
+		"jsdom": "^29.1.0",
+		"msw": "^2.13.6",
+		"prettier": "^3.8.3",
+		"typescript": "^6.0.3",
+		"vite": "^8.0.10",
+		"vitest": "^4.1.5",
+		"wait-on": "^9.0.5"
 	}
 }

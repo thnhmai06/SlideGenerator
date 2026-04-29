@@ -27,29 +27,14 @@ const App: React.FC = () => {
 	const { groups } = useJobs();
 	const [currentMenu, setCurrentMenu] = useState<MenuType>('input');
 	const [bannerState, setBannerState] = useState<'hidden' | 'connected' | 'disconnected'>('hidden');
-	const bannerTimeoutRef = useRef<number | null>(null);
 	const connectionRef = useRef<'connected' | 'disconnected' | 'unknown'>('unknown');
 
 	useEffect(() => {
-		const clearBannerTimeout = () => {
-			if (bannerTimeoutRef.current !== null) {
-				window.clearTimeout(bannerTimeoutRef.current);
-				bannerTimeoutRef.current = null;
-			}
-		};
-
 		const showConnected = () => {
-			clearBannerTimeout();
 			setBannerState('connected');
-			bannerTimeoutRef.current = window.setTimeout(() => {
-				if (connectionRef.current === 'connected') {
-					setBannerState('hidden');
-				}
-			}, 2000);
 		};
 
 		const showDisconnected = () => {
-			clearBannerTimeout();
 			setBannerState('disconnected');
 		};
 
@@ -72,7 +57,6 @@ const App: React.FC = () => {
 		updateStatus().catch(() => undefined);
 		const intervalId = window.setInterval(updateStatus, 5000);
 		return () => {
-			clearBannerTimeout();
 			window.clearInterval(intervalId);
 		};
 	}, []);

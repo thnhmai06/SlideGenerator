@@ -1,8 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import '@/shared/platform/desktopApi';
 import App from '@/app/App';
 import AppProviders from '@/app/providers/AppProviders';
+import { installBrowserDesktopApi } from '@/shared/platform/browserApi';
+import { isTauriRuntime } from '@/shared/platform/runtime';
 import '@/shared/styles/theme.css';
 import '@/shared/styles/index.css';
 
@@ -95,12 +96,28 @@ const initRendererLogging = () => {
 	sendRendererLog('info', ['Renderer logger initialized']);
 };
 
-initRendererLogging();
+const initPlatform = async () => {
+	if (isTauriRuntime()) {
+		await import('@/shared/platform/desktopApi');
+		return;
+	}
+	installBrowserDesktopApi();
+};
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-	<React.StrictMode>
-		<AppProviders>
-			<App />
-		</AppProviders>
-	</React.StrictMode>,
-);
+initPlatform()
+	.then(() => {
+		if (isTauriRuntime()) {
+			initRendererLogging();
+		}
+
+		ReactDOM.createRoot(document.getElementById('root')!).render(
+			<React.StrictMode>
+				<AppProviders>
+					<App />
+				</AppProviders>
+			</React.StrictMode>,
+		);
+	})
+	.catch((error) => {
+		console.error('Failed to initialize platform adapter:', error);
+	});

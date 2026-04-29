@@ -351,6 +351,21 @@ export async function removeJob(request: Record<string, unknown>): Promise<Slide
  */
 export async function getJobLogs(request: Record<string, unknown>): Promise<SlideJobLogsSuccess> {
   const jobId = request.jobId as string
+  try {
+    const response = await jobClient.sendRequest<ResponseBase>({
+      type: 'joblogs',
+      jobId,
+    })
+    const data = assertSuccess<SlideJobLogsSuccess>(response)
+    return {
+      type: 'joblogs',
+      jobId,
+      logs: data.logs ?? [],
+    } satisfies SlideJobLogsSuccess
+  } catch (error) {
+    loggers.jobs.warn('Job logs are unavailable:', error)
+  }
+
   return {
     type: 'joblogs',
     jobId: jobId,

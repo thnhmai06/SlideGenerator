@@ -32,11 +32,10 @@ const toNumberOrZero = (value: unknown): number => {
 }
 
 const normalizeScanResult = (filePath: string, raw: Record<string, unknown>): SheetScanResult => {
-  const rawSheets = ((raw.sheets ?? raw.Sheets ?? []) as Array<Record<string, unknown>>) ?? []
+  const rawSheets = (raw.sheets ?? raw.Sheets ?? []) as Array<Record<string, unknown>>
 
   const sheets = rawSheets.map((sheet) => {
-    const rawHeaders =
-      ((sheet.headers ?? sheet.Headers ?? []) as Array<string | null | undefined>) ?? []
+    const rawHeaders = (sheet.headers ?? sheet.Headers ?? []) as Array<string | null | undefined>
 
     return {
       sheetName: toStringOrEmpty(sheet.sheetName ?? sheet.SheetName),

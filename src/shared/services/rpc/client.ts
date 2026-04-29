@@ -30,19 +30,11 @@ export class RpcChannelClient {
 		}
 
 		if (this.channel === 'sheets') {
-			return {
-				type: 'error',
-				kind: 'NotSupported',
-				message: 'Sheet APIs are not supported by current JSON-RPC backend.',
-			} as TResponse;
+			return (await this.sendSheetRequest(payload, type)) as TResponse;
 		}
 
 		if (this.channel === 'config') {
-			return {
-				type: 'error',
-				kind: 'NotSupported',
-				message: 'Config APIs are not supported by current JSON-RPC backend.',
-			} as TResponse;
+			return (await this.sendConfigRequest(payload, type)) as TResponse;
 		}
 
 		throw new Error(`Unsupported RPC channel: ${this.channel}`);
@@ -291,6 +283,15 @@ export class RpcChannelClient {
 					action: payload.action,
 				};
 			}
+			case 'joblogs': {
+				const jobId = payload.jobId as string;
+				const result = await this.backendRequest<{ logs?: unknown[] }>('jobs.logs', { jobId });
+				return {
+					type: 'joblogs',
+					jobId,
+					logs: result.logs ?? [],
+				};
+			}
 			default:
 				loggers.jobs.warn(`Unsupported JSON-RPC job request type: ${type}`);
 				return {
@@ -299,6 +300,44 @@ export class RpcChannelClient {
 					message: `Unsupported request type: ${type}`,
 				};
 		}
+	}
+
+	private async sendConfigRequest(payload: Record<string, unknown>, type: string): Promise<unknown> {
+		switch (type) {
+			case 'get':
+				return await this.backendRequest('config.get');
+			case 'update':
+				return await this.backendRequest('config.update', payload);
+			case 'reload':
+				return await this.backendRequest('config.reload');
+			case 'reset':
+				return await this.backendRequest('config.reset');
+			case 'modelstatus':
+				return await this.backendRequest('config.modelStatus');
+			case 'modelcontrol':
+				return await this.backendRequest('config.modelControl', {
+					model: payload.Model,
+					action: payload.Action,
+				});
+			default:
+				return {
+					type: 'error',
+					kind: 'NotSupported',
+					message: `Unsupported config request type: ${type}`,
+				};
+		}
+	}
+
+	private async sendSheetRequest(payload: Record<string, unknown>, type: string): Promise<unknown> {
+		if (type === 'scan') {
+			return await this.backendRequest('sheet.scan', payload);
+		}
+
+		return {
+			type: 'error',
+			kind: 'NotSupported',
+			message: `Unsupported sheet request type: ${type}`,
+		};
 	}
 
 	private handleJobUpdated(params: unknown): void {

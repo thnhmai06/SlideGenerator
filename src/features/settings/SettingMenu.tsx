@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useApp } from '@/shared/contexts/useApp';
 import { useJobs } from '@/shared/contexts/useJobs';
+import { isDesktopRuntime } from '@/shared/platform/runtime';
 import type { SettingTab } from './types';
 import { createPadStyles } from './utils';
 import { useSettings } from './hooks/useSettings';
@@ -101,7 +102,7 @@ const SettingMenu: React.FC = () => {
 		return Object.values(group.sheets).some((sheet) => isActiveStatus(sheet.status));
 	});
 	const isLocked = activeTab !== 'appearance' && hasActiveJobs;
-	const canEditConfig = !hasActiveJobs;
+	const canEditConfig = isDesktopRuntime() && !hasActiveJobs;
 	const isEditable = !loading && !!config && canEditConfig;
 
 	return (
