@@ -29,7 +29,7 @@ public class XlReadOnlyWorkbook : IReadOnlyWorkbook
         Identifier = new WorkbookIdentifier(filePath);
         _workbookLazy = new Lazy<IXLWorkbook>(() =>
         {
-            _fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            _fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             return new XLWorkbook(_fileStream);
         });
 

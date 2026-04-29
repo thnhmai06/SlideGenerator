@@ -78,7 +78,7 @@ public sealed class EditImage(
         SpecializedInstruction instruction,
         CancellationToken ct)
     {
-        using var lease = await slideRegistry
+        await using var lease = await slideRegistry
             .AcquireAsync(instruction.Target.Slide.Presentation.FilePath, false, ct)
             .ConfigureAwait(false);
         var slide = lease.Value

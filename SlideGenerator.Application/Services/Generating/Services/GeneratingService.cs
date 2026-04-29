@@ -13,8 +13,8 @@ namespace SlideGenerator.Application.Services.Generating.Services;
 /// </summary>
 public sealed class GeneratingService(IWorkflowService workflowService)
 {
-    /// <summary>Exposes active workflow states.</summary>
-    public IEnumerable<WorkflowState> Workflows => workflowService.Workflows;
+    /// <summary>Exposes active workflow snapshots.</summary>
+    public IEnumerable<WorkflowSnapshot> Workflows => workflowService.Workflows;
     // TODO: Implement workflow execution
 
     /// <summary>Starts a generation job and returns its instance ID.</summary>
@@ -42,10 +42,10 @@ public sealed class GeneratingService(IWorkflowService workflowService)
         return workflowService.CancelAsync(id);
     }
 
-    /// <summary>Resolves a complete generating workflow state snapshot.</summary>
-    public async Task<GeneratingState?> GetWorkbookAsync(string instanceId, CancellationToken ct = default)
+    /// <summary>Resolves a complete generating workflow snapshot.</summary>
+    public async Task<GeneratingSnapshot?> GetWorkbookAsync(string instanceId, CancellationToken ct = default)
     {
         var state = await workflowService.GetWorkflow(instanceId).ConfigureAwait(false);
-        return state as GeneratingState;
+        return state as GeneratingSnapshot;
     }
 }

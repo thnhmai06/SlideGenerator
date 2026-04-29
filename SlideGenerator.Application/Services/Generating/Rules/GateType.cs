@@ -1,7 +1,7 @@
 namespace SlideGenerator.Application.Services.Generating.Rules;
 
 /// <summary>Identifies a named process-wide concurrency gate used during generation.</summary>
-public enum SlotType
+public enum GateType
 {
     /// <summary>Gate for worksheet-level processing flows.</summary>
     Worksheet,

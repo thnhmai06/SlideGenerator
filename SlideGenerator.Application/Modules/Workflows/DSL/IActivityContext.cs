@@ -12,11 +12,8 @@ public interface IActivityContext
     /// <summary>Gets the cancellation token for the current execution.</summary>
     CancellationToken CancellationToken { get; }
 
-    /// <summary>Gets the execution state tree for logging and status tracking.</summary>
-    ExecutionState State { get; }
-
-    /// <summary>Resolves a required service from the DI container.</summary>
-    T GetRequiredService<T>() where T : notnull;
+    /// <summary>Gets the execution snapshot tree for logging and status tracking.</summary>
+    ExecutionSnapshot State { get; }
 
     /// <summary>
     ///     Reads the value of <paramref name="key" /> from this scope.

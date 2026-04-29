@@ -1,205 +1,81 @@
-using SlideGenerator.Application.Modules.Resources.Abstractions;
+﻿using SlideGenerator.Application.Modules.Resources.Entities;
+using SlideGenerator.Application.Modules.Resources.Interfaces;
 
 namespace SlideGenerator.Application.Modules.Resources.Services;
 
 /// <summary>
-///     Thread-safe, async-first registry that creates resources on demand via a caller-supplied
-///     factory, caches them per key, and disposes each resource (together with its slim) automatically
-///     when the last holder releases its <see cref="IKeyedLockHandle" />.
+///     Async-first resource registry that creates a fresh resource instance on every acquiring via
+///     a caller-supplied factory, and enforces reader-writer locking per key.
 /// </summary>
+/// <remarks>
+///     <para>
+///         Unlike a caching registry, every call to <see cref="AcquireAsync" /> invokes the factory
+///         and produces a new resource instance. Sharing across calls within the same workflow run
+///         is the responsibility of the workflow data's lease dictionaries.
+///     </para>
+///     <para>
+///         Read acquires are shared — multiple callers may hold a read lock on the same key
+///         simultaneously. Write acquires are exclusive — only one writer may hold the lock at a time,
+///         and no reader may hold it concurrently.
+///     </para>
+///     <para>
+///         Disposing the returned <see cref="Lease{TValue}" /> releases the lock and disposes the resource
+///         (if it implements <see cref="IDisposable" />).
+///     </para>
+/// </remarks>
 /// <typeparam name="TKey">The key type used to identify entries.</typeparam>
-/// <typeparam name="TValue">The resource type managed by each entry.</typeparam>
-/// <param name="locker">
-///     Per-key locker that creates and owns one <see cref="System.Threading.SemaphoreSlim" /> per
-///     live key.  The locker frees the slim (and its key) once all holders have released.
-///     Concurrency limits (e.g., <see cref="int.MaxValue" /> for unrestricted access) are
-///     configured on the locker at construction time, not per-call.
-/// </param>
-/// <param name="comparer">Optional equality comparer for <typeparamref name="TKey" />.</param>
+/// <typeparam name="TValue">The resource type managed by each lease.</typeparam>
+/// <param name="acquireRead">Acquires a shared read lock for the given key.</param>
+/// <param name="acquireWrite">Acquires an exclusive write lock for the given key.</param>
 public class Registry<TKey, TValue>(
-    IAsyncKeyedLocker<TKey> locker,
-    IEqualityComparer<TKey>? comparer = null) : IDisposable
+    Func<TKey, CancellationToken, ValueTask<ILock>> acquireRead,
+    Func<TKey, CancellationToken, ValueTask<ILock>> acquireWrite)
     where TKey : notnull
 {
-    private readonly Dictionary<TKey, Entry> _entries =
-        comparer is null ? [] : new Dictionary<TKey, Entry>(comparer);
-
-    private readonly Lock _lock = new();
-
-    /// <inheritdoc />
-    public void Dispose()
-    {
-        lock (_lock)
-        {
-            foreach (var entry in _entries.Values)
-                DisposeEntryResource(entry);
-            _entries.Clear();
-        }
-    }
-
     /// <summary>Normalises <paramref name="rawKey" /> before it is used as a registry key.</summary>
-    protected virtual TKey NormalizeKey(TKey rawKey)
-    {
-        return rawKey;
-    }
+    protected virtual TKey FormatKey(TKey rawKey) => rawKey;
 
     /// <summary>
-    ///     Acquires the lock for <paramref name="key" /> and returns a lease over its cached resource.
+    ///     Creates a new resource instance via <paramref name="factory" /> and acquires a reader-writer
+    ///     lock for <paramref name="key" />, then returns a lease that owns both.
     /// </summary>
     /// <remarks>
-    ///     <para>
-    ///         The factory is invoked exactly once per live entry (inside the internal sync lock, so
-    ///         it must not itself re-acquire the lock).  The resulting
-    ///         <see cref="Task{TValue}" /> is shared by all concurrent callers for the same key.
-    ///     </para>
-    ///     <para>
-    ///         If the factory task faults, the entry is evicted immediately, so the next call retries
-    ///         the factory.
-    ///     </para>
-    ///     <para>
-    ///         Disposing the returned lease releases the slim permit.  When the last pending user
-    ///         exits, the entry is removed and the resource is disposed (if it implements
-    ///         <see cref="IDisposable" />).
-    ///     </para>
+    ///     The factory is always invoked — there is no caching at this layer. The lock is acquired
+    ///     after the factory completes so that file-open I/O never runs inside a lock wait.
+    ///     If either the factory or the lock acquisition fails, no lease is returned and any partially
+    ///     created resource is disposed of.
     /// </remarks>
-    /// <param name="key">The key identifying the entry.</param>
-    /// <param name="factory">
-    ///     Produces the resource for a brand-new entry.  Its synchronous prelude runs inside
-    ///     the internal sync lock; any async continuation runs outside.
+    /// <param name="key">The key identifying the resource.</param>
+    /// <param name="factory">Produces a fresh resource instance for <paramref name="key" />.</param>
+    /// <param name="isWritable">
+    ///     <see langword="true" /> to acquire an exclusive write lock;
+    ///     <see langword="false" /> to acquire a shared read lock.
     /// </param>
-    /// <param name="cancellationToken">Cancels the slim wait.</param>
-    /// <returns>A <see cref="Lease" /> whose <see cref="Lease.Value" /> is the cached resource.</returns>
-    protected async ValueTask<Lease> AcquireAsync(
+    /// <param name="cancellationToken">Cancels the lock wait.</param>
+    /// <returns>An <see cref="Lease{TValue}" /> whose <see cref="Lease{TValue}.Value" /> is the fresh resource instance.</returns>
+    protected async ValueTask<Lease<TValue>> AcquireAsync(
         TKey key,
         Func<TKey, ValueTask<TValue>> factory,
+        bool isWritable,
         CancellationToken cancellationToken = default)
     {
-        key = NormalizeKey(key);
+        key = FormatKey(key);
 
-        Entry entry;
-        lock (_lock)
-        {
-            if (!_entries.TryGetValue(key, out entry!))
-            {
-                // factory(key) starts the async work; only its synchronous prelude runs here.
-                entry = new Entry(factory(key).AsTask());
-                _entries[key] = entry;
-            }
+        var value = await factory(key).ConfigureAwait(false);
 
-            entry.PendingUsers++;
-        }
-
-        IKeyedLockHandle handle;
+        ILock handle;
         try
         {
-            handle = await locker
-                .LockAsync(key, cancellationToken)
-                .ConfigureAwait(false);
+            handle = isWritable
+                ? await acquireWrite(key, cancellationToken).ConfigureAwait(false)
+                : await acquireRead(key, cancellationToken).ConfigureAwait(false);
         }
         catch
         {
-            lock (_lock)
-            {
-                DecrementAndCleanup(key, entry);
-            }
-
+            (value as IDisposable)?.Dispose();
             throw;
         }
 
-        TValue value;
-        try
-        {
-            value = await entry.ResourceTask.ConfigureAwait(false);
-        }
-        catch
-        {
-            handle.Dispose();
-            lock (_lock)
-            {
-                // Evict faulted entry so the next caller gets a fresh factory call.
-                if (_entries.TryGetValue(key, out var current) && ReferenceEquals(current, entry))
-                    _entries.Remove(key);
-                --entry.PendingUsers;
-            }
-
-            throw;
-        }
-
-        return new Lease(this, key, entry, handle, value);
-    }
-
-    private void Release(TKey key, Entry entry, IKeyedLockHandle handle)
-    {
-        handle.Dispose(); // releases slim permit; locker disposes slim when the count returns to max
-        lock (_lock)
-        {
-            DecrementAndCleanup(key, entry);
-        }
-    }
-
-    /// <summary>Decrements <see cref="Entry.PendingUsers" /> and tears down the entry when it hits zero.</summary>
-    /// <remarks>Caller must hold <c>_lock</c>.</remarks>
-    private void DecrementAndCleanup(TKey key, Entry entry)
-    {
-        if (--entry.PendingUsers != 0) return;
-
-        if (_entries.TryGetValue(key, out var current) && ReferenceEquals(current, entry))
-            _entries.Remove(key);
-
-        DisposeEntryResource(entry);
-    }
-
-    private static void DisposeEntryResource(Entry entry)
-    {
-        if (entry.ResourceTask is { IsCompletedSuccessfully: true, Result: IDisposable d })
-            d.Dispose();
-    }
-
-    /// <summary>Pairs the resource creation task with the active pending-user count.</summary>
-    internal sealed class Entry(Task<TValue> resourceTask)
-    {
-        /// <summary>
-        ///     Completes with the resource once the factory finishes.  Faulted if the factory threw.
-        /// </summary>
-        public readonly Task<TValue> ResourceTask = resourceTask;
-
-        /// <summary>
-        ///     Number of callers that have incremented this count but have not yet released —
-        ///     includes threads waiting for the slim <em>and</em> threads actively holding it.
-        /// </summary>
-        public int PendingUsers;
-    }
-
-    /// <summary>
-    ///     A disposable lease over a registry-managed resource.
-    ///     Dispose releases the slim permit; when the last holder disposes, the resource is disposed
-    ///     and the entry is evicted from the registry.
-    /// </summary>
-    public sealed class Lease : IDisposable
-    {
-        private readonly Entry _entry;
-        private readonly IKeyedLockHandle _handle;
-        private readonly TKey _key;
-        private readonly Registry<TKey, TValue> _owner;
-        private int _disposed;
-
-        internal Lease(Registry<TKey, TValue> owner, TKey key, Entry entry, IKeyedLockHandle handle, TValue value)
-        {
-            _owner = owner;
-            _key = key;
-            _entry = entry;
-            _handle = handle;
-            Value = value;
-        }
-
-        /// <summary>Gets the leased resource instance.</summary>
-        public TValue Value { get; }
-
-        /// <inheritdoc />
-        public void Dispose()
-        {
-            if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
-            _owner.Release(_key, _entry, _handle);
-        }
+        return new Lease<TValue>(handle, value);
     }
 }

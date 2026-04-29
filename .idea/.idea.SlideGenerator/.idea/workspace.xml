@@ -9,9 +9,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3a1f1c77-0578-40bf-9d5d-a0e8452562c2" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.SlideGenerator/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.SlideGenerator/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/.todo" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/.todo" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/workflows.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/Adapters/WcInterpreterStep.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/Adapters/WcInterpreterStep.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/Adapters/WcWorkflowService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/Adapters/WcWorkflowService.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/WorkflowStateRegistry.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/WorkflowSnapshotRegistry.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -34,7 +34,7 @@
     </selectedModels>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="113" />
+    <option name="cachedIndexableFilesCount" value="114" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="FileTemplateManagerImpl">
@@ -81,6 +81,7 @@
   }
 }</component>
   <component name="HighlightingSettingsPerFile">
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/0137b071addb424d88025a5baca0fe4f2ce00/5c/c8fc0b11/StepBodyAsync.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/0931384e8ad84ecb9766b8ae7f864099bbc00/47/a04ca0b2/Activity.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/0931384e8ad84ecb9766b8ae7f864099bbc00/6c/acdde61a/Inline.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/0931384e8ad84ecb9766b8ae7f864099bbc00/e8/0a6937a1/ForEach`1.cs" root0="SKIP_HIGHLIGHTING" />
@@ -89,6 +90,7 @@
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/a344d5234cda41fbb887e67f5efa58d0bba00/b9/0a942041/Container.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/SourcesCache/17f16a5814c3cb737befcff401e930e6fa815a6e07168dda4bbea848e4911/ConfiguredValueTaskAwaitable.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/SourcesCache/3cca26e6dd627c1a7919bec86cb05b6d975a30287456f7daa8773a92451a/List.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/SourcesCache/7190b86157fe2342e7d9cf3157f9c281f2c917a33ed717e326792cddc2976563/AsyncKeyedLocker.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/6340b5fe53504d64abf787165f5fc155ad800/7c/7ae0de59/ParallelForEach`1.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/658a0e954f184e67b66bdd4634556e681b48cf0/18/abe1cf38/Shape.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/78884848959540a592c6ed676b77131279d7e0/29/321c8130/PresentationDocument.cs" root0="FORCE_HIGHLIGHTING" />
@@ -112,10 +114,7 @@
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/f8933dc0151257bf474678ae93838fb9978d7b6fe81d878b68a1c61350bc4026/DownloadStartedEventArgs.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/fad14b43e4819e65f7bd431c7e5f027e2c383e35d9ed8de5d5fc66adc971/MustacheTemplate.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/.claude/settings.local.json" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/SlideGenerator.Application/Cloud/Abstractions/ICloudResolver.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/SlideGenerator.Application/Cloud/Rules/CloudResolverKey.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/SlideGenerator.Application/Download/Utilities.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/SlideGenerator.Application/Settings/Rules/NamingRules.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/SlideGenerator.Application/Modules/Resources/Services/ISlotLocker.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Domain/Settings/Rules/NamingRules.cs" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="McpProjectServerCommands">
@@ -251,7 +250,9 @@
       <workItem from="1777086751403" duration="14313000" />
       <workItem from="1777183094350" duration="28661000" />
       <workItem from="1777247833681" duration="59293000" />
-      <workItem from="1777431938906" duration="475000" />
+      <workItem from="1777431938906" duration="6852000" />
+      <workItem from="1777443400212" duration="20232000" />
+      <workItem from="1777479570691" duration="13820000" />
     </task>
     <task id="LOCAL-00001" summary="feat: update LoadPresentation workflow&#10;&#10;- Updated LoadPresentation class to enhance documentation and streamline presentation preparation workflow (improves clarity and maintainability).">
       <option name="closed" value="true" />
@@ -501,7 +502,23 @@
       <option name="project" value="LOCAL" />
       <updated>1777401340281</updated>
     </task>
-    <option name="localTasksCounter" value="32" />
+    <task id="LOCAL-00032" summary="[skip ci] chore: Update Instructions">
+      <option name="closed" value="true" />
+      <created>1777432648443</created>
+      <option name="number" value="00032" />
+      <option name="presentableId" value="LOCAL-00032" />
+      <option name="project" value="LOCAL" />
+      <updated>1777432648443</updated>
+    </task>
+    <task id="LOCAL-00033" summary="refactor(workflows)!: transition to variable-based persistence and robust resource locking&#10;&#10;- Replaced `ExecutionState` with `ExecutionSnapshot`, splitting transient context (`IExecutionContext`) from persisted variables (`IExecutionPayload`).&#10;- Eliminated mutable state objects (e.g., `SheetTask`) in favor of strict, scope-based `Variable&lt;T&gt;` persistence for workflow execution.&#10;- Refactored `Registry` implementations to support shared-read/exclusive-write locking using `FileLocker`.&#10;- Introduced `GateLocker`, `GateNode`, and `GateType`, replacing `SlotGatedNode` and `SlotType` for granular concurrency throttling.&#10;- Extracted custom DSL interpretation logic from `WcInterpreterStep` into a dedicated `WorkflowInterpreter` service.&#10;- Updated generation and scanning activities to manage data, instructions, and open file leases exclusively through scope variables.&#10;- Introduced `Lease&lt;T&gt;` and `ILock` abstractions for reliable, strongly-typed resource lifecycle management.&#10;- Updated documentation (INSTRUCTIONS.MD, CLAUDE.md) to reflect new variable scope rules, registry patterns, and strict architectural constraints.">
+      <option name="closed" value="true" />
+      <created>1777493747163</created>
+      <option name="number" value="00033" />
+      <option name="presentableId" value="LOCAL-00033" />
+      <option name="project" value="LOCAL" />
+      <updated>1777493747163</updated>
+    </task>
+    <option name="localTasksCounter" value="34" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -537,8 +554,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
-    <MESSAGE value="doc: add workflows.svg diagram" />
-    <MESSAGE value="feat: introduce download management and configuration settings&#10;&#10;- Add FileDownloadInfo and FileDownloader classes for managing file downloads (encapsulates download lifecycle).&#10;- Implement DownloadManager to handle concurrent downloads and check completion status.&#10;- Rename Config classes to Setting for consistency in domain structure." />
     <MESSAGE value="feat(sheet): add GetHeadersName method to WorksheetService&#10;&#10;- Introduced GetHeadersName method to retrieve column headers from the first row of a specified content range (enhances data retrieval capabilities).&#10;- Refactored GetRowContent method to maintain functionality while improving code structure." />
     <MESSAGE value="[skip ci] chore: add copilot-instructions.md" />
     <MESSAGE value="refactor(download): complete almost workflows for PrepareImages.cs&#10;&#10;- Updated class names for clarity and consistency (improves code readability).&#10;- Refactored DownloadManager to use new class names.&#10;- Enhanced copilot instructions for better architectural guidance." />
@@ -562,7 +577,9 @@
     <MESSAGE value="refactor(workflows)!: transition to custom C# DSL and WorkflowCore&#10;&#10;- Introduced a custom Workflow-as-Code DSL (e.g., `SequenceNode`, `ForEachNode`, `TryNode`, `SlotGatedNode`) in the Application layer.&#10;- Implemented strongly-typed, stateless `Variable&lt;T&gt;` and `IActivityContext` for lexical scoping and isolated state management across concurrent branches.&#10;- Integrated `WorkflowCore` in the Infrastructure layer to interpret and execute the custom DSL via a single `WcInterpreterStep`.&#10;- Refactored `GeneratingWorkflow` and all related activities to implement `ILeafActivity&lt;WorkflowTask&gt;`, completely removing dependencies on Elsa.&#10;- Added hierarchical state monitoring (`ExecutionState`, `WorkflowState`) and thread-safe, in-memory logging (`Logger`, `LogEntry`).&#10;- Replaced `ScanningService` with modular `ScanWorkbook` and `ScanPresentation` leaf activities.&#10;- Redesigned temporary output paths to use deterministic, hash-based folder structures for downloaded and edited images.&#10;- Renamed replacer abstractions to composers (e.g., `ITextReplacer` to `ITextComposer`, `IImageReplacer` to `IImageComposer`).&#10;- Extended the `IImage` interface and its `Mat` implementation with `Crop`, `Resize`, and `SaveAsync` capabilities.&#10;- Updated `INSTRUCTIONS.MD` and `CLAUDE.md` to document the new DSL architecture, variable scoping rules, and strict dependency constraints." />
     <MESSAGE value="refactor: reorganize application core features into Modules directory&#10;&#10;- Relocated multiple root application directories (Cloud, Download, Images, Resources, Settings, Slides, Systems, Workflows) into a new `Modules` directory to improve project organization.&#10;- Updated namespaces and using directives across the Application and Infrastructure layers to align with the new `Modules` path structure.&#10;- Moved WorkflowCore-specific infrastructure implementations (e.g., `WcWorkflowService`, `WcInterpreterStep`, `WcExecutionContext`) into a dedicated `Adapters` subfolder within `SlideGenerator.Infrastructure/Workflows`.&#10;- Deleted the obsolete `AssemblyInfo.cs` file from the Application project.&#10;- Updated the Application `.csproj` file to replace the old `Cloud` folder inclusion with the new `Modules` directory." />
     <MESSAGE value="[skip ci] chore(backend): reformat and cleanup code" />
-    <option name="LAST_COMMIT_MESSAGE" value="[skip ci] chore(backend): reformat and cleanup code" />
+    <MESSAGE value="[skip ci] chore: Update Instructions" />
+    <MESSAGE value="refactor(workflows)!: transition to variable-based persistence and robust resource locking&#10;&#10;- Replaced `ExecutionState` with `ExecutionSnapshot`, splitting transient context (`IExecutionContext`) from persisted variables (`IExecutionPayload`).&#10;- Eliminated mutable state objects (e.g., `SheetTask`) in favor of strict, scope-based `Variable&lt;T&gt;` persistence for workflow execution.&#10;- Refactored `Registry` implementations to support shared-read/exclusive-write locking using `FileLocker`.&#10;- Introduced `GateLocker`, `GateNode`, and `GateType`, replacing `SlotGatedNode` and `SlotType` for granular concurrency throttling.&#10;- Extracted custom DSL interpretation logic from `WcInterpreterStep` into a dedicated `WorkflowInterpreter` service.&#10;- Updated generation and scanning activities to manage data, instructions, and open file leases exclusively through scope variables.&#10;- Introduced `Lease&lt;T&gt;` and `ILock` abstractions for reliable, strongly-typed resource lifecycle management.&#10;- Updated documentation (INSTRUCTIONS.MD, CLAUDE.md) to reflect new variable scope rules, registry patterns, and strict architectural constraints." />
+    <option name="LAST_COMMIT_MESSAGE" value="" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

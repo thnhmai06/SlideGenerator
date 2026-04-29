@@ -1,42 +1,39 @@
-using SlideGenerator.Application.Modules.Resources.Services;
 using SlideGenerator.Application.Modules.Workflows.DSL;
+using SlideGenerator.Application.Services.Generating.Models.States;
 using SlideGenerator.Application.Services.Generating.Workflows.Models;
-using SlideGenerator.Domain.Sheets.Models;
-using SlideGenerator.Domain.Slides.Entities.Presentation;
 
 namespace SlideGenerator.Application.Services.Generating.Workflows.Activities;
 
 /// <summary>
 ///     Removes the working template slide (index 1) from the presentation once all row slides have
-///     been generated, then saves the file in the requested output format.
+///     been generated, then saves and closes the file.
 /// </summary>
 /// <remarks>
-///     <b>Variables read:</b> <see cref="VariablesDeclaration.WorksheetItem" />.<br />
-///     <b>Data read:</b> <see cref="SheetTask.WorkingTemplateSlide" />;
-///     <see cref="WorkflowTask.Request" /> (<c>OutputExtension</c>).<br />
-///     <b>Services:</b> <see cref="FileRegistry{IPresentation}" />.<br />
-///     <b>CancellationToken:</b> propagated to registry acquire.
+///     <b>Variables read:</b> <see cref="VariablesDeclaration.WorkingTemplateSlide" />.<br />
+///     <b>State:</b> Reads and disposes <see cref="WorksheetContext.PresentationLease" />.<br />
+///     <b>Data read:</b> <see cref="WorkflowTask.Request" /> (<c>OutputExtension</c>).
 /// </remarks>
-public sealed class RemoveWorkingTemplateSlide(
-    FileRegistry<IPresentation> slideRegistry,
-    Variable<WorksheetIdentifier> worksheetVar) : ILeafActivity<WorkflowTask>
+public sealed class RemoveWorkingTemplateSlide : ILeafActivity<WorkflowTask>
 {
     /// <inheritdoc />
-    public async Task ExecuteAsync(IActivityContext<WorkflowTask> context)
+    public Task ExecuteAsync(IActivityContext<WorkflowTask> context)
     {
-        var data = context.Data;
-        var worksheet = context.GetVariable(worksheetVar);
-        var sheetTask = data.SheetTasks[worksheet];
-
-        var slideIdentifier = sheetTask.WorkingTemplateSlide
+        var slideIdentifier = context.GetVariable(VariablesDeclaration.WorkingTemplateSlide)
                               ?? throw new ArgumentException(
                                   "Working template slide identifier must be set in context.");
 
-        using var lease = await slideRegistry
-            .AcquireAsync(slideIdentifier.Presentation.FilePath, true, context.CancellationToken)
-            .ConfigureAwait(false);
+        var worksheetSnapshot = CloneTemplateSlide.GetWorksheetSnapshot(context);
+        var lease = worksheetSnapshot.Context.PresentationLease
+                    ?? throw new InvalidOperationException(
+                        "Presentation lease must be open before removing template slide.");
 
-        lease.Value.RemoveSlide(slideIdentifier.Index);
-        lease.Value.Save(data.Request.OutputExtension);
+        var presentation = lease.Value;
+        presentation.RemoveSlide(slideIdentifier.Index);
+        presentation.Save(context.Data.Request.OutputExtension);
+
+        lease.Dispose();
+        worksheetSnapshot.Context.PresentationLease = null;
+
+        return Task.CompletedTask;
     }
 }

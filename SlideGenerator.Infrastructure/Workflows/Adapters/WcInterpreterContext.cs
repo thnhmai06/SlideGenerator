@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using SlideGenerator.Application.Modules.Workflows.DSL;
 using SlideGenerator.Application.Modules.Workflows.Models.States;
 
@@ -11,8 +10,7 @@ namespace SlideGenerator.Infrastructure.Workflows.Adapters;
 /// </summary>
 internal sealed class WcInterpreterContext<TData>(
     TData data,
-    ExecutionState state,
-    IServiceProvider services,
+    ExecutionSnapshot state,
     CancellationToken cancellationToken,
     WcInterpreterContext<TData>? parent = null) : IActivityContext<TData>
 {
@@ -25,13 +23,7 @@ internal sealed class WcInterpreterContext<TData>(
     public CancellationToken CancellationToken => cancellationToken;
 
     /// <inheritdoc />
-    public ExecutionState State => state;
-
-    /// <inheritdoc />
-    public T GetRequiredService<T>() where T : notnull
-    {
-        return services.GetRequiredService<T>();
-    }
+    public ExecutionSnapshot State => state;
 
     /// <inheritdoc />
     public TVar GetVariable<TVar>(Variable<TVar> key)
@@ -50,8 +42,6 @@ internal sealed class WcInterpreterContext<TData>(
     }
 
     /// <inheritdoc />
-    public IActivityContext<TData> CreateChildScope()
-    {
-        return new WcInterpreterContext<TData>(data, state, services, cancellationToken, this);
-    }
+    public IActivityContext<TData> CreateChildScope() =>
+        new WcInterpreterContext<TData>(data, state, cancellationToken, this);
 }

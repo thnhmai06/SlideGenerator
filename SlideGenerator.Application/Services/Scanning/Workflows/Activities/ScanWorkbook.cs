@@ -9,14 +9,15 @@ using SlideGenerator.Domain.Sheets.Models;
 namespace SlideGenerator.Application.Services.Scanning.Workflows.Activities;
 
 /// <summary>
-///     Scans a single workbook file and stores the result in <see cref="WorkflowTask.WorkbookSummaries" />.
+///     Scans a single workbook file and stores the result in the <see cref="VariablesDeclaration.WorkbookSummaries" />
+///     Variable.
 /// </summary>
 /// <remarks>
 ///     <b>Variables read:</b> <see cref="VariablesDeclaration.WorkbookItem" /> — the workbook identifier to scan.<br />
-///     <b>Variables written:</b> none.<br />
-///     <b>Services:</b> <see cref="FileRegistry{IReadOnlyWorkbook}" />.<br />
+///     <b>Variables written:</b> <see cref="VariablesDeclaration.WorkbookSummaries" /> — adds the scan result entry.<br />
+///     <b>Services:</b> <see cref="FileRegistry{T}" /> — acquires a fresh read lease; released on completion.<br />
 ///     <b>Logging:</b> via <c>context.State.Logger</c>.<br />
-///     <b>CancellationToken:</b> propagated to registry acquire.
+///     <b>CancellationToken:</b> propagated to lease acquire.
 /// </remarks>
 public sealed class ScanWorkbook(
     FileRegistry<IReadOnlyWorkbook> workbookRegistry,
@@ -25,21 +26,20 @@ public sealed class ScanWorkbook(
     /// <inheritdoc />
     public async Task ExecuteAsync(IActivityContext<WorkflowTask> context)
     {
-        var data = context.Data;
         var fullPath = Path.GetFullPath(context.GetVariable(workbookVar).FilePath);
 
         if (!File.Exists(fullPath))
             throw new FileNotFoundException("Workbook file not found.", fullPath);
 
-        using var workbookLease = await workbookRegistry
-            .AcquireAsync(fullPath, false, context.CancellationToken)
+        await using var lease = await workbookRegistry.AcquireAsync(fullPath, false, context.CancellationToken)
             .ConfigureAwait(false);
+        var workbook = lease.Value;
 
-        var workbook = workbookLease.Value;
         var worksheets = workbook.Worksheets
             .Select(ws => new WorksheetSummary(ws.Name, ws.Headers, ws.RowsCount))
             .ToList();
 
-        data.WorkbookSummaries[fullPath] = new WorkbookSummary(workbook.FilePath, workbook.Name, worksheets);
+        context.GetVariable(VariablesDeclaration.WorkbookSummaries)[fullPath] =
+            new WorkbookSummary(workbook.FilePath, workbook.Name, worksheets);
     }
 }

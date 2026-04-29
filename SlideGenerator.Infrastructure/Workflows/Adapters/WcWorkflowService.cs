@@ -8,7 +8,7 @@ namespace SlideGenerator.Infrastructure.Workflows.Adapters;
 public class WcWorkflowService(
     IWorkflowHost workflowHost,
     IWorkflowController workflowController,
-    WorkflowStateRegistry stateRegistry) : IWorkflowService
+    WorkflowSnapshotRegistry snapshotRegistry) : IWorkflowService
 {
     public async Task<string> RunAsync<TDef, TData>(TData data, CancellationToken ct = default)
         where TDef : IWorkflowDefinition<TData>, new()
@@ -42,11 +42,11 @@ public class WcWorkflowService(
         return workflowController.TerminateWorkflow(id);
     }
 
-    public IEnumerable<WorkflowState> Workflows => stateRegistry.All;
+    public IEnumerable<WorkflowSnapshot> Workflows => snapshotRegistry.All;
 
-    public Task<WorkflowState?> GetWorkflow(string id)
+    public Task<WorkflowSnapshot?> GetWorkflow(string id)
     {
-        stateRegistry.TryGet(id, out var state);
+        snapshotRegistry.TryGet(id, out var state);
         return Task.FromResult(state);
     }
 }

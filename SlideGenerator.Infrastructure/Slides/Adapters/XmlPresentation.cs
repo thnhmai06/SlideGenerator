@@ -20,8 +20,9 @@ public class XmlPresentation(string filePath, bool isEditable = true) : IPresent
     /// </summary>
     private readonly Lazy<PresentationDocument> _core = new(() =>
     {
-        var docFs = new FileStream(filePath, FileMode.Open,
-            isEditable ? FileAccess.ReadWrite : FileAccess.Read, FileShare.ReadWrite);
+        var access = isEditable ? FileAccess.ReadWrite : FileAccess.Read;
+        var share = isEditable ? FileShare.Read : FileShare.ReadWrite;
+        var docFs = new FileStream(filePath, FileMode.Open, access, share);
         return PresentationDocument.Open(docFs, isEditable);
     }, LazyThreadSafetyMode.ExecutionAndPublication);
 
@@ -40,7 +41,7 @@ public class XmlPresentation(string filePath, bool isEditable = true) : IPresent
     public PresentationIdentifier Identifier { get; } = new(filePath);
 
     /// <summary>
-    ///     Enumerates all slides in the presentation.
+    ///     Lists all slides in the presentation.
     /// </summary>
     /// <returns>An enumerable collection of <see cref="ISlide" /> objects.</returns>
     /// <exception cref="InvalidOperationException">Thrown when the presentation structure is invalid.</exception>

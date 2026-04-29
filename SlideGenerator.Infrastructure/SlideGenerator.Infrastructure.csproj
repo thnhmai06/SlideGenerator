@@ -8,6 +8,7 @@
 
     <ItemGroup>
         <PackageReference Include="AsyncKeyedLock" Version="8.0.2"/>
+        <PackageReference Include="Nito.AsyncEx" Version="5.1.2"/>
         <PackageReference Include="ClosedXML" Version="0.105.0"/>
         <PackageReference Include="Downloader" Version="5.2.0"/>
         <PackageReference Include="WorkflowCore" Version="3.17.0"/>

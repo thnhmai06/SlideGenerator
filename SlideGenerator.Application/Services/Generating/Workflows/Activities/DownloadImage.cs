@@ -11,17 +11,17 @@ namespace SlideGenerator.Application.Services.Generating.Workflows.Activities;
 
 /// <summary>
 ///     Resolves the cloud storage URL for the current download task, downloads the image to the
-///     local download folder, then records the resolved
+///     local download folder, then appends the resolved
 ///     <see cref="SlideGenerator.Application.Services.Generating.Models.Images.SpecializedInstruction" />
-///     in the row's accumulated instruction list.
+///     to the row's <see cref="VariablesDeclaration.SpecializedInstructions" /> Variable.
 /// </summary>
 /// <remarks>
 ///     <b>Variables read:</b> <see cref="VariablesDeclaration.RowTaskItem" />.<br />
-///     <b>Data written:</b> <see cref="SheetTask.RowSpecializedInstructions" /> — the resolved instruction
-///     is appended (thread-safe via <c>lock</c>) to the entry for the current row.<br />
+///     <b>Variables written:</b> <see cref="VariablesDeclaration.SpecializedInstructions" /> — the resolved
+///     instruction is appended (thread-safe via <c>lock</c>) to the row-scope list.<br />
 ///     <b>Services:</b> <see cref="ICloudResolver" />, <see cref="FileRegistry{IReadOnlyWorkbook}" />,
 ///     <c>DownloadRegistry</c>, <c>ISettingProvider</c>.<br />
-///     <b>CancellationToken:</b> propagated to cloud resolver and registry acquire.
+///     <b>CancellationToken:</b> propagated to cloud resolver; workbook lease acquired via registry.
 /// </remarks>
 public sealed class DownloadImage(
     ICloudResolver cloudResolver,
@@ -33,18 +33,16 @@ public sealed class DownloadImage(
     /// <inheritdoc />
     public async Task ExecuteAsync(IActivityContext<WorkflowTask> context)
     {
-        var data = context.Data;
         var rowTask = context.GetVariable(rowTaskVar);
-        var sheetTask = data.SheetTasks[rowTask.Worksheet];
 
         var downloadItem = rowTask.DownloadItem
                            ?? throw new ArgumentException("DownloadItem must be set on the RowTask.");
 
-        using var lease = await workbookRegistry
+        await using var lease = await workbookRegistry
             .AcquireAsync(rowTask.Worksheet.Workbook.FilePath, false, context.CancellationToken)
             .ConfigureAwait(false);
-
         var workbook = lease.Value;
+
         if (!workbook.TryGetWorksheet(rowTask.Worksheet.Name, out var ws))
             throw new InvalidOperationException(
                 $"Worksheet '{rowTask.Worksheet.Name}' does not exist in workbook.");
@@ -70,10 +68,10 @@ public sealed class DownloadImage(
         if (downloadRegistry.TryGetOrCreateDownloader(request, null, out var downloader))
             await downloader.DownloadAsync().ConfigureAwait(false);
 
-        var rowList = sheetTask.RowSpecializedInstructions.GetOrAdd(rowTask.RowIndex, _ => []);
-        lock (rowList)
+        var list = context.GetVariable(VariablesDeclaration.SpecializedInstructions);
+        lock (list)
         {
-            rowList.Add(finalInstruction);
+            list.Add(finalInstruction);
         }
     }
 }
