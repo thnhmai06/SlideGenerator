@@ -1,7 +1,7 @@
 using SlideGenerator.Application.Modules.Resources.Services;
 using SlideGenerator.Application.Modules.Systems.Abstractions;
 using SlideGenerator.Application.Modules.Workflows.DSL;
-using SlideGenerator.Application.Modules.Workflows.Rules;
+using SlideGenerator.Application.Services.Generating.Rules;
 using SlideGenerator.Application.Services.Generating.Workflows.Models;
 using SlideGenerator.Domain.Sheets.Entities;
 using SlideGenerator.Domain.Sheets.Models;
@@ -62,7 +62,8 @@ public sealed class CreateWorkingPresentation(
         fileSystem.CopyFile(templatePath, outputPath);
 
         var normalizedOutput = Path.GetFullPath(outputPath);
-        await using (var lease = await presentationRegistry.AcquireAsync(normalizedOutput, true, context.CancellationToken)
+        await using (var lease = await presentationRegistry
+                         .AcquireAsync(normalizedOutput, true, context.CancellationToken)
                          .ConfigureAwait(false))
         {
             var workingPresentation = lease.Value;

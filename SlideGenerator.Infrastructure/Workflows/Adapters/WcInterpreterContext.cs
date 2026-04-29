@@ -42,6 +42,8 @@ internal sealed class WcInterpreterContext<TData>(
     }
 
     /// <inheritdoc />
-    public IActivityContext<TData> CreateChildScope() =>
-        new WcInterpreterContext<TData>(data, state, cancellationToken, this);
+    public IActivityContext<TData> CreateChildScope()
+    {
+        return new WcInterpreterContext<TData>(data, state, cancellationToken, this);
+    }
 }

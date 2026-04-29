@@ -2,7 +2,8 @@ namespace SlideGenerator.Application.Modules.Workflows.Models.States;
 
 /// <summary>
 ///     Typed variable storage for a workflow execution scope.
-///     Provides named get/set for checkpoint-able values associated with an <see cref="SlideGenerator.Application.Modules.Workflows.Models.States.ExecutionSnapshot" />.
+///     Provides named get/set for checkpoint-able values associated with an
+///     <see cref="SlideGenerator.Application.Modules.Workflows.Models.States.ExecutionSnapshot" />.
 /// </summary>
 public interface IExecutionPayload
 {

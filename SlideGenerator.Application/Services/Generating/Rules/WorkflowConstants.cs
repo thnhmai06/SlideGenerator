@@ -1,4 +1,4 @@
-namespace SlideGenerator.Application.Modules.Workflows.Rules;
+namespace SlideGenerator.Application.Services.Generating.Rules;
 
 /// <summary>
 ///     Provides strongly-typed constants for workflow execution.

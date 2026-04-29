@@ -5,6 +5,10 @@ namespace SlideGenerator.Application.Modules.Workflows.Models.Logging;
 /// </summary>
 public sealed class Logger
 {
+    public static readonly HashSet<string> MsgFinished = ["[[COMPLETED]]", "[[FINISHED]]"];
+    public static readonly HashSet<string> MsgPaused = ["[[PAUSED]]"];
+    public static readonly HashSet<string> MsgCancelled = ["[[CANCELLED]]", "[[CANCELED]]"];
+    
     private readonly Lock _lock = new();
     private readonly SortedSet<LogEntry> _logs = [];
 

@@ -23,10 +23,15 @@ public sealed class GeneratingWorkflow : IWorkflowDefinition<WorkflowTask>
     private readonly ISettingProvider _settingProvider;
 
     // Parameterless ctor — used only by WcWorkflowAdapter to read Id/Version metadata.
-    public GeneratingWorkflow() => _settingProvider = null!;
+    public GeneratingWorkflow()
+    {
+        _settingProvider = null!;
+    }
 
-    public GeneratingWorkflow(ISettingProvider settingProvider) =>
+    public GeneratingWorkflow(ISettingProvider settingProvider)
+    {
         _settingProvider = settingProvider;
+    }
 
     /// <inheritdoc />
     public string Id => nameof(GeneratingWorkflow);
@@ -154,7 +159,8 @@ public sealed class GeneratingWorkflow : IWorkflowDefinition<WorkflowTask>
                                             var rc = ctx.GetVariable(VariablesDeclaration.RowItem);
                                             var downloadRoot = Path.GetFullPath(
                                                 _settingProvider.Current.Download.DownloadFolder);
-                                            var rowInstr = ctx.GetVariable(VariablesDeclaration.RowInstructionsMap)[rc.Index];
+                                            var rowInstr =
+                                                ctx.GetVariable(VariablesDeclaration.RowInstructionsMap)[rc.Index];
                                             return rowInstr
                                                 .Select(instr => (instr,
                                                     filePath: ImagePathRules.ScanDownloadedFile(

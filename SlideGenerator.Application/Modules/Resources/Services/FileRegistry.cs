@@ -56,7 +56,10 @@ public abstract class FileRegistry<T>(FileLocker locker)
     }
 
     /// <summary>Normalizes <paramref name="filePath" /> to the canonical registry key.</summary>
-    protected override string FormatKey(string filePath) => Path.GetFullPath(filePath);
+    protected override string FormatKey(string filePath)
+    {
+        return Path.GetFullPath(filePath);
+    }
 
     /// <summary>
     ///     Opens a new resource instance for <paramref name="normalizedPath" />.

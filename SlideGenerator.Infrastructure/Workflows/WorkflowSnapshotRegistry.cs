@@ -17,10 +17,18 @@ public sealed class WorkflowSnapshotRegistry
     public IEnumerable<WorkflowSnapshot> All => _snapshots.Values;
 
     /// <summary>Looks up a workflow snapshot by instance ID.</summary>
-    public bool TryGet(string id, out WorkflowSnapshot? snapshot) =>
-        _snapshots.TryGetValue(id, out snapshot);
+    public bool TryGet(string id, out WorkflowSnapshot? snapshot)
+    {
+        return _snapshots.TryGetValue(id, out snapshot);
+    }
 
-    internal void Register(string id, WorkflowSnapshot snapshot) => _snapshots[id] = snapshot;
+    internal void Register(string id, WorkflowSnapshot snapshot)
+    {
+        _snapshots[id] = snapshot;
+    }
 
-    internal void Unregister(string id) => _snapshots.TryRemove(id, out _);
+    internal void Unregister(string id)
+    {
+        _snapshots.TryRemove(id, out _);
+    }
 }

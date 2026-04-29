@@ -14,6 +14,12 @@ public sealed class GateLocker(ISettingProvider settingProvider) : IDisposable
 {
     private readonly ConcurrentDictionary<GateType, SemaphoreSlim> _semaphores = new();
 
+    public void Dispose()
+    {
+        foreach (var s in _semaphores.Values) s.Dispose();
+        _semaphores.Clear();
+    }
+
     public async ValueTask<ILock> LockAsync(GateType key, CancellationToken ct = default)
     {
         var semaphore = _semaphores.GetOrAdd(key, k =>
@@ -32,11 +38,5 @@ public sealed class GateLocker(ISettingProvider settingProvider) : IDisposable
 
         await semaphore.WaitAsync(ct).ConfigureAwait(false);
         return new GateLock(semaphore);
-    }
-
-    public void Dispose()
-    {
-        foreach (var s in _semaphores.Values) s.Dispose();
-        _semaphores.Clear();
     }
 }

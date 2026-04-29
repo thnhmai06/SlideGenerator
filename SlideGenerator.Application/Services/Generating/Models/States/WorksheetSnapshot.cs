@@ -20,6 +20,8 @@ public class WorksheetSnapshot(
         rowActivityMap ?? new Dictionary<int, string>();
 
     /// <summary>Retrieves the snapshot of a specific row activity by its index.</summary>
-    public ActivitySnapshot? GetRow(int rowIndex) =>
-        RowIds.TryGetValue(rowIndex, out var id) ? GetActivity<ActivitySnapshot>(id) : null;
+    public ActivitySnapshot? GetRow(int rowIndex)
+    {
+        return RowIds.TryGetValue(rowIndex, out var id) ? GetActivity<ActivitySnapshot>(id) : null;
+    }
 }

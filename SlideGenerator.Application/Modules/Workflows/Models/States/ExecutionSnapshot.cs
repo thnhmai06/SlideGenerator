@@ -12,10 +12,6 @@ public abstract class ExecutionSnapshot(
     ExecutionContext? context = null,
     IReadOnlyDictionary<string, ExecutionSnapshot>? activities = null)
 {
-    private static readonly HashSet<string> MsgFinished = ["[[COMPLETED]]", "[[FINISHED]]"];
-    private static readonly HashSet<string> MsgPaused = ["[[PAUSED]]"];
-    private static readonly HashSet<string> MsgCancelled = ["[[CANCELLED]]", "[[CANCELED]]"];
-
     /// <summary>Gets the unique identifier for this execution unit.</summary>
     public string Id { get; } = id;
 
@@ -36,12 +32,16 @@ public abstract class ExecutionSnapshot(
         activities ?? new Dictionary<string, ExecutionSnapshot>();
 
     /// <summary>Retrieves a child activity snapshot by its ID.</summary>
-    public ExecutionSnapshot? GetActivity(string activityId) =>
-        Activities.GetValueOrDefault(activityId);
+    public ExecutionSnapshot? GetActivity(string activityId)
+    {
+        return Activities.GetValueOrDefault(activityId);
+    }
 
     /// <summary>Retrieves a child activity snapshot of a specific type by its ID.</summary>
-    public T? GetActivity<T>(string activityId) where T : ExecutionSnapshot =>
-        GetActivity(activityId) as T;
+    public T? GetActivity<T>(string activityId) where T : ExecutionSnapshot
+    {
+        return GetActivity(activityId) as T;
+    }
 
     /// <summary>Synchronizes the status based on logs and children's states.</summary>
     public virtual void SyncStatus()
@@ -62,9 +62,9 @@ public abstract class ExecutionSnapshot(
 
         var latestEntry = Logger.Logs.MaxBy(l => l.Timestamp);
         var message = latestEntry.Message.ToUpperInvariant();
-        if (MsgFinished.Any(m => message.Contains(m))) Status = Status.Finished;
-        else if (MsgPaused.Any(m => message.Contains(m))) Status = Status.Paused;
-        else if (MsgCancelled.Any(m => message.Contains(m))) Status = Status.Canceled;
+        if (Logger.MsgFinished.Any(m => message.Contains(m))) Status = Status.Finished;
+        else if (Logger.MsgPaused.Any(m => message.Contains(m))) Status = Status.Paused;
+        else if (Logger.MsgCancelled.Any(m => message.Contains(m))) Status = Status.Canceled;
         else Status = Status.Running;
     }
 }

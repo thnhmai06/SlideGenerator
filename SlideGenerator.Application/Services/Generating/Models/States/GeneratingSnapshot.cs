@@ -1,5 +1,5 @@
-using ExecutionContext = SlideGenerator.Application.Modules.Workflows.Models.States.IExecutionContext;
 using SlideGenerator.Application.Modules.Workflows.Models.States;
+using ExecutionContext = SlideGenerator.Application.Modules.Workflows.Models.States.IExecutionContext;
 
 namespace SlideGenerator.Application.Services.Generating.Models.States;
 
@@ -17,6 +17,8 @@ public class GeneratingSnapshot(
         workbookActivityMap ?? new Dictionary<string, string>();
 
     /// <summary>Retrieves the snapshot of a specific workbook activity by its name.</summary>
-    public WorkbookSnapshot? GetWorkbook(string workbookName) =>
-        WorkbookIds.TryGetValue(workbookName, out var id) ? GetActivity<WorkbookSnapshot>(id) : null;
+    public WorkbookSnapshot? GetWorkbook(string workbookName)
+    {
+        return WorkbookIds.TryGetValue(workbookName, out var id) ? GetActivity<WorkbookSnapshot>(id) : null;
+    }
 }

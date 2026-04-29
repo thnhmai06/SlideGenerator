@@ -4,7 +4,6 @@ using SlideGenerator.Application.Services.Generating.Workflows.Models;
 using SlideGenerator.Application.Services.Scanning.Models.Sheets;
 using SlideGenerator.Application.Services.Scanning.Models.Slides;
 using SlideGenerator.Domain.Sheets.Models;
-using SlideGenerator.Domain.Slides.Entities.Presentation;
 using SlideGenerator.Domain.Slides.Models.Identifiers;
 using ImageInstruction = SlideGenerator.Application.Services.Generating.Models.Images.GeneralInstruction;
 using SpecializedInstruction = SlideGenerator.Application.Services.Generating.Models.Images.SpecializedInstruction;

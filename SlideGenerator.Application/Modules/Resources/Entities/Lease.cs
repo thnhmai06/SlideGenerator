@@ -21,14 +21,6 @@ public sealed class Lease<TValue> : IDisposable, IAsyncDisposable
     public TValue Value { get; }
 
     /// <inheritdoc />
-    public void Dispose()
-    {
-        if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
-        _handle.Dispose();
-        (Value as IDisposable)?.Dispose();
-    }
-
-    /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
         if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
@@ -38,5 +30,13 @@ public sealed class Lease<TValue> : IDisposable, IAsyncDisposable
             await asyncDisposable.DisposeAsync().ConfigureAwait(false);
         else
             (Value as IDisposable)?.Dispose();
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
+        _handle.Dispose();
+        (Value as IDisposable)?.Dispose();
     }
 }

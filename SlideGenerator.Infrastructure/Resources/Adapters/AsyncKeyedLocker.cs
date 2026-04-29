@@ -16,7 +16,10 @@ public sealed class AsyncKeyedLocker<TKey>(AsyncKeyedLockOptions? configure = nu
         : new global::AsyncKeyedLock.AsyncKeyedLocker<TKey>(configure);
 
     /// <inheritdoc />
-    public void Dispose() => _locker.Dispose();
+    public void Dispose()
+    {
+        _locker.Dispose();
+    }
 
     public async ValueTask<ILock> AcquireAsync(TKey key, CancellationToken cancellationToken)
     {

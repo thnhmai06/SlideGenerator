@@ -33,7 +33,10 @@ public class Registry<TKey, TValue>(
     where TKey : notnull
 {
     /// <summary>Normalises <paramref name="rawKey" /> before it is used as a registry key.</summary>
-    protected virtual TKey FormatKey(TKey rawKey) => rawKey;
+    protected virtual TKey FormatKey(TKey rawKey)
+    {
+        return rawKey;
+    }
 
     /// <summary>
     ///     Creates a new resource instance via <paramref name="factory" /> and acquires a reader-writer

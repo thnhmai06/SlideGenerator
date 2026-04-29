@@ -9,9 +9,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3a1f1c77-0578-40bf-9d5d-a0e8452562c2" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/Adapters/WcInterpreterStep.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/Adapters/WcInterpreterStep.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/Adapters/WcWorkflowService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/Adapters/WcWorkflowService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/WorkflowStateRegistry.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/WorkflowSnapshotRegistry.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/Rules/WorkflowConstants.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Rules/WorkflowConstants.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Workflows/Activities/CloneTemplateSlide.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Workflows/Activities/CloneTemplateSlide.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Workflows/Activities/CreateWorkingPresentation.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Workflows/Activities/CreateWorkingPresentation.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Workflows/Activities/EditSlide.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Workflows/Activities/EditSlide.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -252,7 +253,7 @@
       <workItem from="1777247833681" duration="59293000" />
       <workItem from="1777431938906" duration="6852000" />
       <workItem from="1777443400212" duration="20232000" />
-      <workItem from="1777479570691" duration="13820000" />
+      <workItem from="1777479570691" duration="14717000" />
     </task>
     <task id="LOCAL-00001" summary="feat: update LoadPresentation workflow&#10;&#10;- Updated LoadPresentation class to enhance documentation and streamline presentation preparation workflow (improves clarity and maintainability).">
       <option name="closed" value="true" />
@@ -518,7 +519,31 @@
       <option name="project" value="LOCAL" />
       <updated>1777493747163</updated>
     </task>
-    <option name="localTasksCounter" value="34" />
+    <task id="LOCAL-00034" summary="refactor(workflows)!: transition to variable-based persistence and robust resource locking&#10;&#10;- Replaced `ExecutionState` with `ExecutionSnapshot`, splitting transient context (`IExecutionContext`) from persisted variables (`IExecutionPayload`).&#10;- Eliminated mutable state objects (e.g., `SheetTask`) in favor of strict, scope-based `Variable&lt;T&gt;` persistence for workflow execution.&#10;- Refactored `Registry` implementations to support shared-read/exclusive-write locking using `FileLocker`.&#10;- Introduced `GateLocker`, `GateNode`, and `GateType`, replacing `SlotGatedNode` and `SlotType` for granular concurrency throttling.&#10;- Extracted custom DSL interpretation logic from `WcInterpreterStep` into a dedicated `WorkflowInterpreter` service.&#10;- Updated generation and scanning activities to manage data, instructions, and open file leases exclusively through scope variables.&#10;- Introduced `Lease&lt;T&gt;` and `ILock` abstractions for reliable, strongly-typed resource lifecycle management.&#10;- Updated documentation (INSTRUCTIONS.MD, CLAUDE.md) to reflect new variable scope rules, registry patterns, and strict architectural constraints.">
+      <option name="closed" value="true" />
+      <created>1777493899391</created>
+      <option name="number" value="00034" />
+      <option name="presentableId" value="LOCAL-00034" />
+      <option name="project" value="LOCAL" />
+      <updated>1777493899392</updated>
+    </task>
+    <task id="LOCAL-00035" summary="[skip ci] chore(backend): reformat and cleanup code">
+      <option name="closed" value="true" />
+      <created>1777494060548</created>
+      <option name="number" value="00035" />
+      <option name="presentableId" value="LOCAL-00035" />
+      <option name="project" value="LOCAL" />
+      <updated>1777494060548</updated>
+    </task>
+    <task id="LOCAL-00036" summary="[skip ci] chore(backend): reformat and cleanup code">
+      <option name="closed" value="true" />
+      <created>1777494383120</created>
+      <option name="number" value="00036" />
+      <option name="presentableId" value="LOCAL-00036" />
+      <option name="project" value="LOCAL" />
+      <updated>1777494383120</updated>
+    </task>
+    <option name="localTasksCounter" value="37" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -576,10 +601,10 @@
     <MESSAGE value="refactor(generating): resolve instructions per-row instead of pre-flattening&#10;&#10;- Introduced the `InstructionResolver` service to evaluate general instructions against row content and produce specialized instructions with actual values.&#10;- Updated the `ISpecializable.Flatten` method signature to require row data, shifting value resolution logic to the execution phase.&#10;- Modified `SpecializedInstruction` models for both images and texts to store resolved values (`Uri` and `string`) rather than column source definitions.&#10;- Refactored the `SpecializeInstructions` activity to filter and store general instructions in the context, removing premature flattening.&#10;- Adapted `ResolveImageUrls`, `DownloadImage`, `ResolveImagePathsFromDisk`, and `ReplaceSlideContents` activities to process the new instruction structure and per-row resolved values.&#10;- Added a `Utilities.NormalizeUri` helper to standardize URI formatting during image resolution." />
     <MESSAGE value="refactor(workflows)!: transition to custom C# DSL and WorkflowCore&#10;&#10;- Introduced a custom Workflow-as-Code DSL (e.g., `SequenceNode`, `ForEachNode`, `TryNode`, `SlotGatedNode`) in the Application layer.&#10;- Implemented strongly-typed, stateless `Variable&lt;T&gt;` and `IActivityContext` for lexical scoping and isolated state management across concurrent branches.&#10;- Integrated `WorkflowCore` in the Infrastructure layer to interpret and execute the custom DSL via a single `WcInterpreterStep`.&#10;- Refactored `GeneratingWorkflow` and all related activities to implement `ILeafActivity&lt;WorkflowTask&gt;`, completely removing dependencies on Elsa.&#10;- Added hierarchical state monitoring (`ExecutionState`, `WorkflowState`) and thread-safe, in-memory logging (`Logger`, `LogEntry`).&#10;- Replaced `ScanningService` with modular `ScanWorkbook` and `ScanPresentation` leaf activities.&#10;- Redesigned temporary output paths to use deterministic, hash-based folder structures for downloaded and edited images.&#10;- Renamed replacer abstractions to composers (e.g., `ITextReplacer` to `ITextComposer`, `IImageReplacer` to `IImageComposer`).&#10;- Extended the `IImage` interface and its `Mat` implementation with `Crop`, `Resize`, and `SaveAsync` capabilities.&#10;- Updated `INSTRUCTIONS.MD` and `CLAUDE.md` to document the new DSL architecture, variable scoping rules, and strict dependency constraints." />
     <MESSAGE value="refactor: reorganize application core features into Modules directory&#10;&#10;- Relocated multiple root application directories (Cloud, Download, Images, Resources, Settings, Slides, Systems, Workflows) into a new `Modules` directory to improve project organization.&#10;- Updated namespaces and using directives across the Application and Infrastructure layers to align with the new `Modules` path structure.&#10;- Moved WorkflowCore-specific infrastructure implementations (e.g., `WcWorkflowService`, `WcInterpreterStep`, `WcExecutionContext`) into a dedicated `Adapters` subfolder within `SlideGenerator.Infrastructure/Workflows`.&#10;- Deleted the obsolete `AssemblyInfo.cs` file from the Application project.&#10;- Updated the Application `.csproj` file to replace the old `Cloud` folder inclusion with the new `Modules` directory." />
-    <MESSAGE value="[skip ci] chore(backend): reformat and cleanup code" />
     <MESSAGE value="[skip ci] chore: Update Instructions" />
     <MESSAGE value="refactor(workflows)!: transition to variable-based persistence and robust resource locking&#10;&#10;- Replaced `ExecutionState` with `ExecutionSnapshot`, splitting transient context (`IExecutionContext`) from persisted variables (`IExecutionPayload`).&#10;- Eliminated mutable state objects (e.g., `SheetTask`) in favor of strict, scope-based `Variable&lt;T&gt;` persistence for workflow execution.&#10;- Refactored `Registry` implementations to support shared-read/exclusive-write locking using `FileLocker`.&#10;- Introduced `GateLocker`, `GateNode`, and `GateType`, replacing `SlotGatedNode` and `SlotType` for granular concurrency throttling.&#10;- Extracted custom DSL interpretation logic from `WcInterpreterStep` into a dedicated `WorkflowInterpreter` service.&#10;- Updated generation and scanning activities to manage data, instructions, and open file leases exclusively through scope variables.&#10;- Introduced `Lease&lt;T&gt;` and `ILock` abstractions for reliable, strongly-typed resource lifecycle management.&#10;- Updated documentation (INSTRUCTIONS.MD, CLAUDE.md) to reflect new variable scope rules, registry patterns, and strict architectural constraints." />
-    <option name="LAST_COMMIT_MESSAGE" value="" />
+    <MESSAGE value="[skip ci] chore(backend): reformat and cleanup code" />
+    <option name="LAST_COMMIT_MESSAGE" value="[skip ci] chore(backend): reformat and cleanup code" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

@@ -19,7 +19,8 @@ namespace SlideGenerator.Application.Services.Scanning.Workflows.Activities;
 ///     scan.<br />
 ///     <b>Variables written:</b> <see cref="VariablesDeclaration.PresentationSummaries" /> — adds the scan result
 ///     entry.<br />
-///     <b>Services:</b> <see cref="FileRegistry{IPresentation}" /> — acquires a shared read lease; released on completion.<br />
+///     <b>Services:</b> <see cref="FileRegistry{IPresentation}" /> — acquires a shared read lease; released on completion.
+///     <br />
 ///     <see cref="ITextComposer" />, <see cref="IImageComposer" />.<br />
 ///     <b>Logging:</b> via <c>context.State.Logger</c>.<br />
 ///     <b>CancellationToken:</b> propagated to lease acquire.
