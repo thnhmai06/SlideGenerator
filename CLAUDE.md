@@ -33,9 +33,20 @@ Three layers with strict dependency rules:
 
 **Application must NOT reference WorkflowCore directly.** It defines its own Workflow-as-Code DSL; Infrastructure interprets this tree via a single `WcInterpreterStep`.
 
+### Application Layer: Modules vs Services
+
+`SlideGenerator.Application` is split into two top-level directories:
+
+| Directory | Purpose | Examples |
+|---|---|---|
+| `Modules/` | Reusable, feature-agnostic capabilities — each self-contained | `Cloud`, `Download`, `Images`, `Resources`, `Settings`, `Slides`, `Systems`, `Workflows` |
+| `Services/` | High-level feature services that orchestrate across modules | `Generating`, `Scanning` |
+
+**Modules** provide cross-cutting infrastructure-level abstractions (downloading, locking, image processing, the Workflow DSL itself). **Services** contain feature-specific use-cases, their Workflows, and Activities.
+
 ### Module Folder Convention
 
-Each module uses consistent subfolders:
+Each module/service uses consistent subfolders:
 - `Abstractions/` — interfaces/contracts (`I`-prefixed)
 - `Entities/` — business objects with identity/behavior
 - `Models/` — DTOs, value objects, records
@@ -67,7 +78,7 @@ Each module uses consistent subfolders:
 
 ### Workflow-as-Code (Application DSL)
 
-The DSL lives in `Application/Workflows/DSL/` and consists of:
+The DSL lives in `Modules/Workflows/DSL/` and consists of:
 
 **Core interfaces:**
 - `ILeafActivity<TData>` — `Task ExecuteAsync(IActivityContext<TData> context)` — implement for all leaf steps; also extends non-generic `ILeafActivity` via a default bridge so `ActivityNode<T>` dispatch works without knowing `TData`
@@ -77,7 +88,7 @@ The DSL lives in `Application/Workflows/DSL/` and consists of:
 
 **Lexical Scope Tree — Variable<T> system:**
 - `Variable<T>` (`DSL/Variable.cs`) — a pure stateless typed key: `sealed record Variable<T>(string Name)`. Carries no runtime state. Safe to use as `static readonly` field.
-- `VariablesDeclaration` — static class of keys for `GeneratingWorkflow` ForEach scopes (file: `Generating/Workflows/VariablesDeclaration.cs`):
+- `VariablesDeclaration` — static class of keys for `GeneratingWorkflow` ForEach scopes (file: `Services/Generating/Workflows/VariablesDeclaration.cs`):
   - `WorkbookItem: Variable<WorkbookIdentifier>` — workbook being scanned
   - `PresentationItem: Variable<PresentationIdentifier>` — presentation being scanned
   - `WorksheetItem: Variable<WorksheetIdentifier>` — current worksheet branch
@@ -99,13 +110,13 @@ The DSL lives in `Application/Workflows/DSL/` and consists of:
 | `InlineNode<TData>` | Runs an inline `Func<IActivityContext<TData>, Task>` for lightweight state mutations |
 | `ConditionNode<TData>` | Conditional branch (file: `IfNode.cs`); predicate is `Func<IActivityContext<TData>, bool>`; interface `IConditionNode` |
 
-**Key rules:**
-- **100% Activity Architecture**: never put orchestration loops or `Task.WhenAll` inside an `ILeafActivity` — all coordination must be expressed through the node tree
-- **No `object` in Application DSL**: never use raw `object` in interface members — activities receive typed `IActivityContext<TData>` with `context.Data`; DSL lambdas receive `IActivityContext<TData>` directly; `Variable<T>` is the only crossing point between scopes
-- **No `RequireItem`, no `GetData`**: these are removed. Activities inject `Variable<T>` keys and read via `context.GetVariable(key)`. DSL lambdas use `ctx.Data` (typed).
-- `ForEachNode<TItem, TData>` creates a child scope per iteration — parallel branches are physically isolated, no AsyncLocal needed
-- `SlotGatedNode` replaces the old `AcquireSlot`/`ReleaseSlot` activity pair
-- `TryNode` provides per-item error isolation; use it to wrap the row body
+**Invariants:**
+- **100% Activity Architecture**: orchestration loops and `Task.WhenAll` never appear inside `ILeafActivity` — all coordination lives exclusively in the node tree.
+- **No `object` in Application DSL**: interface members never use raw `object` — activities receive typed `IActivityContext<TData>`; DSL lambdas receive `IActivityContext<TData>` directly; `Variable<T>` is the only crossing point between scopes.
+- **`Variable<T>` is the sole scope crossing**: activities inject `Variable<T>` keys via constructor and read via `context.GetVariable(key)`; DSL lambdas use `ctx.Data` directly.
+- **`ForEachNode` isolation**: each iteration runs in a physically isolated child scope — parallel branches need no `AsyncLocal`.
+- **`SlotGatedNode` for all throttling**: concurrency throttling is expressed exclusively via `SlotGatedNode` — no manual semaphore management inside an activity.
+- **`TryNode` wraps every row body**: a failure in one row never halts the worksheet.
 
 **`context.GetVariable(key)` convention in GeneratingWorkflow:**
 
@@ -133,7 +144,7 @@ Infrastructure's `WcInterpreterStep<TDef, TData>` (a single `StepBodyAsync`) int
 
 **Input**: `GeneratingRequest` — `Graph` (worksheet→slide template mapping), `TextInstructions`, `ImageInstructions`, `OutputExtension`, `SaveFolder`
 
-**Data model**: `WorkflowTask` (file: `Generating/Workflows/Models/WorkflowTask.cs`) holds:
+**Data model**: `WorkflowTask` (file: `Services/Generating/Workflows/Models/WorkflowTask.cs`) holds:
 - `WorkbookSummaries` — `ConcurrentDictionary<string, WorkbookSummary>` keyed by `Path.GetFullPath`. Populated by initial workbook scan.
 - `PresentationSummaries` — `ConcurrentDictionary<string, PresentationSummary>` similarly.
 - `WorksheetKeys` — filtered list: only worksheets that exist in their workbook's scan result.
@@ -197,17 +208,17 @@ Hash: Base64 of UTF-8 bytes, first 7 chars. Special chars (`+/=` and invalid fil
   - **CancellationToken**: propagate where async I/O occurs; note when not required (pure in-memory)
 - StyleCop.Analyzers is applied solution-wide; SA1402 (one type per file) is set to suggestion
 
-## Dependency Checklist (Self-Check Before Committing)
+## System Invariants — Checklist
 
-- [ ] Does Domain reference Application or Infrastructure? → **must not**
-- [ ] Is business logic placed correctly in Domain/Application? → **yes**
-- [ ] Does Application reference WorkflowCore? → **must not**
-- [ ] Does the new activity implement `ILeafActivity<TData>` (not `StepBodyAsync` or bare `ILeafActivity`)? → **required**
-- [ ] Does the new workflow implement `IWorkflowDefinition<TData>` (not `IWorkflow<TData>`)? → **required**
-- [ ] Does the new activity use `context.Data` (typed) and `context.GetVariable(xVar)` for scope variables instead of casts? → **required**
-- [ ] Are DSL lambdas (ForEachNode/InlineNode/ConditionNode) using `ctx.Data` directly (generic `TData`) instead of `GetData<T>()` or `object`? → **required**
-- [ ] Does the new activity inject `Variable<T>` keys via constructor and register them as Singletons in DI? → **required for scoped activities**
-- [ ] Is all logging done via `context.State.Logger`? → **required**
-- [ ] Is `ConfigureAwait(false)` used in async service/library code? → **required**
-- [ ] Are business rules in Infrastructure? → **must not be**
-- [ ] Does the new activity perform disk I/O (justifying its existence as a checkpoint)? → **required; RAM-only activities must not exist**
+- [ ] Domain layer has zero references to Application or Infrastructure.
+- [ ] Application layer has zero references to WorkflowCore.
+- [ ] Business logic lives in Domain or Application — never in Infrastructure.
+- [ ] All Activities implement `ILeafActivity<TData>` — never the raw non-generic form or any engine-specific base class.
+- [ ] All Workflow definitions implement `IWorkflowDefinition<TData>` — never `IWorkflow<TData>`.
+- [ ] All Activities access workflow data via `context.Data` (typed) and scope variables via `context.GetVariable(xVar)` — no `object` casts.
+- [ ] All DSL lambdas (`ForEachNode`/`InlineNode`/`ConditionNode`) use `ctx.Data` directly — no `GetData<T>()` or raw `object`.
+- [ ] All scoped Activities inject `Variable<T>` keys via constructor and are registered as Singleton in DI.
+- [ ] All logging goes through `context.State.Logger` — never the framework logger.
+- [ ] `ConfigureAwait(false)` is used in all async service and library code.
+- [ ] Business rules never appear in Infrastructure.
+- [ ] All Activities perform disk I/O — RAM-only activities must not exist.
