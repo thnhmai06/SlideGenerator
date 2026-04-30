@@ -1,5 +1,5 @@
 using SlideGenerator.Application.Modules.Workflows.DSL;
-using SlideGenerator.Application.Services.Generating.Workflows.Models;
+using SlideGenerator.Application.Services.Generating.Models;
 using SlideGenerator.Domain.Sheets.Models.Identifiers;
 
 namespace SlideGenerator.Application.Services.Generating.Workflows.Activities;
@@ -15,19 +15,19 @@ namespace SlideGenerator.Application.Services.Generating.Workflows.Activities;
 ///     <b>Variables written:</b> <see cref="VariablesDeclaration.RowIndices" />,
 ///     <see cref="VariablesDeclaration.RowTextInstructions" />,
 ///     <see cref="VariablesDeclaration.RowImageInstructions" /> — all set in the current worksheet scope.<br />
-///     <b>Data read:</b> <see cref="WorkflowTask.Request" /> — text and image instruction lists.<br />
+///     <b>Data read:</b> <see cref="GeneratingRequest" /> — text and image instruction lists.<br />
 ///     <b>Logging:</b> via <c>context.State.Logger</c>.<br />
 ///     <b>CancellationToken:</b> not required — all data is read from pre-scanned in-memory summaries.
 /// </remarks>
 public sealed class SimplyInstructions(
-    Variable<WorksheetIdentifier> worksheetVar) : ILeafActivity<WorkflowTask>
+    Variable<WorksheetIdentifier> worksheetVar) : ILeafActivity<GeneratingRequest>
 {
     /// <inheritdoc />
-    public Task ExecuteAsync(IActivityContext<WorkflowTask> context)
+    public Task ExecuteAsync(IActivityContext<GeneratingRequest> context)
     {
         var data = context.Data;
         var worksheet = context.GetVariable(worksheetVar);
-        var templateSlide = data.Request.Graph[worksheet];
+        var templateSlide = data.Graph[worksheet];
 
         var presentationPath = Path.GetFullPath(templateSlide.Presentation.FilePath);
         if (!context.GetVariable(VariablesDeclaration.PresentationSummaries)
@@ -56,13 +56,13 @@ public sealed class SimplyInstructions(
         var headers = worksheetSummary.Preview.Headers;
 
         context.SetVariable(VariablesDeclaration.RowTextInstructions,
-            data.Request.TextInstructions
+            data.TextInstructions
                 .Where(x => placeholders.Contains(x.Placeholder)
                             && headers.Contains(x.Placeholder, StringComparer.OrdinalIgnoreCase))
                 .ToList());
 
         context.SetVariable(VariablesDeclaration.RowImageInstructions,
-            data.Request.ImageInstructions
+            data.ImageInstructions
                 .Where(x => shapeIds.Contains(x.Target.Id)
                             && x.Sources.Any(s =>
                                 headers.Contains(s.Name, StringComparer.OrdinalIgnoreCase)))

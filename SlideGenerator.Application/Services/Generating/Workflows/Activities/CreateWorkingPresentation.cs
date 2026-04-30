@@ -1,8 +1,8 @@
 using SlideGenerator.Application.Modules.Resources.Services;
 using SlideGenerator.Application.Modules.Systems.Abstractions;
 using SlideGenerator.Application.Modules.Workflows.DSL;
+using SlideGenerator.Application.Services.Generating.Models;
 using SlideGenerator.Application.Services.Generating.Rules;
-using SlideGenerator.Application.Services.Generating.Workflows.Models;
 using SlideGenerator.Domain.Sheets.Entities;
 using SlideGenerator.Domain.Sheets.Models.Identifiers;
 using SlideGenerator.Domain.Slides.Entities.Presentation;
@@ -19,7 +19,7 @@ namespace SlideGenerator.Application.Services.Generating.Workflows.Activities;
 ///     <b>Variables read:</b> <see cref="VariablesDeclaration.WorksheetItem" />.<br />
 ///     <b>Variables written:</b> <see cref="VariablesDeclaration.OutputPath" />,
 ///     <see cref="VariablesDeclaration.WorkingTemplateSlide" />.<br />
-///     <b>Data read:</b> <see cref="WorkflowTask.Request" /> (<c>Graph</c>, <c>OutputExtension</c>,
+///     <b>Data read:</b> <see cref="GeneratingRequest" /> (<c>Graph</c>, <c>OutputExtension</c>,
 ///     <c>SaveFolder</c>).<br />
 ///     <b>Services:</b> <see cref="FileRegistry{IReadOnlyWorkbook}" />, <see cref="FileRegistry{IPresentation}" />,
 ///     <see cref="IFileSystem" />.<br />
@@ -29,18 +29,18 @@ public sealed class CreateWorkingPresentation(
     FileRegistry<IReadOnlyWorkbook> workbookRegistry,
     FileRegistry<IPresentation> presentationRegistry,
     IFileSystem fileSystem,
-    Variable<WorksheetIdentifier> worksheetVar) : ILeafActivity<WorkflowTask>
+    Variable<WorksheetIdentifier> worksheetVar) : ILeafActivity<GeneratingRequest>
 {
     /// <inheritdoc />
-    public async Task ExecuteAsync(IActivityContext<WorkflowTask> context)
+    public async Task ExecuteAsync(IActivityContext<GeneratingRequest> context)
     {
         var data = context.Data;
         var worksheet = context.GetVariable(worksheetVar);
-        var templateSlideIdentifier = data.Request.Graph[worksheet];
+        var templateSlideIdentifier = data.Graph[worksheet];
 
-        var extension = data.Request.OutputExtension.ToFileExtension();
+        var extension = data.OutputExtension.ToFileExtension();
         var workbookName = Path.GetFileNameWithoutExtension(worksheet.Workbook.FilePath);
-        var outputPath = Path.Combine(data.Request.SaveFolder, $"{workbookName}_{worksheet.Name}{extension}");
+        var outputPath = Path.Combine(data.SaveFolder, $"{workbookName}_{worksheet.Name}{extension}");
 
         var workbookPath = Path.GetFullPath(worksheet.Workbook.FilePath);
         if (!File.Exists(workbookPath))

@@ -42,6 +42,22 @@ internal sealed class WcInterpreterContext<TData>(
     }
 
     /// <inheritdoc />
+    public bool TryGetVariable<TVar>(Variable<TVar> key, out TVar value)
+    {
+        if (_locals.TryGetValue(key.Name, out var obj))
+        {
+            value = (TVar)obj!;
+            return true;
+        }
+
+        if (parent is not null)
+            return parent.TryGetVariable(key, out value);
+
+        value = default!;
+        return false;
+    }
+
+    /// <inheritdoc />
     public IActivityContext<TData> CreateChildScope()
     {
         return new WcInterpreterContext<TData>(data, state, cancellationToken, this);

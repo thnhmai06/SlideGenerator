@@ -2,9 +2,9 @@ using SlideGenerator.Application.Modules.Resources.Services;
 using SlideGenerator.Application.Modules.Settings.Interfaces;
 using SlideGenerator.Application.Modules.Slides.Abstractions;
 using SlideGenerator.Application.Modules.Workflows.DSL;
+using SlideGenerator.Application.Services.Generating.Models;
 using SlideGenerator.Application.Services.Generating.Models.States;
 using SlideGenerator.Application.Services.Generating.Rules;
-using SlideGenerator.Application.Services.Generating.Workflows.Models;
 using SlideGenerator.Domain.Sheets.Entities;
 using SlideGenerator.Domain.Sheets.Models.Identifiers;
 
@@ -30,10 +30,10 @@ public sealed class EditSlide(
     ITextComposer textComposer,
     IImageComposer imageComposer,
     ISettingProvider settingProvider,
-    Variable<RowIdentifier> rowVar) : ILeafActivity<WorkflowTask>
+    Variable<RowIdentifier> rowVar) : ILeafActivity<GeneratingRequest>
 {
     /// <inheritdoc />
-    public async Task ExecuteAsync(IActivityContext<WorkflowTask> context)
+    public async Task ExecuteAsync(IActivityContext<GeneratingRequest> context)
     {
         var rc = context.GetVariable(rowVar);
         var slideIdentifier = context.GetVariable(VariablesDeclaration.WorkingTemplateSlide)
@@ -76,7 +76,7 @@ public sealed class EditSlide(
     }
 
     private async ValueTask<IReadOnlyDictionary<string, string>> BuildTextMapAsync(
-        IActivityContext<WorkflowTask> context, int row)
+        IActivityContext<GeneratingRequest> context, int row)
     {
         var worksheet = context.GetVariable(VariablesDeclaration.WorksheetItem);
 

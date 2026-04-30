@@ -24,6 +24,12 @@ public interface IActivityContext
 
     /// <summary>Writes <paramref name="value" /> into this scope's local variable dictionary.</summary>
     void SetVariable<TVar>(Variable<TVar> key, TVar value);
+
+    /// <summary>
+    ///     Attempts to read the value of <paramref name="key" /> from this scope or its parents.
+    /// </summary>
+    /// <returns>True if found; otherwise, false.</returns>
+    bool TryGetVariable<TVar>(Variable<TVar> key, out TVar value);
 }
 
 /// <summary>

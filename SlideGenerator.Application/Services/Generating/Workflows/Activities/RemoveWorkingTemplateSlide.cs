@@ -1,6 +1,6 @@
 using SlideGenerator.Application.Modules.Workflows.DSL;
+using SlideGenerator.Application.Services.Generating.Models;
 using SlideGenerator.Application.Services.Generating.Models.States;
-using SlideGenerator.Application.Services.Generating.Workflows.Models;
 
 namespace SlideGenerator.Application.Services.Generating.Workflows.Activities;
 
@@ -11,12 +11,12 @@ namespace SlideGenerator.Application.Services.Generating.Workflows.Activities;
 /// <remarks>
 ///     <b>Variables read:</b> <see cref="VariablesDeclaration.WorkingTemplateSlide" />.<br />
 ///     <b>State:</b> Reads and disposes <see cref="WorksheetContext.PresentationLease" />.<br />
-///     <b>Data read:</b> <see cref="WorkflowTask.Request" /> (<c>OutputExtension</c>).
+///     <b>Data read:</b> <see cref="GeneratingRequest" /> (<c>OutputExtension</c>).
 /// </remarks>
-public sealed class RemoveWorkingTemplateSlide : ILeafActivity<WorkflowTask>
+public sealed class RemoveWorkingTemplateSlide : ILeafActivity<GeneratingRequest>
 {
     /// <inheritdoc />
-    public Task ExecuteAsync(IActivityContext<WorkflowTask> context)
+    public Task ExecuteAsync(IActivityContext<GeneratingRequest> context)
     {
         var slideIdentifier = context.GetVariable(VariablesDeclaration.WorkingTemplateSlide)
                               ?? throw new ArgumentException(
@@ -29,7 +29,7 @@ public sealed class RemoveWorkingTemplateSlide : ILeafActivity<WorkflowTask>
 
         var presentation = lease.Value;
         presentation.RemoveSlide(slideIdentifier.Index);
-        presentation.Save(context.Data.Request.OutputExtension);
+        presentation.Save(context.Data.OutputExtension);
 
         lease.Dispose();
         worksheetSnapshot.Context.PresentationLease = null;

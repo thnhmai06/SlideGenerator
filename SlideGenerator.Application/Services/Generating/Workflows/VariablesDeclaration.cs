@@ -3,6 +3,7 @@ using SlideGenerator.Application.Modules.Workflows.DSL;
 using SlideGenerator.Application.Services.Generating.Workflows.Models;
 using SlideGenerator.Application.Services.Scanning.Models.Sheets;
 using SlideGenerator.Application.Services.Scanning.Models.Slides;
+using SlideGenerator.Application.Services.Scanning.Workflows;
 using SlideGenerator.Domain.Sheets.Models.Identifiers;
 using SlideGenerator.Domain.Slides.Models.Identifiers;
 using ImageInstruction = SlideGenerator.Application.Services.Generating.Models.Images.GeneralInstruction;
@@ -41,7 +42,7 @@ public static class VariablesDeclaration
     ///     <c>InlineNode</c> and populated by <c>ScanWorkbook</c> activities.
     /// </summary>
     public static readonly Variable<ConcurrentDictionary<string, WorkbookSummary>>
-        WorkbookSummaries = new(nameof(WorkbookSummaries));
+        WorkbookSummaries = ScanningVariables.WorkbookSummaries;
 
     /// <summary>
     ///     Presentation scan results keyed by normalized file path.
@@ -49,7 +50,7 @@ public static class VariablesDeclaration
     ///     <c>InlineNode</c> and populated by <c>ScanPresentation</c> activities.
     /// </summary>
     public static readonly Variable<ConcurrentDictionary<string, PresentationSummary>>
-        PresentationSummaries = new(nameof(PresentationSummaries));
+        PresentationSummaries = ScanningVariables.PresentationSummaries;
 
     /// <summary>
     ///     Filtered list of worksheet identifiers confirmed to exist in their respective workbooks.
@@ -63,10 +64,10 @@ public static class VariablesDeclaration
     // =========================================================================
 
     /// <summary>The workbook being scanned in the workbook scan ForEach loop.</summary>
-    public static readonly Variable<WorkbookIdentifier> WorkbookItem = new(nameof(WorkbookItem));
+    public static readonly Variable<WorkbookIdentifier> WorkbookItem = ScanningVariables.WorkbookItem;
 
     /// <summary>The presentation being scanned in the presentation scan ForEach loop.</summary>
-    public static readonly Variable<PresentationIdentifier> PresentationItem = new(nameof(PresentationItem));
+    public static readonly Variable<PresentationIdentifier> PresentationItem = ScanningVariables.PresentationItem;
 
     /// <summary>The current worksheet being processed in the outer worksheet ForEach loop.</summary>
     public static readonly Variable<WorksheetIdentifier> WorksheetItem = new(nameof(WorksheetItem));

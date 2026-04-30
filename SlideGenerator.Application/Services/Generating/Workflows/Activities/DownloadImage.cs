@@ -4,6 +4,7 @@ using SlideGenerator.Application.Modules.Download.Services;
 using SlideGenerator.Application.Modules.Resources.Services;
 using SlideGenerator.Application.Modules.Settings.Interfaces;
 using SlideGenerator.Application.Modules.Workflows.DSL;
+using SlideGenerator.Application.Services.Generating.Models;
 using SlideGenerator.Application.Services.Generating.Workflows.Models;
 using SlideGenerator.Domain.Sheets.Entities;
 
@@ -28,10 +29,10 @@ public sealed class DownloadImage(
     FileRegistry<IReadOnlyWorkbook> workbookRegistry,
     DownloadRegistry downloadRegistry,
     ISettingProvider settings,
-    Variable<RowTask> rowTaskVar) : ILeafActivity<WorkflowTask>
+    Variable<RowTask> rowTaskVar) : ILeafActivity<GeneratingRequest>
 {
     /// <inheritdoc />
-    public async Task ExecuteAsync(IActivityContext<WorkflowTask> context)
+    public async Task ExecuteAsync(IActivityContext<GeneratingRequest> context)
     {
         var rowTask = context.GetVariable(rowTaskVar);
 

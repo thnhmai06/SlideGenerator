@@ -2,6 +2,7 @@ using SlideGenerator.Application.Modules.Images.Abstractions;
 using SlideGenerator.Application.Modules.Resources.Services;
 using SlideGenerator.Application.Modules.Settings.Interfaces;
 using SlideGenerator.Application.Modules.Workflows.DSL;
+using SlideGenerator.Application.Services.Generating.Models;
 using SlideGenerator.Application.Services.Generating.Models.Images;
 using SlideGenerator.Application.Services.Generating.Workflows.Models;
 using SlideGenerator.Domain.Images.Entities;
@@ -28,10 +29,10 @@ public sealed class EditImage(
     IRoiCalculator roiCalculator,
     FileRegistry<IPresentation> slideRegistry,
     ISettingProvider settingProvider,
-    Variable<RowTask> rowTaskVar) : ILeafActivity<WorkflowTask>
+    Variable<RowTask> rowTaskVar) : ILeafActivity<GeneratingRequest>
 {
     /// <inheritdoc />
-    public async Task ExecuteAsync(IActivityContext<WorkflowTask> context)
+    public async Task ExecuteAsync(IActivityContext<GeneratingRequest> context)
     {
         var task = context.GetVariable(rowTaskVar);
         var (instruction, downloadedPath) = task.EditItem

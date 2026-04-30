@@ -1,8 +1,6 @@
 using SlideGenerator.Application.Modules.Resources.Services;
 using SlideGenerator.Application.Modules.Slides.Abstractions;
 using SlideGenerator.Application.Modules.Workflows.DSL;
-using SlideGenerator.Application.Services.Generating.Workflows;
-using SlideGenerator.Application.Services.Generating.Workflows.Models;
 using SlideGenerator.Application.Services.Scanning.Models.Slides;
 using SlideGenerator.Domain.Slides.Entities.Presentation;
 using SlideGenerator.Domain.Slides.Models.Identifiers;
@@ -11,12 +9,12 @@ namespace SlideGenerator.Application.Services.Scanning.Workflows.Activities;
 
 /// <summary>
 ///     Scans a single presentation file and stores the result in the
-///     <see cref="VariablesDeclaration.PresentationSummaries" /> Variable.
+///     <see cref="ScanningVariables.PresentationSummaries" /> Variable.
 /// </summary>
 /// <remarks>
-///     <b>Variables read:</b> <see cref="VariablesDeclaration.PresentationItem" /> — the presentation identifier to
+///     <b>Variables read:</b> <see cref="ScanningVariables.PresentationItem" /> (default) — the presentation identifier to
 ///     scan.<br />
-///     <b>Variables written:</b> <see cref="VariablesDeclaration.PresentationSummaries" /> — adds the scan result
+///     <b>Variables written:</b> <see cref="ScanningVariables.PresentationSummaries" /> — adds the scan result
 ///     entry.<br />
 ///     <b>Services:</b> <see cref="FileRegistry{IPresentation}" /> — acquires a shared read lease; released on completion.
 ///     <br />
@@ -27,10 +25,10 @@ namespace SlideGenerator.Application.Services.Scanning.Workflows.Activities;
 public sealed class ScanPresentation(
     FileRegistry<IPresentation> presentationRegistry,
     ITextComposer textComposer,
-    Variable<PresentationIdentifier> presentationVar) : ILeafActivity<WorkflowTask>
+    Variable<PresentationIdentifier> presentationVar) : ILeafActivity<object>
 {
     /// <inheritdoc />
-    public async Task ExecuteAsync(IActivityContext<WorkflowTask> context)
+    public async Task ExecuteAsync(IActivityContext<object> context)
     {
         var fullPath = Path.GetFullPath(context.GetVariable(presentationVar).FilePath);
 
@@ -62,7 +60,7 @@ public sealed class ScanPresentation(
             slides.Add(new SlideSummary(slide.Index, slide.Id, slide.Name ?? string.Empty, preview, placeholders, imageShapePreviews));
         }
 
-        context.GetVariable(VariablesDeclaration.PresentationSummaries)[fullPath] =
+        context.GetVariable(ScanningVariables.PresentationSummaries)[fullPath] =
             new PresentationSummary(fullPath, slides);
     }
 }
