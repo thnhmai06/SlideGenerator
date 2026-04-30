@@ -478,16 +478,13 @@ export const useCreateTask = ({ onStart }: UseCreateTaskOptions) => {
 			setShapes([]);
 			setPlaceholders([]);
 			setTemplateLoaded(false);
+			lastLoadedTemplatePathRef.current = '';
 			return;
 		}
 
 		if (templateLoaded && lastLoadedTemplatePathRef.current === slidePath && shapes.length > 0) {
 			return;
 		}
-
-		setShapes([]);
-		setPlaceholders([]);
-		setTemplateLoaded(false);
 
 		const timer = setTimeout(() => {
 			loadTemplateFromServer(slidePath).catch(() => undefined);
@@ -507,20 +504,13 @@ export const useCreateTask = ({ onStart }: UseCreateTaskOptions) => {
 			setSheetCount(0);
 			setTotalRows(0);
 			setDataLoaded(false);
+			lastLoadedDataPathRef.current = '';
 			return;
 		}
 
 		if (isLoadingColumns || (dataLoaded && lastLoadedDataPathRef.current === dataPath)) {
 			return;
 		}
-
-		setColumns([]);
-		setSheetNames([]);
-		setSelectedSheets([]);
-		setSheetRowCounts({});
-		setSheetCount(0);
-		setTotalRows(0);
-		setDataLoaded(false);
 
 		const timer = setTimeout(() => {
 			loadDataFromServer(dataPath).catch(() => undefined);

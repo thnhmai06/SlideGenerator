@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import React, { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Sidebar from '@/shared/components/Sidebar';
 import TitleBar from '@/shared/components/TitleBar';
 import { checkHealth } from '@/shared/services/backendApi';
@@ -20,18 +20,43 @@ const MenuLoader: React.FC = () => (
 	</div>
 );
 
-type MenuType = 'input' | 'setting' | 'download' | 'process' | 'about';
+export type MenuType = 'input' | 'setting' | 'download' | 'process' | 'about';
 
-const App: React.FC = () => {
+export type ConnectionBannerState = 'hidden' | 'connected' | 'disconnected';
+
+export interface AppProps {
+	/** Initial menu used by Storybook/tests to render a specific workflow directly. */
+	initialMenu?: MenuType;
+	/** Health probe dependency; injectable so App stories do not need a real backend. */
+	healthCheck?: () => Promise<unknown>;
+	/** Disable polling for deterministic stories and static render states. */
+	enableHealthPolling?: boolean;
+	/** Optional deterministic banner state for stories. */
+	initialConnectionBanner?: ConnectionBannerState;
+}
+
+const App: React.FC<AppProps> = ({
+	initialMenu = 'input',
+	healthCheck = checkHealth,
+	enableHealthPolling = true,
+	initialConnectionBanner = 'hidden',
+}) => {
 	const { t } = useApp();
 	const { groups } = useJobs();
-	const [currentMenu, setCurrentMenu] = useState<MenuType>('input');
-	const [bannerState, setBannerState] = useState<'hidden' | 'connected' | 'disconnected'>('hidden');
+	const [currentMenu, setCurrentMenu] = useState<MenuType>(initialMenu);
+	const [bannerState, setBannerState] = useState<ConnectionBannerState>(initialConnectionBanner);
 	const connectionRef = useRef<'connected' | 'disconnected' | 'unknown'>('unknown');
+
+	useEffect(() => {
+		setCurrentMenu(initialMenu);
+	}, [initialMenu]);
 
 	useEffect(() => {
 		const showConnected = () => {
 			setBannerState('connected');
+			window.setTimeout(() => {
+				setBannerState('hidden');
+			}, 2000);
 		};
 
 		const showDisconnected = () => {
@@ -40,7 +65,7 @@ const App: React.FC = () => {
 
 		const updateStatus = async () => {
 			try {
-				await checkHealth();
+				await healthCheck();
 				if (connectionRef.current !== 'connected') {
 					connectionRef.current = 'connected';
 					console.info('Backend connection restored.');
@@ -55,11 +80,12 @@ const App: React.FC = () => {
 		};
 
 		updateStatus().catch(() => undefined);
+		if (!enableHealthPolling) return undefined;
 		const intervalId = window.setInterval(updateStatus, 5000);
 		return () => {
 			window.clearInterval(intervalId);
 		};
-	}, []);
+	}, [enableHealthPolling, healthCheck]);
 
 	useEffect(() => {
 		const allowedMenus: MenuType[] = ['input', 'setting', 'download', 'process', 'about'];

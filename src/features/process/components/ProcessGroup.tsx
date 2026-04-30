@@ -11,7 +11,7 @@ import {
 } from '../utils';
 import { SheetItem } from './SheetItem';
 
-interface ProcessGroupProps {
+export interface ProcessGroupProps {
 	group: {
 		id: string;
 		status: string;

@@ -34,3 +34,11 @@ This repository is a React + TypeScript frontend for Slide Generator.
 - The browser build should act as a frontend showcase, including representative states for create task, process, results, settings, and about screens.
 - Desktop-specific APIs must be guarded behind platform adapters or capability checks.
 - Backend-specific data should have browser-safe fallbacks or mock/showcase data where needed.
+
+## Storybook & Simulation Standards
+
+- **High-Fidelity Mocks:** Storybook simulations must use the `preview.tsx` mock backend to provide realistic data (e.g., non-zero record counts, diverse placeholders, and background job progress).
+- **Dynamic Simulations:** Stories in `App.stories.tsx` (Generating, Settings, Update) must be interactive walkthroughs that demonstrate state transitions (e.g., opening panels, waiting for data load, and navigating through tabs).
+- **Consolidated Flows:** Preference for single stories that respond to Storybook global toggles (e.g., the "Portable" mode toggle for update flows) rather than multiple redundant stories.
+- **Defensive RPC:** All RPC client operations must use defensive coding (nullish coalescing, optional chaining) to prevent UI crashes when the backend or simulation returns incomplete or unexpected data.
+- **Regulatory Navigation:** All complex simulations should explicitly start from the "Create Task" home screen to ensure a consistent initial state.

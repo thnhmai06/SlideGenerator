@@ -9,16 +9,20 @@ export class RpcChannelClient {
 		this.channel = channel;
 
 		if (window.desktopAPI?.onBackendNotification) {
-			this.unsubscribeNotification = window.desktopAPI.onBackendNotification(({ method, params }) => {
-				if (this.channel !== 'jobs') return;
-				if (method !== 'jobs.updated') return;
-				this.handleJobUpdated(params);
-			});
+			this.unsubscribeNotification = window.desktopAPI.onBackendNotification(
+				({ method, params }) => {
+					if (this.channel !== 'jobs') return;
+					if (method !== 'jobs.updated') return;
+					this.handleJobUpdated(params);
+				},
+			);
 			return;
 		}
 
 		this.unsubscribeNotification = () => {};
-		loggers.jobs.warn('Desktop API is unavailable; RPC notifications are disabled in this runtime.');
+		loggers.jobs.warn(
+			'Desktop API is unavailable; RPC notifications are disabled in this runtime.',
+		);
 	}
 
 	async sendRequest<TResponse>(payload: Record<string, unknown>): Promise<TResponse> {
@@ -77,11 +81,13 @@ export class RpcChannelClient {
 				}>('slide.scan', { filePath });
 
 				const shapeSet = new Set<number>();
-				result.slides.forEach((slide) => slide.imageShapeIds.forEach((shapeId) => shapeSet.add(shapeId)));
+				(result?.slides ?? []).forEach((slide) =>
+					(slide.imageShapeIds ?? []).forEach((shapeId) => shapeSet.add(shapeId)),
+				);
 
 				return {
 					type: 'scanshapes',
-					filePath: result.filePath,
+					filePath: result?.filePath ?? filePath,
 					shapes: Array.from(shapeSet).map((id) => ({
 						id,
 						name: `Shape ${id}`,
@@ -99,11 +105,13 @@ export class RpcChannelClient {
 				}>('slide.scan', { filePath });
 
 				const placeholderSet = new Set<string>();
-				result.slides.forEach((slide) => slide.placeholders.forEach((placeholder) => placeholderSet.add(placeholder)));
+				(result?.slides ?? []).forEach((slide) =>
+					(slide.placeholders ?? []).forEach((placeholder) => placeholderSet.add(placeholder)),
+				);
 
 				return {
 					type: 'scanplaceholders',
-					filePath: result.filePath,
+					filePath: result?.filePath ?? filePath,
 					placeholders: Array.from(placeholderSet),
 				};
 			}
@@ -116,14 +124,14 @@ export class RpcChannelClient {
 
 				const shapeSet = new Set<number>();
 				const placeholderSet = new Set<string>();
-				result.slides.forEach((slide) => {
-					slide.imageShapeIds.forEach((shapeId) => shapeSet.add(shapeId));
-					slide.placeholders.forEach((placeholder) => placeholderSet.add(placeholder));
+				(result?.slides ?? []).forEach((slide) => {
+					(slide.imageShapeIds ?? []).forEach((shapeId) => shapeSet.add(shapeId));
+					(slide.placeholders ?? []).forEach((placeholder) => placeholderSet.add(placeholder));
 				});
 
 				return {
 					type: 'scantemplate',
-					filePath: result.filePath,
+					filePath: result?.filePath ?? filePath,
 					shapes: Array.from(shapeSet).map((id) => ({
 						id,
 						name: `Shape ${id}`,
@@ -139,16 +147,22 @@ export class RpcChannelClient {
 				const spreadsheetPath = payload.spreadsheetPath as string;
 				const outputPath = payload.outputPath as string;
 				const sheetNames = (payload.sheetNames as string[] | undefined) ?? [];
-				const textConfigs = (payload.textConfigs as Array<{ pattern: string; columns: string[] }> | undefined) ?? [];
+				const textConfigs =
+					(payload.textConfigs as Array<{ pattern: string; columns: string[] }> | undefined) ?? [];
 				const imageConfigs =
 					(payload.imageConfigs as
 						| Array<{ shapeId: number; columns: string[]; roiType?: string | null }>
 						| undefined) ?? [];
 
 				const templateKey = 'default';
-				const sheetTemplateMap = Object.fromEntries(sheetNames.map((sheetName) => [sheetName, templateKey]));
+				const sheetTemplateMap = Object.fromEntries(
+					sheetNames.map((sheetName) => [sheetName, templateKey]),
+				);
 
-				const job = await this.backendRequest<{ jobId: string }>('jobs.create', {
+				const job = await this.backendRequest<{
+					jobId?: string;
+					sheetJobIds?: Record<string, string>;
+				}>('jobs.create', {
 					templates: [{ templateKey, filePath: templatePath, templateSlideIndex: 1 }],
 					sheetPath: spreadsheetPath,
 					sheetTemplateMap,
@@ -165,27 +179,37 @@ export class RpcChannelClient {
 					outputFolder: outputPath,
 				});
 
+				const jobId = job?.jobId ?? '';
+
 				return {
 					type: 'jobcreate',
 					job: {
-						jobId: job.jobId,
+						jobId,
 						jobType: 'Group',
 						status: 'Pending',
 						progress: 0,
 						outputPath,
 						errorCount: 0,
 					},
-					sheetJobIds: {},
+					sheetJobIds: job?.sheetJobIds ?? {},
 				};
 			}
 			case 'jobquery': {
 				const jobId = payload.jobId as string | undefined;
 				if (jobId) {
+					const requestedJobType = payload.jobType as string | undefined;
+					const jobIdParts = jobId.split(':');
+					const sheetIndex =
+						requestedJobType === 'Sheet' && jobId.includes(':')
+							? Number(jobIdParts[jobIdParts.length - 1])
+							: undefined;
+					const targetJobId =
+						requestedJobType === 'Sheet' && jobId.includes(':') ? jobId.split(':')[0] : jobId;
 					const snapshot = await this.backendRequest<{
 						jobId: string;
 						status: string;
 						progress: number;
-						sheets: Array<{
+						sheets?: Array<{
 							sheetName: string;
 							outputPath: string;
 							currentRow: number;
@@ -193,14 +217,17 @@ export class RpcChannelClient {
 							status: string;
 							error?: string | null;
 						}>;
-					} | null>('jobs.get', { jobId });
+						outputFolder?: string;
+						payloadJson?: string | null;
+					} | null>('jobs.get', { jobId: targetJobId });
 
 					if (!snapshot) return { type: 'jobquery', job: null, jobs: [] };
 
-					const isGroup = !payload.jobType || (payload.jobType as string) === 'Group';
+					const snapshotSheets = snapshot.sheets ?? [];
+					const isGroup = !requestedJobType || requestedJobType === 'Group';
 					if (isGroup) {
 						const sheets = Object.fromEntries(
-							snapshot.sheets.map((sheet, index) => [
+							snapshotSheets.map((sheet, index) => [
 								`${snapshot.jobId}:${index}`,
 								{
 									jobType: 'Sheet',
@@ -220,22 +247,26 @@ export class RpcChannelClient {
 								jobType: 'Group',
 								status: this.toLegacyStatus(snapshot.status),
 								progress: snapshot.progress,
-								outputPath: snapshot.sheets[0]?.outputPath,
-								errorCount: snapshot.sheets.filter((sheet) => !!sheet.error).length,
+								outputPath: snapshot.outputFolder ?? snapshotSheets[0]?.outputPath,
+								outputFolder: snapshot.outputFolder,
+								errorCount: snapshotSheets.filter((sheet) => !!sheet.error).length,
 								sheets,
+								payloadJson: snapshot.payloadJson,
 							},
 							jobs: null,
 						};
 					}
 
-					const sheet = snapshot.sheets[0];
+					const sheet = snapshotSheets[Number.isFinite(sheetIndex) ? (sheetIndex as number) : 0];
 					return {
 						type: 'jobquery',
 						job: {
-							jobId: snapshot.jobId,
+							jobId,
 							jobType: 'Sheet',
 							status: this.toLegacyStatus(sheet?.status ?? snapshot.status),
-							progress: sheet?.totalRows ? (sheet.currentRow * 100) / sheet.totalRows : snapshot.progress,
+							progress: sheet?.totalRows
+								? (sheet.currentRow * 100) / sheet.totalRows
+								: snapshot.progress,
 							sheetName: sheet?.sheetName,
 							currentRow: sheet?.currentRow,
 							totalRows: sheet?.totalRows,
@@ -248,20 +279,29 @@ export class RpcChannelClient {
 				}
 
 				const snapshots = await this.backendRequest<
-					Array<{ jobId: string; status: string; progress: number; sheets: Array<{ outputPath: string; error?: string | null }> }>
+					Array<{
+						jobId: string;
+						status: string;
+						progress: number;
+						outputFolder?: string;
+						sheets?: Array<{ outputPath: string; error?: string | null }>;
+					}>
 				>('jobs.list');
 
 				return {
 					type: 'jobquery',
 					job: null,
-					jobs: snapshots.map((snapshot) => ({
-						jobId: snapshot.jobId,
-						jobType: 'Group',
-						status: this.toLegacyStatus(snapshot.status),
-						progress: snapshot.progress,
-						outputPath: snapshot.sheets[0]?.outputPath,
-						errorCount: snapshot.sheets.filter((sheet) => !!sheet.error).length,
-					})),
+					jobs: (snapshots ?? []).map((snapshot) => {
+						const sheets = snapshot.sheets ?? [];
+						return {
+							jobId: snapshot.jobId,
+							jobType: 'Group',
+							status: this.toLegacyStatus(snapshot.status),
+							progress: snapshot.progress,
+							outputPath: snapshot.outputFolder ?? sheets[0]?.outputPath,
+							errorCount: sheets.filter((sheet) => !!sheet.error).length,
+						};
+					}),
 				};
 			}
 			case 'jobcontrol': {
@@ -271,11 +311,7 @@ export class RpcChannelClient {
 				const targetJobId =
 					jobType === 'sheet' && jobId.includes(':') ? jobId.split(':')[0] : jobId;
 				const method =
-					action === 'pause'
-						? 'jobs.pause'
-						: action === 'resume'
-							? 'jobs.resume'
-							: 'jobs.cancel';
+					action === 'pause' ? 'jobs.pause' : action === 'resume' ? 'jobs.resume' : 'jobs.cancel';
 				await this.backendRequest(method, { jobId: targetJobId });
 				return {
 					type: 'jobcontrol',
@@ -302,7 +338,10 @@ export class RpcChannelClient {
 		}
 	}
 
-	private async sendConfigRequest(payload: Record<string, unknown>, type: string): Promise<unknown> {
+	private async sendConfigRequest(
+		payload: Record<string, unknown>,
+		type: string,
+	): Promise<unknown> {
 		switch (type) {
 			case 'get':
 				return await this.backendRequest('config.get');
@@ -413,9 +452,14 @@ export class RpcChannelClient {
 		}
 	}
 
-	private async backendRequest<TResult = unknown>(method: string, params?: unknown): Promise<TResult> {
+	private async backendRequest<TResult = unknown>(
+		method: string,
+		params?: unknown,
+	): Promise<TResult> {
 		if (!window.desktopAPI?.backendRequest) {
-			throw new Error('Desktop API is unavailable. Run desktop mode (`task dev`) to access backend RPC.');
+			throw new Error(
+				'Desktop API is unavailable. Run desktop mode (`task dev`) to access backend RPC.',
+			);
 		}
 		return await window.desktopAPI.backendRequest<TResult>(method, params);
 	}
