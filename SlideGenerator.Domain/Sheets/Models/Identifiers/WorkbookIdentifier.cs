@@ -1,10 +1,10 @@
-namespace SlideGenerator.Domain.Sheets.Models;
+namespace SlideGenerator.Domain.Sheets.Models.Identifiers;
 
 /// <summary>
 ///     Identifies a spreadsheet workbook on the file system.
 /// </summary>
 /// <param name="FilePath">The absolute or relative file path to the workbook file.</param>
-public record WorkbookIdentifier(string FilePath)
+public sealed record WorkbookIdentifier(string FilePath)
 {
     /// <summary>Gets the name of the workbook file without its extension.</summary>
     public string Name => Path.GetFileNameWithoutExtension(FilePath);

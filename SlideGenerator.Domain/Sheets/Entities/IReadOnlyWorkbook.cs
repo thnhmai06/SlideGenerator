@@ -1,5 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
-using SlideGenerator.Domain.Sheets.Models;
+using SlideGenerator.Domain.Sheets.Models.Identifiers;
 
 namespace SlideGenerator.Domain.Sheets.Entities;
 

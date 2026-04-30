@@ -1,4 +1,4 @@
-using SlideGenerator.Domain.Sheets.Models;
+using SlideGenerator.Domain.Sheets.Models.Identifiers;
 using SlideGenerator.Domain.Slides.Models.Identifiers;
 
 namespace SlideGenerator.Application.Services.Generating.Models.Images;

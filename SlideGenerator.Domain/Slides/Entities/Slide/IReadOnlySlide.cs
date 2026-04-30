@@ -1,5 +1,6 @@
 using SlideGenerator.Domain.Slides.Entities.Presentation;
 using SlideGenerator.Domain.Slides.Entities.Shape;
+using SlideGenerator.Domain.Slides.Models.Previews;
 
 namespace SlideGenerator.Domain.Slides.Entities.Slide;
 
@@ -8,6 +9,9 @@ namespace SlideGenerator.Domain.Slides.Entities.Slide;
 /// </summary>
 public interface IReadOnlySlide
 {
+    /// <summary>Gets the 1-based position of this slide within the presentation.</summary>
+    int Index { get; }
+
     /// <summary>Gets the unique ID of the slide.</summary>
     uint Id { get; }
 
@@ -18,8 +22,15 @@ public interface IReadOnlySlide
     IReadOnlyPresentation Presentation { get; }
 
     /// <summary>
-    ///     Recursively enumerates all read-only shapes within the slide.
+    ///     Recursively lists all read-only shapes within the slide.
     /// </summary>
     /// <returns>A collection of <see cref="IReadOnlyShape" /> instances.</returns>
     IEnumerable<IReadOnlyShape> DescendShapes();
+
+    /// <summary>
+    ///     Renders this slide to a PNG image and returns it as a <see cref="SlidePreview" />.
+    /// </summary>
+    /// <param name="skipPreview">When <see langword="true" />, returns an empty preview immediately without any I/O.</param>
+    /// <param name="ct">Cancellation token.</param>
+    Task<SlidePreview> GetPreview(bool skipPreview = false, CancellationToken ct = default);
 }

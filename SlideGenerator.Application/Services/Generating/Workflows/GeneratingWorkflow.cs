@@ -9,7 +9,7 @@ using SlideGenerator.Application.Services.Generating.Workflows.Models;
 using SlideGenerator.Application.Services.Scanning.Models.Sheets;
 using SlideGenerator.Application.Services.Scanning.Models.Slides;
 using SlideGenerator.Application.Services.Scanning.Workflows.Activities;
-using SlideGenerator.Domain.Sheets.Models;
+using SlideGenerator.Domain.Sheets.Models.Identifiers;
 using SlideGenerator.Domain.Slides.Models.Identifiers;
 
 namespace SlideGenerator.Application.Services.Generating.Workflows;

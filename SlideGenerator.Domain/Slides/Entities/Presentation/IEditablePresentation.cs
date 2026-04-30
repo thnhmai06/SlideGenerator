@@ -15,7 +15,7 @@ public interface IPresentation : IReadOnlyPresentation
     }
 
     /// <summary>
-    ///     Enumerates all editable slides within the presentation.
+    ///     Lists all editable slides within the presentation.
     /// </summary>
     /// <returns>A collection of <see cref="ISlide" /> instances.</returns>
     new IEnumerable<ISlide> EnumerateSlides();

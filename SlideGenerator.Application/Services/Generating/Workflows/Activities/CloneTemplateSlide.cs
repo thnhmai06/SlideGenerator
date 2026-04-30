@@ -3,7 +3,7 @@ using SlideGenerator.Application.Modules.Workflows.DSL;
 using SlideGenerator.Application.Services.Generating.Models.States;
 using SlideGenerator.Application.Services.Generating.Rules;
 using SlideGenerator.Application.Services.Generating.Workflows.Models;
-using SlideGenerator.Domain.Sheets.Models;
+using SlideGenerator.Domain.Sheets.Models.Identifiers;
 using SlideGenerator.Domain.Slides.Entities.Presentation;
 
 namespace SlideGenerator.Application.Services.Generating.Workflows.Activities;

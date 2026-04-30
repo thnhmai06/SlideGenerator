@@ -1,11 +1,11 @@
-namespace SlideGenerator.Domain.Sheets.Models;
+namespace SlideGenerator.Domain.Sheets.Models.Identifiers;
 
 /// <summary>
 ///     Identifies a specific worksheet within a workbook.
 /// </summary>
 /// <param name="Workbook">The identifier of the parent workbook.</param>
 /// <param name="Name">The exact name of the worksheet.</param>
-public record WorksheetIdentifier(WorkbookIdentifier Workbook, string Name)
+public sealed record WorksheetIdentifier(WorkbookIdentifier Workbook, string Name)
 {
     /// <summary>
     ///     Creates a child <see cref="ColumnIdentifier" /> for the specified column name.

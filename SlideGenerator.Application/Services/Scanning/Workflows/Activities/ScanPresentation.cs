@@ -6,7 +6,6 @@ using SlideGenerator.Application.Services.Generating.Workflows.Models;
 using SlideGenerator.Application.Services.Scanning.Models.Slides;
 using SlideGenerator.Domain.Slides.Entities.Presentation;
 using SlideGenerator.Domain.Slides.Models.Identifiers;
-using SlideGenerator.Domain.Slides.Models.Previews;
 
 namespace SlideGenerator.Application.Services.Scanning.Workflows.Activities;
 
@@ -21,14 +20,13 @@ namespace SlideGenerator.Application.Services.Scanning.Workflows.Activities;
 ///     entry.<br />
 ///     <b>Services:</b> <see cref="FileRegistry{IPresentation}" /> — acquires a shared read lease; released on completion.
 ///     <br />
-///     <see cref="ITextComposer" />, <see cref="IImageComposer" />.<br />
+///     <see cref="ITextComposer" />.<br />
 ///     <b>Logging:</b> via <c>context.State.Logger</c>.<br />
 ///     <b>CancellationToken:</b> propagated to lease acquire.
 /// </remarks>
 public sealed class ScanPresentation(
     FileRegistry<IPresentation> presentationRegistry,
     ITextComposer textComposer,
-    IImageComposer imageComposer,
     Variable<PresentationIdentifier> presentationVar) : ILeafActivity<WorkflowTask>
 {
     /// <inheritdoc />
@@ -43,33 +41,26 @@ public sealed class ScanPresentation(
             .ConfigureAwait(false);
         var presentation = lease.Value;
 
-        var slides = presentation.EnumerateSlides()
-            .Select((slide, index) =>
-            {
-                var shapes = slide.DescendShapes().ToList();
-                var placeholders = shapes
-                    .SelectMany(textComposer.Scan)
-                    .Distinct(StringComparer.Ordinal)
-                    .ToList();
+        var slides = new List<SlideSummary>();
+        foreach (var slide in presentation.EnumerateSlides())
+        {
+            var shapes = slide.DescendShapes().ToList();
 
-                var imageShapePreviews = shapes
-                    .Where(shape => shape.IsPicture || shape.HasBlipFill)
-                    .Select(shape =>
-                    {
-                        var image = imageComposer.Scan(shape) ?? [];
-                        return new ShapePreview(shape.Id, shape.Name, shape.Bounds, image);
-                    })
-                    .ToList();
+            var placeholders = shapes
+                .SelectMany(textComposer.Scan)
+                .Distinct(StringComparer.Ordinal)
+                .ToList();
 
-                var slidePreview = new SlidePreview(
-                    index + 1,
-                    slide.Id,
-                    slide.Name ?? string.Empty,
-                    imageShapePreviews.FirstOrDefault()?.Image ?? []);
+            var imageShapePreviews = shapes
+                .Where(shape => shape.IsPicture || shape.HasBlipFill)
+                .Select(shape => shape.GetPreview())
+                .ToList();
 
-                return new SlideSummary(index + 1, slidePreview, placeholders, imageShapePreviews);
-            })
-            .ToList();
+            var preview = await slide.GetPreview(skipPreview: false, ct: context.CancellationToken)
+                .ConfigureAwait(false);
+
+            slides.Add(new SlideSummary(slide.Index, slide.Id, slide.Name ?? string.Empty, preview, placeholders, imageShapePreviews));
+        }
 
         context.GetVariable(VariablesDeclaration.PresentationSummaries)[fullPath] =
             new PresentationSummary(fullPath, slides);

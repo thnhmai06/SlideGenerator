@@ -4,7 +4,7 @@ using SlideGenerator.Application.Services.Generating.Workflows;
 using SlideGenerator.Application.Services.Generating.Workflows.Models;
 using SlideGenerator.Application.Services.Scanning.Models.Sheets;
 using SlideGenerator.Domain.Sheets.Entities;
-using SlideGenerator.Domain.Sheets.Models;
+using SlideGenerator.Domain.Sheets.Models.Identifiers;
 
 namespace SlideGenerator.Application.Services.Scanning.Workflows.Activities;
 
@@ -35,9 +35,13 @@ public sealed class ScanWorkbook(
             .ConfigureAwait(false);
         var workbook = lease.Value;
 
-        var worksheets = workbook.Worksheets
-            .Select(ws => new WorksheetSummary(ws.Name, ws.Headers, ws.RowsCount))
-            .ToList();
+        var worksheets = new List<WorksheetSummary>(workbook.Worksheets.Count);
+        foreach (var ws in workbook.Worksheets)
+        {
+            var preview = await ws.GetPreview(from: 1, to: 10, skipPreview: false, ct: context.CancellationToken)
+                .ConfigureAwait(false);
+            worksheets.Add(new WorksheetSummary(ws.Name, preview, ws.RowsCount));
+        }
 
         context.GetVariable(VariablesDeclaration.WorkbookSummaries)[fullPath] =
             new WorkbookSummary(workbook.FilePath, workbook.Name, worksheets);

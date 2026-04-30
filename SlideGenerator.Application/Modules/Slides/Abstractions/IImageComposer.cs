@@ -3,17 +3,10 @@ using SlideGenerator.Domain.Slides.Entities.Shape;
 namespace SlideGenerator.Application.Modules.Slides.Abstractions;
 
 /// <summary>
-///     Defines a contract for scanning and replacing image content within a slide shape.
+///     Defines a contract for replacing image content within a slide shape.
 /// </summary>
 public interface IImageComposer
 {
-    /// <summary>
-    ///     Scans the provided read-only shape to extract existing image bytes.
-    /// </summary>
-    /// <param name="shape">The <see cref="IReadOnlyShape" /> to scan.</param>
-    /// <returns>A byte array representing the extracted image, or <see langword="null" /> if none is found.</returns>
-    byte[]? Scan(IReadOnlyShape shape);
-
     /// <summary>
     ///     Replaces the image content of the specified shape with a new image stream.
     /// </summary>

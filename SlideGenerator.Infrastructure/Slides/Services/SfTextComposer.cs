@@ -1,17 +1,19 @@
-/* LEGACY-OPENXML — replaced by SfTextComposer (Syncfusion.Presentation.NET)
 using System.Text;
 using System.Text.RegularExpressions;
-using DocumentFormat.OpenXml.Drawing;
 using SlideGenerator.Application.Modules.Slides.Abstractions;
 using SlideGenerator.Domain.Slides.Entities.Shape;
 using SlideGenerator.Infrastructure.Slides.Adapters;
 using Stubble.Core;
 using Stubble.Core.Builders;
-using Shape = DocumentFormat.OpenXml.Presentation.Shape;
 
 namespace SlideGenerator.Infrastructure.Slides.Services;
 
-public partial class MustacheComposer : ITextComposer
+/// <summary>
+///     Replaces mustache-style placeholders in Syncfusion shapes using the Stubble library.
+///     The scanning and rendering logic is identical to the legacy implementation;
+///     only the text-run manipulation uses Syncfusion APIs.
+/// </summary>
+public sealed partial class SfTextComposer : ITextComposer
 {
     private static readonly Regex MustachePattern = MustacheRegex();
 
@@ -19,35 +21,38 @@ public partial class MustacheComposer : ITextComposer
         .Configure(settings => settings.SetEncodingFunction(value => value))
         .Build();
 
+    /// <inheritdoc />
     public IEnumerable<string> Scan(IReadOnlyShape shape)
     {
-        return
-            !string.IsNullOrWhiteSpace(shape.TextContent)
-                ? ExtractKeys(shape.TextContent!)
-                : [];
+        return !string.IsNullOrWhiteSpace(shape.TextContent)
+            ? ExtractKeys(shape.TextContent!)
+            : [];
     }
 
+    /// <inheritdoc />
     public int Replace(IShape shape, IReadOnlyDictionary<string, string> instructions)
     {
-        if (shape is not XmlShape xmlShape)
+        if (shape is not SfShape sfShape)
             throw new ArgumentException("Shape is not supported.", nameof(shape));
-        if (xmlShape.Core is not Shape coreXmlShape)
-            return 0;
-        if (string.IsNullOrWhiteSpace(xmlShape.TextContent) || instructions.Count == 0)
+
+        var textBody = sfShape.Core.TextBody;
+        if (textBody == null || string.IsNullOrWhiteSpace(sfShape.TextContent) || instructions.Count == 0)
             return 0;
 
         var replacements = Utilities.SanitizeXmlValues(instructions);
         var changed = 0;
 
-        foreach (var paragraph in coreXmlShape.TextBody?.Descendants<Paragraph>() ?? [])
+        foreach (var paragraph in textBody.Paragraphs)
         {
-            var runs = paragraph.Descendants<Run>().ToList();
-            if (runs.Count == 0)
+            var parts = paragraph.TextParts;
+            if (parts.Count == 0)
                 continue;
 
+            // Collect full paragraph text across all parts
             var builder = new StringBuilder();
-            foreach (var run in runs)
-                builder.Append(run.Text?.Text ?? string.Empty);
+            foreach (var part in parts)
+                builder.Append(part.Text ?? string.Empty);
+
             var originalText = builder.ToString();
             var renderedText = RenderText(originalText, replacements);
             if (renderedText == originalText)
@@ -55,12 +60,10 @@ public partial class MustacheComposer : ITextComposer
 
             changed += ExtractKeys(originalText).Count(instructions.ContainsKey);
 
-            runs[0].Text ??= new Text();
-            runs[0].Text!.Text = renderedText;
-
-            for (var index = 1; index < runs.Count; index++)
-                if (runs[index].Text != null)
-                    runs[index].Text!.Text = string.Empty;
+            // Write the full replaced text into the first part, clear the rest
+            parts[0].Text = renderedText;
+            for (var i = 1; i < parts.Count; i++)
+                parts[i].Text = string.Empty;
         }
 
         return changed;
@@ -97,12 +100,9 @@ public partial class MustacheComposer : ITextComposer
             .Distinct();
     }
 
-    private static string NormalizeKey(string key)
-    {
-        return key.Trim().TrimStart('#', '/', '^', '&', '>');
-    }
+    private static string NormalizeKey(string key) =>
+        key.Trim().TrimStart('#', '/', '^', '&', '>');
 
     [GeneratedRegex(@"\{\{\s*(\w+)\s*\}\}", RegexOptions.Compiled)]
     private static partial Regex MustacheRegex();
 }
-*/

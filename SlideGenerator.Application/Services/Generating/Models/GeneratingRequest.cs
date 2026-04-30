@@ -1,5 +1,5 @@
 using SlideGenerator.Application.Services.Generating.Models.Texts;
-using SlideGenerator.Domain.Sheets.Models;
+using SlideGenerator.Domain.Sheets.Models.Identifiers;
 using SlideGenerator.Domain.Slides.Models.Identifiers;
 using SlideGenerator.Domain.Slides.Rules;
 

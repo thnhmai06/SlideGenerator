@@ -4,7 +4,7 @@ using SlideGenerator.Application.Modules.Workflows.DSL;
 using SlideGenerator.Application.Services.Generating.Rules;
 using SlideGenerator.Application.Services.Generating.Workflows.Models;
 using SlideGenerator.Domain.Sheets.Entities;
-using SlideGenerator.Domain.Sheets.Models;
+using SlideGenerator.Domain.Sheets.Models.Identifiers;
 using SlideGenerator.Domain.Slides.Entities.Presentation;
 using SlideGenerator.Domain.Slides.Models.Identifiers;
 using SlideGenerator.Domain.Slides.Rules;

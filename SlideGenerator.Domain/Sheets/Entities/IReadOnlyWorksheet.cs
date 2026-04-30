@@ -1,4 +1,5 @@
-using SlideGenerator.Domain.Sheets.Models;
+using SlideGenerator.Domain.Sheets.Models.Identifiers;
+using SlideGenerator.Domain.Sheets.Models.Previews;
 
 namespace SlideGenerator.Domain.Sheets.Entities;
 
@@ -28,4 +29,13 @@ public interface IReadOnlyWorksheet
     /// <param name="rowIndex">The 1-based index of the data row (row 1 is the first row after headers).</param>
     /// <returns>A read-only dictionary mapping column headers to their corresponding string values.</returns>
     IReadOnlyDictionary<string, string> GetRowContent(int rowIndex);
+
+    /// <summary>
+    ///     Returns a <see cref="WorksheetPreview" /> containing headers and a slice of data rows.
+    /// </summary>
+    /// <param name="from">1-based index of the first data row to include (default: 1).</param>
+    /// <param name="to">1-based index of the last data row to include (default: 10).</param>
+    /// <param name="skipPreview">When <see langword="true" />, returns an empty preview immediately without reading data.</param>
+    /// <param name="ct">Cancellation token.</param>
+    Task<WorksheetPreview> GetPreview(int from = 1, int to = 10, bool skipPreview = false, CancellationToken ct = default);
 }

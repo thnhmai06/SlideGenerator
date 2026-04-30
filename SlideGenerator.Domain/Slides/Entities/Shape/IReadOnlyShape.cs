@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using SlideGenerator.Domain.Slides.Entities.Slide;
+using SlideGenerator.Domain.Slides.Models.Previews;
 
 namespace SlideGenerator.Domain.Slides.Entities.Shape;
 
@@ -49,4 +50,10 @@ public interface IReadOnlyShape
     /// </param>
     /// <returns><see langword="true" /> if the BLIP fill data was successfully retrieved; otherwise, <see langword="false" />.</returns>
     bool TryGetBlipFill([MaybeNullWhen(false)] out byte[] image);
+
+    /// <summary>
+    ///     Returns a <see cref="ShapePreview" /> for this shape — picture or blip fill image, whichever applies.
+    ///     Image bytes are empty when neither is present.
+    /// </summary>
+    ShapePreview GetPreview();
 }

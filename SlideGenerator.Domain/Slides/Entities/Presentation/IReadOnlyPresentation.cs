@@ -15,7 +15,7 @@ public interface IReadOnlyPresentation
     string FilePath => Identifier.FilePath;
 
     /// <summary>
-    ///     Enumerates all slides within the presentation as read-only objects.
+    ///     Lists all slides within the presentation as read-only objects.
     /// </summary>
     /// <returns>A collection of <see cref="IReadOnlySlide" /> instances.</returns>
     IEnumerable<IReadOnlySlide> EnumerateSlides();

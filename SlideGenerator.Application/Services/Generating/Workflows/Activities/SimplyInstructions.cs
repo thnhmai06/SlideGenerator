@@ -1,6 +1,6 @@
 using SlideGenerator.Application.Modules.Workflows.DSL;
 using SlideGenerator.Application.Services.Generating.Workflows.Models;
-using SlideGenerator.Domain.Sheets.Models;
+using SlideGenerator.Domain.Sheets.Models.Identifiers;
 
 namespace SlideGenerator.Application.Services.Generating.Workflows.Activities;
 
@@ -53,7 +53,7 @@ public sealed class SimplyInstructions(
                                ?? throw new InvalidOperationException(
                                    $"Worksheet '{worksheet.Name}' not found in workbook summary for '{workbookPath}'.");
 
-        var headers = worksheetSummary.Headers;
+        var headers = worksheetSummary.Preview.Headers;
 
         context.SetVariable(VariablesDeclaration.RowTextInstructions,
             data.Request.TextInstructions

@@ -6,7 +6,7 @@ using SlideGenerator.Application.Services.Generating.Models.States;
 using SlideGenerator.Application.Services.Generating.Rules;
 using SlideGenerator.Application.Services.Generating.Workflows.Models;
 using SlideGenerator.Domain.Sheets.Entities;
-using SlideGenerator.Domain.Sheets.Models;
+using SlideGenerator.Domain.Sheets.Models.Identifiers;
 
 namespace SlideGenerator.Application.Services.Generating.Workflows.Activities;
 

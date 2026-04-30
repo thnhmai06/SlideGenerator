@@ -32,7 +32,7 @@ public sealed class SettingManager(FileRegistry<ITextFile> textFileRegistry, ISe
         try
         {
             // Acquire is safe here: TextFileRegistry uses maxCount = int.MaxValue (no blocking).
-            using var textFileLease = await textFileRegistry.Acquire(FilePath, false);
+            await using var textFileLease = await textFileRegistry.Acquire(FilePath, false);
             var textFile = textFileLease.Value;
             var source = textFile.Read();
             var loaded = serializer.Deserialize<Setting>(source);
@@ -56,7 +56,7 @@ public sealed class SettingManager(FileRegistry<ITextFile> textFileRegistry, ISe
     {
         try
         {
-            using var textFileLease = await textFileRegistry.Acquire(FilePath, true);
+            await using var textFileLease = await textFileRegistry.Acquire(FilePath, true);
             var textFile = textFileLease.Value;
             var content = serializer.Serialize(Current);
             textFile.Write(content);

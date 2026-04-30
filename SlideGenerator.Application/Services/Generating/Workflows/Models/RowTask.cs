@@ -1,5 +1,5 @@
 using SlideGenerator.Application.Services.Generating.Models.Images;
-using SlideGenerator.Domain.Sheets.Models;
+using SlideGenerator.Domain.Sheets.Models.Identifiers;
 
 namespace SlideGenerator.Application.Services.Generating.Workflows.Models;
 
