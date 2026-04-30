@@ -19,10 +19,10 @@ namespace SlideGenerator.Application.Services.Scanning.Workflows.Activities;
 /// </remarks>
 public sealed class ScanWorkbook(
     FileRegistry<IReadOnlyWorkbook> workbookRegistry,
-    Variable<WorkbookIdentifier> workbookVar) : ILeafActivity<object>
+    Handle<WorkbookIdentifier> workbookVar)
 {
     /// <inheritdoc />
-    public async Task ExecuteAsync(IActivityContext<object> context)
+    public async Task ExecuteAsync(IExecutionContext<object> context)
     {
         var fullPath = Path.GetFullPath(context.GetVariable(workbookVar).FilePath);
 

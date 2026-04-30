@@ -30,10 +30,10 @@ public sealed class EditSlide(
     ITextComposer textComposer,
     IImageComposer imageComposer,
     ISettingProvider settingProvider,
-    Variable<RowIdentifier> rowVar) : ILeafActivity<GeneratingRequest>
+    Handle<RowIdentifier> rowVar)
 {
     /// <inheritdoc />
-    public async Task ExecuteAsync(IActivityContext<GeneratingRequest> context)
+    public async Task ExecuteAsync(IExecutionContext<GeneratingRequest> context)
     {
         var rc = context.GetVariable(rowVar);
         var slideIdentifier = context.GetVariable(VariablesDeclaration.WorkingTemplateSlide)
@@ -76,7 +76,7 @@ public sealed class EditSlide(
     }
 
     private async ValueTask<IReadOnlyDictionary<string, string>> BuildTextMapAsync(
-        IActivityContext<GeneratingRequest> context, int row)
+        IExecutionContext<GeneratingRequest> context, int row)
     {
         var worksheet = context.GetVariable(VariablesDeclaration.WorksheetItem);
 

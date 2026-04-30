@@ -13,10 +13,10 @@ namespace SlideGenerator.Application.Services.Generating.Workflows.Activities;
 ///     <b>State:</b> Reads and disposes <see cref="WorksheetContext.PresentationLease" />.<br />
 ///     <b>Data read:</b> <see cref="GeneratingRequest" /> (<c>OutputExtension</c>).
 /// </remarks>
-public sealed class RemoveWorkingTemplateSlide : ILeafActivity<GeneratingRequest>
+public sealed class RemoveWorkingTemplateSlide
 {
     /// <inheritdoc />
-    public Task ExecuteAsync(IActivityContext<GeneratingRequest> context)
+    public Task ExecuteAsync(IExecutionContext<GeneratingRequest> context)
     {
         var slideIdentifier = context.GetVariable(VariablesDeclaration.WorkingTemplateSlide)
                               ?? throw new ArgumentException(

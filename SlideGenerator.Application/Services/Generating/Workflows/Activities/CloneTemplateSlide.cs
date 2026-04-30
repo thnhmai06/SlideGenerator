@@ -1,5 +1,6 @@
 using SlideGenerator.Application.Modules.Resources.Services;
 using SlideGenerator.Application.Modules.Workflows.DSL;
+using SlideGenerator.Application.Modules.Workflows.DSL.Activities;
 using SlideGenerator.Application.Services.Generating.Models;
 using SlideGenerator.Application.Services.Generating.Models.States;
 using SlideGenerator.Application.Services.Generating.Rules;
@@ -22,10 +23,10 @@ namespace SlideGenerator.Application.Services.Generating.Workflows.Activities;
 /// </remarks>
 public sealed class CloneTemplateSlide(
     FileRegistry<IPresentation> presentationRegistry,
-    Variable<RowIdentifier> rowVar) : ILeafActivity<GeneratingRequest>
+    Handle<RowIdentifier> rowVar) : Activity<GeneratingRequest>
 {
     /// <inheritdoc />
-    public async Task ExecuteAsync(IActivityContext<GeneratingRequest> context)
+    public override async Task ExecuteAsync(IExecutionContext<GeneratingRequest> context)
     {
         var rc = context.GetVariable(rowVar);
         _ = context.GetVariable(VariablesDeclaration.WorkingTemplateSlide)
@@ -38,7 +39,7 @@ public sealed class CloneTemplateSlide(
             WorkflowConstants.WorkingTemplateSlideIndex + rc.Index);
     }
 
-    private async ValueTask<IPresentation> GetOrAcquirePresentationAsync(IActivityContext context)
+    private async ValueTask<IPresentation> GetOrAcquirePresentationAsync(IExecutionContext context)
     {
         var state = GetWorksheetSnapshot(context);
         if (state.Context.PresentationLease is null)
@@ -52,10 +53,10 @@ public sealed class CloneTemplateSlide(
         return state.Context.PresentationLease.Value;
     }
 
-    internal static WorksheetSnapshot GetWorksheetSnapshot(IActivityContext context)
+    internal static WorksheetSnapshot GetWorksheetSnapshot(IExecutionContext context)
     {
         var ws = context.GetVariable(VariablesDeclaration.WorksheetItem);
-        return ((GeneratingSnapshot)context.State)
+        return ((GeneratingSnapshot)context.Snapshot)
             .GetWorkbook(ws.Workbook.Name)!
             .GetWorksheet(ws.Name)!;
     }

@@ -21,30 +21,30 @@ The project strictly adheres to Clean Architecture with a unidirectional depende
 - **Uniform Folder Structure**: Every module/service follows a consistent layout: `Abstractions/`, `Entities/`, `Models/`, `Rules/`, `Services/`, and where applicable, `Activities/` and `Workflows/`.
 
 ## 3. Workflow DSL
-The system uses a custom DSL (located in `Modules/Workflows/DSL/`) for defining long-running processes. Interpretation is handled by `WorkflowInterpreter` (a singleton class injected via DI), backed by WorkflowCore in Infrastructure.
+The system uses a custom DSL (located in `Modules/Workflows/DSL/`) for defining long-running processes. Interpretation is handled by `WcWorkflowService` and `WcInterpreterStep` in Infrastructure, backed by WorkflowCore.
 
 ### Lexical Scope Tree & Variables
-State is managed via a hierarchical scope tree using `Variable<T>` keys.
-- **`Variable<T>`**: A stateless, typed key used to store/retrieve checkpoint-able values from the execution context. **Never** store transient handles (file leases, locks, streams) in Variables.
-- **Child Scopes**: Iterative nodes (like `ForEachNode`) create isolated child scopes. `GetVariable` searches the local scope before traversing up the parent chain.
+State is managed via a hierarchical scope tree using `Handle<T>` keys.
+- **`Handle<T>`**: A stateless, typed key used to store/retrieve checkpoint-able values from the execution context. **Never** store transient handles (file leases, locks, streams) in Variables.
+- **Child Scopes**: Iterative nodes (like `ForEach`) create isolated child scopes. `GetVariable` searches the local scope before traversing up the parent chain.
 
 ### Core DSL Nodes
 | Node | Purpose |
 |---|---|
-| `ActivityNode<T>` | Invokes a leaf activity (`ILeafActivity<TData>`) via DI. |
-| `SequenceNode` | Executes children in order. |
-| `ParallelNode` | Executes children concurrently. |
-| `ForEachNode` | Iterates a collection, creating a child scope for each item. |
-| `TryNode` | Provides error isolation (swallows and logs exceptions). |
-| `GateNode` | Throttles execution via `GateLocker` (semaphore per `GateType`). |
-| `InlineNode` | Performs lightweight state mutations via lambdas (no DI). |
-| `ConditionNode` | Provides branching logic based on a predicate. |
+| `Inline.Activity<T>` | Invokes a leaf activity via DI resolution. |
+| `Sequence` | Executes children in order. |
+| `Parallel` | Executes children concurrently. |
+| `ForEach` | Iterates a collection, creating a child scope for each item. |
+| `Try` | Provides error isolation (swallows and logs exceptions). |
+| `GateWrapper` | Throttles execution via `GateLocker` (semaphore per `GateType`). |
+| `Inline` | Performs lightweight state mutations via lambdas. |
+| `Condition` | Provides branching logic based on a predicate. |
 
 ### Workflow Invariants
 - **Orchestration belongs to the Node Tree**: Leaf activities must not contain loops or parallel coordination; use the DSL nodes instead.
-- **Variables are the only Scope-Crossing mechanism for checkpoint-able state**: Activities inject `Variable<T>` keys via constructors and read via `context.GetVariable(key)`. DSL lambdas use `ctx.Data` directly.
+- **Variables are the only Scope-Crossing mechanism for checkpoint-able state**: Activities inject `Handle<T>` keys via constructors and read via `context.GetVariable(key)`. DSL lambdas use `ctx.Data` directly.
 - **Disk-Bound Persistence**: Every activity should ideally correspond to a disk I/O or state boundary to support crash recovery.
-- **Error Isolation**: Use `TryNode` for granular steps in loops where a single failure should not halt the entire process.
+- **Error Isolation**: Use `Try` for granular steps in loops where a single failure should not halt the entire process.
 
 ## 4. Execution State Model
 
@@ -58,13 +58,13 @@ All execution state lives under `Modules/Workflows/Models/States/` (base types) 
 | `WorkflowSnapshot` | Top-level snapshot for a workflow instance. |
 | `ActivitySnapshot` | Snapshot for a single activity invocation. |
 | `IExecutionPayload` | Named, checkpoint-able variable store (`GetVariable<T>` / `SetVariable<T>`). One per scope. |
-| `IExecutionContext` | Marker interface for **transient** runtime-only state. Implementations add live-resource fields. Never persisted. |
+| `IExecutionContext` | Marker interface for **transient** runtime-only state. Implementations add live-resource fields and provide `IServiceProvider` for DI. |
 
 ### Transient State via IExecutionContext
-Transient resources (open file handles, in-flight locks) must **not** be stored in `Variable<T>`. Instead:
+Transient resources (open file handles, in-flight locks) must **not** be stored in `Handle<T>`. Instead:
 1. Define a class implementing `IExecutionContext` with the required fields (e.g., `WorksheetContext.PresentationLease`).
 2. Pass an instance when constructing the scope's snapshot (e.g., `WorksheetSnapshot`).
-3. Activities navigate to the snapshot via `context.State` and cast it to the concrete type to access the context.
+3. Activities navigate to the snapshot via `context.Snapshot` and cast it to the concrete type to access the context.
 4. The first activity that needs a resource acquires it lazily; the last one disposes and nulls it.
 
 **Concrete implementation**: `WorksheetContext` — holds `Lease<IPresentation>? PresentationLease` for Phase B slide editing. Accessed via `((WorksheetSnapshot)snapshot).Context.PresentationLease`.
@@ -79,13 +79,14 @@ Used for managing access to shared or reference-counted resources (e.g., file st
 - **Long-lived leases**: Store on `IExecutionContext`; the owning activity calls `Dispose()` explicitly when done.
 
 ### Gate Locking (Throttling)
-Controlled via `GateNode` and `GateLocker`. Limits are configured per `GateType` (e.g., Download, EditImage, Worksheet) to prevent resource exhaustion.
+Controlled via `GateWrapper` and `GateLocker`. Limits are configured per `GateType` (e.g., Download, EditImage, Worksheet) to prevent resource exhaustion.
 - `GateLocker`: semaphore-based, exposes `LockAsync` only (no read/write distinction).
 - `FileLocker`: file-path reader-writer lock, exposes `ReadLockAsync` / `WriteLockAsync`.
 
 ### Service Injection
-- Activities are registered as **Singletons** — inject all services via constructor. There is no `GetRequiredService` on `IActivityContext`.
-- `IWorkflowDefinition` implementations that need services at `Build()` time: add a **parameterless constructor** (used by `WcWorkflowAdapter` for metadata only) and a **DI constructor** with the required services. `Build()` is only called from the DI-resolved instance.
+- **Activities**: Registered as **Singletons** — inject all required services via constructor.
+- **Workflows**: Inject **only `IServiceProvider`** via constructor. Use it to resolve all required services (e.g., `GateLocker`, `ISettingProvider`, or other Workflows).
+- **Workflow Metadata**: Workflows must also have a **parameterless constructor** for registration purposes.
 
 ## 6. Technical Standards
 
@@ -94,7 +95,7 @@ Controlled via `GateNode` and `GateLocker`. Limits are configured per `GateType`
 - Propagate `CancellationToken` throughout the call chain.
 
 ### Logging
-- Use `context.State.Logger.AddLog(...)` within workflows.
+- Use `context.Snapshot.Logger.AddLog(...)` within workflows.
 - Avoid direct dependency on framework loggers inside business logic modules.
 
 ### Coding Style
@@ -105,9 +106,10 @@ Controlled via `GateNode` and `GateLocker`. Limits are configured per `GateType`
 ### Invariants Checklist
 - [ ] Domain has zero dependencies on other layers.
 - [ ] Application has zero dependencies on Infrastructure libraries.
-- [ ] Activities implement `ILeafActivity<TData>` and are stateless Singletons.
-- [ ] Workflows implement `IWorkflowDefinition<TData>`.
+- [ ] Activities implement `Activity<TData>` (implicitly via `Inline.Activity`).
+- [ ] Workflows implement `IWorkflow<TData>`.
 - [ ] Business rules live in Domain or Application — never in Infrastructure.
 - [ ] All async code uses `ConfigureAwait(false)`.
-- [ ] Transient resources (leases, handles) are stored on `IExecutionContext`, never in `Variable<T>`.
-- [ ] Services are injected via constructor — `IActivityContext.GetRequiredService` does not exist.
+- [ ] Transient resources (leases, handles) are stored on `IExecutionContext`, never in `Handle<T>`.
+- [ ] Workflows only inject `IServiceProvider`.
+- [ ] Activities inject services via constructor.

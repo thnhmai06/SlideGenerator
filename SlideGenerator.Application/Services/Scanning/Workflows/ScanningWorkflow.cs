@@ -1,6 +1,8 @@
 using System.Collections.Concurrent;
+using Microsoft.Extensions.DependencyInjection;
+using SlideGenerator.Application.Modules.Resources.Services;
 using SlideGenerator.Application.Modules.Workflows.DSL;
-using SlideGenerator.Application.Modules.Workflows.DSL.Nodes;
+using SlideGenerator.Application.Modules.Workflows.DSL.Activities;
 using SlideGenerator.Application.Services.Generating.Rules;
 using SlideGenerator.Application.Services.Scanning.Models;
 using SlideGenerator.Application.Services.Scanning.Models.Sheets;
@@ -14,8 +16,12 @@ namespace SlideGenerator.Application.Services.Scanning.Workflows;
 /// <summary>
 ///     Defines the standalone scanning workflow for <see cref="ScanningRequest" />.
 /// </summary>
-public sealed class ScanningWorkflow : IWorkflowDefinition<ScanningRequest>
+public sealed class ScanningWorkflow(IServiceProvider services) : IWorkflow<ScanningRequest>
 {
+    private readonly GateLocker<GateType> _gateLocker = services.GetRequiredService<GateLocker<GateType>>();
+
+    public ScanningWorkflow() : this(default!) { }
+
     /// <inheritdoc />
     public string Id => nameof(ScanningWorkflow);
 
@@ -23,42 +29,61 @@ public sealed class ScanningWorkflow : IWorkflowDefinition<ScanningRequest>
     public int Version => 1;
 
     /// <inheritdoc />
-    public WorkflowNode Build()
+    public Activity<ScanningRequest> Build()
     {
-        return new SequenceNode([
-            // 0. Initialize scanning Variables if not already present in the context
-            new InlineNode<ScanningRequest>(ctx =>
-            {
-                if (!ctx.TryGetVariable(ScanningVariables.WorkbookSummaries, out _))
+        return new Sequence<ScanningRequest>
+        {
+            Steps =
+            [
+                // 0. Initialize scanning Variables if not already present in the context
+                new Inline<ScanningRequest>
                 {
-                    ctx.SetVariable(ScanningVariables.WorkbookSummaries,
-                        new ConcurrentDictionary<string, WorkbookSummary>(StringComparer.OrdinalIgnoreCase));
-                }
+                    Action = ctx =>
+                    {
+                        if (!ctx.TryGetVariable(ScanningVariables.WorkbookSummaries, out _))
+                        {
+                            ctx.SetVariable(ScanningVariables.WorkbookSummaries,
+                                new ConcurrentDictionary<string, WorkbookSummary>(StringComparer.OrdinalIgnoreCase));
+                        }
 
-                if (!ctx.TryGetVariable(ScanningVariables.PresentationSummaries, out _))
+                        if (!ctx.TryGetVariable(ScanningVariables.PresentationSummaries, out _))
+                        {
+                            ctx.SetVariable(ScanningVariables.PresentationSummaries,
+                                new ConcurrentDictionary<string, PresentationSummary>(StringComparer.OrdinalIgnoreCase));
+                        }
+
+                        return Task.CompletedTask;
+                    }
+                },
+
+                // 1. Parallel initial scans
+                new Parallel<ScanningRequest>
                 {
-                    ctx.SetVariable(ScanningVariables.PresentationSummaries,
-                        new ConcurrentDictionary<string, PresentationSummary>(StringComparer.OrdinalIgnoreCase));
+                    Branches =
+                    [
+                        new ForEach<WorkbookIdentifier, ScanningRequest>(true)
+                        {
+                            Items = ctx => ctx.Data.Workbooks,
+                            Handle = ScanningVariables.WorkbookItem,
+                            Body = new GateWrapper<GateType, ScanningRequest>(_gateLocker)
+                            {
+                                Gate = GateType.ScanWorkbook,
+                                Body = Inline<ScanningRequest>.Activity<ScanWorkbook>()
+                            }
+                        },
+                        new ForEach<PresentationIdentifier, ScanningRequest>(true)
+                        {
+                            Items = ctx => ctx.Data.Presentations,
+                            Handle = ScanningVariables.PresentationItem,
+                            Body = new GateWrapper<GateType, ScanningRequest>(_gateLocker)
+                            {
+                                Gate = GateType.ScanPresentation,
+                                Body = Inline<ScanningRequest>.Activity<ScanPresentation>()
+                            }
+                        }
+                    ]
                 }
-
-                return Task.CompletedTask;
-            }),
-
-            // 1. Parallel initial scans
-            new ParallelNode([
-                new ForEachNode<WorkbookIdentifier, ScanningRequest>(
-                    ScanningVariables.WorkbookItem,
-                    ctx => ctx.Data.Workbooks,
-                    true,
-                    new GateNode(GateType.ScanWorkbook, new ActivityNode<ScanWorkbook>())
-                ),
-                new ForEachNode<PresentationIdentifier, ScanningRequest>(
-                    ScanningVariables.PresentationItem,
-                    ctx => ctx.Data.Presentations,
-                    true,
-                    new GateNode(GateType.ScanPresentation, new ActivityNode<ScanPresentation>())
-                )
-            ])
-        ]);
+            ]
+        };
     }
 }

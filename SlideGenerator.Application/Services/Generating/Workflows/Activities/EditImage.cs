@@ -29,10 +29,10 @@ public sealed class EditImage(
     IRoiCalculator roiCalculator,
     FileRegistry<IPresentation> slideRegistry,
     ISettingProvider settingProvider,
-    Variable<RowTask> rowTaskVar) : ILeafActivity<GeneratingRequest>
+    Handle<RowTask> rowTaskVar)
 {
     /// <inheritdoc />
-    public async Task ExecuteAsync(IActivityContext<GeneratingRequest> context)
+    public async Task ExecuteAsync(IExecutionContext<GeneratingRequest> context)
     {
         var task = context.GetVariable(rowTaskVar);
         var (instruction, downloadedPath) = task.EditItem

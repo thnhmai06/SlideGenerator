@@ -1,21 +1,19 @@
 using SlideGenerator.Application.Modules.Workflows.DSL;
 using SlideGenerator.Application.Modules.Workflows.Models.States;
-using SlideGenerator.Application.Modules.Workflows.Services;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
 
 namespace SlideGenerator.Infrastructure.Workflows.Adapters;
 
 /// <summary>
-///     Single WorkflowCore step that interprets the entire <see cref="IWorkflowDefinition{TData}" /> node tree
+///     Single WorkflowCore step that interprets the entire <see cref="Application.Modules.Workflows.DSL.IWorkflow{TData}" /> node tree
 ///     in-process. Parallel branches use <c>Task.WhenAll</c>; ForEach iterations each run in a dedicated
-///     child scope created via <see cref="IActivityContext{TData}.CreateChildScope" />.
+///     child scope created via <see cref="IExecutionContext{TData}.CreateChildScope" />.
 /// </summary>
 public sealed class WcInterpreterStep<TDef, TData>(
     IServiceProvider services,
-    WorkflowInterpreter interpreter,
     WorkflowSnapshotRegistry snapshotRegistry) : StepBodyAsync
-    where TDef : IWorkflowDefinition<TData>
+    where TDef : Application.Modules.Workflows.DSL.IWorkflow<TData>
     where TData : class
 {
     private readonly TDef _def = (TDef)(services.GetService(typeof(TDef))
@@ -26,12 +24,13 @@ public sealed class WcInterpreterStep<TDef, TData>(
     {
         var data = (TData)context.Workflow.Data;
         var state = new WorkflowSnapshot(_def.Id, new WcExecutionPayload());
-        var ctx = new WcInterpreterContext<TData>(data, state, context.CancellationToken);
+        var ctx = new WcInterpreterContext<TData>(data, state, context.CancellationToken, services);
 
         snapshotRegistry.Register(context.Workflow.Id, state);
         try
         {
-            await interpreter.ExecuteAsync(_def.Build(), ctx).ConfigureAwait(false);
+            var workflow = _def.Build();
+            await workflow.ExecuteAsync(ctx).ConfigureAwait(false);
         }
         finally
         {

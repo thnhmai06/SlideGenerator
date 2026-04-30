@@ -29,10 +29,10 @@ public sealed class CreateWorkingPresentation(
     FileRegistry<IReadOnlyWorkbook> workbookRegistry,
     FileRegistry<IPresentation> presentationRegistry,
     IFileSystem fileSystem,
-    Variable<WorksheetIdentifier> worksheetVar) : ILeafActivity<GeneratingRequest>
+    Handle<WorksheetIdentifier> worksheetVar)
 {
     /// <inheritdoc />
-    public async Task ExecuteAsync(IActivityContext<GeneratingRequest> context)
+    public async Task ExecuteAsync(IExecutionContext<GeneratingRequest> context)
     {
         var data = context.Data;
         var worksheet = context.GetVariable(worksheetVar);

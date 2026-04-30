@@ -4,7 +4,7 @@ using SlideGenerator.Application.Modules.Workflows.Models.States;
 namespace SlideGenerator.Infrastructure.Workflows.Adapters;
 
 /// <summary>
-///     Concrete implementation of <see cref="IActivityContext{TData}" /> that forms one node
+///     Concrete implementation of <see cref="IExecutionContext{TData}" /> that forms one node
 ///     in a lexical scope chain. Each instance maintains its own local variable dictionary and
 ///     holds a reference to its parent scope for recursive variable lookup.
 /// </summary>
@@ -12,7 +12,8 @@ internal sealed class WcInterpreterContext<TData>(
     TData data,
     ExecutionSnapshot state,
     CancellationToken cancellationToken,
-    WcInterpreterContext<TData>? parent = null) : IActivityContext<TData>
+    IServiceProvider services,
+    WcInterpreterContext<TData>? parent = null) : IExecutionContext<TData>
 {
     private readonly Dictionary<string, object?> _locals = new();
 
@@ -23,10 +24,13 @@ internal sealed class WcInterpreterContext<TData>(
     public CancellationToken CancellationToken => cancellationToken;
 
     /// <inheritdoc />
-    public ExecutionSnapshot State => state;
+    public ExecutionSnapshot Snapshot => state;
 
     /// <inheritdoc />
-    public TVar GetVariable<TVar>(Variable<TVar> key)
+    public IServiceProvider Services => services;
+
+    /// <inheritdoc />
+    public TVar GetVariable<TVar>(Handle<TVar> key)
     {
         if (_locals.TryGetValue(key.Name, out var value))
             return (TVar)value!;
@@ -36,13 +40,13 @@ internal sealed class WcInterpreterContext<TData>(
     }
 
     /// <inheritdoc />
-    public void SetVariable<TVar>(Variable<TVar> key, TVar value)
+    public void SetVariable<TVar>(Handle<TVar> key, TVar value)
     {
         _locals[key.Name] = value;
     }
 
     /// <inheritdoc />
-    public bool TryGetVariable<TVar>(Variable<TVar> key, out TVar value)
+    public bool TryGetVariable<TVar>(Handle<TVar> key, out TVar value)
     {
         if (_locals.TryGetValue(key.Name, out var obj))
         {
@@ -58,8 +62,8 @@ internal sealed class WcInterpreterContext<TData>(
     }
 
     /// <inheritdoc />
-    public IActivityContext<TData> CreateChildScope()
+    public IExecutionContext<TData> CreateChildScope()
     {
-        return new WcInterpreterContext<TData>(data, state, cancellationToken, this);
+        return new WcInterpreterContext<TData>(data, state, cancellationToken, services, this);
     }
 }

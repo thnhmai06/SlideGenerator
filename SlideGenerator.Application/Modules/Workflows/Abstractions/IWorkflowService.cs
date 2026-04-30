@@ -9,11 +9,11 @@ namespace SlideGenerator.Application.Modules.Workflows.Abstractions;
 public interface IWorkflowService
 {
     /// <summary>Returns all currently active workflow snapshots.</summary>
-    IEnumerable<WorkflowSnapshot> Workflows { get; }
+    IEnumerable<WorkflowSnapshot> Active { get; }
 
     /// <summary>Starts a new workflow instance with the supplied data and returns its assigned identifier.</summary>
     Task<string> RunAsync<TDef, TData>(TData data, CancellationToken ct = default)
-        where TDef : IWorkflowDefinition<TData>, new()
+        where TDef : IWorkflow<TData>, new()
         where TData : class, new();
 
     /// <summary>Suspends the workflow with the given identifier.</summary>

@@ -20,10 +20,10 @@ namespace SlideGenerator.Application.Services.Generating.Workflows.Activities;
 ///     <b>CancellationToken:</b> not required — all data is read from pre-scanned in-memory summaries.
 /// </remarks>
 public sealed class SimplyInstructions(
-    Variable<WorksheetIdentifier> worksheetVar) : ILeafActivity<GeneratingRequest>
+    Handle<WorksheetIdentifier> worksheetVar)
 {
     /// <inheritdoc />
-    public Task ExecuteAsync(IActivityContext<GeneratingRequest> context)
+    public Task ExecuteAsync(IExecutionContext<GeneratingRequest> context)
     {
         var data = context.Data;
         var worksheet = context.GetVariable(worksheetVar);

@@ -25,10 +25,10 @@ namespace SlideGenerator.Application.Services.Scanning.Workflows.Activities;
 public sealed class ScanPresentation(
     FileRegistry<IPresentation> presentationRegistry,
     ITextComposer textComposer,
-    Variable<PresentationIdentifier> presentationVar) : ILeafActivity<object>
+    Handle<PresentationIdentifier> presentationVar)
 {
     /// <inheritdoc />
-    public async Task ExecuteAsync(IActivityContext<object> context)
+    public async Task ExecuteAsync(IExecutionContext<object> context)
     {
         var fullPath = Path.GetFullPath(context.GetVariable(presentationVar).FilePath);
 

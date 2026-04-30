@@ -1,4 +1,4 @@
-using SlideGenerator.Application.Modules.Workflows.DSL.Nodes;
+using SlideGenerator.Application.Modules.Workflows.DSL.Activities;
 
 namespace SlideGenerator.Application.Modules.Workflows.DSL;
 
@@ -7,7 +7,7 @@ namespace SlideGenerator.Application.Modules.Workflows.DSL;
 ///     Infrastructure translates this tree into a concrete execution engine.
 /// </summary>
 /// <typeparam name="TData">The workflow data type.</typeparam>
-public interface IWorkflowDefinition<TData>
+public interface IWorkflow<TData>
 {
     /// <summary>Gets the unique workflow identifier used for registration and lookup.</summary>
     string Id { get; }
@@ -16,5 +16,5 @@ public interface IWorkflowDefinition<TData>
     int Version { get; }
 
     /// <summary>Builds and returns the root node of the workflow activity tree.</summary>
-    WorkflowNode Build();
+    Activity<TData> Build();
 }

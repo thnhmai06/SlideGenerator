@@ -4,17 +4,15 @@ using WorkflowCore.Interface;
 namespace SlideGenerator.Infrastructure.Workflows.Adapters;
 
 /// <summary>
-///     Bridges an <see cref="IWorkflowDefinition{TData}" /> to WorkflowCore's <see cref="IWorkflow{TData}" />
+///     Bridges an <see cref="Application.Modules.Workflows.DSL.IWorkflow{TData}" /> to WorkflowCore's <see cref="WorkflowCore.Interface.IWorkflow{TData}" />
 ///     by building a single <see cref="WcInterpreterStep{TDef,TData}" /> step as the workflow body.
 /// </summary>
-public sealed class WcWorkflowAdapter<TDef, TData> : IWorkflow<TData>
-    where TDef : IWorkflowDefinition<TData>, new()
+public sealed class WcWorkflowAdapter<TDef, TData>(TDef def) : WorkflowCore.Interface.IWorkflow<TData>
+    where TDef : Application.Modules.Workflows.DSL.IWorkflow<TData>
     where TData : class, new()
 {
-    private static readonly TDef Def = new();
-
-    public string Id => Def.Id;
-    public int Version => Def.Version;
+    public string Id => def.Id;
+    public int Version => def.Version;
 
     public void Build(IWorkflowBuilder<TData> builder)
     {

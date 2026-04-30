@@ -10,9 +10,9 @@ namespace SlideGenerator.Application.Modules.Resources.Services;
 ///     Concurrency gate for <see cref="GateType" /> that resolves per-gate slot limits
 ///     from <see cref="ISettingProvider" />.
 /// </summary>
-public sealed class GateLocker(ISettingProvider settingProvider) : IDisposable
+public sealed class GateLocker<TGate>(Func<TGate, int> resolver) : IDisposable where TGate : notnull
 {
-    private readonly ConcurrentDictionary<GateType, SemaphoreSlim> _semaphores = new();
+    private readonly ConcurrentDictionary<TGate, SemaphoreSlim> _semaphores = new();
 
     public void Dispose()
     {
@@ -20,19 +20,11 @@ public sealed class GateLocker(ISettingProvider settingProvider) : IDisposable
         _semaphores.Clear();
     }
 
-    public async ValueTask<ILock> LockAsync(GateType key, CancellationToken ct = default)
+    public async ValueTask<ILock> LockAsync(TGate key, CancellationToken ct = default)
     {
         var semaphore = _semaphores.GetOrAdd(key, k =>
         {
-            var job = settingProvider.Current.Job;
-            var limit = k switch
-            {
-                GateType.Download => job.MaxConcurrentDownloadFlows,
-                GateType.EditImage => job.MaxConcurrentImageEditingFlows,
-                GateType.EditSlide => job.MaxConcurrentSlideEditingFlows,
-                _ => 5
-            };
-
+            var limit = resolver(k);
             return new SemaphoreSlim(Math.Max(1, limit), Math.Max(1, limit));
         });
 

@@ -13,9 +13,9 @@ using TextInstruction = SlideGenerator.Application.Services.Generating.Models.Te
 namespace SlideGenerator.Application.Services.Generating.Workflows;
 
 /// <summary>
-///     Declares all <see cref="Variable{T}" /> identifiers used in <see cref="GeneratingWorkflow" />.
+///     Declares all <see cref="Handle{T}" /> identifiers used in <see cref="GeneratingWorkflow" />.
 ///     Each variable is a stateless-typed key — values are stored in and retrieved from the
-///     <see cref="IActivityContext" /> scope chain at runtime.
+///     <see cref="IExecutionContext" /> scope chain at runtime.
 /// </summary>
 /// <remarks>
 ///     <b>Variables are the persistence units of the workflow.</b> All computed states are stored in Variables
@@ -39,24 +39,24 @@ public static class VariablesDeclaration
     /// <summary>
     ///     Workbook scan results keyed by normalized file path.
     ///     Initialized as an empty <see cref="ConcurrentDictionary{TKey,TValue}" /> by the opening
-    ///     <c>InlineNode</c> and populated by <c>ScanWorkbook</c> activities.
+    ///     <c>Inline</c> and populated by <c>ScanWorkbook</c> activities.
     /// </summary>
-    public static readonly Variable<ConcurrentDictionary<string, WorkbookSummary>>
+    public static readonly Handle<ConcurrentDictionary<string, WorkbookSummary>>
         WorkbookSummaries = ScanningVariables.WorkbookSummaries;
 
     /// <summary>
     ///     Presentation scan results keyed by normalized file path.
     ///     Initialized as an empty <see cref="ConcurrentDictionary{TKey,TValue}" /> by the opening
-    ///     <c>InlineNode</c> and populated by <c>ScanPresentation</c> activities.
+    ///     <c>Inline</c> and populated by <c>ScanPresentation</c> activities.
     /// </summary>
-    public static readonly Variable<ConcurrentDictionary<string, PresentationSummary>>
+    public static readonly Handle<ConcurrentDictionary<string, PresentationSummary>>
         PresentationSummaries = ScanningVariables.PresentationSummaries;
 
     /// <summary>
     ///     Filtered list of worksheet identifiers confirmed to exist in their respective workbooks.
     ///     Set once after the initial parallel scans are complete.
     /// </summary>
-    public static readonly Variable<List<WorksheetIdentifier>>
+    public static readonly Handle<List<WorksheetIdentifier>>
         WorksheetKeys = new(nameof(WorksheetKeys));
 
     // =========================================================================
@@ -64,19 +64,19 @@ public static class VariablesDeclaration
     // =========================================================================
 
     /// <summary>The workbook being scanned in the workbook scan ForEach loop.</summary>
-    public static readonly Variable<WorkbookIdentifier> WorkbookItem = ScanningVariables.WorkbookItem;
+    public static readonly Handle<WorkbookIdentifier> WorkbookItem = ScanningVariables.WorkbookItem;
 
     /// <summary>The presentation being scanned in the presentation scan ForEach loop.</summary>
-    public static readonly Variable<PresentationIdentifier> PresentationItem = ScanningVariables.PresentationItem;
+    public static readonly Handle<PresentationIdentifier> PresentationItem = ScanningVariables.PresentationItem;
 
     /// <summary>The current worksheet being processed in the outer worksheet ForEach loop.</summary>
-    public static readonly Variable<WorksheetIdentifier> WorksheetItem = new(nameof(WorksheetItem));
+    public static readonly Handle<WorksheetIdentifier> WorksheetItem = new(nameof(WorksheetItem));
 
     /// <summary>The current row context being processed in the sequential row ForEach loop.</summary>
-    public static readonly Variable<RowIdentifier> RowItem = new(nameof(RowItem));
+    public static readonly Handle<RowIdentifier> RowItem = new(nameof(RowItem));
 
     /// <summary>The current row task being processed in the download or edit ForEach loops.</summary>
-    public static readonly Variable<RowTask> RowTaskItem = new(nameof(RowTaskItem));
+    public static readonly Handle<RowTask> RowTaskItem = new(nameof(RowTaskItem));
 
     // =========================================================================
     // Worksheet scope (set by SimplyInstructions and CreateWorkingPresentation)
@@ -86,32 +86,32 @@ public static class VariablesDeclaration
     ///     1-based row indices to process for this worksheet.
     ///     Set by <c>SimplyInstructions</c> from the scanned workbook row count.
     /// </summary>
-    public static readonly Variable<List<int>> RowIndices = new(nameof(RowIndices));
+    public static readonly Handle<List<int>> RowIndices = new(nameof(RowIndices));
 
     /// <summary>
     ///     Text replacement instructions applicable to this worksheet's columns.
     ///     Set by <c>SimplyInstructions</c>; read by <c>EditSlide</c>.
     /// </summary>
-    public static readonly Variable<List<TextInstruction>> RowTextInstructions = new(nameof(RowTextInstructions));
+    public static readonly Handle<List<TextInstruction>> RowTextInstructions = new(nameof(RowTextInstructions));
 
     /// <summary>
     ///     Image replacement instructions applicable to this worksheet's columns.
     ///     Set by <c>SimplyInstructions</c>; used to build the download ForEach item list.
     /// </summary>
-    public static readonly Variable<List<ImageInstruction>> RowImageInstructions = new(nameof(RowImageInstructions));
+    public static readonly Handle<List<ImageInstruction>> RowImageInstructions = new(nameof(RowImageInstructions));
 
     /// <summary>
     ///     Absolute path of the output presentation file for this worksheet.
     ///     Set by <c>CreateWorkingPresentation</c>.
     /// </summary>
-    public static readonly Variable<string> OutputPath = new(nameof(OutputPath));
+    public static readonly Handle<string> OutputPath = new(nameof(OutputPath));
 
     /// <summary>
     ///     Identifier of the template slide (index 1) in the working presentation copy.
     ///     Set by <c>CreateWorkingPresentation</c>; read by <c>CloneTemplateSlide</c>, <c>EditSlide</c>,
     ///     and <c>RemoveWorkingTemplateSlide</c>.
     /// </summary>
-    public static readonly Variable<SlideIdentifier> WorkingTemplateSlide = new(nameof(WorkingTemplateSlide));
+    public static readonly Handle<SlideIdentifier> WorkingTemplateSlide = new(nameof(WorkingTemplateSlide));
 
     // =========================================================================
     // Worksheet scope (set per worksheet; persists across Phase A and Phase B)
@@ -121,7 +121,7 @@ public static class VariablesDeclaration
     ///     Per-row map of resolved image instructions, keyed by a 1-based row index.
     ///     Populated during Phase A (download loop); read during Phase B (slide edit loop).
     /// </summary>
-    public static readonly Variable<Dictionary<int, List<SpecializedInstruction>>>
+    public static readonly Handle<Dictionary<int, List<SpecializedInstruction>>>
         RowInstructionsMap = new(nameof(RowInstructionsMap));
 
     // =========================================================================
@@ -134,6 +134,6 @@ public static class VariablesDeclaration
     ///     activities; saved to <see cref="RowInstructionsMap" /> after downloads, then restored per row in Phase B
     ///     for <c>EditSlide</c> to consume.
     /// </summary>
-    public static readonly Variable<List<SpecializedInstruction>>
+    public static readonly Handle<List<SpecializedInstruction>>
         SpecializedInstructions = new(nameof(SpecializedInstructions));
 }

@@ -29,10 +29,10 @@ public sealed class DownloadImage(
     FileRegistry<IReadOnlyWorkbook> workbookRegistry,
     DownloadRegistry downloadRegistry,
     ISettingProvider settings,
-    Variable<RowTask> rowTaskVar) : ILeafActivity<GeneratingRequest>
+    Handle<RowTask> rowTaskVar)
 {
     /// <inheritdoc />
-    public async Task ExecuteAsync(IActivityContext<GeneratingRequest> context)
+    public async Task ExecuteAsync(IExecutionContext<GeneratingRequest> context)
     {
         var rowTask = context.GetVariable(rowTaskVar);
 
