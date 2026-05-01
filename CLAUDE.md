@@ -30,68 +30,52 @@ SDK: .NET 10.0 (`global.json` pins to `latestMajor`).
 - `Services/`: Feature orchestration (Generating, Scanning).
 - Internal folder convention: `Abstractions/`, `Entities/`, `Models/`, `Rules/`, `Services/`, `Activities/`, `Workflows/`.
 
-## Workflow DSL (Application Layer)
+## Workflow System (WorkflowCore)
 
-The DSL resides in `Modules/Workflows/DSL/`. Interpretation happens in Infrastructure via `WcWorkflowService` and `WcInterpreterStep`.
+The system uses **WorkflowCore** directly for orchestration.
 
-**Core Nodes**: `Activity<T>`, `Sequence<T>`, `Parallel<T>`, `ForEach<TItem, TData>`, `Try<TData>`, `GateWrapper<TGate, TData>`, `Inline<TData>`, `Condition<TData>`.
+**Core Steps**: `AcquireSlotStep`, `ReleaseSlotStep`, and specific domain activities (e.g., `ScanWorkbook`, `DownloadImage`).
 
-**Variable System**:
-- `Handle<T>` is a stateless typed key. Only for checkpoint-able values — never store transient handles (leases, streams) in Variables.
-- `ForEach` creates a child scope for isolation.
-- Activities are executed via `Inline<TData>.Activity<TActivity>()`, which resolves the activity from DI and executes it.
-- Lambdas in `Inline` or `Condition` access `context.Data` (typed) directly.
+**Data Persistence**:
+- Workflows use strongly-typed data classes (e.g., `ScanningData`, `GeneratingData`).
+- State is persisted via these classes; use `ConcurrentDictionary` for parallel safety.
+- normalized absolute file paths are preferred as dictionary keys.
 
-## Execution State Model (`Modules/Workflows/Models/States/`)
-
-| Type | Role |
-|---|---|
-| `ExecutionSnapshot` | Abstract base; carries `Payload`, `Context`, `Status`, `Logger`, child `Activities`. |
-| `WorkflowSnapshot` | Top-level workflow snapshot. |
-| `ActivitySnapshot` | Per-activity snapshot. |
-| `IExecutionPayload` | Named get/set store for checkpoint-able values (string-keyed). |
-| `IExecutionContext` | Marker interface for transient runtime-only state. Implementations add fields for live resources (leases, handles) and provide `IServiceProvider`. |
-
-Derived generating snapshots (`GeneratingSnapshot`, `WorkbookSnapshot`, `WorksheetSnapshot`) live in `Services/Generating/Models/States/`.
-
-**`WorksheetContext`** (`IExecutionContext`) is the only concrete context so far — holds `PresentationLease` for Phase B slide editing.
+**Error Resilience**:
+- All data classes include an `Errors` dictionary: `ConcurrentDictionary<string, Exception> Errors`.
+- Activities use `try-catch` to capture full `Exception` objects, allowing partial success in parallel loops.
 
 ## Development Patterns
 
-### Registry & Leasing
-- Always acquire resources via `Registry<TKey, TResource>.AcquireAsync()`.
-- Returns `Lease<T>` (disposable). Use `await using` for short-lived leases.
-- For leases that must survive across multiple activities, store on the scope's `IExecutionContext` implementation (e.g., `WorksheetContext.PresentationLease`), not in `Handle<T>`.
+### Activity (StepBody)
+- Inherit from `StepBody` or `StepBodyAsync`.
+- Activities are **Singletons** — inject services via constructor.
+- Inputs/Outputs are mapped in the workflow's `Build` method.
 
-### Transient State via IExecutionContext
-- Transient resources (open file handles, in-flight locks) live on `IExecutionContext` implementations, not in the `Handle<T>` system.
-- The first activity that needs the resource acquires it lazily; the last one disposes and nulls it.
-- Access via `((ConcreteSnapshot)context.State).Context.FieldName`.
+### PresentationStepBase
+- Specialized base class for PowerPoint activities.
+- Ensures `FileRegistry` leases are always disposed of, even on failure.
+
+### Workflow Control
+- `IGeneratingService` and `IScanningService` support `Stop`, `Pause`, and `Resume` operations via the underlying `IWorkflowHost`.
+
+### Registry & Leasing
+- Always acquire resources via `FileRegistry<TResource>.AcquireAsync()`.
+- Returns `Lease<T>` (disposable). Use `await using` for short-lived leases.
 
 ### Locking
 - `FileLocker`: file-path-based reader-writer lock. Exposes `ReadLockAsync` / `WriteLockAsync`.
-- `GateLocker`: semaphore-based concurrency limit per `GateType`. Exposes `LockAsync` only (no read/write distinction).
-- `ISlotLocker<TKey>` has been removed — do not reintroduce it.
+- `GateLocker`: semaphore-based concurrency limit per `GateType`. Exposes `LockAsync` only.
 
-### Service Injection in Activities & Workflows
-- Activities are Singletons — inject services via constructor.
-- Workflows inject `IServiceProvider` via constructor and resolve required services (like `GateLocker` or other Workflows) from it.
-- Workflows also have a parameterless constructor for metadata registration.
+### Service Injection
+- Workflows inject `IServiceProvider` via constructor and resolve dependencies from it.
+- Workflows must have a parameterless constructor for registration.
 
-### Invariants
-- **No Direct Engine Reference**: Application must not reference WorkflowCore or other infrastructure libraries.
-- **Orchestration in DSL**: Loops, parallel tasks, and error isolation (`Try`) belong in the workflow definition, not in leaf activities.
-- **Stateless Activities**: Activities are Singletons; all runtime state goes through `IExecutionContext` (variables or transient context).
-- **Logging**: Use `context.Snapshot.Logger.AddLog(...)`.
-- **Async**: Use `ConfigureAwait(false)` in all library/service code.
-
-## System Invariants Checklist
+## Invariants Checklist
 - [ ] Domain has zero dependencies on other layers.
-- [ ] Application has zero dependencies on Infrastructure libraries.
-- [ ] Activities implement `Activity<TData>` (implicitly via `Inline.Activity`).
+- [ ] Application has zero dependencies on Infrastructure libraries (except WorkflowCore interface).
+- [ ] Activities inherit from `StepBody` or `StepBodyAsync`.
 - [ ] Workflows implement `IWorkflow<TData>`.
 - [ ] Async code uses `ConfigureAwait(false)`.
-- [ ] Every Activity corresponds to a disk I/O or state boundary.
 - [ ] Use `record` for data, `sealed` for logic by default.
-- [ ] Transient resources (leases, handles) are stored on `IExecutionContext`, never in `Handle<T>`.
-- [ ] Services are injected via constructor.
+- [ ] Services are injected via constructor in Activities.

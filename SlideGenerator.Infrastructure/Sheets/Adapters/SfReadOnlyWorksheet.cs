@@ -10,8 +10,16 @@ namespace SlideGenerator.Infrastructure.Sheets.Adapters;
 /// </summary>
 public sealed class SfReadOnlyWorksheet : IReadOnlyWorksheet
 {
+    /// <summary>
+    ///     The underlying Syncfusion worksheet instance.
+    /// </summary>
     private readonly SfXlsIO.IWorksheet _core;
 
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="SfReadOnlyWorksheet" /> class.
+    /// </summary>
+    /// <param name="workbook">The parent workbook adapter.</param>
+    /// <param name="core">The underlying Syncfusion worksheet instance.</param>
     internal SfReadOnlyWorksheet(SfReadOnlyWorkbook workbook, SfXlsIO.IWorksheet core)
     {
         Workbook = workbook;
@@ -21,6 +29,9 @@ public sealed class SfReadOnlyWorksheet : IReadOnlyWorksheet
         RowsCount = ComputeRowsCount();
     }
 
+    /// <summary>
+    ///     Gets the used range of cells in the worksheet.
+    /// </summary>
     private SfXlsIO.IRange? UsedRange => _core.UsedRange;
 
     /// <inheritdoc />
@@ -67,6 +78,10 @@ public sealed class SfReadOnlyWorksheet : IReadOnlyWorksheet
         return result;
     }
 
+    /// <summary>
+    ///     Parses the headers from the first used row of the worksheet.
+    /// </summary>
+    /// <returns>A list of header names.</returns>
     private IReadOnlyList<string> ParseHeaders()
     {
         var used = UsedRange;
@@ -84,6 +99,10 @@ public sealed class SfReadOnlyWorksheet : IReadOnlyWorksheet
         return headers;
     }
 
+    /// <summary>
+    ///     Computes the number of data rows in the worksheet (excluding the header row).
+    /// </summary>
+    /// <returns>The number of data rows.</returns>
     private int ComputeRowsCount()
     {
         var used = UsedRange;

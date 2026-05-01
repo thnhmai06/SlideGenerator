@@ -16,7 +16,7 @@ public sealed class StreamTextFile : ITextFile
     /// <summary>
     ///     Object used for thread-safe synchronization of stream operations.
     /// </summary>
-    private readonly Lock _syncRoot = new();
+    private readonly object _syncRoot = new();
 
     /// <summary>
     ///     Indicates whether this instance has been disposed.
@@ -45,23 +45,12 @@ public sealed class StreamTextFile : ITextFile
     }
 
     /// <inheritdoc />
-    /// <summary>
-    ///     Gets a value indicating whether the file is editable.
-    /// </summary>
     public bool IsEditable { get; }
 
     /// <inheritdoc />
-    /// <summary>
-    ///     Gets the full file path.
-    /// </summary>
     public string FilePath { get; }
 
     /// <inheritdoc />
-    /// <summary>
-    ///     Reads the entire content of the file.
-    /// </summary>
-    /// <returns>The file's content as a <see cref="string" />.</returns>
-    /// <exception cref="ObjectDisposedException">Thrown if the instance is disposed.</exception>
     public string Read()
     {
         lock (_syncRoot)
@@ -80,12 +69,6 @@ public sealed class StreamTextFile : ITextFile
     }
 
     /// <inheritdoc />
-    /// <summary>
-    ///     Writes content to the file, overwriting any existing data.
-    /// </summary>
-    /// <param name="content">The content to write.</param>
-    /// <exception cref="ObjectDisposedException">Thrown if the instance is disposed.</exception>
-    /// <exception cref="InvalidOperationException">Thrown if the file is opened in read-only mode.</exception>
     public void Write(string? content)
     {
         lock (_syncRoot)
@@ -109,9 +92,6 @@ public sealed class StreamTextFile : ITextFile
     }
 
     /// <inheritdoc />
-    /// <summary>
-    ///     Closes the file stream and releases all associated resources.
-    /// </summary>
     public void Dispose()
     {
         lock (_syncRoot)
@@ -125,10 +105,6 @@ public sealed class StreamTextFile : ITextFile
         }
     }
 
-    /// <summary>
-    ///     Throws an <see cref="ObjectDisposedException" /> if the instance is disposed.
-    /// </summary>
-    /// <exception cref="ObjectDisposedException">Thrown if the instance is disposed.</exception>
     private void ThrowIfDisposed()
     {
         if (_disposed)

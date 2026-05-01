@@ -9,33 +9,54 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3a1f1c77-0578-40bf-9d5d-a0e8452562c2" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/DSL/Activities/Activity.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/DSL/Activities/Condition.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/DSL/Activities/ForEach.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/DSL/Activities/GateWrapper.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/DSL/Activities/Inline.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/DSL/Activities/Parallel.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/DSL/Activities/Sequence.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/DSL/Activities/Try.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Lock/Services/GateLocker.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Registry/Interfaces/FileRegistry.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/conductor/tracks/replace-activity-node/plan.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.SlideGenerator/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.SlideGenerator/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/CLAUDE.md" beforeDir="false" afterPath="$PROJECT_DIR$/CLAUDE.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/INSTRUCTIONS.MD" beforeDir="false" afterPath="$PROJECT_DIR$/INSTRUCTIONS.MD" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Resources/Services/GateLocker.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Resources/Services/GateLocker.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/Abstractions/IWorkflowService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/Abstractions/IWorkflowService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/DSL/IActivityContext.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/DSL/IExecutionContext.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/DSL/ILeafActivity.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/DSL/IWorkflowDefinition.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/DSL/IWorkflow.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/DSL/Nodes/ActivityNode.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/DSL/Nodes/ForEachNode.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/DSL/Nodes/GateNode.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/DSL/Nodes/IfNode.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/DSL/Nodes/InlineNode.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/DSL/Nodes/ParallelNode.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/DSL/Nodes/SequenceNode.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/DSL/Nodes/TryNode.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/DSL/Nodes/WorkflowNode.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/DSL/Variable.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/DSL/Handle.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/Services/WorkflowInterpreter.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Cloud/Services/CloudResolversManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Cloud/Services/CloudResolversManager.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Cloud/Services/GoogleDriveResolver.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Cloud/Services/GoogleDriveResolver.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Cloud/Services/GooglePhotosResolver.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Cloud/Services/GooglePhotosResolver.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Download/Entities/Downloader.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Download/Entities/Downloader.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Download/Services/DownloadRegistry.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Download/Services/DownloadRegistry.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Images/Services/FaceDetectorsManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Images/Services/FaceDetectorsManager.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Resources/Entities/GateLock.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Resources/Entities/Lease.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Registry/Entities/Lease.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Resources/Interfaces/ILock.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Resources/Interfaces/ILocker.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Resources/Services/FileLocker.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Resources/Services/FileRegistry.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Resources/Services/GateLocker.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Resources/Services/Registry.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Settings/Services/SettingManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Settings/Services/SettingManager.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/Abstractions/IWorkflowService.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/DSL/Activities/Activity.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/DSL/Activities/Condition.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/DSL/Activities/ForEach.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/DSL/Activities/GateWrapper.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/DSL/Activities/Inline.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/DSL/Activities/Parallel.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/DSL/Activities/Sequence.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/DSL/Activities/Try.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/DSL/Handle.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/DSL/IExecutionContext.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/DSL/IWorkflow.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/Models/Logging/LogEntry.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/Models/Logging/LogLevel.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/Models/Logging/Logger.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/Models/States/ActivitySnapshot.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/Models/States/ExecutionSnapshot.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/Models/States/IExecutionContext.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/Models/States/IExecutionPayload.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/Models/States/WorkflowSnapshot.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/Models/Status.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Models/States/GeneratingSnapshot.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Models/States/WorkbookSnapshot.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Models/States/WorksheetContext.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Models/States/WorksheetSnapshot.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Rules/GateType.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Rules/GateType.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Rules/NamingRules.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Rules/NamingRules.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Workflows/Activities/CloneTemplateSlide.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Workflows/Activities/CloneTemplateSlide.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Workflows/Activities/CreateWorkingPresentation.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Workflows/Activities/CreateWorkingPresentation.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Workflows/Activities/DownloadImage.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Workflows/Activities/DownloadImage.cs" afterDir="false" />
@@ -44,17 +65,39 @@
       <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Workflows/Activities/RemoveWorkingTemplateSlide.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Workflows/Activities/RemoveWorkingTemplateSlide.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Workflows/Activities/SimplyInstructions.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Workflows/Activities/SimplyInstructions.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Workflows/GeneratingWorkflow.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Workflows/GeneratingWorkflow.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Workflows/VariablesDeclaration.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Workflows/VariablesDeclaration.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Workflows/Models/RowTask.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Workflows/Models/RowTask.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Generating/Workflows/VariablesDeclaration.cs" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Scanning/Workflows/Activities/ScanPresentation.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Scanning/Workflows/Activities/ScanPresentation.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Scanning/Workflows/Activities/ScanWorkbook.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Scanning/Workflows/Activities/ScanWorkbook.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Scanning/Workflows/ScanningVariables.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Scanning/Workflows/ScanningVariables.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Scanning/Workflows/ScanningVariables.cs" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/Services/Scanning/Workflows/ScanningWorkflow.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/Services/Scanning/Workflows/ScanningWorkflow.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/SlideGenerator.Application/SlideGenerator.Application.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Application/SlideGenerator.Application.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/Adapters/WcInterpreterContext.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/Adapters/WcInterpreterContext.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/Adapters/WcInterpreterStep.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/Adapters/WcInterpreterStep.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/Adapters/WcWorkflowAdapter.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/Adapters/WcWorkflowAdapter.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/Adapters/WcWorkflowService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/Adapters/WcWorkflowService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.sln.DotSettings.user" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.sln.DotSettings.user" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Images/Entities/CenterRoi.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Images/Entities/CenterRoi.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Domain/Settings/Entities/Setting.JobConfig.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Domain/Settings/Entities/Setting.JobConfig.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Resources/Adapters/AsyncKeyedLock.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Resources/Adapters/AsyncKeyedLocker.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Settings/Adapters/StreamTextFile.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Settings/Adapters/StreamTextFile.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Settings/Services/TextFileRegistry.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Settings/Services/TextFileRegistry.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Sheets/Adapters/SfReadOnlyWorkbook.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Sheets/Adapters/SfReadOnlyWorkbook.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Sheets/Adapters/SfReadOnlyWorksheet.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Sheets/Adapters/SfReadOnlyWorksheet.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Sheets/Services/SfWorkbookRegistry.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Sheets/Services/SfWorkbookRegistry.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/SlideGenerator.Infrastructure.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/SlideGenerator.Infrastructure.csproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slides/Adapters/SfPresentation.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slides/Adapters/SfPresentation.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slides/Adapters/SfShape.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slides/Adapters/SfShape.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slides/Adapters/SfSlide.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slides/Adapters/SfSlide.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slides/Services/BlipFillComposer.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slides/Services/Xml/BlipFillComposer.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slides/Services/ImageComposer.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slides/Services/Xml/ImageComposer.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slides/Services/MustacheComposer.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slides/Services/Xml/MustacheComposer.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slides/Services/PictureComposer.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slides/Services/Xml/PictureComposer.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slides/Services/SfPresentationRegistry.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slides/Services/SfPresentationRegistry.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slides/Services/SfTextComposer.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slides/Services/SfTextComposer.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slides/Services/XmlPresentationRegistry.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Slides/Services/Xml/XmlPresentationRegistry.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/Adapters/WcExecutionPayload.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/Adapters/WcInterpreterContext.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/Adapters/WcInterpreterStep.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/Adapters/WcWorkflowAdapter.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/Adapters/WcWorkflowService.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Infrastructure/Workflows/WorkflowSnapshotRegistry.cs" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -77,13 +120,14 @@
     </selectedModels>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="119" />
+    <option name="cachedIndexableFilesCount" value="106" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="editable-svg" />
+        <option value="JSON File" />
       </list>
     </option>
   </component>
@@ -158,6 +202,7 @@
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/f8933dc0151257bf474678ae93838fb9978d7b6fe81d878b68a1c61350bc4026/DownloadStartedEventArgs.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/fad14b43e4819e65f7bd431c7e5f027e2c383e35d9ed8de5d5fc66adc971/MustacheTemplate.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/.claude/settings.local.json" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/SlideGenerator.Application/Modules/Workflows/Utilities.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Domain/Settings/Rules/NamingRules.cs" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="McpProjectServerCommands">
@@ -298,6 +343,7 @@
       <workItem from="1777443400212" duration="20232000" />
       <workItem from="1777479570691" duration="15672000" />
       <workItem from="1777523923636" duration="12539000" />
+      <workItem from="1777638186493" duration="6203000" />
     </task>
     <task id="LOCAL-00001" summary="feat: update LoadPresentation workflow&#10;&#10;- Updated LoadPresentation class to enhance documentation and streamline presentation preparation workflow (improves clarity and maintainability).">
       <option name="closed" value="true" />
@@ -603,7 +649,23 @@
       <option name="project" value="LOCAL" />
       <updated>1777535885407</updated>
     </task>
-    <option name="localTasksCounter" value="39" />
+    <task id="LOCAL-00039" summary="```text&#10;refactor(workflows): replace centralized interpreter with self-executing activity DSL&#10;&#10;- Removed the centralized `WorkflowInterpreter` and record-based DSL nodes (e.g., `SequenceNode`, `ForEachNode`, `TryNode`).&#10;- Introduced an object-oriented `Activity&lt;TData&gt;` base class with self-executing implementations (`Sequence`, `Parallel`, `ForEach`, `Try`, `Condition`, `Inline`, `GateWrapper`).&#10;- Renamed `Variable&lt;T&gt;` to `Handle&lt;T&gt;` to better represent workflow-scoped references.&#10;- Renamed `IActivityContext` to `IExecutionContext`, renaming the `State` property to `Snapshot` and exposing an `IServiceProvider` for internal dependency resolution.&#10;- Renamed `IWorkflowDefinition` to `IWorkflow` and updated implementations to construct activity trees using the new DSL.&#10;- Refactored `GateLocker` to be a generic `GateLocker&lt;TGate&gt;` that accepts a resolver function for determining concurrency limits.&#10;- Updated all leaf activities to implement `Activity&lt;TData&gt;` instead of `ILeafActivity&lt;TData&gt;`.&#10;- Updated WorkflowCore infrastructure adapters (`WcWorkflowService`, `WcInterpreterStep`, `WcInterpreterContext`) to support the new interface types and execute the activity tree directly.&#10;- Updated architectural documentation (`INSTRUCTIONS.MD`, `CLAUDE.md`) to reflect the new terminology and scope management guidelines.&#10;```">
+      <option name="closed" value="true" />
+      <created>1777567531736</created>
+      <option name="number" value="00039" />
+      <option name="presentableId" value="LOCAL-00039" />
+      <option name="project" value="LOCAL" />
+      <updated>1777567531736</updated>
+    </task>
+    <task id="LOCAL-00040" summary="refactor(workflows): replace centralized interpreter with self-executing activity DSL&#10;&#10;- Removed the centralized `WorkflowInterpreter` and record-based DSL nodes (e.g., `SequenceNode`, `ForEachNode`, `TryNode`).&#10;- Introduced an object-oriented `Activity&lt;TData&gt;` base class with self-executing implementations (`Sequence`, `Parallel`, `ForEach`, `Try`, `Condition`, `Inline`, `GateWrapper`).&#10;- Renamed `Variable&lt;T&gt;` to `Handle&lt;T&gt;` to better represent workflow-scoped references.&#10;- Renamed `IActivityContext` to `IExecutionContext`, renaming the `State` property to `Snapshot` and exposing an `IServiceProvider` for internal dependency resolution.&#10;- Renamed `IWorkflowDefinition` to `IWorkflow` and updated implementations to construct activity trees using the new DSL.&#10;- Refactored `GateLocker` to be a generic `GateLocker&lt;TGate&gt;` that accepts a resolver function for determining concurrency limits.&#10;- Updated all leaf activities to implement `Activity&lt;TData&gt;` instead of `ILeafActivity&lt;TData&gt;`.&#10;- Updated WorkflowCore infrastructure adapters (`WcWorkflowService`, `WcInterpreterStep`, `WcInterpreterContext`) to support the new interface types and execute the activity tree directly.&#10;- Updated architectural documentation (`INSTRUCTIONS.MD`, `CLAUDE.md`) to reflect the new terminology and scope management guidelines.">
+      <option name="closed" value="true" />
+      <created>1777567541062</created>
+      <option name="number" value="00040" />
+      <option name="presentableId" value="LOCAL-00040" />
+      <option name="project" value="LOCAL" />
+      <updated>1777567541062</updated>
+    </task>
+    <option name="localTasksCounter" value="41" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -639,9 +701,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
-    <MESSAGE value="[skip ci] chore: add copilot-instructions.md" />
-    <MESSAGE value="refactor(download): complete almost workflows for PrepareImages.cs&#10;&#10;- Updated class names for clarity and consistency (improves code readability).&#10;- Refactored DownloadManager to use new class names.&#10;- Enhanced copilot instructions for better architectural guidance." />
-    <MESSAGE value="refactor!(backend): Merge Framework into Domain, Application, Infastructure (part 1)" />
     <MESSAGE value="chore(backend): Make ReadOnlyWorksheet constructor internal" />
     <MESSAGE value="feat(backend): complete generating activities and clean architecture structure &#10;&#10;- Changed ISlide and IImageShape to inherit from ISlideObject (ensures a unified interface structure).&#10;- Updated namespaces in various files to reflect the new structure (improves clarity and organization).&#10;- Renamed methods in ISpecializable to Flatten for better semantic meaning (enhances code readability)." />
     <MESSAGE value="feat(backend): complete generating activities and clean architecture structure&#10;&#10;- Changed ISlide and IImageShape to inherit from ISlideObject (ensures a unified interface structure).&#10;- Updated namespaces in various files to reflect the new structure (improves clarity and organization).&#10;- Renamed methods in ISpecializable to Flatten for better semantic meaning (enhances code readability)." />
@@ -664,7 +723,10 @@
     <MESSAGE value="refactor(workflows)!: transition to variable-based persistence and robust resource locking&#10;&#10;- Replaced `ExecutionState` with `ExecutionSnapshot`, splitting transient context (`IExecutionContext`) from persisted variables (`IExecutionPayload`).&#10;- Eliminated mutable state objects (e.g., `SheetTask`) in favor of strict, scope-based `Variable&lt;T&gt;` persistence for workflow execution.&#10;- Refactored `Registry` implementations to support shared-read/exclusive-write locking using `FileLocker`.&#10;- Introduced `GateLocker`, `GateNode`, and `GateType`, replacing `SlotGatedNode` and `SlotType` for granular concurrency throttling.&#10;- Extracted custom DSL interpretation logic from `WcInterpreterStep` into a dedicated `WorkflowInterpreter` service.&#10;- Updated generation and scanning activities to manage data, instructions, and open file leases exclusively through scope variables.&#10;- Introduced `Lease&lt;T&gt;` and `ILock` abstractions for reliable, strongly-typed resource lifecycle management.&#10;- Updated documentation (INSTRUCTIONS.MD, CLAUDE.md) to reflect new variable scope rules, registry patterns, and strict architectural constraints." />
     <MESSAGE value="[skip ci] chore(backend): reformat and cleanup code" />
     <MESSAGE value="refactor(infrastructure): Transition to Syncfusion libraries for slide and sheet processing&#10;&#10;- Replaced OpenXML and ClosedXML implementations with Syncfusion equivalents (e.g., SfPresentation, SfReadOnlyWorkbook, SfImageComposer, SfTextComposer).&#10;- Moved sheet identifier models (e.g., WorkbookIdentifier, WorksheetIdentifier) to the Models.Identifiers namespace for better organization.&#10;- Introduced GetPreview methods in IReadOnlyWorksheet, IReadOnlySlide, and IReadOnlyShape to generate lightweight visual and data previews.&#10;- Simplified SlidePreview to only retain the index and image, promoting Id and Name metadata to SlideSummary.&#10;- Updated ScanWorkbook and ScanPresentation activities to adopt the new preview rendering approaches.&#10;- Removed the Scan method from IImageComposer as preview extraction is now handled directly by shapes.&#10;- Cleaned up obsolete XML and ClosedXML adapters, services, and the GeneratingService.&#10;- Added Syncfusion packages to the infrastructure project dependencies." />
-    <option name="LAST_COMMIT_MESSAGE" value="refactor(infrastructure): Transition to Syncfusion libraries for slide and sheet processing&#10;&#10;- Replaced OpenXML and ClosedXML implementations with Syncfusion equivalents (e.g., SfPresentation, SfReadOnlyWorkbook, SfImageComposer, SfTextComposer).&#10;- Moved sheet identifier models (e.g., WorkbookIdentifier, WorksheetIdentifier) to the Models.Identifiers namespace for better organization.&#10;- Introduced GetPreview methods in IReadOnlyWorksheet, IReadOnlySlide, and IReadOnlyShape to generate lightweight visual and data previews.&#10;- Simplified SlidePreview to only retain the index and image, promoting Id and Name metadata to SlideSummary.&#10;- Updated ScanWorkbook and ScanPresentation activities to adopt the new preview rendering approaches.&#10;- Removed the Scan method from IImageComposer as preview extraction is now handled directly by shapes.&#10;- Cleaned up obsolete XML and ClosedXML adapters, services, and the GeneratingService.&#10;- Added Syncfusion packages to the infrastructure project dependencies." />
+    <MESSAGE value="refactor(workflows): extract ScanningWorkflow and remove WorkflowTask wrapper&#10;&#10;- Removed `WorkflowTask` class and updated generating activities and nodes to consume `GeneratingRequest` directly.&#10;- Introduced `ScanningWorkflow` and `ScanningRequest` to encapsulate and separate scanning logic from generation.&#10;- Created `ScanningVariables` to define specific variables for scanning, aliasing them within `VariablesDeclaration`.&#10;- Updated `GeneratingWorkflow` to execute the new `ScanningWorkflow` during its initial parallel scanning phase.&#10;- Modified `ScanWorkbook` and `ScanPresentation` activities to implement `ILeafActivity&lt;object&gt;`, improving reusability.&#10;- Added `TryGetVariable` to `IActivityContext` and implemented it in `WcInterpreterContext` for safer variable resolution across nested scopes." />
+    <MESSAGE value="```text&#10;refactor(workflows): replace centralized interpreter with self-executing activity DSL&#10;&#10;- Removed the centralized `WorkflowInterpreter` and record-based DSL nodes (e.g., `SequenceNode`, `ForEachNode`, `TryNode`).&#10;- Introduced an object-oriented `Activity&lt;TData&gt;` base class with self-executing implementations (`Sequence`, `Parallel`, `ForEach`, `Try`, `Condition`, `Inline`, `GateWrapper`).&#10;- Renamed `Variable&lt;T&gt;` to `Handle&lt;T&gt;` to better represent workflow-scoped references.&#10;- Renamed `IActivityContext` to `IExecutionContext`, renaming the `State` property to `Snapshot` and exposing an `IServiceProvider` for internal dependency resolution.&#10;- Renamed `IWorkflowDefinition` to `IWorkflow` and updated implementations to construct activity trees using the new DSL.&#10;- Refactored `GateLocker` to be a generic `GateLocker&lt;TGate&gt;` that accepts a resolver function for determining concurrency limits.&#10;- Updated all leaf activities to implement `Activity&lt;TData&gt;` instead of `ILeafActivity&lt;TData&gt;`.&#10;- Updated WorkflowCore infrastructure adapters (`WcWorkflowService`, `WcInterpreterStep`, `WcInterpreterContext`) to support the new interface types and execute the activity tree directly.&#10;- Updated architectural documentation (`INSTRUCTIONS.MD`, `CLAUDE.md`) to reflect the new terminology and scope management guidelines.&#10;```" />
+    <MESSAGE value="refactor(workflows): replace centralized interpreter with self-executing activity DSL&#10;&#10;- Removed the centralized `WorkflowInterpreter` and record-based DSL nodes (e.g., `SequenceNode`, `ForEachNode`, `TryNode`).&#10;- Introduced an object-oriented `Activity&lt;TData&gt;` base class with self-executing implementations (`Sequence`, `Parallel`, `ForEach`, `Try`, `Condition`, `Inline`, `GateWrapper`).&#10;- Renamed `Variable&lt;T&gt;` to `Handle&lt;T&gt;` to better represent workflow-scoped references.&#10;- Renamed `IActivityContext` to `IExecutionContext`, renaming the `State` property to `Snapshot` and exposing an `IServiceProvider` for internal dependency resolution.&#10;- Renamed `IWorkflowDefinition` to `IWorkflow` and updated implementations to construct activity trees using the new DSL.&#10;- Refactored `GateLocker` to be a generic `GateLocker&lt;TGate&gt;` that accepts a resolver function for determining concurrency limits.&#10;- Updated all leaf activities to implement `Activity&lt;TData&gt;` instead of `ILeafActivity&lt;TData&gt;`.&#10;- Updated WorkflowCore infrastructure adapters (`WcWorkflowService`, `WcInterpreterStep`, `WcInterpreterContext`) to support the new interface types and execute the activity tree directly.&#10;- Updated architectural documentation (`INSTRUCTIONS.MD`, `CLAUDE.md`) to reflect the new terminology and scope management guidelines." />
+    <option name="LAST_COMMIT_MESSAGE" value="refactor(workflows): replace centralized interpreter with self-executing activity DSL&#10;&#10;- Removed the centralized `WorkflowInterpreter` and record-based DSL nodes (e.g., `SequenceNode`, `ForEachNode`, `TryNode`).&#10;- Introduced an object-oriented `Activity&lt;TData&gt;` base class with self-executing implementations (`Sequence`, `Parallel`, `ForEach`, `Try`, `Condition`, `Inline`, `GateWrapper`).&#10;- Renamed `Variable&lt;T&gt;` to `Handle&lt;T&gt;` to better represent workflow-scoped references.&#10;- Renamed `IActivityContext` to `IExecutionContext`, renaming the `State` property to `Snapshot` and exposing an `IServiceProvider` for internal dependency resolution.&#10;- Renamed `IWorkflowDefinition` to `IWorkflow` and updated implementations to construct activity trees using the new DSL.&#10;- Refactored `GateLocker` to be a generic `GateLocker&lt;TGate&gt;` that accepts a resolver function for determining concurrency limits.&#10;- Updated all leaf activities to implement `Activity&lt;TData&gt;` instead of `ILeafActivity&lt;TData&gt;`.&#10;- Updated WorkflowCore infrastructure adapters (`WcWorkflowService`, `WcInterpreterStep`, `WcInterpreterContext`) to support the new interface types and execute the activity tree directly.&#10;- Updated architectural documentation (`INSTRUCTIONS.MD`, `CLAUDE.md`) to reflect the new terminology and scope management guidelines." />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

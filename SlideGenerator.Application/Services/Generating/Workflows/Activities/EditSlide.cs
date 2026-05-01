@@ -1,67 +1,98 @@
-using SlideGenerator.Application.Modules.Resources.Services;
+using SlideGenerator.Application.Modules.Registry.Interfaces;
 using SlideGenerator.Application.Modules.Settings.Interfaces;
 using SlideGenerator.Application.Modules.Slides.Abstractions;
-using SlideGenerator.Application.Modules.Workflows.DSL;
-using SlideGenerator.Application.Services.Generating.Models;
-using SlideGenerator.Application.Services.Generating.Models.States;
 using SlideGenerator.Application.Services.Generating.Rules;
 using SlideGenerator.Domain.Sheets.Entities;
 using SlideGenerator.Domain.Sheets.Models.Identifiers;
+using SlideGenerator.Domain.Slides.Entities.Presentation;
+using SlideGenerator.Domain.Slides.Models.Identifiers;
+using WorkflowCore.Interface;
+using WorkflowCore.Models;
+using ImageSpecializedInstruction = SlideGenerator.Application.Services.Generating.Models.Images.SpecializedInstruction;
+using TextGeneralInstruction = SlideGenerator.Application.Services.Generating.Models.Texts.GeneralInstruction;
 
 namespace SlideGenerator.Application.Services.Generating.Workflows.Activities;
 
 /// <summary>
-///     Replaces Mustache text placeholders and image shapes on the cloned row slide with
-///     values and edited images for the current row.
+///     A workflow activity that populates a cloned slide with text and image data from a specific row.
 /// </summary>
 /// <remarks>
-///     <b>Variables read:</b> <see cref="VariablesDeclaration.RowItem" />,
-///     <see cref="VariablesDeclaration.WorkingTemplateSlide" />,
-///     <see cref="VariablesDeclaration.RowTextInstructions" />,
-///     <see cref="VariablesDeclaration.SpecializedInstructions" />,
-///     <see cref="WorksheetContext.PresentationLease" />.<br />
-///     <b>Services:</b> <see cref="FileRegistry{IReadOnlyWorkbook}" />, <c>ITextComposer</c>,
-///     <c>IImageComposer</c>, <c>ISettingProvider</c>.<br />
-///     <b>Logging:</b> errors propagated as exceptions (caller's <c>TryNode</c> logs them).<br />
-///     <b>CancellationToken:</b> not required (leases already open).
+///     The editing process includes:
+///     <list type="bullet">
+///         <item>
+///             <description>Locating the specific cloned slide within the working presentation.</description>
+///         </item>
+///         <item>
+///             <description>Resolving row-specific text values and replacing placeholders (e.g., {{Name}}) using the <see cref="ITextComposer"/>.</description>
+///         </item>
+///         <item>
+///             <description>Matching processed images to target shapes and injecting them into the slide using the <see cref="IImageComposer"/>.</description>
+///         </item>
+///         <item>
+///             <description>Validating existence of worksheets and shapes before attempting modification.</description>
+///         </item>
+///     </list>
 /// </remarks>
+/// <param name="workbookRegistry">Registry to safely read row data from the workbook.</param>
+/// <param name="presentationRegistry">Registry to manage concurrent write access to the presentation file.</param>
+/// <param name="textComposer">Service to perform text replacement logic.</param>
+/// <param name="imageComposer">Service to perform image injection logic.</param>
+/// <param name="settingProvider">Provider for global application settings.</param>
 public sealed class EditSlide(
     FileRegistry<IReadOnlyWorkbook> workbookRegistry,
+    FileRegistry<IPresentation> presentationRegistry,
     ITextComposer textComposer,
     IImageComposer imageComposer,
-    ISettingProvider settingProvider,
-    Handle<RowIdentifier> rowVar)
+    ISettingProvider settingProvider) : PresentationStepBase(presentationRegistry)
 {
-    /// <inheritdoc />
-    public async Task ExecuteAsync(IExecutionContext<GeneratingRequest> context)
+    /// <summary>
+    ///     Gets or sets the row identifier (worksheet and index) providing the source data.
+    /// </summary>
+    public RowIdentifier Row { get; set; } = null!;
+
+    /// <summary>
+    ///     Gets or sets the original template slide identifier (used for metadata reference).
+    /// </summary>
+    public SlideIdentifier WorkingTemplateSlide { get; set; } = null!;
+
+    /// <summary>
+    ///     Gets or sets the absolute path to the working presentation file.
+    /// </summary>
+    public string OutputPath { get; set; } = null!;
+
+    /// <summary>
+    ///     Gets or sets the list of general text instructions to be applied to this row.
+    /// </summary>
+    public List<TextGeneralInstruction> TextInstructions { get; set; } = [];
+
+    /// <summary>
+    ///     Gets or sets the list of fully resolved image instructions (with local paths) to be applied to this row.
+    /// </summary>
+    public List<ImageSpecializedInstruction> ResolvedImageInstructions { get; set; } = [];
+
+    protected override async Task<ExecutionResult> ExecuteStepAsync(IStepExecutionContext context)
     {
-        var rc = context.GetVariable(rowVar);
-        var slideIdentifier = context.GetVariable(VariablesDeclaration.WorkingTemplateSlide)
-                                  ?.Presentation.GetSlide(WorkflowConstants.WorkingTemplateSlideIndex + rc.Index)
-                              ?? throw new ArgumentException(
-                                  "Template slide must be set in context before replacing slide contents.");
+        var slideIndex = WorkflowConstants.WorkingTemplateSlideIndex + Row.Index;
+        var presentation = await AcquirePresentationAsync(OutputPath, context.CancellationToken).ConfigureAwait(false);
 
-        var presentation = CloneTemplateSlide.GetWorksheetSnapshot(context).Context.PresentationLease!.Value;
-
-        var slide = presentation.EnumerateSlides().ElementAtOrDefault(slideIdentifier.Index - 1)
+        var slide = presentation.EnumerateSlides().ElementAtOrDefault(slideIndex - 1)
                     ?? throw new InvalidOperationException(
-                        $"Cannot replace contents: slide {slideIdentifier.Index} does not exist.");
+                        $"Cannot replace contents: slide {slideIndex} does not exist.");
 
-        var textMap = await BuildTextMapAsync(context, rc.Index).ConfigureAwait(false);
+        var textMap = await BuildTextMapAsync(workbookRegistry, context.CancellationToken).ConfigureAwait(false);
         if (textMap is { Count: > 0 })
             foreach (var shape in slide.DescendShapes())
                 textComposer.Replace(shape, textMap);
 
-        var rowInstructions = context.GetVariable(VariablesDeclaration.SpecializedInstructions);
-        if (rowInstructions is { Count: > 0 })
+        if (ResolvedImageInstructions is { Count: > 0 })
         {
             var downloadRoot = Path.GetFullPath(settingProvider.Current.Download.DownloadFolder);
             foreach (var shape in slide.DescendShapes())
             {
-                var instruction = rowInstructions.FirstOrDefault(x => x.Target.Id == shape.Id);
+                var instruction = ResolvedImageInstructions.FirstOrDefault(x => x.Target.Id == shape.Id);
                 if (instruction == null) continue;
 
-                var editedPath = instruction.GetEditPath(downloadRoot, rc.Worksheet, rc.Index);
+                var editedPath = instruction.GetEditPath(downloadRoot, Row.Worksheet, Row.Index);
                 if (!File.Exists(editedPath)) continue;
 
                 await using var imageStream =
@@ -73,26 +104,26 @@ public sealed class EditSlide(
                 imageComposer.Replace(shape, imageStream);
             }
         }
+
+        return ExecutionResult.Next();
     }
 
     private async ValueTask<IReadOnlyDictionary<string, string>> BuildTextMapAsync(
-        IExecutionContext<GeneratingRequest> context, int row)
+        FileRegistry<IReadOnlyWorkbook> registry,
+        CancellationToken ct)
     {
-        var worksheet = context.GetVariable(VariablesDeclaration.WorksheetItem);
-
-        await using var lease = await workbookRegistry
-            .AcquireAsync(worksheet.Workbook.FilePath, false, context.CancellationToken)
+        await using var lease = await registry
+            .AcquireAsync(Row.Worksheet.Workbook.FilePath, false, ct)
             .ConfigureAwait(false);
         var workbook = lease.Value;
 
-        if (!workbook.TryGetWorksheet(worksheet.Name, out var ws))
+        if (!workbook.TryGetWorksheet(Row.Worksheet.Name, out var ws))
             throw new InvalidOperationException(
-                $"Worksheet '{worksheet.Name}' does not exist in workbook.");
+                $"Worksheet '{Row.Worksheet.Name}' does not exist in workbook.");
 
-        var rowContent = ws.GetRowContent(row);
-        var textInstructions = context.GetVariable(VariablesDeclaration.RowTextInstructions);
+        var rowContent = ws.GetRowContent(Row.Index);
 
-        return textInstructions
+        return TextInstructions
             .Select(general => general.Flatten(general, rowContent)
                 .FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.Value)) ?? general.Empty)
             .ToDictionary(

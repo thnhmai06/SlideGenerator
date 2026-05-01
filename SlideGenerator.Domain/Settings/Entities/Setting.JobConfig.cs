@@ -18,7 +18,7 @@ public sealed partial class Setting
         /// <remarks>
         ///     This controls runtime admission for image download operations.
         /// </remarks>
-        public int MaxConcurrentDownloadFlows = 5;
+        public int MaxParallelDownload = 5;
 
         /// <summary>
         ///     Gets or sets the maximum number of concurrent image-editing flows.
@@ -26,7 +26,7 @@ public sealed partial class Setting
         /// <remarks>
         ///     This controls runtime admission for image editing operations.
         /// </remarks>
-        public int MaxConcurrentImageEditingFlows = 5;
+        public int MaxParallelEditImage = 5;
 
         /// <summary>
         ///     Gets or sets the maximum number of concurrent slide-editing flows.
@@ -34,11 +34,10 @@ public sealed partial class Setting
         /// <remarks>
         ///     This controls runtime admission for slide clone and slide content replacement operations.
         /// </remarks>
-        public int MaxConcurrentSlideEditingFlows = 5;
+        public int MaxParallelEditSlide = 5;
 
-        /// <summary>
-        ///     Gets or sets the maximum number of times a failing job will be retried.
-        /// </summary>
-        public int MaxRetries = 3;
+        public int MaxParallelReadWorkbook = 5;
+
+        public int MaxParallelReadPresentation = 5;
     }
 }

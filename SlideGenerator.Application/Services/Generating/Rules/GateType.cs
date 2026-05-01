@@ -3,21 +3,18 @@ namespace SlideGenerator.Application.Services.Generating.Rules;
 /// <summary>Identifies a named process-wide concurrency gate used during generation.</summary>
 public enum GateType
 {
-    /// <summary>Gate for worksheet-level processing flows.</summary>
-    Worksheet,
-
     /// <summary>Gate for image download operations.</summary>
-    Download,
+    DownloadImage,
 
     /// <summary>Gate for image editing operations.</summary>
     EditImage,
 
     /// <summary>Gate for slide editing operations.</summary>
-    EditSlide,
+    EditPresentation,
 
     /// <summary>Gate for workbook file scanning operations.</summary>
-    ScanWorkbook,
+    ReadWorkbook,
 
     /// <summary>Gate for presentation file scanning operations.</summary>
-    ScanPresentation
+    ReadPresentation
 }

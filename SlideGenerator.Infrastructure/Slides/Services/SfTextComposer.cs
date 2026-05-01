@@ -15,8 +15,14 @@ namespace SlideGenerator.Infrastructure.Slides.Services;
 /// </summary>
 public sealed partial class SfTextComposer : ITextComposer
 {
+    /// <summary>
+    ///     The regular expression pattern used to identify mustache placeholders.
+    /// </summary>
     private static readonly Regex MustachePattern = MustacheRegex();
 
+    /// <summary>
+    ///     The Stubble renderer used to process mustache templates.
+    /// </summary>
     private readonly StubbleVisitorRenderer _renderer = new StubbleBuilder()
         .Configure(settings => settings.SetEncodingFunction(value => value))
         .Build();
@@ -69,6 +75,13 @@ public sealed partial class SfTextComposer : ITextComposer
         return changed;
     }
 
+    /// <summary>
+    ///     Renders the specified text by replacing mustache placeholders with values from the instructions.
+    ///     Falls back to a regular expression-based replacement if the Stubble renderer fails.
+    /// </summary>
+    /// <param name="text">The text containing placeholders.</param>
+    /// <param name="instructions">The dictionary of replacement values.</param>
+    /// <returns>The rendered text.</returns>
     private string RenderText(string text, Dictionary<string, string> instructions)
     {
         if (string.IsNullOrEmpty(text) || !text.Contains("{{", StringComparison.Ordinal))
@@ -91,6 +104,11 @@ public sealed partial class SfTextComposer : ITextComposer
         }
     }
 
+    /// <summary>
+    ///     Extracts the unique mustache keys from the specified text.
+    /// </summary>
+    /// <param name="text">The text to scan.</param>
+    /// <returns>An enumeration of unique mustache keys.</returns>
     private static IEnumerable<string> ExtractKeys(string text)
     {
         return MustachePattern.Matches(text)
@@ -100,9 +118,18 @@ public sealed partial class SfTextComposer : ITextComposer
             .Distinct();
     }
 
+    /// <summary>
+    ///     Normalizes a mustache key by trimming whitespace and removing control characters.
+    /// </summary>
+    /// <param name="key">The key to normalize.</param>
+    /// <returns>The normalized key.</returns>
     private static string NormalizeKey(string key) =>
         key.Trim().TrimStart('#', '/', '^', '&', '>');
 
+    /// <summary>
+    ///     Generates the regular expression for matching mustache placeholders.
+    /// </summary>
+    /// <returns>A <see cref="Regex" /> instance.</returns>
     [GeneratedRegex(@"\{\{\s*(\w+)\s*\}\}", RegexOptions.Compiled)]
     private static partial Regex MustacheRegex();
 }

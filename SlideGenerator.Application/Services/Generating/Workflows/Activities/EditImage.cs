@@ -1,68 +1,90 @@
 using SlideGenerator.Application.Modules.Images.Abstractions;
-using SlideGenerator.Application.Modules.Resources.Services;
+using SlideGenerator.Application.Modules.Registry.Interfaces;
 using SlideGenerator.Application.Modules.Settings.Interfaces;
-using SlideGenerator.Application.Modules.Workflows.DSL;
-using SlideGenerator.Application.Services.Generating.Models;
 using SlideGenerator.Application.Services.Generating.Models.Images;
 using SlideGenerator.Application.Services.Generating.Workflows.Models;
 using SlideGenerator.Domain.Images.Entities;
 using SlideGenerator.Domain.Images.Models;
 using SlideGenerator.Domain.Slides.Entities.Presentation;
+using WorkflowCore.Interface;
+using WorkflowCore.Models;
 using Size = System.Drawing.Size;
 
 namespace SlideGenerator.Application.Services.Generating.Workflows.Activities;
 
 /// <summary>
-///     Crops and resizes the downloaded image to fit the target shape dimensions using ROI detection
-///     (center or rule-of-thirds), writing the result to the edit output path.
-///     Falls back to a plain file copy if processing fails.
+///     A workflow activity that processes a downloaded image to fit its target slide shape using ROI calculations.
 /// </summary>
 /// <remarks>
-///     <b>Variables read:</b> <see cref="VariablesDeclaration.RowTaskItem" />.<br />
-///     <b>Services:</b> <c>IImageDecoder</c>, <c>IRoiCalculator</c>,
-///     <see cref="FileRegistry{IPresentation}" /> (to read target shape bounds),
-///     <c>ISettingProvider</c> (for <c>DownloadFolder</c>).<br />
-///     <b>CancellationToken:</b> propagated to registry acquire.
+///     The editing process includes:
+///     <list type="bullet">
+///         <item>
+///             <description>Resolving the target shape's physical dimensions from the presentation.</description>
+///         </item>
+///         <item>
+///             <description>Decoding the source image and calculating the optimal Region of Interest (ROI) based on the specified <see cref="RoiOption"/>.</description>
+///         </item>
+///         <item>
+///             <description>Applying crops or transformations to the image to match the slide's aspect ratio and size.</description>
+///         </item>
+///         <item>
+///             <description>Fallback: If advanced processing fails, the original image is copied to the edit path to avoid breaking the pipeline.</description>
+///         </item>
+///     </list>
 /// </remarks>
+/// <param name="imageDecoder">Service to decode image bytes into processing-friendly matrices.</param>
+/// <param name="roiCalculator">Service to perform computer vision-based ROI detection (e.g., face detection).</param>
+/// <param name="slideRegistry">Registry to access slide metadata for target dimension resolution.</param>
+/// <param name="settingProvider">Provider for global application settings.</param>
 public sealed class EditImage(
     IImageDecoder imageDecoder,
     IRoiCalculator roiCalculator,
     FileRegistry<IPresentation> slideRegistry,
-    ISettingProvider settingProvider,
-    Handle<RowTask> rowTaskVar)
+    ISettingProvider settingProvider) : StepBodyAsync
 {
-    /// <inheritdoc />
-    public async Task ExecuteAsync(IExecutionContext<GeneratingRequest> context)
+    /// <summary>
+    ///     Gets or sets the row-specific task context containing the image instruction and the local path of the downloaded source.
+    /// </summary>
+    public RowTask RowTask { get; set; } = null!;
+
+    /// <summary>
+    ///     Gets or sets the exception if the image editing process encountered a critical error.
+    /// </summary>
+    public Exception? Exception { get; set; }
+
+    public override async Task<ExecutionResult> RunAsync(IStepExecutionContext context)
     {
-        var task = context.GetVariable(rowTaskVar);
-        var (instruction, downloadedPath) = task.EditItem
+        var (instruction, downloadedPath) = RowTask.EditItem
                                             ?? throw new ArgumentException("EditItem must be set on the RowTask.");
 
         if (string.IsNullOrWhiteSpace(downloadedPath) || !File.Exists(downloadedPath))
-            return;
+            return ExecutionResult.Next();
 
-        var editedPath = instruction.GetEditPath(settingProvider.Current.Download.DownloadFolder, task.Worksheet,
-            task.RowIndex);
+        var editedPath = instruction.GetEditPath(settingProvider.Current.Download.DownloadFolder, RowTask.Worksheet,
+            RowTask.RowIndex);
         Directory.CreateDirectory(Path.GetDirectoryName(editedPath)!);
 
         try
         {
-            var targetSize = await ResolveTargetSizeAsync(instruction, context.CancellationToken)
+            var targetSize = await ResolveTargetSizeAsync(slideRegistry, instruction, context.CancellationToken)
                 .ConfigureAwait(false);
-            await ProcessWithRoiAsync(downloadedPath, editedPath, targetSize, instruction.Edit.RoiOption)
+            await ProcessWithRoiAsync(imageDecoder, roiCalculator, downloadedPath, editedPath, targetSize, instruction.Edit.RoiOption)
                 .ConfigureAwait(false);
         }
-        catch
+        catch (Exception ex)
         {
+            Exception = ex;
             File.Copy(downloadedPath, editedPath, true);
         }
+        
+        return ExecutionResult.Next();
     }
 
-    private async ValueTask ProcessWithRoiAsync(string sourcePath,
+    private async ValueTask ProcessWithRoiAsync(IImageDecoder decoder, IRoiCalculator calculator, string sourcePath,
         string destinationPath, Size targetSize, RoiOption roiOption)
     {
         var sourceBytes = await File.ReadAllBytesAsync(sourcePath).ConfigureAwait(false);
-        using var sourceMat = imageDecoder.Decode(sourceBytes);
+        using var sourceMat = decoder.Decode(sourceBytes);
         if (sourceMat.Empty())
             throw new InvalidOperationException($"Cannot decode image '{sourcePath}'.");
 
@@ -70,16 +92,17 @@ public sealed class EditImage(
             Math.Max(1, targetSize.Width > 0 ? targetSize.Width : sourceMat.Width),
             Math.Max(1, targetSize.Height > 0 ? targetSize.Height : sourceMat.Height));
 
-        await roiCalculator.CalculateRoiAsync(sourceMat, normalizedSize, roiOption.Type, roiOption)
+        await calculator.CalculateRoiAsync(sourceMat, normalizedSize, roiOption.Type, roiOption)
             .ConfigureAwait(false);
         await File.WriteAllBytesAsync(destinationPath, sourceMat.ToByteArray()).ConfigureAwait(false);
     }
 
     private async ValueTask<Size> ResolveTargetSizeAsync(
+        FileRegistry<IPresentation> registry,
         SpecializedInstruction instruction,
         CancellationToken ct)
     {
-        await using var lease = await slideRegistry
+        await using var lease = await registry
             .AcquireAsync(instruction.Target.Slide.Presentation.FilePath, false, ct)
             .ConfigureAwait(false);
         var slide = lease.Value

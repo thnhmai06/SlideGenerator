@@ -58,6 +58,12 @@ public static class NamingRules
         return new string(value.Where(char.IsLetterOrDigit).ToArray());
     }
 
+    /// <summary>
+    ///     Computes a Base64-encoded hash segment of the specified length for a given string.
+    /// </summary>
+    /// <param name="value">The string to hash.</param>
+    /// <param name="length">The desired length of the hash segment (default is 7).</param>
+    /// <returns>A sanitized Base64 hash segment.</returns>
     private static string ComputeBase64Hash(string value, int length = 7)
     {
         var b64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
@@ -65,6 +71,11 @@ public static class NamingRules
         return SanitizeBase64Segment(segment);
     }
 
+    /// <summary>
+    ///     Sanitizes a Base64 segment by replacing invalid file name characters and Base64 special characters with hyphens.
+    /// </summary>
+    /// <param name="segment">The Base64 segment to sanitize.</param>
+    /// <returns>A sanitized string safe for use in file names.</returns>
     private static string SanitizeBase64Segment(string segment)
     {
         var invalidChars = Path.GetInvalidFileNameChars();

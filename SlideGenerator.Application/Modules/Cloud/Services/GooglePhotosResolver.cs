@@ -7,6 +7,7 @@ namespace SlideGenerator.Application.Modules.Cloud.Services;
 /// <summary>
 ///     Provides access to Google Photos as a cloud provider, resolving album URLs to direct image links.
 /// </summary>
+/// <param name="clientService">The service used to handle HTTP requests and URI redirections.</param>
 public sealed partial class GooglePhotosResolver(IClientService clientService) : ICloudResolver
 {
     /// <summary>

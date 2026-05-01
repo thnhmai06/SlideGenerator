@@ -12,13 +12,35 @@ namespace SlideGenerator.Infrastructure.Sheets.Adapters;
 /// </summary>
 public sealed class SfReadOnlyWorkbook : IReadOnlyWorkbook
 {
+    /// <summary>
+    ///     The Syncfusion Excel engine instance.
+    /// </summary>
     private SfXlsIO.ExcelEngine? _engine;
+
+    /// <summary>
+    ///     The Syncfusion workbook instance.
+    /// </summary>
     private SfXlsIO.IWorkbook? _workbook;
+
+    /// <summary>
+    ///     The file stream for the workbook.
+    /// </summary>
     private FileStream? _fileStream;
 
+    /// <summary>
+    ///     The lazy initializer for the workbook.
+    /// </summary>
     private readonly Lazy<SfXlsIO.IWorkbook> _workbookLazy;
+
+    /// <summary>
+    ///     The cache of worksheet adapters, keyed by worksheet name.
+    /// </summary>
     private readonly ConcurrentDictionary<string, SfReadOnlyWorksheet> _worksheetCache = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="SfReadOnlyWorkbook" /> class.
+    /// </summary>
+    /// <param name="filePath">The path to the Excel file.</param>
     public SfReadOnlyWorkbook(string filePath)
     {
         Identifier = new WorkbookIdentifier(filePath);
@@ -35,6 +57,9 @@ public sealed class SfReadOnlyWorkbook : IReadOnlyWorkbook
         Worksheets = EnumerateWorksheets().ToList();
     }
 
+    /// <summary>
+    ///     Gets the underlying Syncfusion workbook instance.
+    /// </summary>
     private SfXlsIO.IWorkbook Core => _workbookLazy.Value;
 
     /// <inheritdoc />
@@ -81,6 +106,10 @@ public sealed class SfReadOnlyWorkbook : IReadOnlyWorkbook
         _fileStream?.Dispose();
     }
 
+    /// <summary>
+    ///     Enumerates all worksheets in the workbook and caches their adapters.
+    /// </summary>
+    /// <returns>An enumeration of <see cref="IReadOnlyWorksheet" /> instances.</returns>
     private IEnumerable<IReadOnlyWorksheet> EnumerateWorksheets()
     {
         for (var i = 0; i < Core.Worksheets.Count; i++)

@@ -11,6 +11,7 @@ namespace SlideGenerator.Domain.Images.Entities;
 /// <summary>
 ///     Calculates the center Region of Interest (ROI).
 /// </summary>
+/// <param name="faceDetectorProvider">The provider used to resolve face detector instances.</param>
 /// Reviewed by @thnhmai06 at 16/04/2026 13:45:59 GMT+7
 public sealed class CenterRoi(IFaceDetectorProvider faceDetectorProvider) : IRoiCalculator
 {

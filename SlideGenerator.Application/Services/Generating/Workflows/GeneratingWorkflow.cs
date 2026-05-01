@@ -1,234 +1,258 @@
-using Microsoft.Extensions.DependencyInjection;
-using SlideGenerator.Application.Modules.Resources.Services;
-using SlideGenerator.Application.Modules.Settings.Interfaces;
-using SlideGenerator.Application.Modules.Workflows.DSL;
-using SlideGenerator.Application.Modules.Workflows.DSL.Activities;
-using SlideGenerator.Application.Services.Generating.Models;
-using SlideGenerator.Application.Services.Generating.Models.Images;
+using SlideGenerator.Application.Modules.Lock.Steps;
 using SlideGenerator.Application.Services.Generating.Rules;
 using SlideGenerator.Application.Services.Generating.Workflows.Activities;
 using SlideGenerator.Application.Services.Generating.Workflows.Models;
-using SlideGenerator.Application.Services.Scanning.Models;
-using SlideGenerator.Application.Services.Scanning.Workflows;
 using SlideGenerator.Domain.Sheets.Models.Identifiers;
+using WorkflowCore.Interface;
+using WorkflowCore.Models;
+using ImageSpecializedInstruction = SlideGenerator.Application.Services.Generating.Models.Images.SpecializedInstruction;
 
 namespace SlideGenerator.Application.Services.Generating.Workflows;
 
 /// <summary>
-///     Defines the end-to-end slide generation pipeline: scanning source files, simplifying instructions,
-///     downloading and editing images per row, compositing each slide, and saving the result.
+///     Defines the complex workflow for generating automated presentations from Excel data.
 /// </summary>
-public sealed class GeneratingWorkflow(IServiceProvider services) : IWorkflow<GeneratingRequest>
+/// <remarks>
+///     The pipeline is structured into five sequential phases to optimize resource usage and ensure consistency:
+///     <list type="bullet">
+///         <item>
+///             <term>Phase 1: Worksheet Setup</term>
+///             <description>
+///                 Iterates through requested worksheets. For each, it creates a "working presentation" (a copy of the template) 
+///                 and resolves placeholders and headers into instructions.
+///             </description>
+///         </item>
+///         <item>
+///             <term>Phase 2: Download Tasks</term>
+///             <description>
+///                 Collects all image instructions across all worksheets and rows. Downloads images in parallel 
+///                 using a semaphore to control concurrent network traffic.
+///             </description>
+///         </item>
+///         <item>
+///             <term>Phase 3: Image Edit Tasks</term>
+///             <description>
+///                 Processes downloaded images (decoding and ROI-based cropping) to fit the target slide shapes. 
+///                 Operates in parallel with concurrency limits.
+///             </description>
+///         </item>
+///         <item>
+///             <term>Phase 4: Slide Generation Tasks</term>
+///             <description>
+///                 For each data row, clones the template slide within the working presentation and injects 
+///                 resolved text and processed images.
+///             </description>
+///         </item>
+///         <item>
+///             <term>Phase 5: Finalization</term>
+///             <description>
+///                 Removes the original template slide from each working presentation and performs final saves.
+///             </description>
+///         </item>
+///     </list>
+///     Error resilience: Each activity captures exceptions, allowing the workflow to continue processing valid rows 
+///     even if specific files or network requests fail.
+/// </remarks>
+public sealed class GeneratingWorkflow : IWorkflow<GeneratingData>
 {
-    private readonly ISettingProvider _settingProvider = services.GetRequiredService<ISettingProvider>();
-    private readonly GateLocker<GateType> _gateLocker = services.GetRequiredService<GateLocker<GateType>>();
-    private readonly ScanningWorkflow _scanningWorkflow = services.GetRequiredService<ScanningWorkflow>();
-
-    public GeneratingWorkflow() : this(default!) { }
-
-    /// <inheritdoc />
     public string Id => nameof(GeneratingWorkflow);
-
-    /// <inheritdoc />
     public int Version => 1;
 
-    /// <inheritdoc />
-    public Activity<GeneratingRequest> Build()
+    public void Build(IWorkflowBuilder<GeneratingData> builder)
     {
-        return new Sequence<GeneratingRequest>
-        {
-            Steps =
-            [
-                // 0. Initial scans — all unique workbook and presentation files scanned concurrently
-                new Inline<GeneratingRequest>
-                {
-                    Action = ctx => _scanningWorkflow.Build().ExecuteAsync(ctx as IExecutionContext<ScanningRequest> ?? throw new InvalidOperationException("Context mismatch"))
-                },
-
-                // 1. Populate WorksheetKeys Variable — filter only worksheets confirmed present in their workbook
-                new Inline<GeneratingRequest>
-                {
-                    Action = ctx =>
+        builder
+            .StartWith(ctx =>
+            {
+                var data = (GeneratingData)ctx.Workflow.Data;
+                data.WorksheetKeys = data.Request.Graph.Keys
+                    .Where(ws =>
                     {
-                        var summaries = ctx.GetVariable(VariablesDeclaration.WorkbookSummaries);
-                        ctx.SetVariable(VariablesDeclaration.WorksheetKeys,
-                        [
-                            .. ctx.Data.Graph.Keys
-                                .Where(ws =>
-                                {
-                                    var path = Path.GetFullPath(ws.Workbook.FilePath);
-                                    return summaries.TryGetValue(path, out var summary)
-                                           && summary.Worksheets.Any(w =>
-                                               string.Equals(w.Name, ws.Name, StringComparison.OrdinalIgnoreCase));
-                                })
-                        ]);
-                        return Task.CompletedTask;
-                    }
-                },
-
-                // 3. Parallel worksheet loop — each branch is slot-gated by GateType.Worksheet
-                new ForEach<WorksheetIdentifier, GeneratingRequest>(true)
+                        var path = Path.GetFullPath(ws.Workbook.FilePath);
+                        return data.WorkbookSummaries.TryGetValue(path, out var summary)
+                               && summary.Worksheets.Any(w =>
+                                   string.Equals(w.Name, ws.Name, StringComparison.OrdinalIgnoreCase));
+                    })
+                    .ToList();
+                return ExecutionResult.Next();
+            })
+            // 1. Worksheet Setup
+            .ForEach(data => data.WorksheetKeys)
+            .Do(wsLoop => wsLoop
+                .StartWith<AcquireSlotStep>().Input(step => step.Gate, data => GateType.ReadWorkbook)
+                .Then<CreateWorkingPresentation>()
+                .Input(step => step.Worksheet, (data, context) => (WorksheetIdentifier)context.Item)
+                .Input(step => step.Request, data => data.Request)
+                .Output((step, data) =>
                 {
-                    Items = ctx => ctx.GetVariable(VariablesDeclaration.WorksheetKeys),
-                    Handle = VariablesDeclaration.WorksheetItem,
-                    Body = new GateWrapper<GateType, GeneratingRequest>(_gateLocker)
+                    if (step.Exception != null) data.Errors[step.Worksheet.ToString()] = step.Exception;
+                    if (!string.IsNullOrEmpty(step.OutputPath))
+                        data.WorksheetOutputPaths[step.Worksheet.ToString()] = step.OutputPath;
+                })
+                .Output((step, data) =>
+                {
+                    if (step.WorkingTemplateSlide != null)
+                        data.WorksheetTemplateSlides[step.Worksheet.ToString()] = step.WorkingTemplateSlide;
+                })
+                .Then<SimplyInstructions>()
+                .Input(step => step.Worksheet, (data, context) => (WorksheetIdentifier)context.Item)
+                .Input(step => step.Request, data => data.Request)
+                .Input(step => step.WorkbookSummaries, data => data.WorkbookSummaries)
+                .Input(step => step.PresentationSummaries, data => data.PresentationSummaries)
+                .Output((step, data) =>
+                {
+                    if (step.Exception != null) data.Errors[$"{step.Worksheet}:Instructions"] = step.Exception;
+                    if (step.RowIndices != null)
+                        data.WorksheetRowIndices[step.Worksheet.ToString()] = step.RowIndices;
+                    if (step.TextInstructions != null)
+                        data.WorksheetTextInstructions[step.Worksheet.ToString()] = step.TextInstructions;
+                    if (step.ImageInstructions != null)
+                        data.WorksheetImageInstructions[step.Worksheet.ToString()] = step.ImageInstructions;
+                })
+                .Then<ReleaseSlotStep>().Input(step => step.Gate, data => GateType.ReadWorkbook)
+            )
+            // 2. Build Phase A: Download Tasks
+            .Then(ctx =>
+            {
+                var data = (GeneratingData)ctx.Workflow.Data;
+                var dlTasks = (from ws in data.WorksheetKeys
+                    let wsKey = ws.ToString()
+                    let rowIndices = data.WorksheetRowIndices[wsKey]
+                    let imgInstructions = data.WorksheetImageInstructions[wsKey]
+                    from rowIndex in rowIndices
+                    from instr in imgInstructions
+                    select new RowTask(ws, rowIndex, instr)).ToList();
+                data.DownloadTasks = dlTasks;
+                return ExecutionResult.Next();
+            })
+            .ForEach(data => data.DownloadTasks)
+            .Do(dlLoop => dlLoop
+                .StartWith<AcquireSlotStep>().Input(step => step.Gate, data => GateType.DownloadImage)
+                .Then<DownloadImage>()
+                .Input(step => step.RowTask, (data, context) => (RowTask)context.Item)
+                .Output((step, data) =>
+                {
+                    var task = step.RowTask;
+                    var key = $"{task.Worksheet}|{task.RowIndex}";
+                    
+                    if (step.Exception != null)
+                        data.Errors[$"{key}:Download:{task.DownloadItem?.Target.Id}"] = step.Exception;
+
+                    if (step.Result != null)
                     {
-                        Gate = GateType.Worksheet,
-                        Body = new Condition<GeneratingRequest>
+                        var list = data.RowResolvedInstructions.GetOrAdd(key, _ => []);
+                        lock (list)
                         {
-                            // Skip entirely if the workbook file is missing
-                            Predicate = ctx => File.Exists(ctx.GetVariable(VariablesDeclaration.WorksheetItem).Workbook.FilePath),
-                            Then = new Sequence<GeneratingRequest>
-                            {
-                                Steps =
-                                [
-                                    Inline<GeneratingRequest>.Activity<CreateWorkingPresentation>(),
-                                    Inline<GeneratingRequest>.Activity<SimplyInstructions>(),
-
-                                    // Initialize a row instructions map for this worksheet
-                                    new Inline<GeneratingRequest>
-                                    {
-                                        Action = ctx =>
-                                        {
-                                            ctx.SetVariable(VariablesDeclaration.RowInstructionsMap,
-                                                new Dictionary<int, List<SpecializedInstruction>>());
-                                            return Task.CompletedTask;
-                                        }
-                                    },
-
-                                    // Phase A: All rows — Download and Edit Images
-                                    new ForEach<RowIdentifier, GeneratingRequest>(false)
-                                    {
-                                        Items = ctx => ctx.GetVariable(VariablesDeclaration.RowIndices)
-                                            .Select(r => new RowIdentifier(
-                                                ctx.GetVariable(VariablesDeclaration.WorksheetItem), r)),
-                                        Handle = VariablesDeclaration.RowItem,
-                                        Body = new Try<GeneratingRequest>
-                                        {
-                                            Body = new Sequence<GeneratingRequest>
-                                            {
-                                                Steps =
-                                                [
-                                                    // 1. Reset resolved instructions for this row
-                                                    new Inline<GeneratingRequest>
-                                                    {
-                                                        Action = ctx =>
-                                                        {
-                                                            ctx.SetVariable(VariablesDeclaration.SpecializedInstructions, []);
-                                                            return Task.CompletedTask;
-                                                        }
-                                                    },
-
-                                                    // 2. Parallel image downloads, each throttled by GateType.Download
-                                                    new ForEach<RowTask, GeneratingRequest>(true)
-                                                    {
-                                                        Items = ctx =>
-                                                        {
-                                                            var rc = ctx.GetVariable(VariablesDeclaration.RowItem);
-                                                            return ctx.GetVariable(VariablesDeclaration.RowImageInstructions)
-                                                                .Select(instr => new RowTask(rc.Worksheet, rc.Index, instr));
-                                                        },
-                                                        Handle = VariablesDeclaration.RowTaskItem,
-                                                        Body = new GateWrapper<GateType, GeneratingRequest>(_gateLocker)
-                                                        {
-                                                            Gate = GateType.Download,
-                                                            Body = Inline<GeneratingRequest>.Activity<DownloadImage>()
-                                                        }
-                                                    },
-
-                                                    // 3. Save resolved instructions to the worksheet map for Phase B
-                                                    new Inline<GeneratingRequest>
-                                                    {
-                                                        Action = ctx =>
-                                                        {
-                                                            var map = ctx.GetVariable(VariablesDeclaration.RowInstructionsMap);
-                                                            var instr = ctx.GetVariable(VariablesDeclaration.SpecializedInstructions);
-                                                            map[ctx.GetVariable(VariablesDeclaration.RowItem).Index] = [.. instr];
-                                                            return Task.CompletedTask;
-                                                        }
-                                                    },
-
-                                                    // 4. Parallel image edits, each throttled by GateType.EditImage
-                                                    new ForEach<RowTask, GeneratingRequest>(true)
-                                                    {
-                                                        Items = ctx =>
-                                                        {
-                                                            var rc = ctx.GetVariable(VariablesDeclaration.RowItem);
-                                                            var downloadRoot = Path.GetFullPath(
-                                                                _settingProvider.Current.Download.DownloadFolder);
-                                                            var rowInstr =
-                                                                ctx.GetVariable(VariablesDeclaration.RowInstructionsMap)[rc.Index];
-                                                            return rowInstr
-                                                                .Select(instr => (instr,
-                                                                    filePath: ImagePathRules.ScanDownloadedFile(
-                                                                        instr.GetDownloadPath(downloadRoot, rc.Worksheet, rc.Index))))
-                                                                .Where(x => x.filePath != null)
-                                                                .Select(x => new RowTask(rc.Worksheet, rc.Index, null,
-                                                                    new KeyValuePair<SpecializedInstruction, string>(x.instr,
-                                                                        x.filePath!)));
-                                                        },
-                                                        Handle = VariablesDeclaration.RowTaskItem,
-                                                        Body = new GateWrapper<GateType, GeneratingRequest>(_gateLocker)
-                                                        {
-                                                            Gate = GateType.EditImage,
-                                                            Body = Inline<GeneratingRequest>.Activity<EditImage>()
-                                                        }
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    },
-
-                                    // Phase B: All rows — Slide Editing (write lease acquired lazily by CloneTemplateSlide)
-                                    new GateWrapper<GateType, GeneratingRequest>(_gateLocker)
-                                    {
-                                        Gate = GateType.EditSlide,
-                                        Body = new Sequence<GeneratingRequest>
-                                        {
-                                            Steps =
-                                            [
-                                                // Sequential slide editing loop
-                                                new ForEach<RowIdentifier, GeneratingRequest>(false)
-                                                {
-                                                    Items = ctx => ctx.GetVariable(VariablesDeclaration.RowIndices)
-                                                        .Select(r => new RowIdentifier(
-                                                            ctx.GetVariable(VariablesDeclaration.WorksheetItem), r)),
-                                                    Handle = VariablesDeclaration.RowItem,
-                                                    Body = new Try<GeneratingRequest>
-                                                    {
-                                                        Body = new Sequence<GeneratingRequest>
-                                                        {
-                                                            Steps =
-                                                            [
-                                                                // Restore resolved instructions for this row from Phase A map
-                                                                new Inline<GeneratingRequest>
-                                                                {
-                                                                    Action = ctx =>
-                                                                    {
-                                                                        var map = ctx.GetVariable(VariablesDeclaration.RowInstructionsMap);
-                                                                        var idx = ctx.GetVariable(VariablesDeclaration.RowItem).Index;
-                                                                        ctx.SetVariable(VariablesDeclaration.SpecializedInstructions, map[idx]);
-                                                                        return Task.CompletedTask;
-                                                                    }
-                                                                },
-
-                                                                Inline<GeneratingRequest>.Activity<CloneTemplateSlide>(),
-                                                                Inline<GeneratingRequest>.Activity<EditSlide>()
-                                                            ]
-                                                        }
-                                                    }
-                                                },
-
-                                                Inline<GeneratingRequest>.Activity<RemoveWorkingTemplateSlide>()
-                                            ]
-                                        }
-                                    }
-                                ]
-                            }
+                            list.Add(step.Result);
                         }
                     }
+                })
+                .Then<ReleaseSlotStep>().Input(step => step.Gate, data => GateType.DownloadImage)
+            )
+            // 3. Build Phase A: Edit Tasks
+            .Then(ctx =>
+            {
+                var data = (GeneratingData)ctx.Workflow.Data;
+                var editTasks = new List<RowTask>();
+                var downloadRoot = Path.GetFullPath(data.Request.SaveFolder);
+                foreach (var ws in data.WorksheetKeys)
+                {
+                    var wsKey = ws.ToString();
+                    var rowIndices = data.WorksheetRowIndices[wsKey];
+                    foreach (var rowIndex in rowIndices)
+                    {
+                        var key = $"{ws}|{rowIndex}";
+                        if (data.RowResolvedInstructions.TryGetValue(key, out var resolved))
+                            editTasks.AddRange(from instr in resolved
+                                let path = instr.GetDownloadPath(downloadRoot, ws, rowIndex)
+                                where File.Exists(path)
+                                select new RowTask(ws, rowIndex, null,
+                                    new KeyValuePair<ImageSpecializedInstruction, string>(instr, path)));
+                    }
                 }
-            ]
-        };
+
+                data.EditTasks = editTasks;
+                return ExecutionResult.Next();
+            })
+            .ForEach(data => data.EditTasks)
+            .Do(editLoop => editLoop
+                .StartWith<AcquireSlotStep>().Input(step => step.Gate, data => GateType.EditImage)
+                .Then<EditImage>()
+                .Input(step => step.RowTask, (data, context) => (RowTask)context.Item)
+                .Output((step, data) =>
+                {
+                    if (step.Exception != null)
+                    {
+                        var task = step.RowTask;
+                        var key = $"{task.Worksheet}|{task.RowIndex}";
+                        data.Errors[$"{key}:Edit:{task.EditItem?.Key.Target.Id}"] = step.Exception;
+                    }
+                })
+                .Then<ReleaseSlotStep>().Input(step => step.Gate, data => GateType.EditImage)
+            )
+            // 4. Build Phase B: Slide Tasks
+            .Then(ctx =>
+            {
+                var data = (GeneratingData)ctx.Workflow.Data;
+                var slideTasks = (from ws in data.WorksheetKeys
+                    let wsKey = ws.ToString()
+                    let rowIndices = data.WorksheetRowIndices[wsKey]
+                    let textInstr = data.WorksheetTextInstructions[wsKey]
+                    let outputPath = data.WorksheetOutputPaths[wsKey]
+                    let templateSlide = data.WorksheetTemplateSlides[wsKey]
+                    from rowIndex in rowIndices
+                    let key = $"{ws}|{rowIndex}"
+                    select new RowTask(ws, rowIndex)
+                    {
+                        TextInstructions = textInstr, OutputPath = outputPath, TemplateSlide = templateSlide,
+                        ResolvedInstructions = data.RowResolvedInstructions.GetOrAdd(key, _ => [])
+                    }).ToList();
+
+                data.SlideTasks = slideTasks;
+                return ExecutionResult.Next();
+            })
+            .ForEach(data => data.SlideTasks)
+            .Do(slideLoop => slideLoop
+                .StartWith<AcquireSlotStep>().Input(step => step.Gate, data => GateType.EditPresentation)
+                .Then<CloneTemplateSlide>()
+                .Input(step => step.Row,
+                    (data, context) =>
+                        new RowIdentifier(((RowTask)context.Item).Worksheet, ((RowTask)context.Item).RowIndex))
+                .Input(step => step.OutputPath, (data, context) => ((RowTask)context.Item).OutputPath)
+                .Output((step, data) =>
+                {
+                    if (step.Exception != null)
+                        data.Errors[$"{step.Row}:Clone"] = step.Exception;
+                })
+                .Then<EditSlide>()
+                .Input(step => step.Row,
+                    (data, context) =>
+                        new RowIdentifier(((RowTask)context.Item).Worksheet, ((RowTask)context.Item).RowIndex))
+                .Input(step => step.OutputPath, (data, context) => ((RowTask)context.Item).OutputPath)
+                .Input(step => step.WorkingTemplateSlide, (data, context) => ((RowTask)context.Item).TemplateSlide)
+                .Input(step => step.TextInstructions, (data, context) => ((RowTask)context.Item).TextInstructions)
+                .Input(step => step.ResolvedImageInstructions,
+                    (data, context) => ((RowTask)context.Item).ResolvedInstructions)
+                .Output((step, data) =>
+                {
+                    if (step.Exception != null)
+                        data.Errors[$"{step.Row}:Edit"] = step.Exception;
+                })
+                .Then<ReleaseSlotStep>().Input(step => step.Gate, data => GateType.EditPresentation)
+            )
+            // 5. Finalize Worksheets
+            .ForEach(data => data.WorksheetKeys)
+            .Do(finalizeLoop => finalizeLoop
+                .StartWith<RemoveWorkingTemplateSlide>()
+                .Input(step => step.Worksheet, (data, context) => (WorksheetIdentifier)context.Item)
+                .Input(step => step.OutputPath, (data, context) => data.WorksheetOutputPaths[context.Item.ToString()!])
+                .Input(step => step.WorkingTemplateSlide,
+                    (data, context) => data.WorksheetTemplateSlides[context.Item.ToString()!])
+                .Input(step => step.Request, data => data.Request)
+                .Output((step, data) =>
+                {
+                    if (step.Exception != null)
+                        data.Errors[$"{step.Worksheet}:Finalize"] = step.Exception;
+                })
+            );
     }
 }

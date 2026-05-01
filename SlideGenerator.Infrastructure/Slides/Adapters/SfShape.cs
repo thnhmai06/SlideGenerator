@@ -13,6 +13,9 @@ namespace SlideGenerator.Infrastructure.Slides.Adapters;
 /// </summary>
 public sealed class SfShape : IShape
 {
+    /// <summary>
+    ///     The parent slide adapter.
+    /// </summary>
     private readonly SfSlide _slide;
 
     internal SfShape(SfSlide slide, SfPresNs.IShape core)

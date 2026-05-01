@@ -10,8 +10,19 @@ namespace SlideGenerator.Application.Modules.Images.Services;
 /// <remarks>Reviewed by @thnhmai06 at 02/03/2026 11:34:31 GMT+7</remarks>
 public abstract class FaceDetectorsManager : IFaceDetectorProvider, IAsyncDisposable
 {
+    /// <summary>
+    ///     The default face detector model to use if no other model is specified.
+    /// </summary>
     private const FaceDetectorModel DefaultModel = FaceDetectorModel.YuNet;
+
+    /// <summary>
+    ///     The cache of initialized face detector instances, keyed by their model type.
+    /// </summary>
     private readonly ConcurrentDictionary<FaceDetectorModel, FaceDetector> _detectors = new();
+
+    /// <summary>
+    ///     Indicates whether the instance has been disposed.
+    /// </summary>
     private bool _disposed;
 
     /// <summary>

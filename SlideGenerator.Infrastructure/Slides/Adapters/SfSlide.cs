@@ -12,6 +12,9 @@ namespace SlideGenerator.Infrastructure.Slides.Adapters;
 /// </summary>
 public sealed class SfSlide : ISlide
 {
+    /// <summary>
+    ///     The parent presentation adapter.
+    /// </summary>
     private readonly SfPresentation _presentation;
 
     internal SfSlide(SfPresentation presentation, SfPresNs.ISlide core, int index)

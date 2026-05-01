@@ -15,10 +15,21 @@ namespace SlideGenerator.Infrastructure.Slides.Adapters;
 /// </summary>
 public sealed class SfPresentation : IPresentation, IDisposable
 {
+    /// <summary>
+    ///     The file stream for the presentation.
+    /// </summary>
     private FileStream? _fileStream;
 
+    /// <summary>
+    ///     The lazy initializer for the Syncfusion presentation instance.
+    /// </summary>
     private readonly Lazy<SfPresNs.IPresentation> _core;
 
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="SfPresentation" /> class.
+    /// </summary>
+    /// <param name="filePath">The path to the PowerPoint file.</param>
+    /// <param name="isEditable">Indicates whether the presentation should be opened for editing.</param>
     public SfPresentation(string filePath, bool isEditable = true)
     {
         Identifier = new PresentationIdentifier(filePath);

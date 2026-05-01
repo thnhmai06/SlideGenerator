@@ -16,6 +16,10 @@ namespace SlideGenerator.Application.Modules.Download.Entities;
 /// </remarks>
 public sealed class Downloader : IDisposable, IAsyncDisposable
 {
+    /// <summary>
+    ///     The queue of file extensions used during the download process.
+    ///     The first element is the current extension being used.
+    /// </summary>
     private readonly Queue<string> _extension = new();
 
     /// <summary>

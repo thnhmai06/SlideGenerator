@@ -1,20 +1,25 @@
-using SlideGenerator.Application.Services.Generating.Models.Images;
 using SlideGenerator.Domain.Sheets.Models.Identifiers;
+using SlideGenerator.Domain.Slides.Models.Identifiers;
+using ImageGeneralInstruction = SlideGenerator.Application.Services.Generating.Models.Images.GeneralInstruction;
+using ImageSpecializedInstruction = SlideGenerator.Application.Services.Generating.Models.Images.SpecializedInstruction;
+using TextGeneralInstruction = SlideGenerator.Application.Services.Generating.Models.Texts.GeneralInstruction;
 
 namespace SlideGenerator.Application.Services.Generating.Workflows.Models;
 
 /// <summary>
-///     Carries the context for a single download or edit task within a row iteration.
-///     Passed as the ForEach item to <see cref="Activities.DownloadImage" /> and <see cref="Activities.EditImage" />.
+///     Represents a single atomic operation within a worksheet row.
+///     Contains all necessary context for download, edit, and slide operations.
 /// </summary>
-/// <param name="Worksheet">The worksheet this task belongs to.</param>
-/// <param name="RowIndex">The 1-based row index being processed.</param>
-/// <param name="DownloadItem">The image instruction to download; <see langword="null" /> for edit tasks.</param>
-/// <param name="EditItem">
-///     The resolved (instruction, downloaded-path) pair to edit; <see langword="null" /> for download tasks.
-/// </param>
-public record RowTask(
+public sealed record RowTask(
     WorksheetIdentifier Worksheet,
     int RowIndex,
-    GeneralInstruction? DownloadItem = null,
-    KeyValuePair<SpecializedInstruction, string>? EditItem = null);
+    ImageGeneralInstruction? DownloadItem = null,
+    KeyValuePair<ImageSpecializedInstruction, string>? EditItem = null)
+{
+    // Metadata for the task, pre-populated during setup
+    public List<TextGeneralInstruction> TextInstructions { get; set; } = [];
+    public List<ImageGeneralInstruction> ImageInstructions { get; set; } = [];
+    public List<ImageSpecializedInstruction> ResolvedInstructions { get; set; } = [];
+    public string OutputPath { get; set; } = string.Empty;
+    public SlideIdentifier TemplateSlide { get; set; } = null!;
+}

@@ -11,6 +11,9 @@ namespace SlideGenerator.Application.Modules.Download.Services;
 /// </summary>
 public sealed class DownloadRegistry
 {
+    /// <summary>
+    ///     The dictionary of active and completed downloads, keyed by the download request.
+    /// </summary>
     private readonly ConcurrentDictionary<DownloadRequest, Downloader> _registry = new();
 
     /// <summary>Gets a read-only view of the currently active download registry.</summary>

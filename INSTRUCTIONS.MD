@@ -20,63 +20,53 @@ The project strictly adheres to Clean Architecture with a unidirectional depende
     - `Services/`: High-level feature orchestration that uses multiple modules.
 - **Uniform Folder Structure**: Every module/service follows a consistent layout: `Abstractions/`, `Entities/`, `Models/`, `Rules/`, `Services/`, and where applicable, `Activities/` and `Workflows/`.
 
-## 3. Workflow DSL
-The system uses a custom DSL (located in `Modules/Workflows/DSL/`) for defining long-running processes. Interpretation is handled by `WcWorkflowService` and `WcInterpreterStep` in Infrastructure, backed by WorkflowCore.
+## 3. Workflow System (WorkflowCore)
+The project uses the **WorkflowCore** engine directly in the Application layer for orchestrating long-running processes.
 
-### Lexical Scope Tree & Variables
-State is managed via a hierarchical scope tree using `Handle<T>` keys.
-- **`Handle<T>`**: A stateless, typed key used to store/retrieve checkpoint-able values from the execution context. **Never** store transient handles (file leases, locks, streams) in Variables.
-- **Child Scopes**: Iterative nodes (like `ForEach`) create isolated child scopes. `GetVariable` searches the local scope before traversing up the parent chain.
+### Workflow Definition
+Workflows are defined by implementing `IWorkflow<TData>`.
+- **`TData`**: A strongly-typed class (e.g., `ScanningData`, `GeneratingData`) used to persist the state of the workflow.
+- **`Build` method**: Uses the Fluent API to define the sequence, parallel branches, and loops.
 
-### Core DSL Nodes
-| Node | Purpose |
-|---|---|
-| `Inline.Activity<T>` | Invokes a leaf activity via DI resolution. |
-| `Sequence` | Executes children in order. |
-| `Parallel` | Executes children concurrently. |
-| `ForEach` | Iterates a collection, creating a child scope for each item. |
-| `Try` | Provides error isolation (swallows and logs exceptions). |
-| `GateWrapper` | Throttles execution via `GateLocker` (semaphore per `GateType`). |
-| `Inline` | Performs lightweight state mutations via lambdas. |
-| `Condition` | Provides branching logic based on a predicate. |
+### Throttling (Gates & Slots)
+To manage resource-intensive operations (I/O, Network, CPU), the system uses a custom throttling mechanism:
+- **`GateType`**: Defines the type of resource being throttled (e.g., `DownloadImage`, `EditPresentation`).
+- **`AcquireSlotStep`**: Acquires a permit from the `SlotManager`. If no slots are available, it suspends and waits for a "SlotAvailable" event.
+- **`ReleaseSlotStep`**: Releases the permit and triggers the event for waiting workflows.
 
-### Workflow Invariants
-- **Orchestration belongs to the Node Tree**: Leaf activities must not contain loops or parallel coordination; use the DSL nodes instead.
-- **Variables are the only Scope-Crossing mechanism for checkpoint-able state**: Activities inject `Handle<T>` keys via constructors and read via `context.GetVariable(key)`. DSL lambdas use `ctx.Data` directly.
-- **Disk-Bound Persistence**: Every activity should ideally correspond to a disk I/O or state boundary to support crash recovery.
-- **Error Isolation**: Use `Try` for granular steps in loops where a single failure should not halt the entire process.
+## 4. Execution State & Persistence
+State management has shifted from a scoped variable system to a direct data persistence model.
 
-## 4. Execution State Model
+### Data Classes
+All workflow state lives in `Services/*/Workflows/*Data.cs` files.
+- **Concurrent Access**: Use `ConcurrentDictionary` for state shared across parallel branches.
+- **Normalized Paths**: Use absolute, normalized file paths as keys for consistency.
 
-All execution state lives under `Modules/Workflows/Models/States/` (base types) and `Services/*/Models/States/` (derived types).
+### Error Handling & Resilience
+The system prioritizes continuity over stopping on the first failure.
+- **`Errors` Dictionary**: Each data class contains a `ConcurrentDictionary<string, Exception> Errors`.
+- **Activity Wrapping**: Activities wrap their logic in `try-catch` blocks.
+- **Full Exceptions**: Store the entire `Exception` object (including stack traces) for better diagnostics.
+- **Partial Success**: The workflow continues to process remaining items (e.g., other rows or files) even if one specific task fails.
 
-### Core Types
+## 5. Development Patterns
 
-| Type | Description |
-|---|---|
-| `ExecutionSnapshot` | Abstract base. Carries `Payload`, `Context`, `Status`, `Logger`, and child `Activities` map. |
-| `WorkflowSnapshot` | Top-level snapshot for a workflow instance. |
-| `ActivitySnapshot` | Snapshot for a single activity invocation. |
-| `IExecutionPayload` | Named, checkpoint-able variable store (`GetVariable<T>` / `SetVariable<T>`). One per scope. |
-| `IExecutionContext` | Marker interface for **transient** runtime-only state. Implementations add live-resource fields and provide `IServiceProvider` for DI. |
+### Activity (StepBody) Model
+Activities inherit from `StepBody` (synchronous) or `StepBodyAsync` (asynchronous).
+- **Dependency Injection**: Use standard constructor injection for services.
+- **Inputs/Outputs**: Map properties in the workflow's `Build` method.
+- **PresentationStepBase**: A specialized base class for PowerPoint operations that ensures file leases are always disposed of.
 
-### Transient State via IExecutionContext
-Transient resources (open file handles, in-flight locks) must **not** be stored in `Handle<T>`. Instead:
-1. Define a class implementing `IExecutionContext` with the required fields (e.g., `WorksheetContext.PresentationLease`).
-2. Pass an instance when constructing the scope's snapshot (e.g., `WorksheetSnapshot`).
-3. Activities navigate to the snapshot via `context.Snapshot` and cast it to the concrete type to access the context.
-4. The first activity that needs a resource acquires it lazily; the last one disposes and nulls it.
-
-**Concrete implementation**: `WorksheetContext` — holds `Lease<IPresentation>? PresentationLease` for Phase B slide editing. Accessed via `((WorksheetSnapshot)snapshot).Context.PresentationLease`.
-
-## 5. Design Patterns
+### Workflow Control
+`IScanningService` and `IGeneratingService` provide methods to manage active workflows:
+- **`Stop`**: Terminates the workflow immediately.
+- **`Pause`**: Suspends execution; current state is persisted.
+- **`Resume`**: Continues a previously paused workflow.
 
 ### Registry & Leasing Pattern
-Used for managing access to shared or reference-counted resources (e.g., file streams, cloud clients).
-- **`Registry<TKey, TResource>`**: Manages resource instantiation and lifecycle.
-- **`Lease<T>`**: Returned by `AcquireAsync()`. Implements `IDisposable` and `IAsyncDisposable`.
-- **Short-lived leases**: Use `await using var lease = await registry.AcquireAsync(key);` for automatic release within one scope.
-- **Long-lived leases**: Store on `IExecutionContext`; the owning activity calls `Dispose()` explicitly when done.
+Used for managing access to shared resources (e.g., file streams).
+- **FileRegistry<TResource>**: Manages file-backed resource lifecycle with integrated reader-writer locking.
+- **Lease<T>**: Returned by `AcquireAsync()`. Ensure `await using` or explicit disposal to prevent file locks.
 
 ### Gate Locking (Throttling)
 Controlled via `GateWrapper` and `GateLocker`. Limits are configured per `GateType` (e.g., Download, EditImage, Worksheet) to prevent resource exhaustion.

@@ -8,6 +8,7 @@ namespace SlideGenerator.Application.Modules.Cloud.Services;
 /// <summary>
 ///     Provides a cloud provider implementation for accessing and resolving Google Drive file and folder URIs.
 /// </summary>
+/// <param name="clientService">The service used to handle HTTP requests and URI redirections.</param>
 public sealed partial class GoogleDriveResolver(IClientService clientService) : ICloudResolver
 {
     /// <summary>
