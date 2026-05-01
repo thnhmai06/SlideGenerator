@@ -2,6 +2,7 @@ using SlideGenerator.Application.Modules.Registry.Interfaces;
 using SlideGenerator.Application.Modules.Settings.Abstractions;
 using SlideGenerator.Application.Modules.Settings.Interfaces;
 using SlideGenerator.Application.Modules.Settings.Rules;
+using SlideGenerator.Application.Services.Setting;
 using SlideGenerator.Domain.Settings.Entities;
 
 namespace SlideGenerator.Application.Modules.Settings.Services;
@@ -12,7 +13,7 @@ namespace SlideGenerator.Application.Modules.Settings.Services;
 /// <param name="textFileRegistry">The registry for acquiring thread-safe access to text files.</param>
 /// <param name="serializer">The serializer used to parse and format the configuration data.</param>
 public sealed class SettingManager(FileRegistry<ITextFile> textFileRegistry, ISerializer serializer)
-    : ISettingProvider
+    : ISettingManager
 {
     /// <summary>
     ///     Gets the absolute file path where the settings are stored.
@@ -66,6 +67,12 @@ public sealed class SettingManager(FileRegistry<ITextFile> textFileRegistry, ISe
         {
             return false;
         }
+    }
+
+    public Task<bool> Update(Setting newSetting)
+    {
+        Current = newSetting;
+        return Save();
     }
 
     /// <summary>

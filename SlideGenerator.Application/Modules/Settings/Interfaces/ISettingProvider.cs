@@ -14,5 +14,5 @@ public interface ISettingProvider
     /// <summary>
     ///     Gets the current active <see cref="Setting" /> configuration.
     /// </summary>
-    Setting Current { get; }
+    public Setting Current { get; }
 }
