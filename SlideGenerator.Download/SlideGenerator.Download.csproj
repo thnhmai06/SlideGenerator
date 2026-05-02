@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="Downloader" Version="5.4.0" />
+        <PackageReference Remove="StyleCop.Analyzers" />
+    </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\SlideGenerator.Gate\SlideGenerator.Gate.csproj" />
+        <ProjectReference Include="..\SlideGenerator.Settings\SlideGenerator.Settings.csproj" />
+    </ItemGroup>
+</Project>

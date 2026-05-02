@@ -1,0 +1,226 @@
+using System.Drawing;
+using System.Numerics;
+using ImageMagick;
+using OpenCvSharp;
+using Point = System.Drawing.Point;
+using Size = System.Drawing.Size;
+
+namespace SlideGenerator.Images;
+
+/// <summary>
+///     Provides utility methods for image and geometric calculations.
+/// </summary>
+public static class Utilities
+{
+    /// <summary>
+    ///     Clamps the specified point so that its coordinates lie within the bounds of the given rectangle.
+    /// </summary>
+    public static Point ClampIn(this Point point, Rectangle border)
+    {
+        var x = Math.Clamp(point.X, border.Left, border.Right - 1);
+        var y = Math.Clamp(point.Y, border.Top, border.Bottom - 1);
+
+        return new Point(x, y);
+    }
+
+    /// <summary>
+    ///     Calculates an anchored rectangle of the specified size inside the source image.
+    /// </summary>
+    public static Rectangle CalculateAnchoredRectangle(
+        Size sourceSize, Size cropSize,
+        Point? anchorPoint = null, Vector2? pivot = null)
+    {
+        anchorPoint ??= sourceSize.CenterPoint();
+        pivot ??= new Vector2(0.5f, 0.5f);
+
+        var imageBounds = new Rectangle(Point.Empty, sourceSize);
+        var boundedSize = new Size(
+            Math.Min(cropSize.Width, imageBounds.Width),
+            Math.Min(cropSize.Height, imageBounds.Height));
+
+        var x = (int)MathF.Round(anchorPoint.Value.X - boundedSize.Width * pivot.Value.X);
+        var y = (int)MathF.Round(anchorPoint.Value.Y - boundedSize.Height * pivot.Value.Y);
+
+        return new Rectangle(x, y, boundedSize.Width, boundedSize.Height).ClampIn(imageBounds);
+    }
+
+    /// <summary>
+    ///     Converts a <see cref="Point" /> to a <see cref="Vector2" />.
+    /// </summary>
+    public static Vector2 ToVector2(this Point point)
+    {
+        return new Vector2(point.X, point.Y);
+    }
+
+    /// <summary>
+    ///     Converts a <see cref="Vector2" /> to a <see cref="Point" />.
+    /// </summary>
+    public static Point ToPoint(this Vector2 vector)
+    {
+        return new Point(
+            (int)MathF.Round(vector.X, MidpointRounding.AwayFromZero),
+            (int)MathF.Round(vector.Y, MidpointRounding.AwayFromZero)
+        );
+    }
+
+    /// <summary>
+    ///     Calculates the centroid of a collection of points.
+    /// </summary>
+    public static Point? Centroid<TSource>(
+        this IReadOnlyList<TSource> containers,
+        Func<TSource, Point?> selector)
+    {
+        var sources = containers
+            .Select(selector)
+            .Where(p => p.HasValue)
+            .Select(p => p!.Value.ToVector2())
+            .ToList();
+        if (sources.Count == 0) return null;
+
+        var sum = sources.Aggregate(Vector2.Zero, (acc, v) => acc + v);
+        return (sum / sources.Count).ToPoint();
+    }
+
+    extension(Rectangle rect)
+    {
+        /// <summary>
+        ///     Linearly interpolates a point within the rectangle based on a pivot.
+        /// </summary>
+        public Point Lerp(Vector2 pivot)
+        {
+            return new Point(
+                rect.X + (int)Math.Round(rect.Width * pivot.X, MidpointRounding.AwayFromZero),
+                rect.Y + (int)Math.Round(rect.Height * pivot.Y, MidpointRounding.AwayFromZero)
+            );
+        }
+
+        /// <summary>
+        ///     Clamps the specified rectangle so that it fits entirely within the bounds of the given border rectangle.
+        /// </summary>
+        public Rectangle ClampIn(Rectangle border)
+        {
+            var x = rect.X;
+            var y = rect.Y;
+            var w = rect.Width;
+            var h = rect.Height;
+
+            if (w > border.Width)
+            {
+                w = border.Width;
+                x = border.X;
+            }
+
+            if (h > border.Height)
+            {
+                h = border.Height;
+                y = border.Y;
+            }
+
+            if (x < border.Left) x = border.Left;
+            if (y < border.Top) y = border.Top;
+            if (x + w > border.Right) x = border.Right - w;
+            if (y + h > border.Bottom) y = border.Bottom - h;
+
+            return new Rectangle(x, y, w, h);
+        }
+    }
+
+    extension(Size original)
+    {
+        /// <summary>
+        ///     Get the largest size that has the same aspect ratio with the target size and fits within the original size.
+        /// </summary>
+        public Size GetMaxAspectSize(Size target)
+        {
+            var originalAspect = original.Width / (double)original.Height;
+            var targetAspect = target.Width / (double)target.Height;
+
+            int width, height;
+            if (originalAspect >= targetAspect)
+            {
+                height = original.Height;
+                width = (int)Math.Round(height * targetAspect);
+            }
+            else
+            {
+                width = original.Width;
+                height = (int)Math.Round(width / targetAspect);
+            }
+
+            width = Math.Min(width, original.Width);
+            height = Math.Min(height, original.Height);
+            return new Size(width, height);
+        }
+
+        /// <summary>
+        ///     Gets the center point of the size.
+        /// </summary>
+        public Point CenterPoint()
+        {
+            return new Point(original.Width / 2, original.Height / 2);
+        }
+
+        /// <summary>
+        ///     Linearly interpolates a point within the size based on a pivot.
+        /// </summary>
+        public Point Lerp(Vector2 pivot)
+        {
+            return new Point(
+                (int)Math.Round(original.Width * pivot.X, MidpointRounding.AwayFromZero),
+                (int)Math.Round(original.Height * pivot.Y, MidpointRounding.AwayFromZero)
+            );
+        }
+    }
+
+    /// <summary>
+    ///     Crops the specified <see cref="OpenCvSharp.Mat" /> to the given dimensions in place.
+    /// </summary>
+    public static void Crop(ref Mat mat, Rectangle rect)
+    {
+        var croppedMat = new Mat(mat, new Rect(rect.X, rect.Y, rect.Width, rect.Height));
+        var cloned = croppedMat.Clone();
+
+        mat.Dispose();
+        mat = cloned;
+        croppedMat.Dispose();
+    }
+
+    /// <summary>
+    ///     Resizes the specified <see cref="OpenCvSharp.Mat" /> to the given dimensions in place.
+    /// </summary>
+    public static void Resize(ref Mat mat, OpenCvSharp.Size size, InterpolationFlags interpolation = InterpolationFlags.Area)
+    {
+        var resizedMat = new Mat();
+        Cv2.Resize(mat, resizedMat, size, 0, 0, interpolation);
+
+        mat.Dispose();
+        mat = resizedMat;
+    }
+    
+    public static Mat Decode(byte[] imageBytes)
+    {
+        if (imageBytes.Length == 0)
+            throw new ArgumentException("Image bytes cannot be empty.", nameof(imageBytes));
+
+        byte[] pngBytes;
+        try
+        {
+            using var magickImage = new MagickImage(imageBytes);
+            magickImage.Format = MagickFormat.Png;
+            pngBytes = magickImage.ToByteArray();
+        }
+        catch (Exception e)
+        {
+            throw new InvalidOperationException("Cannot decode image bytes using ImageMagick.", e);
+        }
+
+        var mat = Cv2.ImDecode(pngBytes, ImreadModes.Unchanged);
+        if (mat.Empty())
+        {
+            mat.Dispose();
+            throw new InvalidOperationException("Cannot decode PNG bytes from ImageMagick into OpenCV image.");
+        }
+
+        return mat;
+    }
+}
