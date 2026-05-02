@@ -9,8 +9,6 @@ namespace SlideGenerator.Workflows.Generating.Activities;
 public sealed class EditSlide(
     SfWorkbookFactory workbookFactory,
     SfPresentationRegistry presentationRegistry,
-    SfTextComposer textComposer,
-    SfImageComposer imageComposer,
     Setting setting) : PresentationStepBase(presentationRegistry)
 {
     public RowTask RowTask { get; set; } = null!;
@@ -33,7 +31,7 @@ public sealed class EditSlide(
         if (textMap is { Count: > 0 })
         {
             foreach (IShape shape in slide.Shapes)
-                textComposer.Replace(shape, textMap);
+                SfTextComposer.Replace(shape, textMap);
         }
 
         if (RowTask.ResolvedInstructions is { Count: > 0 })

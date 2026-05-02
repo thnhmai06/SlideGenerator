@@ -1,5 +1,7 @@
 using System.Drawing;
+using ImageMagick;
 using SlideGenerator.Images.Models.Options;
+using SlideGenerator.Images.Services;
 using SlideGenerator.Workflows.Generating.Models;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
@@ -8,8 +10,7 @@ using Syncfusion.Presentation;
 namespace SlideGenerator.Workflows.Generating.Activities;
 
 public sealed class EditImage(
-    IImageDecoder imageDecoder,
-    IRoiCalculator roiCalculator,
+    RoiResolver roiCalculator,
     SfPresentationRegistry slideRegistry,
     Setting setting) : StepBodyAsync
 {
@@ -47,18 +48,41 @@ public sealed class EditImage(
     private async ValueTask ProcessWithRoiAsync(string sourcePath, string destinationPath, Size targetSize, RoiOption roiOption)
     {
         var sourceBytes = await File.ReadAllBytesAsync(sourcePath).ConfigureAwait(false);
-        using var sourceMat = imageDecoder.Decode(sourceBytes);
-        if (sourceMat.Empty())
-            throw new InvalidOperationException($"Cannot decode image '{sourcePath}'.");
-
-        var normalizedSize = new Size(
-            Math.Max(1, targetSize.Width > 0 ? targetSize.Width : sourceMat.Width),
-            Math.Max(1, targetSize.Height > 0 ? targetSize.Height : sourceMat.Height));
-
-        await roiCalculator.CalculateRoiAsync(sourceMat, normalizedSize, roiOption.Type, roiOption).ConfigureAwait(false);
+        using var sourceMagickImage = SlideGenerator.Images.Utilities.Decode(sourceBytes);
         
-        // Use OpenCV to encode and save
-        sourceMat.SaveImage(destinationPath);
+        var normalizedSize = new Size(
+            Math.Max(1, targetSize.Width > 0 ? targetSize.Width : sourceMagickImage.Width),
+            Math.Max(1, targetSize.Height > 0 ? targetSize.Height : sourceMagickImage.Height));
+
+        var roi = await roiCalculator.CalculateRoiAsync(sourceMagickImage, normalizedSize, roiOption.Type, roiOption).ConfigureAwait(false);
+        
+        // Crop the image to ROI
+        var croppedImage = SlideGenerator.Images.Utilities.Crop(sourceMagickImage, roi);
+        
+        try
+        {
+            // Resize if needed
+            if (croppedImage.Width != normalizedSize.Width || croppedImage.Height != normalizedSize.Height)
+            {
+                var resizedImage = SlideGenerator.Images.Utilities.Resize(croppedImage, normalizedSize);
+                try
+                {
+                    resizedImage.Write(destinationPath);
+                }
+                finally
+                {
+                    resizedImage.Dispose();
+                }
+            }
+            else
+            {
+                croppedImage.Write(destinationPath);
+            }
+        }
+        finally
+        {
+            croppedImage.Dispose();
+        }
     }
 
     private async ValueTask<Size> ResolveTargetSizeAsync(SpecializedInstruction instruction, CancellationToken ct)

@@ -1,5 +1,6 @@
 using System.Drawing;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using ImageMagick;
 using OpenCvSharp;
 using Point = System.Drawing.Point;
@@ -8,8 +9,12 @@ using Size = System.Drawing.Size;
 namespace SlideGenerator.Images;
 
 /// <summary>
-///     Provides utility methods for image and geometric calculations.
+///     Provides utility methods for image processing, geometric calculations, and format conversions.
 /// </summary>
+/// <remarks>
+///     This utility class facilitates operations between ImageMagick and OpenCV formats,
+///     providing seamless conversion and processing capabilities for image manipulation.
+/// </remarks>
 public static class Utilities
 {
     /// <summary>
@@ -123,6 +128,15 @@ public static class Utilities
 
             return new Rectangle(x, y, w, h);
         }
+
+        public MagickGeometry ToMagick()
+        {
+            return new MagickGeometry(
+                Math.Max(0, rect.X),
+                Math.Max(0, rect.Y),
+                (uint)Math.Max(1, rect.Width),
+                (uint)Math.Max(1, rect.Height));
+        }
     }
 
     extension(Size original)
@@ -173,54 +187,40 @@ public static class Utilities
     }
 
     /// <summary>
-    ///     Crops the specified <see cref="OpenCvSharp.Mat" /> to the given dimensions in place.
+    ///     Converts Image to OpenCV Mat for face detection operations.
     /// </summary>
-    public static void Crop(ref Mat mat, Rectangle rect)
+    public static Mat ToMat(this MagickImage image)
     {
-        var croppedMat = new Mat(mat, new Rect(rect.X, rect.Y, rect.Width, rect.Height));
-        var cloned = croppedMat.Clone();
+        ArgumentNullException.ThrowIfNull(image);
 
-        mat.Dispose();
-        mat = cloned;
-        croppedMat.Dispose();
-    }
-
-    /// <summary>
-    ///     Resizes the specified <see cref="OpenCvSharp.Mat" /> to the given dimensions in place.
-    /// </summary>
-    public static void Resize(ref Mat mat, OpenCvSharp.Size size, InterpolationFlags interpolation = InterpolationFlags.Area)
-    {
-        var resizedMat = new Mat();
-        Cv2.Resize(mat, resizedMat, size, 0, 0, interpolation);
-
-        mat.Dispose();
-        mat = resizedMat;
-    }
-    
-    public static Mat Decode(byte[] imageBytes)
-    {
-        if (imageBytes.Length == 0)
-            throw new ArgumentException("Image bytes cannot be empty.", nameof(imageBytes));
-
-        byte[] pngBytes;
-        try
-        {
-            using var magickImage = new MagickImage(imageBytes);
-            magickImage.Format = MagickFormat.Png;
-            pngBytes = magickImage.ToByteArray();
-        }
-        catch (Exception e)
-        {
-            throw new InvalidOperationException("Cannot decode image bytes using ImageMagick.", e);
-        }
+        image.Format = MagickFormat.Png;
+        var pngBytes = image.ToByteArray();
 
         var mat = Cv2.ImDecode(pngBytes, ImreadModes.Unchanged);
         if (mat.Empty())
         {
             mat.Dispose();
-            throw new InvalidOperationException("Cannot decode PNG bytes from ImageMagick into OpenCV image.");
+            throw new InvalidOperationException("Cannot decode image bytes into OpenCV Mat.");
         }
 
         return mat;
+    }
+
+    /// <summary>
+    ///     Converts OpenCV Mat to Image.
+    /// </summary>
+    public static MagickImage ToMagick(this Mat mat)
+    {
+        if (mat.Empty()) return new MagickImage();
+        
+        var bytes = new byte[mat.Total() * mat.ElemSize()];
+        Marshal.Copy(mat.Data, bytes, 0, bytes.Length);
+        return new MagickImage(bytes, new MagickReadSettings
+        {
+            Width = (uint)mat.Width,
+            Height = (uint)mat.Height,
+            Depth = 8,
+            ColorSpace = ColorSpace.RGB
+        });
     }
 }

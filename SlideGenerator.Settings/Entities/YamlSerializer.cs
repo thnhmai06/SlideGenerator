@@ -1,3 +1,6 @@
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
+
 namespace SlideGenerator.Settings.Entities;
 
 public class YamlSerializer : Serializer
@@ -6,8 +9,8 @@ public class YamlSerializer : Serializer
 
     public override T Deserialize<T>(string source)
     {
-        var deserializer = new YamlDotNet.Serialization.DeserializerBuilder()
-            .WithNamingConvention(YamlDotNet.Serialization.NamingConventions.CamelCaseNamingConvention.Instance)
+        var deserializer = new DeserializerBuilder()
+            .WithNamingConvention(CamelCaseNamingConvention.Instance)
             .IgnoreUnmatchedProperties()
             .Build();
 
@@ -16,8 +19,8 @@ public class YamlSerializer : Serializer
 
     public override string Serialize<T>(T obj)
     {
-        var serializer = new YamlDotNet.Serialization.SerializerBuilder()
-            .WithNamingConvention(YamlDotNet.Serialization.NamingConventions.CamelCaseNamingConvention.Instance)
+        var serializer = new SerializerBuilder()
+            .WithNamingConvention(CamelCaseNamingConvention.Instance)
             .Build();
 
         return serializer.Serialize(obj);

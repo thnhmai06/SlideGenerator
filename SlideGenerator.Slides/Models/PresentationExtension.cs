@@ -1,4 +1,4 @@
-namespace SlideGenerator.Slides.Rules;
+namespace SlideGenerator.Slides.Models;
 
 /// <summary>
 ///     Specifies the supported file extensions for presentations.

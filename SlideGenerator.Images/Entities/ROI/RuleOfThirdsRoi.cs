@@ -1,9 +1,9 @@
 using System.Drawing;
 using System.Numerics;
+using ImageMagick;
 using SlideGenerator.Images.Entities.Detectors;
 using SlideGenerator.Images.Models;
 using SlideGenerator.Images.Models.Options;
-using Mat = OpenCvSharp.Mat;
 
 namespace SlideGenerator.Images.Entities.ROI;
 
@@ -15,16 +15,17 @@ internal sealed class RuleOfThirdsRoi(FaceDetector faceDetector) : RoiCalculator
     private static readonly Vector2 RuleOfThirdsPivot = new(0.5f, 0.333f);
 
     public override async ValueTask<Rectangle> CalculateRoiAsync(
-        Mat mat, Size targetSize, RoiType type,
+        MagickImage image, Size targetSize, RoiType type,
         RoiOption? option = null)
     {
         if (type != RoiType.RuleOfThirds)
             throw new ArgumentException($"Invalid ROI type '{type}' for {nameof(RuleOfThirdsRoi)}.", nameof(type));
-        
+
         var ruleOption = option as RuleOfThirdsOption;
         var pivot = ruleOption?.Pivot ?? RuleOfThirdsPivot;
-        var sourceSize = new Size(mat.Width, mat.Height);
-        
+        var sourceSize = new Size((int)image.Width, (int)image.Height);
+
+        using var mat = image.ToMat();
         var faces = await faceDetector.DetectAsync(mat).ConfigureAwait(false);
         if (faces.Count <= 0) return Utilities.CalculateAnchoredRectangle(sourceSize, targetSize);
 

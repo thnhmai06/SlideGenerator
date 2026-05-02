@@ -1,13 +1,20 @@
 using System.Collections.ObjectModel;
 using System.Drawing;
+using ImageMagick;
 using SlideGenerator.Images.Entities.Detectors;
 using SlideGenerator.Images.Entities.ROI;
 using SlideGenerator.Images.Models;
 using SlideGenerator.Images.Models.Options;
-using Mat = OpenCvSharp.Mat;
 
 namespace SlideGenerator.Images.Services;
 
+/// <summary>
+///     Resolves Region of Interest (ROI) for images using configurable algorithms.
+/// </summary>
+/// <remarks>
+///     This service routes ROI calculation requests to appropriate calculator implementations
+///     (Center or Rule of Thirds) and supports intelligent feature detection via face detection.
+/// </remarks>
 public sealed class RoiResolver(FaceDetector faceDetector)
 {
     private readonly ReadOnlyDictionary<RoiType, RoiCalculator> _calculators =
@@ -18,17 +25,24 @@ public sealed class RoiResolver(FaceDetector faceDetector)
         }.AsReadOnly();
 
     /// <summary>
-    ///     Calculates ROI by routing to the calculator keyed by the option type.
+    ///     Calculates the Region of Interest for the specified image asynchronously.
     /// </summary>
-    public ValueTask<Rectangle> CalculateRoiAsync(Mat mat, Size targetSize, RoiType type, RoiOption? option = null)
+    /// <param name="image">The source image to calculate ROI for.</param>
+    /// <param name="targetSize">The desired size of the ROI region.</param>
+    /// <param name="type">The algorithm type for ROI calculation.</param>
+    /// <param name="option">Optional configuration for the selected ROI algorithm.</param>
+    /// <returns>A task that returns the calculated ROI rectangle.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when the ROI type is not supported.</exception>
+    public ValueTask<Rectangle> CalculateRoiAsync(MagickImage image, Size targetSize, RoiType type,
+        RoiOption? option = null)
     {
-        return GetCalculator(type).CalculateRoiAsync(mat, targetSize, type, option);
+        return GetCalculator(type).CalculateRoiAsync(image, targetSize, type, option);
     }
 
     private RoiCalculator GetCalculator(RoiType key)
     {
-        return _calculators.TryGetValue(key, out var calculator) 
-            ? calculator 
+        return _calculators.TryGetValue(key, out var calculator)
+            ? calculator
             : throw new ArgumentOutOfRangeException(nameof(key), key, null);
     }
 }
