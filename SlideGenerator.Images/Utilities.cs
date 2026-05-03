@@ -144,21 +144,21 @@ public static class Utilities
         /// <summary>
         ///     Get the largest size that has the same aspect ratio with the target size and fits within the original size.
         /// </summary>
-        public Size GetMaxAspectSize(Size target)
+        public Size GetMaxAspectSize(Size ratioSize)
         {
             var originalAspect = original.Width / (double)original.Height;
-            var targetAspect = target.Width / (double)target.Height;
+            var ratioAspect = ratioSize.Width / (double)ratioSize.Height;
 
             int width, height;
-            if (originalAspect >= targetAspect)
+            if (originalAspect >= ratioAspect)
             {
                 height = original.Height;
-                width = (int)Math.Round(height * targetAspect);
+                width = (int)Math.Round(height * ratioAspect);
             }
             else
             {
                 width = original.Width;
-                height = (int)Math.Round(width / targetAspect);
+                height = (int)Math.Round(width / ratioAspect);
             }
 
             width = Math.Min(width, original.Width);
@@ -177,11 +177,11 @@ public static class Utilities
         /// <summary>
         ///     Linearly interpolates a point within the size based on a pivot.
         /// </summary>
-        public Point Lerp(Vector2 pivot)
+        public Point Lerp(Vector2 interpolateWith)
         {
             return new Point(
-                (int)Math.Round(original.Width * pivot.X, MidpointRounding.AwayFromZero),
-                (int)Math.Round(original.Height * pivot.Y, MidpointRounding.AwayFromZero)
+                (int)Math.Round(original.Width * interpolateWith.X, MidpointRounding.AwayFromZero),
+                (int)Math.Round(original.Height * interpolateWith.Y, MidpointRounding.AwayFromZero)
             );
         }
     }

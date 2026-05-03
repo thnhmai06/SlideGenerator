@@ -1,6 +1,6 @@
 using Syncfusion.Presentation;
 
-namespace SlideGenerator.Slides.Services;
+namespace SlideGenerator.Slides.Entities;
 
 /// <summary>
 ///     Wraps a Syncfusion IPresentation and its FileStream for proper disposal and saving.
@@ -10,7 +10,7 @@ public sealed class SfPresentation : IDisposable
     private readonly FileStream? _fileStream;
     public IPresentation Value { get; }
 
-    public SfPresentation(string filePath, bool isWritable, string? password)
+    public SfPresentation(string filePath, bool isWritable, string? password = null)
     {
         if (isWritable) Value = Presentation.Open(filePath, password);
         else
@@ -18,6 +18,11 @@ public sealed class SfPresentation : IDisposable
             _fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             Value = Presentation.Open(_fileStream, password);
         }
+    }
+
+    public void Save()
+    {
+        Value.Save(_fileStream);
     }
 
     public void Dispose()

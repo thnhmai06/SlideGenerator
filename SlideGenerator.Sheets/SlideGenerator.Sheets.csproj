@@ -11,5 +11,6 @@
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\SlideGenerator.Gate\SlideGenerator.Gate.csproj" />
+        <ProjectReference Include="..\SlideGenerator.Registry\SlideGenerator.Registry.csproj" />
     </ItemGroup>
 </Project>

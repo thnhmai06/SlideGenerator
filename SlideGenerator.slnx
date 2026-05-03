@@ -3,8 +3,8 @@
     <Project Path="SlideGenerator.Images/SlideGenerator.Images.csproj" />
     <Project Path="SlideGenerator.Slides/SlideGenerator.Slides.csproj" />
     <Project Path="SlideGenerator.Sheets/SlideGenerator.Sheets.csproj" />
+    <Project Path="SlideGenerator.Services/SlideGenerator.Services.csproj" />
     <Project Path="SlideGenerator.Settings/SlideGenerator.Settings.csproj" />
     <Project Path="SlideGenerator.Cloud/SlideGenerator.Cloud.csproj" />
     <Project Path="SlideGenerator.Download/SlideGenerator.Download.csproj" />
-    <Project Path="SlideGenerator.Workflows/SlideGenerator.Workflows.csproj" />
 </Solution>

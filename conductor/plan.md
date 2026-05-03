@@ -1,52 +1,77 @@
-# SfTextComposer Implementation Plan
+# Implementation Plan: Generating Workflow Rewrite
 
-## Objective
-Implement `SfTextComposer` in `SlideGenerator.Slides.Services` to parse and render Mustache templates using `Stubble.Core` within Syncfusion presentation shapes, supporting smart context-aware data parsing (Arrays/Objects vs Text).
+## Background & Motivation
+The current slide generation pipeline is being completely rebuilt ("ĐẬP ĐI, XÂY LẠI") to adhere purely to a new 3-phase, 6-step logical pipeline documented in `Pipeline.md`, utilizing `WorkflowCore` natively. The new system emphasizes strict phase boundaries, idempotency in resource preparation, and high concurrency control via `GateLocker`.
 
-## Key Files
-- `SlideGenerator.Slides/Services/SfTextComposer.cs`
+## Scope & Impact
+- **Target Folder:** `SlideGenerator.Services/Generating`
+- **Modifications:** Only workflows, steps (StepBody/StepBodyAsync), and the workflow data state class will be created.
+- **Constraints:** Existing models (e.g., `Recipe`, `GeneratingRequest`) and other projects will **not** be modified.
 
-## Proposed Solution & Workflow
+## Proposed Solution
 
-1.  **Context-Aware Variable Extraction (`Scan` API):**
-    *   Implement the `public static IEnumerable<string> Scan(IShape shape)` method.
-    *   Extract the entire text content from `shape.TextBody`.
-    *   Use Regex or a robust scanning mechanism to extract all unique Mustache keys (`{{key}}`, `{{{key}}}`, `{{#key}}`, `{{^key}}`, `{{>key}}`, `{{key.prop}}`).
-    *   Exclude comments (`{{!comment}}`).
+### 1. State Management (`GeneratingData.cs`)
+A unified, strongly-typed state class to orchestrate the WorkflowCore process:
+- `GeneratingRequest Request`: The initial input.
+- `ConcurrentBag<DownloadTask> DownloadTasks`: Aggregated image download tasks across all sheets.
+- `ConcurrentBag<EditTask> EditTasks`: Aggregated image edit tasks.
+- `ConcurrentBag<AssemblyTask> AssemblyTasks`: Aggregated slide assembly tasks (each representing a row to be converted into a slide).
+- `ConcurrentBag<FinalizeTask> FinalizeTasks`: Tasks to finalize each output presentation.
+- `ConcurrentDictionary<string, Exception> Errors`: Global error tracking for resilience.
 
-2.  **Context Analysis and Resolution (Context Collision):**
-    *   Analyze the template context to determine the expected data type of each variable.
-    *   **Context Rules:**
-        *   **Object/Array Context:** If a variable is used in a section `{{#var}}...{{/var}}` or inverted section `{{^var}}...{{/var}}`, or has property access `{{var.prop}}`.
-        *   **Text Context:** If a variable is used purely as `{{var}}` or `{{{var}}}`.
-    *   **Collision Resolution:** Nếu một biến (ví dụ `{{hobbies}}`) được sử dụng ở cả hai ngữ cảnh trong cùng một template (vừa hiển thị raw text, vừa chạy section lặp), hệ thống sẽ ưu tiên xử lý ép kiểu nó thành Object/Array. Kết quả parse sẽ được cache lại để tái sử dụng, đồng thời Stubble tự mặc định gọi `.ToString()` đối với List/Array/Object khi được in ở dạng Text nên không gây lỗi hệ thống.
+### 2. Workflow Steps (StepBody/StepBodyAsync)
+- The "Activity" suffix will be completely omitted from step names.
+- `GateLocker` lock logic (`LockAsync` and `DisposeAsync`) will be implemented **internally within the `ExecuteAsync` methods** of the steps instead of being separate workflow steps.
+- **NO internal `foreach` or `Task.WhenAll` loops** over rows/worksheets. Every iteration will be managed purely by WorkflowCore's `.ForEach()` construct, meaning each Step instance processes exactly ONE item.
 
-3.  **Smart Data Parsing (`SmartParse` Logic):**
-    *   Before passing data to `Stubble`, parse the input `IReadOnlyDictionary<string, string> instructions` into a `Dictionary<string, object>` cache.
-    *   **Parsing Rules:**
-        *   **Excel Array:** Chỉ coi là Excel Array nếu chuỗi bắt đầu bằng `{` và kết thúc bằng `}`, có chứa dấu phẩy `,`, và **tuyệt đối KHÔNG chứa dấu hai chấm `:`** (vì `:` là dấu hiệu nhận biết cặp key-value của JSON Object).
-            *   Remove wrapping `{}` and `"` if present.
-            *   Split by comma.
-            *   Trim whitespace from elements.
-            *   Convert to `List<string>`.
-        *   **Comma-Separated Array:** Nếu chuỗi có dấu `,` và không được bao bọc bởi `{}` hay `[]`, đồng thời context yêu cầu Array. Tách theo dấu phẩy, trim và chuyển thành `List<string>`.
-        *   **JSON Object/Array:** Nếu chuỗi hợp lệ chuẩn JSON (có `{}` và `:` hoặc `[]`), dùng `System.Text.Json` để parse sang `Dictionary<string, object>` hoặc `List<object>`.
-        *   **Text Context / Fallback:** Nếu là text context thuần túy hoặc tất cả bước parse trên thất bại, giữ nguyên giá trị chuỗi (`string`) ban đầu.
+**Phase A: Validation & Template Setup**
+- `ValidateRequest`: Checks workbooks, sheets, presentations, and shapes. Filters out invalid configurations.
+- `CreateTemplate`: Copies the template PPT to the target location and clears all slides except the template slide (index 1).
 
-4.  **Rendering and Shape Updating (`Replace` API):**
-    *   Implement `public int Replace(IShape shape, IReadOnlyDictionary<string, string> instructions)`.
-    *   Concatenate the text from all `TextParts` and `Paragraphs` to construct the full Mustache template. This is crucial because Mustache sections (`{{#section}}`) might span multiple paragraphs/text parts.
-    *   Run `Stubble.Render()` using the generated template and the **parsed** dictionary cache.
-    *   If the rendered output differs from the original template:
-        *   Assign the rendered text to the first `TextPart` of the first `Paragraph`.
-        *   Clear the text of all other `TextParts` in the shape to replace the content cleanly.
-        *   Return the number of replaced text parts (or calculate logically based on keys found/replaced).
+**Phase B: Resource Preparation (Idempotent)**
+- `PrepareDownloadTasks`: Translates valid rows into `DownloadTasks`.
+- `DownloadImage`: Processes **one** `DownloadTask`. Checks idempotency. Internally acquires `GateType.DownloadImage`.
+- `PrepareEditTasks`: Translates downloaded items and shape bounds into `EditTasks`.
+- `EditImage`: Processes **one** `EditTask`. Crops/resizes image. Internally acquires `GateType.EditImage`.
 
-## Verification
+**Phase C: Assembly & Finalization**
+- `PrepareAssemblyTasks`: Translates valid rows into `AssemblyTasks`, computing the exact target `SlideIndex` for each row so that even if WorkflowCore runs `.ForEach()` in parallel, slides are inserted at their deterministic indices to maintain Excel row order.
+- `AssembleSlide`: Processes **one** `AssemblyTask`. Clones the template slide, inserts at the computed index, and replaces text/images. Internally acquires `GateType.EditPresentation` to prevent concurrent file corruption for the same presentation.
+- `PrepareFinalizeTasks`: Prepares tasks to finalize each presentation.
+- `FinalizePresentation`: Removes the original template slide (index 1) and saves the file.
 
-*   **Context Collision:** `{{tags}}` and `{{#tags}}{{.}}{{/tags}}` in the same text will safely render (prioritized as Array).
-*   **Excel Array:** `{"1", "2"}` renders array elements without confusing it with JSON (vì không có `:`).
-*   **JSON Object:** `{"id": 1, "name": "A"}` properly parses as JSON, not an Excel array (có dấu `:`).
-*   **Variables:** `{{name}}` replaces with string.
-*   **Unescaped:** `{{{html}}}` replaces with string without encoding.
-*   **Comma-Separated Array:** `10, 20, 30` mapped to `{{#list}}{{.}}{{/list}}` renders `102030`.
+### 3. Workflow Definition (`GeneratingWorkflow.cs`)
+```csharp
+public void Build(IWorkflowBuilder<GeneratingData> builder)
+{
+    builder
+        // Phase A: Validation & Template Setup
+        .StartWith<ValidateRequest>()
+        .Then<CreateTemplate>()
+        
+        // Phase B: Resource Preparation
+        .Then<PrepareDownloadTasks>()
+        .ForEach(data => data.DownloadTasks)
+            .Do(x => x.StartWith<DownloadImage>())
+                
+        .Then<PrepareEditTasks>()
+        .ForEach(data => data.EditTasks)
+            .Do(x => x.StartWith<EditImage>())
+
+        // Phase C: Assembly & Finalization
+        .Then<PrepareAssemblyTasks>()
+        .ForEach(data => data.AssemblyTasks)
+            .Do(x => x.StartWith<AssembleSlide>())
+            
+        .Then<PrepareFinalizeTasks>()
+        .ForEach(data => data.FinalizeTasks)
+            .Do(x => x.StartWith<FinalizePresentation>());
+}
+```
+
+## Migration & Rollback
+- Since this is a rewrite within the domain services, the old workflow files can be safely replaced or deleted. If rollback is necessary, the previous git commit can be restored.
+
+## Verification & Testing
+- Verify `GateLocker` throttling is correctly applied inside the steps.
+- Verify slide order matches Excel rows despite WorkflowCore's parallel `ForEach` (by checking deterministic slide insertion indices).

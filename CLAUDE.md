@@ -156,47 +156,45 @@ All public classes, methods, and properties have XML documentation comments:
 
 The system uses **WorkflowCore** directly for orchestration.
 
-**Core Steps**: `AcquireSlotStep`, `ReleaseSlotStep`, and specific domain activities.
+**Phase-Sequential, Item-Parallel Architecture**:
+- Workflows are divided into 3 logical phases (Setup, Resource Prep, Assembly) separated by `ExecutionResult.Next()` barriers.
+- **Strict Iteration (MANDATORY)**: Iteration over local data (Workbooks, Presentations, File lists) MUST use WorkflowCore's native `.ForEach()` iterator.
+  - **PROHIBITED**: Using C# `foreach`, `Parallel.ForEach`, or `Task.WhenAll` inside an Activity for processing multiple items.
+- **Activity Chaining**: Within a `.ForEach` block, chain activities (`.StartWith<X>().Then<Y>()`) so items transition immediately between steps without waiting for the entire collection.
 
 **Data Persistence**:
-- Workflows use strongly-typed data classes (e.g., `ScanningData`, `GeneratingData`)
-- State is persisted via these classes; use `ConcurrentDictionary` for parallel safety
-- Normalized absolute file paths are preferred as dictionary keys
+- Workflows use strongly-typed data classes (e.g., `ScanningData`, `GeneratingData`).
+- State is persisted via these classes; use `ConcurrentDictionary` for parallel safety.
+- Normalized absolute file paths are preferred as dictionary keys.
+
+**Slide Generation Mapping Rules**:
+- **Text Instruction**: Defines mapping between mustache variables and sheet columns. Variables not in an instruction are considered non-existent in the replacement context.
+- **Image Instruction**: Maps sheet columns to slide shapes, including `EditOptions` (ROI, Resizing).
 
 **Error Resilience**:
-- All data classes include an `Errors` dictionary storing full `Exception` objects
-- Activities use `try-catch` to capture exceptions, allowing partial success in parallel loops
+- All data classes include an `Errors` dictionary storing full `Exception` objects.
+- Activities use `try-catch` to capture exceptions, allowing partial success in parallel loops.
 
 ## Development Patterns
 
-### Module Registration
-Each module provides a static `Registration` class:
-```csharp
-services.AddImageServices();      // Registers RoiResolver, FaceDetector, etc.
-services.AddSlideServices();       // Registers ImageComposer, TextComposer
-services.AddGateServices();        // Registers GateLocker, SlotManager
-```
-
 ### Activity (StepBody)
-- Inherit from `StepBody` or `StepBodyAsync`
-- Activities are **Singletons** — inject services via constructor
-- Inputs/Outputs are mapped in the workflow's `Build` method
+- Inherit from `StepBody` or `StepBodyAsync`.
+- **Single Task Focus**: Activities should ideally focus on a single piece of data (mapped from `context.Item`).
+- **Throttling**: Inject and use `GateLocker` internally within `RunAsync` to throttle shared resource access (I/O, Workbook reads, Presentation edits).
+- Activities are **Singletons** or **Transients** — inject services via constructor.
 
-### Workflow Control
-- `IGeneratingService` and `IScanningService` support `Stop`, `Pause`, and `Resume` operations
+### Workflow
+- Inject `IServiceProvider` or specific services via constructor.
+- Workflows MUST have a parameterless constructor for registration.
+- Register all Workflows and Activities in the module's `Registration.cs`.
 
 ### Registry & Leasing
-- Always acquire resources via `FileRegistry<TResource>.AcquireAsync()`
-- Returns `Lease<T>` (disposable). Use `await using` for short-lived leases
+- Always acquire shared resources via `FileRegistry<TResource>.AcquireAsync()`.
+- Returns `Lease<T>` (disposable). Use `await using` for short-lived leases.
 
 ### Locking
-- `FileLocker`: file-path-based reader-writer lock
-- `GateLocker`: semaphore-based concurrency limit per `GateType`
-
-### Service Injection
-- Workflows inject `IServiceProvider` via constructor
-- Workflows must have a parameterless constructor for registration
-- Activities inject specific services via constructor
+- `FileLocker`: file-path-based reader-writer lock.
+- `GateLocker`: semaphore-based concurrency limit per `GateType`.
 
 ## Invariants Checklist
 - [ ] Each module has a `Registration.cs` with DI setup

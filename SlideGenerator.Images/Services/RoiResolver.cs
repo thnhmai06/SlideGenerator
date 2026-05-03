@@ -36,7 +36,7 @@ public sealed class RoiResolver(FaceDetector faceDetector)
     public ValueTask<Rectangle> CalculateRoiAsync(MagickImage image, Size targetSize, RoiType type,
         RoiOption? option = null)
     {
-        return GetCalculator(type).CalculateRoiAsync(image, targetSize, type, option);
+        return GetCalculator(type).CalculateRoiAsync(image, targetSize, option);
     }
 
     private RoiCalculator GetCalculator(RoiType key)

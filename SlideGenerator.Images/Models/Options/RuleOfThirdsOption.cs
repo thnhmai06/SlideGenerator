@@ -1,17 +1,19 @@
+using System.Numerics;
+
 namespace SlideGenerator.Images.Models.Options;
 
 /// <summary>
 ///     Customizes the Rule of Thirds ROI calculation.
 /// </summary>
-public sealed class RuleOfThirdsOption : RoiOption
+public sealed record RuleOfThirdsOption : RoiOption
 {
+    public override RoiType Type => RoiType.RuleOfThirds;
+
     /// <summary>
-    ///     Gets or sets the specific grid point (1-4) to align the anchor to.
+    ///     Gets or sets the target pivot point (0.0 to 1.0).
     /// </summary>
     /// <remarks>
-    ///     Points are numbered 1 (top-left) to 4 (bottom-right) in row-major order.
+    ///     Determines where the anchor point (e.g., face, grid point) is positioned within the resulting ROI.
     /// </remarks>
-    public int GridPoint { get; init; } = 1;
-
-    public override RoiType Type => RoiType.RuleOfThirds;
+    public Vector2 Pivot { get; init; } = new(1 / 2f, 1 / 3f);
 }

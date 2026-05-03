@@ -1,5 +1,4 @@
 using System.Drawing;
-using System.Numerics;
 using ImageMagick;
 using SlideGenerator.Images.Entities.Detectors;
 using SlideGenerator.Images.Models;
@@ -12,17 +11,14 @@ namespace SlideGenerator.Images.Entities.ROI;
 /// </summary>
 internal sealed class RuleOfThirdsRoi(FaceDetector faceDetector) : RoiCalculator
 {
-    private static readonly Vector2 RuleOfThirdsPivot = new(0.5f, 0.333f);
-
-    public override async ValueTask<Rectangle> CalculateRoiAsync(
-        MagickImage image, Size targetSize, RoiType type,
-        RoiOption? option = null)
+    public override async ValueTask<Rectangle> CalculateRoiAsync(MagickImage image, Size targetSize, RoiOption option)
     {
-        if (type != RoiType.RuleOfThirds)
-            throw new ArgumentException($"Invalid ROI type '{type}' for {nameof(RuleOfThirdsRoi)}.", nameof(type));
+        if (option.Type != RoiType.RuleOfThirds)
+            throw new ArgumentException($"Invalid ROI type '{option.Type}' for {nameof(RuleOfThirdsRoi)}.",
+                nameof(option.Type));
 
         var ruleOption = option as RuleOfThirdsOption;
-        var pivot = ruleOption?.Pivot ?? RuleOfThirdsPivot;
+        var pivot = ruleOption?.Pivot;
         var sourceSize = new Size((int)image.Width, (int)image.Height);
 
         using var mat = image.ToMat();

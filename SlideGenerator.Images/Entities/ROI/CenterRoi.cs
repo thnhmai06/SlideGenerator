@@ -12,16 +12,14 @@ namespace SlideGenerator.Images.Entities.ROI;
 /// </summary>
 internal sealed class CenterRoi(FaceDetector faceDetector) : RoiCalculator
 {
-    private static readonly Vector2 CenterPivot = new(0.5f, 0.5f);
-
-    public override async ValueTask<Rectangle> CalculateRoiAsync(
-        MagickImage image, Size targetSize, RoiType type,
-        RoiOption? option = null)
+    public override async ValueTask<Rectangle> CalculateRoiAsync(MagickImage image, Size targetSize, RoiOption option)
     {
-        if (type != RoiType.Center)
-            throw new ArgumentException($"Invalid ROI type '{type}' for {nameof(CenterRoi)}.", nameof(type));
+        if (option.Type != RoiType.Center)
+            throw new ArgumentException($"Invalid ROI type '{option.Type}' for {nameof(CenterRoi)}.",
+                nameof(option.Type));
 
-        var pivot = option?.Pivot ?? CenterPivot;
+        var centerOption = option as CenterOption;
+        var pivot = centerOption!.Pivot;
         var sourceSize = new Size((int)image.Width, (int)image.Height);
 
         return option is CenterOption { UseFaceAlignment: true }
@@ -35,7 +33,7 @@ internal sealed class CenterRoi(FaceDetector faceDetector) : RoiCalculator
         using var mat = image.ToMat();
         var faces = await faceDetector.DetectAsync(mat).ConfigureAwait(false);
         var faceCenter = faces.Centroid(face => face.FaceCenter);
-        
+
         return faceCenter.HasValue
             ? Utilities.CalculateAnchoredRectangle(sourceSize, targetSize, faceCenter.Value, pivot)
             : Utilities.CalculateAnchoredRectangle(sourceSize, targetSize, sourceSize.CenterPoint(), pivot);

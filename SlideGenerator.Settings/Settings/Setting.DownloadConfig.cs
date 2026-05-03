@@ -24,8 +24,21 @@ public sealed partial class Setting
                 }
             } = string.Empty;
 
-            public bool DeleteDownload { get; set; } = false;
-            public bool DeleteEdit { get; set; } = true;
+            public string GetDownloadDir(string bookName, string sheetName, string colName)
+            {
+                bookName = Utilities.NormalizeFileName(bookName);
+                sheetName = Utilities.NormalizeFileName(sheetName);
+                colName = Utilities.NormalizeFileName(colName);
+                return Path.Combine(FolderPath, bookName, sheetName, colName, "Download");
+            }
+
+            public string GetEditDir(string bookName, string sheetName, string colName)
+            {
+                bookName = Utilities.NormalizeFileName(bookName);
+                sheetName = Utilities.NormalizeFileName(sheetName);
+                colName = Utilities.NormalizeFileName(colName);
+                return Path.Combine(FolderPath, bookName, sheetName, colName, "Edit");
+            }
         }
 
         public sealed class RetrySetting

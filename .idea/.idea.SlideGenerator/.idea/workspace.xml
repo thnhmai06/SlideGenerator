@@ -10,36 +10,104 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3a1f1c77-0578-40bf-9d5d-a0e8452562c2" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Images/README.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Slides/Services/ImageComposer.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Slides/Services/TextComposer.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Slides/Utilities.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/conductor/plan.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.SlideGenerator/.idea/copilotDiffState.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.SlideGenerator/.idea/copilotDiffState.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Cloud/SlideGenerator.Cloud.csproj.DotSettings" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Download/SlideGenerator.Download.csproj.DotSettings" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Gate/SlideGenerator.Gate.csproj.DotSettings" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Images/SlideGenerator.Images.csproj.DotSettings" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Models/GeneratingRequest.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Models/Identifiers/BookIdentifier.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Models/Identifiers/PresentationIdentifier.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Models/Identifiers/ShapeIdentifier.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Models/Identifiers/SheetIdentifier.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Models/Identifiers/SlideIdentifier.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Models/Instructions/ImageInstruction.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Models/Instructions/TextInstruction.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Models/Recipe.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Pipeline.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Registration.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/CreateTemplate.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/DownloadImage.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/EditImage.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/ExtractRowData.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/ExtractShapeBounds.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/FinalizePresentation.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/PrepareIterationTasks.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/ReplaceShapeData.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/ValidateRequest.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Workflows/GeneratingData.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Workflows/GeneratingWorkflow.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Services/Scanning/Models/Sheets/Requests/BookSummaryRequest.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Services/Scanning/Models/Sheets/Responses/WorkbookSummary.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Services/Scanning/Models/Sheets/Responses/WorksheetPreview.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Services/Scanning/Models/Sheets/Responses/WorksheetSummary.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Services/Scanning/Models/Slides/Requests/PresentationSummaryRequest.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Services/Scanning/Models/Slides/Responses/PresentationSummary.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Services/Scanning/Models/Slides/Responses/ShapeSummary.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Services/Scanning/Models/Slides/Responses/SlideSummary.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Services/Scanning/ScanningService.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Settings/SlideGenerator.Settings.csproj.DotSettings" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Sheets/SlideGenerator.Sheets.csproj.DotSettings" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SlideGenerator.Slides/SlideGenerator.Slides.csproj.DotSettings" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Workflow.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.SlideGenerator/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.SlideGenerator/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/CLAUDE.md" beforeDir="false" afterPath="$PROJECT_DIR$/CLAUDE.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/INSTRUCTIONS.MD" beforeDir="false" afterPath="$PROJECT_DIR$/INSTRUCTIONS.MD" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Cloud/SlideGenerator.Cloud.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Cloud/SlideGenerator.Cloud.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Download/SlideGenerator.Download.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Download/SlideGenerator.Download.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Gate/SlideGenerator.Gate.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Gate/SlideGenerator.Gate.csproj" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/SlideGenerator.Images/Entities/ROI/CenterRoi.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Images/Entities/ROI/CenterRoi.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/SlideGenerator.Images/Entities/ROI/RoiCalculator.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Images/Entities/ROI/RoiCalculator.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/SlideGenerator.Images/Entities/ROI/RuleOfThirdsRoi.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Images/Entities/ROI/RuleOfThirdsRoi.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Images/Models/Options/CenterOption.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Images/Models/Options/CenterOption.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Images/Models/Options/RoiOption.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Images/Models/Options/RoiOption.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Images/Models/Options/RuleOfThirdsOption.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Images/Models/Options/RuleOfThirdsOption.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/SlideGenerator.Images/Services/RoiResolver.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Images/Services/RoiResolver.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Images/SlideGenerator.Images.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Images/SlideGenerator.Images.csproj" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/SlideGenerator.Images/Utilities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Images/Utilities.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Settings/Entities/YamlSerializer.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Settings/Entities/YamlSerializer.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Settings/SlideGenerator.Settings.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Settings/SlideGenerator.Settings.csproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Settings/Settings/Setting.DownloadConfig.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Settings/Settings/Setting.DownloadConfig.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Settings/Settings/Setting.ImageConfig.cs" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/SlideGenerator.Sheets/SlideGenerator.Sheets.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Sheets/SlideGenerator.Sheets.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Slides/Rules/PresentationExtension.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Slides/Models/PresentationExtension.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Slides/Services/SfImageComposer.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Slides/Services/SfPresentation.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Slides/Entities/SfPresentation.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Slides/Services/SfTextComposer.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Slides/Services/Utilities.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Sheets/Utilities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Sheets/Utilities.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Slides/Entities/SfPresentation.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Slides/Entities/SfPresentation.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/SlideGenerator.Slides/SlideGenerator.Slides.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Slides/SlideGenerator.Slides.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Slides/SlidesRegistration.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/Generating/Activities/EditImage.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Workflows/Generating/Activities/EditImage.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/Generating/Activities/EditSlide.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Workflows/Generating/Activities/EditSlide.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Slides/Utilities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Slides/Utilities.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/Generating/Activities/CloneTemplateSlide.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/Generating/Activities/CreateWorkingPresentation.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/Generating/Activities/DownloadImage.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/Generating/Activities/EditImage.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/Generating/Activities/EditSlide.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/Generating/Activities/PresentationStepBase.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/Generating/Activities/RemoveWorkingTemplateSlide.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/Generating/Activities/SimplyInstructions.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/Generating/Activities/SlotSteps.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/Generating/GeneratingData.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/Generating/GeneratingWorkflow.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/Generating/Models/EditOptions.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Models/EditOptions.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/Generating/Models/GeneralInstruction.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/Generating/Models/GeneratingRequest.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/Generating/Models/RowTask.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/Generating/Models/SpecializedInstruction.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/Generating/Models/Texts/TextInstructions.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/Generating/Rules/ImagePathRules.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/Generating/Rules/NamingRules.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/Generating/Rules/WorkflowConstants.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/Models/Sheets/ColumnIdentifier.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/Models/Sheets/RowIdentifier.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/Models/Sheets/WorkbookIdentifier.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/Models/Sheets/WorksheetIdentifier.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/Models/Slides/PresentationIdentifier.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/Models/Slides/ShapeIdentifier.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/Models/Slides/SlideIdentifier.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/Scanning/Activities/ScanPresentation.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/Scanning/Activities/ScanWorkbook.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/Scanning/Models/ScanningModels.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/Scanning/Models/ScanningRequest.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/Scanning/ScanningData.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/Scanning/ScanningWorkflow.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/Services/GeneratingService.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/Services/ScanningService.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/SlideGenerator.Workflows.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/SlideGenerator.Services.csproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/Utilities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Settings/Utilities.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Workflows/WorkflowRegistration.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.sln.DotSettings.user" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.sln.DotSettings.user" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.slnx" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.slnx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/conductor/plan.md" beforeDir="false" afterPath="$PROJECT_DIR$/conductor/plan.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -62,7 +130,7 @@
     </selectedModels>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="86" />
+    <option name="cachedIndexableFilesCount" value="44" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="FileTemplateManagerImpl">
@@ -149,6 +217,9 @@
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/f8933dc0151257bf474678ae93838fb9978d7b6fe81d878b68a1c61350bc4026/DownloadStartedEventArgs.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/fad14b43e4819e65f7bd431c7e5f027e2c383e35d9ed8de5d5fc66adc971/MustacheTemplate.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/.claude/settings.local.json" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/SlideGenerator.Services/Generating/Models/Identifiers/BookIdentifier.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/SlideGenerator.Services/Generating/Models/Identifiers/PresentationIdentifier.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/SlideGenerator.Services/Generating/Models/Identifiers/ShapeIdentifier.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Settings/Entities/Serializer.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Settings/Entities/YamlSerializer.cs" root0="FORCE_HIGHLIGHTING" />
   </component>
@@ -160,9 +231,9 @@
   <component name="ProblemsViewState">
     <option name="selectedTabId" value="CurrentFile" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 4
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 4
+}</component>
   <component name="ProjectId" id="3AjRSsDaXgOGJifP2mkOaJyARb5" />
   <component name="ProjectLevelVcsManager">
     <ConfirmationsSetting value="2" id="Add" />
@@ -171,42 +242,42 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;ShowUsagesActions.previewPropertyKey&quot;: &quot;true&quot;,
-    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;develop/backend&quot;,
-    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
-    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
-    &quot;ts.external.directory.path&quot;: &quot;D:\\PROGRAM\\Jetbrains\\Rider\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "ShowUsagesActions.previewPropertyKey": "true",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "develop/backend",
+    "ignore.virus.scanning.warn.message": "true",
+    "junie.onboarding.icon.badge.shown": "true",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "com.android.studio.ml.bot.mainConfigurable",
+    "to.speed.mode.migration.done": "true",
+    "ts.external.directory.path": "D:\\PROGRAM\\Jetbrains\\Rider\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external",
+    "vue.rearranger.settings.migration": "true"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File&quot;: [
-      &quot;TEXT&quot;
+  "keyToStringList": {
+    "com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File": [
+      "TEXT"
     ]
   }
-}</component>
+}]]></component>
   <component name="Push.Settings">
     <force-push-targets>
       <force-push-target remote-path="origin" branch="develop/backend" />
     </force-push-targets>
   </component>
-  <component name="RunManager" selected=".NET Project.SlideGenerator.Grpc">
+  <component name="RunManager">
     <configuration name="SlideGenerator.Grpc" type="DotNetProject" factoryName=".NET Project">
       <option name="EXE_PATH" value="" />
       <option name="PROGRAM_PARAMETERS" value="" />
@@ -312,7 +383,9 @@
       <workItem from="1777523923636" duration="12539000" />
       <workItem from="1777638186493" duration="6203000" />
       <workItem from="1777647993611" duration="5954000" />
-      <workItem from="1777685313692" duration="23855000" />
+      <workItem from="1777685313692" duration="39814000" />
+      <workItem from="1777732612552" duration="9858000" />
+      <workItem from="1777780379713" duration="6800000" />
     </task>
     <task id="LOCAL-00001" summary="feat: update LoadPresentation workflow&#10;&#10;- Updated LoadPresentation class to enhance documentation and streamline presentation preparation workflow (improves clarity and maintainability).">
       <option name="closed" value="true" />
@@ -642,7 +715,15 @@
       <option name="project" value="LOCAL" />
       <updated>1777704963413</updated>
     </task>
-    <option name="localTasksCounter" value="42" />
+    <task id="LOCAL-00042" summary="refactor(images,slides): adopt MagickImage-first architecture and static composers&#10;&#10;This commit migrates the primary image processing pipeline from OpenCV to ImageMagick and refactors the Syncfusion slide composition services to use static utility classes, simplifying dependency management and improving image handling.&#10;&#10;- **MagickImage-First Architecture:**&#10;  - Updated `SlideGenerator.Images` to use `MagickImage` as the primary format for image manipulation.&#10;  - Modified `RoiResolver`, `RoiCalculator`, `CenterRoi`, and `RuleOfThirdsRoi` to accept `MagickImage`, converting to OpenCV `Mat` internally only when required for face detection.&#10;  - Refactored `Images/Utilities.cs` by replacing `Mat`-based operations with `ToMat()` and `ToMagick()` format conversion extensions.&#10;  - Updated the `EditImage` workflow activity to use `MagickImage` for decoding, cropping, and resizing operations instead of relying on `IImageDecoder` and OpenCV.&#10;&#10;- **Static Slide Composers:**&#10;  - Replaced injected `SfImageComposer` and `SfTextComposer` with static `ImageComposer` and `TextComposer` classes.&#10;  - Enhanced `TextComposer` with intelligent context-aware data parsing (Excel arrays, JSON, comma-separated values) before rendering mustache templates via Stubble.&#10;  - Enhanced `ImageComposer` to support direct replacements using `MagickImage`, `Stream`, and `byte[]`.&#10;  - Recreated `Slides/Utilities.cs` to provide static extension methods for extracting shape and slide previews natively as `MagickImage` instances.&#10;  - Updated `EditSlide` activity to consume the static composers directly, removing them from constructor injection.&#10;  - Deleted `SlidesRegistration.cs` as the slide services are now static utilities.&#10;&#10;- **Project Configuration &amp; Restructuring:**&#10;  - Disabled packing by adding `&lt;IsPackable&gt;false&lt;/IsPackable&gt;` to all module `.csproj` files (`Cloud`, `Download`, `Gate`, `Images`, `Settings`, `Sheets`, `Slides`).&#10;  - Removed the `Syncfusion.PresentationRenderer.NET` dependency from the `Slides` project.&#10;  - Reorganized `Slides` project structure by moving `PresentationExtension.cs` to `Models/` and `SfPresentation.cs` to `Entities/`.&#10;  - Fixed `YamlDotNet` namespace references in `YamlSerializer.cs`.&#10;&#10;- **Documentation &amp; Planning:**&#10;  - Extensively updated `CLAUDE.md` and `INSTRUCTIONS.MD` to document the new Modular Monolith architectural boundaries, the MagickImage-First approach, and comprehensive XML documentation standards.&#10;  - Added `conductor/plan.md` to document the implementation strategy for the new text composer.">
+      <option name="closed" value="true" />
+      <created>1777710310727</created>
+      <option name="number" value="00042" />
+      <option name="presentableId" value="LOCAL-00042" />
+      <option name="project" value="LOCAL" />
+      <updated>1777710310727</updated>
+    </task>
+    <option name="localTasksCounter" value="43" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -708,7 +789,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
-    <MESSAGE value="feat(backend): complete generating activities and clean architecture structure &#10;&#10;- Changed ISlide and IImageShape to inherit from ISlideObject (ensures a unified interface structure).&#10;- Updated namespaces in various files to reflect the new structure (improves clarity and organization).&#10;- Renamed methods in ISpecializable to Flatten for better semantic meaning (enhances code readability)." />
     <MESSAGE value="feat(backend): complete generating activities and clean architecture structure&#10;&#10;- Changed ISlide and IImageShape to inherit from ISlideObject (ensures a unified interface structure).&#10;- Updated namespaces in various files to reflect the new structure (improves clarity and organization).&#10;- Renamed methods in ISpecializable to Flatten for better semantic meaning (enhances code readability)." />
     <MESSAGE value="chore(backend): improve business logic on sheet, slide, tasks&#10;&#10;- Updated activity constructors to accept identifiers instead of raw strings (improves type safety).&#10;- Refined error handling for invalid inputs in several activities (enhances robustness).&#10;- Introduced a new FileSystem class for file operations (promotes single responsibility).&#10;- Normalized file naming conventions across the application (ensures consistency)." />
     <MESSAGE value="chore(backend): improve business logic and field naming on sheet, slide, tasks&#10;&#10;- Updated activity constructors to accept identifiers instead of raw strings (improves type safety).&#10;- Refined error handling for invalid inputs in several activities (enhances robustness).&#10;- Introduced a new FileSystem class for file operations (promotes single responsibility).&#10;- Normalized file naming conventions across the application (ensures consistency)." />
@@ -733,7 +813,8 @@
     <MESSAGE value="```text&#10;refactor(workflows): replace centralized interpreter with self-executing activity DSL&#10;&#10;- Removed the centralized `WorkflowInterpreter` and record-based DSL nodes (e.g., `SequenceNode`, `ForEachNode`, `TryNode`).&#10;- Introduced an object-oriented `Activity&lt;TData&gt;` base class with self-executing implementations (`Sequence`, `Parallel`, `ForEach`, `Try`, `Condition`, `Inline`, `GateWrapper`).&#10;- Renamed `Variable&lt;T&gt;` to `Handle&lt;T&gt;` to better represent workflow-scoped references.&#10;- Renamed `IActivityContext` to `IExecutionContext`, renaming the `State` property to `Snapshot` and exposing an `IServiceProvider` for internal dependency resolution.&#10;- Renamed `IWorkflowDefinition` to `IWorkflow` and updated implementations to construct activity trees using the new DSL.&#10;- Refactored `GateLocker` to be a generic `GateLocker&lt;TGate&gt;` that accepts a resolver function for determining concurrency limits.&#10;- Updated all leaf activities to implement `Activity&lt;TData&gt;` instead of `ILeafActivity&lt;TData&gt;`.&#10;- Updated WorkflowCore infrastructure adapters (`WcWorkflowService`, `WcInterpreterStep`, `WcInterpreterContext`) to support the new interface types and execute the activity tree directly.&#10;- Updated architectural documentation (`INSTRUCTIONS.MD`, `CLAUDE.md`) to reflect the new terminology and scope management guidelines.&#10;```" />
     <MESSAGE value="refactor(workflows): replace centralized interpreter with self-executing activity DSL&#10;&#10;- Removed the centralized `WorkflowInterpreter` and record-based DSL nodes (e.g., `SequenceNode`, `ForEachNode`, `TryNode`).&#10;- Introduced an object-oriented `Activity&lt;TData&gt;` base class with self-executing implementations (`Sequence`, `Parallel`, `ForEach`, `Try`, `Condition`, `Inline`, `GateWrapper`).&#10;- Renamed `Variable&lt;T&gt;` to `Handle&lt;T&gt;` to better represent workflow-scoped references.&#10;- Renamed `IActivityContext` to `IExecutionContext`, renaming the `State` property to `Snapshot` and exposing an `IServiceProvider` for internal dependency resolution.&#10;- Renamed `IWorkflowDefinition` to `IWorkflow` and updated implementations to construct activity trees using the new DSL.&#10;- Refactored `GateLocker` to be a generic `GateLocker&lt;TGate&gt;` that accepts a resolver function for determining concurrency limits.&#10;- Updated all leaf activities to implement `Activity&lt;TData&gt;` instead of `ILeafActivity&lt;TData&gt;`.&#10;- Updated WorkflowCore infrastructure adapters (`WcWorkflowService`, `WcInterpreterStep`, `WcInterpreterContext`) to support the new interface types and execute the activity tree directly.&#10;- Updated architectural documentation (`INSTRUCTIONS.MD`, `CLAUDE.md`) to reflect the new terminology and scope management guidelines." />
     <MESSAGE value="refactor!: restructure solution into feature-based projects and standardize on Syncfusion&#10;&#10;This commit represents a major architectural refactoring, migrating from a traditional layered architecture (Application, Domain, Infrastructure) to a feature-sliced design. It also removes complex abstraction layers over file formats by standardizing exclusively on Syncfusion libraries for document processing.&#10;&#10;- **Restructured Solution Architecture:**&#10;  - Replaced `SlideGenerator.Application`, `SlideGenerator.Domain`, and `SlideGenerator.Infrastructure` with specialized feature projects: `Cloud`, `Download`, `Gate`, `Images`, `Registry`, `Settings`, `Sheets`, `Slides`, and `Workflows`.&#10;&#10;- **Standardized on Syncfusion:**&#10;  - Removed OpenXML and ClosedXML dependencies entirely.&#10;  - Deleted custom document abstractions (`IPresentation`, `IReadOnlyWorkbook`, `IShape`, `ISlide`) in favor of directly utilizing `Syncfusion.Presentation.NET` and `Syncfusion.XlsIO.NET`.&#10;  - Refactored `SfTextComposer` and `SfImageComposer` to operate directly on Syncfusion components.&#10;&#10;- **Simplified External Integrations:**&#10;  - Removed generic abstraction interfaces such as `IClientService`, `IDownloadService`, and `IImageDecoder`.&#10;  - Adopted direct usage of `HttpClient`, `Downloader`, `Magick.NET`, and `OpenCvSharp` in their respective feature modules.&#10;  - Moved Face Detection (`YuNet`) and ROI calculations into the `Images` project, and included the `YuNet.onnx` model binary natively.&#10;&#10;- **Refactored Workflows:**&#10;  - Moved `GeneratingWorkflow`, `ScanningWorkflow`, and all related steps to the `Workflows` project.&#10;  - Updated workflow state data and activities to consume the new feature-sliced services and Syncfusion models.&#10;&#10;- **Streamlined Settings and Concurrency:**&#10;  - Consolidated configuration and YAML serialization into `SlideGenerator.Settings`.&#10;  - Moved concurrency gating logic into `SlideGenerator.Gate`.&#10;  - Simplified asynchronous file locking into a generic `FileRegistry&lt;T&gt;` in `SlideGenerator.Registry`." />
-    <option name="LAST_COMMIT_MESSAGE" value="refactor!: restructure solution into feature-based projects and standardize on Syncfusion&#10;&#10;This commit represents a major architectural refactoring, migrating from a traditional layered architecture (Application, Domain, Infrastructure) to a feature-sliced design. It also removes complex abstraction layers over file formats by standardizing exclusively on Syncfusion libraries for document processing.&#10;&#10;- **Restructured Solution Architecture:**&#10;  - Replaced `SlideGenerator.Application`, `SlideGenerator.Domain`, and `SlideGenerator.Infrastructure` with specialized feature projects: `Cloud`, `Download`, `Gate`, `Images`, `Registry`, `Settings`, `Sheets`, `Slides`, and `Workflows`.&#10;&#10;- **Standardized on Syncfusion:**&#10;  - Removed OpenXML and ClosedXML dependencies entirely.&#10;  - Deleted custom document abstractions (`IPresentation`, `IReadOnlyWorkbook`, `IShape`, `ISlide`) in favor of directly utilizing `Syncfusion.Presentation.NET` and `Syncfusion.XlsIO.NET`.&#10;  - Refactored `SfTextComposer` and `SfImageComposer` to operate directly on Syncfusion components.&#10;&#10;- **Simplified External Integrations:**&#10;  - Removed generic abstraction interfaces such as `IClientService`, `IDownloadService`, and `IImageDecoder`.&#10;  - Adopted direct usage of `HttpClient`, `Downloader`, `Magick.NET`, and `OpenCvSharp` in their respective feature modules.&#10;  - Moved Face Detection (`YuNet`) and ROI calculations into the `Images` project, and included the `YuNet.onnx` model binary natively.&#10;&#10;- **Refactored Workflows:**&#10;  - Moved `GeneratingWorkflow`, `ScanningWorkflow`, and all related steps to the `Workflows` project.&#10;  - Updated workflow state data and activities to consume the new feature-sliced services and Syncfusion models.&#10;&#10;- **Streamlined Settings and Concurrency:**&#10;  - Consolidated configuration and YAML serialization into `SlideGenerator.Settings`.&#10;  - Moved concurrency gating logic into `SlideGenerator.Gate`.&#10;  - Simplified asynchronous file locking into a generic `FileRegistry&lt;T&gt;` in `SlideGenerator.Registry`." />
+    <MESSAGE value="refactor(images,slides): adopt MagickImage-first architecture and static composers&#10;&#10;This commit migrates the primary image processing pipeline from OpenCV to ImageMagick and refactors the Syncfusion slide composition services to use static utility classes, simplifying dependency management and improving image handling.&#10;&#10;- **MagickImage-First Architecture:**&#10;  - Updated `SlideGenerator.Images` to use `MagickImage` as the primary format for image manipulation.&#10;  - Modified `RoiResolver`, `RoiCalculator`, `CenterRoi`, and `RuleOfThirdsRoi` to accept `MagickImage`, converting to OpenCV `Mat` internally only when required for face detection.&#10;  - Refactored `Images/Utilities.cs` by replacing `Mat`-based operations with `ToMat()` and `ToMagick()` format conversion extensions.&#10;  - Updated the `EditImage` workflow activity to use `MagickImage` for decoding, cropping, and resizing operations instead of relying on `IImageDecoder` and OpenCV.&#10;&#10;- **Static Slide Composers:**&#10;  - Replaced injected `SfImageComposer` and `SfTextComposer` with static `ImageComposer` and `TextComposer` classes.&#10;  - Enhanced `TextComposer` with intelligent context-aware data parsing (Excel arrays, JSON, comma-separated values) before rendering mustache templates via Stubble.&#10;  - Enhanced `ImageComposer` to support direct replacements using `MagickImage`, `Stream`, and `byte[]`.&#10;  - Recreated `Slides/Utilities.cs` to provide static extension methods for extracting shape and slide previews natively as `MagickImage` instances.&#10;  - Updated `EditSlide` activity to consume the static composers directly, removing them from constructor injection.&#10;  - Deleted `SlidesRegistration.cs` as the slide services are now static utilities.&#10;&#10;- **Project Configuration &amp; Restructuring:**&#10;  - Disabled packing by adding `&lt;IsPackable&gt;false&lt;/IsPackable&gt;` to all module `.csproj` files (`Cloud`, `Download`, `Gate`, `Images`, `Settings`, `Sheets`, `Slides`).&#10;  - Removed the `Syncfusion.PresentationRenderer.NET` dependency from the `Slides` project.&#10;  - Reorganized `Slides` project structure by moving `PresentationExtension.cs` to `Models/` and `SfPresentation.cs` to `Entities/`.&#10;  - Fixed `YamlDotNet` namespace references in `YamlSerializer.cs`.&#10;&#10;- **Documentation &amp; Planning:**&#10;  - Extensively updated `CLAUDE.md` and `INSTRUCTIONS.MD` to document the new Modular Monolith architectural boundaries, the MagickImage-First approach, and comprehensive XML documentation standards.&#10;  - Added `conductor/plan.md` to document the implementation strategy for the new text composer." />
+    <option name="LAST_COMMIT_MESSAGE" value="" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

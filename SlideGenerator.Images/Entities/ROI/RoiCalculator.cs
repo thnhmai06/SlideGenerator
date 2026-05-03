@@ -1,6 +1,5 @@
 using System.Drawing;
 using ImageMagick;
-using SlideGenerator.Images.Models;
 using SlideGenerator.Images.Models.Options;
 
 namespace SlideGenerator.Images.Entities.ROI;
@@ -12,10 +11,8 @@ internal abstract class RoiCalculator
     /// </summary>
     /// <param name="image">The source image.</param>
     /// <param name="targetSize">The desired ROI size.</param>
-    /// <param name="type">The ROI type used to resolve the target calculator.</param>
     /// <param name="option">The customized ROI option used to resolve the target calculator.</param>
     /// <returns>The calculated ROI rectangle.</returns>
-    public abstract ValueTask<Rectangle> CalculateRoiAsync(
-        MagickImage image, Size targetSize, RoiType type,
-        RoiOption? option = null);
+    public abstract ValueTask<Rectangle> CalculateRoiAsync(MagickImage image, Size targetSize,
+        RoiOption option);
 }
