@@ -29,14 +29,13 @@ public sealed class RoiResolver(FaceDetector faceDetector)
     /// </summary>
     /// <param name="image">The source image to calculate ROI for.</param>
     /// <param name="targetSize">The desired size of the ROI region.</param>
-    /// <param name="type">The algorithm type for ROI calculation.</param>
     /// <param name="option">Optional configuration for the selected ROI algorithm.</param>
     /// <returns>A task that returns the calculated ROI rectangle.</returns>
     /// <exception cref="ArgumentOutOfRangeException">Thrown when the ROI type is not supported.</exception>
-    public ValueTask<Rectangle> CalculateRoiAsync(MagickImage image, Size targetSize, RoiType type,
-        RoiOption? option = null)
+    public ValueTask<Rectangle> CalculateRoiAsync(MagickImage image, Size targetSize,
+        RoiOption option)
     {
-        return GetCalculator(type).CalculateRoiAsync(image, targetSize, option);
+        return GetCalculator(option.Type).CalculateRoiAsync(image, targetSize, option);
     }
 
     private RoiCalculator GetCalculator(RoiType key)

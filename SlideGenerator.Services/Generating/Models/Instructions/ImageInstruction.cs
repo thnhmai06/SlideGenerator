@@ -6,4 +6,11 @@ public record ImageInstruction(
     IReadOnlySet<ShapeIdentifier> Shapes,
     IReadOnlyList<ColumnIdentifier> Columns,
     EditOptions EditOptions,
-    string? FallbackImagePath = null);
+    string? FallbackImagePath = null)
+{
+    public string? FallbackImagePath
+    {
+        get;
+        init => field = string.IsNullOrWhiteSpace(value) ? null : Path.GetFullPath(value);
+    } = FallbackImagePath;
+}

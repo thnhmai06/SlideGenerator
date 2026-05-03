@@ -33,50 +33,59 @@ public sealed class EditImage(
         // Idempotency: skip if the file already exists
         if (File.Exists(finalEditPath)) return ExecutionResult.Next();
         
-        // Skip if SourceUri is null (already logged warning in DownloadImage)
-        if (Task.SourceUri == null) return ExecutionResult.Next();
+        // Skip if SourceUri is null and no FallbackImagePath is provided
+        if (Task.SourceUri == null && string.IsNullOrWhiteSpace(Task.FallbackImagePath))
+            return ExecutionResult.Next();
 
-        // Discover the downloaded file based on its expected prefix (since Downloader handles extension)
+        // Discover the source file
+        string? sourceFile = null;
         var downloadDir = Path.GetDirectoryName(Task.DownloadPath);
         var downloadPrefix = Path.GetFileName(Task.DownloadPath);
         
-        if (downloadDir == null || !Directory.Exists(downloadDir))
+        if (downloadDir != null && Directory.Exists(downloadDir))
         {
-            data.Errors.TryAdd($"Edit_MissingSourceDir_{downloadPrefix}", 
-                new DirectoryNotFoundException($"Download directory not found: {downloadDir}"));
-            return ExecutionResult.Next();
+            sourceFile = Directory.GetFiles(downloadDir, $"{downloadPrefix}.*").FirstOrDefault();
         }
 
-        var downloadedFile = Directory.GetFiles(downloadDir, $"{downloadPrefix}.*").FirstOrDefault();
-
-        if (downloadedFile == null)
+        // Use fallback if primary source is missing
+        if (sourceFile == null || !File.Exists(sourceFile))
         {
-            data.Errors.TryAdd($"Edit_MissingSourceFile_{downloadPrefix}",
-                new FileNotFoundException("Source image not found for editing.", Task.DownloadPath));
-            return ExecutionResult.Next();
+            if (!string.IsNullOrWhiteSpace(Task.FallbackImagePath) && File.Exists(Task.FallbackImagePath))
+            {
+                sourceFile = Task.FallbackImagePath;
+            }
+            else
+            {
+                // Source is missing and no fallback available
+                if (Task.SourceUri != null)
+                {
+                    data.Errors.TryAdd($"Edit_MissingSource_{downloadPrefix}",
+                        new FileNotFoundException("Source image and fallback not found for editing.", Task.DownloadPath));
+                }
+                return ExecutionResult.Next();
+            }
         }
 
-        // Ensure directory exists
+        // Ensure target directory exists
         var editDir = Path.GetDirectoryName(finalEditPath);
         if (editDir != null && !Directory.Exists(editDir)) Directory.CreateDirectory(editDir);
 
         await gateLocker.AcquireAsync(GateType.EditImage).ConfigureAwait(false);
         try
         {
-            using var image = new MagickImage(downloadedFile);
+            using var image = new MagickImage(sourceFile);
             var targetSize = new Size((int)Math.Round(Task.Width), (int)Math.Round(Task.Height));
 
             // 1. Calculate ROI based on the selected algorithm
             var roi = await roiResolver.CalculateRoiAsync(
                 image,
                 targetSize,
-                Task.EditOptions.RoiOption.Type,
                 Task.EditOptions.RoiOption).ConfigureAwait(false);
 
             // 2. Crop the image to the ROI
             image.Crop(new MagickGeometry(roi.X, roi.Y, (uint)roi.Width, (uint)roi.Height));
 
-            // 3. Resize with maintained aspect ratios to fit the target shape dimensions
+            // 3. Resize with maintained aspect ratio to fit the target shape dimensions
             var currentSize = new Size((int)image.Width, (int)image.Height);
             var maxAspectSize = currentSize.GetMaxAspectSize(targetSize);
             image.Resize(new MagickGeometry((uint)maxAspectSize.Width, (uint)maxAspectSize.Height));
@@ -84,10 +93,10 @@ public sealed class EditImage(
             // 4. Save the edited image as PNG
             await image.WriteAsync(finalEditPath).ConfigureAwait(false);
 
-            // Optional: Delete raw download image to save space
-            if (data.Request.DeleteDownloadImage)
+            // Optional: Delete raw download image to save space (only if it was the primary source)
+            if (data.Request.DeleteDownloadImage && sourceFile != Task.FallbackImagePath)
             {
-                try { File.Delete(downloadedFile); } catch { /* ignore */ }
+                try { File.Delete(sourceFile); } catch { /* ignore */ }
             }
         }
         catch (Exception ex)

@@ -63,4 +63,5 @@ public sealed record ImageTask(
     string EditPath,
     double Width,
     double Height,
-    EditOptions EditOptions);
+    EditOptions EditOptions,
+    string? FallbackImagePath = null);

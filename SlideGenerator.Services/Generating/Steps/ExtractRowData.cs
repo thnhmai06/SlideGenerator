@@ -64,7 +64,7 @@ public sealed class ExtractRowData(GateLocker gateLocker, ExcelEngine excelEngin
                             new ImageTask(
                                 Task.Worksheet.Identifier, Task.RowIndex, column.ColumnName,
                                 shapeId.ShapeId, uri, downloadPath, editPath, (double)bounds.Width, (double)bounds.Height,
-                                imgInst.EditOptions));
+                                imgInst.EditOptions, imgInst.FallbackImagePath));
                     }
                 }
             }
