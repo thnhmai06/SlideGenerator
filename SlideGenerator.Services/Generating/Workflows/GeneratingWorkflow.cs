@@ -1,4 +1,4 @@
-using SlideGenerator.Services.Generating.Models.Identifiers;
+using System.Linq;
 using SlideGenerator.Services.Generating.Steps;
 using WorkflowCore.Interface;
 
@@ -21,21 +21,16 @@ public sealed class GeneratingWorkflow : IWorkflow<GeneratingData>
     /// <inheritdoc />
     public void Build(IWorkflowBuilder<GeneratingData> builder)
     {
-        //! Problem: Thay vì mỗi Activity thực hiện một chu trình Mở/Đóng (I/O) riêng biệt, tôi muốn thực hiện cơ chế: Mở một lần tại Activity bắt đầu, xử lý liên tiếp trên RAM, và chỉ Save/Close một lần duy nhất tại Activity cuối cùng.
-        //! Problem: Cấu hình đồng bộ cả RunTime và Workflow.
-        //! Problem: Đặt tên folder kèm hash để tránh tranh chấp.
         builder
 
             #region Phase A: Validation & Template Setup
 
-            .ForEach(data => data.Request.Recipe.Graph)
+            .ForEach(data => data.Request.Recipe.Nodes.SelectMany(node => node.Sheets.Select(sheet => new ValidationItem(sheet, node))))
             .Do(x => x
                 .StartWith<ValidateRequest>()
-                .Input(step => step.Item,
-                    (data, context) => (KeyValuePair<SheetIdentifier, SlideIdentifier>)context.Item)
+                .Input(step => step.Item, (data, context) => (ValidationItem)context.Item)
                 .Then<CreateTemplate>()
-                .Input(step => step.Item,
-                    (data, context) => (KeyValuePair<SheetIdentifier, SlideIdentifier>)context.Item))
+                .Input(step => step.Item, (data, context) => (ValidationItem)context.Item))
             .Then(_ => WorkflowCore.Models.ExecutionResult.Next())
 
             #endregion

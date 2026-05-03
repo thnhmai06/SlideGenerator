@@ -1,5 +1,6 @@
 using SlideGenerator.Gate.Models;
 using SlideGenerator.Gate.Services;
+using SlideGenerator.Services.Generating.Models;
 using SlideGenerator.Services.Generating.Models.Identifiers;
 using SlideGenerator.Services.Generating.Workflows;
 using SlideGenerator.Settings;
@@ -10,27 +11,29 @@ using WorkflowCore.Models;
 
 namespace SlideGenerator.Services.Generating.Steps;
 
+public sealed record ValidationItem(SheetIdentifier Sheet, MapNode Node);
+
 /// <summary>
 ///     Validates a single sheet and slide mapping, ensuring both exist and are accessible.
 /// </summary>
 public sealed class ValidateRequest(ExcelEngine excelEngine, GateLocker gateLocker) : StepBodyAsync
 {
     /// <summary>
-    ///     The sheet to a slide mapping task to validate.
-    ///     Mapped from the ForEach loop in the workflow.
+    ///     The sheet and its associated map node to validate.
     /// </summary>
-    public KeyValuePair<SheetIdentifier, SlideIdentifier> Item { get; set; }
+    public ValidationItem Item { get; set; } = null!;
 
     /// <inheritdoc />
     public override async Task<ExecutionResult> RunAsync(IStepExecutionContext context)
     {
         var data = (GeneratingData)context.Workflow.Data;
-        var sheet = Item.Key;
-        var slide = Item.Value;
+        var sheet = Item.Sheet;
+        var node = Item.Node;
+        var slide = node.Slide;
 
         try
         {
-            await ValidateSheetAndSlideAsync(data, sheet, slide).ConfigureAwait(false);
+            await ValidateSheetAndSlideAsync(data, sheet, node, slide).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -40,7 +43,7 @@ public sealed class ValidateRequest(ExcelEngine excelEngine, GateLocker gateLock
         return ExecutionResult.Next();
     }
 
-    private async Task ValidateSheetAndSlideAsync(GeneratingData data, SheetIdentifier sheet, SlideIdentifier slide)
+    private async Task ValidateSheetAndSlideAsync(GeneratingData data, SheetIdentifier sheet, MapNode node, SlideIdentifier slide)
     {
         #region 1. Validate Worksheet
 
@@ -93,7 +96,7 @@ public sealed class ValidateRequest(ExcelEngine excelEngine, GateLocker gateLock
                 $"{Utilities.NormalizeFileName(sheet.SheetName)}{Path.GetExtension(slide.PresentationFilePath)}";
             var outputPath = Path.Combine(data.Request.SaveFolder, bookName, outputFileName);
 
-            data.ValidWorksheets.TryAdd(sheet, new ValidatedWorksheet(sheet, outputPath, slide));
+            data.ValidWorksheets.TryAdd(sheet, new ValidatedWorksheet(sheet, outputPath, slide, node));
         }
         finally
         {

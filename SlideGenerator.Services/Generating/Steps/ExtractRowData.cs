@@ -33,17 +33,21 @@ public sealed class ExtractRowData(GateLocker gateLocker, ExcelEngine excelEngin
                 .ToDictionary(x => x.h, x => x.i, StringComparer.OrdinalIgnoreCase);
             var rowData = sheet.GetRow(Task.RowIndex);
 
-            // Generate ImageTasks for this row based on in-memory instructions
-            foreach (var imgInst in data.Request.Recipe.ImageInstructions)
+            // Generate ImageTasks for this row based on instructions in the associated MapNode
+            foreach (var imgInst in Task.Worksheet.MapNode.ImageInstructions)
             {
-                foreach (var colName in imgInst.ColumnNames)
+                foreach (var column in imgInst.Columns)
                 {
-                    if (!headerMap.TryGetValue(colName, out var colIndex) || colIndex >= rowData.Count) continue;
+                    // Only process if the instruction refers to this specific sheet
+                    if (!column.SheetName.Equals(sheet.Name, StringComparison.OrdinalIgnoreCase) ||
+                        !column.BookFilePath.Equals(path, StringComparison.OrdinalIgnoreCase)) continue;
+
+                    if (!headerMap.TryGetValue(column.ColumnName, out var colIndex) || colIndex >= rowData.Count) continue;
 
                     var uri = Utilities.NormalizeUri(rowData[colIndex]);
 
                     var downloadDir =
-                        settingProvider.Current.Download.Temp.GetDownloadDir(bookName, sheet.Name, colName);
+                        settingProvider.Current.Download.Temp.GetDownloadDir(bookName, sheet.Name, column.ColumnName);
                     var downloadPath = Path.Combine(downloadDir, Task.RowIndex.ToString());
 
                     foreach (var shapeId in imgInst.Shapes)
@@ -53,13 +57,13 @@ public sealed class ExtractRowData(GateLocker gateLocker, ExcelEngine excelEngin
                         if (!data.ShapeBounds.TryGetValue(shapeId.ShapeId, out var bounds)) continue;
 
                         var editDir =
-                            settingProvider.Current.Download.Temp.GetEditDir(bookName, sheet.Name, colName);
+                            settingProvider.Current.Download.Temp.GetEditDir(bookName, sheet.Name, column.ColumnName);
                         var editPath = Path.Combine(editDir, $"{Task.RowIndex}_{shapeId.ShapeId}");
 
                         data.ImageTasks.Add(
                             new ImageTask(
-                                Task.Worksheet.Identifier, Task.RowIndex, colName,
-                                shapeId.ShapeId, uri, downloadPath, editPath, bounds.Width, bounds.Height,
+                                Task.Worksheet.Identifier, Task.RowIndex, column.ColumnName,
+                                shapeId.ShapeId, uri, downloadPath, editPath, (double)bounds.Width, (double)bounds.Height,
                                 imgInst.EditOptions));
                     }
                 }

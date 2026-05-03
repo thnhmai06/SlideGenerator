@@ -3,11 +3,10 @@ using SlideGenerator.Services.Generating.Models.Instructions;
 
 namespace SlideGenerator.Services.Generating.Models;
 
-public record Recipe(IReadOnlyDictionary<SheetIdentifier, SlideIdentifier> Graph,
+public record MapNode(
+    IReadOnlySet<SheetIdentifier> Sheets,
+    SlideIdentifier Slide,
     IReadOnlyList<TextInstruction> TextInstructions,
-    IReadOnlyList<ImageInstruction> ImageInstructions)
-{
-    public IReadOnlyDictionary<SheetIdentifier, SlideIdentifier> Graph { get; init; } = Graph.Count == 0
-        ? throw new ArgumentException("Graph cannot be empty.", nameof(Graph))
-        : Graph;
-}
+    IReadOnlyList<ImageInstruction> ImageInstructions);
+
+public record Recipe(IReadOnlyList<MapNode> Nodes);

@@ -4,6 +4,6 @@ namespace SlideGenerator.Services.Generating.Models.Instructions;
 
 public record ImageInstruction(
     IReadOnlySet<ShapeIdentifier> Shapes,
-    IReadOnlyList<string> ColumnNames,
+    IReadOnlyList<ColumnIdentifier> Columns,
     EditOptions EditOptions,
     string? FallbackImagePath = null);

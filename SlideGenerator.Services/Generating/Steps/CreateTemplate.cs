@@ -1,6 +1,5 @@
 using SlideGenerator.Gate.Models;
 using SlideGenerator.Gate.Services;
-using SlideGenerator.Services.Generating.Models.Identifiers;
 using SlideGenerator.Services.Generating.Workflows;
 using SlideGenerator.Slides.Entities;
 using WorkflowCore.Interface;
@@ -15,20 +14,19 @@ namespace SlideGenerator.Services.Generating.Steps;
 public sealed class CreateTemplate(GateLocker gateLocker) : StepBodyAsync
 {
     /// <summary>
-    ///     The sheet and slide mapping.
-    ///     Mapped from the ForEach loop in the workflow.
+    ///     The validation item containing sheet and node info.
     /// </summary>
-    public KeyValuePair<SheetIdentifier, SlideIdentifier> Item { get; set; }
+    public ValidationItem Item { get; set; } = null!;
 
     /// <inheritdoc />
     public override async Task<ExecutionResult> RunAsync(IStepExecutionContext context)
     {
         var data = (GeneratingData)context.Workflow.Data;
 
-        if (!data.ValidWorksheets.TryGetValue(Item.Key, out var worksheet))
+        if (!data.ValidWorksheets.TryGetValue(Item.Sheet, out var worksheet))
         {
-            var ex = new KeyNotFoundException($"Worksheet '{Item.Key.SheetName}' was not found in validated results.");
-            data.Errors.TryAdd($"CreateTemplate_{Item.Key.SheetName}", ex);
+            var ex = new KeyNotFoundException($"Worksheet '{Item.Sheet.SheetName}' was not found in validated results.");
+            data.Errors.TryAdd($"CreateTemplate_{Item.Sheet.SheetName}", ex);
         }
         else
         {

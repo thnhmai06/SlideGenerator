@@ -25,7 +25,7 @@ public sealed class ReplaceShapeData(GateLocker gateLocker, ExcelEngine excelEng
         var textInstructions = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         string? imagePath = null;
         uint currentShapeId = 0;
-        HashSet<string> shapeTags = new();
+        HashSet<string> shapeTags = [];
         
         // 1. Find Shape ID and Mustache Tags
         await gateLocker.AcquireAsync(GateType.ReadPresentation).ConfigureAwait(false);
@@ -45,12 +45,12 @@ public sealed class ReplaceShapeData(GateLocker gateLocker, ExcelEngine excelEng
         
         if (currentShapeId == 0) return ExecutionResult.Next();
 
-        // 2. Identify relevant instructions
-        var relevantTextInstructions = data.Request.Recipe.TextInstructions
+        // 2. Identify relevant instructions from the Worksheet's MapNode
+        var relevantTextInstructions = worksheet.MapNode.TextInstructions
             .Where(ti => ti.Placeholders.Any(p => shapeTags.Contains(p)))
             .ToList();
             
-        var relevantImageInstruction = data.Request.Recipe.ImageInstructions
+        var relevantImageInstruction = worksheet.MapNode.ImageInstructions
             .FirstOrDefault(img => img.Shapes.Any(s => s.ShapeId == currentShapeId && s.PresentationFilePath == worksheet.TemplateSlide.PresentationFilePath));
 
         bool needsText = relevantTextInstructions.Any();
@@ -76,14 +76,17 @@ public sealed class ReplaceShapeData(GateLocker gateLocker, ExcelEngine excelEng
             {
                 foreach (var txtInst in relevantTextInstructions)
                 {
-                    foreach (var colName in txtInst.ColumnNames)
+                    foreach (var column in txtInst.Columns)
                     {
-                        if (headerMap.TryGetValue(colName, out var colIndex) && colIndex < rowData.Count)
+                        // Check if the column belongs to this sheet
+                        if (!column.SheetName.Equals(worksheet.Identifier.SheetName, StringComparison.OrdinalIgnoreCase) ||
+                            !column.BookFilePath.Equals(worksheet.Identifier.BookFilePath, StringComparison.OrdinalIgnoreCase)) continue;
+
+                        if (headerMap.TryGetValue(column.ColumnName, out var colIndex) && colIndex < rowData.Count)
                         {
                             var val = rowData[colIndex];
                             foreach (var placeholder in txtInst.Placeholders)
                             {
-                                // Only add if the placeholder actually exists in this shape
                                 if (shapeTags.Contains(placeholder))
                                     textInstructions[placeholder] = val;
                             }

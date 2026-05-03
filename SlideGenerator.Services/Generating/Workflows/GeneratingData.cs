@@ -22,16 +22,16 @@ public sealed class GeneratingData
     public ConcurrentDictionary<SheetIdentifier, ValidatedWorksheet> ValidWorksheets { get; } = new();
 
     // Iteration lists generated during Prep phase
-    public ConcurrentBag<RowTask> RowTasks { get; } = new();
-    public ConcurrentBag<ShapeTask> ShapeTasks { get; } = new();
-    public ConcurrentBag<RowShapeTask> RowShapeTasks { get; } = new();
+    public ConcurrentBag<RowTask> RowTasks { get; } = [];
+    public ConcurrentBag<ShapeTask> ShapeTasks { get; } = [];
+    public ConcurrentBag<RowShapeTask> RowShapeTasks { get; } = [];
 
     public ConcurrentDictionary<uint, RectangleF> ShapeBounds { get; } = new();
 
     /// <summary>
     ///     The collection of image processing tasks combining download and edit requirements.
     /// </summary>
-    public ConcurrentBag<ImageTask> ImageTasks { get; } = new();
+    public ConcurrentBag<ImageTask> ImageTasks { get; } = [];
 
     /// <summary>
     ///     The collection of errors encountered during the workflow.
@@ -43,7 +43,8 @@ public sealed class GeneratingData
 public sealed record ValidatedWorksheet(
     SheetIdentifier Identifier,
     string OutputPresentationPath,
-    SlideIdentifier TemplateSlide);
+    SlideIdentifier TemplateSlide,
+    MapNode MapNode);
 
 public sealed record RowTask(ValidatedWorksheet Worksheet, int RowIndex);
 
