@@ -1,7 +1,9 @@
+using SlideGenerator.Services.Generating.Models.Identifiers;
+
 namespace SlideGenerator.Services.Scanning.Models.Slides.Responses;
 
 public sealed record SlideSummary(
-    uint SlideIndex, uint SlideId, string SlideName,
+    SlideIdentifier Identifier,
     IReadOnlyList<string> Placeholders,
     IReadOnlyList<ShapeSummary> ImageShapes,
     byte[]? Preview);

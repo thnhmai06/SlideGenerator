@@ -26,7 +26,7 @@ public sealed class GeneratingData
     public ConcurrentBag<ShapeTask> ShapeTasks { get; } = [];
     public ConcurrentBag<RowShapeTask> RowShapeTasks { get; } = [];
 
-    public ConcurrentDictionary<uint, RectangleF> ShapeBounds { get; } = new();
+    public ConcurrentDictionary<ShapeIdentifier, RectangleF> ShapeBounds { get; } = new();
 
     /// <summary>
     ///     The collection of image processing tasks combining download and edit requirements.
@@ -57,7 +57,7 @@ public sealed record ImageTask(
     SheetIdentifier Sheet,
     int RowIndex,
     string ColumnName,
-    uint ShapeId,
+    string ShapeName,
     Uri? SourceUri,
     string DownloadPath,
     string EditPath,

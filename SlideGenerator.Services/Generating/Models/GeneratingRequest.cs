@@ -4,7 +4,7 @@ namespace SlideGenerator.Services.Generating.Models;
 
 public sealed record GeneratingRequest(
     Recipe Recipe, 
-    PresentationExtension PresentationExtension, string SaveFolder,
+    PresentationExtension OutputExtension, string SaveFolder,
     bool DeleteDownloadImage = false, bool DeleteEditImage = true)
 {
     public string SaveFolder { get; init; } = string.IsNullOrWhiteSpace(SaveFolder)

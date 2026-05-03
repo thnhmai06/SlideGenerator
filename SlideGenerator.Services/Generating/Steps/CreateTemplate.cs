@@ -54,7 +54,7 @@ public sealed class CreateTemplate(GateLocker gateLocker) : StepBodyAsync
         }
 
         // 2. Copy the template to the output path (overwrite if it exists)
-        File.Copy(validatedSheet.TemplateSlide.PresentationFilePath, validatedSheet.OutputPresentationPath);
+        File.Copy(validatedSheet.TemplateSlide.PresentationPath, validatedSheet.OutputPresentationPath);
 
         // 3. Isolate template slide (Delete all other slides)
         await gateLocker.AcquireAsync(GateType.EditPresentation).ConfigureAwait(false);

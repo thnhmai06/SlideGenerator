@@ -1,10 +1,10 @@
 namespace SlideGenerator.Services.Generating.Models.Identifiers;
 
-public record BookIdentifier(string BookFilePath, string? BookPassword = null)
+public record BookIdentifier(string BookPath, string? BookPassword = null)
 {
-    public string BookFilePath
+    public string BookPath
     {
         get;
         init => field = Path.GetFullPath(value);
-    } = BookFilePath;
+    } = BookPath;
 }

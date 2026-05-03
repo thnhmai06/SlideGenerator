@@ -24,7 +24,7 @@ public sealed class PrepareIterationTasks(GateLocker gateLocker, ExcelEngine exc
         try
         {
             var workbook = excelEngine.Excel.Workbooks.Open(
-                Worksheet.Identifier.BookFilePath, ExcelParseOptions.Default,
+                Worksheet.Identifier.BookPath, ExcelParseOptions.Default,
                 true, Worksheet.Identifier.BookPassword);
             var sheet = workbook.Worksheets[Worksheet.Identifier.SheetName];
             rowCount = sheet.CountRows();

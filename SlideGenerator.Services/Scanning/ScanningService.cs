@@ -2,6 +2,7 @@ using SlideGenerator.Services.Scanning.Models.Sheets.Requests;
 using SlideGenerator.Services.Scanning.Models.Sheets.Responses;
 using SlideGenerator.Services.Scanning.Models.Slides.Requests;
 using SlideGenerator.Services.Scanning.Models.Slides.Responses;
+using SlideGenerator.Services.Generating.Models.Identifiers;
 using SlideGenerator.Sheets;
 using SlideGenerator.Slides.Entities;
 using SlideGenerator.Slides.Services;
@@ -16,12 +17,11 @@ public sealed class ScanningService(ExcelEngine excelEngine)
 
     public Task<WorkbookSummary> ScanWorkbookAsync(BookSummaryRequest request)
     {
-        var fullPath = Path.GetFullPath(request.WorkbookPath);
-        if (!File.Exists(fullPath))
-            throw new FileNotFoundException("Workbook not found.", fullPath);
+        var id = request.Identifier;
+        if (!File.Exists(id.BookPath))
+            throw new FileNotFoundException("Workbook not found.", id.BookPath);
 
-        using var stream = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-        var workbook = excelEngine.Excel.Workbooks.Open(stream);
+        var workbook = excelEngine.Excel.Workbooks.Open(id.BookPath, ExcelParseOptions.Default, true, id.BookPassword);
         try
         {
             var worksheets = new List<WorksheetSummary>(workbook.Worksheets.Count);
@@ -40,11 +40,11 @@ public sealed class ScanningService(ExcelEngine excelEngine)
                     preview = new WorksheetPreview(headers, rows);
                 }
 
-                worksheets.Add(new WorksheetSummary(worksheet.Name, count, preview));
+                worksheets.Add(new WorksheetSummary(new SheetIdentifier(id.BookPath, worksheet.Name, id.BookPassword), count, preview));
             }
 
             return Task.FromResult(
-                new WorkbookSummary(fullPath, Path.GetFileNameWithoutExtension(fullPath), worksheets));
+                new WorkbookSummary(id.BookPath, Path.GetFileNameWithoutExtension(id.BookPath), worksheets));
         }
         finally
         {
@@ -54,11 +54,11 @@ public sealed class ScanningService(ExcelEngine excelEngine)
 
     public static Task<PresentationSummary> ScanPresentationAsync(PresentationSummaryRequest request)
     {
-        var fullPath = Path.GetFullPath(request.FilePath);
-        if (!File.Exists(fullPath))
-            throw new FileNotFoundException("Presentation not found.", fullPath);
+        var id = request.Identifier;
+        if (!File.Exists(id.PresentationPath))
+            throw new FileNotFoundException("Presentation not found.", id.PresentationPath);
 
-        using var wrapper = new SfPresentation(fullPath, false, request.Password);
+        using var wrapper = new SfPresentation(id.PresentationPath, false, id.PresentationPassword);
         var presentation = wrapper.Value;
 
         var slides = new List<SlideSummary>();
@@ -81,18 +81,17 @@ public sealed class ScanningService(ExcelEngine excelEngine)
             var imageShapes = shapes
                 .Where(shape => shape is IPicture || shape.Fill.FillType == FillType.Picture)
                 .Select(shape => new ShapeSummary(
-                    Id: (uint)(shape.ShapeName?.GetHashCode() ?? 0),
-                    Name: shape.ShapeName ?? string.Empty,
-                    Bounds: Slides.Utilities.GetBoundsF(shape))
+                    new ShapeIdentifier(id.PresentationPath, i + 1, shape.ShapeName ?? string.Empty, id.PresentationPassword),
+                    Slides.Utilities.GetBoundsF(shape))
                 )
                 .ToList();
 
             slides.Add(
                 new SlideSummary(
-                    (uint)i + 1, (uint)i + 1, slide.Name ?? string.Empty,
+                    new SlideIdentifier(id.PresentationPath, i + 1, id.PresentationPassword),
                     placeholders, imageShapes, slidePreviewBytes));
         }
 
-        return Task.FromResult(new PresentationSummary(fullPath, slides));
+        return Task.FromResult(new PresentationSummary(id.PresentationPath, slides));
     }
 }

@@ -18,12 +18,12 @@ public sealed class ExtractRowData(GateLocker gateLocker, ExcelEngine excelEngin
     public override async Task<ExecutionResult> RunAsync(IStepExecutionContext context)
     {
         var data = (GeneratingData)context.Workflow.Data;
-        var bookName = Path.GetFileNameWithoutExtension(Task.Worksheet.Identifier.BookFilePath);
+        var bookName = Path.GetFileNameWithoutExtension(Task.Worksheet.Identifier.BookPath);
 
         await gateLocker.AcquireAsync(GateType.ReadWorkbook).ConfigureAwait(false);
         try
         {
-            var path = Task.Worksheet.Identifier.BookFilePath;
+            var path = Task.Worksheet.Identifier.BookPath;
             var book = excelEngine.Excel.Workbooks.Open(path, ExcelParseOptions.Default, true,
                 Task.Worksheet.Identifier.BookPassword);
             var sheet = book.Worksheets[Task.Worksheet.Identifier.SheetName];
@@ -40,7 +40,7 @@ public sealed class ExtractRowData(GateLocker gateLocker, ExcelEngine excelEngin
                 {
                     // Only process if the instruction refers to this specific sheet
                     if (!column.SheetName.Equals(sheet.Name, StringComparison.OrdinalIgnoreCase) ||
-                        !column.BookFilePath.Equals(path, StringComparison.OrdinalIgnoreCase)) continue;
+                        !column.BookPath.Equals(path, StringComparison.OrdinalIgnoreCase)) continue;
 
                     if (!headerMap.TryGetValue(column.ColumnName, out var colIndex) || colIndex >= rowData.Count) continue;
 
@@ -50,20 +50,20 @@ public sealed class ExtractRowData(GateLocker gateLocker, ExcelEngine excelEngin
                         settingProvider.Current.Download.Temp.GetDownloadDir(bookName, sheet.Name, column.ColumnName);
                     var downloadPath = Path.Combine(downloadDir, Task.RowIndex.ToString());
 
-                    foreach (var shapeId in imgInst.Shapes)
+                    foreach (var shape in imgInst.Shapes)
                     {
-                        if (shapeId.PresentationFilePath != Task.Worksheet.TemplateSlide.PresentationFilePath
-                            || shapeId.SlideIndex != Task.Worksheet.TemplateSlide.SlideIndex) continue;
-                        if (!data.ShapeBounds.TryGetValue(shapeId.ShapeId, out var bounds)) continue;
+                        if (shape.PresentationPath != Task.Worksheet.TemplateSlide.PresentationPath
+                            || shape.SlideIndex != Task.Worksheet.TemplateSlide.SlideIndex) continue;
+                        if (!data.ShapeBounds.TryGetValue(shape, out var bounds)) continue;
 
                         var editDir =
                             settingProvider.Current.Download.Temp.GetEditDir(bookName, sheet.Name, column.ColumnName);
-                        var editPath = Path.Combine(editDir, $"{Task.RowIndex}_{shapeId.ShapeId}");
+                        var editPath = Path.Combine(editDir, $"{Task.RowIndex}_{shape.ShapeName}");
 
                         data.ImageTasks.Add(
                             new ImageTask(
                                 Task.Worksheet.Identifier, Task.RowIndex, column.ColumnName,
-                                shapeId.ShapeId, uri, downloadPath, editPath, (double)bounds.Width, (double)bounds.Height,
+                                shape.ShapeName, uri, downloadPath, editPath, (double)bounds.Width, (double)bounds.Height,
                                 imgInst.EditOptions, imgInst.FallbackImagePath));
                     }
                 }

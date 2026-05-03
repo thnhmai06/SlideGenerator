@@ -37,7 +37,7 @@ public sealed class ValidateRequest(ExcelEngine excelEngine, GateLocker gateLock
         }
         catch (Exception ex)
         {
-            data.Errors.TryAdd($"Validation_{sheet.BookFilePath}_{sheet.SheetName}", ex);
+            data.Errors.TryAdd($"Validation_{sheet.BookPath}_{sheet.SheetName}", ex);
         }
 
         return ExecutionResult.Next();
@@ -50,18 +50,18 @@ public sealed class ValidateRequest(ExcelEngine excelEngine, GateLocker gateLock
         await gateLocker.AcquireAsync(GateType.ReadWorkbook).ConfigureAwait(false);
         try
         {
-            if (!File.Exists(sheet.BookFilePath))
-                throw new FileNotFoundException("Workbook not found.", sheet.BookFilePath);
+            if (!File.Exists(sheet.BookPath))
+                throw new FileNotFoundException("Workbook not found.", sheet.BookPath);
 
             var workbook =
-                excelEngine.Excel.Workbooks.Open(sheet.BookFilePath, ExcelParseOptions.Default, true,
+                excelEngine.Excel.Workbooks.Open(sheet.BookPath, ExcelParseOptions.Default, true,
                     sheet.BookPassword);
             try
             {
                 var worksheet = workbook.Worksheets[sheet.SheetName];
                 if (worksheet == null)
                     throw new ArgumentException(
-                        $"Sheet '{sheet.SheetName}' not found in workbook '{Path.GetFileName(sheet.BookFilePath)}'.");
+                        $"Sheet '{sheet.SheetName}' not found in workbook '{Path.GetFileName(sheet.BookPath)}'.");
             }
             finally
             {
@@ -80,20 +80,20 @@ public sealed class ValidateRequest(ExcelEngine excelEngine, GateLocker gateLock
         await gateLocker.AcquireAsync(GateType.ReadPresentation).ConfigureAwait(false);
         try
         {
-            if (!File.Exists(slide.PresentationFilePath))
-                throw new FileNotFoundException("Presentation template not found.", slide.PresentationFilePath);
+            if (!File.Exists(slide.PresentationPath))
+                throw new FileNotFoundException("Presentation template not found.", slide.PresentationPath);
 
-            using var wrapper = new SfPresentation(slide.PresentationFilePath, false, slide.PresentationPassword);
+            using var wrapper = new SfPresentation(slide.PresentationPath, false, slide.PresentationPassword);
             var presentation = wrapper.Value;
 
             if (slide.SlideIndex == 0 || slide.SlideIndex > presentation.Slides.Count)
                 throw new ArgumentException(
-                    $"Slide index {slide.SlideIndex} is out of range for '{Path.GetFileName(slide.PresentationFilePath)}' (Count: {presentation.Slides.Count}).");
+                    $"Slide index {slide.SlideIndex} is out of range for '{Path.GetFileName(slide.PresentationPath)}' (Count: {presentation.Slides.Count}).");
 
             // Successful validation: Prepare output mapping
-            var bookName = Path.GetFileNameWithoutExtension(sheet.BookFilePath);
+            var bookName = Path.GetFileNameWithoutExtension(sheet.BookPath);
             var outputFileName =
-                $"{Utilities.NormalizeFileName(sheet.SheetName)}{Path.GetExtension(slide.PresentationFilePath)}";
+                $"{Utilities.NormalizeFileName(sheet.SheetName)}{Path.GetExtension(slide.PresentationPath)}";
             var outputPath = Path.Combine(data.Request.SaveFolder, bookName, outputFileName);
 
             data.ValidWorksheets.TryAdd(sheet, new ValidatedWorksheet(sheet, outputPath, slide, node));

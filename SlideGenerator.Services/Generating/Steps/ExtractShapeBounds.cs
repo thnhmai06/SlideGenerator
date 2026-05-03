@@ -1,5 +1,6 @@
 using SlideGenerator.Gate.Models;
 using SlideGenerator.Gate.Services;
+using SlideGenerator.Services.Generating.Models.Identifiers;
 using SlideGenerator.Services.Generating.Workflows;
 using SlideGenerator.Slides;
 using SlideGenerator.Slides.Entities;
@@ -22,8 +23,13 @@ public sealed class ExtractShapeBounds(GateLocker gateLocker) : StepBodyAsync
             using var wrapper = new SfPresentation(Task.Worksheet.OutputPresentationPath, false);
             if (wrapper.Value.Slides[0].Shapes[Task.ShapeIndex] is IShape shape)
             {
-                var shapeId = (uint)(shape.ShapeName?.GetHashCode() ?? 0);
-                data.ShapeBounds.TryAdd(shapeId, shape.GetBoundsF());
+                var identifier = new ShapeIdentifier(
+                    Task.Worksheet.TemplateSlide.PresentationPath,
+                    Task.Worksheet.TemplateSlide.SlideIndex,
+                    shape.ShapeName ?? string.Empty,
+                    Task.Worksheet.TemplateSlide.PresentationPassword);
+                
+                data.ShapeBounds.TryAdd(identifier, shape.GetBoundsF());
             }
         }
         finally
