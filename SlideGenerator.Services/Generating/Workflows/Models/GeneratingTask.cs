@@ -33,9 +33,24 @@ public sealed class GeneratingTask : IDisposable
     public ConcurrentBag<ImageTask> ImageTasks { get; } = [];
 
     // Long-lived handles
-    public ConcurrentDictionary<string, IWorkbook> WorkbookHandles { get; } = new(); // read
-    public ConcurrentDictionary<string, SfPresentation> TemplateHandles { get; } = new(); // read
-    public ConcurrentDictionary<string, SfPresentation> OutputHandles { get; } = new(); // write
+
+    /// <summary>
+    ///     Gets the collection of workbook handles used for reading data.
+    ///     Key is the absolute file path.
+    /// </summary>
+    public ConcurrentDictionary<string, IWorkbook> WorkbookHandles { get; } = new();
+
+    /// <summary>
+    ///     Gets the collection of presentation handles used as templates.
+    ///     Key is the absolute file path.
+    /// </summary>
+    public ConcurrentDictionary<string, SfPresentation> TemplateHandles { get; } = new();
+
+    /// <summary>
+    ///     Gets the collection of presentation handles used for output generation.
+    ///     Key is the absolute file path.
+    /// </summary>
+    public ConcurrentDictionary<string, SfPresentation> OutputHandles { get; } = new();
 
     /// <summary>
     ///     Disposes of all open workbook and presentation handles.

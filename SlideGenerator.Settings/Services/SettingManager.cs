@@ -8,13 +8,21 @@ namespace SlideGenerator.Settings.Services;
 /// <summary>
 ///     Manages the loading, saving, and state of the application's <see cref="Setting" /> configuration.
 /// </summary>
+/// <param name="serializer">The serializer used to persist settings to disk.</param>
 public sealed class SettingManager(Serializer serializer) : ISettingProvider
 {
+    /// <summary>
+    ///     Gets the full file path where settings are stored.
+    /// </summary>
     private string FilePath => NameAndPathRules.Setting.GetFilePath(serializer.FileExtension);
 
     /// <inheritdoc />
     public Setting Current { get; private set; } = new();
 
+    /// <summary>
+    ///     Asynchronously loads settings from disk.
+    /// </summary>
+    /// <returns>True if the settings were successfully loaded; false if the file does not exist.</returns>
     public async Task<bool> Load()
     {
         if (!File.Exists(FilePath)) return false;
@@ -26,6 +34,10 @@ public sealed class SettingManager(Serializer serializer) : ISettingProvider
         return true;
     }
 
+    /// <summary>
+    ///     Asynchronously saves the current settings to disk.
+    /// </summary>
+    /// <returns>True if the operation completed successfully.</returns>
     public async Task<bool> Save()
     {
         var content = serializer.Serialize(Current);
@@ -33,12 +45,21 @@ public sealed class SettingManager(Serializer serializer) : ISettingProvider
         return true;
     }
 
+    /// <summary>
+    ///     Updates the current settings state and persists it to disk.
+    /// </summary>
+    /// <param name="newSetting">The new settings object to apply.</param>
+    /// <returns>A task representing the save operation.</returns>
     public Task<bool> Update(Setting newSetting)
     {
         Current = newSetting;
         return Save();
     }
 
+    /// <summary>
+    ///     Resets the settings to their default values and persists them to disk.
+    /// </summary>
+    /// <returns>A task representing the reset and save operation.</returns>
     public async Task<bool> ResetToDefaults()
     {
         Current = new Setting();

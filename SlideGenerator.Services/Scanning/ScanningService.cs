@@ -11,10 +11,21 @@ using Syncfusion.XlsIO;
 
 namespace SlideGenerator.Services.Scanning;
 
+/// <summary>
+///     Provides discovery services for Excel workbooks and PowerPoint presentations.
+///     Extracts structural metadata, identifies placeholders, and generates visual previews.
+/// </summary>
+/// <param name="excelEngine">The Syncfusion Excel engine instance used for workbook operations.</param>
 public sealed class ScanningService(ExcelEngine excelEngine)
 {
     private const uint MaxPreviewRows = 20;
 
+    /// <summary>
+    ///     Analyzes an Excel workbook to extract sheet names, row counts, and optional data previews.
+    /// </summary>
+    /// <param name="request">The request containing workbook path and preview options.</param>
+    /// <returns>A summary of the workbook structure.</returns>
+    /// <exception cref="FileNotFoundException">Thrown if the workbook path is invalid.</exception>
     public Task<WorkbookSummary> ScanWorkbookAsync(BookSummaryRequest request)
     {
         var id = request.Identifier;
@@ -52,6 +63,12 @@ public sealed class ScanningService(ExcelEngine excelEngine)
         }
     }
 
+    /// <summary>
+    ///     Analyzes a PowerPoint presentation to identify slides, text placeholders, and image-compatible shapes.
+    /// </summary>
+    /// <param name="request">The request containing presentation path and preview options.</param>
+    /// <returns>A summary of the presentation structure.</returns>
+    /// <exception cref="FileNotFoundException">Thrown if the presentation path is invalid.</exception>
     public static Task<PresentationSummary> ScanPresentationAsync(PresentationSummaryRequest request)
     {
         var id = request.Identifier;

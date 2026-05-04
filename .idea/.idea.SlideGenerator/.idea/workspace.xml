@@ -11,16 +11,36 @@
   <component name="ChangeListManager">
     <list default="true" id="3a1f1c77-0578-40bf-9d5d-a0e8452562c2" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.SlideGenerator/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.SlideGenerator/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/CreateTemplate.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/CreateTemplate.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/DownloadImage.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/DownloadImage.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/EditImage.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/EditImage.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/ExtractData.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/ExtractData.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/ReplaceSlideData.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/ReplaceSlideData.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/ValidateRequest.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/ValidateRequest.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Logging/ILogDbContext.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Logging/ILogDbContext.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Logging/Models/ExceptionIdentifier.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Logging/Models/ExceptionIdentifier.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Logging/Models/LogEntry.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Logging/Models/LogEntry.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Logging/Sinks/WorkflowDatabaseSink.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Logging/Sinks/WorkflowDatabaseSink.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Models/EditOptions.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Models/EditOptions.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Models/GeneratingRequest.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Models/GeneratingRequest.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Models/Identifiers/BookIdentifier.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Models/Identifiers/BookIdentifier.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Models/Identifiers/ColumnIdentifier.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Models/Identifiers/ColumnIdentifier.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Models/Identifiers/PresentationIdentifier.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Models/Identifiers/PresentationIdentifier.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Models/Identifiers/ShapeIdentifier.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Models/Identifiers/ShapeIdentifier.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Models/Identifiers/SheetIdentifier.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Models/Identifiers/SheetIdentifier.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Models/Identifiers/SlideIdentifier.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Models/Identifiers/SlideIdentifier.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Models/Instructions/ImageInstruction.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Models/Instructions/ImageInstruction.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Models/Instructions/TextInstruction.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Models/Instructions/TextInstruction.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Models/Recipe.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Models/Recipe.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Utilities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Utilities.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Workflows/Models/GeneratingTask.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Workflows/Models/GeneratingTask.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/SlideGenerator.Services.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/SlideGenerator.Services.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.slnx" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.slnx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/conductor/plan.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Workflows/Models/ImageTask.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Workflows/Models/ImageTask.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Workflows/Models/SheetTask.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Workflows/Models/SheetTask.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Workflows/Models/SlideTask.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Workflows/Models/SlideTask.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Scanning/ScanningService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Scanning/ScanningService.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Settings/Entities/Serializer.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Settings/Entities/Serializer.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Settings/Entities/YamlSerializer.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Settings/Entities/YamlSerializer.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Settings/Rules/NameAndPathRules.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Settings/Rules/NameAndPathRules.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Settings/Services/SettingManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Settings/Services/SettingManager.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Settings/Settings/Setting.DownloadConfig.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Settings/Settings/Setting.DownloadConfig.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Settings/Settings/Setting.JobConfig.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Settings/Settings/Setting.JobConfig.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Settings/Settings/Setting.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Settings/Settings/Setting.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Settings/SettingsRegistration.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Settings/SettingsRegistration.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Settings/Utilities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Settings/Utilities.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -302,7 +322,7 @@
       <workItem from="1777732612552" duration="9858000" />
       <workItem from="1777780379713" duration="9613000" />
       <workItem from="1777805580498" duration="15986000" />
-      <workItem from="1777863175670" duration="11976000" />
+      <workItem from="1777863175670" duration="12696000" />
     </task>
     <task id="LOCAL-00001" summary="feat: update LoadPresentation workflow&#10;&#10;- Updated LoadPresentation class to enhance documentation and streamline presentation preparation workflow (improves clarity and maintainability).">
       <option name="closed" value="true" />
@@ -688,7 +708,15 @@
       <option name="project" value="LOCAL" />
       <updated>1777864493052</updated>
     </task>
-    <option name="localTasksCounter" value="49" />
+    <task id="LOCAL-00049" summary="feat(logging): introduce database-backed logging and replace in-memory error tracking&#10;&#10;- Created the `SlideGenerator.Logging` project to provide structured, database-backed logging via Entity Framework Core and Serilog.&#10;- Introduced `LogEntry` and `ExceptionIdentifier` models, alongside the `ILogDbContext` interface.&#10;- Implemented `WorkflowDatabaseSink`, a custom Serilog sink that batches log events and persists them to the database, explicitly extracting `TaskId`, `Path`, and exception details.&#10;- Removed the `Errors` concurrent dictionary from the `GeneratingTask` model, shifting error management to the new centralized logging system.&#10;- Integrated `ILogger` dependency injection into all generating workflow steps (`ValidateRequest`, `CreateTemplate`, `DownloadImage`, `EditImage`, `ExtractData`, `ReplaceSlideData`, `CloseAllHandles`).&#10;- Added rich contextual logging across workflow steps using `.ForContext(&quot;TaskId&quot;, context.Workflow.Id)` and `.ForContext(&quot;Path&quot;, ...)` to provide granular visibility into task execution, idempotency checks, and error handling.&#10;- Deleted the obsolete `conductor/plan.md` implementation plan.">
+      <option name="closed" value="true" />
+      <created>1777883745221</created>
+      <option name="number" value="00049" />
+      <option name="presentableId" value="LOCAL-00049" />
+      <option name="project" value="LOCAL" />
+      <updated>1777883745221</updated>
+    </task>
+    <option name="localTasksCounter" value="50" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -773,7 +801,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
-    <MESSAGE value="chore(backend): update packages" />
     <MESSAGE value="refactor: refactoring Images module&#10;&#10;- Renamed FaceDetectorModelKey to FaceDetectorModel for clarity.&#10;- Updated RoiType enum values for better understanding (RuleOfThirds to Center and vice versa).&#10;- Introduced new classes for CenterOption and RuleOfThirdsOption to encapsulate ROI strategies.&#10;- Refactored FaceDetector and related classes to improve maintainability and readability." />
     <MESSAGE value="[skip ci] chore(backend): cleanup and reformat" />
     <MESSAGE value="refactor(workflows): refactoring workflows models to Application Layer" />
@@ -798,7 +825,8 @@
     <MESSAGE value="feat(generating): add fallback image support and simplify ROI resolution&#10;&#10;- Introduced `FallbackImagePath` to `ImageInstruction` and `GeneratingData`, ensuring the path is automatically resolved to an absolute path when provided.&#10;- Updated `ExtractRowData` to pass the `FallbackImagePath` into the constructed `ImageTask`.&#10;- Modified the `EditImage` workflow step to utilize the fallback image when the primary source file is missing or no `SourceUri` is provided.&#10;- Updated cleanup logic in `EditImage` to prevent deleting the source image if the fallback image was used.&#10;- Refactored `RoiResolver.CalculateRoiAsync` to determine the algorithm type directly from the `RoiOption.Type` property, removing the redundant `RoiType` parameter." />
     <MESSAGE value="refactor(identifiers): standardize naming and adopt strongly typed models&#10;&#10;- Renamed path properties across identifier records for consistency (e.g., `BookFilePath` to `BookPath`, `PresentationFilePath` to `PresentationPath`).&#10;- Refactored `ShapeIdentifier` to use a `string ShapeName` instead of a hashed `uint ShapeId`.&#10;- Changed `SlideIndex` from `uint` to `int` in `SlideIdentifier`.&#10;- Updated scanning request and summary models (`BookSummaryRequest`, `PresentationSummaryRequest`, `WorksheetSummary`, `SlideSummary`, `ShapeSummary`) to use strongly typed identifiers instead of flat primitive properties.&#10;- Modified `ExtractRowData`, `ExtractShapeBounds`, and `ReplaceShapeData` workflow steps to utilize explicit string `ShapeName` matching rather than hashed integer IDs.&#10;- Updated `GeneratingData` to use `ShapeIdentifier` as the key for the `ShapeBounds` dictionary and `ShapeName` in `ShapeTask`.&#10;- Renamed `PresentationExtension` to `OutputExtension` in `GeneratingRequest`.&#10;- Updated `ScanningService` to natively handle the new identifier-based request and summary models." />
     <MESSAGE value="refactor(generating): restructure workflow tasks&#10;&#10;- Updated namespaces and project references from Gate to Coordinator for consistency.&#10;- Refactored workflow tasks to utilize the new GeneratingTask model, enhancing clarity and maintainability.&#10;- Consolidated data extraction and task creation processes for improved efficiency." />
-    <option name="LAST_COMMIT_MESSAGE" value="refactor(generating): restructure workflow tasks&#10;&#10;- Updated namespaces and project references from Gate to Coordinator for consistency.&#10;- Refactored workflow tasks to utilize the new GeneratingTask model, enhancing clarity and maintainability.&#10;- Consolidated data extraction and task creation processes for improved efficiency." />
+    <MESSAGE value="feat(logging): introduce database-backed logging and replace in-memory error tracking&#10;&#10;- Created the `SlideGenerator.Logging` project to provide structured, database-backed logging via Entity Framework Core and Serilog.&#10;- Introduced `LogEntry` and `ExceptionIdentifier` models, alongside the `ILogDbContext` interface.&#10;- Implemented `WorkflowDatabaseSink`, a custom Serilog sink that batches log events and persists them to the database, explicitly extracting `TaskId`, `Path`, and exception details.&#10;- Removed the `Errors` concurrent dictionary from the `GeneratingTask` model, shifting error management to the new centralized logging system.&#10;- Integrated `ILogger` dependency injection into all generating workflow steps (`ValidateRequest`, `CreateTemplate`, `DownloadImage`, `EditImage`, `ExtractData`, `ReplaceSlideData`, `CloseAllHandles`).&#10;- Added rich contextual logging across workflow steps using `.ForContext(&quot;TaskId&quot;, context.Workflow.Id)` and `.ForContext(&quot;Path&quot;, ...)` to provide granular visibility into task execution, idempotency checks, and error handling.&#10;- Deleted the obsolete `conductor/plan.md` implementation plan." />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(logging): introduce database-backed logging and replace in-memory error tracking&#10;&#10;- Created the `SlideGenerator.Logging` project to provide structured, database-backed logging via Entity Framework Core and Serilog.&#10;- Introduced `LogEntry` and `ExceptionIdentifier` models, alongside the `ILogDbContext` interface.&#10;- Implemented `WorkflowDatabaseSink`, a custom Serilog sink that batches log events and persists them to the database, explicitly extracting `TaskId`, `Path`, and exception details.&#10;- Removed the `Errors` concurrent dictionary from the `GeneratingTask` model, shifting error management to the new centralized logging system.&#10;- Integrated `ILogger` dependency injection into all generating workflow steps (`ValidateRequest`, `CreateTemplate`, `DownloadImage`, `EditImage`, `ExtractData`, `ReplaceSlideData`, `CloseAllHandles`).&#10;- Added rich contextual logging across workflow steps using `.ForContext(&quot;TaskId&quot;, context.Workflow.Id)` and `.ForContext(&quot;Path&quot;, ...)` to provide granular visibility into task execution, idempotency checks, and error handling.&#10;- Deleted the obsolete `conductor/plan.md` implementation plan." />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

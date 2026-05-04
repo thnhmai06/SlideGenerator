@@ -5,8 +5,19 @@ using SlideGenerator.Logging.Models;
 
 namespace SlideGenerator.Logging.Sinks;
 
+/// <summary>
+///     A custom Serilog sink that buffers log events and persists them to the database in batches.
+///     Uses scoped database contexts to ensure thread-safety and prevent memory leaks.
+/// </summary>
+/// <param name="scopeFactory">The factory used to create a new service scope for each batch insertion.</param>
 public class WorkflowDatabaseSink(IServiceScopeFactory scopeFactory) : IBatchedLogEventSink
 {
+    /// <summary>
+    ///     Processes a batch of log events, transforms them into <see cref="LogEntry"/> entities, 
+    ///     and saves them to the database.
+    /// </summary>
+    /// <param name="batch">The collection of log events to persist.</param>
+    /// <returns>A task representing the asynchronous save operation.</returns>
     public async Task EmitBatchAsync(IEnumerable<LogEvent> batch)
     {
         using var scope = scopeFactory.CreateScope();
@@ -53,6 +64,10 @@ public class WorkflowDatabaseSink(IServiceScopeFactory scopeFactory) : IBatchedL
         }
     }
 
+    /// <summary>
+    ///     Called when a batch interval expires but no events are pending.
+    /// </summary>
+    /// <returns>A completed task.</returns>
     public Task OnEmptyBatchAsync()
     {
         return Task.CompletedTask;

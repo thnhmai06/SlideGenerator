@@ -8,16 +8,19 @@ namespace SlideGenerator.Services.Generating.Workflows.Models;
 /// </summary>
 public sealed class SlideTask(SheetTask sheetTask, int rowIndex)
 {
+    /// <summary>Gets the parent worksheet task.</summary>
     public SheetTask SheetTask { get; } = sheetTask;
+
+    /// <summary>Gets the 1-based row index in the sheet that this slide represents.</summary>
     public int RowIndex { get; } = rowIndex;
 
     /// <summary>
-    /// Text replacements where Key is the Placeholder text (Mustache tag) and Value is the string replacement.
+    /// Gets the text replacements where Key is the Placeholder text (Mustache tag) and Value is the string replacement.
     /// </summary>
     public Dictionary<string, string> TextReplacements { get; } = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
-    /// Image replacements where Key is the ShapeIdentifier and Value is the ImageTask responsible for processing it.
+    /// Gets the image replacements where Key is the ShapeIdentifier and Value is the ImageTask responsible for processing it.
     /// </summary>
     public Dictionary<ShapeIdentifier, ImageTask> ImageReplacements { get; } = new();
 }
