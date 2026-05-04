@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Serilog.Events;
 using Serilog.Sinks.PeriodicBatching;
+using SlideGenerator.Logging.Abstractions;
 using SlideGenerator.Logging.Models;
 
 namespace SlideGenerator.Logging.Sinks;

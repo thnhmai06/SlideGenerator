@@ -3,7 +3,7 @@
     <Project Path="SlideGenerator.Slides/SlideGenerator.Slides.csproj" />
     <Project Path="SlideGenerator.Sheets/SlideGenerator.Sheets.csproj" />
     <Project Path="SlideGenerator.Logging/SlideGenerator.Logging.csproj" />
-    <Project Path="SlideGenerator.Services/SlideGenerator.Services.csproj" />
+    <Project Path="SlideGenerator.Pipelines/SlideGenerator.Pipelines.csproj" />
     <Project Path="SlideGenerator.Settings/SlideGenerator.Settings.csproj" />
     <Project Path="SlideGenerator.Cloud/SlideGenerator.Cloud.csproj" />
     <Project Path="SlideGenerator.Coordinator/SlideGenerator.Coordinator.csproj" />
