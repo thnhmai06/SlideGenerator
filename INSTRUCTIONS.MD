@@ -22,9 +22,9 @@ Orchestration
 | Category | Modules | Responsibility |
 |---|---|---|
 | **Foundation** | Settings, Cloud | No external dependencies; core infrastructure |
-| **Core Services** | Gate, Download, Sheets | Depend on Settings; shared capabilities |
-| **Features** | Images, Slides | Domain-specific operations |
-| **Orchestration** | Workflows | Coordinates module composition |
+| **Core Services** | Coordinator, Download, Sheets | Depend on Settings; shared capabilities |
+| **Features** | Images, Slides, Logging | Domain-specific operations |
+| **Orchestration** | Services | Coordinates module composition |
 
 ### Architectural Rules
 
@@ -39,7 +39,7 @@ Orchestration
 **Encouraged:**
 - **Data Classes**: Use `record` for DTOs, `sealed record` for strongly-scoped values
 - **Service Classes**: Use `sealed class` with dependency-injected constructor
-- **Naming**: Keep module names short and intent-driven (e.g., `Gate`, not `ConcurrencyGate`)
+- **Naming**: Keep module names short and intent-driven (e.g., `Coordinator`, not `ConcurrencyCoordinator`)
 - **Uniform Folder Structure**: Every module/service follows a consistent layout: `Abstractions/`, `Entities/`, `Models/`, `Rules/`, `Services/`, and where applicable, `Activities/` and `Workflows/`.
 
 ## 3. Image Processing (May 2026 Update)
@@ -235,7 +235,7 @@ Activities inherit from `StepBody` (synchronous) or `StepBodyAsync` (asynchronou
 - [ ] Workflow classes have a parameterless constructor for registration.
 - [ ] All async code uses `ConfigureAwait(false)`.
 - [ ] Transient resources (leases, handles) are properly disposed.
-- [ ] Workflows only inject `IServiceProvider` in their parameterless constructor.
+- [ ] Workflows inject only `IServiceProvider` (if service access is needed), never concrete services.
 - [ ] Activities inject services via their parameterized constructor.
 - [ ] All public APIs have comprehensive XML documentation.
 - [ ] Image processing uses MagickImage (exception: face detection uses Mat internally).

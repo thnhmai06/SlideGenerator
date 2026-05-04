@@ -1,6 +1,6 @@
-# CLAUDE.md - SlideGenerator Development Guide
+# CLAUDE.md
 
-This file provides high-signal guidance for working with the SlideGenerator repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Build Commands
 
@@ -19,184 +19,121 @@ SDK: .NET 10.0 (`global.json` pins to `latestMajor`).
 
 ## Architecture: Modular Monolith
 
-SlideGenerator uses a **Modular Monolith** architecture with independent, composable modules organized by feature and responsibility.
+SlideGenerator automates PowerPoint generation from Excel data and templates. It uses a **Modular Monolith** with independent modules coordinated via WorkflowCore orchestration.
 
-### Module Organization
+### Module Map
 
 ```
 Foundation Modules (no external dependencies)
-├── SlideGenerator.Settings      - Configuration management (YAML-based)
-└── SlideGenerator.Cloud         - Multi-cloud resolver (Google Drive, OneDrive, SharePoint)
+├── SlideGenerator.Settings      - YAML-based configuration; ISettingProvider
+└── SlideGenerator.Cloud         - Multi-cloud URI resolver (Google Drive, OneDrive, SharePoint)
 
-Core Services (depend on Settings/foundational modules)
-├── SlideGenerator.Gate          - Concurrency throttling via gates and slots
-├── SlideGenerator.Download      - HTTP resource downloading with throttling
-└── SlideGenerator.Sheets        - Excel workbook operations (read-only scanning)
+Core Services (depend on Settings)
+├── SlideGenerator.Coordinator   - Concurrency throttling; GateLocker + GateType enum
+├── SlideGenerator.Download      - HTTP downloading with throttling and progress reporting
+└── SlideGenerator.Sheets        - Read-only Excel scanning via Syncfusion
 
 Feature Modules
-├── SlideGenerator.Images        - Image processing with ROI and face detection (MagickImage-based)
-└── SlideGenerator.Slides        - PowerPoint operations (MagickImage-based shape handling)
+├── SlideGenerator.Images        - MagickImage processing; ROI + face detection (OpenCV YuNet)
+├── SlideGenerator.Slides        - PowerPoint operations; Syncfusion + MagickImage
+└── SlideGenerator.Logging       - Database-backed Serilog sink via ILogDbContext (EF Core)
 
-Orchestration Layer
-└── SlideGenerator.Services      - WorkflowCore-based process orchestration
+Orchestration
+└── SlideGenerator.Services      - WorkflowCore workflows: Scanning + Generating
 ```
 
-### Dependency Principles
+### Dependency Rules
 
-- **Isolation**: Each module is independently deployable and testable
-- **Clear Contracts**: Modules expose public services via `Registration.cs` for DI setup
-- **No Circular Dependencies**: Dependencies flow downward only
-- **Layered Communication**: Modules compose via dependency injection, not direct coupling
-- **Internal Freedom**: Each module organizes internals via Entities/Models/Services pattern
+- Dependencies flow downward only — no circular references.
+- Each module registers via its own `Registration.cs` (DI entry point).
+- `SlideGenerator.Services` is the only module that wires all others together.
 
-## Project Modules
+## DI Registration Methods
 
-### Foundation Modules (Zero External Dependencies)
+| Module | Extension Method |
+|---|---|
+| Settings | `SettingsRegistration.AddSettings()` |
+| Cloud | `Registration.AddCloudServices()` |
+| Coordinator | `Registration.AddCoreServices()` |
+| Download | `Registration.AddDownloadServices()` |
+| Sheets | `Registration.AddSheetServices()` |
+| Images | `Registration.AddImageServices()` |
+| Logging | `Registration.AddWorkflowLogging()` |
 
-| **Foundation** | Settings, Cloud | No external dependencies; core infrastructure |
-| **Core Services** | Gate, Download, Sheets | Depend on Settings; shared capabilities |
-| **Features** | Images, Slides | Domain-specific operations |
-| **Orchestration** | Services | Coordinates module composition |
+## Concurrency: GateLocker
 
-**SlideGenerator.Settings**
-- YAML-based configuration system
-- Provides `ISettingProvider` for all modules
-- DI integration via `SettingsRegistration.AddSettings()`
+`GateLocker` (in `SlideGenerator.Coordinator`) provides per-gate semaphores. Limits are read from settings at runtime:
 
-**SlideGenerator.Cloud**
-- Multi-cloud resolver supporting Google Drive, OneDrive, SharePoint
-- Cloud resolver implementations for URI resolution
-- DI setup via `Registration.AddCloudServices()`
+```csharp
+await gateLocker.AcquireAsync(GateType.DownloadImage, ct);
+try { /* ... */ }
+finally { gateLocker.Release(GateType.DownloadImage); }
+```
 
-### Core Services (Depend on Settings/Foundation)
+Gate types: `DownloadImage`, `EditImage`, `EditPresentation`, `ReadWorkbook`, `ReadPresentation`.
 
-**SlideGenerator.Gate**
-- Concurrency control with configurable gates per resource type
-- Semaphore-based throttling: `GateLocker.LockAsync(gateType)`
-- Used by Download, Sheets, and Workflows for resource management
+## Image Processing
 
-**SlideGenerator.Download**
-- HTTP-based resource downloading with throttling
-- Progress reporting and error resilience
-- Integrates with Gate for concurrency limits
-- DI setup via `Registration.AddDownloadServices()`
+Both `SlideGenerator.Images` and `SlideGenerator.Slides` use **MagickImage** as primary type. Convert to/from `byte[]` only at system boundaries (file I/O, Syncfusion API).
 
-**SlideGenerator.Sheets**
-- Excel workbook read-only scanning via Syncfusion
-- Worksheet enumeration and column extraction
-- Integrates with Gate for throttling
-- DI setup via `Registration.AddSheetServices()`
-
-### Feature Modules
-
-**SlideGenerator.Images**
-- Image processing with MagickImage as primary format
-- ROI (Region of Interest) calculation with multiple algorithms
-- Face detection via OpenCV YuNet model
-- Key Services:
-  - `RoiResolver` - intelligent crop region calculation
-  - `Utilities.Decode()`, `Crop()`, `Resize()` - image operations
-  - `ToMat()` / `ToMagickImage()` - format conversion extensions
-- DI setup via `Registration.AddImageServices()`
-
-**SlideGenerator.Slides**
-- PowerPoint presentation operations via Syncfusion
-- Shape preview extraction using MagickImage
-- Text placeholder scanning and replacement (Stubble template engine)
-- Image composition with multiple input formats
-- Key Services:
-  - `ImageComposer` - replace shape images
-  - `TextComposer` - render mustache templates
-  - `Utilities` - shape bounds and preview extraction
-
-### Orchestration Layer
-
-**SlideGenerator.Services**
-- WorkflowCore-based process orchestration
-- Supports complex workflows: scanning, generating, error handling
-- Data-driven persistence via strongly-typed data classes
-- Activity-based step execution with DI support
-- Integrates all modules for end-to-end automation
-
-## Image Processing (May 2026)
-
-### MagickImage-First Architecture
-Both **SlideGenerator.Images** and **SlideGenerator.Slides** now use **ImageMagick's MagickImage** as the primary image type:
-- Better format compatibility and conversion
-- Consistent image processing pipeline
-- Improved memory efficiency
-- Cleaner API surface
-
-**Exception**: Face detection in `RoiResolver` uses **OpenCV Mat** internally (converted on-demand from MagickImage).
-
-### Updated APIs
-
-#### SlideGenerator.Images
-- `Utilities.Decode(byte[])` → returns `MagickImage`
-- `Utilities.Crop(MagickImage, Rectangle)` → returns cropped `MagickImage`
-- `Utilities.Resize(MagickImage, Size)` → returns resized `MagickImage`
-- `RoiResolver.CalculateRoiAsync()` → accepts `MagickImage` parameter
-
-#### SlideGenerator.Slides
-- `Utilities.GetPreviewImage(IShape, byte[])` → returns `MagickImage`
-- `Utilities.GetPreviewImage(IShape, MagickImage)` → returns cloned cropped `MagickImage`
-- `ImageComposer.Replace()` → supports `MagickImage`, `Stream`, and `byte[]` inputs
-
-## XML Documentation Standard
-
-All public classes, methods, and properties have XML documentation comments:
-- **`<summary>`**: Brief description (one sentence when possible)
-- **`<remarks>`**: Implementation details, algorithms, performance notes
-- **`<param>`**: Parameter descriptions with type expectations
-- **`<returns>`**: Return value description
-- **`<exception>`**: Thrown exceptions with conditions
+- `Utilities.Decode(byte[])` → `MagickImage`
+- `Utilities.Crop(MagickImage, Rectangle)` → `MagickImage`
+- `Utilities.Resize(MagickImage, Size)` → `MagickImage`
+- Face detection: `MagickImage.ToMat()` converts internally; `RoiResolver.CalculateRoiAsync()` accepts `MagickImage`
+- Always use `using` for MagickImage disposal.
 
 ## Workflow System (WorkflowCore)
 
-The system uses **WorkflowCore** directly for orchestration.
+`GeneratingWorkflow` orchestrates the full slide generation pipeline in 3 phases:
 
-**Phase-Sequential, Item-Parallel Architecture**:
-- Workflows are divided into 3 logical phases (Setup, Resource Prep, Assembly) separated by `ExecutionResult.Next()` barriers.
-- **Strict Iteration (MANDATORY)**: Iteration over local data (Workbooks, Presentations, File lists) MUST use WorkflowCore's native `.ForEach()` iterator.
-  - **PROHIBITED**: Using C# `foreach`, `Parallel.ForEach`, or `Task.WhenAll` inside an Activity for processing multiple items.
-- **Activity Chaining**: Within a `.ForEach` block, chain activities (`.StartWith<X>().Then<Y>()`) so items transition immediately between steps without waiting for the entire collection.
+| Phase | Steps |
+|---|---|
+| A – Validation & Setup | `ValidateRequest` → `CreateTemplate` |
+| B – Resource Prep | `ExtractData` → `DownloadImage` → `EditImage` |
+| C – Assembly & Cleanup | `ReplaceSlideData` → `CloseAllHandles` |
 
-**Data Persistence**:
-- Workflows use strongly-typed data classes (e.g., `ScanningData`, `BookTask`).
-- State is persisted via these classes; use `ConcurrentDictionary` for parallel safety.
-- Normalized absolute file paths are preferred as dictionary keys.
+Phase boundaries are enforced with `ExecutionResult.Next()` barriers — all items in a phase must complete before the next phase begins.
 
-**Slide Generation Mapping Rules**:
-- **Text Instruction**: Defines mapping between mustache variables and sheet columns. Variables not in an instruction are considered non-existent in the replacement context.
-- **Image Instruction**: Maps sheet columns to slide shapes, including `EditOptions` (ROI, Resizing).
+**Strict iteration rule**: Use WorkflowCore `.ForEach()` for all collection iteration. **Never** use C# `foreach`, `Parallel.ForEach`, or `Task.WhenAll` inside an Activity.
 
-**Error Resilience**:
-- All data classes include an `Errors` dictionary storing full `Exception` objects.
-- Activities use `try-catch` to capture exceptions, allowing partial success in parallel loops.
+**Data model**: `GeneratingTask` is the workflow's state class. Intermediate tasks (`SheetTask`, `ImageTask`, `SlideTask`) are populated per phase and fed into `.ForEach()` loops.
+
+**Input mapping**: `Recipe.Nodes` defines the graph — each node maps a set of `Sheets` (Excel) to a presentation template. `TextInstruction` and `ImageInstruction` on each node drive placeholder replacement and image composition.
+
+**Error resilience**: Each data class has a `ConcurrentDictionary<string, Exception> Errors`. Activities catch exceptions and record them, allowing partial success.
+
+`ScanningService` (synchronous) provides workbook and presentation metadata (`WorkbookSummary`, `PresentationSummary`) used to validate instructions before running generation.
 
 ## Development Patterns
 
-### Activity (StepBody)
-- Inherit from `StepBody` or `StepBodyAsync`.
-- **Single Task Focus**: Activities should ideally focus on a single piece of data (mapped from `context.Item`).
-- **Throttling**: Inject and use `GateLocker` internally within `RunAsync` to throttle shared resource access (I/O, Workbook reads, Presentation edits).
-- Activities are **Singletons** or **Transients** — inject services via constructor.
+### Activity
+
+- Inherit `StepBody` or `StepBodyAsync`.
+- Process a single item (from `context.Item`); receive it via `.Input()` mapping in the workflow `Build()`.
+- Inject `GateLocker` via constructor; call `AcquireAsync`/`Release` around shared resource access.
+- Register as Singleton or Transient in the module's `Registration.cs`.
 
 ### Workflow
-- Inject `IServiceProvider` or specific services via constructor.
-- Workflows MUST have a parameterless constructor for registration.
-- Register all Workflows and Activities in the module's `Registration.cs`.
 
-### Locking
-- `GateLocker`: semaphore-based concurrency limit per `GateType`.
+- Implement `IWorkflow<TData>`.
+- Must have a **parameterless constructor** for WorkflowCore registration.
+- Inject `IServiceProvider` or specific services via constructor.
+
+### Coding Style
+
+- `record` for DTOs/value objects; `sealed class` for services.
+- File-scoped namespaces.
+- `ConfigureAwait(false)` in all library/module async code.
+- Uniform folder structure per module: `Abstractions/`, `Entities/`, `Models/`, `Rules/`, `Services/`, `Activities/`, `Workflows/` (as applicable).
 
 ## Invariants Checklist
+
 - [ ] Each module has a `Registration.cs` with DI setup
 - [ ] Module dependencies flow downward only
 - [ ] Activities inherit from `StepBody` or `StepBodyAsync`
-- [ ] Workflows implement `IWorkflow<TData>`
+- [ ] Workflows implement `IWorkflow<TData>` with a parameterless constructor
 - [ ] Async code uses `ConfigureAwait(false)`
-- [ ] Use `record` for data, `sealed` for logic by default
-- [ ] Services are injected via constructor in Activities
-- [ ] Image handling uses MagickImage
+- [ ] `record` for data, `sealed` for logic by default
+- [ ] Services injected via constructor in Activities
+- [ ] Image handling uses MagickImage; byte arrays only at boundaries
 - [ ] All public APIs have XML documentation comments
