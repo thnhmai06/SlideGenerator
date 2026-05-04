@@ -1,5 +1,6 @@
 using System.Drawing;
 using ImageMagick;
+using Serilog;
 using SlideGenerator.Coordinator.Models;
 using SlideGenerator.Coordinator.Services;
 using SlideGenerator.Images;
@@ -16,7 +17,8 @@ namespace SlideGenerator.Services.Generating.Steps;
 /// </summary>
 public sealed class EditImage(
     RoiResolver roiResolver,
-    GateLocker gateLocker) : StepBodyAsync
+    GateLocker gateLocker,
+    ILogger logger) : StepBodyAsync
 {
     /// <summary>
     ///     The editing task to process.
@@ -31,11 +33,20 @@ public sealed class EditImage(
         var finalEditPath = Task.EditPath + ".png";
 
         // Idempotency: skip if the file already exists
-        if (File.Exists(finalEditPath)) return ExecutionResult.Next();
+        if (File.Exists(finalEditPath))
+        {
+            logger.ForContext("TaskId", context.Workflow.Id)
+                .Debug("Edited image for row {RowIndex} already exists at '{Path}', skipping edit", Task.RowIndex, finalEditPath);
+            return ExecutionResult.Next();
+        }
         
         // Skip if SourceUri is null and no FallbackImagePath is provided
         if (Task.SourceUri == null && string.IsNullOrWhiteSpace(Task.FallbackImagePath))
+        {
+            logger.ForContext("TaskId", context.Workflow.Id)
+                .Debug("No source URI or fallback image for row {RowIndex}, shape {ShapeName}. Skipping.", Task.RowIndex, Task.ShapeName);
             return ExecutionResult.Next();
+        }
 
         // Discover the source file
         string? sourceFile = null;
@@ -53,14 +64,15 @@ public sealed class EditImage(
             if (!string.IsNullOrWhiteSpace(Task.FallbackImagePath) && File.Exists(Task.FallbackImagePath))
             {
                 sourceFile = Task.FallbackImagePath;
+                logger.ForContext("TaskId", context.Workflow.Id)
+                    .Debug("Primary source missing for row {RowIndex}, using fallback: '{Fallback}'", Task.RowIndex, sourceFile);
             }
             else
             {
                 // Source is missing and no fallback available
                 if (Task.SourceUri != null)
                 {
-                    data.Errors.TryAdd($"Edit_MissingSource_{downloadPrefix}",
-                        new FileNotFoundException("Source image and fallback not found for editing.", Task.DownloadPath));
+                    logger.ForContext("TaskId", context.Workflow.Id).ForContext("Path", downloadPrefix).Error(new FileNotFoundException("Source image and fallback not found for editing.", Task.DownloadPath), "Missing source");
                 }
                 return ExecutionResult.Next();
             }
@@ -73,25 +85,39 @@ public sealed class EditImage(
         await gateLocker.AcquireAsync(GateType.EditImage).ConfigureAwait(false);
         try
         {
+            logger.ForContext("TaskId", context.Workflow.Id)
+                .Debug("Editing image '{Source}' for shape '{ShapeName}' (Row {RowIndex})", sourceFile, Task.ShapeName, Task.RowIndex);
+
             using var image = new MagickImage(sourceFile);
             var targetSize = new Size((int)Math.Round(Task.Width), (int)Math.Round(Task.Height));
 
             // 1. Calculate ROI based on the selected algorithm
+            logger.ForContext("TaskId", context.Workflow.Id)
+                .Debug("Calculating ROI for row {RowIndex} using {Algorithm}", Task.RowIndex, Task.EditOptions.RoiOption);
+            
             var roi = await roiResolver.CalculateRoiAsync(
                 image,
                 targetSize,
                 Task.EditOptions.RoiOption).ConfigureAwait(false);
 
             // 2. Crop the image to the ROI
+            logger.ForContext("TaskId", context.Workflow.Id)
+                .Debug("Applying crop {ROI} to image for row {RowIndex}", roi, Task.RowIndex);
             image.Crop(new MagickGeometry(roi.X, roi.Y, (uint)roi.Width, (uint)roi.Height));
 
             // 3. Resize with a maintained aspect ratio to fit the target shape dimensions
             var currentSize = new Size((int)image.Width, (int)image.Height);
             var maxAspectSize = currentSize.GetMaxAspectSize(targetSize);
+            
+            logger.ForContext("TaskId", context.Workflow.Id)
+                .Debug("Resizing image for row {RowIndex} to {Size}", maxAspectSize, Task.RowIndex);
             image.Resize(new MagickGeometry((uint)maxAspectSize.Width, (uint)maxAspectSize.Height));
 
             // 4. Save the edited image as PNG
             await image.WriteAsync(finalEditPath).ConfigureAwait(false);
+
+            logger.ForContext("TaskId", context.Workflow.Id)
+                .Information("Successfully edited image for row {RowIndex}, shape {ShapeName}", Task.RowIndex, Task.ShapeName);
 
             // Optional: Delete raw download image to save space (only if it was the primary source)
             if (data.Request.DeleteDownloadImage && sourceFile != Task.FallbackImagePath)
@@ -101,7 +127,7 @@ public sealed class EditImage(
         }
         catch (Exception ex)
         {
-            data.Errors.TryAdd($"Edit_{Path.GetFileName(finalEditPath)}", ex);
+            logger.ForContext("TaskId", context.Workflow.Id).ForContext("Path", Path.GetFileName(finalEditPath)).Error(ex, "Edit image failed");
         }
         finally
         {

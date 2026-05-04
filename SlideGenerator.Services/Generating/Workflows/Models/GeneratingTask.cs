@@ -32,11 +32,6 @@ public sealed class GeneratingTask : IDisposable
     /// </summary>
     public ConcurrentBag<ImageTask> ImageTasks { get; } = [];
 
-    /// <summary>
-    ///     The collection of errors encountered during the workflow.
-    /// </summary>
-    public ConcurrentDictionary<string, Exception> Errors { get; } = new();
-
     // Long-lived handles
     public ConcurrentDictionary<string, IWorkbook> WorkbookHandles { get; } = new(); // read
     public ConcurrentDictionary<string, SfPresentation> TemplateHandles { get; } = new(); // read

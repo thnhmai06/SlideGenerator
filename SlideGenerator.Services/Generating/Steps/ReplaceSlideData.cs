@@ -1,3 +1,4 @@
+using Serilog;
 using SlideGenerator.Coordinator.Models;
 using SlideGenerator.Coordinator.Services;
 using SlideGenerator.Services.Generating.Workflows.Models;
@@ -12,7 +13,7 @@ namespace SlideGenerator.Services.Generating.Steps;
 ///     Fills a single slide with pre-calculated text and image replacements.
 ///     Avoids redundant file I/O by executing all replacements for a slide in one pass.
 /// </summary>
-public sealed class ReplaceSlideData(GateLocker gateLocker) : StepBodyAsync
+public sealed class ReplaceSlideData(GateLocker gateLocker, ILogger logger) : StepBodyAsync
 {
     public SlideTask Task { get; set; } = null!;
 
@@ -21,7 +22,14 @@ public sealed class ReplaceSlideData(GateLocker gateLocker) : StepBodyAsync
         var data = (GeneratingTask)context.Workflow.Data;
 
         if (Task.TextReplacements.Count == 0 && Task.ImageReplacements.Count == 0)
+        {
+            logger.ForContext("TaskId", context.Workflow.Id)
+                .Debug("No replacements found for row {RowIndex} in sheet {SheetName}. Skipping.", Task.RowIndex, Task.SheetTask.Identifier.SheetName);
             return ExecutionResult.Next();
+        }
+
+        logger.ForContext("TaskId", context.Workflow.Id)
+            .Information("Starting data replacement for row {RowIndex} in sheet {SheetName}", Task.RowIndex, Task.SheetTask.Identifier.SheetName);
 
         await gateLocker.AcquireAsync(GateType.EditPresentation).ConfigureAwait(false);
         try
@@ -35,16 +43,23 @@ public sealed class ReplaceSlideData(GateLocker gateLocker) : StepBodyAsync
                     if (shapeBase is not IShape shape || string.IsNullOrEmpty(shape.ShapeName))
                         continue;
 
-                    ApplyTextReplacements(shape);
-                    await ApplyImageReplacementsAsync(shape).ConfigureAwait(false);
+                    logger.ForContext("TaskId", context.Workflow.Id)
+                        .Debug("Processing shape '{ShapeName}' for row {RowIndex}", shape.ShapeName, Task.RowIndex);
+
+                    ApplyTextReplacements(context, shape);
+                    await ApplyImageReplacementsAsync(context, shape).ConfigureAwait(false);
                 }
 
                 wrapper.Save();
+                
+                logger.ForContext("TaskId", context.Workflow.Id)
+                    .Information("Successfully replaced data for row {RowIndex} in sheet {SheetName}", Task.RowIndex, Task.SheetTask.Identifier.SheetName);
             }
         }
         catch (Exception ex)
         {
-            data.Errors.TryAdd($"FillSlideData_{Task.SheetTask.Identifier.SheetName}_{Task.RowIndex}", ex);
+            var path = $"{Task.SheetTask.Identifier.SheetName}_{Task.RowIndex}";
+            logger.ForContext("TaskId", context.Workflow.Id).ForContext("Path", path).Error(ex, "FillSlideData failed");
         }
         finally
         {
@@ -54,13 +69,17 @@ public sealed class ReplaceSlideData(GateLocker gateLocker) : StepBodyAsync
         return ExecutionResult.Next();
     }
 
-    private void ApplyTextReplacements(IShape shape)
+    private void ApplyTextReplacements(IStepExecutionContext context, IShape shape)
     {
         if (Task.TextReplacements.Count > 0)
+        {
+            logger.ForContext("TaskId", context.Workflow.Id)
+                .Debug("Applying text replacements to shape '{ShapeName}' (Count: {Count})", shape.ShapeName, Task.TextReplacements.Count);
             TextComposer.Replace(shape, Task.TextReplacements);
+        }
     }
 
-    private async Task ApplyImageReplacementsAsync(IShape shape)
+    private async Task ApplyImageReplacementsAsync(IStepExecutionContext context, IShape shape)
     {
         var matchingImageTask = Task.ImageReplacements.Values.FirstOrDefault(t => 
             t.ShapeName.Equals(shape.ShapeName, StringComparison.OrdinalIgnoreCase));
@@ -70,8 +89,16 @@ public sealed class ReplaceSlideData(GateLocker gateLocker) : StepBodyAsync
             var finalEditPath = matchingImageTask.EditPath + ".png";
             if (File.Exists(finalEditPath))
             {
+                logger.ForContext("TaskId", context.Workflow.Id)
+                    .Information("Replacing image for shape '{ShapeName}' with '{Path}'", shape.ShapeName, finalEditPath);
+                
                 await using var imgStream = new FileStream(finalEditPath, FileMode.Open, FileAccess.Read);
                 ImageComposer.Replace(shape, imgStream);
+            }
+            else
+            {
+                logger.ForContext("TaskId", context.Workflow.Id)
+                    .Warning("Edited image not found at '{Path}' for shape '{ShapeName}'", finalEditPath, shape.ShapeName);
             }
         }
     }

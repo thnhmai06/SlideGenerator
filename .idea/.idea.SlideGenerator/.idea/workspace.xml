@@ -9,42 +9,18 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3a1f1c77-0578-40bf-9d5d-a0e8452562c2" name="Changes" comment="Here is a concise commit message summarizing the provided diffs:&#10;&#10;```text&#10;refactor(generating): rename GeneratingData to BookTask and ValidatedWorksheet to SheetTask&#10;&#10;- Renamed `GeneratingData` to `BookTask` and updated DI registration and the workflow builder to use `IWorkflow&lt;BookTask&gt;`.&#10;- Renamed `ValidatedWorksheet` to `SheetTask` and simplified its `OutputPresentationPath` property to `OutputPath`.&#10;- Updated all generating workflow steps (e.g., `ValidateRequest`, `CreateTemplate`, `ExtractRowData`, `ReplaceShapeData`) to consume the new `BookTask` and `SheetTask` types.&#10;- Changed the return type of `TextComposer.Scan` from `IEnumerable&lt;string&gt;` to `HashSet&lt;string&gt;`, streamlining tag collection in `ReplaceShapeData` by removing redundant `.ToHashSet()` calls.&#10;```">
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Coordinator/SlideGenerator.Coordinator.csproj" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Coordinator/SlideGenerator.Coordinator.csproj.DotSettings" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Workflows/Models/GeneratingTask.cs" afterDir="false" />
+    <list default="true" id="3a1f1c77-0578-40bf-9d5d-a0e8452562c2" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.SlideGenerator/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.SlideGenerator/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CLAUDE.md" beforeDir="false" afterPath="$PROJECT_DIR$/CLAUDE.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/INSTRUCTIONS.MD" beforeDir="false" afterPath="$PROJECT_DIR$/INSTRUCTIONS.MD" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Download/SlideGenerator.Download.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Download/SlideGenerator.Download.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Gate/Models/GateType.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Coordinator/Models/GateType.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Gate/Registration.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Coordinator/Registration.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Gate/Services/GateLocker.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Coordinator/Services/GateLocker.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Gate/SlideGenerator.Gate.csproj" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Gate/SlideGenerator.Gate.csproj.DotSettings" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Images/SlideGenerator.Images.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Images/SlideGenerator.Images.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Registry/Entities/Lease.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Registry/Interfaces/FileRegistry.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Registry/SlideGenerator.Registry.csproj" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Registration.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Registration.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/CreateTemplate.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/CreateTemplate.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/DownloadImage.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/DownloadImage.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/EditImage.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/EditImage.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/ExtractRowData.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/ExtractShapeBounds.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/FinalizePresentation.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/PrepareIterationTasks.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/ReplaceShapeData.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/ExtractData.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/ExtractData.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/ReplaceSlideData.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/ReplaceSlideData.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/ValidateRequest.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/ValidateRequest.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Workflows/GeneratingData.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Workflows/GeneratingWorkflow.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Workflows/GeneratingWorkflow.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Workflows/Models/GeneratingTask.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Workflows/Models/GeneratingTask.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/SlideGenerator.Services.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/SlideGenerator.Services.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Sheets/SlideGenerator.Sheets.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Sheets/SlideGenerator.Sheets.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Slides/Entities/SfPresentation.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Slides/Entities/SfPresentation.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Slides/Services/TextComposer.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Slides/Services/TextComposer.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Slides/SlideGenerator.Slides.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Slides/SlideGenerator.Slides.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.sln.DotSettings.user" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.sln.DotSettings.user" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/SlideGenerator.slnx" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.slnx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/conductor/plan.md" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -326,7 +302,7 @@
       <workItem from="1777732612552" duration="9858000" />
       <workItem from="1777780379713" duration="9613000" />
       <workItem from="1777805580498" duration="15986000" />
-      <workItem from="1777863175670" duration="1066000" />
+      <workItem from="1777863175670" duration="11976000" />
     </task>
     <task id="LOCAL-00001" summary="feat: update LoadPresentation workflow&#10;&#10;- Updated LoadPresentation class to enhance documentation and streamline presentation preparation workflow (improves clarity and maintainability).">
       <option name="closed" value="true" />
@@ -696,7 +672,23 @@
       <option name="project" value="LOCAL" />
       <updated>1777810435284</updated>
     </task>
-    <option name="localTasksCounter" value="47" />
+    <task id="LOCAL-00047" summary="refactor(generating): restructure workflow tasks&#10;&#10;- Updated namespaces and project references from Gate to Coordinator for consistency.&#10;- Refactored workflow tasks to utilize the new GeneratingTask model, enhancing clarity and maintainability.&#10;- Consolidated data extraction and task creation processes for improved efficiency.">
+      <option name="closed" value="true" />
+      <created>1777864274210</created>
+      <option name="number" value="00047" />
+      <option name="presentableId" value="LOCAL-00047" />
+      <option name="project" value="LOCAL" />
+      <updated>1777864274210</updated>
+    </task>
+    <task id="LOCAL-00048" summary="refactor(generating): restructure workflow tasks&#10;&#10;- Updated namespaces and project references from Gate to Coordinator for consistency.&#10;- Refactored workflow tasks to utilize the new GeneratingTask model, enhancing clarity and maintainability.&#10;- Consolidated data extraction and task creation processes for improved efficiency.">
+      <option name="closed" value="true" />
+      <created>1777864493052</created>
+      <option name="number" value="00048" />
+      <option name="presentableId" value="LOCAL-00048" />
+      <option name="project" value="LOCAL" />
+      <updated>1777864493052</updated>
+    </task>
+    <option name="localTasksCounter" value="49" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -781,7 +773,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
-    <MESSAGE value="feat(backend)!: add ScanningService, refactoring Slide entities&#10;&#10;- Updated namespaces for clarity and consistency (e.g., SlideGenerator.Domain.Slide.Models to SlideGenerator.Domain.Slide.Models.Previews).&#10;- Modified method signatures to remove default parameters for better readability (e.g., GetOrOpen method).&#10;- Introduced new interfaces and classes for better abstraction (e.g., IImageReplacer, ITextReplacer)." />
     <MESSAGE value="chore(backend): update packages" />
     <MESSAGE value="refactor: refactoring Images module&#10;&#10;- Renamed FaceDetectorModelKey to FaceDetectorModel for clarity.&#10;- Updated RoiType enum values for better understanding (RuleOfThirds to Center and vice versa).&#10;- Introduced new classes for CenterOption and RuleOfThirdsOption to encapsulate ROI strategies.&#10;- Refactored FaceDetector and related classes to improve maintainability and readability." />
     <MESSAGE value="[skip ci] chore(backend): cleanup and reformat" />
@@ -806,7 +797,8 @@
     <MESSAGE value="refactor(generating): restructure Recipe model to use node-based mapping and exact column identifiers&#10;&#10;- Replaced the flat `Graph` mapping in `Recipe` with a collection of `MapNode` objects, encapsulating target sheets, a target slide, and specific text and image instructions.&#10;- Introduced `ColumnIdentifier` (inheriting from `SheetIdentifier`) to explicitly tie columns to their exact workbook and sheet origins.&#10;- Updated `TextInstruction` and `ImageInstruction` to use collections of `ColumnIdentifier` instead of raw string column names.&#10;- Introduced `ValidationItem` to encapsulate sheet and map node data during the `GeneratingWorkflow` validation phase.&#10;- Updated `ExtractRowData` and `ReplaceShapeData` workflow steps to retrieve instructions from the associated `MapNode` and strictly match column identifiers against the current sheet context.&#10;- Modified `ValidatedWorksheet` to store its parent `MapNode`, ensuring context-aware instruction lookups in downstream pipeline tasks.&#10;- Adopted modern C# collection expressions (`[]`) for concurrent bags and hash sets in `GeneratingData` and `ReplaceShapeData`." />
     <MESSAGE value="feat(generating): add fallback image support and simplify ROI resolution&#10;&#10;- Introduced `FallbackImagePath` to `ImageInstruction` and `GeneratingData`, ensuring the path is automatically resolved to an absolute path when provided.&#10;- Updated `ExtractRowData` to pass the `FallbackImagePath` into the constructed `ImageTask`.&#10;- Modified the `EditImage` workflow step to utilize the fallback image when the primary source file is missing or no `SourceUri` is provided.&#10;- Updated cleanup logic in `EditImage` to prevent deleting the source image if the fallback image was used.&#10;- Refactored `RoiResolver.CalculateRoiAsync` to determine the algorithm type directly from the `RoiOption.Type` property, removing the redundant `RoiType` parameter." />
     <MESSAGE value="refactor(identifiers): standardize naming and adopt strongly typed models&#10;&#10;- Renamed path properties across identifier records for consistency (e.g., `BookFilePath` to `BookPath`, `PresentationFilePath` to `PresentationPath`).&#10;- Refactored `ShapeIdentifier` to use a `string ShapeName` instead of a hashed `uint ShapeId`.&#10;- Changed `SlideIndex` from `uint` to `int` in `SlideIdentifier`.&#10;- Updated scanning request and summary models (`BookSummaryRequest`, `PresentationSummaryRequest`, `WorksheetSummary`, `SlideSummary`, `ShapeSummary`) to use strongly typed identifiers instead of flat primitive properties.&#10;- Modified `ExtractRowData`, `ExtractShapeBounds`, and `ReplaceShapeData` workflow steps to utilize explicit string `ShapeName` matching rather than hashed integer IDs.&#10;- Updated `GeneratingData` to use `ShapeIdentifier` as the key for the `ShapeBounds` dictionary and `ShapeName` in `ShapeTask`.&#10;- Renamed `PresentationExtension` to `OutputExtension` in `GeneratingRequest`.&#10;- Updated `ScanningService` to natively handle the new identifier-based request and summary models." />
-    <option name="LAST_COMMIT_MESSAGE" value="refactor(identifiers): standardize naming and adopt strongly typed models&#10;&#10;- Renamed path properties across identifier records for consistency (e.g., `BookFilePath` to `BookPath`, `PresentationFilePath` to `PresentationPath`).&#10;- Refactored `ShapeIdentifier` to use a `string ShapeName` instead of a hashed `uint ShapeId`.&#10;- Changed `SlideIndex` from `uint` to `int` in `SlideIdentifier`.&#10;- Updated scanning request and summary models (`BookSummaryRequest`, `PresentationSummaryRequest`, `WorksheetSummary`, `SlideSummary`, `ShapeSummary`) to use strongly typed identifiers instead of flat primitive properties.&#10;- Modified `ExtractRowData`, `ExtractShapeBounds`, and `ReplaceShapeData` workflow steps to utilize explicit string `ShapeName` matching rather than hashed integer IDs.&#10;- Updated `GeneratingData` to use `ShapeIdentifier` as the key for the `ShapeBounds` dictionary and `ShapeName` in `ShapeTask`.&#10;- Renamed `PresentationExtension` to `OutputExtension` in `GeneratingRequest`.&#10;- Updated `ScanningService` to natively handle the new identifier-based request and summary models." />
+    <MESSAGE value="refactor(generating): restructure workflow tasks&#10;&#10;- Updated namespaces and project references from Gate to Coordinator for consistency.&#10;- Refactored workflow tasks to utilize the new GeneratingTask model, enhancing clarity and maintainability.&#10;- Consolidated data extraction and task creation processes for improved efficiency." />
+    <option name="LAST_COMMIT_MESSAGE" value="refactor(generating): restructure workflow tasks&#10;&#10;- Updated namespaces and project references from Gate to Coordinator for consistency.&#10;- Refactored workflow tasks to utilize the new GeneratingTask model, enhancing clarity and maintainability.&#10;- Consolidated data extraction and task creation processes for improved efficiency." />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

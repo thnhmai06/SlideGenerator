@@ -16,5 +16,6 @@
         <ProjectReference Include="..\SlideGenerator.Settings\SlideGenerator.Settings.csproj" />
         <ProjectReference Include="..\SlideGenerator.Sheets\SlideGenerator.Sheets.csproj" />
         <ProjectReference Include="..\SlideGenerator.Slides\SlideGenerator.Slides.csproj" />
+        <ProjectReference Include="..\SlideGenerator.Logging\SlideGenerator.Logging.csproj" />
     </ItemGroup>
 </Project>

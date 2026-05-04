@@ -1,3 +1,4 @@
+using Serilog;
 using SlideGenerator.Coordinator.Models;
 using SlideGenerator.Coordinator.Services;
 using SlideGenerator.Services.Generating.Models;
@@ -14,7 +15,7 @@ public sealed record ValidationItem(SheetIdentifier Sheet, MapNode Node);
 /// <summary>
 ///     Validates a single sheet and slide mapping, ensuring both exist and are accessible.
 /// </summary>
-public sealed class ValidateRequest(ExcelEngine excelEngine, GateLocker gateLocker) : StepBodyAsync
+public sealed class ValidateRequest(ExcelEngine excelEngine, GateLocker gateLocker, ILogger logger) : StepBodyAsync
 {
     /// <summary>
     ///     The sheet and its associated map node to validate.
@@ -29,20 +30,27 @@ public sealed class ValidateRequest(ExcelEngine excelEngine, GateLocker gateLock
         var node = Item.Node;
         var slide = node.Slide;
 
+        logger.ForContext("TaskId", context.Workflow.Id)
+            .Information("Validating request for sheet {SheetName} and slide index {SlideIndex}", sheet.SheetName, slide.SlideIndex);
+
         try
         {
-            await ValidateWorksheetAsync(data, sheet).ConfigureAwait(false);
-            await ValidatePresentationAndMapOutputAsync(data, sheet, node, slide).ConfigureAwait(false);
+            await ValidateWorksheetAsync(context, data, sheet).ConfigureAwait(false);
+            await ValidatePresentationAndMapOutputAsync(context, data, sheet, node, slide).ConfigureAwait(false);
+            
+            logger.ForContext("TaskId", context.Workflow.Id)
+                .Information("Validation successful for sheet {SheetName}", sheet.SheetName);
         }
         catch (Exception ex)
         {
-            data.Errors.TryAdd($"Validation_{sheet.BookPath}_{sheet.SheetName}", ex);
+            var path = $"{sheet.BookPath}_{sheet.SheetName}";
+            logger.ForContext("TaskId", context.Workflow.Id).ForContext("Path", path).Error(ex, "Validation failed");
         }
 
         return ExecutionResult.Next();
     }
 
-    private async Task ValidateWorksheetAsync(GeneratingTask data, SheetIdentifier sheet)
+    private async Task ValidateWorksheetAsync(IStepExecutionContext context, GeneratingTask data, SheetIdentifier sheet)
     {
         await gateLocker.AcquireAsync(GateType.ReadWorkbook).ConfigureAwait(false);
         try
@@ -53,6 +61,9 @@ public sealed class ValidateRequest(ExcelEngine excelEngine, GateLocker gateLock
             if (worksheet == null)
                 throw new ArgumentException(
                     $"Sheet '{sheet.SheetName}' not found in workbook '{Path.GetFileName(sheet.BookPath)}'.");
+            
+            logger.ForContext("TaskId", context.Workflow.Id)
+                .Debug("Verified workbook '{BookName}' contains sheet '{SheetName}'", Path.GetFileName(sheet.BookPath), sheet.SheetName);
         }
         finally
         {
@@ -60,7 +71,7 @@ public sealed class ValidateRequest(ExcelEngine excelEngine, GateLocker gateLock
         }
     }
 
-    private async Task ValidatePresentationAndMapOutputAsync(GeneratingTask data, SheetIdentifier sheet, MapNode node,
+    private async Task ValidatePresentationAndMapOutputAsync(IStepExecutionContext context, GeneratingTask data, SheetIdentifier sheet, MapNode node,
         SlideIdentifier slide)
     {
         await gateLocker.AcquireAsync(GateType.ReadPresentation).ConfigureAwait(false);
@@ -73,6 +84,9 @@ public sealed class ValidateRequest(ExcelEngine excelEngine, GateLocker gateLock
                 throw new ArgumentException(
                     $"Slide index {slide.SlideIndex} is out of range for '{Path.GetFileName(slide.PresentationPath)}' (Count: {presentation.Slides.Count}).");
 
+            logger.ForContext("TaskId", context.Workflow.Id)
+                .Debug("Verified presentation '{PresentationName}' contains slide index {Index}", Path.GetFileName(slide.PresentationPath), slide.SlideIndex);
+
             // Successful validation: Prepare output mapping
             var bookName = Path.GetFileNameWithoutExtension(sheet.BookPath);
             var outputFileName =
@@ -80,6 +94,9 @@ public sealed class ValidateRequest(ExcelEngine excelEngine, GateLocker gateLock
             var outputPath = Path.Combine(data.Request.SaveFolder, bookName, outputFileName);
 
             data.ValidWorksheets.TryAdd(sheet, new SheetTask(sheet, slide, node, outputPath));
+            
+            logger.ForContext("TaskId", context.Workflow.Id)
+                .Debug("Output path mapped to: '{Path}'", outputPath);
         }
         finally
         {

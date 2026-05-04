@@ -1,3 +1,4 @@
+using Serilog;
 using SlideGenerator.Cloud.Services;
 using SlideGenerator.Coordinator.Models;
 using SlideGenerator.Coordinator.Services;
@@ -16,7 +17,8 @@ public sealed class DownloadImage(
     DownloadService downloadService,
     MultiCloudResolver multiCloudResolver,
     GateLocker gateLocker,
-    HttpClient httpClient) : StepBodyAsync
+    HttpClient httpClient,
+    ILogger logger) : StepBodyAsync
 {
     /// <summary>
     ///     The download task to process.
@@ -31,7 +33,11 @@ public sealed class DownloadImage(
 
         // Idempotency: skip if file already exists
         if (File.Exists(Task.DownloadPath))
+        {
+            logger.ForContext("TaskId", context.Workflow.Id)
+                .Debug("Image for row {RowIndex} already exists at '{Path}', skipping download", Task.RowIndex, Task.DownloadPath);
             return ExecutionResult.Next();
+        }
 
         // Ensure directory exists
         var dir = Path.GetDirectoryName(Task.DownloadPath);
@@ -42,18 +48,29 @@ public sealed class DownloadImage(
         {
             if (Task.SourceUri == null)
             {
-                data.Errors.TryAdd($"Download_Row{Task.RowIndex}_{Task.ColumnName}",
-                    new Exception($"[Warning] URI is not valid for {Task.ColumnName}:{Task.RowIndex}. Skipping."));
+                var path = $"Row{Task.RowIndex}_{Task.ColumnName}";
+                logger.ForContext("TaskId", context.Workflow.Id).ForContext("Path", path).Warning("URI is not valid. Skipping.");
                 return ExecutionResult.Next();
             }
 
+            logger.ForContext("TaskId", context.Workflow.Id)
+                .Debug("Downloading image for row {RowIndex} from '{Uri}'", Task.RowIndex, Task.SourceUri);
+
             var resolvedUri =
                 await multiCloudResolver.ResolveUriAsync(Task.SourceUri, httpClient).ConfigureAwait(false);
+            
+            logger.ForContext("TaskId", context.Workflow.Id)
+                .Debug("Resolved URI for row {RowIndex}: '{ResolvedUri}'", Task.RowIndex, resolvedUri);
+
             await downloadService.DownloadAsync(resolvedUri, Task.DownloadPath).ConfigureAwait(false);
+            
+            logger.ForContext("TaskId", context.Workflow.Id)
+                .Information("Successfully downloaded image for row {RowIndex}, column {ColumnName}", Task.RowIndex, Task.ColumnName);
         }
         catch (Exception ex)
         {
-            data.Errors.TryAdd($"Download_Row{Task.RowIndex}_{Task.ColumnName}", ex);
+            var path = $"Row{Task.RowIndex}_{Task.ColumnName}";
+            logger.ForContext("TaskId", context.Workflow.Id).ForContext("Path", path).Error(ex, "Download failed");
         }
         finally
         {
