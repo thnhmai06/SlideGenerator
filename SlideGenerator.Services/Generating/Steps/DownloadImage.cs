@@ -24,7 +24,7 @@ public sealed class DownloadImage(
     ///     The download task to process.
     ///     Mapped from the ForEach loop in the workflow.
     /// </summary>
-    public ImageTask Task { get; set; } = null!;
+    public ImageTask Task { get; init; } = null!;
 
     /// <inheritdoc />
     public override async Task<ExecutionResult> RunAsync(IStepExecutionContext context)
@@ -64,7 +64,7 @@ public sealed class DownloadImage(
 
             data.Logger.Information("Successfully downloaded image for row {RowIndex}, column {ColumnName}", Task.RowIndex, Task.ColumnName);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not NullReferenceException and not InvalidCastException and not IndexOutOfRangeException)
         {
             var path = $"Row{Task.RowIndex}_{Task.ColumnName}";
             data.Logger.ForContext("Path", path).Error(ex, "Download failed");

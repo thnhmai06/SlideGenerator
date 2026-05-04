@@ -15,7 +15,7 @@ namespace SlideGenerator.Services.Generating.Steps;
 /// </summary>
 public sealed class ReplaceSlideData(GateLocker gateLocker, ILogger logger) : StepBodyAsync
 {
-    public SlideTask Task { get; set; } = null!;
+    public SlideTask Task { get; init; } = null!;
 
     public override async Task<ExecutionResult> RunAsync(IStepExecutionContext context)
     {
@@ -53,7 +53,7 @@ public sealed class ReplaceSlideData(GateLocker gateLocker, ILogger logger) : St
                 data.Logger.Information("Successfully replaced data for row {RowIndex} in sheet {SheetName}", Task.RowIndex, Task.SheetTask.Identifier.SheetName);
             }
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not NullReferenceException and not InvalidCastException and not IndexOutOfRangeException)
         {
             var path = $"{Task.SheetTask.Identifier.SheetName}_{Task.RowIndex}";
             data.Logger.ForContext("Path", path).Error(ex, "FillSlideData failed");

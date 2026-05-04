@@ -42,10 +42,19 @@ public sealed class GateLocker(ISettingProvider settingProvider) : IDisposable
             }
 
             var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-            state.Waiters.Enqueue(tcs);
+            var node = state.Waiters.AddLast(tcs);
             waitTask = tcs.Task;
 
-            if (ct.CanBeCanceled) ctr = ct.Register(() => tcs.TrySetCanceled(ct));
+            if (ct.CanBeCanceled)
+                ctr = ct.Register(() =>
+                {
+                    // O(1) removal via stored node reference — no stale entries accumulate.
+                    lock (state)
+                    {
+                        if (node.List != null) state.Waiters.Remove(node);
+                    }
+                    tcs.TrySetCanceled(ct);
+                });
         }
 
         try
@@ -54,7 +63,7 @@ public sealed class GateLocker(ISettingProvider settingProvider) : IDisposable
         }
         finally
         {
-            await ctr.DisposeAsync();
+            await ctr.DisposeAsync().ConfigureAwait(false);
         }
     }
 
@@ -103,7 +112,10 @@ public sealed class GateLocker(ISettingProvider settingProvider) : IDisposable
             lock (state)
             {
                 while (state.Waiters.Count > 0)
-                    state.Waiters.Dequeue().TrySetCanceled();
+                {
+                    state.Waiters.First!.Value.TrySetCanceled();
+                    state.Waiters.RemoveFirst();
+                }
             }
         }
 
@@ -121,9 +133,10 @@ public sealed class GateLocker(ISettingProvider settingProvider) : IDisposable
         public int ActiveCount;
 
         /// <summary>
-        ///     The queue of waiters waiting to acquire a lock for this gate.
+        ///     The ordered list of waiters pending admission.
+        ///     <see cref="LinkedList{T}"/> allows O(1) removal of canceled waiters via stored node references.
         /// </summary>
-        public readonly Queue<TaskCompletionSource<bool>> Waiters = new();
+        public readonly LinkedList<TaskCompletionSource<bool>> Waiters = [];
 
         /// <summary>
         ///     Attempts to admit pending waiters if the current active count is below the specified limit.
@@ -133,8 +146,9 @@ public sealed class GateLocker(ISettingProvider settingProvider) : IDisposable
         {
             while (ActiveCount < limit && Waiters.Count > 0)
             {
-                var tcs = Waiters.Dequeue();
-                if (tcs.TrySetResult(true)) ActiveCount++;
+                var node = Waiters.First!;
+                Waiters.RemoveFirst();
+                if (node.Value.TrySetResult(true)) ActiveCount++;
             }
         }
     }

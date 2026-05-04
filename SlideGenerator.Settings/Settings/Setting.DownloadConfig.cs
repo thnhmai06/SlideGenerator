@@ -75,11 +75,11 @@ public sealed partial class Setting
         /// </summary>
         public sealed class RetrySetting
         {
-            /// <summary>Gets or sets the maximum number of times a failed request should be retried.</summary>
-            public int MaxRetries { get; set; } = 3;
-            
-            /// <summary>Gets or sets the network timeout in seconds.</summary>
-            public int Timeout { get; set; } = 30;
+            /// <summary>Gets the maximum number of times a failed request should be retried.</summary>
+            public int MaxRetries { get; init; } = 3;
+
+            /// <summary>Gets the network timeout in seconds.</summary>
+            public int Timeout { get; init; } = 30;
         }
 
         /// <summary>
@@ -87,20 +87,20 @@ public sealed partial class Setting
         /// </summary>
         public sealed class ProxySetting
         {
-            /// <summary>Gets or sets whether a proxy should be used.</summary>
-            public bool UseProxy { get; set; } = false;
-            
-            /// <summary>Gets or sets the proxy domain name.</summary>
-            public string Domain { get; set; } = string.Empty;
-            
-            /// <summary>Gets or sets the proxy password.</summary>
-            public string Password { get; set; } = string.Empty;
-            
-            /// <summary>Gets or sets the full proxy server address (e.g., http://proxy:8080).</summary>
-            public string ProxyAddress { get; set; } = string.Empty;
-            
-            /// <summary>Gets or sets the proxy username.</summary>
-            public string Username { get; set; } = string.Empty;
+            /// <summary>Gets whether a proxy should be used.</summary>
+            public bool UseProxy { get; init; } = false;
+
+            /// <summary>Gets the proxy domain name.</summary>
+            public string Domain { get; init; } = string.Empty;
+
+            /// <summary>Gets the proxy password.</summary>
+            public string Password { get; init; } = string.Empty;
+
+            /// <summary>Gets the full proxy server address (e.g., http://proxy:8080).</summary>
+            public string ProxyAddress { get; init; } = string.Empty;
+
+            /// <summary>Gets the proxy username.</summary>
+            public string Username { get; init; } = string.Empty;
 
             /// <summary>
             ///     Constructs an <see cref="IWebProxy"/> based on the current configuration.

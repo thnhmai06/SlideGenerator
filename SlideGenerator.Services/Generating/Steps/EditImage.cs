@@ -24,7 +24,7 @@ public sealed class EditImage(
     ///     The editing task to process.
     ///     Mapped from the ForEach loop in the workflow.
     /// </summary>
-    public ImageTask Task { get; set; } = null!;
+    public ImageTask Task { get; init; } = null!;
 
     /// <inheritdoc />
     public override async Task<ExecutionResult> RunAsync(IStepExecutionContext context)
@@ -119,7 +119,7 @@ public sealed class EditImage(
                 try { File.Delete(sourceFile); } catch { /* ignore */ }
             }
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not NullReferenceException and not InvalidCastException and not IndexOutOfRangeException)
         {
             data.Logger.ForContext("Path", Path.GetFileName(finalEditPath)).Error(ex, "Edit image failed");
         }

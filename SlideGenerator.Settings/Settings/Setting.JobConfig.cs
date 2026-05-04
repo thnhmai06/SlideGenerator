@@ -8,19 +8,19 @@ public sealed partial class Setting
     /// </summary>
     public sealed class JobSetting
     {
-        /// <summary>Gets or sets the maximum number of concurrent image downloads.</summary>
-        public int MaxParallelDownloadImage { get; set; } = 5;
+        /// <summary>Gets the maximum number of concurrent image downloads.</summary>
+        public int MaxParallelDownloadImage { get; init; } = 5;
 
-        /// <summary>Gets or sets the maximum number of concurrent image editing operations.</summary>
-        public int MaxParallelEditImage { get; set; } = 5;
+        /// <summary>Gets the maximum number of concurrent image editing operations.</summary>
+        public int MaxParallelEditImage { get; init; } = 5;
 
-        /// <summary>Gets or sets the maximum number of concurrent presentation editing operations (slides filling).</summary>
-        public int MaxParallelEditPresentation { get; set; } = 5;
+        /// <summary>Gets the maximum number of concurrent presentation editing operations (slides filling).</summary>
+        public int MaxParallelEditPresentation { get; init; } = 5;
 
-        /// <summary>Gets or sets the maximum number of concurrent workbook reading operations.</summary>
-        public int MaxParallelReadWorkbook { get; set; } = 5;
+        /// <summary>Gets the maximum number of concurrent workbook reading operations.</summary>
+        public int MaxParallelReadWorkbook { get; init; } = 5;
 
-        /// <summary>Gets or sets the maximum number of concurrent presentation reading operations.</summary>
-        public int MaxParallelReadPresentation { get; set; } = 5;
+        /// <summary>Gets the maximum number of concurrent presentation reading operations.</summary>
+        public int MaxParallelReadPresentation { get; init; } = 5;
     }
 }

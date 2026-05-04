@@ -20,17 +20,26 @@ public sealed class SettingManager(Serializer serializer) : ISettingProvider
     public Setting Current { get; private set; } = new();
 
     /// <summary>
-    ///     Asynchronously loads settings from disk.
+    ///     Asynchronously loads settings from the disk.
     /// </summary>
     /// <returns>True if the settings were successfully loaded; false if the file does not exist.</returns>
     public async Task<bool> Load()
     {
         if (!File.Exists(FilePath)) return false;
-
-        var source = await File.ReadAllTextAsync(FilePath);
-        var loaded = serializer.Deserialize<Setting>(source);
-
-        Current = loaded;
+        
+        try
+        {
+            var source = await File.ReadAllTextAsync(FilePath).ConfigureAwait(false);
+            var loaded = serializer.Deserialize<Setting>(source);
+            Current = loaded;
+        }
+        catch (Exception e)
+        {
+            // TODO: Log e
+            await ResetToDefaults().ConfigureAwait(false);
+            return false;
+        }
+        
         return true;
     }
 
@@ -38,11 +47,19 @@ public sealed class SettingManager(Serializer serializer) : ISettingProvider
     ///     Asynchronously saves the current settings to disk.
     /// </summary>
     /// <returns>True if the operation completed successfully.</returns>
-    public async Task<bool> Save()
+    public async Task Save()
     {
         var content = serializer.Serialize(Current);
-        await File.WriteAllTextAsync(FilePath, content);
-        return true;
+        await File.WriteAllTextAsync(FilePath, content).ConfigureAwait(false);
+    }
+    
+    /// <summary>
+    ///     Resets the settings to their default values and persists them to disk.
+    /// </summary>
+    /// <returns>A task representing the reset and save operation.</returns>
+    public async Task ResetToDefaults()
+    {
+        await Update(new Setting()).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -50,19 +67,9 @@ public sealed class SettingManager(Serializer serializer) : ISettingProvider
     /// </summary>
     /// <param name="newSetting">The new settings object to apply.</param>
     /// <returns>A task representing the save operation.</returns>
-    public Task<bool> Update(Setting newSetting)
+    public async Task Update(Setting newSetting)
     {
         Current = newSetting;
-        return Save();
-    }
-
-    /// <summary>
-    ///     Resets the settings to their default values and persists them to disk.
-    /// </summary>
-    /// <returns>A task representing the reset and save operation.</returns>
-    public async Task<bool> ResetToDefaults()
-    {
-        Current = new Setting();
-        return await Save();
+        await Save().ConfigureAwait(false);
     }
 }

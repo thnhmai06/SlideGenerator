@@ -20,7 +20,7 @@ public sealed class ValidateRequest(ExcelEngine excelEngine, GateLocker gateLock
     /// <summary>
     ///     The sheet and its associated map node to validate.
     /// </summary>
-    public ValidationItem Item { get; set; } = null!;
+    public ValidationItem Item { get; init; } = null!;
 
     /// <inheritdoc />
     public override async Task<ExecutionResult> RunAsync(IStepExecutionContext context)
@@ -41,7 +41,7 @@ public sealed class ValidateRequest(ExcelEngine excelEngine, GateLocker gateLock
 
             data.Logger.Information("Validation successful for sheet {SheetName}", sheet.SheetName);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not NullReferenceException and not InvalidCastException and not IndexOutOfRangeException)
         {
             var path = $"{sheet.BookPath}_{sheet.SheetName}";
             data.Logger.ForContext("Path", path).Error(ex, "Validation failed");

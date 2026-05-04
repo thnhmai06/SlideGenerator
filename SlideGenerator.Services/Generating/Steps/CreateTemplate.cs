@@ -17,7 +17,7 @@ public sealed class CreateTemplate(GateLocker gateLocker, ILogger logger) : Step
     /// <summary>
     ///     The validation item containing sheet and node info.
     /// </summary>
-    public ValidationItem Item { get; set; } = null!;
+    public ValidationItem Item { get; init; } = null!;
 
     /// <inheritdoc />
     public override async Task<ExecutionResult> RunAsync(IStepExecutionContext context)
@@ -40,7 +40,7 @@ public sealed class CreateTemplate(GateLocker gateLocker, ILogger logger) : Step
 
                 data.Logger.Information("Successfully initialized output presentation at '{Path}'", worksheet.OutputPath);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not NullReferenceException and not InvalidCastException and not IndexOutOfRangeException)
             {
                 data.Logger.ForContext("Path", worksheet.Identifier.SheetName).Error(ex, "CreateTemplate execution failed");
             }

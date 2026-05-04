@@ -24,7 +24,7 @@ namespace SlideGenerator.Services.Generating.Steps;
 public sealed class ExtractData(GateLocker gateLocker, ExcelEngine excelEngine, ISettingProvider settingProvider, ILogger logger)
     : StepBodyAsync
 {
-    public SheetTask Worksheet { get; set; } = null!;
+    public SheetTask Worksheet { get; init; } = null!;
 
     public override async Task<ExecutionResult> RunAsync(IStepExecutionContext context)
     {
@@ -42,7 +42,7 @@ public sealed class ExtractData(GateLocker gateLocker, ExcelEngine excelEngine, 
 
             data.Logger.Information("Successfully extracted data and constructed tasks for sheet {SheetName}", Worksheet.Identifier.SheetName);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not NullReferenceException and not InvalidCastException and not IndexOutOfRangeException)
         {
             data.Logger.ForContext("Path", Worksheet.Identifier.SheetName).Error(ex, "ExtractData failed");
         }
