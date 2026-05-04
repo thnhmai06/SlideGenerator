@@ -15,10 +15,10 @@ public sealed class CloseAllHandles(ILogger logger) : StepBody
     public override ExecutionResult Run(IStepExecutionContext context)
     {
         var data = (GeneratingTask)context.Workflow.Data;
-        
-        logger.ForContext("TaskId", context.Workflow.Id)
-            .Information("Closing all workbook and presentation handles. Workflow complete.");
-            
+        data.TryInitLogger(logger, context.Workflow.Id);
+
+        data.Logger.Information("Closing all workbook and presentation handles. Workflow complete.");
+
         data.Dispose();
         return ExecutionResult.Next();
     }

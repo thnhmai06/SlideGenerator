@@ -11,6 +11,14 @@
   <component name="ChangeListManager">
     <list default="true" id="3a1f1c77-0578-40bf-9d5d-a0e8452562c2" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.SlideGenerator/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.SlideGenerator/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/CloseAllHandles.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/CloseAllHandles.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/CreateTemplate.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/CreateTemplate.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/DownloadImage.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/DownloadImage.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/EditImage.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/EditImage.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/ExtractData.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/ExtractData.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/ReplaceSlideData.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/ReplaceSlideData.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/ValidateRequest.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Steps/ValidateRequest.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Workflows/Models/GeneratingTask.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Services/Generating/Workflows/Models/GeneratingTask.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -33,7 +41,7 @@
     </selectedModels>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="80" />
+    <option name="cachedIndexableFilesCount" value="84" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="FileTemplateManagerImpl">
@@ -292,15 +300,8 @@
       <workItem from="1777732612552" duration="9858000" />
       <workItem from="1777780379713" duration="9613000" />
       <workItem from="1777805580498" duration="15986000" />
-      <workItem from="1777863175670" duration="13492000" />
-    </task>
-    <task id="LOCAL-00002" summary="chore: add Rider project settings">
-      <option name="closed" value="true" />
-      <created>1773107350724</created>
-      <option name="number" value="00002" />
-      <option name="presentableId" value="LOCAL-00002" />
-      <option name="project" value="LOCAL" />
-      <updated>1773107350724</updated>
+      <workItem from="1777863175670" duration="13937000" />
+      <workItem from="1777897507627" duration="1928000" />
     </task>
     <task id="LOCAL-00003" summary="doc: add workflows.svg diagram">
       <option name="closed" value="true" />
@@ -686,7 +687,15 @@
       <option name="project" value="LOCAL" />
       <updated>1777884234053</updated>
     </task>
-    <option name="localTasksCounter" value="51" />
+    <task id="LOCAL-00051" summary="docs: update architectural guidelines and AI assistant instructions&#10;&#10;- Updated `CLAUDE.md` to provide clearer guidance for AI assistants, reflecting recent architectural changes and module responsibilities.&#10;- Renamed references from the `Gate` module to `Coordinator` and added the new `SlideGenerator.Logging` module to the architecture maps in both `CLAUDE.md` and `INSTRUCTIONS.MD`.&#10;- Added a specific section detailing dependency injection registration methods for each module.&#10;- Clarified concurrency management guidelines using `GateLocker` and enumerated the available gate types.&#10;- Detailed the three-phase orchestration pipeline (Validation &amp; Setup, Resource Prep, Assembly &amp; Cleanup) and updated state tracking documentation to use the new `GeneratingTask` data model.&#10;- Updated the invariants checklist in `INSTRUCTIONS.MD` to explicitly restrict workflow constructors to only inject `IServiceProvider` rather than concrete services.">
+      <option name="closed" value="true" />
+      <created>1777885340346</created>
+      <option name="number" value="00051" />
+      <option name="presentableId" value="LOCAL-00051" />
+      <option name="project" value="LOCAL" />
+      <updated>1777885340346</updated>
+    </task>
+    <option name="localTasksCounter" value="52" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -771,7 +780,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
-    <MESSAGE value="[skip ci] chore(backend): cleanup and reformat" />
     <MESSAGE value="refactor(workflows): refactoring workflows models to Application Layer" />
     <MESSAGE value="refactor(workflows): Rearchitect concurrency and processing in GeneratingWorkflow&#10;&#10;This commit introduces a major refactoring of the GeneratingWorkflow to improve concurrency control, modularity, and clarity. The previous implementation used rigid, monolithic activities for batch processing, which has been replaced with a more flexible, granular, and robust system.&#10;&#10;Key Changes:&#10;&#10;- **Introduced `IAsyncKeyedLocker&lt;SlotType&gt;`:** Replaced hardcoded concurrency limits with a generic, keyed locking mechanism. This allows defining flexible, process-wide concurrency gates (e.g., for downloads, image edits, slide edits) that are managed centrally.&#10;&#10;- **Generic `AcquireSlot` and `ReleaseSlot` Activities:** The numerous specific slot activities (e.g., `AcquirePreparingSlot`, `AcquireEditingSlot`) have been removed and replaced by a single, reusable pair of `AcquireSlot` and `ReleaseSlot` activities. These now operate on the `IAsyncKeyedLocker` by specifying a `SlotType`.&#10;&#10;- **Parallel-Per-Item Processing:** The monolithic `DownloadImages` and `EditImages` activities have been replaced with a `ParallelForEach` pattern. The workflow now iterates over a collection of items (URLs or paths), and each item is processed individually within its own `AcquireSlot`/`ReleaseSlot` block. This provides fine-grained control over the degree of parallelism.&#10;&#10;- **Renamed Activities for Clarity:**&#10;  - `SummarizeDownloadedImagePaths` is now `ReadDownloadedImagePathStore`.&#10;  - `SummarizeEditedImagePaths` is now `ReadEditedImagePathStore`.&#10;  This better reflects their function of reading results from the transient workflow store.&#10;&#10;- **Code Cleanup:** Removed numerous obsolete activity files and updated dependencies across the workflow and related services to support the new architecture." />
     <MESSAGE value="refactor(workflows): Decouple Application layer from Elsa workflow engine&#10;&#10;- Introduced a custom workflow DSL (`Activity`, `Sequence`, `ForEach`, `ParallelForEach`, `Inline`, `SlotGated`) and state management (`Variable`, `IExecutionContext`) in the Application layer.&#10;- Added `IActivityFactory` to abstract workflow activity creation.&#10;- Migrated all generation workflow activities to use the new Application-layer DSL, removing direct Elsa dependencies (e.g., `Input&lt;T&gt;`, `Output&lt;T&gt;`, `ActivityExecutionContext`).&#10;- Refactored `GeneratingWorkflow` to construct the execution tree using the new `IActivityFactory` and strongly-typed context variables.&#10;- Introduced `WorksheetContextRules` to standardize workflow variable keys for the generation process.&#10;- Implemented Elsa-specific adapters (`ElsaSequence`, `ElsaInline`, `ElsaForEach`, `ElsaParallelForEach`, `ElsaSlotGated`, `ElsaVariable`, `ElsaExecutionContext`) and `ElsaActivityFactory` in the Infrastructure layer.&#10;- Reorganized the project structure by moving generating and scanning components to the `Services` namespace.&#10;- Updated `CLAUDE.md` to document the architectural constraint that Elsa dependencies must reside exclusively in the Infrastructure layer." />
@@ -796,7 +804,8 @@
     <MESSAGE value="refactor(generating): restructure workflow tasks&#10;&#10;- Updated namespaces and project references from Gate to Coordinator for consistency.&#10;- Refactored workflow tasks to utilize the new GeneratingTask model, enhancing clarity and maintainability.&#10;- Consolidated data extraction and task creation processes for improved efficiency." />
     <MESSAGE value="feat(logging): introduce database-backed logging and replace in-memory error tracking&#10;&#10;- Created the `SlideGenerator.Logging` project to provide structured, database-backed logging via Entity Framework Core and Serilog.&#10;- Introduced `LogEntry` and `ExceptionIdentifier` models, alongside the `ILogDbContext` interface.&#10;- Implemented `WorkflowDatabaseSink`, a custom Serilog sink that batches log events and persists them to the database, explicitly extracting `TaskId`, `Path`, and exception details.&#10;- Removed the `Errors` concurrent dictionary from the `GeneratingTask` model, shifting error management to the new centralized logging system.&#10;- Integrated `ILogger` dependency injection into all generating workflow steps (`ValidateRequest`, `CreateTemplate`, `DownloadImage`, `EditImage`, `ExtractData`, `ReplaceSlideData`, `CloseAllHandles`).&#10;- Added rich contextual logging across workflow steps using `.ForContext(&quot;TaskId&quot;, context.Workflow.Id)` and `.ForContext(&quot;Path&quot;, ...)` to provide granular visibility into task execution, idempotency checks, and error handling.&#10;- Deleted the obsolete `conductor/plan.md` implementation plan." />
     <MESSAGE value="docs: add comprehensive XML documentation and standardize extension methods&#10;&#10;- **Extensive XML Documentation:** Added detailed summaries, parameter descriptions, exceptions, and return value definitions to data models, identifiers, workflow tasks, configuration settings, and core services across the `SlideGenerator.Settings`, `SlideGenerator.Services`, and `SlideGenerator.Logging` projects.&#10;- **Standardized Extension Methods:** Refactored `GeneratingTask` resource management utilities in `SlideGenerator.Services.Generating`, replacing the experimental `extension` syntax with standard C# static extension methods (`GetOrOpenWorkbook` and `GetOrOpenTemplate`).&#10;- **Logging Registration:** Introduced `Registration.cs` in `SlideGenerator.Logging` to expose `AddWorkflowLogging`, centralizing the dependency injection setup for the custom `WorkflowDatabaseSink`." />
-    <option name="LAST_COMMIT_MESSAGE" value="docs: add comprehensive XML documentation and standardize extension methods&#10;&#10;- **Extensive XML Documentation:** Added detailed summaries, parameter descriptions, exceptions, and return value definitions to data models, identifiers, workflow tasks, configuration settings, and core services across the `SlideGenerator.Settings`, `SlideGenerator.Services`, and `SlideGenerator.Logging` projects.&#10;- **Standardized Extension Methods:** Refactored `GeneratingTask` resource management utilities in `SlideGenerator.Services.Generating`, replacing the experimental `extension` syntax with standard C# static extension methods (`GetOrOpenWorkbook` and `GetOrOpenTemplate`).&#10;- **Logging Registration:** Introduced `Registration.cs` in `SlideGenerator.Logging` to expose `AddWorkflowLogging`, centralizing the dependency injection setup for the custom `WorkflowDatabaseSink`." />
+    <MESSAGE value="docs: update architectural guidelines and AI assistant instructions&#10;&#10;- Updated `CLAUDE.md` to provide clearer guidance for AI assistants, reflecting recent architectural changes and module responsibilities.&#10;- Renamed references from the `Gate` module to `Coordinator` and added the new `SlideGenerator.Logging` module to the architecture maps in both `CLAUDE.md` and `INSTRUCTIONS.MD`.&#10;- Added a specific section detailing dependency injection registration methods for each module.&#10;- Clarified concurrency management guidelines using `GateLocker` and enumerated the available gate types.&#10;- Detailed the three-phase orchestration pipeline (Validation &amp; Setup, Resource Prep, Assembly &amp; Cleanup) and updated state tracking documentation to use the new `GeneratingTask` data model.&#10;- Updated the invariants checklist in `INSTRUCTIONS.MD` to explicitly restrict workflow constructors to only inject `IServiceProvider` rather than concrete services." />
+    <option name="LAST_COMMIT_MESSAGE" value="docs: update architectural guidelines and AI assistant instructions&#10;&#10;- Updated `CLAUDE.md` to provide clearer guidance for AI assistants, reflecting recent architectural changes and module responsibilities.&#10;- Renamed references from the `Gate` module to `Coordinator` and added the new `SlideGenerator.Logging` module to the architecture maps in both `CLAUDE.md` and `INSTRUCTIONS.MD`.&#10;- Added a specific section detailing dependency injection registration methods for each module.&#10;- Clarified concurrency management guidelines using `GateLocker` and enumerated the available gate types.&#10;- Detailed the three-phase orchestration pipeline (Validation &amp; Setup, Resource Prep, Assembly &amp; Cleanup) and updated state tracking documentation to use the new `GeneratingTask` data model.&#10;- Updated the invariants checklist in `INSTRUCTIONS.MD` to explicitly restrict workflow constructors to only inject `IServiceProvider` rather than concrete services." />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

@@ -29,30 +29,29 @@ public sealed class ExtractData(GateLocker gateLocker, ExcelEngine excelEngine, 
     public override async Task<ExecutionResult> RunAsync(IStepExecutionContext context)
     {
         var data = (GeneratingTask)context.Workflow.Data;
+        data.TryInitLogger(logger, context.Workflow.Id);
 
-        logger.ForContext("TaskId", context.Workflow.Id)
-            .Information("Starting data extraction for sheet {SheetName} in {BookPath}", Worksheet.Identifier.SheetName, Worksheet.Identifier.BookPath);
+        data.Logger.Information("Starting data extraction for sheet {SheetName} in {BookPath}", Worksheet.Identifier.SheetName, Worksheet.Identifier.BookPath);
 
         try
         {
-            var (rowCount, headerMap, sheet) = await ReadWorkbookMetadataAsync(context, data).ConfigureAwait(false);
-            var shapeData = await CloneSlidesAndExtractShapeDataAsync(context, data, rowCount).ConfigureAwait(false);
+            var (rowCount, headerMap, sheet) = await ReadWorkbookMetadataAsync(data).ConfigureAwait(false);
+            var shapeData = await CloneSlidesAndExtractShapeDataAsync(data, rowCount).ConfigureAwait(false);
 
-            ConstructTasks(context, data, rowCount, headerMap, sheet, shapeData);
-            
-            logger.ForContext("TaskId", context.Workflow.Id)
-                .Information("Successfully extracted data and constructed tasks for sheet {SheetName}", Worksheet.Identifier.SheetName);
+            ConstructTasks(data, rowCount, headerMap, sheet, shapeData);
+
+            data.Logger.Information("Successfully extracted data and constructed tasks for sheet {SheetName}", Worksheet.Identifier.SheetName);
         }
         catch (Exception ex)
         {
-            logger.ForContext("TaskId", context.Workflow.Id).ForContext("Path", Worksheet.Identifier.SheetName).Error(ex, "ExtractData failed");
+            data.Logger.ForContext("Path", Worksheet.Identifier.SheetName).Error(ex, "ExtractData failed");
         }
 
         return ExecutionResult.Next();
     }
 
     private async Task<(int RowCount, Dictionary<string, int> HeaderMap, IWorksheet Sheet)>
-        ReadWorkbookMetadataAsync(IStepExecutionContext context, GeneratingTask data)
+        ReadWorkbookMetadataAsync(GeneratingTask data)
     {
         await gateLocker.AcquireAsync(GateType.ReadWorkbook).ConfigureAwait(false);
         try
@@ -66,8 +65,7 @@ public sealed class ExtractData(GateLocker gateLocker, ExcelEngine excelEngine, 
             var headerMap = headers.Select((h, i) => (h, i))
                 .ToDictionary(x => x.h, x => x.i, StringComparer.OrdinalIgnoreCase);
 
-            logger.ForContext("TaskId", context.Workflow.Id)
-                .Debug("Found {RowCount} rows in sheet {SheetName}", rowCount, Worksheet.Identifier.SheetName);
+            data.Logger.Debug("Found {RowCount} rows in sheet {SheetName}", rowCount, Worksheet.Identifier.SheetName);
 
             return (rowCount, headerMap, sheet);
         }
@@ -78,7 +76,7 @@ public sealed class ExtractData(GateLocker gateLocker, ExcelEngine excelEngine, 
     }
 
     private async Task<Dictionary<ShapeIdentifier, (string ShapeName, HashSet<string> Tags, RectangleF Bounds)>>
-        CloneSlidesAndExtractShapeDataAsync(IStepExecutionContext context, GeneratingTask data, int rowCount)
+        CloneSlidesAndExtractShapeDataAsync(GeneratingTask data, int rowCount)
     {
         var shapeData = new Dictionary<ShapeIdentifier, (string ShapeName, HashSet<string> Tags, RectangleF Bounds)>();
 
@@ -93,7 +91,7 @@ public sealed class ExtractData(GateLocker gateLocker, ExcelEngine excelEngine, 
                 foreach (var slideItem in templateSlide.Shapes)
                 {
                     if (slideItem is not IShape shape || string.IsNullOrEmpty(shape.ShapeName)) continue;
-                    
+
                     var shapeId = new ShapeIdentifier(
                         Worksheet.TemplateSlide.PresentationPath,
                         Worksheet.TemplateSlide.SlideIndex,
@@ -105,14 +103,12 @@ public sealed class ExtractData(GateLocker gateLocker, ExcelEngine excelEngine, 
                     shapeData[shapeId] = (shape.ShapeName, tags, bounds);
                 }
 
-                logger.ForContext("TaskId", context.Workflow.Id)
-                    .Debug("Extracted metadata for {Count} shapes from template slide", shapeData.Count);
+                data.Logger.Debug("Extracted metadata for {Count} shapes from template slide", shapeData.Count);
 
                 // Clone slides
                 if (rowCount > 1)
                 {
-                    logger.ForContext("TaskId", context.Workflow.Id)
-                        .Debug("Cloning {Count} additional slides for output", rowCount - 1);
+                    data.Logger.Debug("Cloning {Count} additional slides for output", rowCount - 1);
                     for (var i = 1; i < rowCount; i++)
                         wrapper.Value.Slides.Add(templateSlide.Clone());
                 }
@@ -133,7 +129,6 @@ public sealed class ExtractData(GateLocker gateLocker, ExcelEngine excelEngine, 
     }
 
     private void ConstructTasks(
-        IStepExecutionContext context,
         GeneratingTask data,
         int rowCount,
         Dictionary<string, int> headerMap,
@@ -153,9 +148,8 @@ public sealed class ExtractData(GateLocker gateLocker, ExcelEngine excelEngine, 
             if (slideTask.TextReplacements.Count > 0 || slideTask.ImageReplacements.Count > 0)
             {
                 data.SlideTasks.Add(slideTask);
-                logger.ForContext("TaskId", context.Workflow.Id)
-                    .Debug("Mapped {TextCount} text and {ImageCount} image replacements for row {RowIndex}", 
-                        slideTask.TextReplacements.Count, slideTask.ImageReplacements.Count, rowIndex);
+                data.Logger.Debug("Mapped {TextCount} text and {ImageCount} image replacements for row {RowIndex}",
+                    slideTask.TextReplacements.Count, slideTask.ImageReplacements.Count, rowIndex);
             }
         }
     }

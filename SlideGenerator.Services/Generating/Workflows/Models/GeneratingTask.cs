@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Serilog;
 using SlideGenerator.Services.Generating.Models;
 using SlideGenerator.Services.Generating.Models.Identifiers;
 using SlideGenerator.Slides.Entities;
@@ -11,10 +12,24 @@ namespace SlideGenerator.Services.Generating.Workflows.Models;
 /// </summary>
 public sealed class GeneratingTask : IDisposable
 {
+    private ILogger? _logger;
+
     /// <summary>
     ///     The initial generation request.
     /// </summary>
     public GeneratingRequest Request { get; init; } = null!;
+
+    /// <summary>
+    ///     Gets the workflow-scoped logger enriched with <c>TaskId</c>.
+    ///     Must be initialized via <see cref="TryInitLogger"/> before first use.
+    /// </summary>
+    public ILogger Logger => _logger ?? throw new InvalidOperationException("Workflow logger has not been initialized.");
+
+    /// <summary>
+    ///     Initializes the workflow-scoped logger. Idempotent — only the first call has effect.
+    /// </summary>
+    public void TryInitLogger(ILogger baseLogger, string workflowId) =>
+        Interlocked.CompareExchange(ref _logger, baseLogger.ForContext("TaskId", workflowId), null);
 
     /// <summary>
     ///     The collection of validated worksheets and their target output configurations.
