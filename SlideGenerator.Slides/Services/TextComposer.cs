@@ -54,7 +54,7 @@ public static partial class TextComposer
     ///         <item>Uses case-insensitive key comparison</item>
     ///     </list>
     /// </remarks>
-    public static IEnumerable<string> Scan(IShape shape)
+    public static HashSet<string> Scan(IShape shape)
     {
         var text = shape.TextBody?.Text;
         if (string.IsNullOrWhiteSpace(text)) return [];

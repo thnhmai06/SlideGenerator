@@ -1,5 +1,5 @@
-using System.Linq;
 using SlideGenerator.Services.Generating.Steps;
+using SlideGenerator.Services.Generating.Workflows.Models;
 using WorkflowCore.Interface;
 
 namespace SlideGenerator.Services.Generating.Workflows;
@@ -10,7 +10,7 @@ namespace SlideGenerator.Services.Generating.Workflows;
 ///     Phase B: Preparation, Metadata Extraction, Resource Fetching
 ///     Phase C: Assembly & Finalization
 /// </summary>
-public sealed class GeneratingWorkflow : IWorkflow<GeneratingData>
+public sealed class GeneratingWorkflow : IWorkflow<GeneratingTask>
 {
     /// <inheritdoc />
     public string Id => nameof(GeneratingWorkflow);
@@ -19,13 +19,15 @@ public sealed class GeneratingWorkflow : IWorkflow<GeneratingData>
     public int Version => 1;
 
     /// <inheritdoc />
-    public void Build(IWorkflowBuilder<GeneratingData> builder)
+    public void Build(IWorkflowBuilder<GeneratingTask> builder)
     {
         builder
 
             #region Phase A: Validation & Template Setup
 
-            .ForEach(data => data.Request.Recipe.Nodes.SelectMany(node => node.Sheets.Select(sheet => new ValidationItem(sheet, node))))
+            .ForEach(data =>
+                data.Request.Recipe.Nodes.SelectMany(node =>
+                    node.Sheets.Select(sheet => new ValidationItem(sheet, node))))
             .Do(x => x
                 .StartWith<ValidateRequest>()
                 .Input(step => step.Item, (data, context) => (ValidationItem)context.Item)
@@ -37,37 +39,17 @@ public sealed class GeneratingWorkflow : IWorkflow<GeneratingData>
 
             #region Phase B: Preparing Resources
 
-            #region Phase B.1: Prepare Iteration Tasks
+            #region Phase B.1: Extract Data (Shapes, Rows, Generate Tasks)
 
             .ForEach(data => data.ValidWorksheets.Values)
             .Do(x => x
-                .StartWith<PrepareIterationTasks>()
-                .Input(step => step.Worksheet, (data, context) => context.Item as ValidatedWorksheet))
+                .StartWith<ExtractData>()
+                .Input(step => step.Worksheet, (data, context) => context.Item as SheetTask))
             .Then(_ => WorkflowCore.Models.ExecutionResult.Next())
 
             #endregion
 
-            #region Phase B.2: Extract Shape Metadata using WorkflowCore Loop
-
-            .ForEach(data => data.ShapeTasks)
-            .Do(x => x
-                .StartWith<ExtractShapeBounds>()
-                .Input(step => step.Task, (data, context) => context.Item as ShapeTask))
-            .Then(_ => WorkflowCore.Models.ExecutionResult.Next())
-
-            #endregion
-
-            #region Phase B.3: Extract Row URIs to Generate ImageTasks
-
-            .ForEach(data => data.RowTasks)
-            .Do(x => x
-                .StartWith<ExtractRowData>()
-                .Input(step => step.Task, (data, context) => context.Item as RowTask))
-            .Then(_ => WorkflowCore.Models.ExecutionResult.Next())
-
-            #endregion
-
-            #region Phase B.4: Download & Edit Images
+            #region Phase B.2: Download & Edit Images
 
             .ForEach(data => data.ImageTasks)
             .Do(x => x
@@ -83,22 +65,19 @@ public sealed class GeneratingWorkflow : IWorkflow<GeneratingData>
 
             #region Phase C: Replacing
 
-            #region Phase C.1: Replace Shape Data (Assembly)
+            #region Phase C.1: Replace Slide Data (Assembly)
 
-            .ForEach(data => data.RowShapeTasks)
+            .ForEach(data => data.SlideTasks)
             .Do(x => x
-                .StartWith<ReplaceShapeData>()
-                .Input(step => step.Task, (data, context) => context.Item as RowShapeTask))
+                .StartWith<ReplaceSlideData>()
+                .Input(step => step.Task, (data, context) => context.Item as SlideTask))
             .Then(_ => WorkflowCore.Models.ExecutionResult.Next())
 
             #endregion
 
-            #region Phase C.2: Finalize
+            #region Phase C.2: Cleanup
 
-            .ForEach(data => data.ValidWorksheets.Values)
-            .Do(x => x
-                .StartWith<FinalizePresentation>()
-                .Input(step => step.Worksheet, (data, context) => context.Item as ValidatedWorksheet));
+            .Then<CloseAllHandles>();
 
         #endregion
 

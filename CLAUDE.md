@@ -25,7 +25,6 @@ SlideGenerator uses a **Modular Monolith** architecture with independent, compos
 
 ```
 Foundation Modules (no external dependencies)
-├── SlideGenerator.Registry      - File-backed resource registry with leasing
 ├── SlideGenerator.Settings      - Configuration management (YAML-based)
 └── SlideGenerator.Cloud         - Multi-cloud resolver (Google Drive, OneDrive, SharePoint)
 
@@ -39,7 +38,7 @@ Feature Modules
 └── SlideGenerator.Slides        - PowerPoint operations (MagickImage-based shape handling)
 
 Orchestration Layer
-└── SlideGenerator.Workflows     - WorkflowCore-based process orchestration
+└── SlideGenerator.Services      - WorkflowCore-based process orchestration
 ```
 
 ### Dependency Principles
@@ -54,10 +53,10 @@ Orchestration Layer
 
 ### Foundation Modules (Zero External Dependencies)
 
-**SlideGenerator.Registry**
-- File-backed resource registry with async/await support
-- Integrated reader-writer locking via `AsyncKeyedLock`
-- Lease pattern: `await using var lease = await registry.AcquireAsync(...)`
+| **Foundation** | Settings, Cloud | No external dependencies; core infrastructure |
+| **Core Services** | Gate, Download, Sheets | Depend on Settings; shared capabilities |
+| **Features** | Images, Slides | Domain-specific operations |
+| **Orchestration** | Services | Coordinates module composition |
 
 **SlideGenerator.Settings**
 - YAML-based configuration system
@@ -112,7 +111,7 @@ Orchestration Layer
 
 ### Orchestration Layer
 
-**SlideGenerator.Workflows**
+**SlideGenerator.Services**
 - WorkflowCore-based process orchestration
 - Supports complex workflows: scanning, generating, error handling
 - Data-driven persistence via strongly-typed data classes
@@ -163,7 +162,7 @@ The system uses **WorkflowCore** directly for orchestration.
 - **Activity Chaining**: Within a `.ForEach` block, chain activities (`.StartWith<X>().Then<Y>()`) so items transition immediately between steps without waiting for the entire collection.
 
 **Data Persistence**:
-- Workflows use strongly-typed data classes (e.g., `ScanningData`, `GeneratingData`).
+- Workflows use strongly-typed data classes (e.g., `ScanningData`, `BookTask`).
 - State is persisted via these classes; use `ConcurrentDictionary` for parallel safety.
 - Normalized absolute file paths are preferred as dictionary keys.
 
@@ -188,12 +187,7 @@ The system uses **WorkflowCore** directly for orchestration.
 - Workflows MUST have a parameterless constructor for registration.
 - Register all Workflows and Activities in the module's `Registration.cs`.
 
-### Registry & Leasing
-- Always acquire shared resources via `FileRegistry<TResource>.AcquireAsync()`.
-- Returns `Lease<T>` (disposable). Use `await using` for short-lived leases.
-
 ### Locking
-- `FileLocker`: file-path-based reader-writer lock.
 - `GateLocker`: semaphore-based concurrency limit per `GateType`.
 
 ## Invariants Checklist
@@ -206,4 +200,3 @@ The system uses **WorkflowCore** directly for orchestration.
 - [ ] Services are injected via constructor in Activities
 - [ ] Image handling uses MagickImage
 - [ ] All public APIs have XML documentation comments
-

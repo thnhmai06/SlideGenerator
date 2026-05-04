@@ -1,8 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
-using SlideGenerator.Gate.Services;
+using SlideGenerator.Coordinator.Services;
 using SlideGenerator.Settings.Interfaces;
 
-namespace SlideGenerator.Gate;
+namespace SlideGenerator.Coordinator;
 
 public static class Registration
 {

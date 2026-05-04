@@ -1,0 +1,62 @@
+using System.Collections.Concurrent;
+using SlideGenerator.Services.Generating.Models;
+using SlideGenerator.Services.Generating.Models.Identifiers;
+using SlideGenerator.Slides.Entities;
+using Syncfusion.XlsIO;
+
+namespace SlideGenerator.Services.Generating.Workflows.Models;
+
+/// <summary>
+///     Represents the state and data managed by the slide generation workflow.
+/// </summary>
+public sealed class GeneratingTask : IDisposable
+{
+    /// <summary>
+    ///     The initial generation request.
+    /// </summary>
+    public GeneratingRequest Request { get; init; } = null!;
+
+    /// <summary>
+    ///     The collection of validated worksheets and their target output configurations.
+    ///     Populated during Phase A.
+    /// </summary>
+    public ConcurrentDictionary<SheetIdentifier, SheetTask> ValidWorksheets { get; } = new();
+
+    /// <summary>
+    ///     The collection of slide generation tasks containing data replacements.
+    /// </summary>
+    public ConcurrentBag<SlideTask> SlideTasks { get; } = [];
+
+    /// <summary>
+    ///     The collection of image processing tasks combining download and edit requirements.
+    /// </summary>
+    public ConcurrentBag<ImageTask> ImageTasks { get; } = [];
+
+    /// <summary>
+    ///     The collection of errors encountered during the workflow.
+    /// </summary>
+    public ConcurrentDictionary<string, Exception> Errors { get; } = new();
+
+    // Long-lived handles
+    public ConcurrentDictionary<string, IWorkbook> WorkbookHandles { get; } = new(); // read
+    public ConcurrentDictionary<string, SfPresentation> TemplateHandles { get; } = new(); // read
+    public ConcurrentDictionary<string, SfPresentation> OutputHandles { get; } = new(); // write
+
+    /// <summary>
+    ///     Disposes of all open workbook and presentation handles.
+    /// </summary>
+    public void Dispose()
+    {
+        foreach (var handle in WorkbookHandles.Values)
+            try { handle.Close(); } catch { /* ignore */ }
+        WorkbookHandles.Clear();
+
+        foreach (var handle in TemplateHandles.Values)
+            try { handle.Dispose(); } catch { /* ignore */ }
+        TemplateHandles.Clear();
+
+        foreach (var handle in OutputHandles.Values)
+            try { handle.Dispose(); } catch { /* ignore */ }
+        OutputHandles.Clear();
+    }
+}

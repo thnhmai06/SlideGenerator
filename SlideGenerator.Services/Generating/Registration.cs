@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using SlideGenerator.Services.Generating.Steps;
 using SlideGenerator.Services.Generating.Workflows;
+using SlideGenerator.Services.Generating.Workflows.Models;
 using WorkflowCore.Interface;
 
 namespace SlideGenerator.Services.Generating;
@@ -21,18 +22,16 @@ public static class Registration
         // Step Registrations
         services.AddTransient<ValidateRequest>();
         services.AddTransient<CreateTemplate>();
-        services.AddTransient<PrepareIterationTasks>();
-        services.AddTransient<ExtractShapeBounds>();
-        services.AddTransient<ExtractRowData>();
+        services.AddTransient<ExtractData>();
         services.AddTransient<DownloadImage>();
         services.AddTransient<EditImage>();
-        services.AddTransient<ReplaceShapeData>();
-        services.AddTransient<FinalizePresentation>();
+        services.AddTransient<ReplaceSlideData>();
+        services.AddTransient<CloseAllHandles>();
 
         // Workflow Registration
-        // Note: WorkflowCore expects the workflow to be registered via IWorkflowHost
+        // Note: WorkflowCore expects the workflow to be registered via IWorkflowHost,
         // but often we just register the IWorkflow implementation in DI.
-        services.AddTransient<IWorkflow<GeneratingData>, GeneratingWorkflow>();
+        services.AddTransient<IWorkflow<GeneratingTask>, GeneratingWorkflow>();
 
         return services;
     }

@@ -1,4 +1,4 @@
-namespace SlideGenerator.Gate.Models;
+namespace SlideGenerator.Coordinator.Models;
 
 /// <summary>Identifies a named process-wide concurrency gate used during generation.</summary>
 public enum GateType

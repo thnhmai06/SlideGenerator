@@ -1,10 +1,8 @@
-using SlideGenerator.Gate.Models;
-using SlideGenerator.Gate.Services;
+using SlideGenerator.Coordinator.Models;
+using SlideGenerator.Coordinator.Services;
 using SlideGenerator.Services.Generating.Models;
 using SlideGenerator.Services.Generating.Models.Identifiers;
-using SlideGenerator.Services.Generating.Workflows;
-using SlideGenerator.Settings;
-using SlideGenerator.Slides.Entities;
+using SlideGenerator.Services.Generating.Workflows.Models;
 using Syncfusion.XlsIO;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
@@ -26,14 +24,15 @@ public sealed class ValidateRequest(ExcelEngine excelEngine, GateLocker gateLock
     /// <inheritdoc />
     public override async Task<ExecutionResult> RunAsync(IStepExecutionContext context)
     {
-        var data = (GeneratingData)context.Workflow.Data;
+        var data = (GeneratingTask)context.Workflow.Data;
         var sheet = Item.Sheet;
         var node = Item.Node;
         var slide = node.Slide;
 
         try
         {
-            await ValidateSheetAndSlideAsync(data, sheet, node, slide).ConfigureAwait(false);
+            await ValidateWorksheetAsync(data, sheet).ConfigureAwait(false);
+            await ValidatePresentationAndMapOutputAsync(data, sheet, node, slide).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -43,66 +42,48 @@ public sealed class ValidateRequest(ExcelEngine excelEngine, GateLocker gateLock
         return ExecutionResult.Next();
     }
 
-    private async Task ValidateSheetAndSlideAsync(GeneratingData data, SheetIdentifier sheet, MapNode node, SlideIdentifier slide)
+    private async Task ValidateWorksheetAsync(GeneratingTask data, SheetIdentifier sheet)
     {
-        #region 1. Validate Worksheet
-
         await gateLocker.AcquireAsync(GateType.ReadWorkbook).ConfigureAwait(false);
         try
         {
-            if (!File.Exists(sheet.BookPath))
-                throw new FileNotFoundException("Workbook not found.", sheet.BookPath);
+            var workbook = data.GetOrOpenWorkbook(excelEngine, sheet);
 
-            var workbook =
-                excelEngine.Excel.Workbooks.Open(sheet.BookPath, ExcelParseOptions.Default, true,
-                    sheet.BookPassword);
-            try
-            {
-                var worksheet = workbook.Worksheets[sheet.SheetName];
-                if (worksheet == null)
-                    throw new ArgumentException(
-                        $"Sheet '{sheet.SheetName}' not found in workbook '{Path.GetFileName(sheet.BookPath)}'.");
-            }
-            finally
-            {
-                workbook.Close();
-            }
+            var worksheet = workbook.Worksheets[sheet.SheetName];
+            if (worksheet == null)
+                throw new ArgumentException(
+                    $"Sheet '{sheet.SheetName}' not found in workbook '{Path.GetFileName(sheet.BookPath)}'.");
         }
         finally
         {
             gateLocker.Release(GateType.ReadWorkbook);
         }
+    }
 
-        #endregion
-
-        #region 2. Validate Slide & Output
-
+    private async Task ValidatePresentationAndMapOutputAsync(GeneratingTask data, SheetIdentifier sheet, MapNode node,
+        SlideIdentifier slide)
+    {
         await gateLocker.AcquireAsync(GateType.ReadPresentation).ConfigureAwait(false);
         try
         {
-            if (!File.Exists(slide.PresentationPath))
-                throw new FileNotFoundException("Presentation template not found.", slide.PresentationPath);
+            var template = data.GetOrOpenTemplate(slide);
 
-            using var wrapper = new SfPresentation(slide.PresentationPath, false, slide.PresentationPassword);
-            var presentation = wrapper.Value;
-
-            if (slide.SlideIndex == 0 || slide.SlideIndex > presentation.Slides.Count)
+            var presentation = template.Value;
+            if (slide.SlideIndex <= 0 || slide.SlideIndex > presentation.Slides.Count)
                 throw new ArgumentException(
                     $"Slide index {slide.SlideIndex} is out of range for '{Path.GetFileName(slide.PresentationPath)}' (Count: {presentation.Slides.Count}).");
 
             // Successful validation: Prepare output mapping
             var bookName = Path.GetFileNameWithoutExtension(sheet.BookPath);
             var outputFileName =
-                $"{Utilities.NormalizeFileName(sheet.SheetName)}{Path.GetExtension(slide.PresentationPath)}";
+                $"{Settings.Utilities.NormalizeFileName(sheet.SheetName)}{Path.GetExtension(slide.PresentationPath)}";
             var outputPath = Path.Combine(data.Request.SaveFolder, bookName, outputFileName);
 
-            data.ValidWorksheets.TryAdd(sheet, new ValidatedWorksheet(sheet, outputPath, slide, node));
+            data.ValidWorksheets.TryAdd(sheet, new SheetTask(sheet, slide, node, outputPath));
         }
         finally
         {
             gateLocker.Release(GateType.ReadPresentation);
         }
-
-        #endregion
     }
 }

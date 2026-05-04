@@ -1,8 +1,8 @@
 using System.Collections.Concurrent;
-using SlideGenerator.Gate.Models;
+using SlideGenerator.Coordinator.Models;
 using SlideGenerator.Settings.Interfaces;
 
-namespace SlideGenerator.Gate.Services;
+namespace SlideGenerator.Coordinator.Services;
 
 /// <summary>
 ///     High-level concurrency gate for <see cref="GateType"/>.

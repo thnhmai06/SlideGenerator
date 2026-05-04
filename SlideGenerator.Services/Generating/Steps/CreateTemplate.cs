@@ -1,6 +1,6 @@
-using SlideGenerator.Gate.Models;
-using SlideGenerator.Gate.Services;
-using SlideGenerator.Services.Generating.Workflows;
+using SlideGenerator.Coordinator.Models;
+using SlideGenerator.Coordinator.Services;
+using SlideGenerator.Services.Generating.Workflows.Models;
 using SlideGenerator.Slides.Entities;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
@@ -21,7 +21,7 @@ public sealed class CreateTemplate(GateLocker gateLocker) : StepBodyAsync
     /// <inheritdoc />
     public override async Task<ExecutionResult> RunAsync(IStepExecutionContext context)
     {
-        var data = (GeneratingData)context.Workflow.Data;
+        var data = (GeneratingTask)context.Workflow.Data;
 
         if (!data.ValidWorksheets.TryGetValue(Item.Sheet, out var worksheet))
         {
@@ -32,7 +32,7 @@ public sealed class CreateTemplate(GateLocker gateLocker) : StepBodyAsync
         {
             try
             {
-                await CreateTemplateFileAsync(worksheet).ConfigureAwait(false);
+                await CreateTemplateFileAsync(data, worksheet).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -43,10 +43,10 @@ public sealed class CreateTemplate(GateLocker gateLocker) : StepBodyAsync
         return ExecutionResult.Next();
     }
 
-    private async Task CreateTemplateFileAsync(ValidatedWorksheet validatedSheet)
+    private async Task CreateTemplateFileAsync(GeneratingTask data, SheetTask validatedSheet)
     {
         // 1. Ensure output directory exists
-        var outputDir = Path.GetDirectoryName(validatedSheet.OutputPresentationPath);
+        var outputDir = Path.GetDirectoryName(validatedSheet.OutputPath);
         if (outputDir != null)
         {
             if (Directory.Exists(outputDir)) Directory.Delete(outputDir, true);
@@ -54,20 +54,22 @@ public sealed class CreateTemplate(GateLocker gateLocker) : StepBodyAsync
         }
 
         // 2. Copy the template to the output path (overwrite if it exists)
-        File.Copy(validatedSheet.TemplateSlide.PresentationPath, validatedSheet.OutputPresentationPath);
+        File.Copy(validatedSheet.TemplateSlide.PresentationPath, validatedSheet.OutputPath);
 
         // 3. Isolate template slide (Delete all other slides)
         await gateLocker.AcquireAsync(GateType.EditPresentation).ConfigureAwait(false);
         try
         {
-            using var wrapper = new SfPresentation(
-                validatedSheet.OutputPresentationPath, true,
+            var wrapper = new SfPresentation(
+                validatedSheet.OutputPath, true,
                 validatedSheet.TemplateSlide.PresentationPassword);
+            data.OutputHandles.TryAdd(validatedSheet.OutputPath, wrapper);
+
             var presentation = wrapper.Value;
             
             // Remove all slides except the one at targetIndex.
             // Iterate backwards to safely remove by index.
-            var templateIndex = (int)validatedSheet.TemplateSlide.SlideIndex - 1;
+            var templateIndex = validatedSheet.TemplateSlide.SlideIndex - 1;
             for (var i = presentation.Slides.Count - 1; i >= 0; i--)
                 if (i != templateIndex) presentation.Slides.RemoveAt(i);
             

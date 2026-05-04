@@ -1,8 +1,8 @@
 using SlideGenerator.Cloud.Services;
+using SlideGenerator.Coordinator.Models;
+using SlideGenerator.Coordinator.Services;
 using SlideGenerator.Download.Services;
-using SlideGenerator.Gate.Models;
-using SlideGenerator.Gate.Services;
-using SlideGenerator.Services.Generating.Workflows;
+using SlideGenerator.Services.Generating.Workflows.Models;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
 
@@ -27,7 +27,7 @@ public sealed class DownloadImage(
     /// <inheritdoc />
     public override async Task<ExecutionResult> RunAsync(IStepExecutionContext context)
     {
-        var data = (GeneratingData)context.Workflow.Data;
+        var data = (GeneratingTask)context.Workflow.Data;
 
         // Idempotency: skip if file already exists
         if (File.Exists(Task.DownloadPath))

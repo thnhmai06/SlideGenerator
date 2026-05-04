@@ -21,7 +21,7 @@ Orchestration
 
 | Category | Modules | Responsibility |
 |---|---|---|
-| **Foundation** | Registry, Settings, Cloud | No external dependencies; core infrastructure |
+| **Foundation** | Settings, Cloud | No external dependencies; core infrastructure |
 | **Core Services** | Gate, Download, Sheets | Depend on Settings; shared capabilities |
 | **Features** | Images, Slides | Domain-specific operations |
 | **Orchestration** | Workflows | Coordinates module composition |

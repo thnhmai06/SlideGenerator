@@ -11,7 +11,7 @@
         <PackageReference Remove="StyleCop.Analyzers" />
     </ItemGroup>
     <ItemGroup>
-        <ProjectReference Include="..\SlideGenerator.Gate\SlideGenerator.Gate.csproj" />
+        <ProjectReference Include="..\SlideGenerator.Coordinator\SlideGenerator.Coordinator.csproj" />
         <ProjectReference Include="..\SlideGenerator.Settings\SlideGenerator.Settings.csproj" />
     </ItemGroup>
     <ItemGroup>

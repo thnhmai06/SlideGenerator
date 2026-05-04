@@ -1,10 +1,10 @@
 using System.Drawing;
 using ImageMagick;
-using SlideGenerator.Gate.Models;
-using SlideGenerator.Gate.Services;
+using SlideGenerator.Coordinator.Models;
+using SlideGenerator.Coordinator.Services;
 using SlideGenerator.Images;
 using SlideGenerator.Images.Services;
-using SlideGenerator.Services.Generating.Workflows;
+using SlideGenerator.Services.Generating.Workflows.Models;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
 
@@ -27,7 +27,7 @@ public sealed class EditImage(
     /// <inheritdoc />
     public override async Task<ExecutionResult> RunAsync(IStepExecutionContext context)
     {
-        var data = (GeneratingData)context.Workflow.Data;
+        var data = (GeneratingTask)context.Workflow.Data;
         var finalEditPath = Task.EditPath + ".png";
 
         // Idempotency: skip if the file already exists
@@ -47,7 +47,7 @@ public sealed class EditImage(
             sourceFile = Directory.GetFiles(downloadDir, $"{downloadPrefix}.*").FirstOrDefault();
         }
 
-        // Use fallback if primary source is missing
+        // Use fallback if a primary source is missing
         if (sourceFile == null || !File.Exists(sourceFile))
         {
             if (!string.IsNullOrWhiteSpace(Task.FallbackImagePath) && File.Exists(Task.FallbackImagePath))
@@ -85,7 +85,7 @@ public sealed class EditImage(
             // 2. Crop the image to the ROI
             image.Crop(new MagickGeometry(roi.X, roi.Y, (uint)roi.Width, (uint)roi.Height));
 
-            // 3. Resize with maintained aspect ratio to fit the target shape dimensions
+            // 3. Resize with a maintained aspect ratio to fit the target shape dimensions
             var currentSize = new Size((int)image.Width, (int)image.Height);
             var maxAspectSize = currentSize.GetMaxAspectSize(targetSize);
             image.Resize(new MagickGeometry((uint)maxAspectSize.Width, (uint)maxAspectSize.Height));
