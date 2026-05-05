@@ -1,4 +1,4 @@
-namespace SlideGenerator.Cloud.Models;
+﻿namespace SlideGenerator.Cloud.Models;
 
 public enum CloudResolverKey
 {

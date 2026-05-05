@@ -1,8 +1,8 @@
-using Serilog;
+﻿using Serilog;
 using SlideGenerator.Coordinator.Models;
 using SlideGenerator.Coordinator.Services;
 using SlideGenerator.Pipelines.Generating.Workflows.Models;
-using SlideGenerator.Slides.Services;
+using SlideGenerator.Documents.PowerPoint.Services;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
 using IShape = Syncfusion.Presentation.IShape;

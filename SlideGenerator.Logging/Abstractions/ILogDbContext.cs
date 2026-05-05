@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using SlideGenerator.Logging.Models;
 
 namespace SlideGenerator.Logging.Abstractions;

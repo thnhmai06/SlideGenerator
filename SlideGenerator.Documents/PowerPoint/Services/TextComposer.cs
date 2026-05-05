@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
@@ -6,7 +6,7 @@ using Stubble.Core;
 using Stubble.Core.Builders;
 using Syncfusion.Presentation;
 
-namespace SlideGenerator.Slides.Services;
+namespace SlideGenerator.Documents.PowerPoint.Services;
 
 /// <summary>
 ///     Replaces mustache-style placeholders in Syncfusion presentation shapes using Stubble template engine

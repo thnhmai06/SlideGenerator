@@ -1,4 +1,4 @@
-using SlideGenerator.Settings.Settings;
+﻿using SlideGenerator.Settings.Settings;
 
 namespace SlideGenerator.Settings.Interfaces;
 

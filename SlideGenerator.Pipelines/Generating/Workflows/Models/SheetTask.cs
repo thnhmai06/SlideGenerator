@@ -1,4 +1,4 @@
-using SlideGenerator.Pipelines.Generating.Models;
+﻿using SlideGenerator.Pipelines.Generating.Models;
 using SlideGenerator.Pipelines.Generating.Models.Identifiers;
 
 namespace SlideGenerator.Pipelines.Generating.Workflows.Models;

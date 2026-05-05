@@ -1,4 +1,4 @@
-using SlideGenerator.Slides.Models;
+﻿using SlideGenerator.Documents.PowerPoint.Models;
 
 namespace SlideGenerator.Pipelines.Generating.Models;
 

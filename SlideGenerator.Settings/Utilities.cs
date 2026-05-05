@@ -1,4 +1,4 @@
-namespace SlideGenerator.Settings;
+﻿namespace SlideGenerator.Settings;
 
 /// <summary>
 ///     Provides common utility methods for processing and normalizing data used throughout the application.

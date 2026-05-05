@@ -1,4 +1,4 @@
-using OpenCvSharp;
+﻿using OpenCvSharp;
 using SlideGenerator.Images.Models;
 
 namespace SlideGenerator.Images.Entities.Detectors;

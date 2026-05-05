@@ -1,4 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Serilog.Events;
 using Serilog.Sinks.PeriodicBatching;
 using SlideGenerator.Logging.Abstractions;

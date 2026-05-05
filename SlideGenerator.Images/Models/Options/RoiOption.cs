@@ -1,4 +1,4 @@
-namespace SlideGenerator.Images.Models.Options;
+﻿namespace SlideGenerator.Images.Models.Options;
 
 /// <summary>
 ///     Provides customization options for ROI calculation.

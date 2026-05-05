@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Drawing;
 using ImageMagick;
 using Microsoft.Extensions.Logging;

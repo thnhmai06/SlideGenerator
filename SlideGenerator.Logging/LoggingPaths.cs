@@ -1,4 +1,4 @@
-namespace SlideGenerator.Logging;
+﻿namespace SlideGenerator.Logging;
 
 /// <summary>
 ///     Defines filesystem paths used by the logging module.

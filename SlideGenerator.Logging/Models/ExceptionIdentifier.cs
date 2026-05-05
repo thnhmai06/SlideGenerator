@@ -1,4 +1,4 @@
-namespace SlideGenerator.Logging.Models;
+﻿namespace SlideGenerator.Logging.Models;
 
 /// <summary>
 ///     A lightweight, serializable representation of an exception.

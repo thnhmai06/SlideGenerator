@@ -9,37 +9,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3a1f1c77-0578-40bf-9d5d-a0e8452562c2" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/SlideGenerator.Logging/LoggingPaths.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/appsettings.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.SlideGenerator/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.SlideGenerator/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Cloud/Resolvers/CloudResolver.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Cloud/Resolvers/CloudResolver.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Cloud/Resolvers/GoogleDriveResolver.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Cloud/Resolvers/GoogleDriveResolver.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Cloud/Resolvers/GooglePhotosResolver.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Cloud/Resolvers/GooglePhotosResolver.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Cloud/Resolvers/OneDriveResolver.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Cloud/Resolvers/OneDriveResolver.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Cloud/Resolvers/SharePointResolver.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Cloud/Resolvers/SharePointResolver.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Cloud/Services/MultiCloudResolver.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Cloud/Services/MultiCloudResolver.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Cloud/SlideGenerator.Cloud.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Cloud/SlideGenerator.Cloud.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Coordinator/Registration.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Coordinator/Registration.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Coordinator/Services/GateLocker.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Coordinator/Services/GateLocker.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Coordinator/SlideGenerator.Coordinator.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Coordinator/SlideGenerator.Coordinator.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Download/Services/DownloadService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Download/Services/DownloadService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Download/SlideGenerator.Download.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Download/SlideGenerator.Download.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Images/Registration.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Images/Registration.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Images/Services/RoiResolver.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Images/Services/RoiResolver.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Images/SlideGenerator.Images.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Images/SlideGenerator.Images.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Logging/Registration.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Logging/Registration.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Logging/SlideGenerator.Logging.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Logging/SlideGenerator.Logging.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Pipelines/Generating/Steps/ExtractData.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Pipelines/Generating/Steps/ExtractData.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Pipelines/Generating/Steps/ReplaceSlideData.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Pipelines/Generating/Steps/ReplaceSlideData.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Pipelines/Generating/Utilities.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Pipelines/Generating/Utilities.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Pipelines/Scanning/ScanningService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Pipelines/Scanning/ScanningService.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Settings/Services/SettingManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Settings/Services/SettingManager.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Settings/SlideGenerator.Settings.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Settings/SlideGenerator.Settings.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Slides/Services/ImageComposer.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Slides/Services/ImageComposer.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Slides/Services/TextComposer.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Slides/Services/TextComposer.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.Slides/SlideGenerator.Slides.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.Slides/SlideGenerator.Slides.csproj" afterDir="false" />
-    </list>
+    <list default="true" id="3a1f1c77-0578-40bf-9d5d-a0e8452562c2" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -117,6 +87,7 @@
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/4e09f6ff7c574a38a6cb04165745f695f45908/44/3e534e70/AsyncLocal`1.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/5fa4ad73dc114186935bd5cb6b89281716b18/f4/83341e1e/HttpClientFactoryServiceCollectionExtensions.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/6c8cecbd329e4134b46fcebcbe7886be21fc00/16/f0e0f8b0/IBaseSlide.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/7db04a06c59049ea9fe88e587c4fbb6714000/44/84abaf83/SyncfusionLicenseProvider.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/a344d5234cda41fbb887e67f5efa58d0bba00/0b/71c40b3e/ForEach`1.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/DecompilerCache/decompiler/a344d5234cda41fbb887e67f5efa58d0bba00/b9/0a942041/Container.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/SourcesCache/17f16a5814c3cb737befcff401e930e6fa815a6e07168dda4bbea848e4911/ConfiguredValueTaskAwaitable.cs" root0="SKIP_HIGHLIGHTING" />
@@ -324,22 +295,6 @@
       <workItem from="1777805580498" duration="15986000" />
       <workItem from="1777863175670" duration="13937000" />
       <workItem from="1777897507627" duration="6168000" />
-    </task>
-    <task id="LOCAL-00005" summary="feat: introduce download management and configuration settings&#10;&#10;- Add FileDownloadInfo and FileDownloader classes for managing file downloads (encapsulates download lifecycle).&#10;- Implement DownloadManager to handle concurrent downloads and check completion status.&#10;- Rename Config classes to Setting for consistency in domain structure.">
-      <option name="closed" value="true" />
-      <created>1773507423076</created>
-      <option name="number" value="00005" />
-      <option name="presentableId" value="LOCAL-00005" />
-      <option name="project" value="LOCAL" />
-      <updated>1773507423076</updated>
-    </task>
-    <task id="LOCAL-00006" summary="feat(sheet): add GetHeadersName method to WorksheetService&#10;&#10;- Introduced GetHeadersName method to retrieve column headers from the first row of a specified content range (enhances data retrieval capabilities).&#10;- Refactored GetRowContent method to maintain functionality while improving code structure.">
-      <option name="closed" value="true" />
-      <created>1773508510664</created>
-      <option name="number" value="00006" />
-      <option name="presentableId" value="LOCAL-00006" />
-      <option name="project" value="LOCAL" />
-      <updated>1773508510664</updated>
     </task>
     <task id="LOCAL-00007" summary="feat(sheet): add GetHeadersName method to WorksheetService&#10;&#10;- Introduced GetHeadersName method to retrieve column headers from the first row of a specified content range (enhances data retrieval capabilities).&#10;- Refactored GetRowContent method to maintain functionality while improving code structure.">
       <option name="closed" value="true" />
@@ -717,7 +672,23 @@
       <option name="project" value="LOCAL" />
       <updated>1777907409475</updated>
     </task>
-    <option name="localTasksCounter" value="54" />
+    <task id="LOCAL-00054" summary="feat(logging): add Serilog configuration and logging paths&#10;&#10;- Introduced appsettings.json for Serilog configuration (enables structured logging).&#10;- Added LoggingPaths class to define log folder path (centralizes logging path management).&#10;- Updated service registrations to include logging services (enhances logging capabilities).">
+      <option name="closed" value="true" />
+      <created>1777953153355</created>
+      <option name="number" value="00054" />
+      <option name="presentableId" value="LOCAL-00054" />
+      <option name="project" value="LOCAL" />
+      <updated>1777953153355</updated>
+    </task>
+    <task id="LOCAL-00055" summary="refactor: update namespaces and improve code structure for document handling&#10;&#10;- Changed references from SlideGenerator.Slides and SlideGenerator.Sheets to SlideGenerator.Documents in multiple files (to unify document handling).&#10;- Added new document-related services and utilities for PowerPoint and Excel (to enhance functionality and maintainability).">
+      <option name="closed" value="true" />
+      <created>1777958842056</created>
+      <option name="number" value="00055" />
+      <option name="presentableId" value="LOCAL-00055" />
+      <option name="project" value="LOCAL" />
+      <updated>1777958842056</updated>
+    </task>
+    <option name="localTasksCounter" value="56" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -802,8 +773,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
-    <MESSAGE value="refactor(workflows): Decouple Application layer from Elsa workflow engine&#10;&#10;- Introduced a custom workflow DSL (`Activity`, `Sequence`, `ForEach`, `ParallelForEach`, `Inline`, `SlotGated`) and state management (`Variable`, `IExecutionContext`) in the Application layer.&#10;- Added `IActivityFactory` to abstract workflow activity creation.&#10;- Migrated all generation workflow activities to use the new Application-layer DSL, removing direct Elsa dependencies (e.g., `Input&lt;T&gt;`, `Output&lt;T&gt;`, `ActivityExecutionContext`).&#10;- Refactored `GeneratingWorkflow` to construct the execution tree using the new `IActivityFactory` and strongly-typed context variables.&#10;- Introduced `WorksheetContextRules` to standardize workflow variable keys for the generation process.&#10;- Implemented Elsa-specific adapters (`ElsaSequence`, `ElsaInline`, `ElsaForEach`, `ElsaParallelForEach`, `ElsaSlotGated`, `ElsaVariable`, `ElsaExecutionContext`) and `ElsaActivityFactory` in the Infrastructure layer.&#10;- Reorganized the project structure by moving generating and scanning components to the `Services` namespace.&#10;- Updated `CLAUDE.md` to document the architectural constraint that Elsa dependencies must reside exclusively in the Infrastructure layer." />
-    <MESSAGE value="docs: add comprehensive XML documentation and minor refactorings&#10;&#10;- Added extensive XML documentation to interfaces, classes, properties, and methods across the Domain, Application, and Infrastructure layers to improve maintainability.&#10;- Relocated IClientService to the Cloud.Abstractions namespace for better logical organization.&#10;- Enhanced resource management by adding GC.SuppressFinalize(this) to the Dispose methods of Mat, StreamTextFile, and YuNet.&#10;- Improved thread safety in YuNet.DeInitAsync by ensuring the semaphore is released within a try-finally block.&#10;- Removed the obsolete ImageReplacer class in favor of using PictureReplacer and BlipFillReplacer directly.&#10;- Corrected an exception message typo in StreamTextFile.Write to accurately reflect read-only file states." />
     <MESSAGE value="chore(backend): clean up and reformat code" />
     <MESSAGE value="refactor(generating): resolve instructions per-row instead of pre-flattening&#10;&#10;- Introduced the `InstructionResolver` service to evaluate general instructions against row content and produce specialized instructions with actual values.&#10;- Updated the `ISpecializable.Flatten` method signature to require row data, shifting value resolution logic to the execution phase.&#10;- Modified `SpecializedInstruction` models for both images and texts to store resolved values (`Uri` and `string`) rather than column source definitions.&#10;- Refactored the `SpecializeInstructions` activity to filter and store general instructions in the context, removing premature flattening.&#10;- Adapted `ResolveImageUrls`, `DownloadImage`, `ResolveImagePathsFromDisk`, and `ReplaceSlideContents` activities to process the new instruction structure and per-row resolved values.&#10;- Added a `Utilities.NormalizeUri` helper to standardize URI formatting during image resolution." />
     <MESSAGE value="refactor(workflows)!: transition to custom C# DSL and WorkflowCore&#10;&#10;- Introduced a custom Workflow-as-Code DSL (e.g., `SequenceNode`, `ForEachNode`, `TryNode`, `SlotGatedNode`) in the Application layer.&#10;- Implemented strongly-typed, stateless `Variable&lt;T&gt;` and `IActivityContext` for lexical scoping and isolated state management across concurrent branches.&#10;- Integrated `WorkflowCore` in the Infrastructure layer to interpret and execute the custom DSL via a single `WcInterpreterStep`.&#10;- Refactored `GeneratingWorkflow` and all related activities to implement `ILeafActivity&lt;WorkflowTask&gt;`, completely removing dependencies on Elsa.&#10;- Added hierarchical state monitoring (`ExecutionState`, `WorkflowState`) and thread-safe, in-memory logging (`Logger`, `LogEntry`).&#10;- Replaced `ScanningService` with modular `ScanWorkbook` and `ScanPresentation` leaf activities.&#10;- Redesigned temporary output paths to use deterministic, hash-based folder structures for downloaded and edited images.&#10;- Renamed replacer abstractions to composers (e.g., `ITextReplacer` to `ITextComposer`, `IImageReplacer` to `IImageComposer`).&#10;- Extended the `IImage` interface and its `Mat` implementation with `Crop`, `Resize`, and `SaveAsync` capabilities.&#10;- Updated `INSTRUCTIONS.MD` and `CLAUDE.md` to document the new DSL architecture, variable scoping rules, and strict dependency constraints." />
@@ -827,7 +796,9 @@
     <MESSAGE value="docs: update architectural guidelines and AI assistant instructions&#10;&#10;- Updated `CLAUDE.md` to provide clearer guidance for AI assistants, reflecting recent architectural changes and module responsibilities.&#10;- Renamed references from the `Gate` module to `Coordinator` and added the new `SlideGenerator.Logging` module to the architecture maps in both `CLAUDE.md` and `INSTRUCTIONS.MD`.&#10;- Added a specific section detailing dependency injection registration methods for each module.&#10;- Clarified concurrency management guidelines using `GateLocker` and enumerated the available gate types.&#10;- Detailed the three-phase orchestration pipeline (Validation &amp; Setup, Resource Prep, Assembly &amp; Cleanup) and updated state tracking documentation to use the new `GeneratingTask` data model.&#10;- Updated the invariants checklist in `INSTRUCTIONS.MD` to explicitly restrict workflow constructors to only inject `IServiceProvider` rather than concrete services." />
     <MESSAGE value="refactor(workflows): centralize workflow-scoped logging in GeneratingTask&#10;&#10;- Introduced a `Logger` property and `TryInitLogger` method to `GeneratingTask` to cache a single, workflow-scoped logger enriched with the `TaskId`.&#10;- Updated all generating workflow steps (`CloseAllHandles`, `CreateTemplate`, `DownloadImage`, `EditImage`, `ExtractData`, `ReplaceSlideData`, `ValidateRequest`) to initialize and utilize the centralized `data.Logger`.&#10;- Removed redundant `logger.ForContext(&quot;TaskId&quot;, context.Workflow.Id)` calls throughout step execution and error handling blocks.&#10;- Refactored private helper methods (e.g., `ReadWorkbookMetadataAsync`, `CloneSlidesAndExtractShapeDataAsync`, `ApplyTextReplacements`, `CreateTemplateFileAsync`) by dropping the `IStepExecutionContext` parameter, as it is no longer needed for localized logger context enrichment." />
     <MESSAGE value="refactor(pipelines): rename Services project to Pipelines and update namespaces&#10;&#10;- Renamed the `SlideGenerator.Services` project to `SlideGenerator.Pipelines` and updated the `SlideGenerator.slnx` solution file.&#10;- Updated namespaces across all models, steps, workflows, and services (e.g., `Generating`, `Scanning`) to reflect the new `SlideGenerator.Pipelines` root namespace.&#10;- Moved `ILogDbContext` to the `Abstractions` folder within the `SlideGenerator.Logging` project and updated its namespace to `SlideGenerator.Logging.Abstractions`.&#10;- Updated `WorkflowDatabaseSink` to reference the new logging abstractions namespace.&#10;- Relocated `Pipeline.md` to the `Generating/Workflows/` directory.&#10;- Added a `.DotSettings` file to configure ReSharper code inspection for the `Pipelines` project." />
-    <option name="LAST_COMMIT_MESSAGE" value="refactor(pipelines): rename Services project to Pipelines and update namespaces&#10;&#10;- Renamed the `SlideGenerator.Services` project to `SlideGenerator.Pipelines` and updated the `SlideGenerator.slnx` solution file.&#10;- Updated namespaces across all models, steps, workflows, and services (e.g., `Generating`, `Scanning`) to reflect the new `SlideGenerator.Pipelines` root namespace.&#10;- Moved `ILogDbContext` to the `Abstractions` folder within the `SlideGenerator.Logging` project and updated its namespace to `SlideGenerator.Logging.Abstractions`.&#10;- Updated `WorkflowDatabaseSink` to reference the new logging abstractions namespace.&#10;- Relocated `Pipeline.md` to the `Generating/Workflows/` directory.&#10;- Added a `.DotSettings` file to configure ReSharper code inspection for the `Pipelines` project." />
+    <MESSAGE value="feat(logging): add Serilog configuration and logging paths&#10;&#10;- Introduced appsettings.json for Serilog configuration (enables structured logging).&#10;- Added LoggingPaths class to define log folder path (centralizes logging path management).&#10;- Updated service registrations to include logging services (enhances logging capabilities)." />
+    <MESSAGE value="refactor: update namespaces and improve code structure for document handling&#10;&#10;- Changed references from SlideGenerator.Slides and SlideGenerator.Sheets to SlideGenerator.Documents in multiple files (to unify document handling).&#10;- Added new document-related services and utilities for PowerPoint and Excel (to enhance functionality and maintainability)." />
+    <option name="LAST_COMMIT_MESSAGE" value="refactor: update namespaces and improve code structure for document handling&#10;&#10;- Changed references from SlideGenerator.Slides and SlideGenerator.Sheets to SlideGenerator.Documents in multiple files (to unify document handling).&#10;- Added new document-related services and utilities for PowerPoint and Excel (to enhance functionality and maintainability)." />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

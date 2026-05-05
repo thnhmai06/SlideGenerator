@@ -1,6 +1,6 @@
-using Syncfusion.Presentation;
+﻿using Syncfusion.Presentation;
 
-namespace SlideGenerator.Slides.Entities;
+namespace SlideGenerator.Documents.PowerPoint.Entities;
 
 /// <summary>
 ///     Wraps a Syncfusion IPresentation and its FileStream for proper disposal and saving.

@@ -1,4 +1,4 @@
-using System.Drawing;
+﻿using System.Drawing;
 using OpenCvSharp;
 using SlideGenerator.Images.Models;
 using Point = System.Drawing.Point;

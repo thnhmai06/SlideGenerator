@@ -1,11 +1,11 @@
-using SlideGenerator.Pipelines.Generating.Models.Identifiers;
+﻿using SlideGenerator.Pipelines.Generating.Models.Identifiers;
 using SlideGenerator.Pipelines.Scanning.Models.Sheets.Requests;
 using SlideGenerator.Pipelines.Scanning.Models.Sheets.Responses;
 using SlideGenerator.Pipelines.Scanning.Models.Slides.Requests;
 using SlideGenerator.Pipelines.Scanning.Models.Slides.Responses;
-using SlideGenerator.Sheets;
-using SlideGenerator.Slides.Entities;
-using SlideGenerator.Slides.Services;
+using SlideGenerator.Documents.Excel;
+using SlideGenerator.Documents.PowerPoint.Entities;
+using SlideGenerator.Documents.PowerPoint.Services;
 using Syncfusion.Presentation;
 using Syncfusion.XlsIO;
 
@@ -86,7 +86,7 @@ public sealed class ScanningService(ExcelEngine excelEngine, TextComposer textCo
 
             // Slide Preview
             byte[]? slidePreviewBytes = null;
-            if (request.GetPreview) slidePreviewBytes = Slides.Utilities.GetPreview(slide);
+            if (request.GetPreview) slidePreviewBytes = SlideGenerator.Documents.PowerPoint.Utilities.GetPreview(slide);
 
             // Text Placeholders
             var placeholders = shapes
@@ -99,7 +99,7 @@ public sealed class ScanningService(ExcelEngine excelEngine, TextComposer textCo
                 .Where(shape => shape is IPicture || shape.Fill.FillType == FillType.Picture)
                 .Select(shape => new ShapeSummary(
                     new ShapeIdentifier(id.PresentationPath, i + 1, shape.ShapeName ?? string.Empty, id.PresentationPassword),
-                    Slides.Utilities.GetBoundsF(shape))
+                    SlideGenerator.Documents.PowerPoint.Utilities.GetBoundsF(shape))
                 )
                 .ToList();
 

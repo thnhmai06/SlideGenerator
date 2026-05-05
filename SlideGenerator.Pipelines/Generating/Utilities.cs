@@ -1,6 +1,6 @@
-using SlideGenerator.Pipelines.Generating.Models.Identifiers;
+﻿using SlideGenerator.Pipelines.Generating.Models.Identifiers;
 using SlideGenerator.Pipelines.Generating.Workflows.Models;
-using SlideGenerator.Slides.Entities;
+using SlideGenerator.Documents.PowerPoint.Entities;
 using Syncfusion.XlsIO;
 
 namespace SlideGenerator.Pipelines.Generating;

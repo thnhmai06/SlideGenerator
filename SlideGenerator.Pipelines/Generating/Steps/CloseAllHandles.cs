@@ -1,4 +1,4 @@
-using Serilog;
+﻿using Serilog;
 using SlideGenerator.Pipelines.Generating.Workflows.Models;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;

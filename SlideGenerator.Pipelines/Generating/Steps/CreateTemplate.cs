@@ -1,8 +1,8 @@
-using Serilog;
+﻿using Serilog;
 using SlideGenerator.Coordinator.Models;
 using SlideGenerator.Coordinator.Services;
 using SlideGenerator.Pipelines.Generating.Workflows.Models;
-using SlideGenerator.Slides.Entities;
+using SlideGenerator.Documents.PowerPoint.Entities;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
 

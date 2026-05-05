@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using SlideGenerator.Settings.Rules;
 
 namespace SlideGenerator.Settings.Settings;

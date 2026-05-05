@@ -1,7 +1,6 @@
-<Solution>
+﻿<Solution>
     <Project Path="SlideGenerator.Images/SlideGenerator.Images.csproj" />
-    <Project Path="SlideGenerator.Slides/SlideGenerator.Slides.csproj" />
-    <Project Path="SlideGenerator.Sheets/SlideGenerator.Sheets.csproj" />
+    <Project Path="SlideGenerator.Documents/SlideGenerator.Documents.csproj" />
     <Project Path="SlideGenerator.Logging/SlideGenerator.Logging.csproj" />
     <Project Path="SlideGenerator.Pipelines/SlideGenerator.Pipelines.csproj" />
     <Project Path="SlideGenerator.Settings/SlideGenerator.Settings.csproj" />

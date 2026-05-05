@@ -1,8 +1,8 @@
-using ImageMagick;
+﻿using ImageMagick;
 using Microsoft.Extensions.Logging;
 using Syncfusion.Presentation;
 
-namespace SlideGenerator.Slides.Services;
+namespace SlideGenerator.Documents.PowerPoint.Services;
 
 /// <summary>
 ///     Provides utility methods for replacing image content in Syncfusion presentation shapes.

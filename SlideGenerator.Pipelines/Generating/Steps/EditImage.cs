@@ -1,4 +1,4 @@
-using System.Drawing;
+﻿using System.Drawing;
 using ImageMagick;
 using Serilog;
 using SlideGenerator.Coordinator.Models;

@@ -48,7 +48,7 @@ Orchestration
 Both **SlideGenerator.Images** and **SlideGenerator.Slides** now use **ImageMagick's MagickImage** as the primary image type:
 
 - **SlideGenerator.Images**: `RoiResolver`, ROI calculators, and utilities use `MagickImage`
-- **SlideGenerator.Slides**: Shape preview extraction and image composition use `MagickImage`
+- **SlideGenerator.Documents**: Shape preview extraction and image composition use `MagickImage`
 
 ### Image Format Handling
 

@@ -1,4 +1,4 @@
-using SlideGenerator.Pipelines.Generating.Steps;
+﻿using SlideGenerator.Pipelines.Generating.Steps;
 using SlideGenerator.Pipelines.Generating.Workflows.Models;
 using WorkflowCore.Interface;
 

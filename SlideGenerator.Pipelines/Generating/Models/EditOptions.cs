@@ -1,4 +1,4 @@
-using SlideGenerator.Images.Models.Options;
+﻿using SlideGenerator.Images.Models.Options;
 
 namespace SlideGenerator.Pipelines.Generating.Models;
 

@@ -1,4 +1,4 @@
-using System.Web;
+﻿using System.Web;
 using Microsoft.Extensions.Logging;
 
 namespace SlideGenerator.Cloud.Resolvers;

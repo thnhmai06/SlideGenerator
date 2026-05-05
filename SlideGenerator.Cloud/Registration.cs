@@ -1,4 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using SlideGenerator.Cloud.Services;
 
 namespace SlideGenerator.Cloud;

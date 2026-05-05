@@ -1,6 +1,6 @@
-using Syncfusion.XlsIO;
+﻿using Syncfusion.XlsIO;
 
-namespace SlideGenerator.Sheets;
+namespace SlideGenerator.Documents.Excel;
 
 public static class Utilities
 {

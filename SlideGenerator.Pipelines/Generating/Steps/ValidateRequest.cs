@@ -1,4 +1,4 @@
-using Serilog;
+﻿using Serilog;
 using SlideGenerator.Coordinator.Models;
 using SlideGenerator.Coordinator.Services;
 using SlideGenerator.Pipelines.Generating.Models;

@@ -1,8 +1,8 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using Serilog;
 using SlideGenerator.Pipelines.Generating.Models;
 using SlideGenerator.Pipelines.Generating.Models.Identifiers;
-using SlideGenerator.Slides.Entities;
+using SlideGenerator.Documents.PowerPoint.Entities;
 using Syncfusion.XlsIO;
 
 namespace SlideGenerator.Pipelines.Generating.Workflows.Models;

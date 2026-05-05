@@ -1,4 +1,4 @@
-namespace SlideGenerator.Settings.Settings;
+﻿namespace SlideGenerator.Settings.Settings;
 
 public sealed partial class Setting
 {

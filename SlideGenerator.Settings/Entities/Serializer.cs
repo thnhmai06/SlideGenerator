@@ -1,4 +1,4 @@
-namespace SlideGenerator.Settings.Entities;
+﻿namespace SlideGenerator.Settings.Entities;
 
 /// <summary>
 ///     Provides an abstraction for serializing and deserializing objects.

@@ -1,4 +1,4 @@
-using System.Drawing;
+﻿using System.Drawing;
 using System.Numerics;
 using ImageMagick;
 using SlideGenerator.Images.Entities.Detectors;

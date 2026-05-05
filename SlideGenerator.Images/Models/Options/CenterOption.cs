@@ -1,4 +1,4 @@
-using System.Numerics;
+﻿using System.Numerics;
 
 namespace SlideGenerator.Images.Models.Options;
 

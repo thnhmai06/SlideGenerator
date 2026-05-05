@@ -1,4 +1,4 @@
-namespace SlideGenerator.Settings.Settings;
+﻿namespace SlideGenerator.Settings.Settings;
 
 /// <summary>
 ///     Represents the root configuration entity containing all application settings.

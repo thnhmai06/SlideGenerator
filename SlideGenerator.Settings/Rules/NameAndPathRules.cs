@@ -1,4 +1,4 @@
-namespace SlideGenerator.Settings.Rules;
+﻿namespace SlideGenerator.Settings.Rules;
 
 /// <summary>
 ///     Defines naming conventions and constant values related to application settings.

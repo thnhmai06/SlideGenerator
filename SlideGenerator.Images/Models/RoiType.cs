@@ -1,4 +1,4 @@
-namespace SlideGenerator.Images.Models;
+﻿namespace SlideGenerator.Images.Models;
 
 /// <summary>Identifies the algorithm used to calculate the Region of Interest (ROI).</summary>
 public enum RoiType

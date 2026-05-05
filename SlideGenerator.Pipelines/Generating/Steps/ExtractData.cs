@@ -1,13 +1,13 @@
-using System.Drawing;
+﻿using System.Drawing;
 using Serilog;
 using SlideGenerator.Coordinator.Models;
 using SlideGenerator.Coordinator.Services;
 using SlideGenerator.Pipelines.Generating.Models.Identifiers;
 using SlideGenerator.Pipelines.Generating.Workflows.Models;
 using SlideGenerator.Settings.Interfaces;
-using SlideGenerator.Sheets;
-using SlideGenerator.Slides;
-using SlideGenerator.Slides.Services;
+using SlideGenerator.Documents.Excel;
+using SlideGenerator.Documents.PowerPoint;
+using SlideGenerator.Documents.PowerPoint.Services;
 using Syncfusion.XlsIO;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;

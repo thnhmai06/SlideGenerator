@@ -1,7 +1,7 @@
-using System.Drawing;
+﻿using System.Drawing;
 using Syncfusion.Presentation;
 
-namespace SlideGenerator.Slides;
+namespace SlideGenerator.Documents.PowerPoint;
 
 /// <summary>
 ///     Provides utility methods for Syncfusion presentation shape operations and image handling.

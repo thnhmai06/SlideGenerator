@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using SlideGenerator.Settings.Entities;
 using SlideGenerator.Settings.Interfaces;
 using SlideGenerator.Settings.Rules;

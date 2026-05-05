@@ -1,4 +1,4 @@
-namespace SlideGenerator.Pipelines.Generating.Models.Identifiers;
+﻿namespace SlideGenerator.Pipelines.Generating.Models.Identifiers;
 
 /// <summary>
 ///     Uniquely identifies an Excel workbook file.

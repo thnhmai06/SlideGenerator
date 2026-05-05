@@ -56,8 +56,7 @@ Orchestration
 | Cloud | `Registration.AddCloudServices()` |
 | Coordinator | `Registration.AddCoreServices()` |
 | Download | `Registration.AddDownloadServices()` |
-| Sheets | `Registration.AddSheetServices()` |
-| Images | `Registration.AddImageServices()` |
+| Documents | `Registration.AddDocumentServices()` |
 | Logging | `Registration.AddWorkflowLogging()` |
 
 ## Concurrency: GateLocker

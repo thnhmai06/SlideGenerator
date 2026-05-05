@@ -1,4 +1,4 @@
-using Downloader;
+﻿using Downloader;
 using Microsoft.Extensions.Logging;
 using SlideGenerator.Settings.Interfaces;
 

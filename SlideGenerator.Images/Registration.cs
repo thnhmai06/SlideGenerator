@@ -1,4 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using OpenCvSharp;
 using SlideGenerator.Images.Entities.Detectors;
 using SlideGenerator.Images.Services;

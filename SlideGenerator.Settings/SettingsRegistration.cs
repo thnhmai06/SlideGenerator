@@ -1,4 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using SlideGenerator.Settings.Entities;
 using SlideGenerator.Settings.Interfaces;
 using SlideGenerator.Settings.Services;
