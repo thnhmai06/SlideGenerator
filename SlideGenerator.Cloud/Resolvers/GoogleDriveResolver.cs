@@ -1,9 +1,10 @@
 using System.Text.RegularExpressions;
 using System.Web;
+using Microsoft.Extensions.Logging;
 
 namespace SlideGenerator.Cloud.Resolvers;
 
-internal sealed partial class GoogleDriveResolver : CloudResolver
+internal sealed partial class GoogleDriveResolver(ILogger logger) : CloudResolver(logger)
 {
     private static readonly Regex GoogleDriveFileIdPattern = GoogleDriveFileIdRegex();
 
@@ -12,6 +13,8 @@ internal sealed partial class GoogleDriveResolver : CloudResolver
         HttpClient httpClient,
         CancellationToken cancellationToken = default)
     {
+        Logger.LogDebug("Resolving Google Drive URI: {Uri}", supportedUri);
+
         string? fileId = null;
         var url = supportedUri.AbsoluteUri;
 
@@ -28,15 +31,22 @@ internal sealed partial class GoogleDriveResolver : CloudResolver
         }
         else if (supportedUri.AbsolutePath.Contains("/folders/"))
         {
+            Logger.LogDebug("Resolving Google Drive folder URI by fetching HTML content");
             var html = await httpClient.GetStringAsync(supportedUri, cancellationToken).ConfigureAwait(false);
             var match = GoogleDriveFileIdPattern.Match(html);
             if (match.Success)
                 fileId = match.Groups[1].Value;
         }
 
-        return !string.IsNullOrEmpty(fileId)
-            ? new Uri($"https://drive.google.com/uc?export=download&id={fileId}")
-            : supportedUri;
+        if (string.IsNullOrEmpty(fileId))
+        {
+            Logger.LogWarning("Could not extract File ID from Google Drive URI: {Uri}", supportedUri);
+            return supportedUri;
+        }
+
+        var resolvedUri = new Uri($"https://drive.google.com/uc?export=download&id={fileId}");
+        Logger.LogDebug("Resolved Google Drive URI to direct link: {ResolvedUri}", resolvedUri);
+        return resolvedUri;
     }
 
     public override bool IsUriSupported(Uri uri)

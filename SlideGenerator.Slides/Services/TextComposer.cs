@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging;
 using Stubble.Core;
 using Stubble.Core.Builders;
 using Syncfusion.Presentation;
@@ -28,7 +29,7 @@ namespace SlideGenerator.Slides.Services;
 ///         <item>Comma-separated (complex keys only): v1,v2,v3 → List of strings</item>
 ///     </list>
 /// </remarks>
-public static partial class TextComposer
+public sealed partial class TextComposer(ILogger<TextComposer> logger)
 {
     private static readonly StubbleVisitorRenderer Renderer = new StubbleBuilder()
         .Configure(settings => settings.SetEncodingFunction(value => value))
@@ -54,10 +55,12 @@ public static partial class TextComposer
     ///         <item>Uses case-insensitive key comparison</item>
     ///     </list>
     /// </remarks>
-    public static HashSet<string> Scan(IShape shape)
+    public HashSet<string> Scan(IShape shape)
     {
         var text = shape.TextBody?.Text;
         if (string.IsNullOrWhiteSpace(text)) return [];
+
+        logger.LogDebug("Scanning shape '{ShapeName}' for mustache placeholders", shape.ShapeName);
 
         var matches = TagRegex.Matches(text);
         var keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -70,6 +73,12 @@ public static partial class TextComposer
             // Normalize key: handles #, ^, &, >, and nested property access like key.prop
             var key = rawKey.TrimStart('#', '^', '&', '>', ' ').Split('.')[0];
             if (!string.IsNullOrWhiteSpace(key)) keys.Add(key);
+        }
+
+        if (keys.Count > 0)
+        {
+            logger.LogDebug("Found {Count} unique placeholders in shape '{ShapeName}': {Keys}", 
+                keys.Count, shape.ShapeName, string.Join(", ", keys));
         }
 
         return keys;
@@ -98,10 +107,12 @@ public static partial class TextComposer
     ///         <item>Consolidates text into first paragraph/part to avoid duplication</item>
     ///     </list>
     /// </remarks>
-    public static int Replace(IShape shape, IReadOnlyDictionary<string, string> instructions)
+    public int Replace(IShape shape, IReadOnlyDictionary<string, string> instructions)
     {
         if (shape.TextBody == null || instructions.Count == 0)
             return 0;
+
+        logger.LogDebug("Attempting text replacement for shape '{ShapeName}' with {Count} instructions", shape.ShapeName, instructions.Count);
 
         // 1. Build the full template from all paragraphs and text parts
         var templateBuilder = new StringBuilder();
@@ -110,7 +121,11 @@ public static partial class TextComposer
             templateBuilder.Append(part.Text);
 
         var template = templateBuilder.ToString();
-        if (string.IsNullOrWhiteSpace(template)) return 0;
+        if (string.IsNullOrWhiteSpace(template))
+        {
+            logger.LogDebug("Shape '{ShapeName}' has empty text body. Skipping replacement.", shape.ShapeName);
+            return 0;
+        }
 
         // 2. Identify keys used in complex contexts (sections, property access)
         var complexKeys = GetComplexKeys(template);
@@ -125,10 +140,15 @@ public static partial class TextComposer
 
         // 4. Render the template
         var rendered = Renderer.Render(template, data);
-        if (rendered == template) return 0;
+        if (rendered == template)
+        {
+            logger.LogDebug("Rendering produced no changes for shape '{ShapeName}'", shape.ShapeName);
+            return 0;
+        }
 
         // 5. Update the shape's text content
         UpdateShapeText(shape, rendered);
+        logger.LogDebug("Successfully updated text for shape '{ShapeName}'", shape.ShapeName);
 
         // Return the number of keys found in the original template that were in instructions
         return instructions.Keys.Count(k => template.Contains("{{" + k, StringComparison.OrdinalIgnoreCase)

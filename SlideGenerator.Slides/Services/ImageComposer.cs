@@ -1,16 +1,17 @@
 using ImageMagick;
+using Microsoft.Extensions.Logging;
 using Syncfusion.Presentation;
 
 namespace SlideGenerator.Slides.Services;
 
 /// <summary>
-///     Provides static utility methods for replacing image content in Syncfusion presentation shapes.
+///     Provides utility methods for replacing image content in Syncfusion presentation shapes.
 /// </summary>
 /// <remarks>
 ///     This composer handles image replacement for both IPicture shapes and shapes with picture fill,
 ///     supporting multiple input formats: MagickImage, Stream, and byte arrays.
 /// </remarks>
-public static class ImageComposer
+public sealed class ImageComposer(ILogger<ImageComposer> logger)
 {
     /// <summary>
     ///     Replaces the image content of a shape with the provided MagickImage.
@@ -23,7 +24,7 @@ public static class ImageComposer
     ///     The MagickImage is automatically converted to a byte array for storage in the shape.
     ///     Supports both IPicture shapes and shapes with picture fill.
     /// </remarks>
-    public static int Replace(IShape shape, MagickImage image)
+    public int Replace(IShape shape, MagickImage image)
     {
         ArgumentNullException.ThrowIfNull(image);
 
@@ -42,7 +43,7 @@ public static class ImageComposer
     ///     This method reads the entire stream into memory before updating the shape.
     ///     The stream position is not reset after reading.
     /// </remarks>
-    public static int Replace(IShape shape, Stream imageStream)
+    public int Replace(IShape shape, Stream imageStream)
     {
         ArgumentNullException.ThrowIfNull(imageStream);
 
@@ -66,12 +67,15 @@ public static class ImageComposer
     ///     </list>
     ///     <para>Other shape types return 0 (no replacement attempted).</para>
     /// </remarks>
-    public static int Replace(IShape shape, byte[] imageBytes)
+    public int Replace(IShape shape, byte[] imageBytes)
     {
+        logger.LogDebug("Attempting image replacement for shape '{ShapeName}' (Type: {Type})", shape.ShapeName, shape.GetType().Name);
+
         // Picture
         if (shape is IPicture picture)
         {
             picture.ImageData = imageBytes;
+            logger.LogDebug("Successfully replaced image for IPicture shape '{ShapeName}'", shape.ShapeName);
             return 1;
         }
 
@@ -79,9 +83,11 @@ public static class ImageComposer
         if (shape.Fill.FillType == FillType.Picture)
         {
             shape.Fill.PictureFill.ImageBytes = imageBytes;
+            logger.LogDebug("Successfully replaced image for picture-fill shape '{ShapeName}'", shape.ShapeName);
             return 1;
         }
 
+        logger.LogWarning("Shape '{ShapeName}' is not an IPicture and does not have picture fill. Skipping replacement.", shape.ShapeName);
         return 0;
     }
 }

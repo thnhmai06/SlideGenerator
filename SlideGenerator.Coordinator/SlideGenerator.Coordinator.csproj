@@ -8,6 +8,7 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.7" />
         <PackageReference Remove="StyleCop.Analyzers" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.7" />
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\SlideGenerator.Settings\SlideGenerator.Settings.csproj" />

@@ -16,7 +16,7 @@ namespace SlideGenerator.Pipelines.Scanning;
 ///     Extracts structural metadata, identifies placeholders, and generates visual previews.
 /// </summary>
 /// <param name="excelEngine">The Syncfusion Excel engine instance used for workbook operations.</param>
-public sealed class ScanningService(ExcelEngine excelEngine)
+public sealed class ScanningService(ExcelEngine excelEngine, TextComposer textComposer)
 {
     private const uint MaxPreviewRows = 20;
 
@@ -69,7 +69,7 @@ public sealed class ScanningService(ExcelEngine excelEngine)
     /// <param name="request">The request containing presentation path and preview options.</param>
     /// <returns>A summary of the presentation structure.</returns>
     /// <exception cref="FileNotFoundException">Thrown if the presentation path is invalid.</exception>
-    public static Task<PresentationSummary> ScanPresentationAsync(PresentationSummaryRequest request)
+    public Task<PresentationSummary> ScanPresentationAsync(PresentationSummaryRequest request)
     {
         var id = request.Identifier;
         if (!File.Exists(id.PresentationPath))
@@ -90,7 +90,7 @@ public sealed class ScanningService(ExcelEngine excelEngine)
 
             // Text Placeholders
             var placeholders = shapes
-                .SelectMany(TextComposer.Scan)
+                .SelectMany(textComposer.Scan)
                 .Distinct(StringComparer.Ordinal)
                 .ToList();
 

@@ -20,7 +20,7 @@ namespace SlideGenerator.Pipelines.Generating.Steps;
 ///     Opens Excel and Presentation once, clones template slides,
 ///     and generates all SlideTasks and ImageTasks required for the worksheet.
 /// </summary>
-public sealed class ExtractData(GateLocker gateLocker, ExcelEngine excelEngine, ISettingProvider settingProvider, ILogger logger)
+public sealed class ExtractData(GateLocker gateLocker, ExcelEngine excelEngine, ISettingProvider settingProvider, TextComposer textComposer, ILogger logger)
     : StepBodyAsync
 {
     public SheetTask Worksheet { get; init; } = null!;
@@ -97,7 +97,7 @@ public sealed class ExtractData(GateLocker gateLocker, ExcelEngine excelEngine, 
                         shape.ShapeName,
                         Worksheet.TemplateSlide.PresentationPassword);
 
-                    var tags = TextComposer.Scan(shape);
+                    var tags = textComposer.Scan(shape);
                     var bounds = shape.GetBoundsF();
                     shapeData[shapeId] = (shape.ShapeName, tags, bounds);
                 }

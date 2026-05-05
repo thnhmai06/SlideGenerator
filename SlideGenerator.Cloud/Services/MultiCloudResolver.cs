@@ -1,17 +1,18 @@
+using Microsoft.Extensions.Logging;
 using SlideGenerator.Cloud.Models;
 using SlideGenerator.Cloud.Resolvers;
 
 namespace SlideGenerator.Cloud.Services;
 
-public sealed class MultiCloudResolver
+public sealed class MultiCloudResolver(ILoggerFactory loggerFactory, ILogger<MultiCloudResolver> logger)
 {
     private readonly IReadOnlyDictionary<CloudResolverKey, CloudResolver> _resolvers =
         new Dictionary<CloudResolverKey, CloudResolver>
         {
-            { CloudResolverKey.GoogleDrive, new GoogleDriveResolver() },
-            { CloudResolverKey.GooglePhotos, new GooglePhotosResolver() },
-            { CloudResolverKey.OneDrive, new OneDriveResolver() },
-            { CloudResolverKey.SharePoint, new SharePointResolver() }
+            { CloudResolverKey.GoogleDrive, new GoogleDriveResolver(loggerFactory.CreateLogger<GoogleDriveResolver>()) },
+            { CloudResolverKey.GooglePhotos, new GooglePhotosResolver(loggerFactory.CreateLogger<GooglePhotosResolver>()) },
+            { CloudResolverKey.OneDrive, new OneDriveResolver(loggerFactory.CreateLogger<OneDriveResolver>()) },
+            { CloudResolverKey.SharePoint, new SharePointResolver(loggerFactory.CreateLogger<SharePointResolver>()) }
         }.AsReadOnly();
 
     public bool IsUriSupported(Uri uri, out CloudResolverKey key)
@@ -34,8 +35,13 @@ public sealed class MultiCloudResolver
         CancellationToken cancellationToken = default)
     {
         if (IsUriSupported(uri, out var key))
+        {
+            logger.LogDebug("URI {Uri} recognized as {CloudKey}. Delegating to specific resolver.", uri, key);
             return await _resolvers[key].ResolveUriAsync(uri, httpClient, cancellationToken)
                 .ConfigureAwait(false);
+        }
+
+        logger.LogDebug("URI {Uri} is not recognized as a supported cloud provider. Returning as-is.", uri);
         return uri;
     }
 }

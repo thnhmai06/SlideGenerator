@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using SlideGenerator.Coordinator.Services;
 using SlideGenerator.Settings.Interfaces;
 
@@ -8,7 +9,7 @@ public static class Registration
 {
     public static IServiceCollection AddCoreServices(this IServiceCollection services)
     {
-        services.AddSingleton<GateLocker>(s => new(s.GetRequiredService<ISettingProvider>()));
+        services.AddSingleton<GateLocker>();
         return services;
     }
 }

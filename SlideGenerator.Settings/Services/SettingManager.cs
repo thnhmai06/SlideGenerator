@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using SlideGenerator.Settings.Entities;
 using SlideGenerator.Settings.Interfaces;
 using SlideGenerator.Settings.Rules;
@@ -9,7 +10,8 @@ namespace SlideGenerator.Settings.Services;
 ///     Manages the loading, saving, and state of the application's <see cref="Setting" /> configuration.
 /// </summary>
 /// <param name="serializer">The serializer used to persist settings to disk.</param>
-public sealed class SettingManager(Serializer serializer) : ISettingProvider
+/// <param name="logger">The logger instance.</param>
+public sealed class SettingManager(Serializer serializer, ILogger<SettingManager> logger) : ISettingProvider
 {
     /// <summary>
     ///     Gets the full file path where settings are stored.
@@ -25,17 +27,23 @@ public sealed class SettingManager(Serializer serializer) : ISettingProvider
     /// <returns>True if the settings were successfully loaded; false if the file does not exist.</returns>
     public async Task<bool> Load()
     {
-        if (!File.Exists(FilePath)) return false;
+        if (!File.Exists(FilePath))
+        {
+            logger.LogInformation("Settings file not found at {Path}. Using default settings.", FilePath);
+            return false;
+        }
         
         try
         {
+            logger.LogDebug("Loading settings from {Path}", FilePath);
             var source = await File.ReadAllTextAsync(FilePath).ConfigureAwait(false);
             var loaded = serializer.Deserialize<Setting>(source);
             Current = loaded;
+            logger.LogInformation("Successfully loaded settings from {Path}", FilePath);
         }
         catch (Exception e)
         {
-            // TODO: Log e
+            logger.LogError(e, "Error loading settings from {Path}. Resetting to defaults.", FilePath);
             await ResetToDefaults().ConfigureAwait(false);
             return false;
         }
@@ -49,8 +57,18 @@ public sealed class SettingManager(Serializer serializer) : ISettingProvider
     /// <returns>True if the operation completed successfully.</returns>
     public async Task Save()
     {
-        var content = serializer.Serialize(Current);
-        await File.WriteAllTextAsync(FilePath, content).ConfigureAwait(false);
+        try
+        {
+            logger.LogDebug("Saving settings to {Path}", FilePath);
+            var content = serializer.Serialize(Current);
+            await File.WriteAllTextAsync(FilePath, content).ConfigureAwait(false);
+            logger.LogInformation("Successfully saved settings to {Path}", FilePath);
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "Error saving settings to {Path}", FilePath);
+            throw;
+        }
     }
     
     /// <summary>

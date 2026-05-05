@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Microsoft.Extensions.Logging;
 using SlideGenerator.Coordinator.Models;
 using SlideGenerator.Settings.Interfaces;
 
@@ -8,7 +9,7 @@ namespace SlideGenerator.Coordinator.Services;
 ///     High-level concurrency gate for <see cref="GateType"/>.
 ///     Manages per-gate limits dynamically using a pure counting mechanism.
 /// </summary>
-public sealed class GateLocker(ISettingProvider settingProvider) : IDisposable
+public sealed class GateLocker(ISettingProvider settingProvider, ILogger<GateLocker> logger) : IDisposable
 {
     /// <summary>
     ///     The dictionary of gate states, keyed by <see cref="GateType" />.
@@ -38,9 +39,11 @@ public sealed class GateLocker(ISettingProvider settingProvider) : IDisposable
             if (state.ActiveCount < limit)
             {
                 state.ActiveCount++;
+                logger.LogTrace("Acquired gate {Gate} (Active: {Count}/{Limit})", gate, state.ActiveCount, limit);
                 return;
             }
 
+            logger.LogDebug("Gate {Gate} reached limit ({Limit}). Waiting for admission.", gate, limit);
             var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
             var node = state.Waiters.AddLast(tcs);
             waitTask = tcs.Task;
@@ -60,6 +63,7 @@ public sealed class GateLocker(ISettingProvider settingProvider) : IDisposable
         try
         {
             await waitTask.ConfigureAwait(false);
+            logger.LogTrace("Acquired gate {Gate} after waiting (Active: {Count}/{Limit})", gate, state.ActiveCount, limit);
         }
         finally
         {
@@ -81,8 +85,13 @@ public sealed class GateLocker(ISettingProvider settingProvider) : IDisposable
         {
             state.TryAdmit(limit);
 
-            if (state.ActiveCount >= limit) return false;
+            if (state.ActiveCount >= limit)
+            {
+                logger.LogTrace("Failed to try-acquire gate {Gate} (Active: {Count}/{Limit})", gate, state.ActiveCount, limit);
+                return false;
+            }
             state.ActiveCount++;
+            logger.LogTrace("Try-acquired gate {Gate} (Active: {Count}/{Limit})", gate, state.ActiveCount, limit);
             return true;
         }
     }
@@ -100,6 +109,7 @@ public sealed class GateLocker(ISettingProvider settingProvider) : IDisposable
         lock (state)
         {
             if (state.ActiveCount > 0) state.ActiveCount--;
+            logger.LogTrace("Released gate {Gate} (Active: {Count}/{Limit})", gate, state.ActiveCount, limit);
             state.TryAdmit(limit);
         }
     }

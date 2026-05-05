@@ -17,7 +17,7 @@ public static class Registration
             new YuNet(
                 FaceDetectorYN.Create(ModelPath, string.Empty, InputSize, Confidence),
                 InputSize));
-        services.AddSingleton<RoiResolver>(sp => new(sp.GetRequiredService<FaceDetector>()));
+        services.AddSingleton<RoiResolver>();
         return services;
     }
 }

@@ -13,7 +13,7 @@ namespace SlideGenerator.Pipelines.Generating.Steps;
 ///     Fills a single slide with pre-calculated text and image replacements.
 ///     Avoids redundant file I/O by executing all replacements for a slide in one pass.
 /// </summary>
-public sealed class ReplaceSlideData(GateLocker gateLocker, ILogger logger) : StepBodyAsync
+public sealed class ReplaceSlideData(GateLocker gateLocker, ImageComposer imageComposer, TextComposer textComposer, ILogger logger) : StepBodyAsync
 {
     public SlideTask Task { get; init; } = null!;
 
@@ -71,7 +71,7 @@ public sealed class ReplaceSlideData(GateLocker gateLocker, ILogger logger) : St
         if (Task.TextReplacements.Count > 0)
         {
             data.Logger.Debug("Applying text replacements to shape '{ShapeName}' (Count: {Count})", shape.ShapeName, Task.TextReplacements.Count);
-            TextComposer.Replace(shape, Task.TextReplacements);
+            textComposer.Replace(shape, Task.TextReplacements);
         }
     }
 
@@ -88,7 +88,7 @@ public sealed class ReplaceSlideData(GateLocker gateLocker, ILogger logger) : St
                 data.Logger.Information("Replacing image for shape '{ShapeName}' with '{Path}'", shape.ShapeName, finalEditPath);
 
                 await using var imgStream = new FileStream(finalEditPath, FileMode.Open, FileAccess.Read);
-                ImageComposer.Replace(shape, imgStream);
+                imageComposer.Replace(shape, imgStream);
             }
             else
             {

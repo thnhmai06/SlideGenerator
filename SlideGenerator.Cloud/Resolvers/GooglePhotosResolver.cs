@@ -1,11 +1,12 @@
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging;
 
 namespace SlideGenerator.Cloud.Resolvers;
 
 /// <summary>
 ///     Provides access to Google Photos as a cloud provider, resolving album URLs to direct image links.
 /// </summary>
-internal sealed partial class GooglePhotosResolver : CloudResolver
+internal sealed partial class GooglePhotosResolver(ILogger logger) : CloudResolver(logger)
 {
     /// <summary>
     ///     A compiled regular expression for extracting direct image URLs from Google Photos HTML content.
@@ -18,15 +19,25 @@ internal sealed partial class GooglePhotosResolver : CloudResolver
         HttpClient httpClient,
         CancellationToken cancellationToken = default)
     {
+        Logger.LogDebug("Resolving Google Photos URI: {Uri}", supportedUri);
+
         var html = await httpClient.GetStringAsync(supportedUri, cancellationToken).ConfigureAwait(false);
         var match = GooglePhotosUrlPattern.Match(html);
-        if (!match.Success) return supportedUri;
+        
+        if (!match.Success)
+        {
+            Logger.LogWarning("Could not find direct image URL in Google Photos HTML for: {Uri}", supportedUri);
+            return supportedUri;
+        }
 
         var directUrl = match.Value;
         if (!directUrl.Contains('=') && !directUrl.EndsWith("=d"))
             directUrl += "=d"; // for raw quality
 
-        return new Uri(directUrl);
+        var resolvedUri = new Uri(directUrl);
+        Logger.LogDebug("Resolved Google Photos URI to direct link: {ResolvedUri}", resolvedUri);
+        
+        return resolvedUri;
     }
 
     /// <inheritdoc />
