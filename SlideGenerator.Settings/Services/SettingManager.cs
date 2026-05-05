@@ -59,6 +59,9 @@ public sealed class SettingManager(Serializer serializer, ILogger<SettingManager
         try
         {
             logger.LogDebug("Saving settings to {Path}", FilePath);
+            var folderName = Path.GetDirectoryName(FilePath);
+            if (!string.IsNullOrEmpty(folderName)) Directory.CreateDirectory(folderName);
+            
             var content = serializer.Serialize(Current);
             await File.WriteAllTextAsync(FilePath, content).ConfigureAwait(false);
             logger.LogInformation("Successfully saved settings to {Path}", FilePath);

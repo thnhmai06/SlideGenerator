@@ -24,6 +24,7 @@ using SlideGenerator.Settings;
 using SlideGenerator.Settings.Services;
 using StreamJsonRpc;
 using WorkflowCore.Interface;
+using System.Runtime.InteropServices;
 
 namespace SlideGenerator.Ipc;
 
@@ -34,6 +35,31 @@ namespace SlideGenerator.Ipc;
 /// </summary>
 internal static class Program
 {
+    public static readonly DateTime StartupTime = DateTime.UtcNow;
+    private static string? _logFilePath;
+    private static IHost? _currentHost;
+
+    // ── Native Interop for Shutdown Handling ─────────────────────────────────────
+
+    [DllImport("kernel32.dll")]
+    private static extern bool SetConsoleCtrlHandler(ConsoleCtrlDelegate handlerRoutine, bool add);
+
+    private delegate bool ConsoleCtrlDelegate(CtrlTypes ctrlType);
+
+    private enum CtrlTypes
+    {
+        // ReSharper disable once InconsistentNaming
+        CTRL_C_EVENT = 0, 
+        // ReSharper disable once InconsistentNaming
+        CTRL_BREAK_EVENT = 1,
+        // ReSharper disable once InconsistentNaming
+        CTRL_CLOSE_EVENT = 2,
+        // ReSharper disable once InconsistentNaming
+        CTRL_LOGOFF_EVENT = 5,
+        // ReSharper disable once InconsistentNaming
+        CTRL_SHUTDOWN_EVENT = 6
+    }
+
     /// <summary>Application entry point.</summary>
     /// <param name="args">Command-line arguments passed by the Tauri sidecar launcher.</param>
     public static async Task<int> Main(string[] args)
@@ -48,8 +74,28 @@ internal static class Program
             .AddCommandLine(args)
             .Build();
 
-        // 2. Initialize the logger module first
-        SlideGenerator.Logging.Registration.ConfigureStaticLogger(bootstrapConfig);
+        // 2. Generate log file path and initialize the logger module first
+        var logFileName = $"{DateTime.Now:yyyy-MM-dd HH-mm-ss}.log";
+        _logFilePath = Path.Combine(LoggingPaths.LogFolderPath, logFileName);
+        
+        SlideGenerator.Logging.Registration.ConfigureStaticLogger(bootstrapConfig, _logFilePath);
+        
+        PrintWelcomeMessage();
+
+        // Wire up native console control handler for 'X' button, Logoff, and Shutdown
+        SetConsoleCtrlHandler(ctrlType =>
+        {
+            Log.Warning("Native termination signal received: {CtrlType}. Flushing and exiting...", ctrlType);
+            
+            // Note: We have very limited time here before OS kills the process.
+            // We attempt a sync save and flush.
+            if (_currentHost != null)
+            {
+                SaveSettingsAsync(_currentHost.Services).GetAwaiter().GetResult();
+            }
+            Log.CloseAndFlush();
+            return false; // Let the next handler (or OS) deal with it
+        }, true);
 
         try
         {
@@ -72,14 +118,34 @@ internal static class Program
 #endif
             };
 
+            // Ensure logs are flushed on unexpected process exit
+            AppDomain.CurrentDomain.ProcessExit += (_, _) =>
+            {
+                Log.Information("Process exiting, flushing logs...");
+                Log.CloseAndFlush();
+            };
+
             var builder = Host.CreateApplicationBuilder(args);
             ConfigureServices(builder.Services, builder.Configuration);
 
-            var host = builder.Build();
+            using var host = builder.Build();
+            _currentHost = host;
+            
+            // Intercept Ctrl+C to trigger a clean shutdown via the host lifetime
+            var lifetime = host.Services.GetRequiredService<IHostApplicationLifetime>();
+            Console.CancelKeyPress += (_, e) =>
+            {
+                e.Cancel = true; // Prevent immediate termination
+                Log.Warning("Ctrl+C detected. Initiating graceful shutdown...");
+                lifetime.StopApplication();
+            };
+
+            await host.StartAsync();
+            
             var jsonOptions = BuildJsonSerializerOptions();
             await StartupAsync(host, jsonOptions);
-
-            return 0;
+            
+            await host.StopAsync();
         }
         catch (Exception ex)
         {
@@ -94,6 +160,7 @@ internal static class Program
         {
             await Log.CloseAndFlushAsync();
         }
+        return 0;
     }
 
     // ── Encoding ─────────────────────────────────────────────────────────────────
@@ -124,11 +191,11 @@ internal static class Program
     /// <param name="configuration">The application configuration, required by the logging module.</param>
     private static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
-        // Logging — stderr-only sinks; stdout is exclusively owned by the StreamJsonRpc layer.
-        services.AddSystemLogging(configuration);
+        Log.Information("Registering core services...");
+        services.AddSystemLogging(configuration, _logFilePath ?? string.Empty);
         services.AddWorkflowLogging();
 
-        // Domain modules — order follows the dependency graph (foundation → core → feature).
+        Log.Information("Registering domain modules...");
         services.AddSettingServices();
         services.AddDocumentServices();
         services.AddCoreServices();
@@ -138,10 +205,8 @@ internal static class Program
         services.AddGeneratingServices();
         services.AddTransient<ScanningService>();
 
-        // WorkflowCore — defaults to in-memory persistence and single-node concurrency.
+        Log.Information("Registering workflow and IPC infrastructure...");
         services.AddWorkflow();
-
-        // IPC handlers and supporting infrastructure.
         services.AddIpcServices();
     }
 
@@ -162,12 +227,21 @@ internal static class Program
 
         try
         {
+            Log.Information("Loading settings...");
             await LoadSettingsAsync(services);
+
+            Log.Information("Starting workflow host...");
             workflowHost = await StartWorkflowHostAsync(services);
+
+            Log.Information("Initializing JSON-RPC connection...");
             jsonRpc = CreateAndConfigureJsonRpc(services, jsonOptions);
             AttachProgressObserver(services, jsonRpc);
+            
+            Log.Information("Setup completed! Application is listening.");
 
-            await jsonRpc.Completion;
+            // Wait for either the RPC connection to close OR the host to signal shutdown (e.g. via Ctrl+C)
+            var lifetime = services.GetRequiredService<IHostApplicationLifetime>();
+            await Task.WhenAny(jsonRpc.Completion, Task.Delay(-1, lifetime.ApplicationStopping));
         }
         catch (Exception ex)
         {
@@ -180,6 +254,21 @@ internal static class Program
         {
             await TeardownAsync(host, services, workflowHost, jsonRpc);
         }
+    }
+
+    /// <summary>
+    ///     Prints the application welcome message and metadata from <see cref="WelcomeMessages" /> using the logger.
+    /// </summary>
+    private static void PrintWelcomeMessage()
+    {
+        Log.Information("\n{AsciiArt}", WelcomeMessages.Name);
+        Log.Information(WelcomeMessages.Line);
+        Log.Information(WelcomeMessages.Version);
+        Log.Information(WelcomeMessages.Description);
+        Log.Information(WelcomeMessages.Line);
+        Log.Information(WelcomeMessages.License);
+        Log.Information(WelcomeMessages.RepositoryUrl);
+        Log.Information(WelcomeMessages.Line);
     }
 
     /// <summary>Registers the generating workflow and starts the WorkflowCore host.</summary>
