@@ -9,7 +9,40 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3a1f1c77-0578-40bf-9d5d-a0e8452562c2" name="Changes" comment="" />
+    <list default="true" id="3a1f1c77-0578-40bf-9d5d-a0e8452562c2" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/CODE_OF_CONDUCT.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/CONTRIBUTING.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Documents/Eng/ARCHITECTURE.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Documents/Eng/CONTRIBUTING.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Documents/Eng/Modules/CLOUD.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Documents/Eng/Modules/COORDINATOR.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Documents/Eng/Modules/DOCUMENTS.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Documents/Eng/Modules/DOWNLOAD.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Documents/Eng/Modules/IMAGES.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Documents/Eng/Modules/IPC.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Documents/Eng/Modules/LOGGING.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Documents/Eng/Modules/PIPELINES.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Documents/Eng/Modules/SETTINGS.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Documents/Eng/README.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Documents/Vie/ARCHITECTURE.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Documents/Vie/CONTRIBUTING.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Documents/Vie/Modules/CLOUD.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Documents/Vie/Modules/COORDINATOR.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Documents/Vie/Modules/DOCUMENTS.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Documents/Vie/Modules/DOWNLOAD.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Documents/Vie/Modules/IMAGES.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Documents/Vie/Modules/IPC.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Documents/Vie/Modules/LOGGING.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Documents/Vie/Modules/PIPELINES.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Documents/Vie/Modules/SETTINGS.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Documents/Vie/README.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/conductor/plan.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.SlideGenerator/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.SlideGenerator/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CLAUDE.md" beforeDir="false" afterPath="$PROJECT_DIR$/CLAUDE.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SlideGenerator.Pipelines/Generating/Workflows/Pipeline.md" beforeDir="false" afterPath="$PROJECT_DIR$/Documents/Vie/PIPELINE.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Workflow.md" beforeDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -301,14 +334,6 @@
       <workItem from="1777805580498" duration="15986000" />
       <workItem from="1777863175670" duration="13937000" />
       <workItem from="1777897507627" duration="6168000" />
-    </task>
-    <task id="LOCAL-00010" summary="refactor!(backend): Merge Framework into Domain, Application, Infastructure (part 1)">
-      <option name="closed" value="true" />
-      <created>1774150322437</created>
-      <option name="number" value="00010" />
-      <option name="presentableId" value="LOCAL-00010" />
-      <option name="project" value="LOCAL" />
-      <updated>1774150322437</updated>
     </task>
     <task id="LOCAL-00011" summary="chore(backend): Make ReadOnlyWorksheet constructor internal">
       <option name="closed" value="true" />
@@ -694,7 +719,15 @@
       <option name="project" value="LOCAL" />
       <updated>1777993644184</updated>
     </task>
-    <option name="localTasksCounter" value="59" />
+    <task id="LOCAL-00059" summary="feat(ipc): implement JSON-RPC sidecar and enhance logging setup&#10;&#10;- Introduced a new `SlideGenerator.Ipc` project for JSON-RPC communication (enables integration with external clients).&#10;- Refactored logging initialization to include log file path and improved shutdown handling (ensures logs are flushed on exit).&#10;- Added welcome message display at startup (enhances user experience).">
+      <option name="closed" value="true" />
+      <created>1777993677924</created>
+      <option name="number" value="00059" />
+      <option name="presentableId" value="LOCAL-00059" />
+      <option name="project" value="LOCAL" />
+      <updated>1777993677924</updated>
+    </task>
+    <option name="localTasksCounter" value="60" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

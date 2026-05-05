@@ -17,9 +17,9 @@ dotnet clean
 
 SDK: .NET 10.0 (`global.json` pins to `latestMajor`).
 
-## Architecture: Modular Monolith
+## Architecture: Modular Monolith + IPC Sidecar
 
-SlideGenerator automates PowerPoint generation from Excel data and templates. It uses a **Modular Monolith** with independent modules coordinated via WorkflowCore orchestration.
+SlideGenerator automates PowerPoint generation from Excel data and templates. It uses a **Modular Monolith** with independent modules coordinated via WorkflowCore orchestration, exposed to a Tauri frontend through a JSON-RPC 2.0 IPC sidecar.
 
 ### Module Map
 
@@ -31,33 +31,84 @@ Foundation Modules (no external dependencies)
 Core Services (depend on Settings)
 ├── SlideGenerator.Coordinator   - Concurrency throttling; GateLocker + GateType enum
 ├── SlideGenerator.Download      - HTTP downloading with throttling and progress reporting
-└── SlideGenerator.Sheets        - Read-only Excel scanning via Syncfusion
+└── SlideGenerator.Documents     - Excel/PowerPoint scanning and processing via Syncfusion
 
 Feature Modules
 ├── SlideGenerator.Images        - MagickImage processing; ROI + face detection (OpenCV YuNet)
-├── SlideGenerator.Slides        - PowerPoint operations; Syncfusion + MagickImage
-└── SlideGenerator.Logging       - Database-backed Serilog sink via ILogDbContext (EF Core)
+└── SlideGenerator.Logging       - Serilog sinks: async rolling file + database (EF Core)
 
-Orchestration
-└── SlideGenerator.Services      - WorkflowCore workflows: Scanning + Generating
+Orchestration & Entry Point
+├── SlideGenerator.Pipelines     - WorkflowCore workflows: Scanning + Generating
+└── SlideGenerator.Ipc           - JSON-RPC 2.0 IPC sidecar (StreamJsonRpc over stdin/stdout)
 ```
 
 ### Dependency Rules
 
 - Dependencies flow downward only — no circular references.
 - Each module registers via its own `Registration.cs` (DI entry point).
-- `SlideGenerator.Services` is the only module that wires all others together.
+- `SlideGenerator.Ipc` is the executable entry point that wires all modules together.
 
 ## DI Registration Methods
 
 | Module | Extension Method |
 |---|---|
-| Settings | `SettingsRegistration.AddSettings()` |
-| Cloud | `Registration.AddCloudServices()` |
-| Coordinator | `Registration.AddCoreServices()` |
-| Download | `Registration.AddDownloadServices()` |
-| Documents | `Registration.AddDocumentServices()` |
-| Logging | `Registration.AddWorkflowLogging()` |
+| Settings | `AddSettingServices()` |
+| Cloud | `AddCloudServices()` |
+| Coordinator | `AddCoreServices()` |
+| Download | `AddDownloadServices()` |
+| Documents | `AddDocumentServices()` |
+| Images | `AddImageServices()` |
+| Logging | `AddSystemLogging(configuration, logFilePath)` / `AddWorkflowLogging()` |
+| Pipelines | `AddGeneratingServices()` |
+| Ipc | `AddIpcServices()` |
+
+## IPC Layer (SlideGenerator.Ipc)
+
+The IPC sidecar exposes 9 JSON-RPC 2.0 methods to the Tauri frontend over stdin/stdout using **StreamJsonRpc** with NDJSON framing (`NewLineDelimitedMessageHandler`) and STJ serialization (`SystemTextJsonFormatter`).
+
+### Stream ownership
+
+| Stream | Owner | Purpose |
+|---|---|---|
+| stdin | StreamJsonRpc | Incoming JSON-RPC requests |
+| stdout | StreamJsonRpc | Outgoing responses **and** notifications |
+| stderr | Serilog | System logs only |
+
+### JsonRpc setup
+
+`JsonRpc` is created **after** the DI container is built (in `Program.cs`) because it requires raw stream access. It is **not** registered in the DI container. Method handlers are wired via `AddLocalRpcMethod`:
+
+```csharp
+// DTO param → UseSingleObjectParameterDeserialization = true
+jsonRpc.AddLocalRpcMethod(method, handler, new JsonRpcMethodAttribute("workflow.start") { UseSingleObjectParameterDeserialization = true });
+
+// No DTO param (only CancellationToken)
+jsonRpc.AddLocalRpcMethod(method, handler, new JsonRpcMethodAttribute("settings.get"));
+```
+
+### Progress notifications
+
+`WorkflowProgressObserver` subscribes to `WorkflowEventBus.OnProgress` and forwards events as `workflow/progress` notifications via `JsonRpc.NotifyWithParameterObjectAsync`. It receives the `JsonRpc` instance through `Attach(bus, jsonRpc)` at startup — not via DI injection.
+
+### STJ adapters
+
+`Ipc/Adapters/` contains custom STJ converters registered in `BuildJsonSerializerOptions()`:
+- `RoiOptionJsonAdapter` — polymorphic `RoiOption` discriminated by `"type"` (`"Center"` | `"RuleOfThirds"`)
+- `RectangleFJsonAdapter` — `RectangleF` as `{"x", "y", "width", "height"}`
+
+### Registered methods
+
+| Method | Handler |
+|---|---|
+| `workflow.start` | `WorkflowHandler.StartAsync` |
+| `workflow.cancel` | `WorkflowHandler.CancelAsync` |
+| `workflow.pause` | `WorkflowHandler.PauseAsync` |
+| `workflow.resume` | `WorkflowHandler.ResumeAsync` |
+| `scanning.scanWorkbook` | `ScanningHandler.ScanWorkbookAsync` |
+| `scanning.scanPresentation` | `ScanningHandler.ScanPresentationAsync` |
+| `settings.get` | `SettingsHandler.GetAsync` |
+| `settings.update` | `SettingsHandler.UpdateAsync` |
+| `settings.resetToDefaults` | `SettingsHandler.ResetToDefaultsAsync` |
 
 ## Concurrency: GateLocker
 
@@ -73,7 +124,7 @@ Gate types: `DownloadImage`, `EditImage`, `EditPresentation`, `ReadWorkbook`, `R
 
 ## Image Processing
 
-Both `SlideGenerator.Images` and `SlideGenerator.Slides` use **MagickImage** as primary type. Convert to/from `byte[]` only at system boundaries (file I/O, Syncfusion API).
+Both `SlideGenerator.Images` and `SlideGenerator.Documents` use **MagickImage** as primary type. Convert to/from `byte[]` only at system boundaries (file I/O, Syncfusion API).
 
 - `Utilities.Decode(byte[])` → `MagickImage`
 - `Utilities.Crop(MagickImage, Rectangle)` → `MagickImage`
@@ -136,3 +187,5 @@ Phase boundaries are enforced with `ExecutionResult.Next()` barriers — all ite
 - [ ] Services injected via constructor in Activities
 - [ ] Image handling uses MagickImage; byte arrays only at boundaries
 - [ ] All public APIs have XML documentation comments
+- [ ] IPC methods with a DTO param use `UseSingleObjectParameterDeserialization = true`
+- [ ] Serilog never writes to stdout — stderr only
