@@ -1,4 +1,4 @@
-﻿namespace SlideGenerator.Pipelines.Generating.Models.Identifiers;
+﻿namespace SlideGenerator.Documents.Slides.Models;
 
 /// <summary>
 ///     Uniquely identifies a specific slide within a PowerPoint presentation.

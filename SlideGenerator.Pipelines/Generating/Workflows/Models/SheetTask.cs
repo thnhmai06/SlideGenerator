@@ -1,5 +1,6 @@
-﻿using SlideGenerator.Pipelines.Generating.Models;
-using SlideGenerator.Pipelines.Generating.Models.Identifiers;
+﻿using SlideGenerator.Documents.Sheets.Models;
+using SlideGenerator.Documents.Slides.Models;
+using SlideGenerator.Pipelines.Generating.Models;
 
 namespace SlideGenerator.Pipelines.Generating.Workflows.Models;
 
@@ -10,7 +11,7 @@ public sealed class SheetTask(
     SheetIdentifier identifier,
     SlideIdentifier templateSlide,
     MapNode mapNode,
-    string outputPath)
+    PresentationIdentifier outputIdentifier)
 {
     /// <summary>Gets the unique identifier for the source worksheet.</summary>
     public SheetIdentifier Identifier { get; } = identifier;
@@ -21,6 +22,6 @@ public sealed class SheetTask(
     /// <summary>Gets the mapping configuration node associated with this sheet.</summary>
     public MapNode MapNode { get; } = mapNode;
 
-    /// <summary>Gets the final output path for the generated presentation corresponding to this sheet.</summary>
-    public string OutputPath { get; } = outputPath;
+    /// <summary>Gets the final output identifier for the generated presentation corresponding to this sheet.</summary>
+    public PresentationIdentifier OutputIdentifier { get; } = outputIdentifier;
 }

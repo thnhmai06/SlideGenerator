@@ -1,6 +1,7 @@
-﻿using SlideGenerator.Pipelines.Generating.Models.Identifiers;
+﻿using SlideGenerator.Documents.Sheets.Models;
+using SlideGenerator.Documents.Slides.Models;
 
-namespace SlideGenerator.Pipelines.Generating.Models.Instructions;
+namespace SlideGenerator.Pipelines.Generating.Models;
 
 /// <summary>
 ///     Defines a mapping between one or more Excel columns and one or more image shapes in a slide.

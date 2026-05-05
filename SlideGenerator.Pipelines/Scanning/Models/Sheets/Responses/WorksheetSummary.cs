@@ -1,4 +1,4 @@
-﻿using SlideGenerator.Pipelines.Generating.Models.Identifiers;
+﻿using SlideGenerator.Documents.Sheets.Models;
 
 namespace SlideGenerator.Pipelines.Scanning.Models.Sheets.Responses;
 

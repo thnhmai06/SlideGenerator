@@ -1,4 +1,4 @@
-﻿namespace SlideGenerator.Pipelines.Generating.Models.Identifiers;
+﻿namespace SlideGenerator.Documents.Sheets.Models;
 
 /// <summary>
 ///     Uniquely identifies a specific column within an Excel worksheet.

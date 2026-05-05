@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Syncfusion.Presentation;
 
-namespace SlideGenerator.Documents.PowerPoint.Services;
+namespace SlideGenerator.Documents.Slides.Services;
 
 /// <summary>
 ///     Provides utility methods for replacing image content in Syncfusion presentation shapes.

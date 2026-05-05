@@ -2,7 +2,7 @@
 using SlideGenerator.Coordinator.Models;
 using SlideGenerator.Coordinator.Services;
 using SlideGenerator.Pipelines.Generating.Workflows.Models;
-using SlideGenerator.Documents.PowerPoint.Services;
+using SlideGenerator.Documents.Slides.Services;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
 using IShape = Syncfusion.Presentation.IShape;
@@ -33,7 +33,7 @@ public sealed class ReplaceSlideData(GateLocker gateLocker, ImageComposer imageC
         await gateLocker.AcquireAsync(GateType.EditPresentation).ConfigureAwait(false);
         try
         {
-            if (data.OutputHandles.TryGetValue(Task.SheetTask.OutputPath, out var wrapper))
+            if (data.OutputHandles.TryGetValue(Task.SheetTask.OutputIdentifier, out var wrapper))
             {
                 var slide = wrapper.Value.Slides[Task.RowIndex - 1];
 

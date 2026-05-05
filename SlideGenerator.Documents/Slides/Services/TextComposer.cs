@@ -6,7 +6,7 @@ using Stubble.Core;
 using Stubble.Core.Builders;
 using Syncfusion.Presentation;
 
-namespace SlideGenerator.Documents.PowerPoint.Services;
+namespace SlideGenerator.Documents.Slides.Services;
 
 /// <summary>
 ///     Replaces mustache-style placeholders in Syncfusion presentation shapes using Stubble template engine

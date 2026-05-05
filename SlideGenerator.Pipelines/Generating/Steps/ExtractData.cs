@@ -2,12 +2,12 @@
 using Serilog;
 using SlideGenerator.Coordinator.Models;
 using SlideGenerator.Coordinator.Services;
-using SlideGenerator.Pipelines.Generating.Models.Identifiers;
 using SlideGenerator.Pipelines.Generating.Workflows.Models;
 using SlideGenerator.Settings.Interfaces;
-using SlideGenerator.Documents.Excel;
-using SlideGenerator.Documents.PowerPoint;
-using SlideGenerator.Documents.PowerPoint.Services;
+using SlideGenerator.Documents.Sheets;
+using SlideGenerator.Documents.Slides;
+using SlideGenerator.Documents.Slides.Models;
+using SlideGenerator.Documents.Slides.Services;
 using Syncfusion.XlsIO;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
@@ -57,7 +57,7 @@ public sealed class ExtractData(GateLocker gateLocker, ExcelEngine excelEngine, 
         {
             var workbook = data.GetOrOpenWorkbook(excelEngine, Worksheet.Identifier);
 
-            var sheet = workbook.Worksheets[Worksheet.Identifier.SheetName];
+            var sheet = workbook.Value.Worksheets[Worksheet.Identifier.SheetName];
             var rowCount = sheet.CountRows();
 
             var headers = sheet.GetHeaders();
@@ -82,7 +82,7 @@ public sealed class ExtractData(GateLocker gateLocker, ExcelEngine excelEngine, 
         await gateLocker.AcquireAsync(GateType.EditPresentation).ConfigureAwait(false);
         try
         {
-            if (data.OutputHandles.TryGetValue(Worksheet.OutputPath, out var wrapper))
+            if (data.OutputHandles.TryGetValue(Worksheet.OutputIdentifier, out var wrapper))
             {
                 var templateSlide = wrapper.Value.Slides[0];
 
@@ -116,7 +116,7 @@ public sealed class ExtractData(GateLocker gateLocker, ExcelEngine excelEngine, 
             }
             else
             {
-                throw new KeyNotFoundException($"Output handle not found for {Worksheet.OutputPath}");
+                throw new KeyNotFoundException($"Output handle not found for {Worksheet.OutputIdentifier.PresentationPath}");
             }
         }
         finally

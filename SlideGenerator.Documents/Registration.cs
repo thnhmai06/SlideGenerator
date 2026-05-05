@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
-using SlideGenerator.Documents.PowerPoint.Services;
+using SlideGenerator.Documents.Slides.Services;
 using Syncfusion.XlsIO;
+using TextComposer = SlideGenerator.Documents.Slides.Services.TextComposer;
 
 namespace SlideGenerator.Documents;
 

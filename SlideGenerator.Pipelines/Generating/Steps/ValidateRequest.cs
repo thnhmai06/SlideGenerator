@@ -1,8 +1,9 @@
 ﻿using Serilog;
 using SlideGenerator.Coordinator.Models;
 using SlideGenerator.Coordinator.Services;
+using SlideGenerator.Documents.Sheets.Models;
+using SlideGenerator.Documents.Slides.Models;
 using SlideGenerator.Pipelines.Generating.Models;
-using SlideGenerator.Pipelines.Generating.Models.Identifiers;
 using SlideGenerator.Pipelines.Generating.Workflows.Models;
 using Syncfusion.XlsIO;
 using WorkflowCore.Interface;
@@ -57,7 +58,7 @@ public sealed class ValidateRequest(ExcelEngine excelEngine, GateLocker gateLock
         {
             var workbook = data.GetOrOpenWorkbook(excelEngine, sheet);
 
-            var worksheet = workbook.Worksheets[sheet.SheetName];
+            var worksheet = workbook.Value.Worksheets[sheet.SheetName];
             if (worksheet == null)
                 throw new ArgumentException(
                     $"Sheet '{sheet.SheetName}' not found in workbook '{Path.GetFileName(sheet.BookPath)}'.");
@@ -75,7 +76,7 @@ public sealed class ValidateRequest(ExcelEngine excelEngine, GateLocker gateLock
         await gateLocker.AcquireAsync(GateType.ReadPresentation).ConfigureAwait(false);
         try
         {
-            var template = data.GetOrOpenTemplate(slide);
+            var template = data.GetOrOpenPresentation(slide);
 
             var presentation = template.Value;
             if (slide.SlideIndex <= 0 || slide.SlideIndex > presentation.Slides.Count)
@@ -89,8 +90,9 @@ public sealed class ValidateRequest(ExcelEngine excelEngine, GateLocker gateLock
             var outputFileName =
                 $"{Settings.Utilities.NormalizeFileName(sheet.SheetName)}{Path.GetExtension(slide.PresentationPath)}";
             var outputPath = Path.Combine(data.Request.SaveFolder, bookName, outputFileName);
+            var outputIdentifier = new PresentationIdentifier(outputPath);
 
-            data.ValidWorksheets.TryAdd(sheet, new SheetTask(sheet, slide, node, outputPath));
+            data.ValidWorksheets.TryAdd(sheet, new SheetTask(sheet, slide, node, outputIdentifier));
 
             data.Logger.Debug("Output path mapped to: '{Path}'", outputPath);
         }

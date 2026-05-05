@@ -1,6 +1,8 @@
-﻿using SlideGenerator.Pipelines.Generating.Models.Identifiers;
+﻿using SlideGenerator.Documents.Sheets.Entities;
+using SlideGenerator.Documents.Sheets.Models;
+using SlideGenerator.Documents.Slides.Entities;
+using SlideGenerator.Documents.Slides.Models;
 using SlideGenerator.Pipelines.Generating.Workflows.Models;
-using SlideGenerator.Documents.PowerPoint.Entities;
 using Syncfusion.XlsIO;
 
 namespace SlideGenerator.Pipelines.Generating;
@@ -19,18 +21,19 @@ public static class Utilities
         /// </summary>
         /// <param name="excelEngine">The Excel engine to use for opening the workbook.</param>
         /// <param name="identifier">The identifier of the workbook to open.</param>
+        /// <param name="isWritable">Whether the workbook should be opened in read/write mode.</param>
         /// <returns>A handle to the opened workbook.</returns>
         /// <exception cref="FileNotFoundException">Thrown if the workbook file does not exist.</exception>
-        public IWorkbook GetOrOpenWorkbook(ExcelEngine excelEngine, BookIdentifier identifier)
+        public SfWorkbook GetOrOpenWorkbook(ExcelEngine excelEngine, BookIdentifier identifier, bool isWritable = false)
         {
-            if (data.WorkbookHandles.TryGetValue(identifier.BookPath, out var workbook))
+            if (data.WorkbookHandles.TryGetValue(identifier, out var workbook))
                 return workbook;
 
             if (!File.Exists(identifier.BookPath))
                 throw new FileNotFoundException("Workbook not found.", identifier.BookPath);
-
-            workbook = excelEngine.Excel.Workbooks.Open(identifier.BookPath, ExcelParseOptions.Default, true, identifier.BookPassword);
-            data.WorkbookHandles.TryAdd(identifier.BookPath, workbook);
+            
+            workbook = new SfWorkbook(excelEngine, identifier, isWritable);
+            data.WorkbookHandles.TryAdd(identifier, workbook);
 
             return workbook;
         }
@@ -40,18 +43,19 @@ public static class Utilities
         ///     Thread-safe via ConcurrentDictionary.
         /// </summary>
         /// <param name="identifier">The identifier of the presentation template to open.</param>
+        /// <param name="isWritable">Whether the presentation should be opened in read/write mode.</param>
         /// <returns>A wrapper around the opened presentation template.</returns>
         /// <exception cref="FileNotFoundException">Thrown if the presentation file does not exist.</exception>
-        public SfPresentation GetOrOpenTemplate(PresentationIdentifier identifier)
+        public SfPresentation GetOrOpenPresentation(PresentationIdentifier identifier, bool isWritable = false)
         {
-            if (data.TemplateHandles.TryGetValue(identifier.PresentationPath, out var template))
+            if (data.TemplateHandles.TryGetValue(identifier, out var template))
                 return template;
 
             if (!File.Exists(identifier.PresentationPath))
                 throw new FileNotFoundException("Presentation template not found.", identifier.PresentationPath);
 
-            template = new SfPresentation(identifier.PresentationPath, false, identifier.PresentationPassword);
-            data.TemplateHandles.TryAdd(identifier.PresentationPath, template);
+            template = new SfPresentation(identifier, isWritable);
+            data.TemplateHandles.TryAdd(identifier, template);
 
             return template;
         }

@@ -1,5 +1,5 @@
 ﻿using System.Drawing;
-using SlideGenerator.Pipelines.Generating.Models.Identifiers;
+using SlideGenerator.Documents.Slides.Models;
 
 namespace SlideGenerator.Pipelines.Scanning.Models.Slides.Responses;
 

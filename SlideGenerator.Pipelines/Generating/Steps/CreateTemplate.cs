@@ -1,8 +1,8 @@
 ﻿using Serilog;
 using SlideGenerator.Coordinator.Models;
 using SlideGenerator.Coordinator.Services;
+using SlideGenerator.Documents.Slides.Entities;
 using SlideGenerator.Pipelines.Generating.Workflows.Models;
-using SlideGenerator.Documents.PowerPoint.Entities;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
 
@@ -38,7 +38,7 @@ public sealed class CreateTemplate(GateLocker gateLocker, ILogger logger) : Step
 
                 await CreateTemplateFileAsync(data, worksheet).ConfigureAwait(false);
 
-                data.Logger.Information("Successfully initialized output presentation at '{Path}'", worksheet.OutputPath);
+                data.Logger.Information("Successfully initialized output presentation at '{Path}'", worksheet.OutputIdentifier.PresentationPath);
             }
             catch (Exception ex) when (ex is not NullReferenceException and not InvalidCastException and not IndexOutOfRangeException)
             {
@@ -52,7 +52,7 @@ public sealed class CreateTemplate(GateLocker gateLocker, ILogger logger) : Step
     private async Task CreateTemplateFileAsync(GeneratingTask data, SheetTask validatedSheet)
     {
         // 1. Ensure output directory exists
-        var outputDir = Path.GetDirectoryName(validatedSheet.OutputPath);
+        var outputDir = Path.GetDirectoryName(validatedSheet.OutputIdentifier.PresentationPath);
         if (outputDir != null)
         {
             if (Directory.Exists(outputDir)) Directory.Delete(outputDir, true);
@@ -62,8 +62,8 @@ public sealed class CreateTemplate(GateLocker gateLocker, ILogger logger) : Step
 
         // 2. Copy the template to the output path (overwrite if it exists)
         data.Logger.Debug("Copying template from '{Source}' to '{Destination}'",
-            validatedSheet.TemplateSlide.PresentationPath, validatedSheet.OutputPath);
-        File.Copy(validatedSheet.TemplateSlide.PresentationPath, validatedSheet.OutputPath);
+            validatedSheet.TemplateSlide.PresentationPath, validatedSheet.OutputIdentifier.PresentationPath);
+        File.Copy(validatedSheet.TemplateSlide.PresentationPath, validatedSheet.OutputIdentifier.PresentationPath);
 
         // 3. Isolate template slide (Delete all other slides)
         await gateLocker.AcquireAsync(GateType.EditPresentation).ConfigureAwait(false);
@@ -71,10 +71,8 @@ public sealed class CreateTemplate(GateLocker gateLocker, ILogger logger) : Step
         {
             data.Logger.Debug("Isolating slide at index {Index} in output presentation", validatedSheet.TemplateSlide.SlideIndex);
 
-            var wrapper = new SfPresentation(
-                validatedSheet.OutputPath, true,
-                validatedSheet.TemplateSlide.PresentationPassword);
-            data.OutputHandles.TryAdd(validatedSheet.OutputPath, wrapper);
+            var wrapper = new SfPresentation(validatedSheet.OutputIdentifier, true);
+            data.OutputHandles.TryAdd(validatedSheet.OutputIdentifier, wrapper);
 
             var presentation = wrapper.Value;
 

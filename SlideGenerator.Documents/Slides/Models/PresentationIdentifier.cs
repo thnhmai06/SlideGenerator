@@ -1,4 +1,4 @@
-﻿namespace SlideGenerator.Pipelines.Generating.Models.Identifiers;
+﻿namespace SlideGenerator.Documents.Slides.Models;
 
 /// <summary>
 ///     Uniquely identifies a PowerPoint presentation file.
@@ -15,4 +15,7 @@ public record PresentationIdentifier(string PresentationPath, string? Presentati
         get;
         init => field = Path.GetFullPath(value);
     } = PresentationPath;
+
+    public PresentationType GetPresentationType() =>
+        PresentationTypeExtensions.FromExtension(Path.GetExtension(PresentationPath));
 }

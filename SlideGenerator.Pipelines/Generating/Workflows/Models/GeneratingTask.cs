@@ -1,8 +1,10 @@
 ﻿using System.Collections.Concurrent;
 using Serilog;
+using SlideGenerator.Documents.Sheets.Entities;
+using SlideGenerator.Documents.Sheets.Models;
+using SlideGenerator.Documents.Slides.Entities;
+using SlideGenerator.Documents.Slides.Models;
 using SlideGenerator.Pipelines.Generating.Models;
-using SlideGenerator.Pipelines.Generating.Models.Identifiers;
-using SlideGenerator.Documents.PowerPoint.Entities;
 using Syncfusion.XlsIO;
 
 namespace SlideGenerator.Pipelines.Generating.Workflows.Models;
@@ -51,21 +53,21 @@ public sealed class GeneratingTask : IDisposable
 
     /// <summary>
     ///     Gets the collection of workbook handles used for reading data.
-    ///     Key is the absolute file path.
+    ///     Key is the book identifier.
     /// </summary>
-    public ConcurrentDictionary<string, IWorkbook> WorkbookHandles { get; } = new();
+    public ConcurrentDictionary<BookIdentifier, SfWorkbook> WorkbookHandles { get; } = new();
 
     /// <summary>
     ///     Gets the collection of presentation handles used as templates.
-    ///     Key is the absolute file path.
+    ///     Key is the presentation identifier.
     /// </summary>
-    public ConcurrentDictionary<string, SfPresentation> TemplateHandles { get; } = new();
+    public ConcurrentDictionary<PresentationIdentifier, SfPresentation> TemplateHandles { get; } = new();
 
     /// <summary>
     ///     Gets the collection of presentation handles used for output generation.
-    ///     Key is the absolute file path.
+    ///     Key is the presentation identifier.
     /// </summary>
-    public ConcurrentDictionary<string, SfPresentation> OutputHandles { get; } = new();
+    public ConcurrentDictionary<PresentationIdentifier, SfPresentation> OutputHandles { get; } = new();
 
     /// <summary>
     ///     Disposes of all open workbook and presentation handles.
@@ -73,7 +75,7 @@ public sealed class GeneratingTask : IDisposable
     public void Dispose()
     {
         foreach (var handle in WorkbookHandles.Values)
-            try { handle.Close(); } catch { /* ignore */ }
+            try { handle.Dispose(); } catch { /* ignore */ }
         WorkbookHandles.Clear();
 
         foreach (var handle in TemplateHandles.Values)
