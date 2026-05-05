@@ -1,10 +1,10 @@
-using SlideGenerator.Documents.Sheets.Models;
-using SlideGenerator.Documents.Slides.Models;
-using SlideGenerator.Pipelines.Scanning;
-using SlideGenerator.Pipelines.Scanning.Models.Sheets.Requests;
-using SlideGenerator.Pipelines.Scanning.Models.Sheets.Responses;
-using SlideGenerator.Pipelines.Scanning.Models.Slides.Requests;
-using SlideGenerator.Pipelines.Scanning.Models.Slides.Responses;
+using SlideGenerator.Document.Sheet.Models;
+using SlideGenerator.Document.Slide.Models;
+using SlideGenerator.Pipeline.Scanning;
+using SlideGenerator.Pipeline.Scanning.Models.Sheets.Requests;
+using SlideGenerator.Pipeline.Scanning.Models.Sheets.Responses;
+using SlideGenerator.Pipeline.Scanning.Models.Slides.Requests;
+using SlideGenerator.Pipeline.Scanning.Models.Slides.Responses;
 
 namespace SlideGenerator.Ipc.Handlers;
 

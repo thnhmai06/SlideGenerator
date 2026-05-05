@@ -1,0 +1,37 @@
+﻿using System.Drawing;
+using ImageMagick;
+using SlideGenerator.Image.Entities.Detectors;
+using SlideGenerator.Image.Models;
+using SlideGenerator.Image.Models.Options;
+
+namespace SlideGenerator.Image.Entities.ROI;
+
+/// <summary>
+///     Calculates rule-of-thirds ROI with face and eye landmark fallbacks.
+/// </summary>
+internal sealed class RuleOfThirdsRoi(FaceDetector faceDetector) : RoiCalculator
+{
+    public override async ValueTask<Rectangle> CalculateRoiAsync(MagickImage image, Size targetSize, RoiOption option)
+    {
+        if (option.Type != RoiType.RuleOfThirds)
+            throw new ArgumentException($"Invalid ROI type '{option.Type}' for {nameof(RuleOfThirdsRoi)}.",
+                nameof(option.Type));
+
+        var ruleOption = option as RuleOfThirdsOption;
+        var pivot = ruleOption?.Pivot;
+        var sourceSize = new Size((int)image.Width, (int)image.Height);
+
+        using var mat = image.ToMat();
+        var faces = await faceDetector.DetectAsync(mat).ConfigureAwait(false);
+        if (faces.Count <= 0) return Utilities.CalculateAnchoredRectangle(sourceSize, targetSize);
+
+        var eyeCenter = faces.Centroid(face => face.EyesCenter);
+        if (eyeCenter.HasValue)
+            return Utilities.CalculateAnchoredRectangle(sourceSize, targetSize, eyeCenter.Value, pivot);
+
+        var faceCenter = faces.Centroid(face => face.FaceCenter);
+        return faceCenter.HasValue
+            ? Utilities.CalculateAnchoredRectangle(sourceSize, targetSize, faceCenter.Value, pivot)
+            : Utilities.CalculateAnchoredRectangle(sourceSize, targetSize);
+    }
+}

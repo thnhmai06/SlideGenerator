@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Logging;
-using SlideGenerator.Pipelines.Generating.Models;
+using SlideGenerator.Pipeline.Generating.Models;
 using StreamJsonRpc;
 
 namespace SlideGenerator.Ipc.Ipc;

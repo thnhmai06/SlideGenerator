@@ -1,7 +1,7 @@
 using SlideGenerator.Ipc.Ipc;
-using SlideGenerator.Pipelines.Generating.Models;
-using SlideGenerator.Pipelines.Generating.Workflows;
-using SlideGenerator.Pipelines.Generating.Workflows.Models;
+using SlideGenerator.Pipeline.Generating.Models;
+using SlideGenerator.Pipeline.Generating.Workflows;
+using SlideGenerator.Pipeline.Generating.Workflows.Models;
 using WorkflowCore.Interface;
 
 namespace SlideGenerator.Ipc.Handlers;

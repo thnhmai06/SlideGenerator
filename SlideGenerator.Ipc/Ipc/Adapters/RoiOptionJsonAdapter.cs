@@ -1,7 +1,7 @@
 using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using SlideGenerator.Images.Models.Options;
+using SlideGenerator.Image.Models.Options;
 
 namespace SlideGenerator.Ipc.Ipc.Adapters;
 

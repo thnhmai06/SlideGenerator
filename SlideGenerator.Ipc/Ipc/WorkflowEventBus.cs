@@ -1,4 +1,4 @@
-using SlideGenerator.Pipelines.Generating.Models;
+using SlideGenerator.Pipeline.Generating.Models;
 
 namespace SlideGenerator.Ipc.Ipc;
 

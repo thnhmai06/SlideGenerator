@@ -18,12 +18,12 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\SlideGenerator.Pipelines\SlideGenerator.Pipelines.csproj"/>
+        <ProjectReference Include="..\SlideGenerator.Pipeline\SlideGenerator.Pipeline.csproj"/>
         <ProjectReference Include="..\SlideGenerator.Settings\SlideGenerator.Settings.csproj"/>
         <ProjectReference Include="..\SlideGenerator.Coordinator\SlideGenerator.Coordinator.csproj"/>
         <ProjectReference Include="..\SlideGenerator.Logging\SlideGenerator.Logging.csproj"/>
-        <ProjectReference Include="..\SlideGenerator.Documents\SlideGenerator.Documents.csproj"/>
-        <ProjectReference Include="..\SlideGenerator.Images\SlideGenerator.Images.csproj"/>
+        <ProjectReference Include="..\SlideGenerator.Document\SlideGenerator.Document.csproj"/>
+        <ProjectReference Include="..\SlideGenerator.Image\SlideGenerator.Image.csproj"/>
         <ProjectReference Include="..\SlideGenerator.Cloud\SlideGenerator.Cloud.csproj"/>
         <ProjectReference Include="..\SlideGenerator.Download\SlideGenerator.Download.csproj"/>
     </ItemGroup>
