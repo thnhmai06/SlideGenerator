@@ -4,7 +4,7 @@ using YamlDotNet.Serialization.NamingConventions;
 namespace SlideGenerator.Settings.Entities;
 
 /// <summary>
-///     Implements the <see cref="Serializer"/> abstraction using the YAML format.
+///     Implements the <see cref="Serializer" /> abstraction using the YAML format.
 ///     Uses CamelCase naming conventions and ignores unmatched properties during deserialization.
 /// </summary>
 public class YamlSerializer : Serializer

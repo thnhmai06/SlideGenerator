@@ -23,7 +23,7 @@ internal sealed partial class GooglePhotosResolver(ILogger logger) : CloudResolv
 
         var html = await httpClient.GetStringAsync(supportedUri, cancellationToken).ConfigureAwait(false);
         var match = GooglePhotosUrlPattern.Match(html);
-        
+
         if (!match.Success)
         {
             Logger.LogWarning("Could not find direct image URL in Google Photos HTML for: {Uri}", supportedUri);
@@ -36,7 +36,7 @@ internal sealed partial class GooglePhotosResolver(ILogger logger) : CloudResolv
 
         var resolvedUri = new Uri(directUrl);
         Logger.LogDebug("Resolved Google Photos URI to direct link: {ResolvedUri}", resolvedUri);
-        
+
         return resolvedUri;
     }
 

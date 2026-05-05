@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -24,7 +25,6 @@ using SlideGenerator.Settings;
 using SlideGenerator.Settings.Services;
 using StreamJsonRpc;
 using WorkflowCore.Interface;
-using System.Runtime.InteropServices;
 
 namespace SlideGenerator.Ipc;
 
@@ -44,22 +44,6 @@ internal static class Program
     [DllImport("kernel32.dll")]
     private static extern bool SetConsoleCtrlHandler(ConsoleCtrlDelegate handlerRoutine, bool add);
 
-    private delegate bool ConsoleCtrlDelegate(CtrlTypes ctrlType);
-
-    private enum CtrlTypes
-    {
-        // ReSharper disable once InconsistentNaming
-        CTRL_C_EVENT = 0, 
-        // ReSharper disable once InconsistentNaming
-        CTRL_BREAK_EVENT = 1,
-        // ReSharper disable once InconsistentNaming
-        CTRL_CLOSE_EVENT = 2,
-        // ReSharper disable once InconsistentNaming
-        CTRL_LOGOFF_EVENT = 5,
-        // ReSharper disable once InconsistentNaming
-        CTRL_SHUTDOWN_EVENT = 6
-    }
-
     /// <summary>Application entry point.</summary>
     /// <param name="args">Command-line arguments passed by the Tauri sidecar launcher.</param>
     public static async Task<int> Main(string[] args)
@@ -69,7 +53,7 @@ internal static class Program
         // 1. Setup bootstrap configuration to initialize logging as early as possible
         var bootstrapConfig = new ConfigurationBuilder()
             .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
-            .AddJsonFile("appsettings.json", optional: true)
+            .AddJsonFile("appsettings.json", true)
             .AddEnvironmentVariables()
             .AddCommandLine(args)
             .Build();
@@ -77,22 +61,19 @@ internal static class Program
         // 2. Generate log file path and initialize the logger module first
         var logFileName = $"{DateTime.Now:yyyy-MM-dd HH-mm-ss}.log";
         _logFilePath = Path.Combine(LoggingPaths.LogFolderPath, logFileName);
-        
-        SlideGenerator.Logging.Registration.ConfigureStaticLogger(bootstrapConfig, _logFilePath);
-        
+
+        Logging.Registration.ConfigureStaticLogger(bootstrapConfig, _logFilePath);
+
         PrintWelcomeMessage();
 
         // Wire up native console control handler for 'X' button, Logoff, and Shutdown
         SetConsoleCtrlHandler(ctrlType =>
         {
             Log.Warning("Native termination signal received: {CtrlType}. Flushing and exiting...", ctrlType);
-            
+
             // Note: We have very limited time here before OS kills the process.
             // We attempt a sync save and flush.
-            if (_currentHost != null)
-            {
-                SaveSettingsAsync(_currentHost.Services).GetAwaiter().GetResult();
-            }
+            if (_currentHost != null) SaveSettingsAsync(_currentHost.Services).GetAwaiter().GetResult();
             Log.CloseAndFlush();
             return false; // Let the next handler (or OS) deal with it
         }, true);
@@ -105,9 +86,7 @@ internal static class Program
             AppDomain.CurrentDomain.UnhandledException += (_, e) =>
             {
                 if (e.ExceptionObject is Exception ex)
-                {
                     Log.Fatal(ex, "Unhandled AppDomain exception. IsTerminating: {IsTerminating}", e.IsTerminating);
-                }
             };
 
             TaskScheduler.UnobservedTaskException += (_, e) =>
@@ -130,7 +109,7 @@ internal static class Program
 
             using var host = builder.Build();
             _currentHost = host;
-            
+
             // Intercept Ctrl+C to trigger a clean shutdown via the host lifetime
             var lifetime = host.Services.GetRequiredService<IHostApplicationLifetime>();
             Console.CancelKeyPress += (_, e) =>
@@ -141,10 +120,10 @@ internal static class Program
             };
 
             await host.StartAsync();
-            
+
             var jsonOptions = BuildJsonSerializerOptions();
             await StartupAsync(host, jsonOptions);
-            
+
             await host.StopAsync();
         }
         catch (Exception ex)
@@ -160,6 +139,7 @@ internal static class Program
         {
             await Log.CloseAndFlushAsync();
         }
+
         return 0;
     }
 
@@ -175,7 +155,7 @@ internal static class Program
     {
         Console.SetError(new StreamWriter(
             Console.OpenStandardError(),
-            new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
+            new UTF8Encoding(false),
             leaveOpen: true) { AutoFlush = true });
     }
 
@@ -236,7 +216,7 @@ internal static class Program
             Log.Information("Initializing JSON-RPC connection...");
             jsonRpc = CreateAndConfigureJsonRpc(services, jsonOptions);
             AttachProgressObserver(services, jsonRpc);
-            
+
             Log.Information("Setup completed! Application is listening.");
 
             // Wait for either the RPC connection to close OR the host to signal shutdown (e.g. via Ctrl+C)
@@ -307,29 +287,43 @@ internal static class Program
         var settingsHandler = services.GetRequiredService<SettingsHandler>();
 
         // Workflow lifecycle
-        jsonRpc.AddLocalRpcMethod(GetMethod<WorkflowHandler>(nameof(WorkflowHandler.StartAsync)), workflowHandler, Attr("workflow.start"));
-        jsonRpc.AddLocalRpcMethod(GetMethod<WorkflowHandler>(nameof(WorkflowHandler.CancelAsync)), workflowHandler, Attr("workflow.cancel"));
-        jsonRpc.AddLocalRpcMethod(GetMethod<WorkflowHandler>(nameof(WorkflowHandler.PauseAsync)), workflowHandler, Attr("workflow.pause"));
-        jsonRpc.AddLocalRpcMethod(GetMethod<WorkflowHandler>(nameof(WorkflowHandler.ResumeAsync)), workflowHandler, Attr("workflow.resume"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<WorkflowHandler>(nameof(WorkflowHandler.StartAsync)), workflowHandler,
+            Attr("workflow.start"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<WorkflowHandler>(nameof(WorkflowHandler.CancelAsync)), workflowHandler,
+            Attr("workflow.cancel"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<WorkflowHandler>(nameof(WorkflowHandler.PauseAsync)), workflowHandler,
+            Attr("workflow.pause"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<WorkflowHandler>(nameof(WorkflowHandler.ResumeAsync)), workflowHandler,
+            Attr("workflow.resume"));
 
         // Scanning
-        jsonRpc.AddLocalRpcMethod(GetMethod<ScanningHandler>(nameof(ScanningHandler.ScanWorkbookAsync)), scanningHandler, Attr("scanning.scanWorkbook"));
-        jsonRpc.AddLocalRpcMethod(GetMethod<ScanningHandler>(nameof(ScanningHandler.ScanPresentationAsync)), scanningHandler, Attr("scanning.scanPresentation"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<ScanningHandler>(nameof(ScanningHandler.ScanWorkbookAsync)),
+            scanningHandler, Attr("scanning.scanWorkbook"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<ScanningHandler>(nameof(ScanningHandler.ScanPresentationAsync)),
+            scanningHandler, Attr("scanning.scanPresentation"));
 
         // Settings — Get and ResetToDefaults carry no parameters, so no UseSingleObjectParameterDeserialization.
-        jsonRpc.AddLocalRpcMethod(GetMethod<SettingsHandler>(nameof(SettingsHandler.GetAsync)), settingsHandler, new JsonRpcMethodAttribute("settings.get"));
-        jsonRpc.AddLocalRpcMethod(GetMethod<SettingsHandler>(nameof(SettingsHandler.UpdateAsync)), settingsHandler, Attr("settings.update"));
-        jsonRpc.AddLocalRpcMethod(GetMethod<SettingsHandler>(nameof(SettingsHandler.ResetToDefaultsAsync)), settingsHandler, new JsonRpcMethodAttribute("settings.resetToDefaults"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<SettingsHandler>(nameof(SettingsHandler.GetAsync)), settingsHandler,
+            new JsonRpcMethodAttribute("settings.get"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<SettingsHandler>(nameof(SettingsHandler.UpdateAsync)), settingsHandler,
+            Attr("settings.update"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<SettingsHandler>(nameof(SettingsHandler.ResetToDefaultsAsync)),
+            settingsHandler, new JsonRpcMethodAttribute("settings.resetToDefaults"));
 
         jsonRpc.StartListening();
         return jsonRpc;
 
         // Helpers — named to avoid lambda capture overhead in the hot path.
-        static JsonRpcMethodAttribute Attr(string name) =>
-            new(name) { UseSingleObjectParameterDeserialization = true };
+        static JsonRpcMethodAttribute Attr(string name)
+        {
+            return new JsonRpcMethodAttribute(name) { UseSingleObjectParameterDeserialization = true };
+        }
 
-        static MethodInfo GetMethod<T>(string name) =>
-            typeof(T).GetMethod(name) ?? throw new InvalidOperationException($"Method {name} not found on {typeof(T).Name}");
+        static MethodInfo GetMethod<T>(string name)
+        {
+            return typeof(T).GetMethod(name) ??
+                   throw new InvalidOperationException($"Method {name} not found on {typeof(T).Name}");
+        }
     }
 
     /// <summary>
@@ -365,10 +359,7 @@ internal static class Program
 
             jsonRpc?.Dispose();
 
-            if (workflowHost != null)
-            {
-                await workflowHost.StopAsync(CancellationToken.None);
-            }
+            if (workflowHost != null) await workflowHost.StopAsync(CancellationToken.None);
 
             await SaveSettingsAsync(services);
         }
@@ -417,5 +408,25 @@ internal static class Program
                 new JsonStringEnumConverter()
             }
         };
+    }
+
+    private delegate bool ConsoleCtrlDelegate(CtrlTypes ctrlType);
+
+    private enum CtrlTypes
+    {
+        // ReSharper disable once InconsistentNaming
+        CTRL_C_EVENT = 0,
+
+        // ReSharper disable once InconsistentNaming
+        CTRL_BREAK_EVENT = 1,
+
+        // ReSharper disable once InconsistentNaming
+        CTRL_CLOSE_EVENT = 2,
+
+        // ReSharper disable once InconsistentNaming
+        CTRL_LOGOFF_EVENT = 5,
+
+        // ReSharper disable once InconsistentNaming
+        CTRL_SHUTDOWN_EVENT = 6
     }
 }

@@ -5,7 +5,7 @@ using SlideGenerator.Pipelines.Generating.Models;
 namespace SlideGenerator.Pipelines.Generating.Workflows.Models;
 
 /// <summary>
-/// Represents a worksheet that has been validated and assigned an output path.
+///     Represents a worksheet that has been validated and assigned an output path.
 /// </summary>
 public sealed class SheetTask(
     SheetIdentifier identifier,

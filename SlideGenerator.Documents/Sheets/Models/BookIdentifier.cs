@@ -16,5 +16,8 @@ public record BookIdentifier(string BookPath, string? BookPassword = null, strin
         init => field = Path.GetFullPath(value);
     } = BookPath;
 
-    public BookType GetBookType() => BookTypeExtensions.FromExtension(Path.GetExtension(BookPath));
+    public BookType GetBookType()
+    {
+        return BookTypeExtensions.FromExtension(Path.GetExtension(BookPath));
+    }
 }

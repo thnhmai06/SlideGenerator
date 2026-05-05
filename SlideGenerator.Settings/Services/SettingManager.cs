@@ -31,7 +31,7 @@ public sealed class SettingManager(Serializer serializer, ILogger<SettingManager
             logger.LogInformation("Settings file not found at {Path}. Using default settings.", FilePath);
             return false;
         }
-        
+
         try
         {
             logger.LogDebug("Loading settings from {Path}", FilePath);
@@ -46,7 +46,7 @@ public sealed class SettingManager(Serializer serializer, ILogger<SettingManager
             await ResetToDefaults().ConfigureAwait(false);
             return false;
         }
-        
+
         return true;
     }
 
@@ -61,7 +61,7 @@ public sealed class SettingManager(Serializer serializer, ILogger<SettingManager
             logger.LogDebug("Saving settings to {Path}", FilePath);
             var folderName = Path.GetDirectoryName(FilePath);
             if (!string.IsNullOrEmpty(folderName)) Directory.CreateDirectory(folderName);
-            
+
             var content = serializer.Serialize(Current);
             await File.WriteAllTextAsync(FilePath, content).ConfigureAwait(false);
             logger.LogInformation("Successfully saved settings to {Path}", FilePath);
@@ -72,7 +72,7 @@ public sealed class SettingManager(Serializer serializer, ILogger<SettingManager
             throw;
         }
     }
-    
+
     /// <summary>
     ///     Resets the settings to their default values and persists them to disk.
     /// </summary>

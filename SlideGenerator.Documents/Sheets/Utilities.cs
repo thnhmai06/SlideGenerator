@@ -6,7 +6,10 @@ public static class Utilities
 {
     extension(IWorksheet ws)
     {
-        public IReadOnlyList<string> GetHeaders() => ws.GetRow(0);
+        public IReadOnlyList<string> GetHeaders()
+        {
+            return ws.GetRow(0);
+        }
 
         public int CountRows()
         {
@@ -22,7 +25,7 @@ public static class Utilities
             var cols = used.LastColumn - used.Column + 1;
             var dataRowAbsolute = used.Row + rowIndex;
             var result = new List<string>(cols);
-        
+
             for (var col = 0; col < cols; col++)
             {
                 var absCol = used.Column + col;

@@ -17,7 +17,7 @@ public static class SettingsRegistration
     public static IServiceCollection AddSettingServices(this IServiceCollection services)
     {
         services.AddSingleton<Serializer, YamlSerializer>();
-        
+
         services.AddSingleton<SettingManager>();
         services.AddSingleton<ISettingProvider>(sp => sp.GetRequiredService<SettingManager>());
         return services;

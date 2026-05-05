@@ -86,6 +86,44 @@ public static class Utilities
         return (sum / sources.Count).ToPoint();
     }
 
+    /// <summary>
+    ///     Converts Image to OpenCV Mat for face detection operations.
+    /// </summary>
+    public static Mat ToMat(this MagickImage image)
+    {
+        ArgumentNullException.ThrowIfNull(image);
+
+        image.Format = MagickFormat.Png;
+        var pngBytes = image.ToByteArray();
+
+        var mat = Cv2.ImDecode(pngBytes, ImreadModes.Unchanged);
+        if (mat.Empty())
+        {
+            mat.Dispose();
+            throw new InvalidOperationException("Cannot decode image bytes into OpenCV Mat.");
+        }
+
+        return mat;
+    }
+
+    /// <summary>
+    ///     Converts OpenCV Mat to Image.
+    /// </summary>
+    public static MagickImage ToMagick(this Mat mat)
+    {
+        if (mat.Empty()) return new MagickImage();
+
+        var bytes = new byte[mat.Total() * mat.ElemSize()];
+        Marshal.Copy(mat.Data, bytes, 0, bytes.Length);
+        return new MagickImage(bytes, new MagickReadSettings
+        {
+            Width = (uint)mat.Width,
+            Height = (uint)mat.Height,
+            Depth = 8,
+            ColorSpace = ColorSpace.RGB
+        });
+    }
+
     extension(Rectangle rect)
     {
         /// <summary>
@@ -184,43 +222,5 @@ public static class Utilities
                 (int)Math.Round(original.Height * interpolateWith.Y, MidpointRounding.AwayFromZero)
             );
         }
-    }
-
-    /// <summary>
-    ///     Converts Image to OpenCV Mat for face detection operations.
-    /// </summary>
-    public static Mat ToMat(this MagickImage image)
-    {
-        ArgumentNullException.ThrowIfNull(image);
-
-        image.Format = MagickFormat.Png;
-        var pngBytes = image.ToByteArray();
-
-        var mat = Cv2.ImDecode(pngBytes, ImreadModes.Unchanged);
-        if (mat.Empty())
-        {
-            mat.Dispose();
-            throw new InvalidOperationException("Cannot decode image bytes into OpenCV Mat.");
-        }
-
-        return mat;
-    }
-
-    /// <summary>
-    ///     Converts OpenCV Mat to Image.
-    /// </summary>
-    public static MagickImage ToMagick(this Mat mat)
-    {
-        if (mat.Empty()) return new MagickImage();
-        
-        var bytes = new byte[mat.Total() * mat.ElemSize()];
-        Marshal.Copy(mat.Data, bytes, 0, bytes.Length);
-        return new MagickImage(bytes, new MagickReadSettings
-        {
-            Width = (uint)mat.Width,
-            Height = (uint)mat.Height,
-            Depth = 8,
-            ColorSpace = ColorSpace.RGB
-        });
     }
 }

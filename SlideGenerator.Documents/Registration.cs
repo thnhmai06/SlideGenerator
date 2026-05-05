@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using SlideGenerator.Documents.Slides.Services;
+using Syncfusion.Licensing;
 using Syncfusion.XlsIO;
 using TextComposer = SlideGenerator.Documents.Slides.Services.TextComposer;
 
@@ -14,7 +15,7 @@ public static class Registration
     {
         var licenseKey = SyncfusionLicense.Key; // decoded from XOR-encoded bytes at build time
         if (!string.IsNullOrWhiteSpace(licenseKey) && licenseKey != "empty")
-            Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense(licenseKey);
+            SyncfusionLicenseProvider.RegisterLicense(licenseKey);
 
         services.AddSingleton<ExcelEngine>();
         services.AddSingleton<ImageComposer>();

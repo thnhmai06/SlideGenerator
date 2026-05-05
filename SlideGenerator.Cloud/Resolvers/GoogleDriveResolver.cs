@@ -9,7 +9,7 @@ internal sealed partial class GoogleDriveResolver(ILogger logger) : CloudResolve
     private static readonly Regex GoogleDriveFileIdPattern = GoogleDriveFileIdRegex();
 
     public override async Task<Uri> ResolveUriAsync(
-        Uri supportedUri, 
+        Uri supportedUri,
         HttpClient httpClient,
         CancellationToken cancellationToken = default)
     {

@@ -6,7 +6,7 @@ using SlideGenerator.Settings.Services;
 namespace SlideGenerator.Coordinator.Services;
 
 /// <summary>
-///     High-level concurrency gate for <see cref="GateType"/>.
+///     High-level concurrency gate for <see cref="GateType" />.
 ///     Manages per-gate limits dynamically using a pure counting mechanism.
 /// </summary>
 public sealed class GateLocker(ISettingProvider settingProvider, ILogger<GateLocker> logger) : IDisposable
@@ -15,6 +15,22 @@ public sealed class GateLocker(ISettingProvider settingProvider, ILogger<GateLoc
     ///     The dictionary of gate states, keyed by <see cref="GateType" />.
     /// </summary>
     private readonly ConcurrentDictionary<GateType, GateState> _gates = new();
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        foreach (var state in _gates.Values)
+            lock (state)
+            {
+                while (state.Waiters.Count > 0)
+                {
+                    state.Waiters.First!.Value.TrySetCanceled();
+                    state.Waiters.RemoveFirst();
+                }
+            }
+
+        _gates.Clear();
+    }
 
     /// <summary>
     ///     Asynchronously waits to acquire a lock for the specified gate.
@@ -56,6 +72,7 @@ public sealed class GateLocker(ISettingProvider settingProvider, ILogger<GateLoc
                     {
                         if (node.List != null) state.Waiters.Remove(node);
                     }
+
                     tcs.TrySetCanceled(ct);
                 });
         }
@@ -63,7 +80,8 @@ public sealed class GateLocker(ISettingProvider settingProvider, ILogger<GateLoc
         try
         {
             await waitTask.ConfigureAwait(false);
-            logger.LogTrace("Acquired gate {Gate} after waiting (Active: {Count}/{Limit})", gate, state.ActiveCount, limit);
+            logger.LogTrace("Acquired gate {Gate} after waiting (Active: {Count}/{Limit})", gate, state.ActiveCount,
+                limit);
         }
         finally
         {
@@ -87,9 +105,11 @@ public sealed class GateLocker(ISettingProvider settingProvider, ILogger<GateLoc
 
             if (state.ActiveCount >= limit)
             {
-                logger.LogTrace("Failed to try-acquire gate {Gate} (Active: {Count}/{Limit})", gate, state.ActiveCount, limit);
+                logger.LogTrace("Failed to try-acquire gate {Gate} (Active: {Count}/{Limit})", gate, state.ActiveCount,
+                    limit);
                 return false;
             }
+
             state.ActiveCount++;
             logger.LogTrace("Try-acquired gate {Gate} (Active: {Count}/{Limit})", gate, state.ActiveCount, limit);
             return true;
@@ -114,22 +134,18 @@ public sealed class GateLocker(ISettingProvider settingProvider, ILogger<GateLoc
         }
     }
 
-    /// <inheritdoc />
-    public void Dispose()
+    private int ResolveLimit(GateType gate)
     {
-        foreach (var state in _gates.Values)
+        var setting = settingProvider.Current;
+        return gate switch
         {
-            lock (state)
-            {
-                while (state.Waiters.Count > 0)
-                {
-                    state.Waiters.First!.Value.TrySetCanceled();
-                    state.Waiters.RemoveFirst();
-                }
-            }
-        }
-
-        _gates.Clear();
+            GateType.DownloadImage => setting.Job.MaxParallelDownloadImage,
+            GateType.EditImage => setting.Job.MaxParallelEditImage,
+            GateType.EditPresentation => setting.Job.MaxParallelEditPresentation,
+            GateType.ReadWorkbook => setting.Job.MaxParallelReadWorkbook,
+            GateType.ReadPresentation => setting.Job.MaxParallelReadPresentation,
+            _ => throw new ArgumentOutOfRangeException(nameof(gate), gate, null)
+        };
     }
 
     /// <summary>
@@ -138,15 +154,15 @@ public sealed class GateLocker(ISettingProvider settingProvider, ILogger<GateLoc
     private sealed class GateState
     {
         /// <summary>
+        ///     The ordered list of waiters pending admission.
+        ///     <see cref="LinkedList{T}" /> allows O(1) removal of canceled waiters via stored node references.
+        /// </summary>
+        public readonly LinkedList<TaskCompletionSource<bool>> Waiters = [];
+
+        /// <summary>
         ///     The number of active operations currently holding a lock for this gate.
         /// </summary>
         public int ActiveCount;
-
-        /// <summary>
-        ///     The ordered list of waiters pending admission.
-        ///     <see cref="LinkedList{T}"/> allows O(1) removal of canceled waiters via stored node references.
-        /// </summary>
-        public readonly LinkedList<TaskCompletionSource<bool>> Waiters = [];
 
         /// <summary>
         ///     Attempts to admit pending waiters if the current active count is below the specified limit.
@@ -161,19 +177,5 @@ public sealed class GateLocker(ISettingProvider settingProvider, ILogger<GateLoc
                 if (node.Value.TrySetResult(true)) ActiveCount++;
             }
         }
-    }
-
-    private int ResolveLimit(GateType gate)
-    {
-        var setting = settingProvider.Current;
-        return gate switch
-        {
-            GateType.DownloadImage => setting.Job.MaxParallelDownloadImage,
-            GateType.EditImage => setting.Job.MaxParallelEditImage,
-            GateType.EditPresentation => setting.Job.MaxParallelEditPresentation,
-            GateType.ReadWorkbook => setting.Job.MaxParallelReadWorkbook,
-            GateType.ReadPresentation => setting.Job.MaxParallelReadPresentation,
-            _ => throw new ArgumentOutOfRangeException(nameof(gate), gate, null)
-        };
     }
 }

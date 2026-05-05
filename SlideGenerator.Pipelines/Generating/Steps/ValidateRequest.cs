@@ -33,7 +33,8 @@ public sealed class ValidateRequest(ExcelEngine excelEngine, GateLocker gateLock
         var node = Item.Node;
         var slide = node.Slide;
 
-        data.Logger.Information("Validating request for sheet {SheetName} and slide index {SlideIndex}", sheet.SheetName, slide.SlideIndex);
+        data.Logger.Information("Validating request for sheet {SheetName} and slide index {SlideIndex}",
+            sheet.SheetName, slide.SlideIndex);
 
         try
         {
@@ -42,7 +43,8 @@ public sealed class ValidateRequest(ExcelEngine excelEngine, GateLocker gateLock
 
             data.Logger.Information("Validation successful for sheet {SheetName}", sheet.SheetName);
         }
-        catch (Exception ex) when (ex is not NullReferenceException and not InvalidCastException and not IndexOutOfRangeException)
+        catch (Exception ex) when (ex is not NullReferenceException and not InvalidCastException
+                                       and not IndexOutOfRangeException)
         {
             var path = $"{sheet.BookPath}_{sheet.SheetName}";
             data.Logger.ForContext("Path", path).Error(ex, "Validation failed");
@@ -63,7 +65,8 @@ public sealed class ValidateRequest(ExcelEngine excelEngine, GateLocker gateLock
                 throw new ArgumentException(
                     $"Sheet '{sheet.SheetName}' not found in workbook '{Path.GetFileName(sheet.BookPath)}'.");
 
-            data.Logger.Debug("Verified workbook '{BookName}' contains sheet '{SheetName}'", Path.GetFileName(sheet.BookPath), sheet.SheetName);
+            data.Logger.Debug("Verified workbook '{BookName}' contains sheet '{SheetName}'",
+                Path.GetFileName(sheet.BookPath), sheet.SheetName);
         }
         finally
         {
@@ -71,7 +74,8 @@ public sealed class ValidateRequest(ExcelEngine excelEngine, GateLocker gateLock
         }
     }
 
-    private async Task ValidatePresentationAndMapOutputAsync(GeneratingTask data, SheetIdentifier sheet, MapNode node, SlideIdentifier slide)
+    private async Task ValidatePresentationAndMapOutputAsync(GeneratingTask data, SheetIdentifier sheet, MapNode node,
+        SlideIdentifier slide)
     {
         await gateLocker.AcquireAsync(GateType.ReadPresentation).ConfigureAwait(false);
         try
@@ -83,7 +87,8 @@ public sealed class ValidateRequest(ExcelEngine excelEngine, GateLocker gateLock
                 throw new ArgumentException(
                     $"Slide index {slide.SlideIndex} is out of range for '{Path.GetFileName(slide.PresentationPath)}' (Count: {presentation.Slides.Count}).");
 
-            data.Logger.Debug("Verified presentation '{PresentationName}' contains slide index {Index}", Path.GetFileName(slide.PresentationPath), slide.SlideIndex);
+            data.Logger.Debug("Verified presentation '{PresentationName}' contains slide index {Index}",
+                Path.GetFileName(slide.PresentationPath), slide.SlideIndex);
 
             // Successful validation: Prepare output mapping
             var bookName = Path.GetFileNameWithoutExtension(sheet.BookPath);

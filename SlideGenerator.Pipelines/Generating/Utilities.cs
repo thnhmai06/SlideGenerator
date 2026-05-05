@@ -8,7 +8,7 @@ using Syncfusion.XlsIO;
 namespace SlideGenerator.Pipelines.Generating;
 
 /// <summary>
-///     Provides extension methods for the <see cref="GeneratingTask"/> to manage resource handles efficiently.
+///     Provides extension methods for the <see cref="GeneratingTask" /> to manage resource handles efficiently.
 /// </summary>
 public static class Utilities
 {
@@ -31,7 +31,7 @@ public static class Utilities
 
             if (!File.Exists(identifier.BookPath))
                 throw new FileNotFoundException("Workbook not found.", identifier.BookPath);
-            
+
             workbook = new SfWorkbook(excelEngine, identifier, isWritable);
             data.WorkbookHandles.TryAdd(identifier, workbook);
 

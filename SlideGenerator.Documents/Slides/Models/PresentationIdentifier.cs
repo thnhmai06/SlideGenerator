@@ -16,6 +16,8 @@ public record PresentationIdentifier(string PresentationPath, string? Presentati
         init => field = Path.GetFullPath(value);
     } = PresentationPath;
 
-    public PresentationType GetPresentationType() =>
-        PresentationTypeExtensions.FromExtension(Path.GetExtension(PresentationPath));
+    public PresentationType GetPresentationType()
+    {
+        return PresentationTypeExtensions.FromExtension(Path.GetExtension(PresentationPath));
+    }
 }

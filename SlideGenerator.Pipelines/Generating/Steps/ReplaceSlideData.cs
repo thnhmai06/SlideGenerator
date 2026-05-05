@@ -1,8 +1,8 @@
 ﻿using Serilog;
 using SlideGenerator.Coordinator.Models;
 using SlideGenerator.Coordinator.Services;
-using SlideGenerator.Pipelines.Generating.Workflows.Models;
 using SlideGenerator.Documents.Slides.Services;
+using SlideGenerator.Pipelines.Generating.Workflows.Models;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
 using IShape = Syncfusion.Presentation.IShape;
@@ -13,7 +13,11 @@ namespace SlideGenerator.Pipelines.Generating.Steps;
 ///     Fills a single slide with pre-calculated text and image replacements.
 ///     Avoids redundant file I/O by executing all replacements for a slide in one pass.
 /// </summary>
-public sealed class ReplaceSlideData(GateLocker gateLocker, ImageComposer imageComposer, TextComposer textComposer, ILogger logger) : StepBodyAsync
+public sealed class ReplaceSlideData(
+    GateLocker gateLocker,
+    ImageComposer imageComposer,
+    TextComposer textComposer,
+    ILogger logger) : StepBodyAsync
 {
     public SlideTask Task { get; init; } = null!;
 
@@ -24,11 +28,13 @@ public sealed class ReplaceSlideData(GateLocker gateLocker, ImageComposer imageC
 
         if (Task.TextReplacements.Count == 0 && Task.ImageReplacements.Count == 0)
         {
-            data.Logger.Debug("No replacements found for row {RowIndex} in sheet {SheetName}. Skipping.", Task.RowIndex, Task.SheetTask.Identifier.SheetName);
+            data.Logger.Debug("No replacements found for row {RowIndex} in sheet {SheetName}. Skipping.", Task.RowIndex,
+                Task.SheetTask.Identifier.SheetName);
             return ExecutionResult.Next();
         }
 
-        data.Logger.Information("Starting data replacement for row {RowIndex} in sheet {SheetName}", Task.RowIndex, Task.SheetTask.Identifier.SheetName);
+        data.Logger.Information("Starting data replacement for row {RowIndex} in sheet {SheetName}", Task.RowIndex,
+            Task.SheetTask.Identifier.SheetName);
 
         await gateLocker.AcquireAsync(GateType.EditPresentation).ConfigureAwait(false);
         try
@@ -42,7 +48,8 @@ public sealed class ReplaceSlideData(GateLocker gateLocker, ImageComposer imageC
                     if (shapeBase is not IShape shape || string.IsNullOrEmpty(shape.ShapeName))
                         continue;
 
-                    data.Logger.Debug("Processing shape '{ShapeName}' for row {RowIndex}", shape.ShapeName, Task.RowIndex);
+                    data.Logger.Debug("Processing shape '{ShapeName}' for row {RowIndex}", shape.ShapeName,
+                        Task.RowIndex);
 
                     ApplyTextReplacements(data, shape);
                     await ApplyImageReplacementsAsync(data, shape).ConfigureAwait(false);
@@ -50,10 +57,12 @@ public sealed class ReplaceSlideData(GateLocker gateLocker, ImageComposer imageC
 
                 wrapper.Save();
 
-                data.Logger.Information("Successfully replaced data for row {RowIndex} in sheet {SheetName}", Task.RowIndex, Task.SheetTask.Identifier.SheetName);
+                data.Logger.Information("Successfully replaced data for row {RowIndex} in sheet {SheetName}",
+                    Task.RowIndex, Task.SheetTask.Identifier.SheetName);
             }
         }
-        catch (Exception ex) when (ex is not NullReferenceException and not InvalidCastException and not IndexOutOfRangeException)
+        catch (Exception ex) when (ex is not NullReferenceException and not InvalidCastException
+                                       and not IndexOutOfRangeException)
         {
             var path = $"{Task.SheetTask.Identifier.SheetName}_{Task.RowIndex}";
             data.Logger.ForContext("Path", path).Error(ex, "FillSlideData failed");
@@ -70,7 +79,8 @@ public sealed class ReplaceSlideData(GateLocker gateLocker, ImageComposer imageC
     {
         if (Task.TextReplacements.Count > 0)
         {
-            data.Logger.Debug("Applying text replacements to shape '{ShapeName}' (Count: {Count})", shape.ShapeName, Task.TextReplacements.Count);
+            data.Logger.Debug("Applying text replacements to shape '{ShapeName}' (Count: {Count})", shape.ShapeName,
+                Task.TextReplacements.Count);
             textComposer.Replace(shape, Task.TextReplacements);
         }
     }
@@ -85,14 +95,16 @@ public sealed class ReplaceSlideData(GateLocker gateLocker, ImageComposer imageC
             var finalEditPath = matchingImageTask.EditPath + ".png";
             if (File.Exists(finalEditPath))
             {
-                data.Logger.Information("Replacing image for shape '{ShapeName}' with '{Path}'", shape.ShapeName, finalEditPath);
+                data.Logger.Information("Replacing image for shape '{ShapeName}' with '{Path}'", shape.ShapeName,
+                    finalEditPath);
 
                 await using var imgStream = new FileStream(finalEditPath, FileMode.Open, FileAccess.Read);
                 imageComposer.Replace(shape, imgStream);
             }
             else
             {
-                data.Logger.Warning("Edited image not found at '{Path}' for shape '{ShapeName}'", finalEditPath, shape.ShapeName);
+                data.Logger.Warning("Edited image not found at '{Path}' for shape '{ShapeName}'", finalEditPath,
+                    shape.ShapeName);
             }
         }
     }

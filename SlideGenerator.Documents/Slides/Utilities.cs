@@ -7,7 +7,7 @@ namespace SlideGenerator.Documents.Slides;
 ///     Provides utility methods for Syncfusion presentation shape operations and image handling.
 /// </summary>
 /// <remarks>
-///     This utility class provides extension methods for working with Syncfusion shapes, 
+///     This utility class provides extension methods for working with Syncfusion shapes,
 ///     particularly for extracting and manipulating shape previews using ImageMagick format.
 /// </remarks>
 public static class Utilities

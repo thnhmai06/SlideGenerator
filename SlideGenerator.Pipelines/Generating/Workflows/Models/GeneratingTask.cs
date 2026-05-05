@@ -22,15 +22,10 @@ public sealed class GeneratingTask : IDisposable
 
     /// <summary>
     ///     Gets the workflow-scoped logger enriched with <c>TaskId</c>.
-    ///     Must be initialized via <see cref="TryInitLogger"/> before first use.
+    ///     Must be initialized via <see cref="TryInitLogger" /> before first use.
     /// </summary>
-    public ILogger Logger => _logger ?? throw new InvalidOperationException("Workflow logger has not been initialized.");
-
-    /// <summary>
-    ///     Initializes the workflow-scoped logger. Idempotent — only the first call has effect.
-    /// </summary>
-    public void TryInitLogger(ILogger baseLogger, string workflowId) =>
-        Interlocked.CompareExchange(ref _logger, baseLogger.ForContext("TaskId", workflowId), null);
+    public ILogger Logger =>
+        _logger ?? throw new InvalidOperationException("Workflow logger has not been initialized.");
 
     /// <summary>
     ///     The collection of validated worksheets and their target output configurations.
@@ -74,15 +69,47 @@ public sealed class GeneratingTask : IDisposable
     public void Dispose()
     {
         foreach (var handle in WorkbookHandles.Values)
-            try { handle.Dispose(); } catch { /* ignore */ }
+            try
+            {
+                handle.Dispose();
+            }
+            catch
+            {
+                /* ignore */
+            }
+
         WorkbookHandles.Clear();
 
         foreach (var handle in TemplateHandles.Values)
-            try { handle.Dispose(); } catch { /* ignore */ }
+            try
+            {
+                handle.Dispose();
+            }
+            catch
+            {
+                /* ignore */
+            }
+
         TemplateHandles.Clear();
 
         foreach (var handle in OutputHandles.Values)
-            try { handle.Dispose(); } catch { /* ignore */ }
+            try
+            {
+                handle.Dispose();
+            }
+            catch
+            {
+                /* ignore */
+            }
+
         OutputHandles.Clear();
+    }
+
+    /// <summary>
+    ///     Initializes the workflow-scoped logger. Idempotent — only the first call has effect.
+    /// </summary>
+    public void TryInitLogger(ILogger baseLogger, string workflowId)
+    {
+        Interlocked.CompareExchange(ref _logger, baseLogger.ForContext("TaskId", workflowId), null);
     }
 }

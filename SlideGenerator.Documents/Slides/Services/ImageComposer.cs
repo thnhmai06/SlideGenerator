@@ -69,7 +69,8 @@ public sealed class ImageComposer(ILogger<ImageComposer> logger)
     /// </remarks>
     public int Replace(IShape shape, byte[] imageBytes)
     {
-        logger.LogDebug("Attempting image replacement for shape '{ShapeName}' (Type: {Type})", shape.ShapeName, shape.GetType().Name);
+        logger.LogDebug("Attempting image replacement for shape '{ShapeName}' (Type: {Type})", shape.ShapeName,
+            shape.GetType().Name);
 
         // Picture
         if (shape is IPicture picture)
@@ -87,7 +88,9 @@ public sealed class ImageComposer(ILogger<ImageComposer> logger)
             return 1;
         }
 
-        logger.LogWarning("Shape '{ShapeName}' is not an IPicture and does not have picture fill. Skipping replacement.", shape.ShapeName);
+        logger.LogWarning(
+            "Shape '{ShapeName}' is not an IPicture and does not have picture fill. Skipping replacement.",
+            shape.ShapeName);
         return 0;
     }
 }

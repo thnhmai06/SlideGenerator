@@ -32,7 +32,8 @@ internal sealed class SharePointResolver(ILogger logger) : CloudResolver(logger)
             return Task.FromResult(resolvedUri);
         }
 
-        Logger.LogDebug("SharePoint URI did not match expected 'id' parameter pattern, returning as-is: {Uri}", supportedUri);
+        Logger.LogDebug("SharePoint URI did not match expected 'id' parameter pattern, returning as-is: {Uri}",
+            supportedUri);
         return Task.FromResult(supportedUri);
     }
 

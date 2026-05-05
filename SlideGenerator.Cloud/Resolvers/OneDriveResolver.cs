@@ -19,10 +19,10 @@ internal sealed class OneDriveResolver(ILogger logger) : CloudResolver(logger)
         var url = supportedUri.AbsoluteUri;
         var base64Value = Convert.ToBase64String(Encoding.UTF8.GetBytes(url));
         var encodedUrl = "u!" + base64Value.TrimEnd('=').Replace('/', '_').Replace('+', '-');
-        
+
         var resolvedUri = new Uri($"https://api.onedrive.com/v1.0/shares/{encodedUrl}/root/content");
         Logger.LogDebug("Resolved OneDrive URI to direct link: {ResolvedUri}", resolvedUri);
-        
+
         return Task.FromResult(resolvedUri);
     }
 

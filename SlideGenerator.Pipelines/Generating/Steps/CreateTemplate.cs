@@ -27,22 +27,27 @@ public sealed class CreateTemplate(GateLocker gateLocker, ILogger logger) : Step
 
         if (!data.ValidWorksheets.TryGetValue(Item.Sheet, out var worksheet))
         {
-            var ex = new KeyNotFoundException($"Worksheet '{Item.Sheet.SheetName}' was not found in validated results.");
+            var ex = new KeyNotFoundException(
+                $"Worksheet '{Item.Sheet.SheetName}' was not found in validated results.");
             data.Logger.ForContext("Path", Item.Sheet.SheetName).Error(ex, "CreateTemplate validation failed");
         }
         else
         {
             try
             {
-                data.Logger.Information("Initializing output template for sheet {SheetName}", worksheet.Identifier.SheetName);
+                data.Logger.Information("Initializing output template for sheet {SheetName}",
+                    worksheet.Identifier.SheetName);
 
                 await CreateTemplateFileAsync(data, worksheet).ConfigureAwait(false);
 
-                data.Logger.Information("Successfully initialized output presentation at '{Path}'", worksheet.OutputIdentifier.PresentationPath);
+                data.Logger.Information("Successfully initialized output presentation at '{Path}'",
+                    worksheet.OutputIdentifier.PresentationPath);
             }
-            catch (Exception ex) when (ex is not NullReferenceException and not InvalidCastException and not IndexOutOfRangeException)
+            catch (Exception ex) when (ex is not NullReferenceException and not InvalidCastException
+                                           and not IndexOutOfRangeException)
             {
-                data.Logger.ForContext("Path", worksheet.Identifier.SheetName).Error(ex, "CreateTemplate execution failed");
+                data.Logger.ForContext("Path", worksheet.Identifier.SheetName)
+                    .Error(ex, "CreateTemplate execution failed");
             }
         }
 
@@ -69,9 +74,10 @@ public sealed class CreateTemplate(GateLocker gateLocker, ILogger logger) : Step
         await gateLocker.AcquireAsync(GateType.EditPresentation).ConfigureAwait(false);
         try
         {
-            data.Logger.Debug("Isolating slide at index {Index} in output presentation", validatedSheet.TemplateSlide.SlideIndex);
+            data.Logger.Debug("Isolating slide at index {Index} in output presentation",
+                validatedSheet.TemplateSlide.SlideIndex);
 
-            var wrapper = new SfPresentation(validatedSheet.OutputIdentifier, true);
+            var wrapper = new SfPresentation(validatedSheet.OutputIdentifier);
             data.OutputHandles.TryAdd(validatedSheet.OutputIdentifier, wrapper);
 
             var presentation = wrapper.Value;
@@ -81,7 +87,8 @@ public sealed class CreateTemplate(GateLocker gateLocker, ILogger logger) : Step
             var templateIndex = validatedSheet.TemplateSlide.SlideIndex - 1;
             var originalCount = presentation.Slides.Count;
             for (var i = presentation.Slides.Count - 1; i >= 0; i--)
-                if (i != templateIndex) presentation.Slides.RemoveAt(i);
+                if (i != templateIndex)
+                    presentation.Slides.RemoveAt(i);
 
             data.Logger.Debug("Removed {Count} unrelated slides from the template copy", originalCount - 1);
 

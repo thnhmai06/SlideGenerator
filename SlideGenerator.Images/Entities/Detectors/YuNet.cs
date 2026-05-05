@@ -21,7 +21,7 @@ public sealed class YuNet(FaceDetectorYN core, Size inputSize) : FaceDetector
         var padInfo = ResizeAndPadMat(mat);
         using var processedMat = padInfo.ProcessedMat;
         using var result = new Mat();
-        
+
         await _detectLock.WaitAsync().ConfigureAwait(false);
         try
         {
@@ -41,26 +41,37 @@ public sealed class YuNet(FaceDetectorYN core, Size inputSize) : FaceDetector
         {
             var score = GetFloat(14);
             var rawBbox = new Rectangle(GetInt(0), GetInt(1), GetInt(2), GetInt(3));
-            
+
             var mappedRect = UnmapBoundingBox(rawBbox, padInfo);
             var rect = Rectangle.Intersect(mappedRect, matBorder);
-            
+
             if (rect.Width <= 0 || rect.Height <= 0) continue;
 
             faces.Add(new Face(
-                rect, 
-                score, 
-                UnmapLandmark(GetPoint(4, 5), padInfo),   // Right Eye
-                UnmapLandmark(GetPoint(6, 7), padInfo),   // Left Eye
-                UnmapLandmark(GetPoint(8, 9), padInfo),   // Nose
+                rect,
+                score,
+                UnmapLandmark(GetPoint(4, 5), padInfo), // Right Eye
+                UnmapLandmark(GetPoint(6, 7), padInfo), // Left Eye
+                UnmapLandmark(GetPoint(8, 9), padInfo), // Nose
                 UnmapLandmark(GetPoint(10, 11), padInfo), // Right Mouth
-                UnmapLandmark(GetPoint(12, 13), padInfo)  // Left Mouth
+                UnmapLandmark(GetPoint(12, 13), padInfo) // Left Mouth
             ));
             continue;
-            
-            float GetFloat(int col) => result.At<float>(i, col);
-            int GetInt(int col) => RoundToIntAwayFromZero(GetFloat(col));
-            Point GetPoint(int colX, int colY) => new(GetInt(colX), GetInt(colY));
+
+            float GetFloat(int col)
+            {
+                return result.At<float>(i, col);
+            }
+
+            int GetInt(int col)
+            {
+                return RoundToIntAwayFromZero(GetFloat(col));
+            }
+
+            Point GetPoint(int colX, int colY)
+            {
+                return new Point(GetInt(colX), GetInt(colY));
+            }
         }
 
         return faces;
@@ -85,16 +96,12 @@ public sealed class YuNet(FaceDetectorYN core, Size inputSize) : FaceDetector
 
         var processedMat = new Mat(inputSize, mat.Type(), Scalar.Black);
         var roi = new Rect(padLeft, padTop, newWidth, newHeight);
-        
+
         using var subMat = processedMat[roi];
         if (scale < 1.0f)
-        {
             Cv2.Resize(mat, subMat, new Size(newWidth, newHeight));
-        }
         else
-        {
             mat.CopyTo(subMat);
-        }
 
         return new PaddingInfo
         {
@@ -112,12 +119,18 @@ public sealed class YuNet(FaceDetectorYN core, Size inputSize) : FaceDetector
 
         var x = Math.Max(0, Unmap(rect.X, info.PadLeft));
         var y = Math.Max(0, Unmap(rect.Y, info.PadTop));
-        
+
         return new Rectangle(x, y, UnmapLen(rect.Width), UnmapLen(rect.Height));
 
-        int Unmap(int val, int pad) => RoundToIntAwayFromZero((val - pad) / info.Scale);
+        int Unmap(int val, int pad)
+        {
+            return RoundToIntAwayFromZero((val - pad) / info.Scale);
+        }
 
-        int UnmapLen(int val) => RoundToIntAwayFromZero(val / info.Scale);
+        int UnmapLen(int val)
+        {
+            return RoundToIntAwayFromZero(val / info.Scale);
+        }
     }
 
     private static Point? UnmapLandmark(Point point, PaddingInfo info)
@@ -133,8 +146,10 @@ public sealed class YuNet(FaceDetectorYN core, Size inputSize) : FaceDetector
         return null;
     }
 
-    private static int RoundToIntAwayFromZero(float value) 
-        => (int)Math.Round(value, MidpointRounding.AwayFromZero);
+    private static int RoundToIntAwayFromZero(float value)
+    {
+        return (int)Math.Round(value, MidpointRounding.AwayFromZero);
+    }
 
     private sealed record PaddingInfo
     {

@@ -37,14 +37,16 @@ public sealed class EditImage(
         // Idempotency: skip if the file already exists
         if (File.Exists(finalEditPath))
         {
-            data.Logger.Debug("Edited image for row {RowIndex} already exists at '{Path}', skipping edit", Task.RowIndex, finalEditPath);
+            data.Logger.Debug("Edited image for row {RowIndex} already exists at '{Path}', skipping edit",
+                Task.RowIndex, finalEditPath);
             return ExecutionResult.Next();
         }
 
         // Skip if SourceUri is null and no FallbackImagePath is provided
         if (Task.SourceUri == null && string.IsNullOrWhiteSpace(Task.FallbackImagePath))
         {
-            data.Logger.Debug("No source URI or fallback image for row {RowIndex}, shape {ShapeName}. Skipping.", Task.RowIndex, Task.ShapeName);
+            data.Logger.Debug("No source URI or fallback image for row {RowIndex}, shape {ShapeName}. Skipping.",
+                Task.RowIndex, Task.ShapeName);
             return ExecutionResult.Next();
         }
 
@@ -54,9 +56,7 @@ public sealed class EditImage(
         var downloadPrefix = Path.GetFileName(Task.DownloadPath);
 
         if (downloadDir != null && Directory.Exists(downloadDir))
-        {
             sourceFile = Directory.GetFiles(downloadDir, $"{downloadPrefix}.*").FirstOrDefault();
-        }
 
         // Use fallback if a primary source is missing
         if (sourceFile == null || !File.Exists(sourceFile))
@@ -64,15 +64,16 @@ public sealed class EditImage(
             if (!string.IsNullOrWhiteSpace(Task.FallbackImagePath) && File.Exists(Task.FallbackImagePath))
             {
                 sourceFile = Task.FallbackImagePath;
-                data.Logger.Debug("Primary source missing for row {RowIndex}, using fallback: '{Fallback}'", Task.RowIndex, sourceFile);
+                data.Logger.Debug("Primary source missing for row {RowIndex}, using fallback: '{Fallback}'",
+                    Task.RowIndex, sourceFile);
             }
             else
             {
                 // Source is missing and no fallback available
                 if (Task.SourceUri != null)
-                {
-                    data.Logger.ForContext("Path", downloadPrefix).Error(new FileNotFoundException("Source image and fallback not found for editing.", Task.DownloadPath), "Missing source");
-                }
+                    data.Logger.ForContext("Path", downloadPrefix).Error(
+                        new FileNotFoundException("Source image and fallback not found for editing.",
+                            Task.DownloadPath), "Missing source");
                 return ExecutionResult.Next();
             }
         }
@@ -84,13 +85,15 @@ public sealed class EditImage(
         await gateLocker.AcquireAsync(GateType.EditImage).ConfigureAwait(false);
         try
         {
-            data.Logger.Debug("Editing image '{Source}' for shape '{ShapeName}' (Row {RowIndex})", sourceFile, Task.ShapeName, Task.RowIndex);
+            data.Logger.Debug("Editing image '{Source}' for shape '{ShapeName}' (Row {RowIndex})", sourceFile,
+                Task.ShapeName, Task.RowIndex);
 
             using var image = new MagickImage(sourceFile);
             var targetSize = new Size((int)Math.Round(Task.Width), (int)Math.Round(Task.Height));
 
             // 1. Calculate ROI based on the selected algorithm
-            data.Logger.Debug("Calculating ROI for row {RowIndex} using {Algorithm}", Task.RowIndex, Task.EditOptions.RoiOption);
+            data.Logger.Debug("Calculating ROI for row {RowIndex} using {Algorithm}", Task.RowIndex,
+                Task.EditOptions.RoiOption);
 
             var roi = await roiResolver.CalculateRoiAsync(
                 image,
@@ -111,15 +114,22 @@ public sealed class EditImage(
             // 4. Save the edited image as PNG
             await image.WriteAsync(finalEditPath).ConfigureAwait(false);
 
-            data.Logger.Information("Successfully edited image for row {RowIndex}, shape {ShapeName}", Task.RowIndex, Task.ShapeName);
+            data.Logger.Information("Successfully edited image for row {RowIndex}, shape {ShapeName}", Task.RowIndex,
+                Task.ShapeName);
 
             // Optional: Delete raw download image to save space (only if it was the primary source)
             if (data.Request.DeleteDownloadImage && sourceFile != Task.FallbackImagePath)
-            {
-                try { File.Delete(sourceFile); } catch { /* ignore */ }
-            }
+                try
+                {
+                    File.Delete(sourceFile);
+                }
+                catch
+                {
+                    /* ignore */
+                }
         }
-        catch (Exception ex) when (ex is not NullReferenceException and not InvalidCastException and not IndexOutOfRangeException)
+        catch (Exception ex) when (ex is not NullReferenceException and not InvalidCastException
+                                       and not IndexOutOfRangeException)
         {
             data.Logger.ForContext("Path", Path.GetFileName(finalEditPath)).Error(ex, "Edit image failed");
         }

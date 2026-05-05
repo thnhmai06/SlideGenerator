@@ -11,8 +11,13 @@ public sealed class MultiCloudResolver(ILoggerFactory loggerFactory, ILogger<Mul
     private readonly IReadOnlyDictionary<CloudResolverKey, CloudResolver> _resolvers =
         new Dictionary<CloudResolverKey, CloudResolver>
         {
-            { CloudResolverKey.GoogleDrive, new GoogleDriveResolver(loggerFactory.CreateLogger<GoogleDriveResolver>()) },
-            { CloudResolverKey.GooglePhotos, new GooglePhotosResolver(loggerFactory.CreateLogger<GooglePhotosResolver>()) },
+            {
+                CloudResolverKey.GoogleDrive, new GoogleDriveResolver(loggerFactory.CreateLogger<GoogleDriveResolver>())
+            },
+            {
+                CloudResolverKey.GooglePhotos,
+                new GooglePhotosResolver(loggerFactory.CreateLogger<GooglePhotosResolver>())
+            },
             { CloudResolverKey.OneDrive, new OneDriveResolver(loggerFactory.CreateLogger<OneDriveResolver>()) },
             { CloudResolverKey.SharePoint, new SharePointResolver(loggerFactory.CreateLogger<SharePointResolver>()) }
         }.AsReadOnly();
@@ -20,13 +25,11 @@ public sealed class MultiCloudResolver(ILoggerFactory loggerFactory, ILogger<Mul
     public bool IsUriSupported(Uri uri, out CloudResolverKey key)
     {
         foreach (var kvp in _resolvers)
-        {
             if (kvp.Value.IsUriSupported(uri))
             {
                 key = kvp.Key;
                 return true;
             }
-        }
 
         key = default;
         return false;

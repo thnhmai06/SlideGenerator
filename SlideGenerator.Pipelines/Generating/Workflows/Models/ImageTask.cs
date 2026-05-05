@@ -4,7 +4,7 @@ using SlideGenerator.Pipelines.Generating.Models;
 namespace SlideGenerator.Pipelines.Generating.Workflows.Models;
 
 /// <summary>
-/// Represents a comprehensive task for downloading and editing a single image.
+///     Represents a comprehensive task for downloading and editing a single image.
 /// </summary>
 public sealed class ImageTask(
     SheetIdentifier sheet,

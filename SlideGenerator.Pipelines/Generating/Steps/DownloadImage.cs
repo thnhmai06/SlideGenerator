@@ -35,7 +35,8 @@ public sealed class DownloadImage(
         // Idempotency: skip if file already exists
         if (File.Exists(Task.DownloadPath))
         {
-            data.Logger.Debug("Image for row {RowIndex} already exists at '{Path}', skipping download", Task.RowIndex, Task.DownloadPath);
+            data.Logger.Debug("Image for row {RowIndex} already exists at '{Path}', skipping download", Task.RowIndex,
+                Task.DownloadPath);
             return ExecutionResult.Next();
         }
 
@@ -62,9 +63,11 @@ public sealed class DownloadImage(
 
             await downloadService.DownloadAsync(resolvedUri, Task.DownloadPath).ConfigureAwait(false);
 
-            data.Logger.Information("Successfully downloaded image for row {RowIndex}, column {ColumnName}", Task.RowIndex, Task.ColumnName);
+            data.Logger.Information("Successfully downloaded image for row {RowIndex}, column {ColumnName}",
+                Task.RowIndex, Task.ColumnName);
         }
-        catch (Exception ex) when (ex is not NullReferenceException and not InvalidCastException and not IndexOutOfRangeException)
+        catch (Exception ex) when (ex is not NullReferenceException and not InvalidCastException
+                                       and not IndexOutOfRangeException)
         {
             var path = $"Row{Task.RowIndex}_{Task.ColumnName}";
             data.Logger.ForContext("Path", path).Error(ex, "Download failed");

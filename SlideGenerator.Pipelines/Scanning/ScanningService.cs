@@ -1,15 +1,16 @@
-﻿using SlideGenerator.Pipelines.Scanning.Models.Sheets.Requests;
-using SlideGenerator.Pipelines.Scanning.Models.Sheets.Responses;
-using SlideGenerator.Pipelines.Scanning.Models.Slides.Requests;
-using SlideGenerator.Pipelines.Scanning.Models.Slides.Responses;
-using SlideGenerator.Documents.Sheets;
+﻿using SlideGenerator.Documents.Sheets;
 using SlideGenerator.Documents.Sheets.Models;
 using SlideGenerator.Documents.Slides;
 using SlideGenerator.Documents.Slides.Entities;
 using SlideGenerator.Documents.Slides.Models;
 using SlideGenerator.Documents.Slides.Services;
+using SlideGenerator.Pipelines.Scanning.Models.Sheets.Requests;
+using SlideGenerator.Pipelines.Scanning.Models.Sheets.Responses;
+using SlideGenerator.Pipelines.Scanning.Models.Slides.Requests;
+using SlideGenerator.Pipelines.Scanning.Models.Slides.Responses;
 using Syncfusion.Presentation;
 using Syncfusion.XlsIO;
+using IShape = Syncfusion.Presentation.IShape;
 
 namespace SlideGenerator.Pipelines.Scanning;
 
@@ -53,7 +54,8 @@ public sealed class ScanningService(ExcelEngine excelEngine, TextComposer textCo
                     preview = new WorksheetPreview(headers, rows);
                 }
 
-                worksheets.Add(new WorksheetSummary(new SheetIdentifier(id.BookPath, worksheet.Name, id.BookPassword), count, preview));
+                worksheets.Add(new WorksheetSummary(new SheetIdentifier(id.BookPath, worksheet.Name, id.BookPassword),
+                    count, preview));
             }
 
             return Task.FromResult(
@@ -84,7 +86,7 @@ public sealed class ScanningService(ExcelEngine excelEngine, TextComposer textCo
         for (var i = 0; i < presentation.Slides.Count; i++)
         {
             var slide = presentation.Slides[i];
-            var shapes = slide.Shapes.Cast<Syncfusion.Presentation.IShape>().ToList();
+            var shapes = slide.Shapes.Cast<IShape>().ToList();
 
             // Slide Preview
             byte[]? slidePreviewBytes = null;
@@ -100,7 +102,8 @@ public sealed class ScanningService(ExcelEngine excelEngine, TextComposer textCo
             var imageShapes = shapes
                 .Where(shape => shape is IPicture || shape.Fill.FillType == FillType.Picture)
                 .Select(shape => new ShapeSummary(
-                    new ShapeIdentifier(id.PresentationPath, i + 1, shape.ShapeName ?? string.Empty, id.PresentationPassword),
+                    new ShapeIdentifier(id.PresentationPath, i + 1, shape.ShapeName ?? string.Empty,
+                        id.PresentationPassword),
                     shape.GetBoundsF())
                 )
                 .ToList();

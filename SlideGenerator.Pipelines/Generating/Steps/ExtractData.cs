@@ -2,11 +2,11 @@
 using Serilog;
 using SlideGenerator.Coordinator.Models;
 using SlideGenerator.Coordinator.Services;
-using SlideGenerator.Pipelines.Generating.Workflows.Models;
 using SlideGenerator.Documents.Sheets;
 using SlideGenerator.Documents.Slides;
 using SlideGenerator.Documents.Slides.Models;
 using SlideGenerator.Documents.Slides.Services;
+using SlideGenerator.Pipelines.Generating.Workflows.Models;
 using SlideGenerator.Settings.Services;
 using Syncfusion.XlsIO;
 using WorkflowCore.Interface;
@@ -20,7 +20,12 @@ namespace SlideGenerator.Pipelines.Generating.Steps;
 ///     Opens Excel and Presentation once, clones template slides,
 ///     and generates all SlideTasks and ImageTasks required for the worksheet.
 /// </summary>
-public sealed class ExtractData(GateLocker gateLocker, ExcelEngine excelEngine, ISettingProvider settingProvider, TextComposer textComposer, ILogger logger)
+public sealed class ExtractData(
+    GateLocker gateLocker,
+    ExcelEngine excelEngine,
+    ISettingProvider settingProvider,
+    TextComposer textComposer,
+    ILogger logger)
     : StepBodyAsync
 {
     public SheetTask Worksheet { get; init; } = null!;
@@ -30,7 +35,8 @@ public sealed class ExtractData(GateLocker gateLocker, ExcelEngine excelEngine, 
         var data = (GeneratingTask)context.Workflow.Data;
         data.TryInitLogger(logger, context.Workflow.Id);
 
-        data.Logger.Information("Starting data extraction for sheet {SheetName} in {BookPath}", Worksheet.Identifier.SheetName, Worksheet.Identifier.BookPath);
+        data.Logger.Information("Starting data extraction for sheet {SheetName} in {BookPath}",
+            Worksheet.Identifier.SheetName, Worksheet.Identifier.BookPath);
 
         try
         {
@@ -39,9 +45,11 @@ public sealed class ExtractData(GateLocker gateLocker, ExcelEngine excelEngine, 
 
             ConstructTasks(data, rowCount, headerMap, sheet, shapeData);
 
-            data.Logger.Information("Successfully extracted data and constructed tasks for sheet {SheetName}", Worksheet.Identifier.SheetName);
+            data.Logger.Information("Successfully extracted data and constructed tasks for sheet {SheetName}",
+                Worksheet.Identifier.SheetName);
         }
-        catch (Exception ex) when (ex is not NullReferenceException and not InvalidCastException and not IndexOutOfRangeException)
+        catch (Exception ex) when (ex is not NullReferenceException and not InvalidCastException
+                                       and not IndexOutOfRangeException)
         {
             data.Logger.ForContext("Path", Worksheet.Identifier.SheetName).Error(ex, "ExtractData failed");
         }
@@ -116,7 +124,8 @@ public sealed class ExtractData(GateLocker gateLocker, ExcelEngine excelEngine, 
             }
             else
             {
-                throw new KeyNotFoundException($"Output handle not found for {Worksheet.OutputIdentifier.PresentationPath}");
+                throw new KeyNotFoundException(
+                    $"Output handle not found for {Worksheet.OutputIdentifier.PresentationPath}");
             }
         }
         finally
@@ -161,25 +170,20 @@ public sealed class ExtractData(GateLocker gateLocker, ExcelEngine excelEngine, 
         Dictionary<ShapeIdentifier, (string ShapeName, HashSet<string> Tags, RectangleF Bounds)> shapeData)
     {
         foreach (var textInst in Worksheet.MapNode.TextInstructions)
+        foreach (var column in textInst.Columns)
         {
-            foreach (var column in textInst.Columns)
+            if (!column.SheetName.Equals(sheet.Name, StringComparison.OrdinalIgnoreCase) ||
+                !column.BookPath.Equals(Worksheet.Identifier.BookPath, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            if (!headerMap.TryGetValue(column.ColumnName, out var colIndex) || colIndex >= rowData.Count) continue;
+
+            var val = rowData[colIndex];
+
+            foreach (var placeholder in textInst.Placeholders)
             {
-                if (!column.SheetName.Equals(sheet.Name, StringComparison.OrdinalIgnoreCase) ||
-                    !column.BookPath.Equals(Worksheet.Identifier.BookPath, StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                if (!headerMap.TryGetValue(column.ColumnName, out var colIndex) || colIndex >= rowData.Count) continue;
-
-                var val = rowData[colIndex];
-
-                foreach (var placeholder in textInst.Placeholders)
-                {
-                    var isUsed = shapeData.Values.Any(s => s.Tags.Contains(placeholder));
-                    if (isUsed)
-                    {
-                        slideTask.TextReplacements[placeholder] = val;
-                    }
-                }
+                var isUsed = shapeData.Values.Any(s => s.Tags.Contains(placeholder));
+                if (isUsed) slideTask.TextReplacements[placeholder] = val;
             }
         }
     }
@@ -195,39 +199,37 @@ public sealed class ExtractData(GateLocker gateLocker, ExcelEngine excelEngine, 
         int rowIndex)
     {
         foreach (var imgInst in Worksheet.MapNode.ImageInstructions)
+        foreach (var column in imgInst.Columns)
         {
-            foreach (var column in imgInst.Columns)
+            if (!column.SheetName.Equals(sheet.Name, StringComparison.OrdinalIgnoreCase) ||
+                !column.BookPath.Equals(Worksheet.Identifier.BookPath, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            if (!headerMap.TryGetValue(column.ColumnName, out var colIndex) || colIndex >= rowData.Count) continue;
+
+            var uri = Settings.Utilities.NormalizeUri(rowData[colIndex]);
+            var downloadDir =
+                settingProvider.Current.Download.Temp.GetDownloadDir(bookName, sheet.Name, column.ColumnName);
+            var downloadPath = Path.Combine(downloadDir, rowIndex.ToString());
+
+            foreach (var shapeId in imgInst.Shapes)
             {
-                if (!column.SheetName.Equals(sheet.Name, StringComparison.OrdinalIgnoreCase) ||
-                    !column.BookPath.Equals(Worksheet.Identifier.BookPath, StringComparison.OrdinalIgnoreCase))
-                    continue;
+                if (shapeId.PresentationPath != Worksheet.TemplateSlide.PresentationPath ||
+                    shapeId.SlideIndex != Worksheet.TemplateSlide.SlideIndex) continue;
+                if (!shapeData.TryGetValue(shapeId, out var sData)) continue;
 
-                if (!headerMap.TryGetValue(column.ColumnName, out var colIndex) || colIndex >= rowData.Count) continue;
+                var editDir =
+                    settingProvider.Current.Download.Temp.GetEditDir(bookName, sheet.Name, column.ColumnName);
+                var editPath = Path.Combine(editDir, $"{rowIndex}_{sData.ShapeName}");
 
-                var uri = Settings.Utilities.NormalizeUri(rowData[colIndex]);
-                var downloadDir =
-                    settingProvider.Current.Download.Temp.GetDownloadDir(bookName, sheet.Name, column.ColumnName);
-                var downloadPath = Path.Combine(downloadDir, rowIndex.ToString());
+                var imageTask = new ImageTask(
+                    Worksheet.Identifier, rowIndex, column.ColumnName,
+                    sData.ShapeName, uri, downloadPath, editPath,
+                    sData.Bounds.Width, sData.Bounds.Height,
+                    imgInst.EditOptions, imgInst.FallbackImagePath);
 
-                foreach (var shapeId in imgInst.Shapes)
-                {
-                    if (shapeId.PresentationPath != Worksheet.TemplateSlide.PresentationPath ||
-                        shapeId.SlideIndex != Worksheet.TemplateSlide.SlideIndex) continue;
-                    if (!shapeData.TryGetValue(shapeId, out var sData)) continue;
-                    
-                    var editDir =
-                        settingProvider.Current.Download.Temp.GetEditDir(bookName, sheet.Name, column.ColumnName);
-                    var editPath = Path.Combine(editDir, $"{rowIndex}_{sData.ShapeName}");
-
-                    var imageTask = new ImageTask(
-                        Worksheet.Identifier, rowIndex, column.ColumnName,
-                        sData.ShapeName, uri, downloadPath, editPath,
-                        sData.Bounds.Width, sData.Bounds.Height,
-                        imgInst.EditOptions, imgInst.FallbackImagePath);
-
-                    data.ImageTasks.Add(imageTask);
-                    slideTask.ImageReplacements[shapeId] = imageTask;
-                }
+                data.ImageTasks.Add(imageTask);
+                slideTask.ImageReplacements[shapeId] = imageTask;
             }
         }
     }

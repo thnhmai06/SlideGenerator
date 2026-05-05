@@ -7,9 +7,9 @@ namespace SlideGenerator.Images;
 
 public static class Registration
 {
-    private static readonly Size InputSize = new(640, 640);
     private const string ModelPath = @"Binary\YuNet.onnx";
     private const float Confidence = 0.8f;
+    private static readonly Size InputSize = new(640, 640);
 
     public static IServiceCollection AddImageServices(this IServiceCollection services)
     {

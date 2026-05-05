@@ -36,12 +36,13 @@ public sealed class RoiResolver(FaceDetector faceDetector, ILogger<RoiResolver> 
     public async ValueTask<Rectangle> CalculateRoiAsync(MagickImage image, Size targetSize,
         RoiOption option)
     {
-        logger.LogDebug("Calculating ROI using {Type} algorithm for image ({Width}x{Height}) targeting {TargetSize}", 
+        logger.LogDebug("Calculating ROI using {Type} algorithm for image ({Width}x{Height}) targeting {TargetSize}",
             option.Type, image.Width, image.Height, targetSize);
 
         try
         {
-            var roi = await GetCalculator(option.Type).CalculateRoiAsync(image, targetSize, option).ConfigureAwait(false);
+            var roi = await GetCalculator(option.Type).CalculateRoiAsync(image, targetSize, option)
+                .ConfigureAwait(false);
             logger.LogDebug("Calculated ROI: {ROI}", roi);
             return roi;
         }

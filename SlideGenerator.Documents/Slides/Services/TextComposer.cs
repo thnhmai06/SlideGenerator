@@ -76,10 +76,8 @@ public sealed partial class TextComposer(ILogger<TextComposer> logger)
         }
 
         if (keys.Count > 0)
-        {
-            logger.LogDebug("Found {Count} unique placeholders in shape '{ShapeName}': {Keys}", 
+            logger.LogDebug("Found {Count} unique placeholders in shape '{ShapeName}': {Keys}",
                 keys.Count, shape.ShapeName, string.Join(", ", keys));
-        }
 
         return keys;
     }
@@ -112,7 +110,8 @@ public sealed partial class TextComposer(ILogger<TextComposer> logger)
         if (shape.TextBody == null || instructions.Count == 0)
             return 0;
 
-        logger.LogDebug("Attempting text replacement for shape '{ShapeName}' with {Count} instructions", shape.ShapeName, instructions.Count);
+        logger.LogDebug("Attempting text replacement for shape '{ShapeName}' with {Count} instructions",
+            shape.ShapeName, instructions.Count);
 
         // 1. Build the full template from all paragraphs and text parts
         var templateBuilder = new StringBuilder();
@@ -209,7 +208,6 @@ public sealed partial class TextComposer(ILogger<TextComposer> logger)
 
         // 2. JSON Check: {} with : or []
         if ((trimmed.StartsWith('{') && trimmed.Contains(':')) || trimmed.StartsWith('['))
-        {
             try
             {
                 using var doc = JsonDocument.Parse(trimmed);
@@ -219,15 +217,12 @@ public sealed partial class TextComposer(ILogger<TextComposer> logger)
             {
                 // Not valid JSON, fall through
             }
-        }
 
         // 3. Comma-Separated Array Check (Context-dependent)
         if (isComplex && trimmed.Contains(',') && !trimmed.Contains(':'))
-        {
             return trimmed.Split(',')
                 .Select(s => s.Trim())
                 .ToList();
-        }
 
         return value;
     }
@@ -280,10 +275,8 @@ public sealed partial class TextComposer(ILogger<TextComposer> logger)
 
         // Clear all other paragraphs to avoid duplication
         for (var i = 1; i < textBody.Paragraphs.Count; i++)
-        {
             foreach (var part in textBody.Paragraphs[i].TextParts)
                 part.Text = string.Empty;
-        }
     }
 
     [GeneratedRegex(@"\{\{\{?([#\^/&!>]?\s*[\w\.\-]+)\s*\}?\}\}", RegexOptions.Compiled)]

@@ -11,9 +11,11 @@ namespace SlideGenerator.Pipelines.Generating.Models;
 /// <param name="DeleteDownloadImage">True to delete raw downloaded images after processing.</param>
 /// <param name="DeleteEditImage">True to delete cropped/resized images after they are embedded in slides.</param>
 public sealed record GeneratingRequest(
-    Recipe Recipe, 
-    PresentationType OutputType, string SaveFolder,
-    bool DeleteDownloadImage = false, bool DeleteEditImage = true)
+    Recipe Recipe,
+    PresentationType OutputType,
+    string SaveFolder,
+    bool DeleteDownloadImage = false,
+    bool DeleteEditImage = true)
 {
     /// <summary>
     ///     Gets the validated save folder path.

@@ -36,7 +36,10 @@ public static class NameAndPathRules
         /// </summary>
         /// <param name="ext">The file extension to append.</param>
         /// <returns>The complete path to the settings file.</returns>
-        public static string GetFilePath(string ext) => Path.Combine(UserPath, $"{FileName}{ext}");
+        public static string GetFilePath(string ext)
+        {
+            return Path.Combine(UserPath, $"{FileName}{ext}");
+        }
     }
 
     /// <summary>

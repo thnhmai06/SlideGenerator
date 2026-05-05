@@ -1,5 +1,5 @@
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
@@ -32,7 +32,7 @@ public static class Registration
         [ConsoleThemeStyle.LevelInformation] = "\e[34m", // Blue
         [ConsoleThemeStyle.LevelWarning] = "\e[33m", // Yellow
         [ConsoleThemeStyle.LevelError] = "\e[31m", // Red
-        [ConsoleThemeStyle.LevelFatal] = "\e[31m", // Red
+        [ConsoleThemeStyle.LevelFatal] = "\e[31m" // Red
     });
 
     /// <summary>
@@ -42,10 +42,7 @@ public static class Registration
     /// <param name="logFilePath">The specific file path where logs should be written.</param>
     public static void ConfigureStaticLogger(IConfiguration configuration, string logFilePath)
     {
-        if (!Directory.Exists(LoggingPaths.LogFolderPath))
-        {
-            Directory.CreateDirectory(LoggingPaths.LogFolderPath);
-        }
+        if (!Directory.Exists(LoggingPaths.LogFolderPath)) Directory.CreateDirectory(LoggingPaths.LogFolderPath);
 
         var logger = new LoggerConfiguration()
             .ReadFrom.Configuration(configuration)
@@ -55,7 +52,7 @@ public static class Registration
                 logFilePath,
                 outputTemplate:
                 "[{Timestamp:yyyy-MM-dd HH:mm:ss zzz}] {Level:u3} [{SourceContext}] {Message:lj}{NewLine}{Exception}",
-                shared: true), bufferSize: 50000, blockWhenFull: true)
+                shared: true), 50000, true)
             // 2. Console Sink - Specifically using stderr to avoid polluting stdout (used for JSON-RPC)
             // This is how we tell the IDE/Debugger and Tauri that logs are on the error stream.
             .WriteTo.Console(
@@ -83,7 +80,7 @@ public static class Registration
             string logFilePath)
         {
             ConfigureStaticLogger(configuration, logFilePath);
-            services.AddSerilog(Log.Logger, dispose: true);
+            services.AddSerilog(Log.Logger, true);
 
             return services;
         }

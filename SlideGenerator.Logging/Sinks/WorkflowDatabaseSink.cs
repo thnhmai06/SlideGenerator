@@ -14,7 +14,7 @@ namespace SlideGenerator.Logging.Sinks;
 public sealed class WorkflowDatabaseSink(IServiceScopeFactory scopeFactory) : IBatchedLogEventSink
 {
     /// <summary>
-    ///     Processes a batch of log events, transforms them into <see cref="LogEntry"/> entities,
+    ///     Processes a batch of log events, transforms them into <see cref="LogEntry" /> entities,
     ///     and saves them to the database.
     /// </summary>
     /// <param name="batch">The collection of log events to persist.</param>
@@ -55,5 +55,8 @@ public sealed class WorkflowDatabaseSink(IServiceScopeFactory scopeFactory) : IB
     ///     Called when a batch interval expires but no events are pending.
     /// </summary>
     /// <returns>A completed task.</returns>
-    public Task OnEmptyBatchAsync() => Task.CompletedTask;
+    public Task OnEmptyBatchAsync()
+    {
+        return Task.CompletedTask;
+    }
 }

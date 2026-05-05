@@ -27,7 +27,9 @@ public sealed class ScanningHandler(ScanningService scanningService)
     ///     A <see cref="WorkbookSummary" /> describing the workbook structure.
     /// </returns>
     public Task<WorkbookSummary> ScanWorkbookAsync(BookSummaryRequest request, CancellationToken ct)
-        => scanningService.ScanWorkbookAsync(request);
+    {
+        return scanningService.ScanWorkbookAsync(request);
+    }
 
     /// <summary>
     ///     Scans a PowerPoint presentation and returns its structure, including slide placeholders,
@@ -42,5 +44,7 @@ public sealed class ScanningHandler(ScanningService scanningService)
     ///     A <see cref="PresentationSummary" /> describing the presentation structure.
     /// </returns>
     public Task<PresentationSummary> ScanPresentationAsync(PresentationSummaryRequest request, CancellationToken ct)
-        => scanningService.ScanPresentationAsync(request);
+    {
+        return scanningService.ScanPresentationAsync(request);
+    }
 }

@@ -12,10 +12,10 @@ public sealed partial record Setting
     {
         /// <summary>Gets the settings for temporary file storage.</summary>
         public TempSetting Temp { get; init; } = new();
-        
+
         /// <summary>Gets the settings for network proxy configuration.</summary>
         public ProxySetting Proxy { get; init; } = new();
-        
+
         /// <summary>Gets the settings for retry logic and timeouts.</summary>
         public RetrySetting Retry { get; init; } = new();
 
@@ -103,7 +103,7 @@ public sealed partial record Setting
             public string Username { get; init; } = string.Empty;
 
             /// <summary>
-            ///     Constructs an <see cref="IWebProxy"/> based on the current configuration.
+            ///     Constructs an <see cref="IWebProxy" /> based on the current configuration.
             /// </summary>
             /// <returns>A configured web proxy, or null if proxy usage is disabled.</returns>
             public IWebProxy? GetWebProxy()

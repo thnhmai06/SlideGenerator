@@ -1,6 +1,7 @@
 ﻿using SlideGenerator.Pipelines.Generating.Steps;
 using SlideGenerator.Pipelines.Generating.Workflows.Models;
 using WorkflowCore.Interface;
+using WorkflowCore.Models;
 
 namespace SlideGenerator.Pipelines.Generating.Workflows;
 
@@ -33,7 +34,7 @@ public sealed class GeneratingWorkflow : IWorkflow<GeneratingTask>
                 .Input(step => step.Item, (data, context) => (ValidationItem)context.Item)
                 .Then<CreateTemplate>()
                 .Input(step => step.Item, (data, context) => (ValidationItem)context.Item))
-            .Then(_ => WorkflowCore.Models.ExecutionResult.Next())
+            .Then(_ => ExecutionResult.Next())
 
             #endregion
 
@@ -45,7 +46,7 @@ public sealed class GeneratingWorkflow : IWorkflow<GeneratingTask>
             .Do(x => x
                 .StartWith<ExtractData>()
                 .Input(step => step.Worksheet, (data, context) => context.Item as SheetTask))
-            .Then(_ => WorkflowCore.Models.ExecutionResult.Next())
+            .Then(_ => ExecutionResult.Next())
 
             #endregion
 
@@ -57,7 +58,7 @@ public sealed class GeneratingWorkflow : IWorkflow<GeneratingTask>
                 .Input(step => step.Task, (data, context) => context.Item as ImageTask)
                 .Then<EditImage>()
                 .Input(step => step.Task, (data, context) => context.Item as ImageTask))
-            .Then(_ => WorkflowCore.Models.ExecutionResult.Next())
+            .Then(_ => ExecutionResult.Next())
 
             #endregion
 
@@ -71,7 +72,7 @@ public sealed class GeneratingWorkflow : IWorkflow<GeneratingTask>
             .Do(x => x
                 .StartWith<ReplaceSlideData>()
                 .Input(step => step.Task, (data, context) => context.Item as SlideTask))
-            .Then(_ => WorkflowCore.Models.ExecutionResult.Next())
+            .Then(_ => ExecutionResult.Next())
 
             #endregion
 
