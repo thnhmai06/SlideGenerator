@@ -1,6 +1,6 @@
 ﻿using Downloader;
 using Microsoft.Extensions.Logging;
-using SlideGenerator.Settings.Interfaces;
+using SlideGenerator.Settings.Services;
 
 namespace SlideGenerator.Download.Services;
 

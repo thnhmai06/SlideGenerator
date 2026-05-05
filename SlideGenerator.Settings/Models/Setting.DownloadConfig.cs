@@ -1,28 +1,28 @@
 ﻿using System.Net;
 using SlideGenerator.Settings.Rules;
 
-namespace SlideGenerator.Settings.Settings;
+namespace SlideGenerator.Settings.Models;
 
-public sealed partial class Setting
+public sealed partial record Setting
 {
     /// <summary>
     ///     Settings governing how the application downloads resources and handles network connectivity.
     /// </summary>
-    public sealed class DownloadSetting
+    public sealed record DownloadSetting
     {
         /// <summary>Gets the settings for temporary file storage.</summary>
-        public readonly TempSetting Temp = new();
+        public TempSetting Temp { get; init; } = new();
         
         /// <summary>Gets the settings for network proxy configuration.</summary>
-        public readonly ProxySetting Proxy = new();
+        public ProxySetting Proxy { get; init; } = new();
         
         /// <summary>Gets the settings for retry logic and timeouts.</summary>
-        public readonly RetrySetting Retry = new();
+        public RetrySetting Retry { get; init; } = new();
 
         /// <summary>
         ///     Defines where temporary files are stored and how directory paths are structured.
         /// </summary>
-        public sealed class TempSetting
+        public sealed record TempSetting
         {
             /// <summary>
             ///     Gets or sets the base directory for temporary application files.
@@ -73,7 +73,7 @@ public sealed partial class Setting
         /// <summary>
         ///     Configures the behavior of network request retries.
         /// </summary>
-        public sealed class RetrySetting
+        public sealed record RetrySetting
         {
             /// <summary>Gets the maximum number of times a failed request should be retried.</summary>
             public int MaxRetries { get; init; } = 3;
@@ -85,7 +85,7 @@ public sealed partial class Setting
         /// <summary>
         ///     Provides network proxy details for corporate or restricted environments.
         /// </summary>
-        public sealed class ProxySetting
+        public sealed record ProxySetting
         {
             /// <summary>Gets whether a proxy should be used.</summary>
             public bool UseProxy { get; init; } = false;

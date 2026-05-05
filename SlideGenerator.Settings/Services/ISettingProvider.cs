@@ -1,6 +1,6 @@
-﻿using SlideGenerator.Settings.Settings;
+﻿using SlideGenerator.Settings.Models;
 
-namespace SlideGenerator.Settings.Interfaces;
+namespace SlideGenerator.Settings.Services;
 
 /// <summary>
 ///     Provides read-only access to the current application configuration.

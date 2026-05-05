@@ -7,4 +7,5 @@
     <Project Path="SlideGenerator.Cloud/SlideGenerator.Cloud.csproj" />
     <Project Path="SlideGenerator.Coordinator/SlideGenerator.Coordinator.csproj" />
     <Project Path="SlideGenerator.Download/SlideGenerator.Download.csproj" />
+    <Project Path="SlideGenerator.Ipc/SlideGenerator.Ipc.csproj" />
 </Solution>

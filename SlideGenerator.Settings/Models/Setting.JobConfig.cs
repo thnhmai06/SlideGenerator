@@ -1,12 +1,12 @@
-﻿namespace SlideGenerator.Settings.Settings;
+﻿namespace SlideGenerator.Settings.Models;
 
-public sealed partial class Setting
+public sealed partial record Setting
 {
     /// <summary>
     ///     Settings related to the execution and orchestration of generation jobs.
     ///     Controls the degree of parallelism for different stages of the pipeline.
     /// </summary>
-    public sealed class JobSetting
+    public sealed record JobSetting
     {
         /// <summary>Gets the maximum number of concurrent image downloads.</summary>
         public int MaxParallelDownloadImage { get; init; } = 5;

@@ -5,7 +5,6 @@ using SlideGenerator.Documents.Sheets.Models;
 using SlideGenerator.Documents.Slides.Entities;
 using SlideGenerator.Documents.Slides.Models;
 using SlideGenerator.Pipelines.Generating.Models;
-using Syncfusion.XlsIO;
 
 namespace SlideGenerator.Pipelines.Generating.Workflows.Models;
 

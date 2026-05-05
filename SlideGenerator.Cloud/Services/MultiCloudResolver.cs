@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
 using SlideGenerator.Cloud.Models;
 using SlideGenerator.Cloud.Resolvers;
+using GoogleDriveResolver = SlideGenerator.Cloud.Resolvers.GoogleDriveResolver;
+using GooglePhotosResolver = SlideGenerator.Cloud.Resolvers.GooglePhotosResolver;
 
 namespace SlideGenerator.Cloud.Services;
 

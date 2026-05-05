@@ -1,7 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
 using SlideGenerator.Coordinator.Models;
-using SlideGenerator.Settings.Interfaces;
+using SlideGenerator.Settings.Services;
 
 namespace SlideGenerator.Coordinator.Services;
 

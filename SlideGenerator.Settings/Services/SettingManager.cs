@@ -1,8 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using SlideGenerator.Settings.Entities;
-using SlideGenerator.Settings.Interfaces;
+using SlideGenerator.Settings.Models;
 using SlideGenerator.Settings.Rules;
-using SlideGenerator.Settings.Settings;
 
 namespace SlideGenerator.Settings.Services;
 

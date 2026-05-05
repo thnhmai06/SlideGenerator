@@ -1,17 +1,17 @@
-﻿namespace SlideGenerator.Settings.Settings;
+﻿namespace SlideGenerator.Settings.Models;
 
 /// <summary>
 ///     Represents the root configuration entity containing all application settings.
 /// </summary>
-public sealed partial class Setting
+public sealed partial record Setting
 {
     /// <summary>
     ///     Gets the configuration settings related to image downloading and resource fetching.
     /// </summary>
-    public readonly DownloadSetting Download = new();
+    public DownloadSetting Download { get; init; } = new();
 
     /// <summary>
     ///     Gets the configuration settings related to job execution and parallelism.
     /// </summary>
-    public readonly JobSetting Job = new();
+    public JobSetting Job { get; init; } = new();
 }
