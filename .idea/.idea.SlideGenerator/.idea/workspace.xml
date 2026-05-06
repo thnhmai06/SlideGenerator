@@ -8,9 +8,14 @@
   <component name="AutoImportSettings">
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
+  <component name="CMakeProjectFlavorService">
+    <option name="flavorId" value="CMakePlainProjectFlavor" />
+  </component>
+  <component name="CMakeSettings">
+    <configurations />
+  </component>
   <component name="ChangeListManager">
     <list default="true" id="3a1f1c77-0578-40bf-9d5d-a0e8452562c2" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.editorconfig" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.SlideGenerator/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.SlideGenerator/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/SlideGenerator.sln.DotSettings.user" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.sln.DotSettings.user" afterDir="false" />
     </list>
@@ -38,7 +43,7 @@
     <option name="firstShow" value="false" />
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="66" />
+    <option name="cachedIndexableFilesCount" value="26" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="FileTemplateManagerImpl">
@@ -158,37 +163,41 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    ".NET Project.SlideGenerator.Ipc.executor": "Debug",
-    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.MCP Project settings loaded": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "ShowUsagesActions.previewPropertyKey": "true",
-    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "develop/backend",
-    "ignore.virus.scanning.warn.message": "true",
-    "junie.onboarding.icon.badge.shown": "true",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "FileHeaderTextPageId",
-    "to.speed.mode.migration.done": "true",
-    "ts.external.directory.path": "D:\\PROGRAM\\Jetbrains\\Rider\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;.NET Project.SlideGenerator.Ipc.executor&quot;: &quot;Debug&quot;,
+    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;ShowUsagesActions.previewPropertyKey&quot;: &quot;true&quot;,
+    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;develop/backend&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;reference.settings.ide.settings.uml&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;D:\\PROGRAM\\Jetbrains\\Rider\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   },
-  "keyToStringList": {
-    "com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File": [
-      "TEXT"
+  &quot;keyToStringList&quot;: {
+    &quot;com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File&quot;: [
+      &quot;TEXT&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="Push.Settings">
     <force-push-targets>
       <force-push-target remote-path="origin" branch="develop/backend" />
@@ -310,15 +319,12 @@
       <workItem from="1777997670857" duration="19000" />
       <workItem from="1777997706085" duration="147000" />
       <workItem from="1778002521594" duration="143000" />
-      <workItem from="1778002688167" duration="812000" />
-    </task>
-    <task id="LOCAL-00012" summary="feat(backend): complete generating activities and clean architecture structure &#10;&#10;- Changed ISlide and IImageShape to inherit from ISlideObject (ensures a unified interface structure).&#10;- Updated namespaces in various files to reflect the new structure (improves clarity and organization).&#10;- Renamed methods in ISpecializable to Flatten for better semantic meaning (enhances code readability).">
-      <option name="closed" value="true" />
-      <created>1774866233535</created>
-      <option name="number" value="00012" />
-      <option name="presentableId" value="LOCAL-00012" />
-      <option name="project" value="LOCAL" />
-      <updated>1774866233535</updated>
+      <workItem from="1778002688167" duration="2039000" />
+      <workItem from="1778004768905" duration="1147000" />
+      <workItem from="1778007174740" duration="134000" />
+      <workItem from="1778038209362" duration="705000" />
+      <workItem from="1778070258953" duration="370000" />
+      <workItem from="1778070662493" duration="322000" />
     </task>
     <task id="LOCAL-00013" summary="feat(backend): complete generating activities and clean architecture structure&#10;&#10;- Changed ISlide and IImageShape to inherit from ISlideObject (ensures a unified interface structure).&#10;- Updated namespaces in various files to reflect the new structure (improves clarity and organization).&#10;- Renamed methods in ISpecializable to Flatten for better semantic meaning (enhances code readability).">
       <option name="closed" value="true" />
@@ -704,7 +710,15 @@
       <option name="project" value="LOCAL" />
       <updated>1777997346932</updated>
     </task>
-    <option name="localTasksCounter" value="61" />
+    <task id="LOCAL-00061" summary="chore: add copyrights to source code, cleanup and reformat">
+      <option name="closed" value="true" />
+      <created>1778003840665</created>
+      <option name="number" value="00061" />
+      <option name="presentableId" value="LOCAL-00061" />
+      <option name="project" value="LOCAL" />
+      <updated>1778003840666</updated>
+    </task>
+    <option name="localTasksCounter" value="62" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -789,8 +803,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
-    <MESSAGE value="[skip ci] chore: Update Instructions" />
-    <MESSAGE value="refactor(workflows)!: transition to variable-based persistence and robust resource locking&#10;&#10;- Replaced `ExecutionState` with `ExecutionSnapshot`, splitting transient context (`IExecutionContext`) from persisted variables (`IExecutionPayload`).&#10;- Eliminated mutable state objects (e.g., `SheetTask`) in favor of strict, scope-based `Variable&lt;T&gt;` persistence for workflow execution.&#10;- Refactored `Registry` implementations to support shared-read/exclusive-write locking using `FileLocker`.&#10;- Introduced `GateLocker`, `GateNode`, and `GateType`, replacing `SlotGatedNode` and `SlotType` for granular concurrency throttling.&#10;- Extracted custom DSL interpretation logic from `WcInterpreterStep` into a dedicated `WorkflowInterpreter` service.&#10;- Updated generation and scanning activities to manage data, instructions, and open file leases exclusively through scope variables.&#10;- Introduced `Lease&lt;T&gt;` and `ILock` abstractions for reliable, strongly-typed resource lifecycle management.&#10;- Updated documentation (INSTRUCTIONS.MD, CLAUDE.md) to reflect new variable scope rules, registry patterns, and strict architectural constraints." />
     <MESSAGE value="[skip ci] chore(backend): reformat and cleanup code" />
     <MESSAGE value="refactor(infrastructure): Transition to Syncfusion libraries for slide and sheet processing&#10;&#10;- Replaced OpenXML and ClosedXML implementations with Syncfusion equivalents (e.g., SfPresentation, SfReadOnlyWorkbook, SfImageComposer, SfTextComposer).&#10;- Moved sheet identifier models (e.g., WorkbookIdentifier, WorksheetIdentifier) to the Models.Identifiers namespace for better organization.&#10;- Introduced GetPreview methods in IReadOnlyWorksheet, IReadOnlySlide, and IReadOnlyShape to generate lightweight visual and data previews.&#10;- Simplified SlidePreview to only retain the index and image, promoting Id and Name metadata to SlideSummary.&#10;- Updated ScanWorkbook and ScanPresentation activities to adopt the new preview rendering approaches.&#10;- Removed the Scan method from IImageComposer as preview extraction is now handled directly by shapes.&#10;- Cleaned up obsolete XML and ClosedXML adapters, services, and the GeneratingService.&#10;- Added Syncfusion packages to the infrastructure project dependencies." />
     <MESSAGE value="refactor(workflows): extract ScanningWorkflow and remove WorkflowTask wrapper&#10;&#10;- Removed `WorkflowTask` class and updated generating activities and nodes to consume `GeneratingRequest` directly.&#10;- Introduced `ScanningWorkflow` and `ScanningRequest` to encapsulate and separate scanning logic from generation.&#10;- Created `ScanningVariables` to define specific variables for scanning, aliasing them within `VariablesDeclaration`.&#10;- Updated `GeneratingWorkflow` to execute the new `ScanningWorkflow` during its initial parallel scanning phase.&#10;- Modified `ScanWorkbook` and `ScanPresentation` activities to implement `ILeafActivity&lt;object&gt;`, improving reusability.&#10;- Added `TryGetVariable` to `IActivityContext` and implemented it in `WcInterpreterContext` for safer variable resolution across nested scopes." />
@@ -814,7 +826,9 @@
     <MESSAGE value="feat(ipc): introduce JSON-RPC sidecar and refactor settings to immutable records&#10;&#10;This commit introduces a new `SlideGenerator.Ipc` project that serves as a JSON-RPC 2.0 sidecar over standard I/O, enabling seamless integration with external clients. Additionally, application settings have been refactored into immutable records, and the logging startup sequence has been streamlined.&#10;&#10;- **New IPC Sidecar (`SlideGenerator.Ipc`):**&#10;  - Created a new console application entry point to handle JSON-RPC communication using `StreamJsonRpc`.&#10;  - Added `WorkflowHandler`, `ScanningHandler`, and `SettingsHandler` to expose core functionality to connected clients.&#10;  - Implemented custom JSON converters (`RectangleFJsonAdapter`, `RoiOptionJsonAdapter`) for precise data serialization of specific types.&#10;  - Added DI registration configuration via `AddIpcServices`.&#10;&#10;- **Workflow Progress Notifications:**&#10;  - Introduced an in-process `WorkflowEventBus` and `WorkflowProgressObserver` to decouple and monitor WorkflowCore lifecycle events.&#10;  - Added the `WorkflowProgress` data model to structure and broadcast workflow execution states (e.g., `Running`, `Paused`, `Cancelled`) directly to the client as standard notifications.&#10;&#10;- **Settings Architecture Refactoring:**&#10;  - Converted the root `Setting` class and its nested configurations (`JobSetting`, `DownloadSetting`, `TempSetting`, `ProxySetting`, `RetrySetting`) into immutable `record` types with `init` properties.&#10;  - Reorganized settings namespaces, moving models to a dedicated `Models` namespace and relocating `ISettingProvider` to the `Services` namespace.&#10;&#10;- **Logging and Module Improvements:**&#10;  - Refactored `SlideGenerator.Logging.Registration` to extract a `ConfigureStaticLogger` method, ensuring the logging directory is created and the Serilog static instance is safely configured early in the bootstrap process.&#10;  - Updated namespaces and using directives across the `Cloud`, `Download`, `Coordinator`, and `Pipelines` modules to align with the new settings structure." />
     <MESSAGE value="feat(ipc): implement JSON-RPC sidecar and enhance logging setup&#10;&#10;- Introduced a new `SlideGenerator.Ipc` project for JSON-RPC communication (enables integration with external clients).&#10;- Refactored logging initialization to include log file path and improved shutdown handling (ensures logs are flushed on exit).&#10;- Added welcome message display at startup (enhances user experience)." />
     <MESSAGE value="[skip ci] docs: add documents written by AI slop&#10;&#10;(i hate it, so i will rewrite this by myself)&#10;&#10;This commit significantly overhauls the project documentation, introducing a structured, bilingual (English and Vietnamese) technical documentation suite while updating architectural guidelines to reflect the recent transition to an IPC Sidecar model.&#10;&#10;- **Architectural Documentation Updates:**&#10;  - Updated `CLAUDE.md` to detail the new Modular Monolith + IPC Sidecar architecture, stream ownership (`stdin`/`stdout`/`stderr`), JSON-RPC setup, and System.Text.Json (STJ) adapters.&#10;  - Removed the outdated `Workflow.md` from the project root.&#10;  - Relocated `SlideGenerator.Pipelines/Generating/Workflows/Pipeline.md` to `Documents/Vie/PIPELINE.md`.&#10;&#10;- **New Bilingual Documentation Suite (`Documents/`):**&#10;  - Added high-level project guides: `README.md`, `ARCHITECTURE.md`, and `CONTRIBUTING.md` in both English and Vietnamese.&#10;  - Added detailed module-specific documentation covering `CLOUD.md`, `COORDINATOR.md`, `DOCUMENTS.md`, `DOWNLOAD.md`, `IMAGES.md`, `IPC.md`, `LOGGING.md`, `PIPELINES.md`, and `SETTINGS.md` in both languages.&#10;&#10;- **Community and Planning:**&#10;  - Added a standard `CODE_OF_CONDUCT.md` based on Contributor Covenant 3.0.&#10;  - Created initial root `README.md` and `CONTRIBUTING.md` files.&#10;  - Added `conductor/plan.md` outlining the documentation implementation strategy." />
-    <option name="LAST_COMMIT_MESSAGE" value="[skip ci] docs: add documents written by AI slop&#10;&#10;(i hate it, so i will rewrite this by myself)&#10;&#10;This commit significantly overhauls the project documentation, introducing a structured, bilingual (English and Vietnamese) technical documentation suite while updating architectural guidelines to reflect the recent transition to an IPC Sidecar model.&#10;&#10;- **Architectural Documentation Updates:**&#10;  - Updated `CLAUDE.md` to detail the new Modular Monolith + IPC Sidecar architecture, stream ownership (`stdin`/`stdout`/`stderr`), JSON-RPC setup, and System.Text.Json (STJ) adapters.&#10;  - Removed the outdated `Workflow.md` from the project root.&#10;  - Relocated `SlideGenerator.Pipelines/Generating/Workflows/Pipeline.md` to `Documents/Vie/PIPELINE.md`.&#10;&#10;- **New Bilingual Documentation Suite (`Documents/`):**&#10;  - Added high-level project guides: `README.md`, `ARCHITECTURE.md`, and `CONTRIBUTING.md` in both English and Vietnamese.&#10;  - Added detailed module-specific documentation covering `CLOUD.md`, `COORDINATOR.md`, `DOCUMENTS.md`, `DOWNLOAD.md`, `IMAGES.md`, `IPC.md`, `LOGGING.md`, `PIPELINES.md`, and `SETTINGS.md` in both languages.&#10;&#10;- **Community and Planning:**&#10;  - Added a standard `CODE_OF_CONDUCT.md` based on Contributor Covenant 3.0.&#10;  - Created initial root `README.md` and `CONTRIBUTING.md` files.&#10;  - Added `conductor/plan.md` outlining the documentation implementation strategy." />
+    <MESSAGE value="[skip ci] chore: Rename namespace and project name" />
+    <MESSAGE value="chore: add copyrights to source code, cleanup and reformat" />
+    <option name="LAST_COMMIT_MESSAGE" value="chore: add copyrights to source code, cleanup and reformat" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
