@@ -1,9 +1,9 @@
-﻿/*
+/*
  * Copyright (C) 2026 Thành Mai
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Cloud
- * File: CloudResolver.cs
+ * Project: SlideGenerator.Tests
+ * File: LoggingPathsTests.cs
  *
  * This file is part of this solution. You can find the full source code here: https://github.com/thnhmai06/SlideGenerator
  *
@@ -17,19 +17,19 @@
  * GNU Affero General Public License for more details.
  */
 
-using Microsoft.Extensions.Logging;
+using FluentAssertions;
+using SlideGenerator.Logging;
+using Xunit;
 
-namespace SlideGenerator.Cloud.Resolvers;
+namespace SlideGenerator.Tests.Logging;
 
-/// <summary>
-///     Defines a contract for resolving cloud-hosted URIs to direct download links.
-/// </summary>
-public abstract class CloudResolver(ILogger logger)
+public sealed class LoggingPathsTests
 {
-    protected ILogger Logger { get; } = logger;
-
-    public abstract bool IsUriSupported(Uri uri);
-
-    public abstract Task<Uri> ResolveUriAsync(Uri supportedUri, HttpClient httpClient,
-        CancellationToken cancellationToken = default);
+    [Fact]
+    public void LogFolderPath_ShouldBeInBaseDirectory()
+    {
+        var path = LoggingPaths.LogFolderPath;
+        path.Should().EndWith("Logs");
+        Directory.Exists(Path.GetDirectoryName(path)).Should().BeTrue();
+    }
 }

@@ -23,7 +23,7 @@ using Microsoft.Extensions.Logging;
 
 namespace SlideGenerator.Cloud.Resolvers;
 
-internal sealed partial class GoogleDriveResolver(ILogger logger) : CloudResolver(logger)
+public sealed partial class GoogleDriveResolver(ILogger logger) : CloudResolver(logger)
 {
     private static readonly Regex GoogleDriveFileIdPattern = GoogleDriveFileIdRegex();
 

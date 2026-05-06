@@ -25,7 +25,7 @@ namespace SlideGenerator.Cloud.Resolvers;
 /// <summary>
 ///     Provides access to Microsoft SharePoint as a cloud provider, resolving file URIs to direct download links.
 /// </summary>
-internal sealed class SharePointResolver(ILogger logger) : CloudResolver(logger)
+public sealed class SharePointResolver(ILogger logger) : CloudResolver(logger)
 {
     /// <inheritdoc />
     public override Task<Uri> ResolveUriAsync(Uri supportedUri,

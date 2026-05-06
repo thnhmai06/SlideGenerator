@@ -25,7 +25,7 @@ namespace SlideGenerator.Cloud.Resolvers;
 /// <summary>
 ///     Provides access to Microsoft OneDrive as a cloud provider, converting sharing links to direct API download links.
 /// </summary>
-internal sealed class OneDriveResolver(ILogger logger) : CloudResolver(logger)
+public sealed class OneDriveResolver(ILogger logger) : CloudResolver(logger)
 {
     /// <inheritdoc />
     public override Task<Uri> ResolveUriAsync(

@@ -25,7 +25,7 @@ namespace SlideGenerator.Cloud.Resolvers;
 /// <summary>
 ///     Provides access to Google Photos as a cloud provider, resolving album URLs to direct image links.
 /// </summary>
-internal sealed partial class GooglePhotosResolver(ILogger logger) : CloudResolver(logger)
+public sealed partial class GooglePhotosResolver(ILogger logger) : CloudResolver(logger)
 {
     /// <summary>
     ///     A compiled regular expression for extracting direct image URLs from Google Photos HTML content.

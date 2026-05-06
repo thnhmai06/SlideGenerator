@@ -1,9 +1,9 @@
-﻿/*
+/*
  * Copyright (C) 2026 Thành Mai
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Cloud
- * File: CloudResolver.cs
+ * Project: SlideGenerator.Tests
+ * File: SpreadsheetUtilitiesTests.cs
  *
  * This file is part of this solution. You can find the full source code here: https://github.com/thnhmai06/SlideGenerator
  *
@@ -17,19 +17,21 @@
  * GNU Affero General Public License for more details.
  */
 
-using Microsoft.Extensions.Logging;
+using Xunit;
 
-namespace SlideGenerator.Cloud.Resolvers;
+namespace SlideGenerator.Tests.Document;
 
-/// <summary>
-///     Defines a contract for resolving cloud-hosted URIs to direct download links.
-/// </summary>
-public abstract class CloudResolver(ILogger logger)
+public sealed class SpreadsheetUtilitiesTests
 {
-    protected ILogger Logger { get; } = logger;
+    [Fact(Skip = "INTEGRATION: requires Syncfusion license and complex mocking of IWorksheet")]
+    public void GetHeaders_ShouldReturnFirstRow()
+    {
+        // Logic: ws.GetRow(0)
+    }
 
-    public abstract bool IsUriSupported(Uri uri);
-
-    public abstract Task<Uri> ResolveUriAsync(Uri supportedUri, HttpClient httpClient,
-        CancellationToken cancellationToken = default);
+    [Fact(Skip = "INTEGRATION: requires Syncfusion license")]
+    public void CountRows_ShouldHandleEmptyWorksheet()
+    {
+        // Mocking UsedRange as null
+    }
 }
