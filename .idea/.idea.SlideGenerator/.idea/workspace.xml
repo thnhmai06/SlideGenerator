@@ -16,8 +16,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3a1f1c77-0578-40bf-9d5d-a0e8452562c2" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.SlideGenerator/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.SlideGenerator/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SlideGenerator.sln.DotSettings.user" beforeDir="false" afterPath="$PROJECT_DIR$/SlideGenerator.sln.DotSettings.user" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CONTRIBUTING.md" beforeDir="false" afterPath="$PROJECT_DIR$/CONTRIBUTING.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Documents/Eng/CONTRIBUTING.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Documents/Eng/README.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -110,29 +112,8 @@
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/SourcesCache/7190b86157fe2342e7d9cf3157f9c281f2c917a33ed717e326792cddc2976563/AsyncKeyedLocker.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/SourcesCache/aa1b45f3f86166f2831a18e0a327c822ba284c2e2367db0ac9752edf3e867d/IAsyncDisposable.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$USER_HOME$/AppData/Local/JetBrains/Shared/vAny/SourcesCache/c06bf838162a738357facbb73f41f36af59b661d5edd62df198fe30c6dca0/DownloadConfiguration.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/6340b5fe53504d64abf787165f5fc155ad800/7c/7ae0de59/ParallelForEach`1.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/658a0e954f184e67b66bdd4634556e681b48cf0/18/abe1cf38/Shape.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/78884848959540a592c6ed676b77131279d7e0/29/321c8130/PresentationDocument.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/7b96cb21469a4abe92f6b27b654e997874de0/cc/69917e13/OpenSettings.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/a344d5234cda41fbb887e67f5efa58d0bba00/4d/14eaf910/ParallelForEach.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/a344d5234cda41fbb887e67f5efa58d0bba00/60/5d6d384f/IWorkflowBuilder.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/a344d5234cda41fbb887e67f5efa58d0bba00/c5/0c88de65/ParallelForEach`1.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/a344d5234cda41fbb887e67f5efa58d0bba00/da/e647ffe1/ObjectExtensions.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/ac1e1a3f342b49519210665ab0a8c796f45910/a2/7a8b4edb/IReadOnlyCollection`1.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/17fcedf764b5f2f0efc6197218d7d226f1c41ec94eae1cfdaf975b38c917ae2/DownloadService.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/189bef5682823822a8630f7f49e12d258e125b64249d463d9b7486a574bd66/ISerializer.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/21a7fbb5537320318fffd25a266ad4eb79ce497d66b03d8c9ad63840bdb35a/AsyncCompletedEvent.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/30eb5193198d78d05ac7a52f66c22ba8d6e62de24b5d1d19e43ccbd92661e50/IEventHandler.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/416d1e8d802dd56d6f1fef2795ed23448112dc496a67df7ac1ae9e4d2dfd/FaceDetectorYN.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/51a13be7672e6212c3a9562a4578b334846417f7dbfee8bb74c3957893b99ba/DownloadProgressChangedEventArgs.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/8487b0975f26afecce52791538c109681ef2116de6e45e85c38c24aa1266/IDeserializer.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/aa1b45f3f86166f2831a18e0a327c822ba284c2e2367db0ac9752edf3e867d/IAsyncDisposable.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/aeddec7ccf3f1571cfd14ca2540abbf19f9846eb91bc3767e402298d4cbaa/ConcurrentDictionary.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/c06bf838162a738357facbb73f41f36af59b661d5edd62df198fe30c6dca0/DownloadConfiguration.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/c9f69e88ac9078c98c3ee8fc6aecfd680efa3c6e4a25e40adcfdbeba514c6/AbstractDownloadService.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/f8933dc0151257bf474678ae93838fb9978d7b6fe81d878b68a1c61350bc4026/DownloadStartedEventArgs.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/fad14b43e4819e65f7bd431c7e5f027e2c383e35d9ed8de5d5fc66adc971/MustacheTemplate.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/.claude/settings.local.json" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/.vs/SlideGenerator.slnx/v18/DocumentLayout.json" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Ipc/Program.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Ipc/Registration.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/SlideGenerator.Settings/Entities/Serializer.cs" root0="FORCE_HIGHLIGHTING" />
@@ -150,7 +131,7 @@
     </order>
   </component>
   <component name="ProblemsViewState">
-    <option name="selectedTabId" value="Toolset" />
+    <option name="selectedTabId" value="CurrentFile" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 4
@@ -324,23 +305,7 @@
       <workItem from="1778007174740" duration="134000" />
       <workItem from="1778038209362" duration="705000" />
       <workItem from="1778070258953" duration="370000" />
-      <workItem from="1778070662493" duration="322000" />
-    </task>
-    <task id="LOCAL-00013" summary="feat(backend): complete generating activities and clean architecture structure&#10;&#10;- Changed ISlide and IImageShape to inherit from ISlideObject (ensures a unified interface structure).&#10;- Updated namespaces in various files to reflect the new structure (improves clarity and organization).&#10;- Renamed methods in ISpecializable to Flatten for better semantic meaning (enhances code readability).">
-      <option name="closed" value="true" />
-      <created>1774866304977</created>
-      <option name="number" value="00013" />
-      <option name="presentableId" value="LOCAL-00013" />
-      <option name="project" value="LOCAL" />
-      <updated>1774866304977</updated>
-    </task>
-    <task id="LOCAL-00014" summary="feat(backend): complete generating activities and clean architecture structure&#10;&#10;- Changed ISlide and IImageShape to inherit from ISlideObject (ensures a unified interface structure).&#10;- Updated namespaces in various files to reflect the new structure (improves clarity and organization).&#10;- Renamed methods in ISpecializable to Flatten for better semantic meaning (enhances code readability).">
-      <option name="closed" value="true" />
-      <created>1774866373734</created>
-      <option name="number" value="00014" />
-      <option name="presentableId" value="LOCAL-00014" />
-      <option name="project" value="LOCAL" />
-      <updated>1774866373734</updated>
+      <workItem from="1778070662493" duration="3350000" />
     </task>
     <task id="LOCAL-00015" summary="chore(backend): improve business logic on sheet, slide, tasks&#10;&#10;- Updated activity constructors to accept identifiers instead of raw strings (improves type safety).&#10;- Refined error handling for invalid inputs in several activities (enhances robustness).&#10;- Introduced a new FileSystem class for file operations (promotes single responsibility).&#10;- Normalized file naming conventions across the application (ensures consistency).">
       <option name="closed" value="true" />
@@ -718,7 +683,23 @@
       <option name="project" value="LOCAL" />
       <updated>1778003840666</updated>
     </task>
-    <option name="localTasksCounter" value="62" />
+    <task id="LOCAL-00062" summary="chore: update package">
+      <option name="closed" value="true" />
+      <created>1778071093694</created>
+      <option name="number" value="00062" />
+      <option name="presentableId" value="LOCAL-00062" />
+      <option name="project" value="LOCAL" />
+      <updated>1778071093694</updated>
+    </task>
+    <task id="LOCAL-00063" summary="[skip ci] docs: restructure and expand bilingual documentation suite&#10;&#10;This commit significantly reorganizes the project documentation by splitting the monolithic README into focused, modular markdown files for both English and Vietnamese.&#10;&#10;- **New Documentation Files (`Documents/Eng/` &amp; `Documents/Vie/`):**&#10;  - Added `API_WORKFLOW.md` detailing the 9 JSON-RPC 2.0 endpoints, push notifications via `stdout`, and WorkflowCore orchestration phases.&#10;  - Added `SETUP.md` covering system prerequisites, `.env` configuration (specifically the `SYNCFUSION_LICENSE_KEY`), and build/run instructions.&#10;  - Added `STANDARDS.md` outlining the core tech stack (.NET 10, StreamJsonRpc, WorkflowCore, Syncfusion, Magick.NET, OpenCVSharp) and strict coding constraints.&#10;&#10;- **Existing Documentation Updates:**&#10;  - Refactored `README.md` to serve as a lightweight index pointing to the new detailed documents, alongside a simplified Quick Start guide.&#10;  - Updated `ARCHITECTURE.md` to explicitly define the &quot;Modular Monolith + IPC Sidecar&quot; approach and mapped out the exact Module Hierarchy (Foundation, Core Services, Feature Modules, and Orchestration).&#10;&#10;- **IDE/Workspace:**&#10;  - Updated JetBrains `.idea/workspace.xml` to reflect file caching and recent task history.">
+      <option name="closed" value="true" />
+      <created>1778073855436</created>
+      <option name="number" value="00063" />
+      <option name="presentableId" value="LOCAL-00063" />
+      <option name="project" value="LOCAL" />
+      <updated>1778073855436</updated>
+    </task>
+    <option name="localTasksCounter" value="64" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -803,8 +784,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
-    <MESSAGE value="[skip ci] chore(backend): reformat and cleanup code" />
-    <MESSAGE value="refactor(infrastructure): Transition to Syncfusion libraries for slide and sheet processing&#10;&#10;- Replaced OpenXML and ClosedXML implementations with Syncfusion equivalents (e.g., SfPresentation, SfReadOnlyWorkbook, SfImageComposer, SfTextComposer).&#10;- Moved sheet identifier models (e.g., WorkbookIdentifier, WorksheetIdentifier) to the Models.Identifiers namespace for better organization.&#10;- Introduced GetPreview methods in IReadOnlyWorksheet, IReadOnlySlide, and IReadOnlyShape to generate lightweight visual and data previews.&#10;- Simplified SlidePreview to only retain the index and image, promoting Id and Name metadata to SlideSummary.&#10;- Updated ScanWorkbook and ScanPresentation activities to adopt the new preview rendering approaches.&#10;- Removed the Scan method from IImageComposer as preview extraction is now handled directly by shapes.&#10;- Cleaned up obsolete XML and ClosedXML adapters, services, and the GeneratingService.&#10;- Added Syncfusion packages to the infrastructure project dependencies." />
     <MESSAGE value="refactor(workflows): extract ScanningWorkflow and remove WorkflowTask wrapper&#10;&#10;- Removed `WorkflowTask` class and updated generating activities and nodes to consume `GeneratingRequest` directly.&#10;- Introduced `ScanningWorkflow` and `ScanningRequest` to encapsulate and separate scanning logic from generation.&#10;- Created `ScanningVariables` to define specific variables for scanning, aliasing them within `VariablesDeclaration`.&#10;- Updated `GeneratingWorkflow` to execute the new `ScanningWorkflow` during its initial parallel scanning phase.&#10;- Modified `ScanWorkbook` and `ScanPresentation` activities to implement `ILeafActivity&lt;object&gt;`, improving reusability.&#10;- Added `TryGetVariable` to `IActivityContext` and implemented it in `WcInterpreterContext` for safer variable resolution across nested scopes." />
     <MESSAGE value="```text&#10;refactor(workflows): replace centralized interpreter with self-executing activity DSL&#10;&#10;- Removed the centralized `WorkflowInterpreter` and record-based DSL nodes (e.g., `SequenceNode`, `ForEachNode`, `TryNode`).&#10;- Introduced an object-oriented `Activity&lt;TData&gt;` base class with self-executing implementations (`Sequence`, `Parallel`, `ForEach`, `Try`, `Condition`, `Inline`, `GateWrapper`).&#10;- Renamed `Variable&lt;T&gt;` to `Handle&lt;T&gt;` to better represent workflow-scoped references.&#10;- Renamed `IActivityContext` to `IExecutionContext`, renaming the `State` property to `Snapshot` and exposing an `IServiceProvider` for internal dependency resolution.&#10;- Renamed `IWorkflowDefinition` to `IWorkflow` and updated implementations to construct activity trees using the new DSL.&#10;- Refactored `GateLocker` to be a generic `GateLocker&lt;TGate&gt;` that accepts a resolver function for determining concurrency limits.&#10;- Updated all leaf activities to implement `Activity&lt;TData&gt;` instead of `ILeafActivity&lt;TData&gt;`.&#10;- Updated WorkflowCore infrastructure adapters (`WcWorkflowService`, `WcInterpreterStep`, `WcInterpreterContext`) to support the new interface types and execute the activity tree directly.&#10;- Updated architectural documentation (`INSTRUCTIONS.MD`, `CLAUDE.md`) to reflect the new terminology and scope management guidelines.&#10;```" />
     <MESSAGE value="refactor(workflows): replace centralized interpreter with self-executing activity DSL&#10;&#10;- Removed the centralized `WorkflowInterpreter` and record-based DSL nodes (e.g., `SequenceNode`, `ForEachNode`, `TryNode`).&#10;- Introduced an object-oriented `Activity&lt;TData&gt;` base class with self-executing implementations (`Sequence`, `Parallel`, `ForEach`, `Try`, `Condition`, `Inline`, `GateWrapper`).&#10;- Renamed `Variable&lt;T&gt;` to `Handle&lt;T&gt;` to better represent workflow-scoped references.&#10;- Renamed `IActivityContext` to `IExecutionContext`, renaming the `State` property to `Snapshot` and exposing an `IServiceProvider` for internal dependency resolution.&#10;- Renamed `IWorkflowDefinition` to `IWorkflow` and updated implementations to construct activity trees using the new DSL.&#10;- Refactored `GateLocker` to be a generic `GateLocker&lt;TGate&gt;` that accepts a resolver function for determining concurrency limits.&#10;- Updated all leaf activities to implement `Activity&lt;TData&gt;` instead of `ILeafActivity&lt;TData&gt;`.&#10;- Updated WorkflowCore infrastructure adapters (`WcWorkflowService`, `WcInterpreterStep`, `WcInterpreterContext`) to support the new interface types and execute the activity tree directly.&#10;- Updated architectural documentation (`INSTRUCTIONS.MD`, `CLAUDE.md`) to reflect the new terminology and scope management guidelines." />
@@ -828,7 +807,9 @@
     <MESSAGE value="[skip ci] docs: add documents written by AI slop&#10;&#10;(i hate it, so i will rewrite this by myself)&#10;&#10;This commit significantly overhauls the project documentation, introducing a structured, bilingual (English and Vietnamese) technical documentation suite while updating architectural guidelines to reflect the recent transition to an IPC Sidecar model.&#10;&#10;- **Architectural Documentation Updates:**&#10;  - Updated `CLAUDE.md` to detail the new Modular Monolith + IPC Sidecar architecture, stream ownership (`stdin`/`stdout`/`stderr`), JSON-RPC setup, and System.Text.Json (STJ) adapters.&#10;  - Removed the outdated `Workflow.md` from the project root.&#10;  - Relocated `SlideGenerator.Pipelines/Generating/Workflows/Pipeline.md` to `Documents/Vie/PIPELINE.md`.&#10;&#10;- **New Bilingual Documentation Suite (`Documents/`):**&#10;  - Added high-level project guides: `README.md`, `ARCHITECTURE.md`, and `CONTRIBUTING.md` in both English and Vietnamese.&#10;  - Added detailed module-specific documentation covering `CLOUD.md`, `COORDINATOR.md`, `DOCUMENTS.md`, `DOWNLOAD.md`, `IMAGES.md`, `IPC.md`, `LOGGING.md`, `PIPELINES.md`, and `SETTINGS.md` in both languages.&#10;&#10;- **Community and Planning:**&#10;  - Added a standard `CODE_OF_CONDUCT.md` based on Contributor Covenant 3.0.&#10;  - Created initial root `README.md` and `CONTRIBUTING.md` files.&#10;  - Added `conductor/plan.md` outlining the documentation implementation strategy." />
     <MESSAGE value="[skip ci] chore: Rename namespace and project name" />
     <MESSAGE value="chore: add copyrights to source code, cleanup and reformat" />
-    <option name="LAST_COMMIT_MESSAGE" value="chore: add copyrights to source code, cleanup and reformat" />
+    <MESSAGE value="chore: update package" />
+    <MESSAGE value="[skip ci] docs: restructure and expand bilingual documentation suite&#10;&#10;This commit significantly reorganizes the project documentation by splitting the monolithic README into focused, modular markdown files for both English and Vietnamese.&#10;&#10;- **New Documentation Files (`Documents/Eng/` &amp; `Documents/Vie/`):**&#10;  - Added `API_WORKFLOW.md` detailing the 9 JSON-RPC 2.0 endpoints, push notifications via `stdout`, and WorkflowCore orchestration phases.&#10;  - Added `SETUP.md` covering system prerequisites, `.env` configuration (specifically the `SYNCFUSION_LICENSE_KEY`), and build/run instructions.&#10;  - Added `STANDARDS.md` outlining the core tech stack (.NET 10, StreamJsonRpc, WorkflowCore, Syncfusion, Magick.NET, OpenCVSharp) and strict coding constraints.&#10;&#10;- **Existing Documentation Updates:**&#10;  - Refactored `README.md` to serve as a lightweight index pointing to the new detailed documents, alongside a simplified Quick Start guide.&#10;  - Updated `ARCHITECTURE.md` to explicitly define the &quot;Modular Monolith + IPC Sidecar&quot; approach and mapped out the exact Module Hierarchy (Foundation, Core Services, Feature Modules, and Orchestration).&#10;&#10;- **IDE/Workspace:**&#10;  - Updated JetBrains `.idea/workspace.xml` to reflect file caching and recent task history." />
+    <option name="LAST_COMMIT_MESSAGE" value="[skip ci] docs: restructure and expand bilingual documentation suite&#10;&#10;This commit significantly reorganizes the project documentation by splitting the monolithic README into focused, modular markdown files for both English and Vietnamese.&#10;&#10;- **New Documentation Files (`Documents/Eng/` &amp; `Documents/Vie/`):**&#10;  - Added `API_WORKFLOW.md` detailing the 9 JSON-RPC 2.0 endpoints, push notifications via `stdout`, and WorkflowCore orchestration phases.&#10;  - Added `SETUP.md` covering system prerequisites, `.env` configuration (specifically the `SYNCFUSION_LICENSE_KEY`), and build/run instructions.&#10;  - Added `STANDARDS.md` outlining the core tech stack (.NET 10, StreamJsonRpc, WorkflowCore, Syncfusion, Magick.NET, OpenCVSharp) and strict coding constraints.&#10;&#10;- **Existing Documentation Updates:**&#10;  - Refactored `README.md` to serve as a lightweight index pointing to the new detailed documents, alongside a simplified Quick Start guide.&#10;  - Updated `ARCHITECTURE.md` to explicitly define the &quot;Modular Monolith + IPC Sidecar&quot; approach and mapped out the exact Module Hierarchy (Foundation, Core Services, Feature Modules, and Orchestration).&#10;&#10;- **IDE/Workspace:**&#10;  - Updated JetBrains `.idea/workspace.xml` to reflect file caching and recent task history." />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
