@@ -1,7 +1,13 @@
 <Solution>
-    <Project Path="SlideGenerator.Application/SlideGenerator.Application.csproj"
-             Id="f93b09d2-d84d-4053-ad70-33ae926179d8"/>
-    <Project Path="SlideGenerator.Domain/SlideGenerator.Domain.csproj" Id="6f61d8c7-c91b-4fc5-a43b-c09b0c4ddbaf"/>
-    <Project Path="SlideGenerator.Framework/SlideGenerator.Framework.csproj"/>
-    <Project Path="SlideGenerator.Ipc/SlideGenerator.Ipc.csproj" Id="ae13f840-eb10-4ab4-adcc-ccd9d25c0426"/>
+    <Project Path="SlideGenerator.Logging/SlideGenerator.Logging.csproj" />
+    <Project Path="SlideGenerator.Pipeline/SlideGenerator.Pipeline.csproj" />
+    <Project Path="SlideGenerator.Settings/SlideGenerator.Settings.csproj" />
+    <Project Path="SlideGenerator.Cloud/SlideGenerator.Cloud.csproj" />
+    <Project Path="SlideGenerator.Coordinator/SlideGenerator.Coordinator.csproj" />
+    <Project Path="SlideGenerator.Document/SlideGenerator.Document.csproj" />
+    <Project Path="SlideGenerator.Download/SlideGenerator.Download.csproj" />
+    <Project Path="SlideGenerator.Hash/SlideGenerator.Hash.csproj" />
+    <Project Path="SlideGenerator.Image/SlideGenerator.Image.csproj" />
+    <Project Path="SlideGenerator.Ipc/SlideGenerator.Ipc.csproj" />
+    <Project Path="SlideGenerator.Tests/SlideGenerator.Tests.csproj" />
 </Solution>
