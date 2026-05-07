@@ -2,28 +2,26 @@
 
 [Tiếng Việt](../vi/updater.md)
 
-The application uses `electron-updater` to provide automated updates for non-portable Windows builds.
+The application updater now uses the Tauri v2 updater plugin.
 
 ## Features
 
 - **Automatic Check**: Checks for updates on application startup.
 - **Manual Check**: Users can trigger a check from the About screen.
-- **Differential Downloads**: Only downloads what has changed (standard `electron-updater` behavior).
+- **Differential Downloads**: Managed by Tauri updater artifacts/signatures configuration.
 - **Safety Guard**: Prevents installation if there are active slide generation jobs.
 - **Portable Detection**: Automatically disables updates when running from a portable executable.
 
 ## Architecture
 
-### Main Process (`electron/main/updater.ts`)
+### Desktop Host (`src-tauri/src/main.rs` and updater plugin config)
 
-- Manages the `autoUpdater` instance.
-- Handles IPC calls for checking, downloading, and installing updates.
-- Broadcasts status updates to all renderer windows via `updater:status`.
-- Persists "downloaded" state to handle app restarts.
+- Uses Tauri updater plugin lifecycle and release metadata.
+- Exposes update flow to renderer through Tauri APIs and app bridge adapters.
 
-### Preload (`electron/preload/api.ts`)
+### Frontend Bridge (`desktopApi` adapter)
 
-- Exposes typed methods to the renderer via `window.electronAPI`:
+- Exposes typed updater methods to the renderer via a Tauri-based desktop adapter:
   - `checkForUpdates()`
   - `downloadUpdate()`
   - `installUpdate()`
@@ -42,19 +40,19 @@ The application uses `electron-updater` to provide automated updates for non-por
 2. **Available**: If a newer version is found, status becomes `available`.
 3. **Download**: User clicks download. Status becomes `downloading` with progress percentage.
 4. **Ready**: Once downloaded, status becomes `downloaded`.
-5. **Install**: User clicks install. The app calls `quitAndInstall()`.
+5. **Install**: User clicks install. The app applies update and relaunches.
    - _Note_: The UI disables the Install button if `hasActiveJobs` is true.
 
 ## Configuration
 
-The updater configuration is read from `package.json` under `build.publish`.
+The updater configuration is read from `src-tauri/tauri.conf.json` under `plugins.updater`.
 
 ```json
-"build": {
-  "publish": {
-    "provider": "github",
-    "owner": "your-username",
-    "repo": "your-repo"
+"plugins": {
+  "updater": {
+    "active": true,
+    "pubkey": "PUBLIC_KEY_CONTENT",
+    "endpoints": ["https://example.com/latest.json"]
   }
 }
 ```
@@ -63,5 +61,4 @@ The updater configuration is read from `package.json` under `build.publish`.
 
 The updater is configured to allow testing in development mode:
 
-- `autoUpdater.forceDevUpdateConfig = true` is set when `app.isPackaged` is false.
-- A `dev-app-update.yml` may be required in the root for local testing.
+- Development updater behavior follows Tauri plugin configuration and environment setup.

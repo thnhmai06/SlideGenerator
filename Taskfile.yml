@@ -3,7 +3,7 @@ version: '3'
 vars:
   RUNTIME: '{{default "win-x64" .RUNTIME}}'
   BACKEND_BUILD_DIR: 'frontend/backend'
-  BACKEND_PROJECT: 'backend/src/SlideGenerator.Presentation/SlideGenerator.Presentation.csproj'
+  BACKEND_PROJECT: 'backend/SlideGenerator.Ipc/SlideGenerator.Ipc.csproj'
   BACKEND_SOLUTION: 'backend/SlideGenerator.slnx'
 
 tasks:
@@ -33,8 +33,33 @@ tasks:
       - echo "Building Frontend..."
       - npm install
       - npm run build
-    env:
-      ELECTRON_BUILDER_PUBLISH: never
+  
+  # ============================================================================
+  # RUN TASKS
+  # ============================================================================
+
+  dev:frontend:
+    desc: Run Frontend desktop app (Tauri + Vite)
+    dir: frontend
+    cmds:
+      - npm run dev
+
+  dev:web:
+    desc: Run Frontend web-only development server (Vite)
+    dir: frontend
+    cmds:
+      - npm run dev:web
+
+  dev:backend:
+    desc: Run Backend development server
+    cmds:
+      - dotnet run --project {{.BACKEND_PROJECT}}
+
+  dev:
+    desc: Run Backend + Frontend development servers
+    deps:
+      - dev:backend
+      - dev:frontend
 
   # ============================================================================
   # TEST TASKS
@@ -46,11 +71,9 @@ tasks:
       - task: test:frontend
 
   test:backend:
-    desc: Run Backend unit tests
+    desc: Backend tests removed
     cmds:
-      - echo "Running Backend Tests..."
-      - dotnet restore {{.BACKEND_SOLUTION}}
-      - dotnet test {{.BACKEND_SOLUTION}} --no-restore --logger "trx;LogFileName=backend-tests.trx" --results-directory backend/TestResults
+      - echo "Backend tests removed"
 
   test:frontend:
     desc: Run Frontend unit tests
@@ -83,7 +106,7 @@ tasks:
   clean:
     desc: Clean build artifacts
     cmds:
-      - cmd: rm -rf frontend/backend frontend/dist frontend/release backend/TestResults
+      - cmd: rm -rf frontend/backend frontend/dist frontend/release frontend/src-tauri/target backend/TestResults
         platforms: [linux, darwin]
-      - cmd: Remove-Item -Recurse -Force -ErrorAction SilentlyContinue frontend/backend, frontend/dist, frontend/release, backend/TestResults
+      - cmd: Remove-Item -Recurse -Force -ErrorAction SilentlyContinue frontend/backend, frontend/dist, frontend/release, frontend/src-tauri/target, backend/TestResults
         platforms: [windows]

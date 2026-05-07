@@ -20,14 +20,17 @@ export function normalizeJobState(value: unknown): JobState {
   const raw = typeof value === 'string' ? value.toLowerCase() : ''
   switch (raw) {
     case 'processing':
+    case 'running':
       return 'Processing'
     case 'paused':
       return 'Paused'
     case 'done':
+    case 'completed':
       return 'Done'
     case 'cancelled':
       return 'Cancelled'
     case 'error':
+    case 'failed':
       return 'Error'
     case 'pending':
     default:

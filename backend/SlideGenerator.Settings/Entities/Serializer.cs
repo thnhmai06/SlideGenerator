@@ -1,0 +1,47 @@
+﻿/*
+ * Copyright (C) 2026 Thành Mai
+ *
+ * Solution: SlideGenerator
+ * Project: SlideGenerator.Settings
+ * File: Serializer.cs
+ *
+ * This file is part of this solution. You can find the full source code here: https://github.com/thnhmai06/SlideGenerator
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, version 3.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Affero General Public License for more details.
+ */
+
+namespace SlideGenerator.Settings.Entities;
+
+/// <summary>
+///     Provides an abstraction for serializing and deserializing objects.
+/// </summary>
+public abstract class Serializer
+{
+    /// <summary>
+    ///     Gets the standard file extension (e.g., .json, .yaml) associated with this serializer.
+    /// </summary>
+    public abstract string FileExtension { get; }
+
+    /// <summary>
+    ///     Serializes an object into its string representation.
+    /// </summary>
+    /// <typeparam name="T">The type of the object to serialize.</typeparam>
+    /// <param name="obj">The object to serialize.</param>
+    /// <returns>A string representation of the object.</returns>
+    public abstract string Serialize<T>(T obj);
+
+    /// <summary>
+    ///     Deserializes a string into an object of the specified type.
+    /// </summary>
+    /// <typeparam name="T">The target type of the deserialized object.</typeparam>
+    /// <param name="source">The string representation to deserialize.</param>
+    /// <returns>The deserialized object.</returns>
+    public abstract T Deserialize<T>(string source);
+}

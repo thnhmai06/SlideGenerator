@@ -29,8 +29,8 @@ const log = (level: LogLevel, source: string, message: string, args: unknown[]):
 	const formattedMessage = formatMessage(message, args);
 
 	// Send to main process for file logging
-	if (window.electronAPI?.logRenderer) {
-		window.electronAPI.logRenderer(level, formattedMessage, source);
+	if (window.desktopAPI?.logRenderer) {
+		window.desktopAPI.logRenderer(level, formattedMessage, source);
 	}
 
 	// Also log to console for development
@@ -43,8 +43,8 @@ const log = (level: LogLevel, source: string, message: string, args: unknown[]):
  * Creates a logger instance with a specific source context.
  *
  * @example
- * const logger = createLogger({ source: 'SignalR' });
- * logger.info('Connected to hub');
+ * const logger = createLogger({ source: 'RPC' });
+ * logger.info('Connected to backend');
  * logger.error('Connection failed', error);
  */
 export const createLogger = (options: LoggerOptions): Logger => {
@@ -60,7 +60,7 @@ export const createLogger = (options: LoggerOptions): Logger => {
 
 // Pre-configured loggers for common modules
 export const loggers = {
-	signalR: createLogger({ source: 'SignalR' }),
+	rpc: createLogger({ source: 'RPC' }),
 	settings: createLogger({ source: 'Settings' }),
 	jobs: createLogger({ source: 'Jobs' }),
 	config: createLogger({ source: 'Config' }),

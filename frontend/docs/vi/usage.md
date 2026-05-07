@@ -4,7 +4,7 @@
 
 ## Điều kiện
 
-- Backend đang chạy (Electron có thể tự khởi động).
+- Backend đang chạy (desktop host có thể tự khởi động).
 - Template: `.pptx` hoặc `.potx`.
 - Spreadsheet: `.xlsx` hoặc `.xlsm`.
 

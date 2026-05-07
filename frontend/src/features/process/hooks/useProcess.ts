@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useApp } from '@/shared/contexts/useApp';
 import { useJobs } from '@/shared/contexts/useJobs';
-import { getBackendBaseUrl } from '@/shared/services/signalrClient';
+import { getBackendBaseUrl } from '@/shared/services/rpcClient';
 import type { LogEntry } from '../types';
 import { formatLogEntry, formatTime } from '../utils';
 
@@ -93,8 +93,8 @@ export const useProcess = () => {
 
 	const handleOpenDashboard = useCallback(async () => {
 		const url = `${getBackendBaseUrl()}/dashboard`;
-		if (window.electronAPI?.openUrl) {
-			await window.electronAPI.openUrl(url);
+		if (window.desktopAPI?.openUrl) {
+			await window.desktopAPI.openUrl(url);
 			return;
 		}
 		window.open(url, '_blank');

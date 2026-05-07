@@ -387,11 +387,11 @@ export const useJobProvider = (): JobContextValue => {
 
 	const exportGroupConfig = useCallback(
 		async (groupId: string) => {
-			if (!window.electronAPI) return false;
+			if (!window.desktopAPI) return false;
 			const config = await resolveGroupConfig(groupId);
 			if (!config) return false;
 			const exportPayload = {
-				pptxPath: config.templatePath,
+				slidePath: config.templatePath,
 				dataPath: config.spreadsheetPath,
 				savePath: config.outputPath,
 				selectedSheets: config.sheetNames,
@@ -409,13 +409,13 @@ export const useJobProvider = (): JobContextValue => {
 				})),
 			};
 
-			const path = await window.electronAPI.saveFile([
+			const path = await window.desktopAPI.saveFile([
 				{ name: 'JSON Files', extensions: ['json'] },
 				{ name: 'All Files', extensions: ['*'] },
 			]);
 			if (!path) return false;
 
-			await window.electronAPI.writeSettings(path, JSON.stringify(exportPayload, null, 2));
+			await window.desktopAPI.writeSettings(path, JSON.stringify(exportPayload, null, 2));
 			return true;
 		},
 		[resolveGroupConfig],
@@ -434,20 +434,20 @@ export const useJobProvider = (): JobContextValue => {
 	}, [groupsById]);
 
 	useEffect(() => {
-		if (!window.electronAPI?.setProgressBar) return;
+		if (!window.desktopAPI?.setProgressBar) return;
 		const activeGroups = Object.values(groupsById).filter((group) =>
 			['pending', 'running', 'paused'].includes(group.status.toLowerCase()),
 		);
 
 		if (activeGroups.length === 0) {
-			window.electronAPI.setProgressBar(-1);
+			window.desktopAPI.setProgressBar(-1);
 			return;
 		}
 
 		const avgProgress =
 			activeGroups.reduce((sum, group) => sum + (group.progress ?? 0), 0) / activeGroups.length;
 		const normalized = Math.max(0, Math.min(1, avgProgress / 100));
-		window.electronAPI.setProgressBar(normalized);
+		window.desktopAPI.setProgressBar(normalized);
 	}, [groupsById]);
 
 	useEffect(() => {

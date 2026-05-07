@@ -1,91 +1,34 @@
 # SlideGenerator Backend
 
-The robust backend service that powers SlideGenerator, built with **ASP.NET Core 10** and **SignalR**. It handles slide generation logic, job management, and background processing with resilience and performance in mind.
+Welcome to the technical documentation for **SlideGenerator**, a powerful PowerPoint automation system driven by Excel data.
 
-## Table of Contents
+## Detailed Documentation
 
-- [SlideGenerator Backend](#slidegenerator-backend)
-  - [Table of Contents](#table-of-contents)
-  - [Overview](#overview)
-  - [Architecture](#architecture)
-  - [Key Systems](#key-systems)
-    - [Job System](#job-system)
-    - [SignalR API](#signalr-api)
-  - [Getting Started](#getting-started)
-    - [Configuration](#configuration)
-    - [Usage](#usage)
-  - [Development Guide](#development-guide)
-    - [Development](#development)
-    - [Deployment](#deployment)
-  - [Framework Library](#framework-library)
+Please refer to the following files for a deep dive into the system:
 
-## Overview
-
-This directory contains the backend source code, structured as a Clean Architecture solution.
-
-- **Target Runtime:** .NET 10
-- **Host:** ASP.NET Core Web API + SignalR
-- **Background Jobs:** Hangfire (Persistent job execution)
-- **Database:** SQLite (Job state storage)
-- **Architectural Pattern:** Clean Architecture (Domain, Application, Infrastructure, Presentation)
-
-## Architecture
-
-The backend is designed to be modular and testable. It strictly separates concerns between the core domain logic and external infrastructure.
-
-👉 **Deep Dive:** [Architecture Documentation](docs/en/architecture.md)
-
-## Key Systems
-
-### Job System
-
-The heart of the application. It manages the lifecycle of slide generation tasks, from parsing Excel files to rendering PowerPoint slides.
-
-- **Features:** Parallel processing, Pause/Resume/Cancel capabilities, Crash recovery.
-- **Learn more:** [Job System Documentation](docs/en/job-system.md)
-
-### SignalR API
-
-Real-time bi-directional communication with the Frontend.
-
-- **Protocol:** WebSocket (primary)
-- **Features:** Real-time progress updates, Job control commands, Configuration sync.
-- **Learn more:** [SignalR API Documentation](docs/en/signalr.md)
-
-## Getting Started
-
-### Configuration
-
-Customize server settings, job concurrency limits, and image processing parameters.
-
-- **Guide:** [Configuration Guide](docs/en/configuration.md)
-
-### Usage
-
-How to run, interact, and troubleshoot the backend service.
-
-- **Guide:** [Usage Guide](docs/en/usage.md)
-
-## Development Guide
-
-### Development
-
-Setup your environment, run the server locally, and run tests.
-
-- **Guide:** [Development Guide](docs/en/development.md)
-
-### Deployment
-
-How to publish and deploy the backend for production (Windows/Linux).
-
-- **Guide:** [Deployment Guide](docs/en/deployment.md)
-
-## Framework Library
-
-The core logic for slide manipulation is abstracted into a reusable framework.
-
-- **Repository:** [SlideGenerator.Framework](../src/SlideGenerator.Framework/README.md)
+1.  **[System Architecture](./Documents/Eng/ARCHITECTURE.md)**: Overview of the Modular Monolith, IPC Sidecar, and data flow.
+2.  **[API & Workflow Documentation](./Documents/Eng/API_WORKFLOW.md)**: Full list of JSON-RPC Endpoints and WorkflowCore orchestration logic.
+3.  **[Tech Stack & Standards](./Documents/Eng/STANDARDS.md)**: Detailed tech stack and mandatory coding standards.
+4.  **[Installation & Setup (Setup Guide)](./Documents/Eng/SETUP.md)**: Detailed steps to configure environment variables and build the project.
 
 ---
 
-[🇻🇳 Vietnamese Documentation](docs/vi)
+## Quick Start
+
+> **⚠️ Important:** You must configure the `SYNCFUSION_LICENSE_KEY` in your `.env` file before running the application. See the [Setup Guide](./Documents/Eng/SETUP.md) for details.
+
+```bash
+# 1. Configure license
+cp .env.example .env
+# Edit .env and fill in SYNCFUSION_LICENSE_KEY
+
+# 2. Build project
+dotnet restore
+dotnet build SlideGenerator.sln
+```
+
+### Key Capabilities
+- Blazingly fast IPC via StreamJsonRpc.
+- Resilient workflow orchestration with WorkflowCore.
+- Smart image processing (ROI & Face Detection).
+- Multi-cloud support (Google Drive, OneDrive, SharePoint).

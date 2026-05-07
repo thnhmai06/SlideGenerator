@@ -2,6 +2,34 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "task: dev",
+      "type": "shell",
+      "command": "task dev",
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "task: dev:backend",
+      "type": "shell",
+      "command": "task dev:backend",
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "task: dev:frontend",
+      "type": "shell",
+      "command": "task dev:frontend",
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "task: dev:web",
+      "type": "shell",
+      "command": "task dev:web",
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
       "label": "task: test:backend",
       "type": "shell",
       "command": "task test:backend",

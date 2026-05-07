@@ -1,10 +1,10 @@
 # SlideGenerator Frontend
 
-The modern desktop interface for SlideGenerator, built with **Electron**, **React**, and **TypeScript**. It provides a user-friendly way to configure templates, manage datasets, and monitor generation progress in real-time.
+The modern desktop interface for SlideGenerator, built with **Tauri v2**, **React**, and **TypeScript**. It provides a user-friendly way to configure templates, manage datasets, and monitor generation progress in real-time.
 
 ## Tech Stack
 
-- **Core:** [Electron](https://www.electronjs.org/) + [React 18](https://react.dev/)
+- **Core:** [Tauri v2](https://tauri.app/) + [React 19](https://react.dev/)
 - **Language:** TypeScript 5.0+
 - **Build Tool:** Vite
 - **Styling:** CSS Modules / Global SCSS
@@ -26,13 +26,26 @@ npm install
 
 ### Development
 
-Start the app in development mode (with Hot Module Replacement):
+Start the app in desktop development mode (with Hot Module Replacement):
 
 ```bash
 npm run dev
 ```
 
-> **Note:** By default, Electron will attempt to launch the backend binary. To disable this behavior (e.g., when debugging the backend separately in Visual Studio), set the environment variable: `SLIDEGEN_DISABLE_BACKEND=1`.
+> **Note:** The Tauri migration is in progress. Runtime command wiring is being finalized for full desktop parity.
+
+### Configure Backend Endpoint
+
+You can override backend endpoints via Vite env variables:
+
+```bash
+VITE_BACKEND_URL=http://localhost:65500
+VITE_SHEET_RPC_CHANNEL=sheets
+VITE_JOB_RPC_CHANNEL=jobs
+VITE_CONFIG_RPC_CHANNEL=config
+```
+
+Create `frontend/.env.local` for local development overrides.
 
 ## Project Structure
 
@@ -45,7 +58,7 @@ The codebase is organized by feature:
     - `results`: History and file management.
     - `settings`: Application configuration.
 - **`src/shared`**: Reusable components, hooks, and services.
-- **`electron`**: Main process code and preload scripts.
+- **`src-tauri`**: Rust desktop host, plugins, and bundling config.
 
 ## Documentation
 

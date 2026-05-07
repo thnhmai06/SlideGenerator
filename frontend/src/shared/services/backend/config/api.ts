@@ -1,4 +1,4 @@
-import { configHub } from '../clients'
+import { configClient } from '../clients'
 import type { ResponseBase } from '../common/types'
 import { assertSuccess } from '../common/utils'
 import type {
@@ -16,7 +16,7 @@ import type {
  * @returns The current configuration settings
  */
 export async function getConfig(): Promise<unknown> {
-  const response = await configHub.sendRequest<ResponseBase>({
+  const response = await configClient.sendRequest<ResponseBase>({
     type: 'get',
   })
   return assertSuccess<ConfigGetSuccess>(response)
@@ -29,7 +29,7 @@ export async function getConfig(): Promise<unknown> {
  * @returns Updated configuration confirmation
  */
 export async function updateConfig(request: Record<string, unknown>): Promise<unknown> {
-  const response = await configHub.sendRequest<ResponseBase>({
+  const response = await configClient.sendRequest<ResponseBase>({
     type: 'update',
     ...request,
   })
@@ -42,7 +42,7 @@ export async function updateConfig(request: Record<string, unknown>): Promise<un
  * @returns Reload confirmation
  */
 export async function reloadConfig(): Promise<unknown> {
-  const response = await configHub.sendRequest<ResponseBase>({
+  const response = await configClient.sendRequest<ResponseBase>({
     type: 'reload',
   })
   return assertSuccess<ConfigReloadSuccess>(response)
@@ -54,7 +54,7 @@ export async function reloadConfig(): Promise<unknown> {
  * @returns Reset confirmation
  */
 export async function resetConfig(): Promise<unknown> {
-  const response = await configHub.sendRequest<ResponseBase>({
+  const response = await configClient.sendRequest<ResponseBase>({
     type: 'reset',
   })
   return assertSuccess<ConfigResetSuccess>(response)
@@ -66,7 +66,7 @@ export async function resetConfig(): Promise<unknown> {
  * @returns Model status information
  */
 export async function getModelStatus(): Promise<ModelStatusSuccess> {
-  const response = await configHub.sendRequest<ResponseBase>({
+  const response = await configClient.sendRequest<ResponseBase>({
     type: 'modelstatus',
   })
   return assertSuccess<ModelStatusSuccess>(response)
@@ -83,7 +83,7 @@ export async function controlModel(
   model: string,
   action: 'init' | 'deinit',
 ): Promise<ModelControlSuccess> {
-  const response = await configHub.sendRequest<ResponseBase>({
+  const response = await configClient.sendRequest<ResponseBase>({
     type: 'modelcontrol',
     Model: model,
     Action: action,

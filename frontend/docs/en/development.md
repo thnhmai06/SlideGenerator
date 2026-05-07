@@ -17,13 +17,13 @@ npm install
 
 ### Running in Development
 
-This command starts the Vite dev server and the Electron container.
+This command starts the Vite dev server and the Tauri desktop host.
 
 ```bash
 npm run dev
 ```
 
-**Note:** By default, Electron attempts to spawn the backend process.
+**Note:** The desktop runtime is being migrated to Tauri v2.
 - **Disable Backend Spawn:** `SLIDEGEN_DISABLE_BACKEND=1` (Useful if you are running the backend in Visual Studio).
 - **Custom Backend Path:** `SLIDEGEN_BACKEND_PATH=/path/to/executable`.
 
@@ -43,7 +43,7 @@ src/
 │   ├── components/       # Atomic UI components (Buttons, Inputs)
 │   ├── contexts/         # React Contexts (JobContext, AppContext)
 │   ├── hooks/            # Custom React Hooks
-│   ├── services/         # API & SignalR clients
+│   ├── services/         # API & RPC clients
 │   └── styles/           # Global SCSS & Variables
 └── assets/               # Static assets (Images, Fonts)
 ```
@@ -83,7 +83,7 @@ npm test
 ## Debugging
 
 - **Renderer Process:** Use standard Chrome DevTools (Ctrl+Shift+I).
-- **Main Process:** Debug via VS Code "Debug Main Process" configuration.
+- **Desktop Host (Rust):** Debug via Rust tooling / VS Code Rust extension.
 - **Backend:** Debug via Visual Studio or VS Code C# extension.
 
 Next: [Build & Packaging](build-and-packaging.md)

@@ -25,7 +25,7 @@ export interface Shape {
 }
 
 export interface SavedInputState {
-	pptxPath?: string;
+	slidePath?: string;
 	dataPath?: string;
 	savePath?: string;
 	columns?: string[];
@@ -161,7 +161,7 @@ export interface MenuHeaderProps {
 }
 
 export interface TemplateInputSectionProps {
-	pptxPath: string;
+	slidePath: string;
 	onChangePath: (value: string) => void;
 	onBrowse: () => void;
 	isLoadingShapes: boolean;

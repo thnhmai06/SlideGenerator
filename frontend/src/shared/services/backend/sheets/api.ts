@@ -1,7 +1,4 @@
-import { loggers } from '@/shared/services/logging';
-import { sheetHub } from '../clients'
-import type { ResponseBase } from '../common/types'
-import { assertSuccess } from '../common/utils'
+import { loggers } from '@/shared/services/logging'
 import type {
   ColumnListResponse,
   FileListResponse,
@@ -13,289 +10,166 @@ import type {
   SheetWorkbookGetInfoSuccess,
 } from './types'
 
-/** Response type for opening a workbook file */
-interface OpenBookSheetSuccess {
-  Type: 'openfile'
-  FilePath: string
+type SheetScanItem = {
+  sheetName: string
+  headers: string[]
+  recordCount: number
 }
 
-/** Response type for closing a workbook file */
-interface SheetWorkbookCloseSuccess {
-  Type: 'closefile'
-  FilePath: string
+type SheetScanResult = {
+  filePath: string
+  sheets: SheetScanItem[]
 }
 
-/** Response type for getting sheet table information */
-interface SheetWorkbookGetSheetInfoSuccess {
-  Type: 'gettables'
-  FilePath: string
-  Sheets: Record<string, number>
+const workbookCache = new Map<string, SheetScanResult>()
+
+const toStringOrEmpty = (value: unknown): string => (typeof value === 'string' ? value : '')
+
+const toNumberOrZero = (value: unknown): number => {
+  if (typeof value === 'number') return value
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : 0
 }
 
-/** Response type for getting sheet column headers */
-interface SheetWorksheetGetHeadersSuccess {
-  Type: 'getheaders'
-  FilePath: string
-  SheetName: string
-  Headers: Array<string | null>
-}
+const normalizeScanResult = (filePath: string, raw: Record<string, unknown>): SheetScanResult => {
+  const rawSheets = ((raw.sheets ?? raw.Sheets ?? []) as Array<Record<string, unknown>>) ?? []
 
-/** Response type for getting a single row */
-interface SheetWorksheetGetRowSuccess {
-  Type: 'getrow'
-  FilePath: string
-  TableName: string
-  RowNumber: number
-  Row: Record<string, string | null>
-}
+  const sheets = rawSheets.map((sheet) => {
+    const rawHeaders =
+      ((sheet.headers ?? sheet.Headers ?? []) as Array<string | null | undefined>) ?? []
 
-/**
- * Opens and loads an Excel/spreadsheet file for processing.
- *
- * @param filePath - Path to the spreadsheet file
- * @returns File load result with sheet information
- */
-export async function loadFile(filePath: string): Promise<LoadFileResponse> {
-  const open = await sheetHub.sendRequest<ResponseBase>({
-    type: 'openfile',
-    filePath,
+    return {
+      sheetName: toStringOrEmpty(sheet.sheetName ?? sheet.SheetName),
+      headers: rawHeaders.filter((header): header is string => typeof header === 'string'),
+      recordCount: toNumberOrZero(sheet.recordCount ?? sheet.RecordCount),
+    } satisfies SheetScanItem
   })
-  assertSuccess<OpenBookSheetSuccess>(open)
-
-  const info = await sheetHub.sendRequest<ResponseBase>({
-    type: 'gettables',
-    filePath,
-  })
-  const tables = assertSuccess<SheetWorkbookGetSheetInfoSuccess>(info)
-  const sheets = tables.Sheets ?? {}
-  const sheetNames = Object.keys(sheets)
 
   return {
-    success: true,
-    group_id: filePath,
-    file_type: 'sheet',
-    num_sheets: sheetNames.length,
-    sheets: sheetNames,
+    filePath: toStringOrEmpty(raw.filePath ?? raw.FilePath) || filePath,
+    sheets,
   }
 }
 
-/**
- * Closes and unloads a previously loaded spreadsheet file.
- *
- * @param filePath - Path to the spreadsheet file
- * @returns Success indicator
- */
+const scanWorkbook = async (filePath: string, force = false): Promise<SheetScanResult> => {
+  if (!force) {
+    const cached = workbookCache.get(filePath)
+    if (cached) return cached
+  }
+
+  const raw =
+    (await window.desktopAPI.backendRequest<Record<string, unknown>>('sheet.scan', {
+      filePath,
+    })) ?? {}
+
+  const normalized = normalizeScanResult(filePath, raw)
+  workbookCache.set(filePath, normalized)
+  return normalized
+}
+
+const findSheet = (workbook: SheetScanResult, sheetName: string): SheetScanItem | undefined =>
+  workbook.sheets.find((sheet) => sheet.sheetName === sheetName)
+
+export async function loadFile(filePath: string): Promise<LoadFileResponse> {
+  const workbook = await scanWorkbook(filePath)
+  return {
+    success: true,
+    group_id: workbook.filePath,
+    file_type: 'sheet',
+    num_sheets: workbook.sheets.length,
+    sheets: workbook.sheets.map((sheet) => sheet.sheetName),
+  }
+}
+
 export async function unloadFile(filePath: string): Promise<{ success: boolean }> {
-  const response = await sheetHub.sendRequest<ResponseBase>({
-    type: 'closefile',
-    filePath,
-  })
-  assertSuccess<SheetWorkbookCloseSuccess>(response)
+  workbookCache.delete(filePath)
   return { success: true }
 }
 
-/**
- * Gets the list of currently loaded files.
- *
- * @returns List of loaded file information
- */
 export async function getLoadedFiles(): Promise<FileListResponse> {
-  return { files: [] }
+  return {
+    files: Array.from(workbookCache.values()).map((item) => ({
+      group_id: item.filePath,
+      file_path: item.filePath,
+      file_type: 'sheet',
+      num_sheets: item.sheets.length,
+    })),
+  }
 }
 
-/**
- * Gets all sheets in a workbook file.
- *
- * @param filePath - Path to the workbook file
- * @returns List of sheets with metadata
- */
 export async function getSheets(filePath: string): Promise<SheetListResponse> {
-  const response = await sheetHub.sendRequest<ResponseBase>({
-    type: 'gettables',
-    filePath,
-  })
-  const raw = assertSuccess<SheetWorkbookGetSheetInfoSuccess>(response) as unknown as Record<
-    string,
-    unknown
-  >
-
-  const tables = ((raw.sheets as Record<string, number>) ?? {}) as Record<string, number>
-  const sheets: SheetInfo[] = Object.entries(tables).map(([name, rows]) => ({
-    sheet_id: name,
-    sheet_name: name,
-    num_rows: rows,
-    num_cols: 0,
+  const workbook = await scanWorkbook(filePath)
+  const sheets: SheetInfo[] = workbook.sheets.map((sheet) => ({
+    sheet_id: sheet.sheetName,
+    sheet_name: sheet.sheetName,
+    num_rows: sheet.recordCount,
+    num_cols: sheet.headers.length,
   }))
 
   return { sheets }
 }
 
-/**
- * Gets column headers for a specific sheet.
- *
- * @param filePath - Path to the workbook file
- * @param sheetName - Name of the sheet
- * @returns List of column names
- */
 export async function getColumns(filePath: string, sheetName: string): Promise<ColumnListResponse> {
-  const response = await sheetHub.sendRequest<ResponseBase>({
-    type: 'getheaders',
-    filePath,
-    sheetName,
-  })
-  const raw = assertSuccess<SheetWorksheetGetHeadersSuccess>(response) as unknown as Record<
-    string,
-    unknown
-  >
-  const headers = ((raw.headers as Array<string | null>) ?? []) as Array<string | null>
-  const columns = headers.filter((header): header is string => Boolean(header))
-  return { columns }
+  const workbook = await scanWorkbook(filePath)
+  const sheet = findSheet(workbook, sheetName)
+  return {
+    columns: sheet?.headers ?? [],
+  }
 }
 
-/**
- * Gets detailed information about a specific sheet.
- *
- * @param filePath - Path to the workbook file
- * @param sheetName - Name of the sheet
- * @returns Sheet details including row/column counts and headers
- */
 export async function getSheetInfo(filePath: string, sheetName: string): Promise<SheetDetailInfo> {
-  const tableResponse = await sheetHub.sendRequest<ResponseBase>({
-    type: 'gettables',
-    filePath,
-  })
-  const tablesRaw = assertSuccess<SheetWorkbookGetSheetInfoSuccess>(
-    tableResponse,
-  ) as unknown as Record<string, unknown>
-  const tableMap = ((tablesRaw.sheets as Record<string, number>) ?? {}) as Record<string, number>
-
-  const headerResponse = await sheetHub.sendRequest<ResponseBase>({
-    type: 'getheaders',
-    filePath,
-    sheetName,
-  })
-  const headersRaw = assertSuccess<SheetWorksheetGetHeadersSuccess>(
-    headerResponse,
-  ) as unknown as Record<string, unknown>
-  const headerList = ((headersRaw.headers as Array<string | null>) ?? []) as Array<string | null>
-  const columns = headerList.filter((header): header is string => Boolean(header))
+  const workbook = await scanWorkbook(filePath)
+  const sheet = findSheet(workbook, sheetName)
 
   return {
     sheet_id: sheetName,
     sheet_name: sheetName,
-    num_rows: tableMap[sheetName] ?? 0,
-    num_cols: columns.length,
-    columns,
+    num_rows: sheet?.recordCount ?? 0,
+    num_cols: sheet?.headers.length ?? 0,
+    columns: sheet?.headers ?? [],
     start_row: 1,
     start_col: 1,
   }
 }
 
-/**
- * Gets paginated row data from a sheet.
- *
- * @param filePath - Path to the workbook file
- * @param sheetName - Name of the sheet
- * @param offset - Row offset to start from (0-based)
- * @param limit - Maximum number of rows to return
- * @returns Sheet data with row content
- */
 export async function getSheetData(
   filePath: string,
   sheetName: string,
   offset = 0,
-  limit?: number,
+  _limit?: number,
 ): Promise<SheetDataResponse> {
   const info = await getSheetInfo(filePath, sheetName)
-  const totalRows = info.num_rows
-  const startRow = offset + 1
-  const endRow = limit ? Math.min(totalRows, offset + limit) : totalRows
-
-  const data: Record<string, string | null>[] = []
-  for (let rowIndex = startRow; rowIndex <= endRow; rowIndex += 1) {
-    const response = await sheetHub.sendRequest<ResponseBase>({
-      type: 'getrow',
-      filePath,
-      tableName: sheetName,
-      rowNumber: rowIndex,
-    })
-    const rowRaw = assertSuccess<SheetWorksheetGetRowSuccess>(response) as unknown as Record<
-      string,
-      unknown
-    >
-    const rowData = ((rowRaw.row as Record<string, string | null>) ?? {}) as Record<
-      string,
-      string | null
-    >
-    data.push(rowData)
-  }
-
+  loggers.jobs.warn('Sheet row preview is not supported by current JSON-RPC backend.')
   return {
     columns: info.columns,
-    data,
-    num_rows: data.length,
+    data: [],
+    num_rows: 0,
     offset,
-    total_rows: totalRows,
+    total_rows: info.num_rows,
   }
 }
 
-/**
- * Gets a single row from a sheet by index.
- *
- * @param filePath - Path to the workbook file
- * @param sheetName - Name of the sheet
- * @param rowIndex - 1-based row index
- * @returns Row data as key-value pairs
- */
 export async function getSheetRow(
   filePath: string,
   sheetName: string,
   rowIndex: number,
 ): Promise<{ row_index: number; data: Record<string, string | null> }> {
-  const response = await sheetHub.sendRequest<ResponseBase>({
-    type: 'getrow',
-    filePath,
-    tableName: sheetName,
-    rowNumber: rowIndex,
-  })
-  const rowRaw = assertSuccess<SheetWorksheetGetRowSuccess>(response) as unknown as Record<
-    string,
-    unknown
-  >
-  const rowData = ((rowRaw.row as Record<string, string | null>) ?? {}) as Record<
-    string,
-    string | null
-  >
-  const rowNumber = ((rowRaw.rowNumber as number) ?? rowIndex) as number
-  return { row_index: rowNumber, data: rowData }
+  await getSheetInfo(filePath, sheetName)
+  loggers.jobs.warn('Sheet row preview is not supported by current JSON-RPC backend.')
+  return {
+    row_index: rowIndex,
+    data: {},
+  }
 }
 
-/**
- * Gets all unique column headers from multiple workbook files.
- *
- * @param filePaths - Array of workbook file paths
- * @returns Sorted array of unique column names
- */
 export async function getAllColumns(filePaths: string[]): Promise<string[]> {
   const allColumns = new Set<string>()
 
   for (const filePath of filePaths) {
     try {
-      const infoResponse = await sheetHub.sendRequest<ResponseBase>({
-        type: 'getworkbookinfo',
-        filePath,
-      })
-      const infoRaw = assertSuccess<SheetWorkbookGetInfoSuccess>(
-        infoResponse,
-      ) as unknown as Record<string, unknown>
-      const sheets = ((infoRaw.sheets as Array<Record<string, unknown>>) ?? []) as Array<
-        Record<string, unknown>
-      >
-      sheets.forEach((sheet) => {
-        const headers = ((sheet.headers as Array<string | null>) ?? []) as Array<string | null>
-        headers
-          .filter((header): header is string => Boolean(header))
-          .forEach((header) => allColumns.add(header))
+      const workbook = await scanWorkbook(filePath)
+      workbook.sheets.forEach((sheet) => {
+        sheet.headers.forEach((header) => allColumns.add(header))
       })
     } catch (error) {
       loggers.jobs.error(`Error getting columns for file ${filePath}:`, error)
@@ -305,33 +179,17 @@ export async function getAllColumns(filePaths: string[]): Promise<string[]> {
   return Array.from(allColumns).sort()
 }
 
-/**
- * Gets comprehensive workbook information including all sheets and their headers.
- *
- * @param filePath - Path to the workbook file
- * @returns Workbook info with sheet details
- */
 export async function getWorkbookInfo(filePath: string): Promise<SheetWorkbookGetInfoSuccess> {
-  const response = await sheetHub.sendRequest<ResponseBase>({
-    type: 'getworkbookinfo',
-    filePath,
-  })
-  const raw = assertSuccess<SheetWorkbookGetInfoSuccess>(response) as unknown as Record<
-    string,
-    unknown
-  >
-  const sheets = ((raw.sheets as Array<Record<string, unknown>>) ?? []) as Array<
-    Record<string, unknown>
-  >
+  const workbook = await scanWorkbook(filePath)
 
   return {
     Type: 'getworkbookinfo',
-    FilePath: (raw.filePath as string) ?? filePath,
-    WorkbookName: (raw.workbookName as string) ?? undefined,
-    Sheets: sheets.map((sheet) => ({
-      Name: ((sheet.name as string) ?? '') as string,
-      Headers: ((sheet.headers as Array<string | null>) ?? []) as Array<string | null>,
-      RowCount: ((sheet.rowCount as number) ?? 0) as number,
+    FilePath: workbook.filePath,
+    WorkbookName: undefined,
+    Sheets: workbook.sheets.map((sheet) => ({
+      Name: sheet.sheetName,
+      Headers: sheet.headers,
+      RowCount: sheet.recordCount,
     })),
   }
 }

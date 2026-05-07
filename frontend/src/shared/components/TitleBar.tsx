@@ -14,25 +14,25 @@ interface TitleBarProps {
  *
  * @remarks
  * Supports close-to-tray behavior based on app settings.
- * Replaces the native Electron title bar for a custom look.
+ * Replaces the native system title bar for a custom look.
  */
 const TitleBar: React.FC<TitleBarProps> = memo(({ title }) => {
 	const { closeToTray, t } = useApp();
 
 	const handleMinimize = useCallback(() => {
-		window.electronAPI?.windowControl('minimize');
+		window.desktopAPI?.windowControl('minimize');
 	}, []);
 
 	const handleMaximize = useCallback(() => {
-		window.electronAPI?.windowControl('maximize');
+		window.desktopAPI?.windowControl('maximize');
 	}, []);
 
 	const handleClose = useCallback(() => {
 		if (closeToTray) {
-			window.electronAPI?.hideToTray();
+			window.desktopAPI?.hideToTray();
 			return;
 		}
-		window.electronAPI?.windowControl('close');
+		window.desktopAPI?.windowControl('close');
 	}, [closeToTray]);
 
 	return (

@@ -1,7 +1,5 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
-import electron from 'vite-plugin-electron';
-import renderer from 'vite-plugin-electron-renderer';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
@@ -19,31 +17,6 @@ export default defineConfig({
 				],
 			},
 		}),
-		electron([
-			{
-				entry: 'electron/main.ts',
-				onstart(options) {
-					options.startup();
-				},
-				vite: {
-					build: {
-						outDir: 'dist-electron',
-					},
-				},
-			},
-			{
-				entry: 'electron/preload.ts',
-				onstart(options) {
-					options.reload();
-				},
-				vite: {
-					build: {
-						outDir: 'dist-electron',
-					},
-				},
-			},
-		]),
-		renderer(),
 	],
 	server: {
 		port: 65000,
@@ -66,9 +39,6 @@ export default defineConfig({
 						if (id.includes('react') || id.includes('react-dom')) {
 							return 'vendor-react';
 						}
-						if (id.includes('@microsoft/signalr')) {
-							return 'vendor-signalr';
-						}
 						// Group other small dependencies into a single vendor chunk to avoid too many requests
 						return 'vendor';
 					}
@@ -86,7 +56,7 @@ export default defineConfig({
 	},
 	// Optimize dependencies
 	optimizeDeps: {
-		include: ['react', 'react-dom', '@microsoft/signalr'],
+		include: ['react', 'react-dom'],
 	},
 	test: {
 		environment: 'jsdom',
