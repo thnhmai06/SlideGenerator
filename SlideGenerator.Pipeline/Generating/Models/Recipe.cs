@@ -41,4 +41,5 @@ public record MapNode(
 ///     A recipe consists of multiple mapping nodes that define how various data sources are merged into slides.
 /// </summary>
 /// <param name="Nodes">The list of mapping nodes that form the recipe.</param>
-public record Recipe(IReadOnlyList<MapNode> Nodes);
+/// <param name="Name">The display name of the recipe.</param>
+public record Recipe(IReadOnlyList<MapNode> Nodes, string Name = "Default Recipe");

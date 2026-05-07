@@ -129,6 +129,10 @@ public sealed class GeneratingTask : IDisposable
     /// </summary>
     public void TryInitLogger(ILogger baseLogger, string workflowId)
     {
-        Interlocked.CompareExchange(ref _logger, baseLogger.ForContext("TaskId", workflowId), null);
+        Interlocked.CompareExchange(ref _logger, 
+            baseLogger
+                .ForContext("TaskId", workflowId)
+                .ForContext("RecipeName", Request.Recipe.Name), 
+            null);
     }
 }

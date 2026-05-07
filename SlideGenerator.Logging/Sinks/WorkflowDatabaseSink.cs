@@ -17,65 +17,122 @@
  * GNU Affero General Public License for more details.
  */
 
+using System.Collections.Concurrent;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog.Events;
 using Serilog.Sinks.PeriodicBatching;
 using SlideGenerator.Logging.Abstractions;
 using SlideGenerator.Logging.Models;
+using SlideGenerator.Settings.Services;
 
 namespace SlideGenerator.Logging.Sinks;
 
 /// <summary>
-///     A custom Serilog sink that buffers log events and persists them to the database in batches.
-///     Uses scoped database contexts to ensure thread-safety and prevent memory leaks.
+///     A custom Serilog sink that appends log events to task-specific files and
+///     persists the file paths to the database.
 /// </summary>
-/// <param name="scopeFactory">The factory used to create a new service scope for each batch insertion.</param>
 public sealed class WorkflowDatabaseSink(IServiceScopeFactory scopeFactory) : IBatchedLogEventSink
 {
+    private readonly ConcurrentDictionary<string, string> _taskLogPaths = new();
+
     /// <summary>
-    ///     Processes a batch of log events, transforms them into <see cref="LogEntry" /> entities,
-    ///     and saves them to the database.
+    ///     Processes a batch of log events, appends them to their respective task files,
+    ///     and ensures a database record exists for each task's log file.
     /// </summary>
-    /// <param name="batch">The collection of log events to persist.</param>
-    /// <returns>A task representing the asynchronous save operation.</returns>
     public async Task EmitBatchAsync(IEnumerable<LogEvent> batch)
     {
         using var scope = scopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ILogDbContext>();
+        var settingProvider = scope.ServiceProvider.GetRequiredService<ISettingProvider>();
 
-        var entries = batch.Select(logEvent =>
+        var groupedEvents = batch
+            .Where(e => e.Properties.ContainsKey("TaskId"))
+            .GroupBy(e => e.Properties["TaskId"].ToString().Trim('"'));
+
+        foreach (var group in groupedEvents)
         {
-            logEvent.Properties.TryGetValue("TaskId", out var taskIdValue);
-            logEvent.Properties.TryGetValue("Path", out var pathValue);
+            var taskId = group.Key;
+            var logFilePath = await GetOrInitializeLogPath(taskId, group.First(), settingProvider, dbContext).ConfigureAwait(false);
 
-            var error = logEvent.Exception is { } ex
-                ? new ExceptionIdentifier(ex.GetType().Name, ex.Message)
-                : null;
+            if (string.IsNullOrEmpty(logFilePath)) continue;
 
-            return new LogEntry
-            {
-                Timestamp = logEvent.Timestamp,
-                Level = logEvent.Level.ToString(),
-                Message = logEvent.RenderMessage(),
-                Error = error,
-                TaskId = taskIdValue?.ToString().Trim('"') ?? "Unknown",
-                Path = pathValue?.ToString().Trim('"') ?? "Global"
-            };
-        }).ToList();
-
-        if (entries.Count != 0)
-        {
-            dbContext.LogEntries.AddRange(entries);
-            await dbContext.SaveChangesAsync().ConfigureAwait(false);
+            await AppendLogsToFile(logFilePath, group).ConfigureAwait(false);
         }
     }
 
-    /// <summary>
-    ///     Called when a batch interval expires but no events are pending.
-    /// </summary>
-    /// <returns>A completed task.</returns>
-    public Task OnEmptyBatchAsync()
+    private async Task<string> GetOrInitializeLogPath(
+        string taskId,
+        LogEvent firstEvent,
+        ISettingProvider settingProvider,
+        ILogDbContext dbContext)
     {
-        return Task.CompletedTask;
+        if (_taskLogPaths.TryGetValue(taskId, out var path)) return path;
+
+        // Try to find existing record in DB
+        var existing = await dbContext.LogEntries
+            .FirstOrDefaultAsync(l => l.TaskId == taskId)
+            .ConfigureAwait(false);
+
+        if (existing != null)
+        {
+            _taskLogPaths[taskId] = existing.LogFilePath;
+            return existing.LogFilePath;
+        }
+
+        // Create new log file path
+        firstEvent.Properties.TryGetValue("RecipeName", out var recipeNameValue);
+        var recipeName = recipeNameValue?.ToString().Trim('"') ?? "UnknownRecipe";
+        var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH-mm-ss");
+        
+        var tempFolder = settingProvider.Current.Download.Temp.FolderPath;
+        var logDir = Path.Combine(tempFolder, "TaskLogs");
+        if (!Directory.Exists(logDir)) Directory.CreateDirectory(logDir);
+
+        var logFileName = $"{recipeName}_{timestamp}.log";
+        var logFilePath = Path.Combine(logDir, logFileName);
+
+        // Save to DB
+        var entry = new LogEntry
+        {
+            TaskId = taskId,
+            Timestamp = DateTimeOffset.UtcNow,
+            LogFilePath = logFilePath
+        };
+
+        dbContext.LogEntries.Add(entry);
+        await dbContext.SaveChangesAsync().ConfigureAwait(false);
+
+        _taskLogPaths[taskId] = logFilePath;
+        return logFilePath;
     }
+
+    private static async Task AppendLogsToFile(string path, IEnumerable<LogEvent> events)
+    {
+        var sb = new System.Text.StringBuilder();
+        foreach (var logEvent in events)
+        {
+            sb.AppendLine($"[{logEvent.Timestamp:yyyy-MM-dd HH:mm:ss}] {logEvent.Level:u3} {logEvent.RenderMessage()}");
+            if (logEvent.Exception != null)
+            {
+                sb.AppendLine(logEvent.Exception.ToString());
+            }
+        }
+
+        // Simple thread-safe append (for production, consider a more robust file-locking mechanism or a dedicated background writer)
+        for (var i = 0; i < 5; i++)
+        {
+            try
+            {
+                await File.AppendAllTextAsync(path, sb.ToString()).ConfigureAwait(false);
+                break;
+            }
+            catch (IOException)
+            {
+                await Task.Delay(50).ConfigureAwait(false);
+            }
+        }
+    }
+
+    public Task OnEmptyBatchAsync() => Task.CompletedTask;
 }

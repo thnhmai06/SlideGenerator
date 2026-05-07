@@ -31,6 +31,7 @@ using SlideGenerator.Cloud;
 using SlideGenerator.Coordinator;
 using SlideGenerator.Document;
 using SlideGenerator.Download;
+using SlideGenerator.Hash;
 using SlideGenerator.Image;
 using SlideGenerator.Ipc.Handlers;
 using SlideGenerator.Ipc.Ipc;
@@ -193,6 +194,7 @@ internal static class Program
         Log.Information("Registering core services...");
         services.AddSystemLogging(configuration, _logFilePath ?? string.Empty);
         services.AddWorkflowLogging();
+        services.AddHashServices();
 
         Log.Information("Registering domain modules...");
         services.AddSettingServices();

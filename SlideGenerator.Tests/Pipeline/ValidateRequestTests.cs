@@ -78,7 +78,7 @@ public sealed class ValidateRequestTests
         var sheet = new SheetIdentifier("valid.xlsx", "Sheet1");
         var slide = new SlideIdentifier("template.pptx", 1);
         var node = new MapNode(new HashSet<SheetIdentifier> { sheet }, slide, [], []);
-        var request = new GeneratingRequest(new Recipe([node]), PresentationType.Pptx, "output");
+        var request = new GeneratingRequest(new Recipe([node]), "Test Name", PresentationType.Pptx, "output");
         var data = new GeneratingTask { Request = request };
 
         var (step, context, _) = BuildContext(data);
@@ -102,7 +102,7 @@ public sealed class ValidateRequestTests
         var sheet = new SheetIdentifier("nonexistent.xlsx", "Sheet1");
         var slide = new SlideIdentifier("template.pptx", 1);
         var node = new MapNode(new HashSet<SheetIdentifier> { sheet }, slide, [], []);
-        var request = new GeneratingRequest(new Recipe([node]), PresentationType.Pptx, "output");
+        var request = new GeneratingRequest(new Recipe([node]), "Test Name", PresentationType.Pptx, "output");
         var data = new GeneratingTask { Request = request };
 
         var (step, context, _) = BuildContext(data);
@@ -128,7 +128,7 @@ public sealed class ValidateRequestTests
         var sheet = new SheetIdentifier("valid.xlsx", "MissingSheet");
         var slide = new SlideIdentifier("template.pptx", 1);
         var node = new MapNode(new HashSet<SheetIdentifier> { sheet }, slide, [], []);
-        var request = new GeneratingRequest(new Recipe([node]), PresentationType.Pptx, "output");
+        var request = new GeneratingRequest(new Recipe([node]), "Test Name", PresentationType.Pptx, "output");
         var data = new GeneratingTask { Request = request };
 
         var (step, context, _) = BuildContext(data);

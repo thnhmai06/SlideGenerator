@@ -25,6 +25,7 @@ using SlideGenerator.Document.Sheet;
 using SlideGenerator.Document.Slide;
 using SlideGenerator.Document.Slide.Models;
 using SlideGenerator.Document.Slide.Services;
+using SlideGenerator.Hash.Services;
 using SlideGenerator.Pipeline.Generating.Workflows.Models;
 using SlideGenerator.Settings.Services;
 using Syncfusion.XlsIO;
@@ -44,6 +45,7 @@ public sealed class ExtractData(
     ExcelEngine excelEngine,
     ISettingProvider settingProvider,
     TextComposer textComposer,
+    HashPathRegistry hashPathRegistry,
     ILogger logger)
     : StepBodyAsync
 {
@@ -88,8 +90,9 @@ public sealed class ExtractData(
             var rowCount = sheet.CountRows();
 
             var headers = sheet.GetHeaders();
-            var headerMap = headers.Select((h, i) => (h, i))
-                .ToDictionary(x => x.h, x => x.i, StringComparer.OrdinalIgnoreCase);
+            var headerMap = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            for (var i = 0; i < headers.Count; i++)
+                if (!headerMap.ContainsKey(headers[i])) headerMap[headers[i]] = i;
 
             data.Logger.Debug("Found {RowCount} rows in sheet {SheetName}", rowCount, Worksheet.Identifier.SheetName);
 
@@ -170,7 +173,7 @@ public sealed class ExtractData(
             var rowData = sheet.GetRow(rowIndex);
 
             MapTextReplacements(slideTask, rowData, headerMap, sheet, shapeData);
-            MapImageReplacements(data, slideTask, rowData, headerMap, sheet, shapeData, bookName, rowIndex);
+            MapImageReplacements(data, slideTask, rowData, headerMap, sheet, shapeData, rowIndex);
 
             if (slideTask.TextReplacements.Count > 0 || slideTask.ImageReplacements.Count > 0)
             {
@@ -214,7 +217,6 @@ public sealed class ExtractData(
         Dictionary<string, int> headerMap,
         IWorksheet sheet,
         Dictionary<ShapeIdentifier, (string ShapeName, HashSet<string> Tags, RectangleF Bounds)> shapeData,
-        string bookName,
         int rowIndex)
     {
         foreach (var imgInst in Worksheet.MapNode.ImageInstructions)
@@ -228,7 +230,7 @@ public sealed class ExtractData(
 
             var uri = Settings.Utilities.NormalizeUri(rowData[colIndex]);
             var downloadDir =
-                settingProvider.Current.Download.Temp.GetDownloadDir(bookName, sheet.Name, column.ColumnName);
+                settingProvider.Current.Download.Temp.GetDownloadDir(Worksheet.Identifier.BookPath, sheet.Name, column.ColumnName, hashPathRegistry);
             var downloadPath = Path.Combine(downloadDir, rowIndex.ToString());
 
             foreach (var shapeId in imgInst.Shapes)
@@ -238,7 +240,7 @@ public sealed class ExtractData(
                 if (!shapeData.TryGetValue(shapeId, out var sData)) continue;
 
                 var editDir =
-                    settingProvider.Current.Download.Temp.GetEditDir(bookName, sheet.Name, column.ColumnName);
+                    settingProvider.Current.Download.Temp.GetEditDir(Worksheet.Identifier.BookPath, sheet.Name, column.ColumnName, hashPathRegistry);
                 var editPath = Path.Combine(editDir, $"{rowIndex}_{sData.ShapeName}");
 
                 var imageTask = new ImageTask(

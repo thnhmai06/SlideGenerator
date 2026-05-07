@@ -18,6 +18,7 @@
  */
 
 using System.Net;
+using SlideGenerator.Hash.Services;
 using SlideGenerator.Settings.Rules;
 
 namespace SlideGenerator.Settings.Models;
@@ -50,42 +51,43 @@ public sealed partial record Setting
             public string FolderPath
             {
                 get => string.IsNullOrEmpty(field) ? NameAndPathRules.DefaultTempPath : field;
-                set
-                {
-                    if (!string.IsNullOrEmpty(value) && !Directory.Exists(value))
-                        Directory.CreateDirectory(value);
-                    field = value;
-                }
+                set => field = value;
             } = string.Empty;
 
             /// <summary>
             ///     Constructs a specialized directory path for storing raw downloaded images.
             /// </summary>
-            /// <param name="bookName">The name of the source workbook.</param>
+            /// <param name="bookPath">The absolute path to the source workbook.</param>
             /// <param name="sheetName">The name of the source worksheet.</param>
             /// <param name="colName">The name of the column providing the image URI.</param>
+            /// <param name="registry">The path registry service.</param>
             /// <returns>A full directory path for downloads.</returns>
-            public string GetDownloadDir(string bookName, string sheetName, string colName)
+            public string GetDownloadDir(string bookPath, string sheetName, string colName, HashPathRegistry registry)
             {
-                bookName = Utilities.NormalizeFileName(bookName);
+                var bookName = Path.GetFileNameWithoutExtension(bookPath);
+                var hash = registry.GetShortHash(bookPath);
+                var bookFolder = $"{Utilities.NormalizeFileName(bookName)}_{hash}";
                 sheetName = Utilities.NormalizeFileName(sheetName);
                 colName = Utilities.NormalizeFileName(colName);
-                return Path.Combine(FolderPath, bookName, sheetName, colName, "Download");
+                return Path.Combine(FolderPath, bookFolder, sheetName, colName, "Download");
             }
 
             /// <summary>
             ///     Constructs a specialized directory path for storing edited (cropped/resized) images.
             /// </summary>
-            /// <param name="bookName">The name of the source workbook.</param>
+            /// <param name="bookPath">The absolute path to the source workbook.</param>
             /// <param name="sheetName">The name of the source worksheet.</param>
             /// <param name="colName">The name of the column providing the image URI.</param>
+            /// <param name="registry">The path registry service.</param>
             /// <returns>A full directory path for edited images.</returns>
-            public string GetEditDir(string bookName, string sheetName, string colName)
+            public string GetEditDir(string bookPath, string sheetName, string colName, HashPathRegistry registry)
             {
-                bookName = Utilities.NormalizeFileName(bookName);
+                var bookName = Path.GetFileNameWithoutExtension(bookPath);
+                var hash = registry.GetShortHash(bookPath);
+                var bookFolder = $"{Utilities.NormalizeFileName(bookName)}_{hash}";
                 sheetName = Utilities.NormalizeFileName(sheetName);
                 colName = Utilities.NormalizeFileName(colName);
-                return Path.Combine(FolderPath, bookName, sheetName, colName, "Edit");
+                return Path.Combine(FolderPath, bookFolder, sheetName, colName, "Edit");
             }
         }
 

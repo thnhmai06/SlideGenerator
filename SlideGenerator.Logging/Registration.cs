@@ -112,6 +112,7 @@ public static class Registration
         {
             // Register the sink implementation so it can receive IServiceScopeFactory via DI
             services.AddSingleton<WorkflowDatabaseSink>();
+            services.AddScoped<Services.LogManager>();
 
             return services;
         }

@@ -21,6 +21,7 @@ using Microsoft.Extensions.Logging;
 using SlideGenerator.Settings.Entities;
 using SlideGenerator.Settings.Models;
 using SlideGenerator.Settings.Rules;
+using SlideGenerator.Settings.Security;
 
 namespace SlideGenerator.Settings.Services;
 
@@ -56,6 +57,22 @@ public sealed class SettingManager(Serializer serializer, ILogger<SettingManager
             logger.LogDebug("Loading settings from {Path}", FilePath);
             var source = await File.ReadAllTextAsync(FilePath).ConfigureAwait(false);
             var loaded = serializer.Deserialize<Setting>(source);
+
+            // Decrypt sensitive data
+            if (!string.IsNullOrEmpty(loaded.Download.Proxy.Password))
+            {
+                loaded = loaded with
+                {
+                    Download = loaded.Download with
+                    {
+                        Proxy = loaded.Download.Proxy with
+                        {
+                            Password = CryptoHelper.Decrypt(loaded.Download.Proxy.Password)
+                        }
+                    }
+                };
+            }
+
             Current = loaded;
             logger.LogInformation("Successfully loaded settings from {Path}", FilePath);
         }
@@ -81,7 +98,23 @@ public sealed class SettingManager(Serializer serializer, ILogger<SettingManager
             var folderName = Path.GetDirectoryName(FilePath);
             if (!string.IsNullOrEmpty(folderName)) Directory.CreateDirectory(folderName);
 
-            var content = serializer.Serialize(Current);
+            // Encrypt sensitive data before serialization
+            var toSave = Current;
+            if (!string.IsNullOrEmpty(toSave.Download.Proxy.Password))
+            {
+                toSave = toSave with
+                {
+                    Download = toSave.Download with
+                    {
+                        Proxy = toSave.Download.Proxy with
+                        {
+                            Password = CryptoHelper.Encrypt(toSave.Download.Proxy.Password)
+                        }
+                    }
+                };
+            }
+
+            var content = serializer.Serialize(toSave);
             await File.WriteAllTextAsync(FilePath, content).ConfigureAwait(false);
             logger.LogInformation("Successfully saved settings to {Path}", FilePath);
         }
@@ -108,7 +141,26 @@ public sealed class SettingManager(Serializer serializer, ILogger<SettingManager
     /// <returns>A task representing the save operation.</returns>
     public async Task Update(Setting newSetting)
     {
+        ValidateWriteAccess(newSetting.Download.Temp.FolderPath);
         Current = newSetting;
         await Save().ConfigureAwait(false);
+    }
+
+    private void ValidateWriteAccess(string path)
+    {
+        if (string.IsNullOrEmpty(path)) return;
+
+        try
+        {
+            if (!Directory.Exists(path)) Directory.CreateDirectory(path);
+            var testFile = Path.Combine(path, $".write_test_{Guid.NewGuid()}");
+            File.WriteAllText(testFile, "test");
+            File.Delete(testFile);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Write access validation failed for path: {Path}", path);
+            throw new UnauthorizedAccessException($"No write access to the specified folder: {path}", ex);
+        }
     }
 }

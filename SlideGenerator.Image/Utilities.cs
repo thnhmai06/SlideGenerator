@@ -143,6 +143,24 @@ public static class Utilities
         });
     }
 
+    /// <summary>
+    ///     Decodes a byte array into a MagickImage.
+    /// </summary>
+    /// <param name="data">The raw image data bytes.</param>
+    /// <returns>A new MagickImage instance.</returns>
+    /// <exception cref="InvalidOperationException">Thrown if decoding fails.</exception>
+    public static MagickImage Decode(byte[] data)
+    {
+        try
+        {
+            return new MagickImage(data);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Failed to decode image data into MagickImage.", ex);
+        }
+    }
+
     extension(Rectangle rect)
     {
         /// <summary>

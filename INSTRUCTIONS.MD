@@ -32,9 +32,7 @@ Orchestration
 - **No Circular Dependencies**: Module A cannot depend on a module that (directly or transitively) depends on A
 - **DI-Based Composition**: Modules register via `Registration.cs`; no service locator pattern
 - **Module Independence**: Each module can be understood and tested in isolation
-- **Clear Contracts**: All public APIs have XML documentation
-- **Dependency Inversion**: Application must NOT reference Infrastructure implementations or specific engine libraries (e.g., WorkflowCore).
-- **Domain Purity**: The Domain layer must remain free of external framework or library logic.
+- **Clear Contracts**: All public APIs have XML documentation.
 
 **Encouraged:**
 - **Data Classes**: Use `record` for DTOs, `sealed record` for strongly-scoped values
@@ -249,7 +247,21 @@ The slide generation process relies on explicit instructions to map data from Ex
 - **Mustache Context**: Only variables explicitly mapped via a `TextInstruction` are added to the replacement context.
 - **Omission Rule**: If a mustache variable exists in a slide but is not defined in any `TextInstruction`, it is considered non-existent in the replacement context and will remain unchanged.
 
-### Image Instruction (`ImageInstruction`)
-- **Purpose**: Maps worksheet columns (containing image URIs) to specific shapes in the slide.
-- **Transformation**: Encapsulates `EditOptions` (ROI algorithms, Resize modes) applied to the image before it is composed into the slide.
-- **Execution**: Drives the `DownloadImage` and `EditImage` activities in Phase B.
+## 10. Security & Foundation Services
+
+### Cryptographic Standard (AES-GCM)
+Sensitive data (e.g., Proxy Passwords) must be encrypted using **AES-GCM** via the `CryptoHelper`. 
+- **Authenticated Encryption**: Always include the Nonce and Tag alongside the ciphertext.
+- **Cross-Platform**: Do not use Windows-only APIs (like DPAPI); use pure `System.Security.Cryptography`.
+- **Key Derivation**: Keys are derived from machine/user identity using PBKDF2 with SHA256.
+
+### File Hashing & Registry
+The **SlideGenerator.Hash** module provides centralized hashing services:
+- **FileHasher**: Static utility for SHA256 file hashing and short path hashes (7 characters).
+- **PathRegistry**: Singleton service that caches path hashes to ensure consistency across the application (e.g., for temp folder naming).
+
+### Refactored Logging Strategy
+Workflow logs are decoupled from the primary database:
+- **File-Based Logs**: Granular log events are appended to `.log` files in `{TempFolder}/TaskLogs/`.
+- **Database Pointers**: The `LogEntries` table stores only the `LogFilePath` and job metadata for auditability.
+- **Independent Cleanup**: Logs can be cleared via `LogManager.DeleteTaskLog(taskId)` without deleting the original Job record.

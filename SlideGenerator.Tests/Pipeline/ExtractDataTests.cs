@@ -26,6 +26,8 @@ using SlideGenerator.Pipeline.Generating.Workflows.Models;
 using SlideGenerator.Settings.Models;
 using SlideGenerator.Settings.Services;
 using Syncfusion.XlsIO;
+using SlideGenerator.Hash;
+using SlideGenerator.Hash.Services;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
 using Xunit;
@@ -39,6 +41,7 @@ public sealed class ExtractDataTests
     private readonly Mock<GateLocker> _gateLockerMock;
     private readonly Mock<ILogger> _loggerMock;
     private readonly Mock<ISettingProvider> _settingProviderMock;
+    private readonly HashPathRegistry _hashPathRegistry;
     private readonly TextComposer _textComposer;
 
     public ExtractDataTests()
@@ -47,6 +50,7 @@ public sealed class ExtractDataTests
             new Mock<GateLocker>(new Mock<ISettingProvider>().Object, new Mock<ILogger<GateLocker>>().Object);
         _settingProviderMock = new Mock<ISettingProvider>();
         _loggerMock = new Mock<ILogger>();
+        _hashPathRegistry = new HashPathRegistry();
         _excelEngine = new ExcelEngine();
         _textComposer = new TextComposer(new Mock<ILogger<TextComposer>>().Object);
 
@@ -59,7 +63,7 @@ public sealed class ExtractDataTests
     private (ExtractData step, IStepExecutionContext context, GeneratingTask data) BuildContext(GeneratingTask data)
     {
         var step = new ExtractData(_gateLockerMock.Object, _excelEngine, _settingProviderMock.Object, _textComposer,
-            _loggerMock.Object);
+            _hashPathRegistry, _loggerMock.Object);
         var contextMock = new Mock<IStepExecutionContext>();
         var workflowInstance = new WorkflowInstance
         {

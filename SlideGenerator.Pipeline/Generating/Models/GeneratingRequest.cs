@@ -25,12 +25,14 @@ namespace SlideGenerator.Pipeline.Generating.Models;
 ///     Represents the user-provided request to start a slide generation process.
 /// </summary>
 /// <param name="Recipe">The mapping recipe defining data sources and targets.</param>
+/// <param name="Name">The display name of the generation job.</param>
 /// <param name="OutputType">The desired file extension for the output presentations.</param>
 /// <param name="SaveFolder">The root directory where generated presentations will be saved.</param>
 /// <param name="DeleteDownloadImage">True to delete raw downloaded images after processing.</param>
 /// <param name="DeleteEditImage">True to delete cropped/resized images after they are embedded in slides.</param>
 public sealed record GeneratingRequest(
     Recipe Recipe,
+    string Name,
     PresentationType OutputType,
     string SaveFolder,
     bool DeleteDownloadImage = false,

@@ -51,12 +51,21 @@ public sealed class DownloadImage(
         var data = (GeneratingTask)context.Workflow.Data;
         data.TryInitLogger(logger, context.Workflow.Id);
 
-        // Idempotency: skip if file already exists
+        // Idempotency: skip if file already exists and is valid
         if (File.Exists(Task.DownloadPath))
         {
-            data.Logger.Debug("Image for row {RowIndex} already exists at '{Path}', skipping download", Task.RowIndex,
-                Task.DownloadPath);
-            return ExecutionResult.Next();
+            try
+            {
+                var bytes = await File.ReadAllBytesAsync(Task.DownloadPath).ConfigureAwait(false);
+                using var testImage = Image.Utilities.Decode(bytes);
+                data.Logger.Debug("Image for row {RowIndex} already exists and is valid, skipping download", Task.RowIndex);
+                return ExecutionResult.Next();
+            }
+            catch
+            {
+                data.Logger.Warning("Existing image for row {RowIndex} is corrupt. Retrying download.", Task.RowIndex);
+                File.Delete(Task.DownloadPath);
+            }
         }
 
         // Ensure directory exists
