@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using Microsoft.Extensions.DependencyInjection;
 using OpenCvSharp;
 using SlideGenerator.Image.Application.Abstractions;
@@ -35,15 +36,12 @@ public static class Registration
     {
         services.AddSingleton<IImageFactory, MagickImageFactory>();
         services.AddSingleton<IMatFactory, OpenCvMatFactory>();
-        
+
         services.AddSingleton<IFaceDetector>(_ =>
             new YuNet(
-                FaceDetectorYN.Create(ModelPath, string.Empty, 
+                FaceDetectorYN.Create(ModelPath, string.Empty,
                     Rules.FaceInputSize.ToOpenCv(), Rules.FaceConfidence), Rules.FaceInputSize.ToOpenCv()));
         services.AddSingleton<IRoiResolver, RoiResolver>();
         return services;
     }
 }
-
-
-

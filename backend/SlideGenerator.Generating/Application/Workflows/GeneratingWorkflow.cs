@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Generating.Application.Steps;
 using SlideGenerator.Generating.Domain.Models.Contexts;
 using WorkflowCore.Interface;
@@ -25,7 +26,12 @@ using WorkflowCore.Primitives;
 namespace SlideGenerator.Generating.Application.Workflows;
 
 /// <summary>Identifies the execution phase of the generating workflow.</summary>
-public enum GeneratingPhase { PhaseA, PhaseB, PhaseC }
+public enum GeneratingPhase
+{
+    PhaseA,
+    PhaseB,
+    PhaseC
+}
 
 /// <summary>
 ///     Orchestrates the slide generation process strictly using WorkflowCore iterators.
@@ -63,7 +69,8 @@ public sealed class GeneratingWorkflow : IWorkflow<GeneratingContext>
     }
 
     /// <summary>Phase B: Resource Preparation (Extract Data, Download &amp; Edit Images)</summary>
-    private static IStepBuilder<GeneratingContext, InlineStepBody> PhaseB(IStepBuilder<GeneratingContext, InlineStepBody> prev)
+    private static IStepBuilder<GeneratingContext, InlineStepBody> PhaseB(
+        IStepBuilder<GeneratingContext, InlineStepBody> prev)
     {
         return prev
             .ForEach(data => data.ValidWorksheets.Values)

@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Document.Application.Abstractions;
 using SlideGenerator.Document.Domain.Abstractions.Slide;
 using SlideGenerator.Document.Domain.Models.Slide;
@@ -36,19 +37,14 @@ internal sealed class SfPresentationProvider : IPresentationProvider
         var presentation = Presentation.Open(identifier.PresentationPath, identifier.PresentationPassword);
         return new SfPresentation(presentation, identifier);
     }
-    
+
     /// <inheritdoc />
     public IReadOnlyPresentation OpenPresentationReadOnly(PresentationIdentifier identifier)
     {
-        var fileStream = new FileStream(identifier.PresentationPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        var fileStream =
+            new FileStream(identifier.PresentationPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
         var presentation = Presentation.Open(fileStream, identifier.PresentationPassword);
 
         return new SfPresentation(presentation, identifier, fileStream);
     }
 }
-
-
-
-
-
-

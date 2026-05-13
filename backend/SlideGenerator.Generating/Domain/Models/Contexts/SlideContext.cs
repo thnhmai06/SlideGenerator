@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Document.Domain.Models.Slide;
 
 namespace SlideGenerator.Generating.Domain.Models.Contexts;
@@ -38,9 +39,9 @@ public sealed class SlideContext(SheetContext sheetContext, int rowIndex)
     public Dictionary<string, string> TextReplacements { get; } = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
-    ///     Gets the image replacements where Key is the ShapeIdentifier and Value is the ImageContext responsible for processing
+    ///     Gets the image replacements where Key is the ShapeIdentifier and Value is the ImageContext responsible for
+    ///     processing
     ///     it.
     /// </summary>
     public Dictionary<ShapeIdentifier, ImageContext> ImageReplacements { get; } = new();
 }
-

@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Document.Domain.Models.Sheet;
 
 namespace SlideGenerator.Generating.Domain.Models.Dto;
@@ -28,8 +29,3 @@ namespace SlideGenerator.Generating.Domain.Models.Dto;
 public record TextInstruction(
     IReadOnlySet<string> Placeholders,
     IReadOnlyList<ColumnIdentifier> Columns);
-
-
-
-
-

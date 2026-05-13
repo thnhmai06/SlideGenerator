@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 namespace SlideGenerator.Document.Domain.Models.Sheet;
 
 /// <summary>
@@ -44,8 +45,3 @@ public record BookIdentifier(string BookPath, string? BookPassword = null, strin
         return BookTypeExtensions.FromExtension(Path.GetExtension(BookPath));
     }
 }
-
-
-
-
-

@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using System.Collections.ObjectModel;
 using System.Drawing;
 using SlideGenerator.Image.Application.Abstractions;
@@ -69,9 +70,3 @@ public sealed class RoiResolver(IFaceDetector faceDetector, IMatFactory matFacto
             : throw new ArgumentOutOfRangeException(nameof(key), key, null);
     }
 }
-
-
-
-
-
-

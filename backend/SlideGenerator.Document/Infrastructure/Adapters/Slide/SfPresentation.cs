@@ -16,8 +16,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-using SlideGenerator.Document.Domain.Abstractions.Slide;
+
 using SlideGenerator.Document.Domain.Models.Slide;
+using Syncfusion.Presentation;
 using ISlide = SlideGenerator.Document.Domain.Abstractions.Slide.ISlide;
 
 namespace SlideGenerator.Document.Infrastructure.Adapters.Slide;
@@ -26,9 +27,9 @@ namespace SlideGenerator.Document.Infrastructure.Adapters.Slide;
 ///     Wraps a Syncfusion IPresentation and its FileStream for proper disposal and saving.
 /// </summary>
 internal sealed class SfPresentation(
-    Syncfusion.Presentation.IPresentation core,
+    IPresentation core,
     PresentationIdentifier identifier,
-    FileStream? fileStream = null) : IPresentation
+    FileStream? fileStream = null) : Domain.Abstractions.Slide.IPresentation
 {
     public IEnumerable<ISlide> Slides
     {
@@ -87,8 +88,3 @@ internal sealed class SfPresentation(
             core.Save(fileStream);
     }
 }
-
-
-
-
-

@@ -16,12 +16,13 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
+using SlideGenerator.Cloud.Application.Abstractions;
 using SlideGenerator.Coordinator.Application.Abstractions;
 using SlideGenerator.Coordinator.Domain.Models;
 using SlideGenerator.Download.Application.Abstractions;
-using SlideGenerator.Cloud.Application.Abstractions;
-using SlideGenerator.Image.Application.Abstractions;
 using SlideGenerator.Generating.Domain.Models.Contexts;
+using SlideGenerator.Image.Application.Abstractions;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
 
@@ -52,12 +53,12 @@ public sealed class DownloadImage(
 
         // Idempotency: skip if file already exists and is valid
         if (File.Exists(Task.DownloadPath))
-        {
             try
             {
                 var bytes = await File.ReadAllBytesAsync(Task.DownloadPath).ConfigureAwait(false);
                 using var testImage = imageFactory.Open(bytes);
-                data.Logger.Debug("Image for row {RowIndex} already exists and is valid, skipping download", Task.RowIndex);
+                data.Logger.Debug("Image for row {RowIndex} already exists and is valid, skipping download",
+                    Task.RowIndex);
                 return ExecutionResult.Next();
             }
             catch
@@ -65,7 +66,6 @@ public sealed class DownloadImage(
                 data.Logger.Warning("Existing image for row {RowIndex} is corrupt. Retrying download.", Task.RowIndex);
                 File.Delete(Task.DownloadPath);
             }
-        }
 
         // Ensure directory exists
         var dir = Path.GetDirectoryName(Task.DownloadPath);
@@ -78,7 +78,10 @@ public sealed class DownloadImage(
             {
                 var path = $"Row{Task.RowIndex}_{Task.ColumnName}";
                 using (data.Logger.BeginScope(path))
+                {
                     data.Logger.Warning("URI is not valid. Skipping.");
+                }
+
                 return ExecutionResult.Next();
             }
 
@@ -99,7 +102,9 @@ public sealed class DownloadImage(
         {
             var path = $"Row{Task.RowIndex}_{Task.ColumnName}";
             using (data.Logger.BeginScope(path))
+            {
                 data.Logger.Error(ex, "Download failed");
+            }
         }
         finally
         {
@@ -109,8 +114,3 @@ public sealed class DownloadImage(
         return ExecutionResult.Next();
     }
 }
-
-
-
-
-

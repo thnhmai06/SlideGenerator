@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Document.Domain.Models.Sheet;
 using SlideGenerator.Generating.Domain.Models.Dto;
 
@@ -70,4 +71,3 @@ public sealed class ImageContext(
     /// <summary>Gets the path to the fallback image to use if the primary source fails.</summary>
     public string? FallbackImagePath { get; } = fallbackImagePath;
 }
-

@@ -16,10 +16,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 namespace SlideGenerator.Document.Domain.Models.Sheet;
 
 /// <summary>
-/// Specifies the supported file types for Excel-like workbooks.
+///     Specifies the supported file types for Excel-like workbooks.
 /// </summary>
 public enum BookType
 {
@@ -43,12 +44,12 @@ public enum BookType
 }
 
 /// <summary>
-/// Provides extension methods and utilities for <see cref="BookType" />.
+///     Provides extension methods and utilities for <see cref="BookType" />.
 /// </summary>
 public static class BookTypeExtensions
 {
     /// <summary>
-    /// Gets the standard file extension associated with the specified workbook type.
+    ///     Gets the standard file extension associated with the specified workbook type.
     /// </summary>
     /// <param name="type">The workbook type.</param>
     /// <returns>The file extension (e.g., ".xlsx").</returns>
@@ -68,7 +69,7 @@ public static class BookTypeExtensions
     }
 
     /// <summary>
-    /// Resolves the <see cref="BookType" /> from a file extension.
+    ///     Resolves the <see cref="BookType" /> from a file extension.
     /// </summary>
     /// <param name="extension">The file extension (case-insensitive).</param>
     /// <returns>The corresponding <see cref="BookType" />.</returns>
@@ -87,8 +88,3 @@ public static class BookTypeExtensions
         };
     }
 }
-
-
-
-
-

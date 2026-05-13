@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using Serilog;
 using Serilog.Context;
 using SlideGenerator.Logging.Domain.Abstractions;
@@ -91,5 +92,3 @@ internal sealed class SerilogAppLogger(ILogger logger, IScopeManager scopeManage
         logger.Fatal(exception, messageTemplate, propertyValues);
     }
 }
-
-

@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using System.Reflection;
 
 namespace SlideGenerator.Ipc;
@@ -44,8 +45,3 @@ internal static class WelcomeMessages
     public static readonly string Version =
         $"Version: v{Assembly.GetExecutingAssembly().GetName().Version?.ToString(3)}";
 }
-
-
-
-
-

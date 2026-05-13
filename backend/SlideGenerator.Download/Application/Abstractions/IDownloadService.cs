@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 namespace SlideGenerator.Download.Application.Abstractions;
 
 /// <summary>
@@ -31,9 +32,3 @@ public interface IDownloadService
     /// <param name="ct">Cancellation token.</param>
     Task DownloadAsync(Uri uri, string destinationPath, CancellationToken ct = default);
 }
-
-
-
-
-
-

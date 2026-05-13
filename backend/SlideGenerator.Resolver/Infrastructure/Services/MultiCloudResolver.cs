@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Cloud.Application.Abstractions;
 using SlideGenerator.Cloud.Domain.Models;
 using SlideGenerator.Cloud.Infrastructure.Resolvers;
@@ -25,7 +26,7 @@ using GooglePhotosResolver = SlideGenerator.Cloud.Infrastructure.Resolvers.Googl
 
 namespace SlideGenerator.Cloud.Infrastructure.Services;
 
-public sealed class MultiCloudResolver(ISystemLogger logger): ICloudResolver
+public sealed class MultiCloudResolver(ISystemLogger logger) : ICloudResolver
 {
     private readonly IReadOnlyDictionary<CloudResolverKey, ICloudResolver> _resolvers =
         new Dictionary<CloudResolverKey, ICloudResolver>
@@ -39,7 +40,8 @@ public sealed class MultiCloudResolver(ISystemLogger logger): ICloudResolver
     public bool IsUriSupported(Uri uri, out CloudResolverKey key)
     {
         foreach (var kvp in _resolvers)
-            if (kvp.Value.IsUriSupported(uri, out key)) return true;
+            if (kvp.Value.IsUriSupported(uri, out key))
+                return true;
 
         key = default;
         return false;
@@ -60,8 +62,3 @@ public sealed class MultiCloudResolver(ISystemLogger logger): ICloudResolver
         return uri;
     }
 }
-
-
-
-
-

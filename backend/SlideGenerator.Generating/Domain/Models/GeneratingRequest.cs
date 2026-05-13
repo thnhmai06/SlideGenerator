@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Document.Domain.Models.Slide;
 using SlideGenerator.Generating.Domain.Models.Dto;
 
@@ -50,8 +51,3 @@ public sealed record GeneratingRequest(
     /// </summary>
     public string? WorkflowLogFilePath { get; init; }
 }
-
-
-
-
-

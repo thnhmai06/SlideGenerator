@@ -16,11 +16,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 namespace SlideGenerator.Logging.Domain.Abstractions;
 
 /// <summary>
 ///     Identifies the process-wide logger intended for developer-facing system diagnostics.
 /// </summary>
 public interface ISystemLogger : IAppLogger;
-
-

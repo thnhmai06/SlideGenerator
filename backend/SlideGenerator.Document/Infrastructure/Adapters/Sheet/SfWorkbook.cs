@@ -16,8 +16,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-using SlideGenerator.Document.Domain.Abstractions.Sheet;
+
 using SlideGenerator.Document.Domain.Models.Sheet;
+using Syncfusion.XlsIO;
+using IWorksheet = SlideGenerator.Document.Domain.Abstractions.Sheet.IWorksheet;
 
 namespace SlideGenerator.Document.Infrastructure.Adapters.Sheet;
 
@@ -26,9 +28,9 @@ namespace SlideGenerator.Document.Infrastructure.Adapters.Sheet;
 ///     Uses lazy initialization to defer file access until the <see cref="Value" /> is accessed.
 /// </summary>
 internal sealed class SfWorkbook(
-    Syncfusion.XlsIO.IWorkbook value,
+    IWorkbook value,
     BookIdentifier identifier,
-    FileStream? fileStream = null) : IWorkbook
+    FileStream? fileStream = null) : Domain.Abstractions.Sheet.IWorkbook
 {
     public IEnumerable<IWorksheet> Worksheets
     {
@@ -59,7 +61,7 @@ internal sealed class SfWorkbook(
             case BookType.Xls:
             case BookType.Xlsx:
             case BookType.Xltx:
-            case BookType.Ods: 
+            case BookType.Ods:
             default:
                 if (fileStream == null)
                     value.SaveAs(identifier.BookPath);
@@ -68,7 +70,7 @@ internal sealed class SfWorkbook(
                 break;
         }
     }
-    
+
     /// <summary>
     ///     Closes the workbook and disposes of any underlying file streams.
     /// </summary>
@@ -78,8 +80,3 @@ internal sealed class SfWorkbook(
         fileStream?.Dispose();
     }
 }
-
-
-
-
-

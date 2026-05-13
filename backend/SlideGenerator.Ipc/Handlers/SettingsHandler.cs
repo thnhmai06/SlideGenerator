@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Settings.Domain.Abstractions;
 using SlideGenerator.Settings.Domain.Entities;
 
@@ -63,8 +64,3 @@ public sealed class SettingsHandler(
         return true;
     }
 }
-
-
-
-
-

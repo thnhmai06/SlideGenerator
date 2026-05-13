@@ -16,23 +16,19 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 namespace SlideGenerator.Document.Domain.Abstractions.Slide;
 
 /// <summary>
-/// Represents a part of text within a paragraph that can be modified.
+///     Represents a part of text within a paragraph that can be modified.
 /// </summary>
 public interface ITextPart : IReadOnlyTextPart
 {
     /// <summary>
-    /// Gets or sets the text content of this part.
+    ///     Gets or sets the text content of this part.
     /// </summary>
     new string Text { get; set; }
 
     /// <inheritdoc />
     string IReadOnlyTextPart.Text => Text;
 }
-
-
-
-
-

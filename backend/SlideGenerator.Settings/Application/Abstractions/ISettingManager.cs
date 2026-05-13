@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Settings.Domain.Entities;
 
 namespace SlideGenerator.Settings.Application.Abstractions;
@@ -41,9 +42,3 @@ public interface ISettingManager : ISettingProvider
     /// </summary>
     Task Update(Setting newSetting);
 }
-
-
-
-
-
-

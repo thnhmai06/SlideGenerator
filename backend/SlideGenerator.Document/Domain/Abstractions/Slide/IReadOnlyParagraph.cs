@@ -16,25 +16,21 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 namespace SlideGenerator.Document.Domain.Abstractions.Slide;
 
 /// <summary>
-/// Represents a read-only view of a paragraph in a shape.
+///     Represents a read-only view of a paragraph in a shape.
 /// </summary>
 public interface IReadOnlyParagraph
 {
     /// <summary>
-    /// Gets the collection of text parts within the paragraph.
+    ///     Gets the collection of text parts within the paragraph.
     /// </summary>
     IEnumerable<IReadOnlyTextPart> TextParts { get; }
 
     /// <summary>
-    /// Gets the total number of text parts in the paragraph.
+    ///     Gets the total number of text parts in the paragraph.
     /// </summary>
     int TextPartsCount { get; }
 }
-
-
-
-
-

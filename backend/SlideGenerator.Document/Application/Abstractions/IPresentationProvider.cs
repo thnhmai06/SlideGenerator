@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Document.Domain.Abstractions.Slide;
 using SlideGenerator.Document.Domain.Models.Slide;
 
@@ -34,7 +35,7 @@ public interface IPresentationProvider
     /// <returns>A handle wrapping the opened presentation.</returns>
     /// <exception cref="System.IO.FileNotFoundException">If the presentation file does not exist.</exception>
     IPresentation OpenPresentation(PresentationIdentifier identifier);
-    
+
     /// <summary>
     ///     Opens a presentation identified by <paramref name="identifier" /> in <b>read</b> mode.
     /// </summary>
@@ -43,9 +44,3 @@ public interface IPresentationProvider
     /// <exception cref="System.IO.FileNotFoundException">If the presentation file does not exist.</exception>
     IReadOnlyPresentation OpenPresentationReadOnly(PresentationIdentifier identifier);
 }
-
-
-
-
-
-

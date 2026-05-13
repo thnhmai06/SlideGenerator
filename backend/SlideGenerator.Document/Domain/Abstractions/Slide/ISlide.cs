@@ -16,24 +16,19 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 namespace SlideGenerator.Document.Domain.Abstractions.Slide;
 
 /// <summary>
-/// Represents a slide in a PowerPoint presentation that can be modified.
+///     Represents a slide in a PowerPoint presentation that can be modified.
 /// </summary>
 public interface ISlide : IReadOnlySlide
 {
     /// <summary>
-    /// Gets the collection of shapes on the slide.
+    ///     Gets the collection of shapes on the slide.
     /// </summary>
     new IEnumerable<IShape> Shapes { get; }
 
     /// <inheritdoc />
     IEnumerable<IReadOnlyShape> IReadOnlySlide.Shapes => Shapes;
 }
-
-
-
-
-
-

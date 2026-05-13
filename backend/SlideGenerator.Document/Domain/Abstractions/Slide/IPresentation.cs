@@ -16,63 +16,58 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 namespace SlideGenerator.Document.Domain.Abstractions.Slide;
 
 /// <summary>
-/// Represents a PowerPoint presentation that can be modified and saved.
+///     Represents a PowerPoint presentation that can be modified and saved.
 /// </summary>
 public interface IPresentation : IReadOnlyPresentation
 {
     /// <summary>
-    /// Gets the collection of slides in the presentation.
+    ///     Gets the collection of slides in the presentation.
     /// </summary>
     new IEnumerable<ISlide> Slides { get; }
 
+    /// <inheritdoc />
+    IEnumerable<IReadOnlySlide> IReadOnlyPresentation.Slides => Slides;
+
     /// <summary>
-    /// Removes the slide at the specified index.
+    ///     Removes the slide at the specified index.
     /// </summary>
     /// <param name="index">The 0-based index of the slide to remove.</param>
     void RemoveSlideAt(int index);
 
     /// <summary>
-    /// Clones the slide at the specified index and appends the clone to the end of the presentation.
+    ///     Clones the slide at the specified index and appends the clone to the end of the presentation.
     /// </summary>
     /// <param name="slideIndex">The 0-based index of the slide to clone.</param>
     void CloneSlide(int slideIndex);
 
     /// <summary>
-    /// Removes encryption from the presentation.
+    ///     Removes encryption from the presentation.
     /// </summary>
     void RemoveEncryption();
 
     /// <summary>
-    /// Removes write protection from the presentation.
+    ///     Removes write protection from the presentation.
     /// </summary>
     void RemoveWriteProtection();
 
     /// <summary>
-    /// Saves the changes made to the presentation.
+    ///     Saves the changes made to the presentation.
     /// </summary>
     void Save();
 
     /// <summary>
-    /// Saves the presentation to the specified file path.
+    ///     Saves the presentation to the specified file path.
     /// </summary>
     /// <param name="path">The file path to save to.</param>
     void Save(string path);
 
     /// <summary>
-    /// Saves the presentation to the specified stream.
+    ///     Saves the presentation to the specified stream.
     /// </summary>
     /// <param name="stream">The stream to save to.</param>
     void Save(Stream stream);
-
-    /// <inheritdoc />
-    IEnumerable<IReadOnlySlide> IReadOnlyPresentation.Slides => Slides;
 }
-
-
-
-
-
-

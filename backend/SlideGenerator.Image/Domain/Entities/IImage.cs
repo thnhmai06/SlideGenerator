@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using System.Drawing;
 
 namespace SlideGenerator.Image.Domain.Entities;
@@ -75,9 +76,3 @@ public interface IImage : IDisposable
     /// <returns>A new <see cref="IImage" /> instance that is a copy of this image.</returns>
     IImage Clone();
 }
-
-
-
-
-
-

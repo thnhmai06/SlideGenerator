@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Document.Domain.Models.Sheet;
 using SlideGenerator.Document.Domain.Models.Slide;
 
@@ -44,8 +45,3 @@ public record ImageInstruction(
         init => field = string.IsNullOrWhiteSpace(value) ? null : Path.GetFullPath(value);
     } = FallbackImagePath;
 }
-
-
-
-
-

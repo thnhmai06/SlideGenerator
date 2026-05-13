@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using System.Text.RegularExpressions;
 using System.Web;
 using SlideGenerator.Cloud.Application.Abstractions;
@@ -78,8 +79,3 @@ internal sealed partial class GoogleDriveResolver(ISystemLogger logger) : ICloud
     [GeneratedRegex(@"/file/d/([^/?]+)", RegexOptions.Compiled)]
     private static partial Regex GoogleDriveFileIdRegex();
 }
-
-
-
-
-

@@ -16,42 +16,37 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 namespace SlideGenerator.Document.Domain.Abstractions.Slide;
 
 /// <summary>
-/// Represents a shape on a PowerPoint slide that can be modified.
+///     Represents a shape on a PowerPoint slide that can be modified.
 /// </summary>
 public interface IShape : IReadOnlyShape
 {
     /// <summary>
-    /// Gets or sets the raw image data of the shape.
+    ///     Gets or sets the raw image data of the shape.
     /// </summary>
     new byte[]? ImageData { get; set; }
 
     /// <summary>
-    /// Gets the collection of paragraphs contained within the shape.
+    ///     Gets the collection of paragraphs contained within the shape.
     /// </summary>
     new IEnumerable<IParagraph> Paragraph { get; }
-
-    /// <summary>
-    /// Appends a new empty paragraph to this shape and returns it.
-    /// </summary>
-    IParagraph AddParagraph();
-
-    /// <summary>
-    /// Clears all paragraphs from the shape.
-    /// </summary>
-    void ClearParagraph();
 
     /// <inheritdoc />
     byte[]? IReadOnlyShape.ImageData => ImageData;
 
     /// <inheritdoc />
     IEnumerable<IReadOnlyParagraph> IReadOnlyShape.Paragraph => Paragraph;
+
+    /// <summary>
+    ///     Appends a new empty paragraph to this shape and returns it.
+    /// </summary>
+    IParagraph AddParagraph();
+
+    /// <summary>
+    ///     Clears all paragraphs from the shape.
+    /// </summary>
+    void ClearParagraph();
 }
-
-
-
-
-
-

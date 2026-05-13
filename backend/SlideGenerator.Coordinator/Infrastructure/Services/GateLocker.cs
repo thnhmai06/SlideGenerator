@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using System.Collections.Concurrent;
 using SlideGenerator.Coordinator.Application.Abstractions;
 using SlideGenerator.Coordinator.Domain.Models;
@@ -198,9 +199,3 @@ public sealed class GateLocker(ISettingProvider settingProvider, ISystemLogger l
         }
     }
 }
-
-
-
-
-
-

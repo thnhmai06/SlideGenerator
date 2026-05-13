@@ -16,8 +16,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Generating.Domain.Models;
-using SlideGenerator.Generating.Domain.Models.Dto;
 
 namespace SlideGenerator.Generating.Application.Abstractions;
 
@@ -64,9 +64,3 @@ public interface IGeneratingService
     /// <returns><see langword="true" /> if the resumption was accepted.</returns>
     Task<bool> ResumeAsync(string instanceId, CancellationToken ct = default);
 }
-
-
-
-
-
-

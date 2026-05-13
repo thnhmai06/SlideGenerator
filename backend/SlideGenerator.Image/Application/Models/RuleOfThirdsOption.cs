@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using System.Numerics;
 
 namespace SlideGenerator.Image.Application.Models;
@@ -35,8 +36,3 @@ public sealed record RuleOfThirdsOption : RoiOption
     /// </remarks>
     public Vector2 Pivot { get; init; } = new(1 / 2f, 1 / 3f);
 }
-
-
-
-
-

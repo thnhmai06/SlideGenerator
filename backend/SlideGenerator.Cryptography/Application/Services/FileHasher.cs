@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using System.Security.Cryptography;
 using System.Text;
 
@@ -27,7 +28,7 @@ namespace SlideGenerator.Cryptography.Application.Services;
 public static class FileHasher
 {
     /// <summary>
-    /// Computes the SHA-256 hash of the file at the specified path and returns the hash as a hexadecimal string.
+    ///     Computes the SHA-256 hash of the file at the specified path and returns the hash as a hexadecimal string.
     /// </summary>
     /// <param name="filePath">The path to the file for which the SHA-256 hash is computed.</param>
     /// <returns>The hexadecimal string representation of the SHA-256 hash.</returns>
@@ -44,13 +45,15 @@ public static class FileHasher
     }
 
     /// <summary>
-    /// Computes a shortened hash of the given text and returns the first seven characters
-    /// of the hexadecimal string representation of the hash.
+    ///     Computes a shortened hash of the given text and returns the first seven characters
+    ///     of the hexadecimal string representation of the hash.
     /// </summary>
     /// <param name="text">The input text for which the shortened hash is computed.</param>
     /// <param name="length">The number of characters to return from the hash. Default is 7.</param>
-    /// <returns>A string containing the first seven characters of the hash.
-    /// If the input text is null or empty, a default value of "default" is returned.</returns>
+    /// <returns>
+    ///     A string containing the first seven characters of the hash.
+    ///     If the input text is null or empty, a default value of "default" is returned.
+    /// </returns>
     public static string ComputeHash(string text, int length = 7)
     {
         if (string.IsNullOrEmpty(text)) return "default";
@@ -66,8 +69,3 @@ public static class FileHasher
         return builder.ToString();
     }
 }
-
-
-
-
-

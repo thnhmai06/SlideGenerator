@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using System.Drawing;
 using System.Numerics;
 
@@ -30,28 +31,6 @@ namespace SlideGenerator.Image.Application;
 /// </remarks>
 public static class Utilities
 {
-    extension(Point point)
-    {
-        /// <summary>
-        ///     Clamps the specified point so that its coordinates lie within the bounds of the given rectangle.
-        /// </summary>
-        public Point ClampIn(Rectangle border)
-        {
-            var x = Math.Clamp(point.X, border.Left, border.Right - 1);
-            var y = Math.Clamp(point.Y, border.Top, border.Bottom - 1);
-
-            return new Point(x, y);
-        }
-
-        /// <summary>
-        ///     Converts a <see cref="Point" /> to a <see cref="Vector2" />.
-        /// </summary>
-        public Vector2 ToVector2()
-        {
-            return new Vector2(point.X, point.Y);
-        }
-    }
-
     /// <summary>
     ///     Converts a <see cref="Vector2" /> to a <see cref="Point" />.
     /// </summary>
@@ -79,6 +58,49 @@ public static class Utilities
 
         var sum = sources.Aggregate(Vector2.Zero, (acc, v) => acc + v);
         return (sum / sources.Count).ToPoint();
+    }
+
+    /// <summary>
+    ///     Calculates an anchored rectangle of the specified size inside the source image.
+    /// </summary>
+    public static Rectangle CalculateAnchoredRectangle(
+        Size sourceSize, Size cropSize,
+        Point? anchorPoint = null, Vector2? pivot = null)
+    {
+        anchorPoint ??= sourceSize.CenterPoint();
+        pivot ??= new Vector2(0.5f, 0.5f);
+
+        var imageBounds = new Rectangle(Point.Empty, sourceSize);
+        var boundedSize = new Size(
+            Math.Min(cropSize.Width, imageBounds.Width),
+            Math.Min(cropSize.Height, imageBounds.Height));
+
+        var x = (int)MathF.Round(anchorPoint.Value.X - boundedSize.Width * pivot.Value.X);
+        var y = (int)MathF.Round(anchorPoint.Value.Y - boundedSize.Height * pivot.Value.Y);
+
+        return new Rectangle(x, y, boundedSize.Width, boundedSize.Height).ClampIn(imageBounds);
+    }
+
+    extension(Point point)
+    {
+        /// <summary>
+        ///     Clamps the specified point so that its coordinates lie within the bounds of the given rectangle.
+        /// </summary>
+        public Point ClampIn(Rectangle border)
+        {
+            var x = Math.Clamp(point.X, border.Left, border.Right - 1);
+            var y = Math.Clamp(point.Y, border.Top, border.Bottom - 1);
+
+            return new Point(x, y);
+        }
+
+        /// <summary>
+        ///     Converts a <see cref="Point" /> to a <see cref="Vector2" />.
+        /// </summary>
+        public Vector2 ToVector2()
+        {
+            return new Vector2(point.X, point.Y);
+        }
     }
 
     extension(Rectangle rect)
@@ -171,30 +193,4 @@ public static class Utilities
             );
         }
     }
-    
-    /// <summary>
-    ///     Calculates an anchored rectangle of the specified size inside the source image.
-    /// </summary>
-    public static Rectangle CalculateAnchoredRectangle(
-        Size sourceSize, Size cropSize,
-        Point? anchorPoint = null, Vector2? pivot = null)
-    {
-        anchorPoint ??= sourceSize.CenterPoint();
-        pivot ??= new Vector2(0.5f, 0.5f);
-
-        var imageBounds = new Rectangle(Point.Empty, sourceSize);
-        var boundedSize = new Size(
-            Math.Min(cropSize.Width, imageBounds.Width),
-            Math.Min(cropSize.Height, imageBounds.Height));
-
-        var x = (int)MathF.Round(anchorPoint.Value.X - boundedSize.Width * pivot.Value.X);
-        var y = (int)MathF.Round(anchorPoint.Value.Y - boundedSize.Height * pivot.Value.Y);
-
-        return new Rectangle(x, y, boundedSize.Width, boundedSize.Height).ClampIn(imageBounds);
-    }
 }
-
-
-
-
-

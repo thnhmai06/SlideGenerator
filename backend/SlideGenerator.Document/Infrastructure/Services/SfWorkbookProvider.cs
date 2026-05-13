@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Document.Application.Abstractions;
 using SlideGenerator.Document.Domain.Abstractions.Sheet;
 using SlideGenerator.Document.Domain.Models.Sheet;
@@ -32,7 +33,7 @@ namespace SlideGenerator.Document.Infrastructure.Services;
 internal sealed class SfWorkbookProvider : IWorkbookProvider
 {
     private readonly ExcelEngine _engine = new();
-    
+
     /// <inheritdoc />
     public IWorkbook OpenWorkbook(BookIdentifier identifier)
     {
@@ -84,12 +85,7 @@ internal sealed class SfWorkbookProvider : IWorkbookProvider
                     true, identifier.BookPassword);
                 break;
         }
-        
+
         return new SfWorkbook(workbook, identifier, fileStream);
     }
 }
-
-
-
-
-

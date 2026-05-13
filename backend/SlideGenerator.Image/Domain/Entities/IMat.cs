@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 namespace SlideGenerator.Image.Domain.Entities;
 
 /// <summary>
@@ -47,9 +48,3 @@ public interface IMat : IDisposable
     /// <returns>A new <see cref="IMat" /> instance that is a copy of this matrix.</returns>
     IMat Clone();
 }
-
-
-
-
-
-

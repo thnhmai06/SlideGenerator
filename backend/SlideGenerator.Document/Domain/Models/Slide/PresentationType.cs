@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 namespace SlideGenerator.Document.Domain.Models.Slide;
 
 /// <summary>
@@ -72,8 +73,3 @@ public static class PresentationTypeExtensions
         };
     }
 }
-
-
-
-
-

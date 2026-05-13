@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using System.Drawing;
 
 namespace SlideGenerator.Image.Domain.Models;
@@ -60,8 +61,3 @@ public readonly record struct Face(
         ? new Point((RightMouth.Value.X + LeftMouth.Value.X) / 2, (RightMouth.Value.Y + LeftMouth.Value.Y) / 2)
         : null;
 }
-
-
-
-
-

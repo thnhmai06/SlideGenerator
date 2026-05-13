@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using System.Drawing;
 using OpenCvSharp;
 using SlideGenerator.Image.Application.Abstractions;
@@ -185,9 +186,3 @@ public sealed class YuNet(FaceDetectorYN core, Size inputSize) : IFaceDetector
         public required Size OriginalSize { get; init; }
     }
 }
-
-
-
-
-
-

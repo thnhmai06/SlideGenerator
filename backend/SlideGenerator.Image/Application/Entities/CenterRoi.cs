@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using System.Drawing;
 using System.Numerics;
 using SlideGenerator.Image.Application.Abstractions;
@@ -56,9 +57,3 @@ internal sealed class CenterRoi(IFaceDetector faceDetector, IMatFactory matFacto
             : Utilities.CalculateAnchoredRectangle(sourceSize, targetSize, sourceSize.CenterPoint(), pivot);
     }
 }
-
-
-
-
-
-

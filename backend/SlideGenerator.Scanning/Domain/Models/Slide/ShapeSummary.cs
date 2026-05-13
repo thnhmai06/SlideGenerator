@@ -16,14 +16,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using System.Drawing;
 using SlideGenerator.Document.Domain.Models.Slide;
 
 namespace SlideGenerator.Scanning.Domain.Models.Slide;
 
 public record ShapeSummary(ShapeIdentifier Identifier, RectangleF Bounds);
-
-
-
-
-

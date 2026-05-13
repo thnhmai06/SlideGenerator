@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -108,9 +109,3 @@ public sealed class RoiOptionJsonAdapter : JsonConverter<RoiOption>
         writer.WriteEndObject();
     }
 }
-
-
-
-
-
-

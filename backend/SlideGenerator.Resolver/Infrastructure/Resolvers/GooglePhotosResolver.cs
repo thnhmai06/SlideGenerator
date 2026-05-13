@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using System.Text.RegularExpressions;
 using SlideGenerator.Cloud.Application.Abstractions;
 using SlideGenerator.Cloud.Domain.Models;
@@ -77,8 +78,3 @@ internal sealed partial class GooglePhotosResolver(ISystemLogger logger) : IClou
     [GeneratedRegex(@"https://lh3\.googleusercontent\.com/pw/[^""\s?]+", RegexOptions.Compiled)]
     private static partial Regex GooglePhotosUrlRegex();
 }
-
-
-
-
-

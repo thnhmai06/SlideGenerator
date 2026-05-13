@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 namespace SlideGenerator.Settings.Domain.Entities;
 
 /// <summary>
@@ -33,8 +34,3 @@ public sealed partial record Setting
     /// </summary>
     public PerformanceSetting Performance { get; init; } = new();
 }
-
-
-
-
-

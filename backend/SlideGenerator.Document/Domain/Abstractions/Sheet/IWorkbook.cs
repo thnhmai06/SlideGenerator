@@ -16,29 +16,18 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 namespace SlideGenerator.Document.Domain.Abstractions.Sheet;
 
 /// <summary>
-/// Represents an Excel workbook that can be modified and saved.
+///     Represents an Excel workbook that can be modified and saved.
 /// </summary>
 public interface IWorkbook : IReadOnlyWorkbook
 {
     /// <summary>
-    /// Gets the collection of worksheets in the workbook.
+    ///     Gets the collection of worksheets in the workbook.
     /// </summary>
     new IEnumerable<IWorksheet> Worksheets { get; }
-
-    /// <summary>
-    /// Gets a worksheet by its name.
-    /// </summary>
-    /// <param name="name">The name of the worksheet.</param>
-    /// <returns>The worksheet if found; otherwise, null.</returns>
-    new IWorksheet? GetWorksheet(string name);
-
-    /// <summary>
-    /// Saves the changes made to the workbook.
-    /// </summary>
-    void Save();
 
     /// <inheritdoc />
     IEnumerable<IReadOnlyWorksheet> IReadOnlyWorkbook.Worksheets => Worksheets;
@@ -48,10 +37,16 @@ public interface IWorkbook : IReadOnlyWorkbook
     {
         return GetWorksheet(name);
     }
+
+    /// <summary>
+    ///     Gets a worksheet by its name.
+    /// </summary>
+    /// <param name="name">The name of the worksheet.</param>
+    /// <returns>The worksheet if found; otherwise, null.</returns>
+    new IWorksheet? GetWorksheet(string name);
+
+    /// <summary>
+    ///     Saves the changes made to the workbook.
+    /// </summary>
+    void Save();
 }
-
-
-
-
-
-

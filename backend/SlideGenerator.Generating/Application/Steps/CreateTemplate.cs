@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Coordinator.Application.Abstractions;
 using SlideGenerator.Coordinator.Domain.Models;
 using SlideGenerator.Document.Application.Abstractions;
@@ -30,7 +31,7 @@ namespace SlideGenerator.Generating.Application.Steps;
 ///     the single template slide to be used for cloning.
 /// </summary>
 public sealed class CreateTemplate(
-    IGateLocker gateLocker, 
+    IGateLocker gateLocker,
     IPresentationProvider presentationProvider) : StepBodyAsync
 {
     /// <summary>
@@ -49,7 +50,9 @@ public sealed class CreateTemplate(
             var ex = new KeyNotFoundException(
                 $"Worksheet '{Item.Sheet.SheetName}' was not found in validated results.");
             using (data.Logger.BeginScope(Item.Sheet.SheetName))
+            {
                 data.Logger.Error(ex, "CreateTemplate validation failed");
+            }
         }
         else
         {
@@ -67,7 +70,9 @@ public sealed class CreateTemplate(
                                            and not IndexOutOfRangeException)
             {
                 using (data.Logger.BeginScope(worksheet.Identifier.SheetName))
+                {
                     data.Logger.Error(ex, "CreateTemplate execution failed");
+                }
             }
         }
 
@@ -120,9 +125,3 @@ public sealed class CreateTemplate(
         }
     }
 }
-
-
-
-
-
-

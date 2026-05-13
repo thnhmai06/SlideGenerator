@@ -16,36 +16,32 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 namespace SlideGenerator.Document.Domain.Abstractions.Slide;
 
 /// <summary>
-/// Represents a paragraph in a shape that can be modified.
+///     Represents a paragraph in a shape that can be modified.
 /// </summary>
 public interface IParagraph : IReadOnlyParagraph
 {
     /// <summary>
-    /// Gets the collection of text parts within the paragraph.
+    ///     Gets the collection of text parts within the paragraph.
     /// </summary>
     new IEnumerable<ITextPart> TextParts { get; }
 
+    /// <inheritdoc />
+    IEnumerable<IReadOnlyTextPart> IReadOnlyParagraph.TextParts => TextParts;
+
     /// <summary>
-    /// Adds a text part to the end of the paragraph.
+    ///     Adds a text part to the end of the paragraph.
     /// </summary>
     /// <param name="textPart">The text part to add.</param>
     /// <returns>The added text part.</returns>
     ITextPart AddTextPart(ITextPart textPart);
 
     /// <summary>
-    /// Removes the text part at the specified index.
+    ///     Removes the text part at the specified index.
     /// </summary>
     /// <param name="index">The 0-based index of the text part to remove.</param>
     void RemoveAt(int index);
-
-    /// <inheritdoc />
-    IEnumerable<IReadOnlyTextPart> IReadOnlyParagraph.TextParts => TextParts;
 }
-
-
-
-
-

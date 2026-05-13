@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using System.Web;
 using SlideGenerator.Cloud.Application.Abstractions;
 using SlideGenerator.Cloud.Domain.Models;
@@ -64,8 +65,3 @@ internal sealed class SharePointResolver(ISystemLogger logger) : ICloudResolver
         return uri.Host.EndsWith(".sharepoint.com", StringComparison.OrdinalIgnoreCase);
     }
 }
-
-
-
-
-

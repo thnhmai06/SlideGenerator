@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SlideGenerator.Logging.Domain.Abstractions;
@@ -83,6 +84,3 @@ internal sealed class AuthService(IAppLoggerFactory loggerFactory)
         throw new InvalidOperationException($"Invalid credentials for {userId}.");
     }
 }
-
-
-

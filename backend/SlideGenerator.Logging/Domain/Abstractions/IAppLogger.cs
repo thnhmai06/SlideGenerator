@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 namespace SlideGenerator.Logging.Domain.Abstractions;
 
 /// <summary>
@@ -96,6 +97,3 @@ public interface IAppLogger
     /// <param name="propertyValues">The message property values.</param>
     void Fatal(Exception exception, string messageTemplate, params object?[] propertyValues);
 }
-
-
-

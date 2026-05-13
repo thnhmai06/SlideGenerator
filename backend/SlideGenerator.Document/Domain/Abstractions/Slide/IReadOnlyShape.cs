@@ -16,48 +16,43 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using System.Drawing;
 
 namespace SlideGenerator.Document.Domain.Abstractions.Slide;
 
 /// <summary>
-/// Represents a read-only view of a shape on a PowerPoint slide.
+///     Represents a read-only view of a shape on a PowerPoint slide.
 /// </summary>
 public interface IReadOnlyShape
 {
     /// <summary>
-    /// Gets the name of the shape.
+    ///     Gets the name of the shape.
     /// </summary>
     string Name { get; }
 
     /// <summary>
-    /// Gets the text displayed within the shape, if any.
+    ///     Gets the text displayed within the shape, if any.
     /// </summary>
     string DisplayText { get; }
 
     /// <summary>
-    /// Gets the bounding box of the shape.
+    ///     Gets the bounding box of the shape.
     /// </summary>
     RectangleF Bounds { get; }
 
     /// <summary>
-    /// Gets the raw image data of the shape if it is a picture; otherwise, null.
+    ///     Gets the raw image data of the shape if it is a picture; otherwise, null.
     /// </summary>
     byte[]? ImageData { get; }
 
     /// <summary>
-    /// Gets the collection of paragraphs contained within the shape.
+    ///     Gets the collection of paragraphs contained within the shape.
     /// </summary>
     IEnumerable<IReadOnlyParagraph> Paragraph { get; }
 
     /// <summary>
-    /// Gets the total number of paragraphs in the shape.
+    ///     Gets the total number of paragraphs in the shape.
     /// </summary>
     int ParagraphsCount { get; }
 }
-
-
-
-
-
-

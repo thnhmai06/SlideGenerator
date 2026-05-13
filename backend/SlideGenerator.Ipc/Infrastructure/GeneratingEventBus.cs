@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Generating.Application.Abstractions;
 using SlideGenerator.Generating.Domain.Models;
 
@@ -30,12 +31,6 @@ namespace SlideGenerator.Ipc.Infrastructure;
 public sealed class GeneratingEventBus : IGeneratingEventBus
 {
     /// <summary>
-    ///     Raised whenever a workflow lifecycle event occurs (start, complete, suspend, resume,
-    ///     error). Subscribers must be registered before the first workflow is started.
-    /// </summary>
-    public event Action<GeneratingProgress>? OnProgress;
-
-    /// <summary>
     ///     Publishes a <see cref="GeneratingProgress" /> to all current subscribers.
     ///     Safe to call from any thread.
     /// </summary>
@@ -44,9 +39,10 @@ public sealed class GeneratingEventBus : IGeneratingEventBus
     {
         OnProgress?.Invoke(progress);
     }
+
+    /// <summary>
+    ///     Raised whenever a workflow lifecycle event occurs (start, complete, suspend, resume,
+    ///     error). Subscribers must be registered before the first workflow is started.
+    /// </summary>
+    public event Action<GeneratingProgress>? OnProgress;
 }
-
-
-
-
-

@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 namespace SlideGenerator.Settings.Domain.Entities;
 
 public sealed partial record Setting
@@ -42,8 +43,3 @@ public sealed partial record Setting
         public int MaxParallelReadPresentation { get; init; } = 5;
     }
 }
-
-
-
-
-

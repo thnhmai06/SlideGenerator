@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using Syncfusion.Presentation;
 
 namespace SlideGenerator.Document.Application.Abstractions;
@@ -32,6 +33,3 @@ public interface IImageComposer
     /// <param name="imageStream">The image stream to apply.</param>
     void Replace(IShape shape, Stream imageStream);
 }
-
-
-

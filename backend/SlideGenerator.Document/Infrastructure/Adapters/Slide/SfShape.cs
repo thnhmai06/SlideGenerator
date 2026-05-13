@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using System.Drawing;
 using Syncfusion.Presentation;
 using IParagraph = SlideGenerator.Document.Domain.Abstractions.Slide.IParagraph;
@@ -79,8 +80,3 @@ internal sealed class SfShape(Syncfusion.Presentation.IShape shape) : IShape
         return null;
     }
 }
-
-
-
-
-

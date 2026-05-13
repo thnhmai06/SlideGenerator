@@ -16,10 +16,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Generating.Application.Abstractions;
 using SlideGenerator.Generating.Application.Workflows;
 using SlideGenerator.Generating.Domain.Models;
-using SlideGenerator.Generating.Domain.Models.Dto;
 
 namespace SlideGenerator.Ipc.Handlers;
 
@@ -88,8 +88,3 @@ public sealed class WorkflowHandler(
         });
     }
 }
-
-
-
-
-

@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 namespace SlideGenerator.Logging.Infrastructure.Services;
 
 /// <summary>
@@ -31,5 +32,3 @@ internal sealed class CompositeDisposable(params IDisposable[] disposables) : ID
             t.Dispose();
     }
 }
-
-

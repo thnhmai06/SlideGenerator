@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Document.Application.Abstractions;
 using SlideGenerator.Document.Domain.Abstractions.Sheet;
 using SlideGenerator.Document.Domain.Abstractions.Slide;
@@ -63,7 +64,8 @@ public static class Utilities
         /// <param name="identifier">The identifier of the presentation template to open.</param>
         /// <returns>A read-only handle to the opened presentation template.</returns>
         /// <exception cref="System.IO.FileNotFoundException">Thrown if the presentation file does not exist.</exception>
-        public IReadOnlyPresentation GetOrOpenPresentation(IPresentationProvider presentationProvider, PresentationIdentifier identifier)
+        public IReadOnlyPresentation GetOrOpenPresentation(IPresentationProvider presentationProvider,
+            PresentationIdentifier identifier)
         {
             if (data.TemplateHandles.TryGetValue(identifier, out var template))
                 return template;
@@ -86,7 +88,8 @@ public static class Utilities
         /// <param name="identifier">The identifier of the output presentation to open.</param>
         /// <returns>A writable handle to the opened output presentation.</returns>
         /// <exception cref="System.IO.FileNotFoundException">Thrown if the output file does not exist.</exception>
-        public IPresentation GetOrOpenOutput(IPresentationProvider presentationProvider, PresentationIdentifier identifier)
+        public IPresentation GetOrOpenOutput(IPresentationProvider presentationProvider,
+            PresentationIdentifier identifier)
         {
             if (data.OutputHandles.TryGetValue(identifier, out var output))
                 return output;
@@ -101,8 +104,3 @@ public static class Utilities
         }
     }
 }
-
-
-
-
-

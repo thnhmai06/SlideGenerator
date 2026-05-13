@@ -16,8 +16,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-using Microsoft.Extensions.DependencyInjection;
+
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using SlideGenerator.Logging.Domain.Abstractions;
@@ -71,13 +72,10 @@ public static class Registration
             services.AddLogging(builder =>
             {
                 builder.ClearProviders();
-                builder.AddSerilog(Log.Logger, false);
+                builder.AddSerilog(Log.Logger);
             });
 
             return services;
         }
     }
 }
-
-
-

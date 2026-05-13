@@ -16,9 +16,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
+using SlideGenerator.Common.Utilities;
 using SlideGenerator.Coordinator.Application.Abstractions;
 using SlideGenerator.Coordinator.Domain.Models;
-using SlideGenerator.Common.Utilities;
 using SlideGenerator.Document.Application.Abstractions;
 using SlideGenerator.Document.Domain.Models.Sheet;
 using SlideGenerator.Document.Domain.Models.Slide;
@@ -69,7 +70,9 @@ public sealed class ValidateRequest(
         {
             var path = $"{sheet.BookPath}_{sheet.SheetName}";
             using (data.Logger.BeginScope(path))
+            {
                 data.Logger.Error(ex, "Validation failed");
+            }
         }
 
         return ExecutionResult.Next();
@@ -96,7 +99,8 @@ public sealed class ValidateRequest(
         }
     }
 
-    private async Task ValidatePresentationAndMapOutputAsync(GeneratingContext data, SheetIdentifier sheet, MapNode node,
+    private async Task ValidatePresentationAndMapOutputAsync(GeneratingContext data, SheetIdentifier sheet,
+        MapNode node,
         SlideIdentifier slide)
     {
         await gateLocker.AcquireAsync(GateType.ReadPresentation).ConfigureAwait(false);
@@ -128,8 +132,3 @@ public sealed class ValidateRequest(
         }
     }
 }
-
-
-
-
-

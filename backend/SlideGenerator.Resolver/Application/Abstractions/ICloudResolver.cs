@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Cloud.Domain.Models;
 
 namespace SlideGenerator.Cloud.Application.Abstractions;
@@ -30,8 +31,3 @@ public interface ICloudResolver
     public Task<Uri> ResolveUriAsync(Uri supportedUri, HttpClient httpClient,
         CancellationToken cancellationToken = default);
 }
-
-
-
-
-

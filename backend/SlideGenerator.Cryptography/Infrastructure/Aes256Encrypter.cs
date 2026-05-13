@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using System.Security.Cryptography;
 using System.Text;
 using SlideGenerator.Cryptography.Application.Abstractions;
@@ -27,10 +28,10 @@ namespace SlideGenerator.Cryptography.Infrastructure;
 /// </summary>
 internal sealed class Aes256Encrypter : IEncrypter
 {
-    private static readonly byte[] Salt = "SlideGenerator_Salt_2026"u8.ToArray();
     private const int KeySize = 32; // AES-256
     private const int NonceSize = 12;
     private const int TagSize = 16;
+    private static readonly byte[] Salt = "SlideGenerator_Salt_2026"u8.ToArray();
 
     /// <summary>
     ///     Encrypts a plain text string using AES.
@@ -93,13 +94,8 @@ internal sealed class Aes256Encrypter : IEncrypter
         return Rfc2898DeriveBytes.Pbkdf2(
             Encoding.UTF8.GetBytes(identity),
             Salt,
-            iterations: 100000,
+            100000,
             HashAlgorithmName.SHA256,
             KeySize);
     }
 }
-
-
-
-
-

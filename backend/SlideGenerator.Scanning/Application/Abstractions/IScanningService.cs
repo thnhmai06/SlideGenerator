@@ -16,13 +16,14 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Scanning.Domain.Models.Sheet;
 using SlideGenerator.Scanning.Domain.Models.Slide;
 
 namespace SlideGenerator.Scanning.Application.Abstractions;
 
 /// <summary>
-/// Provides methods to analyze and summarize the structure of Excel workbooks and PowerPoint presentations.
+///     Provides methods to analyze and summarize the structure of Excel workbooks and PowerPoint presentations.
 /// </summary>
 public interface IScanningService
 {

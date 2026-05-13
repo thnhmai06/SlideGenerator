@@ -16,13 +16,13 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using System.Collections.Concurrent;
 using Newtonsoft.Json;
 using SlideGenerator.Document.Domain.Abstractions.Sheet;
 using SlideGenerator.Document.Domain.Abstractions.Slide;
 using SlideGenerator.Document.Domain.Models.Sheet;
 using SlideGenerator.Document.Domain.Models.Slide;
-using SlideGenerator.Generating.Domain.Models.Dto;
 using SlideGenerator.Logging.Domain.Abstractions;
 
 namespace SlideGenerator.Generating.Domain.Models.Contexts;
@@ -133,4 +133,3 @@ public sealed class GeneratingContext : IDisposable
         OutputHandles.Clear();
     }
 }
-

@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using System.Drawing;
 
 namespace SlideGenerator.Image.Domain;
@@ -25,6 +26,3 @@ public static class Rules
     public const float FaceConfidence = 0.8f;
     public static readonly Size FaceInputSize = new(640, 640);
 }
-
-
-

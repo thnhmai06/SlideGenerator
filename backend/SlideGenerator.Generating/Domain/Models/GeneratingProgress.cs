@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Generating.Application.Abstractions;
 using SlideGenerator.Generating.Application.Workflows;
 
@@ -50,8 +51,3 @@ public sealed record GeneratingProgress
     /// <summary>Gets the UTC timestamp when this event was emitted.</summary>
     public DateTimeOffset Timestamp { get; init; }
 }
-
-
-
-
-

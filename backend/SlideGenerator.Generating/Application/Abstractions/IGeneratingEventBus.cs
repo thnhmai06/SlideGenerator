@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Generating.Domain.Models;
 
 namespace SlideGenerator.Generating.Application.Abstractions;
@@ -57,9 +58,3 @@ public interface IGeneratingEventBus
     /// </summary>
     void Publish(GeneratingProgress progress);
 }
-
-
-
-
-
-

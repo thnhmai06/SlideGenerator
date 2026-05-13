@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using System.Drawing;
 using ImageMagick;
 using SlideGenerator.Image.Domain.Entities;
@@ -65,9 +66,3 @@ public sealed class MagickImage(ImageMagick.MagickImage image) : IImage
         image.Dispose();
     }
 }
-
-
-
-
-
-

@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Image.Domain.Entities;
 using SlideGenerator.Image.Domain.Models;
 
@@ -28,9 +29,3 @@ public interface IFaceDetector : IDisposable
     /// </summary>
     public Task<IReadOnlyList<Face>> DetectAsync(IMat mat);
 }
-
-
-
-
-
-

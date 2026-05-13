@@ -16,8 +16,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-using SlideGenerator.Logging.Domain.Abstractions;
+
 using SlideGenerator.Generating.Domain.Models;
+using SlideGenerator.Logging.Domain.Abstractions;
 using StreamJsonRpc;
 
 namespace SlideGenerator.Ipc.Infrastructure;
@@ -68,8 +69,3 @@ public sealed class WorkflowProgressObserver(ISystemLogger logger)
                 TaskScheduler.Default);
     }
 }
-
-
-
-
-

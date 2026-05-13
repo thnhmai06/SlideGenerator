@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Document.Domain.Models.Slide;
 
 namespace SlideGenerator.Scanning.Domain.Models.Slide;
@@ -25,8 +26,3 @@ public sealed record SlideSummary(
     IReadOnlyList<string> Placeholders,
     IReadOnlyList<ShapeSummary> ImageShapes,
     byte[]? Preview);
-
-
-
-
-

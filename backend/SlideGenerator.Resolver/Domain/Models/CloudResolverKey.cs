@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 namespace SlideGenerator.Cloud.Domain.Models;
 
 public enum CloudResolverKey
@@ -25,8 +26,3 @@ public enum CloudResolverKey
     OneDrive,
     SharePoint
 }
-
-
-
-
-

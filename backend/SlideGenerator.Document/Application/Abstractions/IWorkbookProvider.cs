@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Document.Domain.Abstractions.Sheet;
 using SlideGenerator.Document.Domain.Models.Sheet;
 
@@ -34,7 +35,7 @@ public interface IWorkbookProvider
     /// <returns>A handle wrapping the opened workbook.</returns>
     /// <exception cref="System.IO.FileNotFoundException">If the workbook file does not exist.</exception>
     IWorkbook OpenWorkbook(BookIdentifier identifier);
-    
+
     /// <summary>
     ///     Opens a workbook identified by <paramref name="identifier" /> in <b>read</b> mode.
     /// </summary>
@@ -43,9 +44,3 @@ public interface IWorkbookProvider
     /// <exception cref="System.IO.FileNotFoundException">If the workbook file does not exist.</exception>
     IReadOnlyWorkbook OpenWorkbookReadOnly(BookIdentifier identifier);
 }
-
-
-
-
-
-

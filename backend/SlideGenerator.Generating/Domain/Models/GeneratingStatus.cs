@@ -16,7 +16,15 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 namespace SlideGenerator.Generating.Domain.Models;
 
 /// <summary>Identifies the execution status of a generating workflow instance.</summary>
-public enum GeneratingStatus { Running, Complete, Paused, Cancelled, Error }
+public enum GeneratingStatus
+{
+    Running,
+    Complete,
+    Paused,
+    Cancelled,
+    Error
+}

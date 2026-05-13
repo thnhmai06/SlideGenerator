@@ -16,38 +16,32 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 namespace SlideGenerator.Document.Domain.Abstractions.Slide;
 
 /// <summary>
-/// Represents a read-only view of a single slide in a presentation.
+///     Represents a read-only view of a single slide in a presentation.
 /// </summary>
 public interface IReadOnlySlide
 {
     /// <summary>
-    /// Gets the 1-based slide number.
+    ///     Gets the 1-based slide number.
     /// </summary>
     int Number { get; }
 
     /// <summary>
-    /// Gets the collection of shapes on the slide.
+    ///     Gets the collection of shapes on the slide.
     /// </summary>
     IEnumerable<IReadOnlyShape> Shapes { get; }
 
     /// <summary>
-    /// Gets the total number of shapes on the slide.
+    ///     Gets the total number of shapes on the slide.
     /// </summary>
     int ShapesCount { get; }
 
     /// <summary>
-    /// Gets a preview image of the slide as a byte array.
+    ///     Gets a preview image of the slide as a byte array.
     /// </summary>
     /// <returns>A byte array containing the slide preview image.</returns>
     byte[] GetPreview();
 }
-
-
-
-
-
-
-

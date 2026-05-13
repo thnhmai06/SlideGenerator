@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Generating.Domain.Models.Contexts;
 using SlideGenerator.Logging.Domain.Abstractions;
 using WorkflowCore.Interface;
@@ -39,4 +40,3 @@ public sealed class GeneratingLoggerMiddleware(IAppLoggerFactory loggerFactory) 
         return await next();
     }
 }
-

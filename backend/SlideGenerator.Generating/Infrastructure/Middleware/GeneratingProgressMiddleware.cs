@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Generating.Application.Abstractions;
 using SlideGenerator.Generating.Application.Steps;
 using SlideGenerator.Generating.Application.Workflows;
@@ -39,7 +40,6 @@ public sealed class GeneratingProgressMiddleware(IGeneratingEventBus eventBus) :
         var result = await next();
 
         if (context.Workflow.Data is GeneratingContext)
-        {
             eventBus.Publish(new GeneratingProgress
             {
                 WorkflowInstanceId = context.Workflow.Id,
@@ -49,17 +49,18 @@ public sealed class GeneratingProgressMiddleware(IGeneratingEventBus eventBus) :
                 Status = GeneratingStatus.Running,
                 Timestamp = DateTimeOffset.UtcNow
             });
-        }
 
         return result;
     }
 
-    private static GeneratingPhase? ResolvePhase(IStepBody body) => body switch
+    private static GeneratingPhase? ResolvePhase(IStepBody body)
     {
-        ValidateRequest or CreateTemplate => GeneratingPhase.PhaseA,
-        ExtractData or DownloadImage or EditImage => GeneratingPhase.PhaseB,
-        ReplaceSlideData or CloseAllHandles => GeneratingPhase.PhaseC,
-        _ => null
-    };
+        return body switch
+        {
+            ValidateRequest or CreateTemplate => GeneratingPhase.PhaseA,
+            ExtractData or DownloadImage or EditImage => GeneratingPhase.PhaseB,
+            ReplaceSlideData or CloseAllHandles => GeneratingPhase.PhaseC,
+            _ => null
+        };
+    }
 }
-

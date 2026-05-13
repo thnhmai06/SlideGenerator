@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using Microsoft.Extensions.Configuration;
 using Serilog.Events;
 
@@ -36,7 +37,8 @@ internal static class LoggingOptionsReader
         return new LoggingOptions
         {
             SystemMinimumLevel = ReadMinimumLevel(configuration, "Logging:System:MinimumLevel", LogEventLevel.Debug),
-            WorkflowMinimumLevel = ReadMinimumLevel(configuration, "Logging:Workflow:MinimumLevel", LogEventLevel.Information)
+            WorkflowMinimumLevel =
+                ReadMinimumLevel(configuration, "Logging:Workflow:MinimumLevel", LogEventLevel.Information)
         };
     }
 
@@ -63,5 +65,3 @@ internal static class LoggingOptionsReader
             : fallback;
     }
 }
-
-

@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -29,19 +30,19 @@ using SlideGenerator.Coordinator.Injection;
 using SlideGenerator.Cryptography.Injection;
 using SlideGenerator.Document.Injection;
 using SlideGenerator.Download.Injection;
+using SlideGenerator.Generating;
+using SlideGenerator.Generating.Application.Abstractions;
 using SlideGenerator.Image.Injection;
-using SlideGenerator.Settings.Injection;
 using SlideGenerator.Ipc.Handlers;
 using SlideGenerator.Ipc.Infrastructure;
 using SlideGenerator.Ipc.Infrastructure.Adapters;
 using SlideGenerator.Logging;
 using SlideGenerator.Logging.Domain.Abstractions;
 using SlideGenerator.Logging.Infrastructure.Services;
-using SlideGenerator.Generating;
-using SlideGenerator.Generating.Application.Abstractions;
-using SlideGenerator.Settings.Domain.Rules;
 using SlideGenerator.Scanning.Injection;
 using SlideGenerator.Settings.Domain.Abstractions;
+using SlideGenerator.Settings.Domain.Rules;
+using SlideGenerator.Settings.Injection;
 using StreamJsonRpc;
 
 namespace SlideGenerator.Ipc;

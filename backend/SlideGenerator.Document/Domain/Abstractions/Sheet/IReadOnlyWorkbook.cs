@@ -16,28 +16,23 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 namespace SlideGenerator.Document.Domain.Abstractions.Sheet;
 
 /// <summary>
-/// Represents a read-only view of an Excel workbook.
+///     Represents a read-only view of an Excel workbook.
 /// </summary>
 public interface IReadOnlyWorkbook : IDisposable
 {
     /// <summary>
-    /// Gets the collection of worksheets in the workbook.
+    ///     Gets the collection of worksheets in the workbook.
     /// </summary>
     IEnumerable<IReadOnlyWorksheet> Worksheets { get; }
 
     /// <summary>
-    /// Gets a worksheet by its name.
+    ///     Gets a worksheet by its name.
     /// </summary>
     /// <param name="name">The name of the worksheet.</param>
     /// <returns>The worksheet if found; otherwise, null.</returns>
     IReadOnlyWorksheet? GetWorksheet(string name);
 }
-
-
-
-
-
-

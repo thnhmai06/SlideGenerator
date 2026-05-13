@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using System.Net;
 
 namespace SlideGenerator.Settings.Domain.Entities;
@@ -25,11 +26,11 @@ public sealed partial record Setting
     public sealed record NetworkSetting
     {
         public Proxy Proxy { get; init; } = new();
-        
+
         /// <summary>Gets the settings for retry logic and timeouts.</summary>
         public RetrySetting Retry { get; init; } = new();
     }
-    
+
     /// <summary>
     ///     Provides network proxy details for corporate or restricted environments.
     /// </summary>
@@ -66,7 +67,7 @@ public sealed partial record Setting
             return proxy;
         }
     }
-    
+
     /// <summary>
     ///     Configures the behavior of network request retries.
     /// </summary>
@@ -79,8 +80,3 @@ public sealed partial record Setting
         public int Timeout { get; init; } = 30;
     }
 }
-
-
-
-
-

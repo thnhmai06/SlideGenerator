@@ -16,9 +16,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Coordinator.Application.Abstractions;
 using SlideGenerator.Coordinator.Domain.Models;
 using SlideGenerator.Document.Application.Abstractions;
+using SlideGenerator.Document.Domain.Abstractions.Slide;
 using SlideGenerator.Generating.Domain.Models.Contexts;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
@@ -79,7 +81,9 @@ public sealed class ReplaceSlideData(
         {
             var path = $"{Task.SheetContext.Identifier.SheetName}_{Task.RowIndex}";
             using (data.Logger.BeginScope(path))
+            {
                 data.Logger.Error(ex, "FillSlideData failed");
+            }
         }
         finally
         {
@@ -89,7 +93,7 @@ public sealed class ReplaceSlideData(
         return ExecutionResult.Next();
     }
 
-    private void ApplyTextReplacements(GeneratingContext data, Document.Domain.Abstractions.Slide.IShape shape)
+    private void ApplyTextReplacements(GeneratingContext data, IShape shape)
     {
         if (Task.TextReplacements.Count > 0)
         {
@@ -99,7 +103,7 @@ public sealed class ReplaceSlideData(
         }
     }
 
-    private async Task ApplyImageReplacementsAsync(GeneratingContext data, Document.Domain.Abstractions.Slide.IShape shape)
+    private async Task ApplyImageReplacementsAsync(GeneratingContext data, IShape shape)
     {
         var matchingImageContext = Task.ImageReplacements.Values.FirstOrDefault(t =>
             t.ShapeName.Equals(shape.Name, StringComparison.OrdinalIgnoreCase));
@@ -122,4 +126,3 @@ public sealed class ReplaceSlideData(
         }
     }
 }
-

@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Common.Utilities;
 using SlideGenerator.Cryptography.Application.Abstractions;
 
@@ -36,7 +37,7 @@ public static class NameAndPaths
         Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), // AppData/Local
             AppName);
-    
+
     // TODO: Log folder.
 
     /// <summary>
@@ -57,7 +58,7 @@ public static class NameAndPaths
             colName = Normalization.NormalizeFileName(colName);
             return Path.Combine(rootPath, bookFolder, sheetName, colName, "Download");
         }
-        
+
         public static string GetEditDir(string? rootPath, string bookPath, string sheetName, string colName,
             IHashPathRegistry registry)
         {
@@ -86,7 +87,10 @@ public static class NameAndPaths
         /// </summary>
         /// <param name="ext">The file extension to append.</param>
         /// <returns>The complete path to the settings file.</returns>
-        public static string GetFilePath(string ext) => Path.Combine(UserPath, $"{FileName}{ext}");
+        public static string GetFilePath(string ext)
+        {
+            return Path.Combine(UserPath, $"{FileName}{ext}");
+        }
     }
 
     /// <summary>
@@ -107,8 +111,3 @@ public static class NameAndPaths
         public static string ConnectionString => $"Data Source={FilePath}";
     }
 }
-
-
-
-
-

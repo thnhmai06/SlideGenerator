@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Logging.Domain.Abstractions;
 
 namespace SlideGenerator.Logging.Infrastructure.Services;
@@ -36,57 +37,85 @@ internal sealed class ScopedAppLogger(IAppLogger inner, string rootScope) : IApp
     /// <inheritdoc />
     public void Trace(string messageTemplate, params object?[] propertyValues)
     {
-        using (inner.BeginScope(rootScope)) inner.Trace(messageTemplate, propertyValues);
+        using (inner.BeginScope(rootScope))
+        {
+            inner.Trace(messageTemplate, propertyValues);
+        }
     }
 
     /// <inheritdoc />
     public void Debug(string messageTemplate, params object?[] propertyValues)
     {
-        using (inner.BeginScope(rootScope)) inner.Debug(messageTemplate, propertyValues);
+        using (inner.BeginScope(rootScope))
+        {
+            inner.Debug(messageTemplate, propertyValues);
+        }
     }
 
     /// <inheritdoc />
     public void Information(string messageTemplate, params object?[] propertyValues)
     {
-        using (inner.BeginScope(rootScope)) inner.Information(messageTemplate, propertyValues);
+        using (inner.BeginScope(rootScope))
+        {
+            inner.Information(messageTemplate, propertyValues);
+        }
     }
 
     /// <inheritdoc />
     public void Warning(string messageTemplate, params object?[] propertyValues)
     {
-        using (inner.BeginScope(rootScope)) inner.Warning(messageTemplate, propertyValues);
+        using (inner.BeginScope(rootScope))
+        {
+            inner.Warning(messageTemplate, propertyValues);
+        }
     }
 
     /// <inheritdoc />
     public void Warning(Exception exception, string messageTemplate, params object?[] propertyValues)
     {
-        using (inner.BeginScope(rootScope)) inner.Warning(exception, messageTemplate, propertyValues);
+        using (inner.BeginScope(rootScope))
+        {
+            inner.Warning(exception, messageTemplate, propertyValues);
+        }
     }
 
     /// <inheritdoc />
     public void Error(string messageTemplate, params object?[] propertyValues)
     {
-        using (inner.BeginScope(rootScope)) inner.Error(messageTemplate, propertyValues);
+        using (inner.BeginScope(rootScope))
+        {
+            inner.Error(messageTemplate, propertyValues);
+        }
     }
 
     /// <inheritdoc />
     public void Error(Exception exception, string messageTemplate, params object?[] propertyValues)
     {
-        using (inner.BeginScope(rootScope)) inner.Error(exception, messageTemplate, propertyValues);
+        using (inner.BeginScope(rootScope))
+        {
+            inner.Error(exception, messageTemplate, propertyValues);
+        }
     }
 
     /// <inheritdoc />
     public void Fatal(string messageTemplate, params object?[] propertyValues)
     {
-        using (inner.BeginScope(rootScope)) inner.Fatal(messageTemplate, propertyValues);
+        using (inner.BeginScope(rootScope))
+        {
+            inner.Fatal(messageTemplate, propertyValues);
+        }
     }
 
     /// <inheritdoc />
     public void Fatal(Exception exception, string messageTemplate, params object?[] propertyValues)
     {
-        using (inner.BeginScope(rootScope)) inner.Fatal(exception, messageTemplate, propertyValues);
+        using (inner.BeginScope(rootScope))
+        {
+            inner.Fatal(exception, messageTemplate, propertyValues);
+        }
     }
 }
+
 /// <summary>
 ///     Provides infrastructure-only helpers for decorating application loggers.
 /// </summary>
@@ -103,4 +132,3 @@ internal static class AppLoggerScopeExtensions
         return new ScopedAppLogger(logger, rootScope);
     }
 }
-

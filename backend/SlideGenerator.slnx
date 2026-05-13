@@ -1,14 +1,14 @@
 <Solution>
-    <Project Path="SlideGenerator.Generating/SlideGenerator.Generating.csproj" />
-    <Project Path="SlideGenerator.Scanning/SlideGenerator.Scanning.csproj" />
-    <Project Path="SlideGenerator.Settings/SlideGenerator.Settings.csproj" />
-    <Project Path="SlideGenerator.Common/SlideGenerator.Common.csproj" />
-    <Project Path="SlideGenerator.Coordinator/SlideGenerator.Coordinator.csproj" />
-    <Project Path="SlideGenerator.Cryptography/SlideGenerator.Cryptography.csproj" />
-    <Project Path="SlideGenerator.Document/SlideGenerator.Document.csproj" />
-    <Project Path="SlideGenerator.Download/SlideGenerator.Download.csproj" />
-    <Project Path="SlideGenerator.Image/SlideGenerator.Image.csproj" />
-    <Project Path="SlideGenerator.Ipc/SlideGenerator.Ipc.csproj" />
-    <Project Path="SlideGenerator.Logging/SlideGenerator.Logging.csproj" />
-    <Project Path="SlideGenerator.Resolver/SlideGenerator.Resolver.csproj" />
+    <Project Path="SlideGenerator.Generating/SlideGenerator.Generating.csproj"/>
+    <Project Path="SlideGenerator.Scanning/SlideGenerator.Scanning.csproj"/>
+    <Project Path="SlideGenerator.Settings/SlideGenerator.Settings.csproj"/>
+    <Project Path="SlideGenerator.Common/SlideGenerator.Common.csproj"/>
+    <Project Path="SlideGenerator.Coordinator/SlideGenerator.Coordinator.csproj"/>
+    <Project Path="SlideGenerator.Cryptography/SlideGenerator.Cryptography.csproj"/>
+    <Project Path="SlideGenerator.Document/SlideGenerator.Document.csproj"/>
+    <Project Path="SlideGenerator.Download/SlideGenerator.Download.csproj"/>
+    <Project Path="SlideGenerator.Image/SlideGenerator.Image.csproj"/>
+    <Project Path="SlideGenerator.Ipc/SlideGenerator.Ipc.csproj"/>
+    <Project Path="SlideGenerator.Logging/SlideGenerator.Logging.csproj"/>
+    <Project Path="SlideGenerator.Resolver/SlideGenerator.Resolver.csproj"/>
 </Solution>

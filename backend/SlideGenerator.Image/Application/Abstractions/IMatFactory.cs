@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Image.Domain.Entities;
 
 namespace SlideGenerator.Image.Application.Abstractions;
@@ -45,9 +46,3 @@ public interface IMatFactory
     /// <returns>A new <see cref="IMat" /> instance.</returns>
     IMat Empty();
 }
-
-
-
-
-
-

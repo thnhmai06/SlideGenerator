@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 namespace SlideGenerator.Coordinator.Domain.Models;
 
 /// <summary>Identifies a named process-wide concurrency gate used during generation.</summary>
@@ -36,8 +37,3 @@ public enum GateType
     /// <summary>Gate for presentation file scanning operations.</summary>
     ReadPresentation
 }
-
-
-
-
-

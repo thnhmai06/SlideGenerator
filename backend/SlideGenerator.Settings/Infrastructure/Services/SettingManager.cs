@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Cryptography.Application.Abstractions;
 using SlideGenerator.Logging.Domain.Abstractions;
 using SlideGenerator.Settings.Application.Abstractions;
@@ -60,7 +61,6 @@ internal sealed class SettingManager(IEncrypter encrypter, ISerializer serialize
 
             // Decrypt sensitive data
             if (!string.IsNullOrEmpty(loaded.Network.Proxy.Password))
-            {
                 loaded = loaded with
                 {
                     Network = loaded.Network with
@@ -71,7 +71,6 @@ internal sealed class SettingManager(IEncrypter encrypter, ISerializer serialize
                         }
                     }
                 };
-            }
 
             Current = loaded;
             logger.Information("Successfully loaded settings from {Path}", FilePath);
@@ -101,7 +100,6 @@ internal sealed class SettingManager(IEncrypter encrypter, ISerializer serialize
             // Encrypt sensitive data before serialization
             var toSave = Current;
             if (!string.IsNullOrEmpty(toSave.Network.Proxy.Password))
-            {
                 toSave = toSave with
                 {
                     Network = toSave.Network with
@@ -112,7 +110,6 @@ internal sealed class SettingManager(IEncrypter encrypter, ISerializer serialize
                         }
                     }
                 };
-            }
 
             var content = serializer.Serialize(toSave);
             await File.WriteAllTextAsync(FilePath, content).ConfigureAwait(false);
@@ -146,8 +143,3 @@ internal sealed class SettingManager(IEncrypter encrypter, ISerializer serialize
         await Save().ConfigureAwait(false);
     }
 }
-
-
-
-
-

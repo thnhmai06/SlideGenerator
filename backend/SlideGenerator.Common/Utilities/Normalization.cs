@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 namespace SlideGenerator.Common.Utilities;
 
 public static class Normalization
@@ -55,8 +56,3 @@ public static class Normalization
         return string.IsNullOrWhiteSpace(normalized) ? defaultValue : normalized;
     }
 }
-
-
-
-
-

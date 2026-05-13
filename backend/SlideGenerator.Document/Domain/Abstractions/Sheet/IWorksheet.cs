@@ -16,24 +16,19 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 namespace SlideGenerator.Document.Domain.Abstractions.Sheet;
 
 /// <summary>
-/// Represents an Excel worksheet that can be modified.
+///     Represents an Excel worksheet that can be modified.
 /// </summary>
 public interface IWorksheet : IReadOnlyWorksheet
 {
     /// <summary>
-    /// Sets the value of a cell at the specified row and column indices.
+    ///     Sets the value of a cell at the specified row and column indices.
     /// </summary>
     /// <param name="row">The 1-based row index.</param>
     /// <param name="col">The 1-based column index.</param>
     /// <param name="value">The value to set.</param>
     void SetCellValue(int row, int col, string value);
 }
-
-
-
-
-
-

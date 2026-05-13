@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using System.Text;
 using SlideGenerator.Cloud.Application.Abstractions;
 using SlideGenerator.Cloud.Domain.Models;
@@ -55,8 +56,3 @@ internal sealed class OneDriveResolver(ISystemLogger logger) : ICloudResolver
                || host.EndsWith("onedrive.live.com", StringComparison.OrdinalIgnoreCase);
     }
 }
-
-
-
-
-

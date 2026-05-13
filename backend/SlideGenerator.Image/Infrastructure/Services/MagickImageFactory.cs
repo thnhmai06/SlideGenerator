@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Image.Application.Abstractions;
 using SlideGenerator.Image.Domain.Entities;
 using SlideGenerator.Image.Infrastructure.Adapters;
@@ -39,14 +40,8 @@ public sealed class MagickImageFactory : IImageFactory
     {
         if (mat is not OpenCvMat adapter)
             throw new ArgumentException($"IMat must be an instance of {nameof(OpenCvMat)}.", nameof(mat));
-        
+
         var bytes = adapter.Mat.ToBytes();
         return Open(bytes);
     }
 }
-
-
-
-
-
-

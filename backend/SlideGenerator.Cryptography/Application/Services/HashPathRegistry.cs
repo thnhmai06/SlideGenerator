@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using System.Collections.Concurrent;
 using SlideGenerator.Cryptography.Application.Abstractions;
 
@@ -27,9 +28,8 @@ namespace SlideGenerator.Cryptography.Application.Services;
 /// </summary>
 internal sealed class HashPathRegistry : IHashPathRegistry
 {
-    private readonly ConcurrentDictionary<string, string> _hashes = new(StringComparer.OrdinalIgnoreCase);
-
     private const int HashLength = 7;
+    private readonly ConcurrentDictionary<string, string> _hashes = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
     ///     Gets the 7-character short hash for the specified path, computing it if necessary.
@@ -38,27 +38,30 @@ internal sealed class HashPathRegistry : IHashPathRegistry
     /// <returns>A 7-character hexadecimal string.</returns>
     public string GetShortHash(string path)
     {
-        return _hashes.GetOrAdd(path, p => FileHasher.ComputeHash(p, HashLength));
+        return _hashes.GetOrAdd(path, p => FileHasher.ComputeHash(p));
     }
 
     /// <summary>
     ///     Adds or updates a hash for the specified path manually.
     /// </summary>
-    public void SetHash(string path, string hash) => _hashes[path] = hash;
+    public void SetHash(string path, string hash)
+    {
+        _hashes[path] = hash;
+    }
 
     /// <summary>
     ///     Tries to retrieve the hash for the specified path without computing it.
     /// </summary>
-    public bool TryGetHash(string path, out string? hash) => _hashes.TryGetValue(path, out hash);
+    public bool TryGetHash(string path, out string? hash)
+    {
+        return _hashes.TryGetValue(path, out hash);
+    }
 
     /// <summary>
     ///     Clears all stored hashes.
     /// </summary>
-    public void Clear() => _hashes.Clear();
+    public void Clear()
+    {
+        _hashes.Clear();
+    }
 }
-
-
-
-
-
-

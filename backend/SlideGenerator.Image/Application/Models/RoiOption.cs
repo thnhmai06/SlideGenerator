@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 namespace SlideGenerator.Image.Application.Models;
 
 /// <summary>
@@ -28,8 +29,3 @@ public abstract record RoiOption
     /// </summary>
     public abstract RoiType Type { get; }
 }
-
-
-
-
-

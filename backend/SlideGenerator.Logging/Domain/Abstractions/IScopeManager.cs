@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 namespace SlideGenerator.Logging.Domain.Abstractions;
 
 /// <summary>
@@ -35,6 +36,3 @@ public interface IScopeManager
     /// <returns>A disposable handle that restores the previous scope when disposed.</returns>
     IDisposable BeginScope(string scope);
 }
-
-
-

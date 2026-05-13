@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using Serilog.Events;
 
 namespace SlideGenerator.Logging.Infrastructure.Options;
@@ -35,5 +36,3 @@ internal sealed class LoggingOptions
     /// </summary>
     public LogEventLevel WorkflowMinimumLevel { get; init; } = LogEventLevel.Information;
 }
-
-

@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using System.Drawing;
 using SlideGenerator.Common.Utilities;
 using SlideGenerator.Coordinator.Application.Abstractions;
@@ -67,7 +68,9 @@ public sealed class ExtractData(
                                        and not IndexOutOfRangeException)
         {
             using (data.Logger.BeginScope(Worksheet.Identifier.SheetName))
+            {
                 data.Logger.Error(ex, "ExtractData failed");
+            }
         }
 
         return ExecutionResult.Next();
@@ -82,14 +85,15 @@ public sealed class ExtractData(
             var workbook = data.GetOrOpenWorkbook(workbookProvider, Worksheet.Identifier);
 
             var sheet = workbook.GetWorksheet(Worksheet.Identifier.SheetName)
-                ?? throw new KeyNotFoundException(
-                    $"Sheet '{Worksheet.Identifier.SheetName}' not found in workbook '{Path.GetFileName(Worksheet.Identifier.BookPath)}'.");
+                        ?? throw new KeyNotFoundException(
+                            $"Sheet '{Worksheet.Identifier.SheetName}' not found in workbook '{Path.GetFileName(Worksheet.Identifier.BookPath)}'.");
 
             var rowCount = sheet.RowCount;
             var headers = sheet.GetRow(0);
             var headerMap = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
             for (var i = 0; i < headers.Count; i++)
-                if (!headerMap.ContainsKey(headers[i])) headerMap[headers[i]] = i;
+                if (!headerMap.ContainsKey(headers[i]))
+                    headerMap[headers[i]] = i;
 
             data.Logger.Debug("Found {RowCount} rows in sheet {SheetName}", rowCount, Worksheet.Identifier.SheetName);
 
@@ -224,7 +228,8 @@ public sealed class ExtractData(
             if (!headerMap.TryGetValue(column.ColumnName, out var colIndex) || colIndex >= rowData.Count) continue;
 
             var uri = Normalization.NormalizeUri(rowData[colIndex]);
-            var downloadDir = NameAndPaths.AssetsFolder.GetDownloadDir(null, Worksheet.Identifier.BookPath, sheet.Name, column.ColumnName, hashPathRegistry);
+            var downloadDir = NameAndPaths.AssetsFolder.GetDownloadDir(null, Worksheet.Identifier.BookPath, sheet.Name,
+                column.ColumnName, hashPathRegistry);
             var downloadPath = Path.Combine(downloadDir, rowIndex.ToString());
 
             foreach (var shapeId in imgInst.Shapes)
@@ -233,7 +238,8 @@ public sealed class ExtractData(
                     shapeId.SlideIndex != Worksheet.TemplateSlide.SlideIndex) continue;
                 if (!shapeData.TryGetValue(shapeId, out var sData)) continue;
 
-                var editDir = NameAndPaths.AssetsFolder.GetEditDir(null, Worksheet.Identifier.BookPath, sheet.Name, column.ColumnName, hashPathRegistry);
+                var editDir = NameAndPaths.AssetsFolder.GetEditDir(null, Worksheet.Identifier.BookPath, sheet.Name,
+                    column.ColumnName, hashPathRegistry);
                 var editPath = Path.Combine(editDir, $"{rowIndex}_{sData.ShapeName}");
 
                 var imageTask = new ImageContext(
@@ -248,8 +254,3 @@ public sealed class ExtractData(
         }
     }
 }
-
-
-
-
-

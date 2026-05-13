@@ -16,12 +16,13 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using System.Drawing;
 using SlideGenerator.Coordinator.Application.Abstractions;
 using SlideGenerator.Coordinator.Domain.Models;
+using SlideGenerator.Generating.Domain.Models.Contexts;
 using SlideGenerator.Image.Application;
 using SlideGenerator.Image.Application.Abstractions;
-using SlideGenerator.Generating.Domain.Models.Contexts;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
 
@@ -88,9 +89,12 @@ public sealed class EditImage(
                 // Source is missing and no fallback available
                 if (Task.SourceUri != null)
                     using (data.Logger.BeginScope(downloadPrefix))
+                    {
                         data.Logger.Error(
                             new FileNotFoundException("Source image and fallback not found for editing.",
                                 Task.DownloadPath), "Missing source");
+                    }
+
                 return ExecutionResult.Next();
             }
         }
@@ -149,7 +153,9 @@ public sealed class EditImage(
                                        and not IndexOutOfRangeException)
         {
             using (data.Logger.BeginScope(Path.GetFileName(finalEditPath)))
+            {
                 data.Logger.Error(ex, "Edit image failed");
+            }
         }
         finally
         {
@@ -159,9 +165,3 @@ public sealed class EditImage(
         return ExecutionResult.Next();
     }
 }
-
-
-
-
-
-

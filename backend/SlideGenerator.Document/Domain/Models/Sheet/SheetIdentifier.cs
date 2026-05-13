@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 namespace SlideGenerator.Document.Domain.Models.Sheet;
 
 /// <summary>
@@ -26,8 +27,3 @@ namespace SlideGenerator.Document.Domain.Models.Sheet;
 /// <param name="BookPassword">Optional password for the workbook.</param>
 public record SheetIdentifier(string BookPath, string SheetName, string? BookPassword = null)
     : BookIdentifier(BookPath, BookPassword);
-
-
-
-
-

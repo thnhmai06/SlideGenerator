@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using Microsoft.Extensions.DependencyInjection;
 using SlideGenerator.Document.Application.Abstractions;
 using SlideGenerator.Document.Application.Services;
@@ -36,7 +37,7 @@ public static class Registration
         var licenseKey = SyncfusionLicense.Key; // decoded from XOR-encoded bytes at build time
         if (!string.IsNullOrWhiteSpace(licenseKey) && licenseKey != "empty")
             SyncfusionLicenseProvider.RegisterLicense(licenseKey);
-        
+
         services.AddSingleton<IWorkbookProvider, SfWorkbookProvider>();
         services.AddSingleton<IPresentationProvider, SfPresentationProvider>();
         services.AddSingleton<ITemplateEngine, MustacheEngine>();
@@ -46,8 +47,3 @@ public static class Registration
         return services;
     }
 }
-
-
-
-
-

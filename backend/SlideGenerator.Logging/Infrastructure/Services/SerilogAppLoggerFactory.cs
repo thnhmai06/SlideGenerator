@@ -16,7 +16,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using Serilog;
+using Serilog.Events;
 using Serilog.Exceptions;
 using SlideGenerator.Logging.Domain.Abstractions;
 using SlideGenerator.Logging.Infrastructure.Formatting;
@@ -52,7 +54,7 @@ internal sealed class SerilogAppLoggerFactory(IScopeManager scopeManager, Loggin
     /// <param name="logFilePath">The concrete file path where log events are written.</param>
     /// <param name="minimumLevel">The minimum event level accepted by the logger.</param>
     /// <returns>An application logger backed by the configured Serilog file sink.</returns>
-    private IAppLogger CreateFileLogger(string name, string logFilePath, Serilog.Events.LogEventLevel minimumLevel)
+    private IAppLogger CreateFileLogger(string name, string logFilePath, LogEventLevel minimumLevel)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentException.ThrowIfNullOrWhiteSpace(logFilePath);
@@ -71,5 +73,3 @@ internal sealed class SerilogAppLoggerFactory(IScopeManager scopeManager, Loggin
         return new SerilogAppLogger(serilogLogger, scopeManager);
     }
 }
-
-

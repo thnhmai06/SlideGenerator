@@ -16,11 +16,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Generating.Application.Abstractions;
+using SlideGenerator.Generating.Application.Workflows;
 using SlideGenerator.Generating.Domain.Models;
 using SlideGenerator.Generating.Domain.Models.Contexts;
-using SlideGenerator.Generating.Domain.Models.Dto;
-using SlideGenerator.Generating.Application.Workflows;
 using SlideGenerator.Logging.Domain.Abstractions;
 using WorkflowCore.Interface;
 using WorkflowCore.Models.LifeCycleEvents;
@@ -146,7 +146,8 @@ public sealed class GeneratingService(
     {
         if (!string.IsNullOrWhiteSpace(request.WorkflowLogFilePath)) return request.WorkflowLogFilePath;
 
-        var fileName = string.Join("_", request.Name.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
+        var fileName = string.Join("_",
+            request.Name.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
         if (string.IsNullOrWhiteSpace(fileName)) fileName = "workflow";
         return Path.Combine(request.SaveFolder, $"{fileName}.log");
     }
@@ -156,9 +157,3 @@ public sealed class GeneratingService(
         return string.IsNullOrWhiteSpace(request.Name) ? "Workflow" : request.Name;
     }
 }
-
-
-
-
-
-

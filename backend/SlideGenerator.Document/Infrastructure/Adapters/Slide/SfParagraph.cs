@@ -16,13 +16,15 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-using SlideGenerator.Document.Domain.Abstractions.Slide;
+
+using Syncfusion.Presentation;
+using ITextPart = SlideGenerator.Document.Domain.Abstractions.Slide.ITextPart;
 
 namespace SlideGenerator.Document.Infrastructure.Adapters.Slide;
 
-public class SfParagraph(Syncfusion.Presentation.IParagraph core) : IParagraph
+public class SfParagraph(IParagraph core) : Domain.Abstractions.Slide.IParagraph
 {
-    internal readonly Syncfusion.Presentation.IParagraph Core = core;
+    internal readonly IParagraph Core = core;
     public IEnumerable<ITextPart> TextParts => Core.TextParts.Select(tp => new SfTextPart(tp));
     public int TextPartsCount => Core.TextParts.Count;
 
@@ -34,7 +36,7 @@ public class SfParagraph(Syncfusion.Presentation.IParagraph core) : IParagraph
         {
             var sourceFont = sfTextPart.Core.Font;
             var targetFont = coreTextPart.Font;
-        
+
             targetFont.CapsType = sourceFont.CapsType;
             targetFont.Color = sourceFont.Color;
             targetFont.Bold = sourceFont.Bold;
@@ -48,7 +50,7 @@ public class SfParagraph(Syncfusion.Presentation.IParagraph core) : IParagraph
             targetFont.LanguageID = sourceFont.LanguageID;
             targetFont.HighlightColor = sourceFont.HighlightColor;
         }
-        
+
         return new SfTextPart(coreTextPart);
     }
 
@@ -57,8 +59,3 @@ public class SfParagraph(Syncfusion.Presentation.IParagraph core) : IParagraph
         Core.TextParts.RemoveAt(index);
     }
 }
-
-
-
-
-

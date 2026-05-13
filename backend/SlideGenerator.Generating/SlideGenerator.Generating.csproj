@@ -6,18 +6,18 @@
         <IsPackable>false</IsPackable>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="WorkflowCore" Version="3.17.0" />
-        <PackageReference Remove="StyleCop.Analyzers" />
+        <PackageReference Include="WorkflowCore" Version="3.17.0"/>
+        <PackageReference Remove="StyleCop.Analyzers"/>
     </ItemGroup>
     <ItemGroup>
-        <ProjectReference Include="..\SlideGenerator.Common\SlideGenerator.Common.csproj" />
-        <ProjectReference Include="..\SlideGenerator.Resolver\SlideGenerator.Resolver.csproj" />
-        <ProjectReference Include="..\SlideGenerator.Cryptography\SlideGenerator.Cryptography.csproj" />
-        <ProjectReference Include="..\SlideGenerator.Download\SlideGenerator.Download.csproj" />
-        <ProjectReference Include="..\SlideGenerator.Coordinator\SlideGenerator.Coordinator.csproj" />
-        <ProjectReference Include="..\SlideGenerator.Image\SlideGenerator.Image.csproj" />
-        <ProjectReference Include="..\SlideGenerator.Settings\SlideGenerator.Settings.csproj" />
-        <ProjectReference Include="..\SlideGenerator.Document\SlideGenerator.Document.csproj" />
-        <ProjectReference Include="..\SlideGenerator.Logging\SlideGenerator.Logging.csproj" />
+        <ProjectReference Include="..\SlideGenerator.Common\SlideGenerator.Common.csproj"/>
+        <ProjectReference Include="..\SlideGenerator.Resolver\SlideGenerator.Resolver.csproj"/>
+        <ProjectReference Include="..\SlideGenerator.Cryptography\SlideGenerator.Cryptography.csproj"/>
+        <ProjectReference Include="..\SlideGenerator.Download\SlideGenerator.Download.csproj"/>
+        <ProjectReference Include="..\SlideGenerator.Coordinator\SlideGenerator.Coordinator.csproj"/>
+        <ProjectReference Include="..\SlideGenerator.Image\SlideGenerator.Image.csproj"/>
+        <ProjectReference Include="..\SlideGenerator.Settings\SlideGenerator.Settings.csproj"/>
+        <ProjectReference Include="..\SlideGenerator.Document\SlideGenerator.Document.csproj"/>
+        <ProjectReference Include="..\SlideGenerator.Logging\SlideGenerator.Logging.csproj"/>
     </ItemGroup>
 </Project>

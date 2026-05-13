@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using Microsoft.Extensions.DependencyInjection;
 using SlideGenerator.Cloud.Application.Abstractions;
 using SlideGenerator.Cloud.Infrastructure.Services;
@@ -30,8 +31,3 @@ public static class Registration
         return services;
     }
 }
-
-
-
-
-

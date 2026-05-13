@@ -16,13 +16,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Document.Domain.Models.Sheet;
 
 namespace SlideGenerator.Scanning.Domain.Models.Sheet;
 
 public sealed record WorksheetSummary(SheetIdentifier Identifier, int Count, WorksheetPreview? Preview = null);
-
-
-
-
-

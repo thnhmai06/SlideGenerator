@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Document.Domain.Models.Sheet;
 using SlideGenerator.Document.Domain.Models.Slide;
 using SlideGenerator.Scanning.Application.Abstractions;
@@ -64,8 +65,3 @@ public sealed class ScanningHandler(IScanningService scanningService)
         return scanningService.ScanPresentationAsync(request);
     }
 }
-
-
-
-
-

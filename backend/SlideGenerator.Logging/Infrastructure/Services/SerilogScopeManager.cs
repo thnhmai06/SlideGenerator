@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Logging.Domain.Abstractions;
 
 namespace SlideGenerator.Logging.Infrastructure.Services;
@@ -78,5 +79,3 @@ internal sealed class SerilogScopeManager : IScopeManager
         }
     }
 }
-
-

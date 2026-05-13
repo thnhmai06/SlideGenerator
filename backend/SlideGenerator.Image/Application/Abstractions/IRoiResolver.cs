@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using System.Drawing;
 using SlideGenerator.Image.Application.Models;
 using SlideGenerator.Image.Domain.Entities;
@@ -37,9 +38,3 @@ public interface IRoiResolver
     /// <returns>The calculated ROI as a <see cref="Rectangle" />.</returns>
     ValueTask<Rectangle> CalculateRoiAsync(IImage image, Size targetSize, RoiOption option);
 }
-
-
-
-
-
-

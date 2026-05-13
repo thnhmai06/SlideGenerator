@@ -6,7 +6,7 @@
         <IsPackable>false</IsPackable>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="Downloader" Version="5.5.0" />
+        <PackageReference Include="Downloader" Version="5.5.0"/>
         <PackageReference Remove="StyleCop.Analyzers"/>
     </ItemGroup>
     <ItemGroup>
