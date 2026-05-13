@@ -1,28 +1,21 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <IsPackable>false</IsPackable>
+        <RootNamespace>SlideGenerator.Logging</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.7" />
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.7" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.8" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.8" />
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.8" />
+        <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.8" />
         <PackageReference Include="Serilog" Version="4.3.1" />
-        <PackageReference Include="Serilog.Extensions.Hosting" Version="10.0.0" />
-        <PackageReference Include="Serilog.Settings.Configuration" Version="10.0.0" />
-        <PackageReference Include="Serilog.Sinks.Async" Version="2.1.0" />
+        <PackageReference Include="Serilog.Exceptions" Version="8.4.0" />
+        <PackageReference Include="Serilog.Extensions.Logging" Version="10.0.0" />
         <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
-        <PackageReference Include="Serilog.Sinks.Debug" Version="3.0.0" />
         <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
-        <PackageReference Include="Serilog.Sinks.PeriodicBatching" Version="5.0.0" />
-        <PackageReference Remove="StyleCop.Analyzers" />
     </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\SlideGenerator.Settings\SlideGenerator.Settings.csproj" />
-    </ItemGroup>
-
 </Project>

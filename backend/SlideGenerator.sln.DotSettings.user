@@ -26,6 +26,7 @@
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AIStepExecutionContext_002Ecs_002Fl_003AC_0021_003FUsers_003Fhaith_003FAppData_003FLocal_003FJetBrains_003FShared_003FvAny_003FDecompilerCache_003Fdecompiler_003F0137b071addb424d88025a5baca0fe4f2ce00_003F5b_003F6e3b658c_003FIStepExecutionContext_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AIWorkbook_002Ecs_002Fl_003AC_0021_003FUsers_003Fhaith_003FAppData_003FLocal_003FJetBrains_003FShared_003FvAny_003FDecompilerCache_003Fdecompiler_003Fd3630cdf9ef7432f999134ebd19e4f0d5d5800_003F65_003Feece767f_003FIWorkbook_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AIWorkflowBuilder_002Ecs_002Fl_003AC_0021_003FUsers_003Fhaith_003FAppData_003FRoaming_003FJetBrains_003FRider2025_002E3_003Fresharper_002Dhost_003FDecompilerCache_003Fdecompiler_003Fa344d5234cda41fbb887e67f5efa58d0bba00_003F60_003F5d6d384f_003FIWorkflowBuilder_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
+	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003ALifeCycleEvent_002Ecs_002Fl_003AC_0021_003FUsers_003Fhaith_003FAppData_003FLocal_003FJetBrains_003FShared_003FvAny_003FDecompilerCache_003Fdecompiler_003F0137b071addb424d88025a5baca0fe4f2ce00_003F4b_003Fb6071643_003FLifeCycleEvent_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AList_002Ecs_002Fl_003AC_0021_003FUsers_003Fhaith_003FAppData_003FLocal_003FJetBrains_003FShared_003FvAny_003FSourcesCache_003F3cca26e6dd627c1a7919bec86cb05b6d975a30287456f7daa8773a92451a_003FList_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AMustacheTemplate_002Ecs_002Fl_003AC_0021_003FUsers_003Fhaith_003FAppData_003FRoaming_003FJetBrains_003FRider2025_002E3_003Fresharper_002Dhost_003FSourcesCache_003Ffad14b43e4819e65f7bd431c7e5f027e2c383e35d9ed8de5d5fc66adc971_003FMustacheTemplate_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AObjectExtensions_002Ecs_002Fl_003AC_0021_003FUsers_003Fhaith_003FAppData_003FRoaming_003FJetBrains_003FRider2025_002E3_003Fresharper_002Dhost_003FDecompilerCache_003Fdecompiler_003Fa344d5234cda41fbb887e67f5efa58d0bba00_003Fda_003Fe647ffe1_003FObjectExtensions_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
@@ -38,12 +39,13 @@
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AStepBodyAsync_002Ecs_002Fl_003AC_0021_003FUsers_003Fhaith_003FAppData_003FLocal_003FJetBrains_003FShared_003FvAny_003FDecompilerCache_003Fdecompiler_003F0137b071addb424d88025a5baca0fe4f2ce00_003F5c_003Fc8fc0b11_003FStepBodyAsync_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003ASyncfusionLicenseProvider_002Ecs_002Fl_003AC_0021_003FUsers_003Fhaith_003FAppData_003FLocal_003FJetBrains_003FShared_003FvAny_003FDecompilerCache_003Fdecompiler_003F7db04a06c59049ea9fe88e587c4fbb6714000_003F44_003F84abaf83_003FSyncfusionLicenseProvider_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AVector2_002Ecs_002Fl_003AC_0021_003FUsers_003Fhaith_003FAppData_003FRoaming_003FJetBrains_003FRider2025_002E3_003Fresharper_002Dhost_003FDecompilerCache_003Fdecompiler_003F5a6236cfdac448ffada1671fabc4404ef49908_003F1e_003F355bc02c_003FVector2_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
-	<s:String x:Key="/Default/CodeStyle/FileHeader/FileHeaderText/@EntryValue">Copyright (C) ${CurrentDate.Year} ${AUTHOR}\n
+	<s:String x:Key="/Default/CodeStyle/FileHeader/FileHeaderText/@EntryValue">Copyright (C) ${CurrentDate.Year} {AUTHOR}
+
 Solution: ${File.SolutionName}
 Project: ${File.ProjectName}
 File: ${File.FileName}
 
-This file is part of this project. You can find the full source code here: https://github.com/thnhmai06/SlideGenerator
+This file is part of this project. You can find the full source code here: {REPOSITORY_URL}
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published by
@@ -53,14 +55,14 @@ This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU Affero General Public License for more details.</s:String>
+	
+	<s:Boolean x:Key="/Default/CodeStyle/FileHeader/FileHeaderVariables/=AUTHOR/@EntryIndexRemoved">True</s:Boolean>
 	<s:String x:Key="/Default/Environment/AssemblyExplorer/XmlDocument/@EntryValue">&lt;AssemblyExplorer&gt;&#xD;
   &lt;Assembly Path="C:\Users\haith\.nuget\packages\downloader\5.1.0\lib\net10.0\Downloader.dll" /&gt;&#xD;
   &lt;Assembly Path="V:\.cache\nuget\microsoft.visualstudio.validation\17.8.8\lib\net6.0\Microsoft.VisualStudio.Validation.dll" /&gt;&#xD;
 &lt;/AssemblyExplorer&gt;</s:String>
 	<s:Boolean x:Key="/Default/Environment/SettingsMigration/IsMigratorApplied/=JetBrains_002EReSharper_002EFeature_002EServices_002ECodeCleanup_002EFileHeader_002EFileHeaderSettingsMigrate/@EntryIndexedValue">True</s:Boolean>
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=58c56b00_002Df81e_002D48fd_002Da74f_002Dc8e84271fcf4/@EntryIndexedValue">&lt;SessionState ContinuousTestingIsOn="True" ContinuousTestingMode="3" IsActive="True" Name="Continuous Testing" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
-  &lt;Solution /&gt;&#xD;
-&lt;/SessionState&gt;</s:String>
+	
 	
 	
 	</wpf:ResourceDictionary>

@@ -1,5 +1,5 @@
-﻿/*
- * Copyright (C) 2026 Thành Mai
+/*
+ * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Ipc
@@ -16,9 +16,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
-using SlideGenerator.Settings.Models;
-using SlideGenerator.Settings.Services;
+using SlideGenerator.Settings.Domain.Abstractions;
+using SlideGenerator.Settings.Domain.Entities;
 
 namespace SlideGenerator.Ipc.Handlers;
 
@@ -26,7 +25,7 @@ namespace SlideGenerator.Ipc.Handlers;
 ///     Handles all <c>settings.*</c> JSON-RPC methods: get, update, and resetToDefaults.
 /// </summary>
 public sealed class SettingsHandler(
-    SettingManager settingManager,
+    ISettingManager settingManager,
     ISettingProvider settingProvider)
 {
     /// <summary>
@@ -64,3 +63,8 @@ public sealed class SettingsHandler(
         return true;
     }
 }
+
+
+
+
+

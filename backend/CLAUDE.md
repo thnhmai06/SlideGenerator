@@ -25,46 +25,65 @@ SlideGenerator automates PowerPoint generation from Excel data and templates. It
 
 ```
 Foundation Modules (no external dependencies)
+├── SlideGenerator.Common        - Shared utilities (string normalization)
 ├── SlideGenerator.Settings      - YAML-based configuration; ISettingProvider
-└── SlideGenerator.Cloud         - Multi-cloud URI resolver (Google Drive, OneDrive, SharePoint)
+└── SlideGenerator.Resolver      - Multi-cloud URI resolver (Google Drive, OneDrive, SharePoint)
 
 Core Services (depend on Settings)
-├── SlideGenerator.Coordinator   - Concurrency throttling; GateLocker + GateType enum
-├── SlideGenerator.Download      - HTTP downloading with throttling and progress reporting
-└── SlideGenerator.Documents     - Excel/PowerPoint scanning and processing via Syncfusion
+├── SlideGenerator.Cryptography  - AES-256 encryption + file hash registry
+├── SlideGenerator.Coordinator   - Concurrency throttling; IGateLocker + GateType
+├── SlideGenerator.Download      - HTTP downloading with throttling and progress
+├── SlideGenerator.Document      - Syncfusion Excel/PowerPoint abstractions + Mustache template engine
+└── SlideGenerator.Logging       - Serilog: IAppLogger, IAppLoggerFactory, ISystemLogger
 
 Feature Modules
-├── SlideGenerator.Images        - MagickImage processing; ROI + face detection (OpenCV YuNet)
-└── SlideGenerator.Logging       - Serilog sinks: async rolling file + database (EF Core)
+└── SlideGenerator.Image         - MagickImage processing; ROI + face detection (OpenCV YuNet)
 
-Orchestration & Entry Point
-├── SlideGenerator.Pipelines     - WorkflowCore workflows: Scanning + Generating
+Orchestration
+├── SlideGenerator.Scanning      - Synchronous workbook/presentation metadata scanner
+└── SlideGenerator.Generating    - WorkflowCore generating pipeline (3-phase workflow)
+
+Entry Point
 └── SlideGenerator.Ipc           - JSON-RPC 2.0 IPC sidecar (StreamJsonRpc over stdin/stdout)
 ```
 
 ### Dependency Rules
 
 - Dependencies flow downward only — no circular references.
-- Each module registers via its own `Registration.cs` (DI entry point).
-- `SlideGenerator.Ipc` is the executable entry point that wires all modules together.
+- Each module has `Injection/Registration.cs` (or root `Registration.cs`) as DI entry point.
+- `SlideGenerator.Ipc` is the executable that wires all modules.
+- Exception: `SlideGenerator.Generating` permits `Application/` and `Domain/` layers to depend on WorkflowCore directly.
 
 ## DI Registration Methods
 
 | Module | Extension Method |
 |---|---|
 | Settings | `AddSettingServices()` |
-| Cloud | `AddCloudServices()` |
-| Coordinator | `AddCoreServices()` |
+| Resolver | `AddCloudServices()` |
+| Cryptography | `AddCryptographyServices()` |
+| Coordinator | `AddCoordinatorServices()` |
 | Download | `AddDownloadServices()` |
-| Documents | `AddDocumentServices()` |
-| Images | `AddImageServices()` |
-| Logging | `AddSystemLogging(configuration, logFilePath)` / `AddWorkflowLogging()` |
-| Pipelines | `AddGeneratingServices()` |
+| Document | `AddDocumentServices()` |
+| Image | `AddImageServices()` |
+| Logging (with config) | `AddLoggingModule(IConfiguration)` |
+| Logging (defaults) | `AddLoggingModule()` |
+| Logging (pre-built logger) | `AddSystemLogging(ISystemLogger)` |
+| Scanning | `AddScanningServices()` |
+| Generating | `AddGeneratingServices()` |
 | Ipc | `AddIpcServices()` |
+| WorkflowCore + SQLite | `services.AddWorkflow(x => x.UseSqlite(NameAndPaths.WorkflowsFile.ConnectionString, true))` |
+
+`Registration.cs` files use C# 14 **extension member syntax**:
+```csharp
+extension(IServiceCollection services)
+{
+    public IServiceCollection AddFooServices() { ... }
+}
+```
 
 ## IPC Layer (SlideGenerator.Ipc)
 
-The IPC sidecar exposes 9 JSON-RPC 2.0 methods to the Tauri frontend over stdin/stdout using **StreamJsonRpc** with NDJSON framing (`NewLineDelimitedMessageHandler`) and STJ serialization (`SystemTextJsonFormatter`).
+JSON-RPC 2.0 over stdin/stdout using **StreamJsonRpc** with NDJSON framing (`NewLineDelimitedMessageHandler`) and STJ serialization (`SystemTextJsonFormatter`).
 
 ### Stream ownership
 
@@ -76,25 +95,29 @@ The IPC sidecar exposes 9 JSON-RPC 2.0 methods to the Tauri frontend over stdin/
 
 ### JsonRpc setup
 
-`JsonRpc` is created **after** the DI container is built (in `Program.cs`) because it requires raw stream access. It is **not** registered in the DI container. Method handlers are wired via `AddLocalRpcMethod`:
+`JsonRpc` is created **after** the DI container is built (raw stream access). Not registered in DI. Methods wired via `AddLocalRpcMethod`:
 
 ```csharp
 // DTO param → UseSingleObjectParameterDeserialization = true
 jsonRpc.AddLocalRpcMethod(method, handler, new JsonRpcMethodAttribute("workflow.start") { UseSingleObjectParameterDeserialization = true });
 
-// No DTO param (only CancellationToken)
+// No DTO param
 jsonRpc.AddLocalRpcMethod(method, handler, new JsonRpcMethodAttribute("settings.get"));
 ```
 
 ### Progress notifications
 
-`WorkflowProgressObserver` subscribes to `WorkflowEventBus.OnProgress` and forwards events as `workflow/progress` notifications via `JsonRpc.NotifyWithParameterObjectAsync`. It receives the `JsonRpc` instance through `Attach(bus, jsonRpc)` at startup — not via DI injection.
+`WorkflowProgressObserver` (in `Infrastructure/`) subscribes to `GeneratingEventBus.OnProgress` and forwards events as `workflow/progress` notifications via `JsonRpc.NotifyWithParameterObjectAsync`. Bound at runtime via `observer.Attach(bus, jsonRpc)` — not DI injected.
+
+`GeneratingEventBus` is registered as both `GeneratingEventBus` (concrete) and `IGeneratingEventBus` (interface) in the Ipc `Registration.cs` so that `WorkflowProgressObserver.Attach` can receive the concrete type.
 
 ### STJ adapters
 
-`Ipc/Adapters/` contains custom STJ converters registered in `BuildJsonSerializerOptions()`:
+`Infrastructure/Adapters/` contains custom STJ converters registered in `BuildJsonSerializerOptions()`:
 - `RoiOptionJsonAdapter` — polymorphic `RoiOption` discriminated by `"type"` (`"Center"` | `"RuleOfThirds"`)
 - `RectangleFJsonAdapter` — `RectangleF` as `{"x", "y", "width", "height"}`
+
+`JsonStringEnumConverter` is registered globally — all enums serialize as strings automatically.
 
 ### Registered methods
 
@@ -112,7 +135,7 @@ jsonRpc.AddLocalRpcMethod(method, handler, new JsonRpcMethodAttribute("settings.
 
 ## Concurrency: GateLocker
 
-`GateLocker` (in `SlideGenerator.Coordinator`) provides per-gate semaphores. Limits are read from settings at runtime:
+`GateLocker` (in `SlideGenerator.Coordinator`) provides per-gate semaphores. Limits read from settings at runtime:
 
 ```csharp
 await gateLocker.AcquireAsync(GateType.DownloadImage, ct);
@@ -124,7 +147,7 @@ Gate types: `DownloadImage`, `EditImage`, `EditPresentation`, `ReadWorkbook`, `R
 
 ## Image Processing
 
-Both `SlideGenerator.Images` and `SlideGenerator.Documents` use **MagickImage** as primary type. Convert to/from `byte[]` only at system boundaries (file I/O, Syncfusion API).
+Both `SlideGenerator.Image` and `SlideGenerator.Document` use **MagickImage** as primary type. Convert to/from `byte[]` only at system boundaries (file I/O, Syncfusion API).
 
 - `Utilities.Decode(byte[])` → `MagickImage`
 - `Utilities.Crop(MagickImage, Rectangle)` → `MagickImage`
@@ -144,47 +167,83 @@ Both `SlideGenerator.Images` and `SlideGenerator.Documents` use **MagickImage** 
 
 Phase boundaries are enforced with `ExecutionResult.Next()` barriers — all items in a phase must complete before the next phase begins.
 
-**Strict iteration rule**: Use WorkflowCore `.ForEach()` for all collection iteration. **Never** use C# `foreach`, `Parallel.ForEach`, or `Task.WhenAll` inside an Activity.
+**Strict iteration rule**: Use WorkflowCore `.ForEach()` for all collection iteration. **Never** use C# `foreach`, `Parallel.ForEach`, or `Task.WhenAll` inside a Step.
 
-**Data model**: `GeneratingTask` is the workflow's state class. Intermediate tasks (`SheetTask`, `ImageTask`, `SlideTask`) are populated per phase and fed into `.ForEach()` loops.
+**Data model**: `GeneratingContext` is the workflow's state class. Intermediate contexts (`SheetContext`, `ImageContext`, `SlideContext`) are populated per phase and fed into `.ForEach()` loops. All live in `Domain/Models/Contexts/`.
+
+**Persistence**: WorkflowCore persists `GeneratingContext` to SQLite (`%LOCALAPPDATA%\SlideGenerator\Workflows.db`) via Newtonsoft.Json. Fields that cannot serialize (file handles, `IAppLogger`) carry `[Newtonsoft.Json.JsonIgnore]`. Handles are lazily reopened after resume via `GetOrOpenWorkbook`/`GetOrOpenPresentation`/`GetOrOpenOutput` extension methods in `Application/Utilities.cs`.
+
+**Step middleware** (registered in `GeneratingServices`):
+- `GeneratingLoggerMiddleware` — lazily initializes `GeneratingContext.Logger` before each step using `WorkflowLogPath`/`WorkflowScope` stored in context (survives persistence resume)
+- `GeneratingProgressMiddleware` — publishes `GeneratingEvent.StepCompleted` + resolved `GeneratingPhase` after each step
+
+**Lifecycle events**: `GeneratingService` subscribes to `IWorkflowHost.OnLifeCycleEvent` to publish `WorkflowCompleted`/`WorkflowError` via `IGeneratingEventBus`. Event types are in `WorkflowCore.Models.LifeCycleEvents`: `WorkflowCompleted`, `WorkflowError`, `WorkflowStarted`, `WorkflowSuspended`, `WorkflowResumed`, `WorkflowTerminated`.
+
+**Progress enums** — each defined in the file where its concept lives:
+- `GeneratingPhase` — in `Application/Workflows/GeneratingWorkflow.cs`
+- `GeneratingEvent` — in `Application/Abstractions/IGeneratingEventBus.cs`
+- `GeneratingStatus` — in `Domain/Models/GeneratingStatus.cs`
 
 **Input mapping**: `Recipe.Nodes` defines the graph — each node maps a set of `Sheets` (Excel) to a presentation template. `TextInstruction` and `ImageInstruction` on each node drive placeholder replacement and image composition.
 
-**Error resilience**: Each data class has a `ConcurrentDictionary<string, Exception> Errors`. Activities catch exceptions and record them, allowing partial success.
+**Error resilience**: Each context class has a `ConcurrentDictionary<string, Exception> Errors`. Steps catch exceptions and record them, allowing partial success.
 
 `ScanningService` (synchronous) provides workbook and presentation metadata (`WorkbookSummary`, `PresentationSummary`) used to validate instructions before running generation.
 
 ## Development Patterns
 
-### Activity
+### Folder structure (Clean Architecture)
+
+All modules follow layered folder layout:
+
+```
+Domain/
+  Abstractions/   — domain interfaces (port definitions owned by domain)
+  Models/         — records, enums, value objects
+Application/
+  Abstractions/   — use-case interfaces (input/output ports)
+  Services/       — use-case implementations
+  Steps/          — WorkflowCore step bodies (Generating only)
+  Workflows/      — WorkflowCore workflow definitions (Generating only)
+Infrastructure/
+  Adapters/       — anti-corruption wrappers around external libs
+  Services/       — infrastructure implementations (DB, HTTP, file)
+  Middleware/     — WorkflowCore step middleware (Generating only)
+Injection/
+  Registration.cs — DI entry point
+```
+
+### Step (WorkflowCore)
 
 - Inherit `StepBody` or `StepBodyAsync`.
-- Process a single item (from `context.Item`); receive it via `.Input()` mapping in the workflow `Build()`.
-- Inject `GateLocker` via constructor; call `AcquireAsync`/`Release` around shared resource access.
-- Register as Singleton or Transient in the module's `Registration.cs`.
+- Live in `Application/Steps/`.
+- Process a single item (from `context.Item`); receive via `.Input()` mapping in `Build()`.
+- Inject `IGateLocker` via constructor; call `AcquireAsync`/`Release` around shared resource access.
+- Register as `Transient` in `Registration.cs`.
 
 ### Workflow
 
 - Implement `IWorkflow<TData>`.
 - Must have a **parameterless constructor** for WorkflowCore registration.
-- Inject `IServiceProvider` or specific services via constructor.
 
 ### Coding Style
 
 - `record` for DTOs/value objects; `sealed class` for services.
 - File-scoped namespaces.
 - `ConfigureAwait(false)` in all library/module async code.
-- Uniform folder structure per module: `Abstractions/`, `Entities/`, `Models/`, `Rules/`, `Services/`, `Activities/`, `Workflows/` (as applicable).
+- Primary constructors (C# 12) for services: `public sealed class Foo(IBar bar) : IFoo`.
+- Extension members (C# 14) for `Registration.cs` and `Utilities.cs`.
+- Class names: max 3 words.
 
 ## Invariants Checklist
 
-- [ ] Each module has a `Registration.cs` with DI setup
+- [ ] Each module has `Injection/Registration.cs` with DI setup
 - [ ] Module dependencies flow downward only
-- [ ] Activities inherit from `StepBody` or `StepBodyAsync`
+- [ ] Steps inherit from `StepBody` or `StepBodyAsync`; live in `Application/Steps/`
 - [ ] Workflows implement `IWorkflow<TData>` with a parameterless constructor
 - [ ] Async code uses `ConfigureAwait(false)`
 - [ ] `record` for data, `sealed` for logic by default
-- [ ] Services injected via constructor in Activities
+- [ ] `[Newtonsoft.Json.JsonIgnore]` on any non-serializable field in WorkflowCore data classes
 - [ ] Image handling uses MagickImage; byte arrays only at boundaries
 - [ ] All public APIs have XML documentation comments
 - [ ] IPC methods with a DTO param use `UseSingleObjectParameterDeserialization = true`

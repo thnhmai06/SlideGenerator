@@ -1,5 +1,5 @@
-﻿/*
- * Copyright (C) 2026 Thành Mai
+/*
+ * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Ipc
@@ -16,10 +16,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
 using Microsoft.Extensions.DependencyInjection;
+using SlideGenerator.Generating.Application.Abstractions;
 using SlideGenerator.Ipc.Handlers;
-using SlideGenerator.Ipc.Ipc;
+using SlideGenerator.Ipc.Infrastructure;
 
 namespace SlideGenerator.Ipc;
 
@@ -39,8 +39,9 @@ public static class Registration
     /// <returns>The updated service collection.</returns>
     public static IServiceCollection AddIpcServices(this IServiceCollection services)
     {
-        // Workflow progress event bus (decoupled from WorkflowCore internals)
-        services.AddSingleton<WorkflowEventBus>();
+        // Workflow progress event bus — registered as both interface (for Pipeline) and concrete (for Observer)
+        services.AddSingleton<GeneratingEventBus>();
+        services.AddSingleton<IGeneratingEventBus>(sp => sp.GetRequiredService<GeneratingEventBus>());
         services.AddSingleton<WorkflowProgressObserver>();
 
         // JSON-RPC method handlers
@@ -51,3 +52,9 @@ public static class Registration
         return services;
     }
 }
+
+
+
+
+
+

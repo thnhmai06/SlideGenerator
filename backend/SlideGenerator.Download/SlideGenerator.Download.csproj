@@ -6,12 +6,12 @@
         <IsPackable>false</IsPackable>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="Downloader" Version="5.4.0"/>
+        <PackageReference Include="Downloader" Version="5.5.0" />
         <PackageReference Remove="StyleCop.Analyzers"/>
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.7"/>
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\SlideGenerator.Coordinator\SlideGenerator.Coordinator.csproj"/>
         <ProjectReference Include="..\SlideGenerator.Settings\SlideGenerator.Settings.csproj"/>
+        <ProjectReference Include="..\SlideGenerator.Logging\SlideGenerator.Logging.csproj"/>
     </ItemGroup>
 </Project>

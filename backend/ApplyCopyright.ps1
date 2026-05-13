@@ -1,5 +1,5 @@
 $YEAR = "2026"
-$AUTHOR = "Thành Mai"
+$AUTHOR = "Thành Mai (thnhmai06)"
 $SOLUTION_NAME = "SlideGenerator"
 $REPO_URL = "https://github.com/thnhmai06/SlideGenerator"
 
@@ -27,37 +27,118 @@ $template = @"
 
 function Get-ProjectName($filePath) {
     $dir = Split-Path $filePath -Parent
+
     while ($dir -and (Test-Path $dir)) {
-        $csproj = Get-ChildItem -Path $dir -Filter "*.csproj" -ErrorAction SilentlyContinue
+        $csproj = Get-ChildItem -Path $dir -Filter "*.csproj" -File -ErrorAction SilentlyContinue
+
         if ($csproj) {
             return $csproj[0].BaseName
         }
+
         $parent = Split-Path $dir -Parent
-        if ($parent -eq $dir) { break }
+
+        if ($parent -eq $dir) {
+            break
+        }
+
         $dir = $parent
     }
-    return "SlideGenerator"
+
+    return $SOLUTION_NAME
 }
 
-$files = Get-ChildItem -Recurse -Filter "*.cs" -Exclude "bin","obj"
+function Remove-ExistingCopyrightHeaders($content) {
+    # Remove UTF-8 BOM if it exists in the string
+    $content = $content -replace "^\uFEFF", ""
+
+    $changed = $true
+
+    while ($changed) {
+        $changed = $false
+
+        # Remove block comment at the top if it contains "Copyright"
+        #
+        # Matches:
+        # /*
+        #  * Copyright ...
+        #  */
+        $blockPattern = "^\s*/\*[\s\S]*?\*/\s*"
+
+        $newContent = [regex]::Replace(
+            $content,
+            $blockPattern,
+            {
+                param($match)
+
+                if ($match.Value -match "(?i)Copyright") {
+                    return ""
+                }
+
+                return $match.Value
+            },
+            1
+        )
+
+        if ($newContent -ne $content) {
+            $content = $newContent
+            $changed = $true
+            continue
+        }
+
+        # Remove consecutive line comments at the top if they contain "Copyright"
+        #
+        # Matches:
+        # // Copyright ...
+        # // ...
+        $linePattern = "^\s*(?://[^\r\n]*(?:\r?\n|$))+"
+
+        $newContent = [regex]::Replace(
+            $content,
+            $linePattern,
+            {
+                param($match)
+
+                if ($match.Value -match "(?i)Copyright") {
+                    return ""
+                }
+
+                return $match.Value
+            },
+            1
+        )
+
+        if ($newContent -ne $content) {
+            $content = $newContent
+            $changed = $true
+            continue
+        }
+    }
+
+    return $content.TrimStart()
+}
+
+$files = Get-ChildItem -Recurse -Filter "*.cs" -File |
+    Where-Object {
+        $_.FullName -notmatch "\\bin\\" -and
+        $_.FullName -notmatch "\\obj\\"
+    }
+
 foreach ($file in $files) {
     $filePath = $file.FullName
-    if ($filePath -match "\\bin\\" -or $filePath -match "\\obj\\") { continue }
-    
+
     $projectName = Get-ProjectName $filePath
     $fileName = $file.Name
+
     $header = $template -f $projectName, $fileName
-    
-    # Read with UTF8 to preserve characters
+
     $content = Get-Content $filePath -Raw -Encoding utf8
-    if (-not $content.StartsWith("/*`r`n * Copyright")) {
-        Write-Host "Applying header to $filePath"
-        $newContent = $header + $content
-        # Write with UTF8 with BOM for C# files
-        $newContent | Out-File -FilePath $filePath -Encoding utf8
-    } else {
-        Write-Host "Header already exists in $filePath"
-    }
+    $contentWithoutOldHeaders = Remove-ExistingCopyrightHeaders $content
+
+    $newContent = $header + $contentWithoutOldHeaders
+
+    Write-Host "Updating copyright header in $filePath"
+
+    $newContent | Out-File -FilePath $filePath -Encoding utf8
 }
 
-# JetBrains Header Template does not apply on exists files, that's so suck.
+Write-Host "Done."

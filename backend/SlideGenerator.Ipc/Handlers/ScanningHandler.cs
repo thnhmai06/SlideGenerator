@@ -1,5 +1,5 @@
-﻿/*
- * Copyright (C) 2026 Thành Mai
+/*
+ * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Ipc
@@ -16,14 +16,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
-using SlideGenerator.Document.Sheet.Models;
-using SlideGenerator.Document.Slide.Models;
-using SlideGenerator.Pipeline.Scanning;
-using SlideGenerator.Pipeline.Scanning.Models.Sheets.Requests;
-using SlideGenerator.Pipeline.Scanning.Models.Sheets.Responses;
-using SlideGenerator.Pipeline.Scanning.Models.Slides.Requests;
-using SlideGenerator.Pipeline.Scanning.Models.Slides.Responses;
+using SlideGenerator.Document.Domain.Models.Sheet;
+using SlideGenerator.Document.Domain.Models.Slide;
+using SlideGenerator.Scanning.Application.Abstractions;
+using SlideGenerator.Scanning.Domain.Models.Sheet;
+using SlideGenerator.Scanning.Domain.Models.Slide;
 
 namespace SlideGenerator.Ipc.Handlers;
 
@@ -31,7 +28,7 @@ namespace SlideGenerator.Ipc.Handlers;
 ///     Handles all <c>scanning.*</c> JSON-RPC methods for inspecting Excel workbooks
 ///     and PowerPoint presentations before a generation job is started.
 /// </summary>
-public sealed class ScanningHandler(ScanningService scanningService)
+public sealed class ScanningHandler(IScanningService scanningService)
 {
     /// <summary>
     ///     Scans an Excel workbook and returns its structure, including worksheet names,
@@ -67,3 +64,8 @@ public sealed class ScanningHandler(ScanningService scanningService)
         return scanningService.ScanPresentationAsync(request);
     }
 }
+
+
+
+
+

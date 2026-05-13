@@ -1,5 +1,5 @@
-﻿/*
- * Copyright (C) 2026 Thành Mai
+/*
+ * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Ipc
@@ -16,118 +16,80 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
-using SlideGenerator.Ipc.Ipc;
-using SlideGenerator.Pipeline.Generating.Models;
-using SlideGenerator.Pipeline.Generating.Workflows;
-using SlideGenerator.Pipeline.Generating.Workflows.Models;
-using WorkflowCore.Interface;
+using SlideGenerator.Generating.Application.Abstractions;
+using SlideGenerator.Generating.Application.Workflows;
+using SlideGenerator.Generating.Domain.Models;
+using SlideGenerator.Generating.Domain.Models.Dto;
 
 namespace SlideGenerator.Ipc.Handlers;
 
 /// <summary>
 ///     Handles all <c>workflow.*</c> JSON-RPC methods: start, cancel, pause, and resume.
-///     Delegates execution to the WorkflowCore <see cref="IWorkflowHost" /> and
-///     <see cref="IWorkflowController" />, and publishes progress events to <see cref="WorkflowEventBus" />.
+///     Delegates execution to <see cref="IGeneratingService" /> and publishes lifecycle events
+///     to <see cref="IGeneratingEventBus" /> for forwarding to the client as notifications.
 /// </summary>
+/// <remarks>
+///     This handler is intentionally thin (<c>adapt-controller-thin</c>): it performs
+///     no business logic — only parameter mapping and event publishing.
+/// </remarks>
 public sealed class WorkflowHandler(
-    IWorkflowHost workflowHost,
-    IWorkflowController workflowController,
-    WorkflowEventBus eventBus)
+    IGeneratingService generatingService,
+    IGeneratingEventBus eventBus)
 {
     /// <summary>
     ///     Starts a new slide generation workflow from the provided request and returns its instance ID.
     /// </summary>
-    /// <param name="request">
-    ///     The generation request deserialized directly from the JSON-RPC payload,
-    ///     containing the recipe, output type, and save folder configuration.
-    /// </param>
-    /// <param name="ct">A cancellation token that, when canceled, aborts the start operation.</param>
-    /// <returns>
-    ///     The unique identifier of the newly created workflow instance.
-    /// </returns>
-    /// <exception cref="ArgumentException">
-    ///     Thrown when <paramref name="request" /> contains an empty recipe or missing save folder.
-    /// </exception>
     public async Task<string> StartAsync(GeneratingRequest request, CancellationToken ct)
     {
-        var task = new GeneratingTask { Request = request };
-
-        var instanceId = await workflowHost
-            .StartWorkflow(nameof(GeneratingWorkflow), 1, task)
-            .ConfigureAwait(false);
-
-        Publish(instanceId, "WorkflowStarted", null, "Running");
-
+        var instanceId = await generatingService.StartAsync(request, ct).ConfigureAwait(false);
+        Publish(instanceId, GeneratingEvent.WorkflowStarted, null, GeneratingStatus.Running);
         return instanceId;
     }
 
     /// <summary>
-    ///     Terminates a running workflow instance. In-progress steps run to completion before
-    ///     the workflow is marked as terminated.
+    ///     Terminates a running workflow instance.
     /// </summary>
-    /// <param name="workflowInstanceId">The workflow instance identifier to cancel.</param>
-    /// <param name="ct">A cancellation token.</param>
-    /// <returns>A <see cref="bool" /> indicating whether the termination was accepted.</returns>
     public async Task<bool> CancelAsync(string workflowInstanceId, CancellationToken ct)
     {
-        var success = await workflowController
-            .TerminateWorkflow(workflowInstanceId)
-            .ConfigureAwait(false);
-
-        if (success)
-            Publish(workflowInstanceId, "WorkflowCancelled", null, "Cancelled");
-
+        var success = await generatingService.CancelAsync(workflowInstanceId, ct).ConfigureAwait(false);
+        if (success) Publish(workflowInstanceId, GeneratingEvent.WorkflowCancelled, null, GeneratingStatus.Cancelled);
         return success;
     }
 
     /// <summary>
-    ///     Suspends a running workflow instance. The workflow can be resumed later via
-    ///     <c>workflow.resume</c>.
+    ///     Suspends a running workflow instance.
     /// </summary>
-    /// <param name="workflowInstanceId">The workflow instance identifier to pause.</param>
-    /// <param name="ct">A cancellation token.</param>
-    /// <returns>A <see cref="bool" /> indicating whether the suspension was accepted.</returns>
     public async Task<bool> PauseAsync(string workflowInstanceId, CancellationToken ct)
     {
-        var success = await workflowController
-            .SuspendWorkflow(workflowInstanceId)
-            .ConfigureAwait(false);
-
-        if (success)
-            Publish(workflowInstanceId, "WorkflowSuspended", null, "Paused");
-
+        var success = await generatingService.PauseAsync(workflowInstanceId, ct).ConfigureAwait(false);
+        if (success) Publish(workflowInstanceId, GeneratingEvent.WorkflowSuspended, null, GeneratingStatus.Paused);
         return success;
     }
 
     /// <summary>
-    ///     Resumes a previously suspended workflow instance from the point at which it was suspended.
+    ///     Resumes a previously suspended workflow instance.
     /// </summary>
-    /// <param name="workflowInstanceId">The workflow instance identifier to resume.</param>
-    /// <param name="ct">A cancellation token.</param>
-    /// <returns>A <see cref="bool" /> indicating whether the resumption was accepted.</returns>
     public async Task<bool> ResumeAsync(string workflowInstanceId, CancellationToken ct)
     {
-        var success = await workflowController
-            .ResumeWorkflow(workflowInstanceId)
-            .ConfigureAwait(false);
-
-        if (success)
-            Publish(workflowInstanceId, "WorkflowResumed", null, "Running");
-
+        var success = await generatingService.ResumeAsync(workflowInstanceId, ct).ConfigureAwait(false);
+        if (success) Publish(workflowInstanceId, GeneratingEvent.WorkflowResumed, null, GeneratingStatus.Running);
         return success;
     }
 
-    private void Publish(string instanceId, string eventName, string? stepName, string status)
+    private void Publish(string instanceId, GeneratingEvent evt, GeneratingPhase? phase, GeneratingStatus status)
     {
-        eventBus.Publish(new WorkflowProgress
+        eventBus.Publish(new GeneratingProgress
         {
             WorkflowInstanceId = instanceId,
-            Event = eventName,
-            StepName = stepName,
-            Phase = null,
+            Event = evt,
+            Phase = phase,
             Status = status,
             Timestamp = DateTimeOffset.UtcNow
         });
     }
 }
+
+
+
+
+
