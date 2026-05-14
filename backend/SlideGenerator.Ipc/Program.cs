@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
@@ -66,7 +67,7 @@ internal static class Program
             .AddEnvironmentVariables()
             .AddCommandLine(args)
             .Build();
-        
+
         _systemLogger = SystemLoggerBootstrapper.Initialize(NameAndPaths.LogsFolder.System, bootstrapConfiguration);
 
         PrintWelcomeMessage();
@@ -177,7 +178,7 @@ internal static class Program
 
         systemLogger?.Information("Registering domain modules...");
         services.AddSettingServices();
-        services.AddDocumentServices();
+        services.AddDocumentServices(systemLogger);
         services.AddCoordinatorServices();
         services.AddCloudServices();
         services.AddDownloadServices();
@@ -276,27 +277,57 @@ internal static class Program
             CancelLocallyInvokedMethodsWhenConnectionIsClosed = true
         };
 
-        var workflowHandler = services.GetRequiredService<WorkflowHandler>();
+        var generatingActiveHandler = services.GetRequiredService<GeneratingActiveHandler>();
+        var generatingCompletedHandler = services.GetRequiredService<GeneratingCompletedHandler>();
         var scanningHandler = services.GetRequiredService<ScanningHandler>();
         var settingsHandler = services.GetRequiredService<SettingsHandler>();
 
-        // Workflow lifecycle
-        jsonRpc.AddLocalRpcMethod(GetMethod<WorkflowHandler>(nameof(WorkflowHandler.StartAsync)), workflowHandler,
-            Attr("workflow.start"));
-        jsonRpc.AddLocalRpcMethod(GetMethod<WorkflowHandler>(nameof(WorkflowHandler.CancelAsync)), workflowHandler,
-            Attr("workflow.cancel"));
-        jsonRpc.AddLocalRpcMethod(GetMethod<WorkflowHandler>(nameof(WorkflowHandler.PauseAsync)), workflowHandler,
-            Attr("workflow.pause"));
-        jsonRpc.AddLocalRpcMethod(GetMethod<WorkflowHandler>(nameof(WorkflowHandler.ResumeAsync)), workflowHandler,
-            Attr("workflow.resume"));
+        #region generating.active
 
-        // Scanning
+        jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingActiveHandler>(nameof(GeneratingActiveHandler.StartAsync)),
+            generatingActiveHandler, Attr("generating.active.start"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingActiveHandler>(nameof(GeneratingActiveHandler.CancelAsync)),
+            generatingActiveHandler, Attr("generating.active.cancel"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingActiveHandler>(nameof(GeneratingActiveHandler.PauseAsync)),
+            generatingActiveHandler, Attr("generating.active.pause"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingActiveHandler>(nameof(GeneratingActiveHandler.ResumeAsync)),
+            generatingActiveHandler, Attr("generating.active.resume"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingActiveHandler>(nameof(GeneratingActiveHandler.CancelAllAsync)),
+            generatingActiveHandler, new JsonRpcMethodAttribute("generating.active.cancelAll"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingActiveHandler>(nameof(GeneratingActiveHandler.PauseAllAsync)),
+            generatingActiveHandler, new JsonRpcMethodAttribute("generating.active.pauseAll"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingActiveHandler>(nameof(GeneratingActiveHandler.ListAsync)),
+            generatingActiveHandler, new JsonRpcMethodAttribute("generating.active.list"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingActiveHandler>(nameof(GeneratingActiveHandler.QueryAsync)),
+            generatingActiveHandler, Attr("generating.active.query"));
+
+        #endregion
+
+        #region generating.completed
+
+        jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingCompletedHandler>(nameof(GeneratingCompletedHandler.ListAsync)),
+            generatingCompletedHandler, new JsonRpcMethodAttribute("generating.completed.list"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingCompletedHandler>(nameof(GeneratingCompletedHandler.QueryAsync)),
+            generatingCompletedHandler, Attr("generating.completed.query"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingCompletedHandler>(nameof(GeneratingCompletedHandler.DeleteAsync)),
+            generatingCompletedHandler, Attr("generating.completed.delete"));
+        jsonRpc.AddLocalRpcMethod(
+            GetMethod<GeneratingCompletedHandler>(nameof(GeneratingCompletedHandler.DeleteAllAsync)),
+            generatingCompletedHandler, new JsonRpcMethodAttribute("generating.completed.deleteAll"));
+
+        #endregion
+
+        #region scanning
+
         jsonRpc.AddLocalRpcMethod(GetMethod<ScanningHandler>(nameof(ScanningHandler.ScanWorkbookAsync)),
             scanningHandler, Attr("scanning.scanWorkbook"));
         jsonRpc.AddLocalRpcMethod(GetMethod<ScanningHandler>(nameof(ScanningHandler.ScanPresentationAsync)),
             scanningHandler, Attr("scanning.scanPresentation"));
 
-        // Settings — Get and ResetToDefaults carry no parameters, so no UseSingleObjectParameterDeserialization.
+        #endregion
+
+        #region settings
+
         jsonRpc.AddLocalRpcMethod(GetMethod<SettingsHandler>(nameof(SettingsHandler.GetAsync)), settingsHandler,
             new JsonRpcMethodAttribute("settings.get"));
         jsonRpc.AddLocalRpcMethod(GetMethod<SettingsHandler>(nameof(SettingsHandler.UpdateAsync)), settingsHandler,
@@ -304,10 +335,13 @@ internal static class Program
         jsonRpc.AddLocalRpcMethod(GetMethod<SettingsHandler>(nameof(SettingsHandler.ResetToDefaultsAsync)),
             settingsHandler, new JsonRpcMethodAttribute("settings.resetToDefaults"));
 
+        #endregion
+
         jsonRpc.StartListening();
         return jsonRpc;
 
-        // Helpers — named to avoid lambda capture overhead in the hot path.
+        #region Helpers
+
         static JsonRpcMethodAttribute Attr(string name)
         {
             return new JsonRpcMethodAttribute(name) { UseSingleObjectParameterDeserialization = true };
@@ -318,6 +352,8 @@ internal static class Program
             return typeof(T).GetMethod(name) ??
                    throw new InvalidOperationException($"Method {name} not found on {typeof(T).Name}");
         }
+
+        #endregion
     }
 
     /// <summary>
@@ -403,6 +439,4 @@ internal static class Program
     }
 
     #endregion
-
 }
-

@@ -45,7 +45,8 @@ public static class Registration
         services.AddSingleton<WorkflowProgressObserver>();
 
         // JSON-RPC method handlers
-        services.AddSingleton<WorkflowHandler>();
+        services.AddSingleton<GeneratingActiveHandler>();
+        services.AddSingleton<GeneratingCompletedHandler>();
         services.AddSingleton<ScanningHandler>();
         services.AddSingleton<SettingsHandler>();
 

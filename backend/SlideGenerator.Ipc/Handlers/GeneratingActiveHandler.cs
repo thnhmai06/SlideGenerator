@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Ipc
- * File: WorkflowHandler.cs
+ * File: GeneratingActiveHandler.cs
  *
  * This file is part of this solution. You can find the full source code here: https://github.com/thnhmai06/SlideGenerator
  *
@@ -23,15 +23,15 @@ using SlideGenerator.Generating.Domain.Models;
 namespace SlideGenerator.Ipc.Handlers;
 
 /// <summary>
-///     Handles all <c>workflow.*</c> JSON-RPC methods: start, cancel, pause, and resume.
+///     Handles all <c>generating.active.*</c> JSON-RPC methods: start, cancel, pause, resume, list, and query.
 ///     Delegates execution to <see cref="IGeneratingService" /> and publishes lifecycle events
 ///     to <see cref="IGeneratingEventBus" /> for forwarding to the client as notifications.
 /// </summary>
 /// <remarks>
-///     This handler is intentionally thin (<c>adapt-controller-thin</c>): it performs
-///     no business logic — only parameter mapping and event publishing.
+///     This handler is intentionally thin: it performs no business logic — only parameter mapping
+///     and event publishing.
 /// </remarks>
-public sealed class WorkflowHandler(
+public sealed class GeneratingActiveHandler(
     IGeneratingService generatingService,
     IGeneratingEventBus eventBus)
 {
@@ -74,6 +74,54 @@ public sealed class WorkflowHandler(
         if (success) Publish(workflowInstanceId, GeneratingEvent.WorkflowResumed, null, GeneratingStatus.Running);
         return success;
     }
+
+    /// <summary>
+    ///     Cancels all currently active (running and paused) workflow instances.
+    /// </summary>
+    /// <returns>The number of instances successfully cancelled.</returns>
+    public async Task<int> CancelAllAsync(CancellationToken ct)
+    {
+        var instances = await generatingService.ListActiveAsync(ct).ConfigureAwait(false);
+        var count = 0;
+        foreach (var instance in instances)
+        {
+            var success = await generatingService.CancelAsync(instance.InstanceId, ct).ConfigureAwait(false);
+            if (!success) continue;
+            Publish(instance.InstanceId, GeneratingEvent.WorkflowCancelled, null, GeneratingStatus.Cancelled);
+            count++;
+        }
+        return count;
+    }
+
+    /// <summary>
+    ///     Pauses all currently running (non-paused) workflow instances.
+    /// </summary>
+    /// <returns>The number of instances successfully paused.</returns>
+    public async Task<int> PauseAllAsync(CancellationToken ct)
+    {
+        var instances = await generatingService.ListActiveAsync(ct).ConfigureAwait(false);
+        var count = 0;
+        foreach (var instance in instances.Where(i => i.Status == GeneratingStatus.Running))
+        {
+            var success = await generatingService.PauseAsync(instance.InstanceId, ct).ConfigureAwait(false);
+            if (!success) continue;
+            Publish(instance.InstanceId, GeneratingEvent.WorkflowSuspended, null, GeneratingStatus.Paused);
+            count++;
+        }
+        return count;
+    }
+
+    /// <summary>
+    ///     Returns summaries of all currently active (running or paused) workflow instances.
+    /// </summary>
+    public Task<IReadOnlyList<GeneratingInstanceSummary>> ListAsync(CancellationToken ct)
+        => generatingService.ListActiveAsync(ct);
+
+    /// <summary>
+    ///     Returns the summary of a specific active workflow instance, or <see langword="null" /> if not found.
+    /// </summary>
+    public Task<GeneratingInstanceSummary?> QueryAsync(string workflowInstanceId, CancellationToken ct)
+        => generatingService.QueryAsync(workflowInstanceId, ct);
 
     private void Publish(string instanceId, GeneratingEvent evt, GeneratingPhase? phase, GeneratingStatus status)
     {

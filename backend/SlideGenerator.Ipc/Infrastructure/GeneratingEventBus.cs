@@ -23,7 +23,7 @@ namespace SlideGenerator.Ipc.Infrastructure;
 
 /// <summary>
 ///     A lightweight, in-process event bus for workflow progress notifications.
-///     Decouples the <see cref="Handlers.WorkflowHandler" /> (publisher) from the
+///     Decouples the <see cref="Handlers.GeneratingActiveHandler" /> (publisher) from the
 ///     <see cref="WorkflowProgressObserver" /> (subscriber) without depending on
 ///     WorkflowCore-internal lifecycle hooks.
 /// </summary>

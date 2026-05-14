@@ -17,6 +17,7 @@
  * GNU Affero General Public License for more details.
  */
 
+using Microsoft.Data.Sqlite;
 using SlideGenerator.Common.Utilities;
 using SlideGenerator.Generating.Application.Abstractions;
 using SlideGenerator.Generating.Application.Workflows;
@@ -25,6 +26,7 @@ using SlideGenerator.Generating.Domain.Models.Contexts;
 using SlideGenerator.Logging.Domain.Abstractions;
 using SlideGenerator.Settings.Domain.Rules;
 using WorkflowCore.Interface;
+using WorkflowCore.Models;
 using WorkflowCore.Models.LifeCycleEvents;
 
 namespace SlideGenerator.Generating.Infrastructure.Services;
@@ -37,6 +39,7 @@ namespace SlideGenerator.Generating.Infrastructure.Services;
 internal sealed class GeneratingService(
     IWorkflowHost workflowHost,
     IWorkflowController workflowController,
+    IPersistenceProvider persistence,
     IGeneratingEventBus eventBus,
     ISystemLogger logger)
     : IGeneratingService
@@ -152,6 +155,145 @@ internal sealed class GeneratingService(
             logger.Warning("Failed to resume workflow {InstanceId}.", instanceId);
 
         return success;
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<GeneratingInstanceSummary>> ListActiveAsync(CancellationToken ct = default)
+    {
+        var runnable = await persistence
+            .GetWorkflowInstances(WorkflowStatus.Runnable, nameof(GeneratingWorkflow), null, null, 0, int.MaxValue)
+            .ConfigureAwait(false);
+        var suspended = await persistence
+            .GetWorkflowInstances(WorkflowStatus.Suspended, nameof(GeneratingWorkflow), null, null, 0, int.MaxValue)
+            .ConfigureAwait(false);
+        return runnable.Concat(suspended).Select(ToSummary).ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<GeneratingInstanceSummary>> ListCompletedAsync(CancellationToken ct = default)
+    {
+        var complete = await persistence
+            .GetWorkflowInstances(WorkflowStatus.Complete, nameof(GeneratingWorkflow), null, null, 0, int.MaxValue)
+            .ConfigureAwait(false);
+        var terminated = await persistence
+            .GetWorkflowInstances(WorkflowStatus.Terminated, nameof(GeneratingWorkflow), null, null, 0, int.MaxValue)
+            .ConfigureAwait(false);
+        return complete.Concat(terminated).Select(ToSummary).ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task<GeneratingInstanceSummary?> QueryAsync(string instanceId, CancellationToken ct = default)
+    {
+        var instance = await persistence.GetWorkflowInstance(instanceId, ct).ConfigureAwait(false);
+        return instance is null ? null : ToSummary(instance);
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> DeleteAsync(string instanceId, CancellationToken ct = default)
+    {
+        await using var conn = new SqliteConnection(NameAndPaths.WorkflowsFile.ConnectionString);
+        await conn.OpenAsync(ct).ConfigureAwait(false);
+        await using var tx = conn.BeginTransaction();
+        try
+        {
+            await DeletePointerChildrenAsync(conn, tx, $"\"WorkflowInstanceId\" = @id", instanceId, ct).ConfigureAwait(false);
+            await DeletePointersAsync(conn, tx, "\"WorkflowInstanceId\" = @id", instanceId, ct).ConfigureAwait(false);
+
+            await using var cmd = conn.CreateCommand();
+            cmd.Transaction = tx;
+            cmd.CommandText = "DELETE FROM \"Workflow\" WHERE \"Id\" = @id AND \"Status\" IN (2, 3)";
+            cmd.Parameters.AddWithValue("@id", instanceId);
+            var rows = await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+
+            tx.Commit();
+
+            if (rows > 0) logger.Information("Deleted completed workflow {InstanceId}.", instanceId);
+            else logger.Warning("Workflow {InstanceId} not found or still active — delete skipped.", instanceId);
+            return rows > 0;
+        }
+        catch
+        {
+            tx.Rollback();
+            throw;
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<int> DeleteAllCompletedAsync(CancellationToken ct = default)
+    {
+        await using var conn = new SqliteConnection(NameAndPaths.WorkflowsFile.ConnectionString);
+        await conn.OpenAsync(ct).ConfigureAwait(false);
+        await using var tx = conn.BeginTransaction();
+        try
+        {
+            const string completedFilter = "\"WorkflowInstanceId\" IN (SELECT \"Id\" FROM \"Workflow\" WHERE \"Status\" IN (2, 3))";
+            await DeletePointerChildrenAsync(conn, tx, completedFilter, null, ct).ConfigureAwait(false);
+            await DeletePointersAsync(conn, tx, completedFilter, null, ct).ConfigureAwait(false);
+
+            await using var cmd = conn.CreateCommand();
+            cmd.Transaction = tx;
+            cmd.CommandText = "DELETE FROM \"Workflow\" WHERE \"Status\" IN (2, 3)";
+            var rows = await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+
+            tx.Commit();
+            logger.Information("Deleted {Count} completed/cancelled workflow(s).", rows);
+            return rows;
+        }
+        catch
+        {
+            tx.Rollback();
+            throw;
+        }
+    }
+
+    private static async Task DeletePointerChildrenAsync(
+        SqliteConnection conn, SqliteTransaction tx,
+        string pointerWhere, string? paramValue, CancellationToken ct)
+    {
+        foreach (var table in new[] { "ExtensionAttribute", "ExecutionError" })
+        {
+            await using var cmd = conn.CreateCommand();
+            cmd.Transaction = tx;
+            cmd.CommandText =
+                $"DELETE FROM \"{table}\" WHERE \"ExecutionPointerId\" IN " +
+                $"(SELECT \"Id\" FROM \"ExecutionPointer\" WHERE {pointerWhere})";
+            if (paramValue is not null) cmd.Parameters.AddWithValue("@id", paramValue);
+            await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+        }
+    }
+
+    private static async Task DeletePointersAsync(
+        SqliteConnection conn, SqliteTransaction tx,
+        string where, string? paramValue, CancellationToken ct)
+    {
+        await using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = $"DELETE FROM \"ExecutionPointer\" WHERE {where}";
+        if (paramValue is not null) cmd.Parameters.AddWithValue("@id", paramValue);
+        await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+    }
+
+    private static GeneratingInstanceSummary ToSummary(WorkflowInstance instance)
+    {
+        var status = instance.Status switch
+        {
+            WorkflowStatus.Runnable => GeneratingStatus.Running,
+            WorkflowStatus.Suspended => GeneratingStatus.Paused,
+            WorkflowStatus.Complete => GeneratingStatus.Complete,
+            WorkflowStatus.Terminated => GeneratingStatus.Cancelled,
+            _ => GeneratingStatus.Running
+        };
+        var name = (instance.Data as GeneratingContext)?.Request.Name;
+        return new GeneratingInstanceSummary
+        {
+            InstanceId = instance.Id,
+            Name = name,
+            Status = status,
+            CreatedAt = new DateTimeOffset(instance.CreateTime, TimeSpan.Zero),
+            CompletedAt = instance.CompleteTime.HasValue
+                ? new DateTimeOffset(instance.CompleteTime.Value, TimeSpan.Zero)
+                : null
+        };
     }
 
     private static string ResolveWorkflowLogPath(GeneratingRequest request)

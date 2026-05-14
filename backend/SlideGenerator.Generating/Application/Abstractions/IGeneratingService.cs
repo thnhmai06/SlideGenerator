@@ -22,7 +22,7 @@ namespace SlideGenerator.Generating.Application.Abstractions;
 
 /// <summary>
 ///     Defines the facade for workflow lifecycle operations exposed to the IPC layer.
-///     Consumers (e.g. <c>WorkflowHandler</c>) depend only on this interface and are
+///     Consumers (e.g. <c>GeneratingActiveHandler</c>) depend only on this interface and are
 ///     completely decoupled from WorkflowCore internals.
 /// </summary>
 public interface IGeneratingService
@@ -62,4 +62,35 @@ public interface IGeneratingService
     /// </summary>
     /// <returns><see langword="true" /> if the resumption was accepted.</returns>
     Task<bool> ResumeAsync(string instanceId, CancellationToken ct = default);
+
+    /// <summary>
+    ///     Returns summaries of all currently active (running or paused) workflow instances.
+    /// </summary>
+    Task<IReadOnlyList<GeneratingInstanceSummary>> ListActiveAsync(CancellationToken ct = default);
+
+    /// <summary>
+    ///     Returns summaries of all completed, cancelled, or errored workflow instances.
+    /// </summary>
+    Task<IReadOnlyList<GeneratingInstanceSummary>> ListCompletedAsync(CancellationToken ct = default);
+
+    /// <summary>
+    ///     Returns the summary of a specific workflow instance by its identifier,
+    ///     or <see langword="null" /> if not found.
+    /// </summary>
+    Task<GeneratingInstanceSummary?> QueryAsync(string instanceId, CancellationToken ct = default);
+
+    /// <summary>
+    ///     Permanently deletes a single completed or cancelled workflow instance and all its associated data.
+    /// </summary>
+    /// <returns>
+    ///     <see langword="true" /> if the instance was found and deleted;
+    ///     <see langword="false" /> if not found or still active.
+    /// </returns>
+    Task<bool> DeleteAsync(string instanceId, CancellationToken ct = default);
+
+    /// <summary>
+    ///     Permanently deletes all completed and cancelled workflow instances and their associated data.
+    /// </summary>
+    /// <returns>The number of workflow instances deleted.</returns>
+    Task<int> DeleteAllCompletedAsync(CancellationToken ct = default);
 }
