@@ -4,7 +4,7 @@
     <option name="PROGRAM_PARAMETERS" value="" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/SlideGenerator.Ipc/bin/Debug/net10.0" />
     <option name="PASS_PARENT_ENVS" value="1" />
-    <option name="ENV_FILE_PATHS" value="" />
+    <option name="ENV_FILE_PATHS" value="$PROJECT_DIR$/.env" />
     <option name="REDIRECT_INPUT_PATH" value="" />
     <option name="MIXED_MODE_DEBUG" value="0" />
     <option name="USE_MONO" value="0" />

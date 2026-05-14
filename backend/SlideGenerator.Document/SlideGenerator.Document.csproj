@@ -29,6 +29,40 @@
         <ProjectReference Include="..\SlideGenerator.Logging\SlideGenerator.Logging.csproj"/>
     </ItemGroup>
 
+    <UsingTask TaskName="ReadDotEnvKey" TaskFactory="RoslynCodeTaskFactory"
+               AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+        <ParameterGroup>
+            <EnvFile ParameterType="System.String" Required="true"/>
+            <Key ParameterType="System.String" Required="true"/>
+            <Value ParameterType="System.String" Output="true"/>
+        </ParameterGroup>
+        <Task>
+            <Using Namespace="System.IO"/>
+            <Code Type="Fragment" Language="cs"><![CDATA[
+                Value = string.Empty;
+                if (!File.Exists(EnvFile)) return true;
+                foreach (var line in File.ReadAllLines(EnvFile))
+                {
+                    var t = line.Trim();
+                    if (t.StartsWith("#") || !t.Contains('=')) continue;
+                    var idx = t.IndexOf('=');
+                    var k = t.Substring(0, idx).Trim();
+                    if (k != Key) continue;
+                    var v = t.Substring(idx + 1).Trim();
+                    // strip quotes
+                    if (v.Length >= 2 && ((v[0] == '"' && v[v.Length-1] == '"') || (v[0] == '\'' && v[v.Length-1] == '\'')))
+                        v = v.Substring(1, v.Length - 2);
+                    // strip inline comment
+                    var ci = v.IndexOf(" #");
+                    if (ci >= 0) v = v.Substring(0, ci).Trim();
+                    Value = v;
+                    break;
+                }
+                return true;
+            ]]></Code>
+        </Task>
+    </UsingTask>
+
     <UsingTask TaskName="GenerateXorLicense" TaskFactory="RoslynCodeTaskFactory"
                AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
         <ParameterGroup>
@@ -44,7 +78,7 @@
                 byte[] raw = Encoding.UTF8.GetBytes(LicenseKey);
                 string byteList = string.Join(", ",
                     raw.Select((b, i) => $"0x{(byte)(b ^ (seed + i)):X2}"));
-                string code = $@"namespace SlideGenerator.Documents;
+                string code = $@"namespace SlideGenerator.Document;
 internal static class SyncfusionLicense
 {{
     private static readonly byte[] _k = {{ {byteList} }};
@@ -67,8 +101,13 @@ internal static class SyncfusionLicense
     </UsingTask>
 
     <Target Name="GenerateLicenseKey" BeforeTargets="BeforeBuild;CoreCompile">
+        <!-- Try loading from .env file first (overrides system env var) -->
+        <ReadDotEnvKey EnvFile="$(MSBuildProjectDirectory)\..\.env" Key="SYNCFUSION_LICENSE_KEY">
+            <Output TaskParameter="Value" PropertyName="DotEnvSyncfusionKey"/>
+        </ReadDotEnvKey>
         <PropertyGroup>
-            <SyncfusionKey>$(SYNCFUSION_LICENSE_KEY)</SyncfusionKey>
+            <SyncfusionKey Condition="'$(DotEnvSyncfusionKey)' != ''">$(DotEnvSyncfusionKey)</SyncfusionKey>
+            <SyncfusionKey Condition="'$(SyncfusionKey)' == ''">$(SYNCFUSION_LICENSE_KEY)</SyncfusionKey>
             <SyncfusionKey Condition="'$(SyncfusionKey)' == ''">empty</SyncfusionKey>
             <LicenseGenOutput>$(IntermediateOutputPath)SyncfusionLicense.g.cs</LicenseGenOutput>
         </PropertyGroup>

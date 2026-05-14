@@ -234,6 +234,7 @@ Injection/
 - Primary constructors (C# 12) for services: `public sealed class Foo(IBar bar) : IFoo`.
 - Extension members (C# 14) for `Registration.cs` and `Utilities.cs`.
 - Class names: max 3 words.
+- Use `#region`/`#endregion` to delimit logical sections within a file — never plain `//` comments for section separation.
 
 ## Invariants Checklist
 
