@@ -16,7 +16,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
 using Microsoft.Extensions.Configuration;
 using Serilog;
 using Serilog.Events;
@@ -24,8 +23,9 @@ using Serilog.Exceptions;
 using SlideGenerator.Logging.Domain.Abstractions;
 using SlideGenerator.Logging.Infrastructure.Formatting;
 using SlideGenerator.Logging.Infrastructure.Options;
+using SlideGenerator.Logging.Infrastructure.Services;
 
-namespace SlideGenerator.Logging.Infrastructure.Services;
+namespace SlideGenerator.Logging.Injection;
 
 /// <summary>
 ///     Creates and owns the process-wide System logger at application startup.
@@ -125,3 +125,4 @@ public static class SystemLoggerBootstrapper
         }
     }
 }
+

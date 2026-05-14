@@ -16,7 +16,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
 using System.Globalization;
 using Serilog.Events;
 using Serilog.Formatting;
@@ -33,7 +32,7 @@ namespace SlideGenerator.Logging.Infrastructure.Formatting;
 ///     the formatter writes one additional JSON line using the <c>ExceptionDetail</c> property enriched by
 ///     Serilog.Exceptions when available.
 /// </remarks>
-public sealed class ScopedExceptionFormatter : ITextFormatter
+internal sealed class ScopedExceptionFormatter : ITextFormatter
 {
     private readonly JsonValueFormatter _jsonValueFormatter = new("$type");
 
@@ -101,3 +100,4 @@ public sealed class ScopedExceptionFormatter : ITextFormatter
             .Replace("\n", "\\n", StringComparison.Ordinal);
     }
 }
+

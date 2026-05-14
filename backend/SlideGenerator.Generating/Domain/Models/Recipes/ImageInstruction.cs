@@ -16,11 +16,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
 using SlideGenerator.Document.Domain.Models.Sheet;
 using SlideGenerator.Document.Domain.Models.Slide;
 
-namespace SlideGenerator.Generating.Domain.Models.Dto;
+namespace SlideGenerator.Generating.Domain.Models.Recipes;
 
 /// <summary>
 ///     Defines a mapping between one or more Excel columns and one or more image shapes in a slide.

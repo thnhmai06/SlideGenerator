@@ -16,7 +16,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
 using OpenCvSharp;
 using SlideGenerator.Image.Domain.Entities;
 
@@ -25,7 +24,7 @@ namespace SlideGenerator.Image.Infrastructure.Adapters;
 /// <summary>
 ///     Adapter for <see cref="OpenCvSharp.Mat" /> implementing <see cref="IMat" />.
 /// </summary>
-public sealed class OpenCvMat(Mat mat) : IMat
+internal sealed class OpenCvMat(Mat mat) : IMat
 {
     internal readonly Mat Mat = mat;
 
@@ -43,3 +42,4 @@ public sealed class OpenCvMat(Mat mat) : IMat
         Mat.Dispose();
     }
 }
+

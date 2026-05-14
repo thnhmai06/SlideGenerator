@@ -16,7 +16,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
 using SlideGenerator.Generating.Application.Abstractions;
 using SlideGenerator.Generating.Domain.Models;
 
@@ -28,7 +27,7 @@ namespace SlideGenerator.Ipc.Infrastructure;
 ///     <see cref="WorkflowProgressObserver" /> (subscriber) without depending on
 ///     WorkflowCore-internal lifecycle hooks.
 /// </summary>
-public sealed class GeneratingEventBus : IGeneratingEventBus
+internal sealed class GeneratingEventBus : IGeneratingEventBus
 {
     /// <summary>
     ///     Publishes a <see cref="GeneratingProgress" /> to all current subscribers.
@@ -46,3 +45,4 @@ public sealed class GeneratingEventBus : IGeneratingEventBus
     /// </summary>
     public event Action<GeneratingProgress>? OnProgress;
 }
+

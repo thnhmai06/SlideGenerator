@@ -16,12 +16,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
 using Syncfusion.Presentation;
 
 namespace SlideGenerator.Document.Infrastructure.Adapters.Slide;
 
-public class SfTextPart(ITextPart core)
+internal class SfTextPart(ITextPart core)
     : Domain.Abstractions.Slide.ITextPart
 {
     internal readonly ITextPart Core = core;
@@ -32,3 +31,4 @@ public class SfTextPart(ITextPart core)
         set => Core.Text = value;
     }
 }
+

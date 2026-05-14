@@ -16,7 +16,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
 using SlideGenerator.Common.Utilities;
 using SlideGenerator.Cryptography.Application.Abstractions;
 
@@ -28,7 +27,7 @@ namespace SlideGenerator.Settings.Domain.Rules;
 public static class NameAndPaths
 {
     /// <summary>The official application name.</summary>
-    public const string AppName = "SlideGenerator";
+    private const string AppName = "SlideGenerator";
 
     /// <summary>
     ///     Gets the base path for user-specific application data.
@@ -37,38 +36,53 @@ public static class NameAndPaths
         Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), // AppData/Local
             AppName);
+    public static string BasePath => AppDomain.CurrentDomain.BaseDirectory;
 
-    // TODO: Log folder.
+    /// <summary>
+    /// Provides predefined folder paths for storing system and workflow logs.
+    /// </summary>
+    public static class LogsFolder
+    {
+        /// <summary>
+        /// Represents the path to the folder designated for storing system logs.
+        /// </summary>
+        public static string System => Path.Combine(BasePath, "Logs", "System");
+
+        /// <summary>
+        /// Represents the predefined folder path for storing workflow logs.
+        /// </summary>
+        public static string Workflows => Path.Combine(BasePath, "Logs", "Workflows");
+    }
 
     /// <summary>
     ///     Gets the default assets directory path for the application.
     /// </summary>
     public static class AssetsFolder
     {
-        private static string DefaultRootPath => Path.Combine(UserPath, "Assets");
+        private static string DefaultAssetsPath => Path.Combine(UserPath, "Assets");
 
-        public static string GetDownloadDir(string? rootPath, string bookPath, string sheetName, string colName,
+        public static string GetDownloadDir(string? assetsPath, string bookPath, string sheetName, string colName,
             IHashPathRegistry registry)
         {
-            rootPath ??= DefaultRootPath;
+            assetsPath ??= DefaultAssetsPath;
             var bookName = Path.GetFileNameWithoutExtension(bookPath);
             var hash = registry.GetShortHash(bookPath);
             var bookFolder = $"{Normalization.NormalizeFileName(bookName)}_{hash}";
             sheetName = Normalization.NormalizeFileName(sheetName);
             colName = Normalization.NormalizeFileName(colName);
-            return Path.Combine(rootPath, bookFolder, sheetName, colName, "Download");
+            return Path.Combine(assetsPath, bookFolder, sheetName, colName, "Download");
         }
 
-        public static string GetEditDir(string? rootPath, string bookPath, string sheetName, string colName,
+        public static string GetEditDir(string? assetsPath, string bookPath, string sheetName, string colName,
             IHashPathRegistry registry)
         {
-            rootPath ??= DefaultRootPath;
+            assetsPath ??= DefaultAssetsPath;
             var bookName = Path.GetFileNameWithoutExtension(bookPath);
             var hash = registry.GetShortHash(bookPath);
             var bookFolder = $"{Normalization.NormalizeFileName(bookName)}_{hash}";
             sheetName = Normalization.NormalizeFileName(sheetName);
             colName = Normalization.NormalizeFileName(colName);
-            return Path.Combine(rootPath, bookFolder, sheetName, colName, "Edit");
+            return Path.Combine(assetsPath, bookFolder, sheetName, colName, "Edit");
         }
     }
 
@@ -80,7 +94,7 @@ public static class NameAndPaths
         /// <summary>
         ///     The default base filename for the main settings file.
         /// </summary>
-        private const string FileName = "Setting";
+        private const string FileName = "Settings";
 
         /// <summary>
         ///     Calculates the full file path for the settings file with the specified extension.
@@ -103,10 +117,28 @@ public static class NameAndPaths
         /// <summary>
         ///     Gets the full path to the SQLite database used for workflow persistence.
         /// </summary>
-        public static string FilePath => Path.Combine(UserPath, $"{FileName}.db");
+        private static string FilePath => Path.Combine(UserPath, $"{FileName}.db");
 
         /// <summary>
         ///     Gets the SQLite connection string for the workflow persistence database.
+        /// </summary>
+        public static string ConnectionString => $"Data Source={FilePath}";
+    }
+
+    /// <summary>
+    ///     Contains naming rules for the recipe SQLite database.
+    /// </summary>
+    public static class RecipesFile
+    {
+        private const string FileName = "Recipes";
+
+        /// <summary>
+        ///     Gets the full path to the SQLite database used for recipe storage.
+        /// </summary>
+        private static string FilePath => Path.Combine(UserPath, $"{FileName}.db");
+
+        /// <summary>
+        ///     Gets the SQLite connection string for the recipe database.
         /// </summary>
         public static string ConnectionString => $"Data Source={FilePath}";
     }

@@ -16,7 +16,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
 using SlideGenerator.Generating.Application.Abstractions;
 using SlideGenerator.Generating.Application.Steps;
 using SlideGenerator.Generating.Application.Workflows;
@@ -31,7 +30,7 @@ namespace SlideGenerator.Generating.Infrastructure.Middleware;
 ///     Publishes a <see cref="GeneratingEvent.StepCompleted" /> progress notification
 ///     after each workflow step executes, including the resolved <see cref="GeneratingPhase" />.
 /// </summary>
-public sealed class GeneratingProgressMiddleware(IGeneratingEventBus eventBus) : IWorkflowStepMiddleware
+internal sealed class GeneratingProgressMiddleware(IGeneratingEventBus eventBus) : IWorkflowStepMiddleware
 {
     /// <inheritdoc />
     public async Task<ExecutionResult> HandleAsync(
@@ -64,3 +63,4 @@ public sealed class GeneratingProgressMiddleware(IGeneratingEventBus eventBus) :
         };
     }
 }
+

@@ -16,15 +16,15 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
 using OpenCvSharp;
 
 namespace SlideGenerator.Image.Infrastructure;
 
-public static class Utilities
+internal static class Utilities
 {
     public static Size ToOpenCv(this System.Drawing.Size size)
     {
         return new Size(size.Width, size.Height);
     }
 }
+

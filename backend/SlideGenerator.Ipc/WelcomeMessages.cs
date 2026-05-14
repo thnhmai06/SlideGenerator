@@ -16,7 +16,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
 using System.Reflection;
 
 namespace SlideGenerator.Ipc;
@@ -36,7 +35,7 @@ internal static class WelcomeMessages
          \______/ |__/|__/ \_______/ \_______/ \______/  \_______/|__/  |__/ \_______/|__/      \_______/   \___/   \______/ |__/      
         """;
 
-    public const string Description = "This is the Backend Sidecar of SlideGenerator.";
+    public const string Description = "This is the Backend sidecar of SlideGenerator.";
 
     public const string Line = "────────────────────────────────────────────────────────────";
     public const string License = "Copyright (c) 2026 Mai Thành. Licensed under the GNU AGPLv3.";

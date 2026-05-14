@@ -16,7 +16,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
 using System.Drawing;
 using ImageMagick;
 using SlideGenerator.Image.Domain.Entities;
@@ -26,7 +25,7 @@ namespace SlideGenerator.Image.Infrastructure.Adapters;
 /// <summary>
 ///     Adapter for <see cref="ImageMagick.MagickImage" /> implementing <see cref="IImage" />.
 /// </summary>
-public sealed class MagickImage(ImageMagick.MagickImage image) : IImage
+internal sealed class MagickImage(ImageMagick.MagickImage image) : IImage
 {
     public uint Width => image.Width;
     public uint Height => image.Height;

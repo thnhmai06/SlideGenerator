@@ -16,7 +16,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
 using SlideGenerator.Coordinator.Application.Abstractions;
 using SlideGenerator.Coordinator.Domain.Models;
 using SlideGenerator.Document.Application.Abstractions;
@@ -41,7 +40,7 @@ public sealed class ReplaceSlideData(
     public override async Task<ExecutionResult> RunAsync(IStepExecutionContext context)
     {
         var data = (GeneratingContext)context.Workflow.Data;
-        using var scope = data.Logger!.BeginScope("ReplaceSlideData");
+        using var scope = data.Logger.BeginScope("ReplaceSlideData");
 
         if (Task.TextReplacements.Count == 0 && Task.ImageReplacements.Count == 0)
         {
@@ -97,7 +96,7 @@ public sealed class ReplaceSlideData(
     {
         if (Task.TextReplacements.Count > 0)
         {
-            data.Logger!.Debug("Applying text replacements to shape '{ShapeName}' (Count: {Count})", shape.Name,
+            data.Logger.Debug("Applying text replacements to shape '{ShapeName}' (Count: {Count})", shape.Name,
                 Task.TextReplacements.Count);
             textComposer.Compose(shape, Task.TextReplacements);
         }
@@ -113,14 +112,17 @@ public sealed class ReplaceSlideData(
             var finalEditPath = matchingImageContext.EditPath + ".png";
             if (File.Exists(finalEditPath))
             {
-                data.Logger!.Information("Replacing image for shape '{ShapeName}' with '{Path}'", shape.Name,
+                data.Logger.Information("Replacing image for shape '{ShapeName}' with '{Path}'", shape.Name,
                     finalEditPath);
 
                 shape.ImageData = await File.ReadAllBytesAsync(finalEditPath).ConfigureAwait(false);
+
+                if (data.Request.EditAssetsPath == null)
+                    try { File.Delete(finalEditPath); } catch { /* ignore */ }
             }
             else
             {
-                data.Logger!.Warning("Edited image not found at '{Path}' for shape '{ShapeName}'", finalEditPath,
+                data.Logger.Warning("Edited image not found at '{Path}' for shape '{ShapeName}'", finalEditPath,
                     shape.Name);
             }
         }

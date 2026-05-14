@@ -16,7 +16,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
 using System.Drawing;
 using SlideGenerator.Common.Utilities;
 using SlideGenerator.Coordinator.Application.Abstractions;
@@ -228,8 +227,8 @@ public sealed class ExtractData(
             if (!headerMap.TryGetValue(column.ColumnName, out var colIndex) || colIndex >= rowData.Count) continue;
 
             var uri = Normalization.NormalizeUri(rowData[colIndex]);
-            var downloadDir = NameAndPaths.AssetsFolder.GetDownloadDir(null, Worksheet.Identifier.BookPath, sheet.Name,
-                column.ColumnName, hashPathRegistry);
+            var downloadDir = NameAndPaths.AssetsFolder.GetDownloadDir(data.Request.DownloadAssetsPath,
+                Worksheet.Identifier.BookPath, sheet.Name, column.ColumnName, hashPathRegistry);
             var downloadPath = Path.Combine(downloadDir, rowIndex.ToString());
 
             foreach (var shapeId in imgInst.Shapes)
@@ -238,8 +237,8 @@ public sealed class ExtractData(
                     shapeId.SlideIndex != Worksheet.TemplateSlide.SlideIndex) continue;
                 if (!shapeData.TryGetValue(shapeId, out var sData)) continue;
 
-                var editDir = NameAndPaths.AssetsFolder.GetEditDir(null, Worksheet.Identifier.BookPath, sheet.Name,
-                    column.ColumnName, hashPathRegistry);
+                var editDir = NameAndPaths.AssetsFolder.GetEditDir(data.Request.EditAssetsPath,
+                    Worksheet.Identifier.BookPath, sheet.Name, column.ColumnName, hashPathRegistry);
                 var editPath = Path.Combine(editDir, $"{rowIndex}_{sData.ShapeName}");
 
                 var imageTask = new ImageContext(

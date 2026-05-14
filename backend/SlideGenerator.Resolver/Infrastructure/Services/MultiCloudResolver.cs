@@ -16,7 +16,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
 using SlideGenerator.Cloud.Application.Abstractions;
 using SlideGenerator.Cloud.Domain.Models;
 using SlideGenerator.Cloud.Infrastructure.Resolvers;
@@ -26,7 +25,7 @@ using GooglePhotosResolver = SlideGenerator.Cloud.Infrastructure.Resolvers.Googl
 
 namespace SlideGenerator.Cloud.Infrastructure.Services;
 
-public sealed class MultiCloudResolver(ISystemLogger logger) : ICloudResolver
+internal sealed class MultiCloudResolver(ISystemLogger logger) : ICloudResolver
 {
     private readonly IReadOnlyDictionary<CloudResolverKey, ICloudResolver> _resolvers =
         new Dictionary<CloudResolverKey, ICloudResolver>
@@ -62,3 +61,4 @@ public sealed class MultiCloudResolver(ISystemLogger logger) : ICloudResolver
         return uri;
     }
 }
+

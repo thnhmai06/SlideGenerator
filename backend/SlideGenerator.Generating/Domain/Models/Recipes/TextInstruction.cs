@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Generating
- * File: EditOptions.cs
+ * File: TextInstruction.cs
  *
  * This file is part of this solution. You can find the full source code here: https://github.com/thnhmai06/SlideGenerator
  *
@@ -16,13 +16,15 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+using SlideGenerator.Document.Domain.Models.Sheet;
 
-using SlideGenerator.Image.Application.Models;
-
-namespace SlideGenerator.Generating.Domain.Models.Dto;
+namespace SlideGenerator.Generating.Domain.Models.Recipes;
 
 /// <summary>
-///     Defines the processing rules for image transformations.
+///     Defines a mapping between one or more Excel columns and one or more text placeholders in a slide.
 /// </summary>
-/// <param name="RoiOption">The algorithm to use for Region of Interest (ROI) detection and cropping.</param>
-public sealed record EditOptions(RoiOption RoiOption);
+/// <param name="Placeholders">The set of placeholder tags (e.g., "{{Name}}") to be replaced.</param>
+/// <param name="Columns">The list of Excel columns whose values will provide the replacement text.</param>
+public record TextInstruction(
+    IReadOnlySet<string> Placeholders,
+    IReadOnlyList<ColumnIdentifier> Columns);

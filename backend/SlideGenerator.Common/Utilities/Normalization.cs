@@ -16,7 +16,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
 namespace SlideGenerator.Common.Utilities;
 
 public static class Normalization
@@ -45,13 +44,11 @@ public static class Normalization
     public static string NormalizeFileName(string? value, string? defaultValue = null)
     {
         defaultValue ??= string.Empty;
-
-        if (string.IsNullOrWhiteSpace(value))
-            return defaultValue;
+        if (string.IsNullOrWhiteSpace(value)) return defaultValue;
 
         var normalized = value.Trim();
-        normalized = Path.GetInvalidFileNameChars()
-            .Aggregate(normalized, (current, invalid) => current.Replace(invalid, '_'));
+        normalized = string.Join("_",
+            normalized.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
 
         return string.IsNullOrWhiteSpace(normalized) ? defaultValue : normalized;
     }

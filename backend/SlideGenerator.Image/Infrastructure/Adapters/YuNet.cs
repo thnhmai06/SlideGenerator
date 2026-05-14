@@ -16,7 +16,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
 using System.Drawing;
 using OpenCvSharp;
 using SlideGenerator.Image.Application.Abstractions;
@@ -30,7 +29,7 @@ namespace SlideGenerator.Image.Infrastructure.Adapters;
 /// <summary>
 ///     Asynchronous wrapper for <see cref="FaceDetectorYN" />.
 /// </summary>
-public sealed class YuNet(FaceDetectorYN core, Size inputSize) : IFaceDetector
+internal sealed class YuNet(FaceDetectorYN core, Size inputSize) : IFaceDetector
 {
     private readonly SemaphoreSlim _detectLock = new(1, 1);
 
@@ -186,3 +185,4 @@ public sealed class YuNet(FaceDetectorYN core, Size inputSize) : IFaceDetector
         public required Size OriginalSize { get; init; }
     }
 }
+

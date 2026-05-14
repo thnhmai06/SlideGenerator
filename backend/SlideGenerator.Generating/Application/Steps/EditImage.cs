@@ -16,7 +16,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
 using System.Drawing;
 using SlideGenerator.Coordinator.Application.Abstractions;
 using SlideGenerator.Coordinator.Domain.Models;
@@ -138,8 +137,8 @@ public sealed class EditImage(
             data.Logger.Information("Successfully edited image for row {RowIndex}, shape {ShapeName}", Task.RowIndex,
                 Task.ShapeName);
 
-            // Optional: Delete raw download image to save space (only if it was the primary source)
-            if (data.Request.DeleteDownloadImage && sourceFile != Task.FallbackImagePath)
+            // Delete raw download image when using the default (temporary) assets path
+            if (data.Request.DownloadAssetsPath == null && sourceFile != Task.FallbackImagePath)
                 try
                 {
                     File.Delete(sourceFile);

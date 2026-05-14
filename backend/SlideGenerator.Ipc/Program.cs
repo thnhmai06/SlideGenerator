@@ -16,9 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -36,9 +34,8 @@ using SlideGenerator.Image.Injection;
 using SlideGenerator.Ipc.Handlers;
 using SlideGenerator.Ipc.Infrastructure;
 using SlideGenerator.Ipc.Infrastructure.Adapters;
-using SlideGenerator.Logging;
 using SlideGenerator.Logging.Domain.Abstractions;
-using SlideGenerator.Logging.Infrastructure.Services;
+using SlideGenerator.Logging.Injection;
 using SlideGenerator.Scanning.Injection;
 using SlideGenerator.Settings.Domain.Abstractions;
 using SlideGenerator.Settings.Domain.Rules;
@@ -52,18 +49,10 @@ namespace SlideGenerator.Ipc;
 ///     Bootstraps the host, wires all services and method routes via StreamJsonRpc,
 ///     then blocks until the client closes the connection.
 /// </summary>
-internal static partial class Program
+internal static class Program
 {
     public static readonly DateTime StartupTime = DateTime.UtcNow;
-    private static IHost? _currentHost;
     private static ISystemLogger? _systemLogger;
-
-    // ── Native Interop for Shutdown Handling ─────────────────────────────────────
-
-    [LibraryImport("kernel32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool SetConsoleCtrlHandler(ConsoleCtrlDelegate handlerRoutine,
-        [MarshalAs(UnmanagedType.Bool)] bool add);
 
     /// <summary>Application entry point.</summary>
     /// <param name="args">Command-line arguments passed by the Tauri sidecar launcher.</param>
@@ -72,28 +61,15 @@ internal static partial class Program
         ConfigureEncoding();
 
         var bootstrapConfiguration = new ConfigurationBuilder()
-            .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+            .SetBasePath(NameAndPaths.BasePath)
             .AddJsonFile("appsettings.json", true)
             .AddEnvironmentVariables()
             .AddCommandLine(args)
             .Build();
-
-        var systemLogDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs", "system");
-        _systemLogger = SystemLoggerBootstrapper.Initialize(systemLogDirectory, bootstrapConfiguration);
+        
+        _systemLogger = SystemLoggerBootstrapper.Initialize(NameAndPaths.LogsFolder.System, bootstrapConfiguration);
 
         PrintWelcomeMessage();
-
-        // Wire up native console control handler for 'X' button, Logoff, and Shutdown
-        SetConsoleCtrlHandler(ctrlType =>
-        {
-            _systemLogger?.Warning("Native termination signal received: {CtrlType}. Flushing and exiting...", ctrlType);
-
-            // Note: We have very limited time here before OS kills the process.
-            // We attempt a sync save and flush.
-            if (_currentHost != null) SaveSettingsAsync(_currentHost.Services).GetAwaiter().GetResult();
-            SystemLoggerBootstrapper.Flush();
-            return false; // Let the next handler (or OS) deal with it
-        }, true);
 
         try
         {
@@ -126,7 +102,6 @@ internal static partial class Program
             ConfigureServices(builder.Services, builder.Configuration, _systemLogger);
 
             using var host = builder.Build();
-            _currentHost = host;
 
             // Intercept Ctrl+C to trigger a clean shutdown via the host lifetime
             var lifetime = host.Services.GetRequiredService<IHostApplicationLifetime>();
@@ -161,7 +136,7 @@ internal static partial class Program
         return 0;
     }
 
-    // ── Encoding ─────────────────────────────────────────────────────────────────
+    #region Encoding
 
     /// <summary>
     ///     Configures stderr to use UTF-8 so Serilog log output is transmitted correctly
@@ -177,7 +152,9 @@ internal static partial class Program
             leaveOpen: true) { AutoFlush = true });
     }
 
-    // ── DI Registration ───────────────────────────────────────────────────────────
+    #endregion
+
+    #region DI Registration
 
     /// <summary>
     ///     Registers all services into the DI container. Delegates to per-module
@@ -213,7 +190,9 @@ internal static partial class Program
         services.AddIpcServices();
     }
 
-    // ── Startup & Run ─────────────────────────────────────────────────────────────
+    #endregion
+
+    #region Startup & Run
 
     /// <summary>
     ///     Performs the ordered startup sequence, then blocks on <see cref="JsonRpc.Completion" />
@@ -381,7 +360,9 @@ internal static partial class Program
         }
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────────
+    #endregion
+
+    #region Helpers
 
     /// <summary>Loads persisted settings from the disk before any workflow is started.</summary>
     /// <param name="services">The application service provider.</param>
@@ -418,23 +399,7 @@ internal static partial class Program
         };
     }
 
-    private delegate bool ConsoleCtrlDelegate(CtrlTypes ctrlType);
+    #endregion
 
-    private enum CtrlTypes
-    {
-        // ReSharper disable once InconsistentNaming
-        CTRL_C_EVENT = 0,
-
-        // ReSharper disable once InconsistentNaming
-        CTRL_BREAK_EVENT = 1,
-
-        // ReSharper disable once InconsistentNaming
-        CTRL_CLOSE_EVENT = 2,
-
-        // ReSharper disable once InconsistentNaming
-        CTRL_LOGOFF_EVENT = 5,
-
-        // ReSharper disable once InconsistentNaming
-        CTRL_SHUTDOWN_EVENT = 6
-    }
 }
+

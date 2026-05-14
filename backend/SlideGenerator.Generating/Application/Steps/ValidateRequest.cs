@@ -16,7 +16,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
 using SlideGenerator.Common.Utilities;
 using SlideGenerator.Coordinator.Application.Abstractions;
 using SlideGenerator.Coordinator.Domain.Models;
@@ -24,7 +23,7 @@ using SlideGenerator.Document.Application.Abstractions;
 using SlideGenerator.Document.Domain.Models.Sheet;
 using SlideGenerator.Document.Domain.Models.Slide;
 using SlideGenerator.Generating.Domain.Models.Contexts;
-using SlideGenerator.Generating.Domain.Models.Dto;
+using SlideGenerator.Generating.Domain.Models.Recipes;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
 
@@ -118,7 +117,7 @@ public sealed class ValidateRequest(
             // Successful validation: Prepare output mapping
             var bookName = Path.GetFileNameWithoutExtension(sheet.BookPath);
             var outputFileName =
-                $"{Normalization.NormalizeFileName(sheet.SheetName)}{Path.GetExtension(slide.PresentationPath)}";
+                $"{Normalization.NormalizeFileName(sheet.SheetName)}{data.Request.OutputType.ToExtension()}";
             var outputPath = Path.Combine(data.Request.SaveFolder, bookName, outputFileName);
             var outputIdentifier = new PresentationIdentifier(outputPath);
 

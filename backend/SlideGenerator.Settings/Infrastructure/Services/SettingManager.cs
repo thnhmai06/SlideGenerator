@@ -16,7 +16,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
 using SlideGenerator.Cryptography.Application.Abstractions;
 using SlideGenerator.Logging.Domain.Abstractions;
 using SlideGenerator.Settings.Application.Abstractions;

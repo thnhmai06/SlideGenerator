@@ -16,7 +16,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
 using System.Drawing;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -33,7 +32,7 @@ namespace SlideGenerator.Ipc.Infrastructure.Adapters;
 ///     {"x":50.0,"y":80.0,"width":200.0,"height":200.0}
 ///     </code>
 /// </example>
-public sealed class RectangleFJsonAdapter : JsonConverter<RectangleF>
+internal sealed class RectangleFJsonAdapter : JsonConverter<RectangleF>
 {
     /// <inheritdoc />
     public override RectangleF Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
@@ -60,3 +59,4 @@ public sealed class RectangleFJsonAdapter : JsonConverter<RectangleF>
         writer.WriteEndObject();
     }
 }
+

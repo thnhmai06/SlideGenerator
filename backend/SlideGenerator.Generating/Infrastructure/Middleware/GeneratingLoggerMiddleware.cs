@@ -16,7 +16,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
 using SlideGenerator.Generating.Domain.Models.Contexts;
 using SlideGenerator.Logging.Domain.Abstractions;
 using WorkflowCore.Interface;
@@ -28,7 +27,7 @@ namespace SlideGenerator.Generating.Infrastructure.Middleware;
 ///     Ensures the workflow logger is initialized before each step executes,
 ///     supporting both first-run and persistence resume scenarios.
 /// </summary>
-public sealed class GeneratingLoggerMiddleware(IAppLoggerFactory loggerFactory) : IWorkflowStepMiddleware
+internal sealed class GeneratingLoggerMiddleware(IAppLoggerFactory loggerFactory) : IWorkflowStepMiddleware
 {
     /// <inheritdoc />
     public async Task<ExecutionResult> HandleAsync(
@@ -40,3 +39,4 @@ public sealed class GeneratingLoggerMiddleware(IAppLoggerFactory loggerFactory) 
         return await next();
     }
 }
+

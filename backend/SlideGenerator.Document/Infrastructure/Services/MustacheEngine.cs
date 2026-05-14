@@ -16,7 +16,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using SlideGenerator.Document.Application.Abstractions;
@@ -47,7 +46,7 @@ namespace SlideGenerator.Document.Infrastructure.Services;
 ///         <item>Comma-separated (complex keys only): v1,v2,v3 → List of strings</item>
 ///     </list>
 /// </remarks>
-public sealed partial class MustacheEngine(ISystemLogger logger) : ITemplateEngine
+internal sealed partial class MustacheEngine(ISystemLogger logger) : ITemplateEngine
 {
     private static readonly StubbleVisitorRenderer Renderer = new StubbleBuilder()
         .Configure(settings => settings.SetEncodingFunction(value => value))
@@ -212,3 +211,4 @@ public sealed partial class MustacheEngine(ISystemLogger logger) : ITemplateEngi
     [GeneratedRegex(@"\{\{\{?([#\^/&!>]?\s*[\w\.\-]+)\s*\}?\}\}", RegexOptions.Compiled)]
     private static partial Regex TagPattern();
 }
+

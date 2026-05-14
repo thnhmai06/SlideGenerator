@@ -16,11 +16,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SlideGenerator.Logging.Domain.Abstractions;
-using SlideGenerator.Logging.Infrastructure.Services;
+using SlideGenerator.Logging.Injection;
 
 namespace SlideGenerator.Logging.Examples;
 

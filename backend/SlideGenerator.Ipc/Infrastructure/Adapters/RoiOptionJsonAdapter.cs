@@ -16,7 +16,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
 using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -35,7 +34,7 @@ namespace SlideGenerator.Ipc.Infrastructure.Adapters;
 ///     {"type":"RuleOfThirds","pivot":{"x":0.5,"y":0.333}}
 ///     </code>
 /// </example>
-public sealed class RoiOptionJsonAdapter : JsonConverter<RoiOption>
+internal sealed class RoiOptionJsonAdapter : JsonConverter<RoiOption>
 {
     /// <inheritdoc />
     public override RoiOption Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
@@ -109,3 +108,4 @@ public sealed class RoiOptionJsonAdapter : JsonConverter<RoiOption>
         writer.WriteEndObject();
     }
 }
+

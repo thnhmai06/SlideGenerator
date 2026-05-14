@@ -16,7 +16,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
 using SlideGenerator.Document.Domain.Models.Slide;
 using Syncfusion.Presentation;
 using ISlide = SlideGenerator.Document.Domain.Abstractions.Slide.ISlide;

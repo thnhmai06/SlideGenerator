@@ -16,10 +16,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
 using SlideGenerator.Document.Domain.Models.Sheet;
 using SlideGenerator.Document.Domain.Models.Slide;
-using SlideGenerator.Generating.Domain.Models.Dto;
+using SlideGenerator.Generating.Domain.Models.Recipes;
 
 namespace SlideGenerator.Generating.Domain.Models.Contexts;
 

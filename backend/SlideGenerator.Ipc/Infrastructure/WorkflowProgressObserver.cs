@@ -16,7 +16,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
 using SlideGenerator.Generating.Domain.Models;
 using SlideGenerator.Logging.Domain.Abstractions;
 using StreamJsonRpc;
@@ -29,7 +28,7 @@ namespace SlideGenerator.Ipc.Infrastructure;
 ///     The connection is bound at runtime via <see cref="Attach" /> rather than at construction time
 ///     because <see cref="JsonRpc" /> is created after the DI container is built.
 /// </summary>
-public sealed class WorkflowProgressObserver(ISystemLogger logger)
+internal sealed class WorkflowProgressObserver(ISystemLogger logger)
 {
     private JsonRpc? _jsonRpc;
 
@@ -69,3 +68,4 @@ public sealed class WorkflowProgressObserver(ISystemLogger logger)
                 TaskScheduler.Default);
     }
 }
+

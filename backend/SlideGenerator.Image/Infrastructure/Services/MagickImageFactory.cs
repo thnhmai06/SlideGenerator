@@ -16,7 +16,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
 using SlideGenerator.Image.Application.Abstractions;
 using SlideGenerator.Image.Domain.Entities;
 using SlideGenerator.Image.Infrastructure.Adapters;
@@ -24,7 +23,7 @@ using MagickImage = SlideGenerator.Image.Infrastructure.Adapters.MagickImage;
 
 namespace SlideGenerator.Image.Infrastructure.Services;
 
-public sealed class MagickImageFactory : IImageFactory
+internal sealed class MagickImageFactory : IImageFactory
 {
     public IImage Open(byte[] data)
     {
@@ -45,3 +44,4 @@ public sealed class MagickImageFactory : IImageFactory
         return Open(bytes);
     }
 }
+

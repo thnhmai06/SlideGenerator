@@ -16,12 +16,13 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
+using SlideGenerator.Common.Utilities;
 using SlideGenerator.Generating.Application.Abstractions;
 using SlideGenerator.Generating.Application.Workflows;
 using SlideGenerator.Generating.Domain.Models;
 using SlideGenerator.Generating.Domain.Models.Contexts;
 using SlideGenerator.Logging.Domain.Abstractions;
+using SlideGenerator.Settings.Domain.Rules;
 using WorkflowCore.Interface;
 using WorkflowCore.Models.LifeCycleEvents;
 
@@ -32,7 +33,7 @@ namespace SlideGenerator.Generating.Infrastructure.Services;
 ///     <see cref="IWorkflowHost" /> and <see cref="IWorkflowController" />.
 ///     Lives in Infrastructure because it has a direct dependency on the WorkflowCore framework.
 /// </summary>
-public sealed class GeneratingService(
+internal sealed class GeneratingService(
     IWorkflowHost workflowHost,
     IWorkflowController workflowController,
     IGeneratingEventBus eventBus,
@@ -144,12 +145,9 @@ public sealed class GeneratingService(
 
     private static string ResolveWorkflowLogPath(GeneratingRequest request)
     {
-        if (!string.IsNullOrWhiteSpace(request.WorkflowLogFilePath)) return request.WorkflowLogFilePath;
-
-        var fileName = string.Join("_",
-            request.Name.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
+        var fileName = Normalization.NormalizeFileName(request.Name);
         if (string.IsNullOrWhiteSpace(fileName)) fileName = "workflow";
-        return Path.Combine(request.SaveFolder, $"{fileName}.log");
+        return Path.Combine(NameAndPaths.LogsFolder.Workflows, $"{fileName}.log");
     }
 
     private static string ResolveWorkflowScope(GeneratingRequest request)
@@ -157,3 +155,4 @@ public sealed class GeneratingService(
         return string.IsNullOrWhiteSpace(request.Name) ? "Workflow" : request.Name;
     }
 }
+

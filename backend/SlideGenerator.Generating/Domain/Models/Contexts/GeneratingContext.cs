@@ -16,7 +16,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
 using System.Collections.Concurrent;
 using Newtonsoft.Json;
 using SlideGenerator.Document.Domain.Abstractions.Sheet;
@@ -53,7 +52,7 @@ public sealed class GeneratingContext : IDisposable
     ///     Not serialized — recreated by <c>GeneratingLoggerMiddleware</c> before each step.
     /// </summary>
     [JsonIgnore]
-    public IAppLogger? Logger { get; set; }
+    public IAppLogger Logger { get; set; } = null!;
 
     /// <summary>
     ///     The collection of validated worksheets and their target output configurations.

@@ -16,11 +16,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
 using SlideGenerator.Document.Domain.Models.Sheet;
 using SlideGenerator.Document.Domain.Models.Slide;
 
-namespace SlideGenerator.Generating.Domain.Models.Dto;
+namespace SlideGenerator.Generating.Domain.Models.Recipes;
 
 /// <summary>
 ///     Represents a single mapping node that links multiple source sheets to a target slide template.
@@ -41,5 +40,15 @@ public record MapNode(
 ///     A recipe consists of multiple mapping nodes that define how various data sources are merged into slides.
 /// </summary>
 /// <param name="Nodes">The list of mapping nodes that form the recipe.</param>
-/// <param name="Name">The display name of the recipe.</param>
-public record Recipe(IReadOnlyList<MapNode> Nodes, string Name = "Default Recipe");
+public record Recipe(IReadOnlyList<MapNode> Nodes);
+
+/// <summary>
+///     Represents a persisted recipe with its storage metadata.
+///     The display name and optional display string are stored alongside the recipe
+///     but are not part of the <see cref="Recipe" /> record itself.
+/// </summary>
+/// <param name="Id">The database-generated identifier.</param>
+/// <param name="Name">The human-readable display name of the recipe.</param>
+/// <param name="FlowData">Optional ReactFlow graph JSON for UI rendering.</param>
+/// <param name="Recipe">The recipe configuration.</param>
+public record RecipeEntry(int Id, string Name, string? FlowData, Recipe Recipe);

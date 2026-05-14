@@ -16,7 +16,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
 using System.Collections.Concurrent;
 using SlideGenerator.Coordinator.Application.Abstractions;
 using SlideGenerator.Coordinator.Domain.Models;
@@ -29,7 +28,7 @@ namespace SlideGenerator.Coordinator.Infrastructure.Services;
 ///     High-level concurrency gate for <see cref="GateType" />.
 ///     Manages per-gate limits dynamically using a pure counting mechanism.
 /// </summary>
-public sealed class GateLocker(ISettingProvider settingProvider, ISystemLogger logger) : IGateLocker
+internal sealed class GateLocker(ISettingProvider settingProvider, ISystemLogger logger) : IGateLocker
 {
     /// <summary>
     ///     The dictionary of gate states, keyed by <see cref="GateType" />.

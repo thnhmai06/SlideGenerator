@@ -16,7 +16,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
 namespace SlideGenerator.Image.Application.Models;
 
 /// <summary>Identifies the algorithm used to calculate the Region of Interest (ROI).</summary>

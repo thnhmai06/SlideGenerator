@@ -16,7 +16,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-
 using Microsoft.Extensions.DependencyInjection;
 using SlideGenerator.Generating.Application.Abstractions;
 using SlideGenerator.Generating.Application.Steps;
@@ -24,6 +23,7 @@ using SlideGenerator.Generating.Application.Workflows;
 using SlideGenerator.Generating.Domain.Models.Contexts;
 using SlideGenerator.Generating.Infrastructure.Middleware;
 using SlideGenerator.Generating.Infrastructure.Services;
+using SlideGenerator.Settings.Domain.Rules;
 using WorkflowCore.Interface;
 
 namespace SlideGenerator.Generating;
@@ -62,6 +62,10 @@ public static class Registration
 
         // Workflow service facade — Ipc depends on this, not on WorkflowCore directly
         services.AddSingleton<IGeneratingService, GeneratingService>();
+
+        // Recipe repository — deduplicates by content, caches results in memory
+        services.AddSingleton<IRecipeRepository>(
+            _ => new RecipeRepository(NameAndPaths.RecipesFile.ConnectionString));
 
         return services;
     }
