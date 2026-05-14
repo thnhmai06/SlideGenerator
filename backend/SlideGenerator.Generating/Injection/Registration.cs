@@ -27,7 +27,7 @@ using SlideGenerator.Generating.Infrastructure.Services;
 using SlideGenerator.Settings.Domain.Rules;
 using WorkflowCore.Interface;
 
-namespace SlideGenerator.Generating;
+namespace SlideGenerator.Generating.Injection;
 
 /// <summary>
 ///     Provides extension methods to register the generating workflow and its steps

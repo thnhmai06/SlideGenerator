@@ -31,6 +31,7 @@ using SlideGenerator.Document.Injection;
 using SlideGenerator.Download.Injection;
 using SlideGenerator.Generating;
 using SlideGenerator.Generating.Application.Abstractions;
+using SlideGenerator.Generating.Injection;
 using SlideGenerator.Image.Injection;
 using SlideGenerator.Ipc.Handlers;
 using SlideGenerator.Ipc.Infrastructure;
