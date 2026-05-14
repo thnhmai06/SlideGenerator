@@ -16,11 +16,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using Microsoft.Extensions.DependencyInjection;
 using SlideGenerator.Document.Application.Abstractions;
 using SlideGenerator.Document.Application.Services;
 using SlideGenerator.Document.Infrastructure.Services;
-using SlideGenerator.Documents;
+using SlideGenerator.Logging.Domain.Abstractions;
 using Syncfusion.Licensing;
 using MustacheEngine = SlideGenerator.Document.Infrastructure.Services.MustacheEngine;
 
@@ -31,11 +32,22 @@ namespace SlideGenerator.Document.Injection;
 /// </summary>
 public static class Registration
 {
-    public static IServiceCollection AddDocumentServices(this IServiceCollection services)
+    public static IServiceCollection AddDocumentServices(this IServiceCollection services, ISystemLogger? systemLogger)
     {
         var licenseKey = SyncfusionLicense.Key; // decoded from XOR-encoded bytes at build time
         if (!string.IsNullOrWhiteSpace(licenseKey) && licenseKey != "empty")
             SyncfusionLicenseProvider.RegisterLicense(licenseKey);
+        else
+            systemLogger?.Warning(
+                "Syncfusion license key is missing or empty. Please provide a valid Syncfusion license key to enable full functionality of the document generation features.");
+        if (!SyncfusionLicenseProvider.ValidateLicense(Platform.Excel))
+            systemLogger?.Warning(
+                "Excel license is invalid. The Excel Engine will not work properly. Please provide a valid Syncfusion license key.");
+        else systemLogger?.Debug("Excel license is valid.");
+        if (!SyncfusionLicenseProvider.ValidateLicense(Platform.PowerPoint))
+            systemLogger?.Warning(
+                "PowerPoint license is invalid. The PowerPoint Engine will not work properly. Please provide a valid Syncfusion license key.");
+        else systemLogger?.Debug("PowerPoint license is valid.");
 
         services.AddSingleton<IWorkbookProvider, SfWorkbookProvider>();
         services.AddSingleton<IPresentationProvider, SfPresentationProvider>();

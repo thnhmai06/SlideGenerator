@@ -60,12 +60,12 @@ public static class NameAndPaths
         /// <summary>
         /// Represents the path to the folder designated for storing system logs.
         /// </summary>
-        public static string System => Path.Combine(BasePath, "Logs", "System");
+        public static string System => Path.Combine(UserPath, "Logs", "System");
 
         /// <summary>
         /// Represents the predefined folder path for storing workflow logs.
         /// </summary>
-        public static string Workflows => Path.Combine(BasePath, "Logs", "Workflows");
+        public static string Workflows => Path.Combine(UserPath, "Logs", "Workflows");
     }
 
     /// <summary>
