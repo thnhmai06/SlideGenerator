@@ -1,9 +1,9 @@
 namespace SlideGenerator.Coordinator.Domain.Models;
 
 /// <summary>
-/// Represents a participation model in the workflow coordination process.
-/// Determines the role (primary or secondary) of a participant in handling
-/// operations for a specific workflow key.
+///     Represents a participation model in the workflow coordination process.
+///     Determines the role (primary or secondary) of a participant in handling
+///     operations for a specific workflow key.
 /// </summary>
 public abstract record Enlistment;
 

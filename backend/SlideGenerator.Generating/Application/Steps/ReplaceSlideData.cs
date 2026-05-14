@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Coordinator.Application.Abstractions;
 using SlideGenerator.Coordinator.Domain.Models;
 using SlideGenerator.Document.Application.Abstractions;
@@ -118,7 +119,14 @@ public sealed class ReplaceSlideData(
                 shape.ImageData = await File.ReadAllBytesAsync(finalEditPath).ConfigureAwait(false);
 
                 if (data.Request.EditAssetsPath == null)
-                    try { File.Delete(finalEditPath); } catch { /* ignore */ }
+                    try
+                    {
+                        File.Delete(finalEditPath);
+                    }
+                    catch
+                    {
+                        /* ignore */
+                    }
             }
             else
             {

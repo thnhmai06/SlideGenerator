@@ -16,9 +16,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using Microsoft.Data.Sqlite;
 using SlideGenerator.Generating.Application.Abstractions;
-using SlideGenerator.Generating.Domain.Models;
 using SlideGenerator.Generating.Domain.Models.Recipes;
 
 namespace SlideGenerator.Generating.Infrastructure.Services;
@@ -39,6 +39,12 @@ internal sealed class RecipeRepository : IRecipeRepository, IDisposable
         _conn = new SqliteConnection(connectionString);
         _conn.Open();
         EnsureCreated();
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        _conn.Dispose();
     }
 
     /// <inheritdoc />
@@ -80,21 +86,17 @@ internal sealed class RecipeRepository : IRecipeRepository, IDisposable
             RecipeSerializer.Deserialize(reader.GetString(3)));
     }
 
-    /// <inheritdoc />
-    public void Dispose() => _conn.Dispose();
-
     private void EnsureCreated()
     {
         using var cmd = _conn.CreateCommand();
         cmd.CommandText = """
-            CREATE TABLE IF NOT EXISTS Recipes (
-                Id         INTEGER PRIMARY KEY AUTOINCREMENT,
-                Name       TEXT    NOT NULL,
-                FlowData   TEXT,
-                RecipeJson TEXT    NOT NULL UNIQUE
-            );
-            """;
+                          CREATE TABLE IF NOT EXISTS Recipes (
+                              Id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                              Name       TEXT    NOT NULL,
+                              FlowData   TEXT,
+                              RecipeJson TEXT    NOT NULL UNIQUE
+                          );
+                          """;
         cmd.ExecuteNonQuery();
     }
 }
-

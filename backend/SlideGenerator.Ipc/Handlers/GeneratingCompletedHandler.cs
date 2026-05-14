@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Generating.Application.Abstractions;
 using SlideGenerator.Generating.Domain.Models;
 
@@ -32,26 +33,34 @@ public sealed class GeneratingCompletedHandler(IGeneratingService generatingServ
     ///     Returns summaries of all completed, cancelled, or errored workflow instances.
     /// </summary>
     public Task<IReadOnlyList<GeneratingInstanceSummary>> ListAsync(CancellationToken ct)
-        => generatingService.ListCompletedAsync(ct);
+    {
+        return generatingService.ListCompletedAsync(ct);
+    }
 
     /// <summary>
     ///     Returns the summary of a specific completed workflow instance,
     ///     or <see langword="null" /> if not found.
     /// </summary>
     public Task<GeneratingInstanceSummary?> QueryAsync(string workflowInstanceId, CancellationToken ct)
-        => generatingService.QueryAsync(workflowInstanceId, ct);
+    {
+        return generatingService.QueryAsync(workflowInstanceId, ct);
+    }
 
     /// <summary>
     ///     Permanently deletes a single completed or cancelled workflow instance and all its associated data.
     /// </summary>
     /// <returns><see langword="true" /> if deleted; <see langword="false" /> if not found or still active.</returns>
     public Task<bool> DeleteAsync(string workflowInstanceId, CancellationToken ct)
-        => generatingService.DeleteAsync(workflowInstanceId, ct);
+    {
+        return generatingService.DeleteAsync(workflowInstanceId, ct);
+    }
 
     /// <summary>
     ///     Permanently deletes all completed and cancelled workflow instances.
     /// </summary>
     /// <returns>The number of instances deleted.</returns>
     public Task<int> DeleteAllAsync(CancellationToken ct)
-        => generatingService.DeleteAllCompletedAsync(ct);
+    {
+        return generatingService.DeleteAllCompletedAsync(ct);
+    }
 }

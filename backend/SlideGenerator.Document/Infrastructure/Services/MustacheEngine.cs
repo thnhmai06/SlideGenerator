@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using SlideGenerator.Document.Application.Abstractions;
@@ -211,4 +212,3 @@ internal sealed partial class MustacheEngine(ISystemLogger logger) : ITemplateEn
     [GeneratedRegex(@"\{\{\{?([#\^/&!>]?\s*[\w\.\-]+)\s*\}?\}\}", RegexOptions.Compiled)]
     private static partial Regex TagPattern();
 }
-

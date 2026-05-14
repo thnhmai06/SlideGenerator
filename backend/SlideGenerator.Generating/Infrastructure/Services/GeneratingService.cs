@@ -196,7 +196,8 @@ internal sealed class GeneratingService(
         await using var tx = conn.BeginTransaction();
         try
         {
-            await DeletePointerChildrenAsync(conn, tx, $"\"WorkflowInstanceId\" = @id", instanceId, ct).ConfigureAwait(false);
+            await DeletePointerChildrenAsync(conn, tx, "\"WorkflowInstanceId\" = @id", instanceId, ct)
+                .ConfigureAwait(false);
             await DeletePointersAsync(conn, tx, "\"WorkflowInstanceId\" = @id", instanceId, ct).ConfigureAwait(false);
 
             await using var cmd = conn.CreateCommand();
@@ -226,7 +227,8 @@ internal sealed class GeneratingService(
         await using var tx = conn.BeginTransaction();
         try
         {
-            const string completedFilter = "\"WorkflowInstanceId\" IN (SELECT \"Id\" FROM \"Workflow\" WHERE \"Status\" IN (2, 3))";
+            const string completedFilter =
+                "\"WorkflowInstanceId\" IN (SELECT \"Id\" FROM \"Workflow\" WHERE \"Status\" IN (2, 3))";
             await DeletePointerChildrenAsync(conn, tx, completedFilter, null, ct).ConfigureAwait(false);
             await DeletePointersAsync(conn, tx, completedFilter, null, ct).ConfigureAwait(false);
 

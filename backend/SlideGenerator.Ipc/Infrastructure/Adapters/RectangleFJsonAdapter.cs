@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using System.Drawing;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -59,4 +60,3 @@ internal sealed class RectangleFJsonAdapter : JsonConverter<RectangleF>
         writer.WriteEndObject();
     }
 }
-

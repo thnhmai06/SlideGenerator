@@ -16,16 +16,17 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using Microsoft.Extensions.Configuration;
 using Serilog;
-using SlideGenerator.Common.Utilities;
 using Serilog.Events;
 using Serilog.Exceptions;
+using Serilog.Sinks.SystemConsole.Themes;
+using SlideGenerator.Common.Utilities;
 using SlideGenerator.Logging.Domain.Abstractions;
 using SlideGenerator.Logging.Infrastructure.Formatting;
 using SlideGenerator.Logging.Infrastructure.Options;
 using SlideGenerator.Logging.Infrastructure.Services;
-using Serilog.Sinks.SystemConsole.Themes;
 
 namespace SlideGenerator.Logging.Injection;
 
@@ -134,4 +135,3 @@ public static class SystemLoggerBootstrapper
         }
     }
 }
-

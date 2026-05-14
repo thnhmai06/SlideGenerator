@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using Syncfusion.Presentation;
 using ITextPart = SlideGenerator.Document.Domain.Abstractions.Slide.ITextPart;
 
@@ -58,4 +59,3 @@ internal class SfParagraph(IParagraph core) : Domain.Abstractions.Slide.IParagra
         Core.TextParts.RemoveAt(index);
     }
 }
-

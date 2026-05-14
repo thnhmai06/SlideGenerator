@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using SlideGenerator.Generating.Domain.Models.Recipes;
@@ -42,61 +43,73 @@ internal static class RecipeSerializer
 
     /// <summary>Serializes <paramref name="recipe" /> to a canonical JSON string.</summary>
     public static string Serialize(Recipe recipe)
-        => JsonSerializer.Serialize(Normalize(recipe));
+    {
+        return JsonSerializer.Serialize(Normalize(recipe));
+    }
 
     /// <summary>Deserializes a <see cref="Recipe" /> from a canonical JSON string produced by <see cref="Serialize" />.</summary>
     public static Recipe Deserialize(string json)
-        => JsonSerializer.Deserialize<Recipe>(json, DeserializeOptions)!;
-
-    private static object Normalize(Recipe recipe) => new
     {
-        Nodes = recipe.Nodes.Select(n => new
+        return JsonSerializer.Deserialize<Recipe>(json, DeserializeOptions)!;
+    }
+
+    private static object Normalize(Recipe recipe)
+    {
+        return new
         {
-            Sheets = n.Sheets
-                .OrderBy(s => s.BookPath).ThenBy(s => s.SheetName).ThenBy(s => s.BookPassword)
-                .Select(s => new { s.BookPath, s.SheetName, s.BookPassword }),
-            Slide = new { n.Slide.PresentationPath, n.Slide.SlideIndex, n.Slide.PresentationPassword },
-            TextInstructions = n.TextInstructions.Select(t => new
+            Nodes = recipe.Nodes.Select(n => new
             {
-                Placeholders = t.Placeholders.OrderBy(p => p),
-                Columns = t.Columns.Select(c => new { c.BookPath, c.SheetName, c.ColumnName, c.BookPassword })
-            }),
-            ImageInstructions = n.ImageInstructions.Select(i => new
-            {
-                Shapes = i.Shapes
-                    .OrderBy(s => s.PresentationPath)
-                    .ThenBy(s => s.SlideIndex)
-                    .ThenBy(s => s.ShapeName)
-                    .ThenBy(s => s.PresentationPassword)
-                    .Select(s => new { s.PresentationPath, s.SlideIndex, s.ShapeName, s.PresentationPassword }),
-                Columns = i.Columns.Select(c => new { c.BookPath, c.SheetName, c.ColumnName, c.BookPassword }),
-                EditOptions = new { RoiOption = NormalizeRoiOption(i.EditOptions.RoiOption) },
-                i.FallbackImagePath
+                Sheets = n.Sheets
+                    .OrderBy(s => s.BookPath).ThenBy(s => s.SheetName).ThenBy(s => s.BookPassword)
+                    .Select(s => new { s.BookPath, s.SheetName, s.BookPassword }),
+                Slide = new { n.Slide.PresentationPath, n.Slide.SlideIndex, n.Slide.PresentationPassword },
+                TextInstructions = n.TextInstructions.Select(t => new
+                {
+                    Placeholders = t.Placeholders.OrderBy(p => p),
+                    Columns = t.Columns.Select(c => new { c.BookPath, c.SheetName, c.ColumnName, c.BookPassword })
+                }),
+                ImageInstructions = n.ImageInstructions.Select(i => new
+                {
+                    Shapes = i.Shapes
+                        .OrderBy(s => s.PresentationPath)
+                        .ThenBy(s => s.SlideIndex)
+                        .ThenBy(s => s.ShapeName)
+                        .ThenBy(s => s.PresentationPassword)
+                        .Select(s => new { s.PresentationPath, s.SlideIndex, s.ShapeName, s.PresentationPassword }),
+                    Columns = i.Columns.Select(c => new { c.BookPath, c.SheetName, c.ColumnName, c.BookPassword }),
+                    EditOptions = new { RoiOption = NormalizeRoiOption(i.EditOptions.RoiOption) },
+                    i.FallbackImagePath
+                })
             })
-        })
-    };
+        };
+    }
 
-    private static object NormalizeRoiOption(RoiOption roi) => roi switch
+    private static object NormalizeRoiOption(RoiOption roi)
     {
-        CenterOption c => new
+        return roi switch
         {
-            Type = c.Type.ToString(),
-            Pivot = new { c.Pivot.X, c.Pivot.Y },
-            c.UseFaceAlignment
-        },
-        RuleOfThirdsOption r => new
-        {
-            Type = r.Type.ToString(),
-            Pivot = new { r.Pivot.X, r.Pivot.Y }
-        },
-        _ => throw new NotSupportedException($"Unknown RoiOption type: {roi.GetType().Name}")
-    };
+            CenterOption c => new
+            {
+                Type = c.Type.ToString(),
+                Pivot = new { c.Pivot.X, c.Pivot.Y },
+                c.UseFaceAlignment
+            },
+            RuleOfThirdsOption r => new
+            {
+                Type = r.Type.ToString(),
+                Pivot = new { r.Pivot.X, r.Pivot.Y }
+            },
+            _ => throw new NotSupportedException($"Unknown RoiOption type: {roi.GetType().Name}")
+        };
+    }
 
     private sealed class ReadOnlySetConverterFactory : JsonConverterFactory
     {
         public override bool CanConvert(Type typeToConvert)
-            => typeToConvert.IsGenericType
-               && typeToConvert.GetGenericTypeDefinition() == typeof(IReadOnlySet<>);
+        {
+            return typeToConvert.IsGenericType
+                   && typeToConvert.GetGenericTypeDefinition() == typeof(IReadOnlySet<>);
+        }
 
         public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
         {
@@ -108,11 +121,16 @@ internal static class RecipeSerializer
 
     private sealed class ReadOnlySetConverter<T> : JsonConverter<IReadOnlySet<T>>
     {
-        public override IReadOnlySet<T> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-            => new HashSet<T>(JsonSerializer.Deserialize<List<T>>(ref reader, options)!);
+        public override IReadOnlySet<T> Read(ref Utf8JsonReader reader, Type typeToConvert,
+            JsonSerializerOptions options)
+        {
+            return new HashSet<T>(JsonSerializer.Deserialize<List<T>>(ref reader, options)!);
+        }
 
         public override void Write(Utf8JsonWriter writer, IReadOnlySet<T> value, JsonSerializerOptions options)
-            => JsonSerializer.Serialize<IEnumerable<T>>(writer, value, options);
+        {
+            JsonSerializer.Serialize<IEnumerable<T>>(writer, value, options);
+        }
     }
 
     private sealed class RoiOptionConverter : JsonConverter<RoiOption>
@@ -130,7 +148,8 @@ internal static class RecipeSerializer
         }
 
         public override void Write(Utf8JsonWriter writer, RoiOption value, JsonSerializerOptions options)
-            => throw new NotSupportedException($"{nameof(RoiOptionConverter)} is used only for deserialization.");
+        {
+            throw new NotSupportedException($"{nameof(RoiOptionConverter)} is used only for deserialization.");
+        }
     }
 }
-

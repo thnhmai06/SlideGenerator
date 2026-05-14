@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Generating.Application.Abstractions;
 using SlideGenerator.Generating.Application.Workflows;
 using SlideGenerator.Generating.Domain.Models;
@@ -90,6 +91,7 @@ public sealed class GeneratingActiveHandler(
             Publish(instance.InstanceId, GeneratingEvent.WorkflowCancelled, null, GeneratingStatus.Cancelled);
             count++;
         }
+
         return count;
     }
 
@@ -108,6 +110,7 @@ public sealed class GeneratingActiveHandler(
             Publish(instance.InstanceId, GeneratingEvent.WorkflowSuspended, null, GeneratingStatus.Paused);
             count++;
         }
+
         return count;
     }
 
@@ -115,13 +118,17 @@ public sealed class GeneratingActiveHandler(
     ///     Returns summaries of all currently active (running or paused) workflow instances.
     /// </summary>
     public Task<IReadOnlyList<GeneratingInstanceSummary>> ListAsync(CancellationToken ct)
-        => generatingService.ListActiveAsync(ct);
+    {
+        return generatingService.ListActiveAsync(ct);
+    }
 
     /// <summary>
     ///     Returns the summary of a specific active workflow instance, or <see langword="null" /> if not found.
     /// </summary>
     public Task<GeneratingInstanceSummary?> QueryAsync(string workflowInstanceId, CancellationToken ct)
-        => generatingService.QueryAsync(workflowInstanceId, ct);
+    {
+        return generatingService.QueryAsync(workflowInstanceId, ct);
+    }
 
     private void Publish(string instanceId, GeneratingEvent evt, GeneratingPhase? phase, GeneratingStatus status)
     {

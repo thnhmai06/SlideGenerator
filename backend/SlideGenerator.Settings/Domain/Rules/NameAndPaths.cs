@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Common.Utilities;
 using SlideGenerator.Cryptography.Application.Abstractions;
 
@@ -53,17 +54,17 @@ public static class NameAndPaths
     }
 
     /// <summary>
-    /// Provides predefined folder paths for storing system and workflow logs.
+    ///     Provides predefined folder paths for storing system and workflow logs.
     /// </summary>
     public static class LogsFolder
     {
         /// <summary>
-        /// Represents the path to the folder designated for storing system logs.
+        ///     Represents the path to the folder designated for storing system logs.
         /// </summary>
         public static string System => Path.Combine(UserPath, "Logs", "System");
 
         /// <summary>
-        /// Represents the predefined folder path for storing workflow logs.
+        ///     Represents the predefined folder path for storing workflow logs.
         /// </summary>
         public static string Workflows => Path.Combine(UserPath, "Logs", "Workflows");
     }

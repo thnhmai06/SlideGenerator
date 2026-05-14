@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using System.Drawing;
 using SlideGenerator.Coordinator.Application.Abstractions;
 using SlideGenerator.Coordinator.Domain.Models;
@@ -74,8 +75,10 @@ public sealed class EditImage(
 
         return enlistResult switch
         {
-            PrimaryEnlistment primary => await RunPrimaryAsync(data, primary.SubmitResult, finalEditPath).ConfigureAwait(false),
-            SecondaryEnlistment secondary => await RunSecondaryAsync(data, secondary.WaitTask, finalEditPath).ConfigureAwait(false),
+            PrimaryEnlistment primary => await RunPrimaryAsync(data, primary.SubmitResult, finalEditPath)
+                .ConfigureAwait(false),
+            SecondaryEnlistment secondary => await RunSecondaryAsync(data, secondary.WaitTask, finalEditPath)
+                .ConfigureAwait(false),
             _ => ExecutionResult.Next()
         };
     }
@@ -237,6 +240,9 @@ public sealed class EditImage(
     ///     Builds a deduplication key encoding all inputs that determine the edit output:
     ///     source URI, fallback path, edit options, and target dimensions.
     /// </summary>
-    private string BuildEditKey() =>
-        $"{Task.SourceUri?.AbsoluteUri}|{Task.FallbackImagePath}|{Task.EditOptions}|{(int)Math.Round(Task.Width)}x{(int)Math.Round(Task.Height)}";
+    private string BuildEditKey()
+    {
+        return
+            $"{Task.SourceUri?.AbsoluteUri}|{Task.FallbackImagePath}|{Task.EditOptions}|{(int)Math.Round(Task.Width)}x{(int)Math.Round(Task.Height)}";
+    }
 }

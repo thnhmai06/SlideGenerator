@@ -14,9 +14,9 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.8"/>
-        <PackageReference Include="StreamJsonRpc" Version="2.24.92" />
+        <PackageReference Include="StreamJsonRpc" Version="2.24.92"/>
         <PackageReference Include="WorkflowCore.Persistence.Sqlite" Version="3.17.0"/>
-        <PackageReference Update="StyleCop.Analyzers" Version="1.1.118" />
+        <PackageReference Update="StyleCop.Analyzers" Version="1.1.118"/>
     </ItemGroup>
 
     <ItemGroup>

@@ -21,6 +21,6 @@
         <PackageReference Include="Serilog.Extensions.Logging" Version="10.0.0"/>
         <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1"/>
         <PackageReference Include="Serilog.Sinks.File" Version="7.0.0"/>
-        <PackageReference Update="StyleCop.Analyzers" Version="1.1.118" />
+        <PackageReference Update="StyleCop.Analyzers" Version="1.1.118"/>
     </ItemGroup>
 </Project>

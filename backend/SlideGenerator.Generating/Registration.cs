@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using Microsoft.Extensions.DependencyInjection;
 using SlideGenerator.Generating.Application.Abstractions;
 using SlideGenerator.Generating.Application.Steps;
@@ -64,8 +65,7 @@ public static class Registration
         services.AddSingleton<IGeneratingService, GeneratingService>();
 
         // Recipe repository — deduplicates by content, caches results in memory
-        services.AddSingleton<IRecipeRepository>(
-            _ => new RecipeRepository(NameAndPaths.RecipesFile.ConnectionString));
+        services.AddSingleton<IRecipeRepository>(_ => new RecipeRepository(NameAndPaths.RecipesFile.ConnectionString));
 
         return services;
     }

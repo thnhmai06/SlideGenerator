@@ -25,5 +25,8 @@ namespace SlideGenerator.Coordinator.Application.Services;
 internal sealed class CoordinatorFactory : ICoordinatorFactory
 {
     /// <inheritdoc />
-    public ICoordinator Create() => new Coordinator();
+    public ICoordinator Create()
+    {
+        return new Coordinator();
+    }
 }

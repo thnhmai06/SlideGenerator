@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 using ISerializer = SlideGenerator.Settings.Application.Abstractions.ISerializer;

@@ -10,7 +10,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Update="StyleCop.Analyzers" Version="1.1.118" />
+        <PackageReference Update="StyleCop.Analyzers" Version="1.1.118"/>
     </ItemGroup>
 
 </Project>

@@ -31,12 +31,14 @@ namespace SlideGenerator.Generating.Domain.Models;
 /// <param name="SaveFolder">The root directory where generated presentations will be saved.</param>
 /// <param name="DownloadAssetsPath">
 ///     Custom directory for raw downloaded images.
-///     When <see langword="null" />, images are written to the default assets folder and deleted once the edit step completes.
+///     When <see langword="null" />, images are written to the default assets folder and deleted once the edit step
+///     completes.
 ///     When set, images are written to the specified path and kept after processing.
 /// </param>
 /// <param name="EditAssetsPath">
 ///     Custom directory for cropped/resized images.
-///     When <see langword="null" />, images are written to the default assets folder and deleted once they are embedded in slides.
+///     When <see langword="null" />, images are written to the default assets folder and deleted once they are embedded in
+///     slides.
 ///     When set, images are written to the specified path and kept after processing.
 /// </param>
 public sealed record GeneratingRequest(
@@ -55,14 +57,14 @@ public sealed record GeneratingRequest(
         : SaveFolder;
 
     /// <summary>
-    /// Gets the optional path where assets are downloaded during the generation process.
+    ///     Gets the optional path where assets are downloaded during the generation process.
     /// </summary>
     public string? DownloadAssetsPath { get; init; } = !string.IsNullOrWhiteSpace(DownloadAssetsPath)
         ? DownloadAssetsPath
         : null;
 
     /// <summary>
-    /// Gets the optional path where assets are edited during the generation process.
+    ///     Gets the optional path where assets are edited during the generation process.
     /// </summary>
     public string? EditAssetsPath { get; init; } = !string.IsNullOrWhiteSpace(EditAssetsPath)
         ? EditAssetsPath

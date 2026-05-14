@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using OpenCvSharp;
 
 namespace SlideGenerator.Image.Infrastructure;
@@ -27,4 +28,3 @@ internal static class Utilities
         return new Size(size.Width, size.Height);
     }
 }
-

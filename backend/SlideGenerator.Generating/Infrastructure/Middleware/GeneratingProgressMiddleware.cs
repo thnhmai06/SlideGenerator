@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Generating.Application.Abstractions;
 using SlideGenerator.Generating.Application.Steps;
 using SlideGenerator.Generating.Application.Workflows;
@@ -63,4 +64,3 @@ internal sealed class GeneratingProgressMiddleware(IGeneratingEventBus eventBus)
         };
     }
 }
-
