@@ -41,7 +41,6 @@ public static class Registration
         services.AddSingleton<IPresentationProvider, SfPresentationProvider>();
         services.AddSingleton<ITemplateEngine, MustacheEngine>();
         services.AddSingleton<ITextComposer, TextComposer>();
-        services.AddSingleton<IImageComposer, ImageComposer>();
 
         return services;
     }

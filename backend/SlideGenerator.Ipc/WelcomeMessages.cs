@@ -38,7 +38,7 @@ internal static class WelcomeMessages
     public const string Description = "This is the Backend sidecar of SlideGenerator.";
 
     public const string Line = "────────────────────────────────────────────────────────────";
-    public const string License = "Copyright (c) 2026 Mai Thành. Licensed under the GNU AGPLv3.";
+    public const string License = "Copyright (c) 2026 Thành Mai (thnhmai06). Licensed under the GNU AGPLv3.";
     public const string RepositoryUrl = "You can find app source code at: https://github.com/thnhmai06/SlideGenerator";
 
     public static readonly string Version =

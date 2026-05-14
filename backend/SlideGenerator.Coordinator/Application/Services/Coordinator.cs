@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Coordinator
- * File: Registration.cs
+ * File: Coordinator.cs
  *
  * This file is part of this solution. You can find the full source code here: https://github.com/thnhmai06/SlideGenerator
  *
@@ -16,19 +16,27 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-using Microsoft.Extensions.DependencyInjection;
+
+using System.Collections.Concurrent;
 using SlideGenerator.Coordinator.Application.Abstractions;
-using SlideGenerator.Coordinator.Application.Services;
-using SlideGenerator.Coordinator.Infrastructure.Services;
+using SlideGenerator.Coordinator.Domain.Models;
 
-namespace SlideGenerator.Coordinator.Injection;
+namespace SlideGenerator.Coordinator.Application.Services;
 
-public static class Registration
+/// <inheritdoc />
+internal sealed class Coordinator : ICoordinator
 {
-    public static IServiceCollection AddCoordinatorServices(this IServiceCollection services)
+    private readonly ConcurrentDictionary<string, TaskCompletionSource<string?>> _entries
+        = new(StringComparer.Ordinal);
+
+    /// <inheritdoc />
+    public Enlistment Enlist(string key)
     {
-        services.AddSingleton<IGateLocker, GateLocker>();
-        services.AddSingleton<ICoordinatorFactory, CoordinatorFactory>();
-        return services;
+        var tcs = new TaskCompletionSource<string?>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        if (_entries.TryAdd(key, tcs))
+            return new PrimaryEnlistment(outputPath => tcs.TrySetResult(outputPath));
+
+        return new SecondaryEnlistment(_entries[key].Task);
     }
 }

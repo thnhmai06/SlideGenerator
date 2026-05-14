@@ -21,4 +21,7 @@
         <ProjectReference Include="..\SlideGenerator.Document\SlideGenerator.Document.csproj"/>
         <ProjectReference Include="..\SlideGenerator.Logging\SlideGenerator.Logging.csproj"/>
     </ItemGroup>
+    <ItemGroup>
+      <Folder Include="Infrastructure\Utilities\" />
+    </ItemGroup>
 </Project>

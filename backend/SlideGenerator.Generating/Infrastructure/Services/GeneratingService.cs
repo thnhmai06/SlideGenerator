@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using SlideGenerator.Common.Utilities;
 using SlideGenerator.Generating.Application.Abstractions;
 using SlideGenerator.Generating.Application.Workflows;
@@ -40,6 +41,8 @@ internal sealed class GeneratingService(
     ISystemLogger logger)
     : IGeneratingService
 {
+    private bool _isStarted;
+
     /// <inheritdoc />
     public async Task InitializeAsync(CancellationToken ct = default)
     {
@@ -71,13 +74,21 @@ internal sealed class GeneratingService(
         };
 
         await workflowHost.StartAsync(ct).ConfigureAwait(false);
+        _isStarted = true;
         logger.Information("WorkflowCore host started and GeneratingWorkflow registered.");
     }
 
     /// <inheritdoc />
     public async Task ShutdownAsync(CancellationToken ct = default)
     {
+        if (!_isStarted)
+        {
+            logger.Debug("WorkflowCore host was not started; skipping stop.");
+            return;
+        }
+
         await workflowHost.StopAsync(ct).ConfigureAwait(false);
+        _isStarted = false;
         logger.Information("WorkflowCore host stopped.");
     }
 
@@ -155,4 +166,3 @@ internal sealed class GeneratingService(
         return string.IsNullOrWhiteSpace(request.Name) ? "Workflow" : request.Name;
     }
 }
-

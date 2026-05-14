@@ -66,7 +66,7 @@ internal sealed class SerilogAppLoggerFactory(IScopeManager scopeManager, Loggin
             .Enrich.FromLogContext()
             .Enrich.WithExceptionDetails()
             .Enrich.WithProperty("LoggerName", name)
-            .WriteTo.File(new ScopedExceptionFormatter(), logFilePath)
+            .WriteTo.File(new LogFormatter(), logFilePath)
             .CreateLogger();
 
         return new SerilogAppLogger(serilogLogger, scopeManager);

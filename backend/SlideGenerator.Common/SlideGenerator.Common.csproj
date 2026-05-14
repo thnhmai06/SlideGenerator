@@ -6,6 +6,7 @@
         <Nullable>enable</Nullable>
         <AssemblyName>SlideGenerator.Common</AssemblyName>
         <RootNamespace>SlideGenerator.Common</RootNamespace>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
 </Project>

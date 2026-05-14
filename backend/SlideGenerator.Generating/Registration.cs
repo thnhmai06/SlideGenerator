@@ -55,7 +55,7 @@ public static class Registration
         services.AddTransient<IWorkflow<GeneratingContext>, GeneratingWorkflow>();
 
         // Step middleware — lazily initializes the workflow logger before each step (supports persistence resume)
-        services.AddWorkflowStepMiddleware<GeneratingLoggerMiddleware>();
+        services.AddWorkflowStepMiddleware<GeneratingMiddleware>();
 
         // Step middleware — publishes StepCompleted progress events with phase info after each step
         services.AddWorkflowStepMiddleware<GeneratingProgressMiddleware>();

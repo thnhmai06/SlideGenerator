@@ -18,7 +18,7 @@
  */
 using Downloader;
 using SlideGenerator.Logging.Domain.Abstractions;
-using SlideGenerator.Settings.Domain.Abstractions;
+using SlideGenerator.Settings.Application.Abstractions;
 using IDownloadService = SlideGenerator.Download.Application.Abstractions.IDownloadService;
 
 namespace SlideGenerator.Download.Infrastructure.Services;

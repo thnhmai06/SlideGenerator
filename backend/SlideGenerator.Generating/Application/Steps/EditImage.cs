@@ -24,12 +24,15 @@ using SlideGenerator.Image.Application;
 using SlideGenerator.Image.Application.Abstractions;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
+using HardLink = SlideGenerator.Common.Utilities.HardLink;
 
 namespace SlideGenerator.Generating.Application.Steps;
 
 /// <summary>
 ///     Processes a single image by cropping and resizing it to match
 ///     the target shape dimensions using an intelligent ROI algorithm.
+///     Deduplicates identical (URI, options, size) combinations: only one step edits;
+///     others hard-link the result.
 /// </summary>
 public sealed class EditImage(
     IRoiResolver roiResolver,
@@ -46,7 +49,7 @@ public sealed class EditImage(
     public override async Task<ExecutionResult> RunAsync(IStepExecutionContext context)
     {
         var data = (GeneratingContext)context.Workflow.Data;
-        using var scope = data.Logger.BeginScope("EditImage");
+        using var scope = data.Logger!.BeginScope("EditImage");
 
         var finalEditPath = Task.EditPath + ".png";
 
@@ -66,6 +69,20 @@ public sealed class EditImage(
             return ExecutionResult.Next();
         }
 
+        var editKey = BuildEditKey();
+        var enlistResult = data.AssetCoordinator!.Enlist(editKey);
+
+        return enlistResult switch
+        {
+            PrimaryEnlistment primary => await RunPrimaryAsync(data, primary.SubmitResult, finalEditPath).ConfigureAwait(false),
+            SecondaryEnlistment secondary => await RunSecondaryAsync(data, secondary.WaitTask, finalEditPath).ConfigureAwait(false),
+            _ => ExecutionResult.Next()
+        };
+    }
+
+    private async Task<ExecutionResult> RunPrimaryAsync(
+        GeneratingContext data, Action<string?> complete, string finalEditPath)
+    {
         // Discover the source file
         string? sourceFile = null;
         var downloadDir = Path.GetDirectoryName(Task.DownloadPath);
@@ -74,44 +91,42 @@ public sealed class EditImage(
         if (downloadDir != null && Directory.Exists(downloadDir))
             sourceFile = Directory.GetFiles(downloadDir, $"{downloadPrefix}.*").FirstOrDefault();
 
-        // Use fallback if a primary source is missing
+        // Use fallback if primary source is missing
         if (sourceFile == null || !File.Exists(sourceFile))
         {
             if (!string.IsNullOrWhiteSpace(Task.FallbackImagePath) && File.Exists(Task.FallbackImagePath))
             {
                 sourceFile = Task.FallbackImagePath;
-                data.Logger.Debug("Primary source missing for row {RowIndex}, using fallback: '{Fallback}'",
+                data.Logger!.Debug("Primary source missing for row {RowIndex}, using fallback: '{Fallback}'",
                     Task.RowIndex, sourceFile);
             }
             else
             {
-                // Source is missing and no fallback available
                 if (Task.SourceUri != null)
-                    using (data.Logger.BeginScope(downloadPrefix))
+                    using (data.Logger!.BeginScope(downloadPrefix))
                     {
                         data.Logger.Error(
                             new FileNotFoundException("Source image and fallback not found for editing.",
                                 Task.DownloadPath), "Missing source");
                     }
 
+                complete(null);
                 return ExecutionResult.Next();
             }
         }
 
-        // Ensure target directory exists
         var editDir = Path.GetDirectoryName(finalEditPath);
         if (editDir != null && !Directory.Exists(editDir)) Directory.CreateDirectory(editDir);
 
         await gateLocker.AcquireAsync(GateType.EditImage).ConfigureAwait(false);
         try
         {
-            data.Logger.Debug("Editing image '{Source}' for shape '{ShapeName}' (Row {RowIndex})", sourceFile,
+            data.Logger!.Debug("Editing image '{Source}' for shape '{ShapeName}' (Row {RowIndex})", sourceFile,
                 Task.ShapeName, Task.RowIndex);
 
             using var image = imageFactory.Open(sourceFile);
             var targetSize = new Size((int)Math.Round(Task.Width), (int)Math.Round(Task.Height));
 
-            // 1. Calculate ROI based on the selected algorithm
             data.Logger.Debug("Calculating ROI for row {RowIndex} using {Algorithm}", Task.RowIndex,
                 Task.EditOptions.RoiOption);
 
@@ -120,24 +135,22 @@ public sealed class EditImage(
                 targetSize,
                 Task.EditOptions.RoiOption).ConfigureAwait(false);
 
-            // 2. Crop the image to the ROI
             data.Logger.Debug("Applying crop {ROI} to image for row {RowIndex}", roi, Task.RowIndex);
             image.Crop(roi);
 
-            // 3. Resize with a maintained aspect ratio to fit the target shape dimensions
             var currentSize = new Size((int)image.Width, (int)image.Height);
             var maxAspectSize = currentSize.GetMaxAspectSize(targetSize);
 
             data.Logger.Debug("Resizing image for row {RowIndex} to {Size}", Task.RowIndex, maxAspectSize);
             image.Resize(maxAspectSize);
 
-            // 4. Save the edited image as PNG
             await image.WriteAsync(finalEditPath).ConfigureAwait(false);
 
             data.Logger.Information("Successfully edited image for row {RowIndex}, shape {ShapeName}", Task.RowIndex,
                 Task.ShapeName);
 
-            // Delete raw download image when using the default (temporary) assets path
+            complete(finalEditPath);
+
             if (data.Request.DownloadAssetsPath == null && sourceFile != Task.FallbackImagePath)
                 try
                 {
@@ -151,10 +164,12 @@ public sealed class EditImage(
         catch (Exception ex) when (ex is not NullReferenceException and not InvalidCastException
                                        and not IndexOutOfRangeException)
         {
-            using (data.Logger.BeginScope(Path.GetFileName(finalEditPath)))
+            using (data.Logger!.BeginScope(Path.GetFileName(finalEditPath)))
             {
                 data.Logger.Error(ex, "Edit image failed");
             }
+
+            complete(null);
         }
         finally
         {
@@ -163,4 +178,65 @@ public sealed class EditImage(
 
         return ExecutionResult.Next();
     }
+
+    private async Task<ExecutionResult> RunSecondaryAsync(
+        GeneratingContext data, Task<string?> waitTask, string finalEditPath)
+    {
+        // Idempotency: own edit file already exists (resume scenario)
+        if (File.Exists(finalEditPath))
+        {
+            data.Logger!.Debug(
+                "Edited image for row {RowIndex} already exists (resume), skipping secondary hardlink",
+                Task.RowIndex);
+            return ExecutionResult.Next();
+        }
+
+        var primaryPath = await waitTask.ConfigureAwait(false);
+
+        if (primaryPath != null && File.Exists(primaryPath))
+        {
+            var editDir = Path.GetDirectoryName(finalEditPath);
+            if (editDir != null && !Directory.Exists(editDir)) Directory.CreateDirectory(editDir);
+
+            HardLink.Create(finalEditPath, primaryPath);
+            data.Logger!.Debug(
+                "Hard-linked edit for row {RowIndex}, shape {ShapeName} from primary path '{PrimaryPath}'",
+                Task.RowIndex, Task.ShapeName, primaryPath);
+
+            // Clean up own source download file if using temp path (consistent with primary behavior)
+            if (data.Request.DownloadAssetsPath == null)
+            {
+                var downloadDir = Path.GetDirectoryName(Task.DownloadPath);
+                var downloadPrefix = Path.GetFileName(Task.DownloadPath);
+                if (downloadDir != null && Directory.Exists(downloadDir))
+                {
+                    var sourceFile = Directory.GetFiles(downloadDir, $"{downloadPrefix}.*").FirstOrDefault();
+                    if (sourceFile != null && sourceFile != Task.FallbackImagePath)
+                        try
+                        {
+                            File.Delete(sourceFile);
+                        }
+                        catch
+                        {
+                            /* ignore */
+                        }
+                }
+            }
+        }
+        else
+        {
+            data.Logger!.Warning(
+                "Primary edit failed for row {RowIndex}, shape {ShapeName} will have no image",
+                Task.RowIndex, Task.ShapeName);
+        }
+
+        return ExecutionResult.Next();
+    }
+
+    /// <summary>
+    ///     Builds a deduplication key encoding all inputs that determine the edit output:
+    ///     source URI, fallback path, edit options, and target dimensions.
+    /// </summary>
+    private string BuildEditKey() =>
+        $"{Task.SourceUri?.AbsoluteUri}|{Task.FallbackImagePath}|{Task.EditOptions}|{(int)Math.Round(Task.Width)}x{(int)Math.Round(Task.Height)}";
 }

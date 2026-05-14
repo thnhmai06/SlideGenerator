@@ -32,11 +32,25 @@ public static class NameAndPaths
     /// <summary>
     ///     Gets the base path for user-specific application data.
     /// </summary>
-    private static string UserPath =>
+    public static string UserPath =>
         Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), // AppData/Local
             AppName);
+
+    /// <summary>
+    ///     Gets the base path for application-local data (executable directory).
+    /// </summary>
     public static string BasePath => AppDomain.CurrentDomain.BaseDirectory;
+
+    /// <summary>
+    ///     Ensures that all required application directories (data, logs, assets) exist on the disk.
+    /// </summary>
+    public static void InitializeDirectories()
+    {
+        Directory.CreateDirectory(UserPath);
+        Directory.CreateDirectory(LogsFolder.System);
+        Directory.CreateDirectory(LogsFolder.Workflows);
+    }
 
     /// <summary>
     /// Provides predefined folder paths for storing system and workflow logs.

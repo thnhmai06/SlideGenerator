@@ -16,7 +16,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-using SlideGenerator.Settings.Domain.Abstractions;
+
+using SlideGenerator.Settings.Application.Abstractions;
 using SlideGenerator.Settings.Domain.Entities;
 
 namespace SlideGenerator.Ipc.Handlers;

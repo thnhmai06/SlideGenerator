@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Generating
- * File: GeneratingLoggerMiddleware.cs
+ * File: GeneratingMiddleware.cs
  *
  * This file is part of this solution. You can find the full source code here: https://github.com/thnhmai06/SlideGenerator
  *
@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+using SlideGenerator.Coordinator.Application.Abstractions;
 using SlideGenerator.Generating.Domain.Models.Contexts;
 using SlideGenerator.Logging.Domain.Abstractions;
 using WorkflowCore.Interface;
@@ -24,19 +25,22 @@ using WorkflowCore.Models;
 namespace SlideGenerator.Generating.Infrastructure.Middleware;
 
 /// <summary>
-///     Ensures the workflow logger is initialized before each step executes,
+///     Ensures workflow-scoped services are initialized before each step executes,
 ///     supporting both first-run and persistence resume scenarios.
 /// </summary>
-internal sealed class GeneratingLoggerMiddleware(IAppLoggerFactory loggerFactory) : IWorkflowStepMiddleware
+internal sealed class GeneratingMiddleware(
+    IAppLoggerFactory loggerFactory,
+    ICoordinatorFactory coordinatorFactory) : IWorkflowStepMiddleware
 {
     /// <inheritdoc />
     public async Task<ExecutionResult> HandleAsync(
         IStepExecutionContext context, IStepBody body, WorkflowStepDelegate next)
     {
-        if (context.Workflow.Data is GeneratingContext { Logger: null } task)
-            task.Logger = loggerFactory.CreateWorkflowLogger(task.WorkflowScope, task.WorkflowLogPath);
+        if (context.Workflow.Data is not GeneratingContext data) return await next();
+
+        data.Logger ??= loggerFactory.CreateWorkflowLogger(data.WorkflowScope, data.WorkflowLogPath);
+        data.AssetCoordinator ??= coordinatorFactory.Create();
 
         return await next();
     }
 }
-

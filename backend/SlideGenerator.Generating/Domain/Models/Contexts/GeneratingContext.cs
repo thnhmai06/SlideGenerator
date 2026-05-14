@@ -18,6 +18,7 @@
  */
 using System.Collections.Concurrent;
 using Newtonsoft.Json;
+using SlideGenerator.Coordinator.Application.Abstractions;
 using SlideGenerator.Document.Domain.Abstractions.Sheet;
 using SlideGenerator.Document.Domain.Abstractions.Slide;
 using SlideGenerator.Document.Domain.Models.Sheet;
@@ -49,10 +50,17 @@ public sealed class GeneratingContext : IDisposable
 
     /// <summary>
     ///     Gets or sets the workflow-scoped logger.
-    ///     Not serialized — recreated by <c>GeneratingLoggerMiddleware</c> before each step.
+    ///     Not serialized — recreated by <c>GeneratingMiddleware</c> before each step.
     /// </summary>
     [JsonIgnore]
-    public IAppLogger Logger { get; set; } = null!;
+    public IAppLogger? Logger { get; set; } = null!;
+
+    /// <summary>
+    ///     Gets or sets the per-workflow asset deduplication coordinator.
+    ///     Not serialized — recreated empty by <c>GeneratingMiddleware</c> on resume (idempotency handles the rest).
+    /// </summary>
+    [JsonIgnore]
+    public ICoordinator? AssetCoordinator { get; set; } = null!;
 
     /// <summary>
     ///     The collection of validated worksheets and their target output configurations.

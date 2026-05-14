@@ -2,8 +2,8 @@
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Document
- * File: IImageComposer.cs
+ * Project: SlideGenerator.Coordinator
+ * File: CoordinatorFactory.cs
  *
  * This file is part of this solution. You can find the full source code here: https://github.com/thnhmai06/SlideGenerator
  *
@@ -16,19 +16,14 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-using Syncfusion.Presentation;
 
-namespace SlideGenerator.Document.Application.Abstractions;
+using SlideGenerator.Coordinator.Application.Abstractions;
 
-/// <summary>
-///     Replaces image content in presentation shapes.
-/// </summary>
-public interface IImageComposer
+namespace SlideGenerator.Coordinator.Application.Services;
+
+/// <inheritdoc />
+internal sealed class CoordinatorFactory : ICoordinatorFactory
 {
-    /// <summary>
-    ///     Replaces the image content of a shape.
-    /// </summary>
-    /// <param name="shape">The target shape.</param>
-    /// <param name="imageStream">The image stream to apply.</param>
-    void Replace(IShape shape, Stream imageStream);
+    /// <inheritdoc />
+    public ICoordinator Create() => new Application.Services.Coordinator();
 }

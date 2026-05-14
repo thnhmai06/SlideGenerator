@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Logging
- * File: ScopedExceptionFormatter.cs
+ * File: LogFormatter.cs
  *
  * This file is part of this solution. You can find the full source code here: https://github.com/thnhmai06/SlideGenerator
  *
@@ -16,6 +16,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
+
 using System.Globalization;
 using Serilog.Events;
 using Serilog.Formatting;
@@ -27,12 +28,12 @@ namespace SlideGenerator.Logging.Infrastructure.Formatting;
 ///     Formats log events as scoped single-line messages and optional exception-detail JSON.
 /// </summary>
 /// <remarks>
-///     The first line is always formatted as <c>[Timestamp] [Level] [Scope] [Message]</c>.
+///     The first line is always formatted as <c>[Timestamp] [Scope] LVL: Message</c>.
 ///     For <see cref="LogEventLevel.Error" /> and <see cref="LogEventLevel.Fatal" /> events that contain an exception,
 ///     the formatter writes one additional JSON line using the <c>ExceptionDetail</c> property enriched by
 ///     Serilog.Exceptions when available.
 /// </remarks>
-internal sealed class ScopedExceptionFormatter : ITextFormatter
+internal sealed class LogFormatter : ITextFormatter
 {
     private readonly JsonValueFormatter _jsonValueFormatter = new("$type");
 
@@ -40,14 +41,22 @@ internal sealed class ScopedExceptionFormatter : ITextFormatter
     public void Format(LogEvent logEvent, TextWriter output)
     {
         var timestamp = logEvent.Timestamp.ToString("yyyy-MM-dd HH:mm:ss.fff zzz", CultureInfo.InvariantCulture);
-        var level = logEvent.Level.ToString();
+        var levelAbbr = logEvent.Level switch
+        {
+            LogEventLevel.Verbose => "VRB",
+            LogEventLevel.Debug => "DBG",
+            LogEventLevel.Information => "INF",
+            LogEventLevel.Warning => "WRN",
+            LogEventLevel.Error => "ERR",
+            LogEventLevel.Fatal => "FTL",
+            _ => "???"
+        };
+
         var scope = GetScalarValue(logEvent, "Scope") ?? "Global";
         var message = logEvent.RenderMessage(CultureInfo.InvariantCulture);
 
-        output.WriteLine($"[{timestamp}] [{level}] [{scope}] [{message}]");
-
+        output.WriteLine($"[{timestamp}] [{scope}] {levelAbbr}: {message}");
         if (logEvent.Exception is null || logEvent.Level < LogEventLevel.Error) return;
-
         output.WriteLine(CreateExceptionJson(logEvent));
     }
 
@@ -100,4 +109,3 @@ internal sealed class ScopedExceptionFormatter : ITextFormatter
             .Replace("\n", "\\n", StringComparison.Ordinal);
     }
 }
-

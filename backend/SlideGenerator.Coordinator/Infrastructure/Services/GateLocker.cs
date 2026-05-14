@@ -20,7 +20,7 @@ using System.Collections.Concurrent;
 using SlideGenerator.Coordinator.Application.Abstractions;
 using SlideGenerator.Coordinator.Domain.Models;
 using SlideGenerator.Logging.Domain.Abstractions;
-using SlideGenerator.Settings.Domain.Abstractions;
+using SlideGenerator.Settings.Application.Abstractions;
 
 namespace SlideGenerator.Coordinator.Infrastructure.Services;
 

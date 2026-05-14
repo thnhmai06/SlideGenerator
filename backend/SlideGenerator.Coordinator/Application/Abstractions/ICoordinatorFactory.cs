@@ -2,8 +2,8 @@
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Settings
- * File: ISettingProvider.cs
+ * Project: SlideGenerator.Coordinator
+ * File: ICoordinatorFactory.cs
  *
  * This file is part of this solution. You can find the full source code here: https://github.com/thnhmai06/SlideGenerator
  *
@@ -16,17 +16,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  */
-using SlideGenerator.Settings.Domain.Entities;
 
-namespace SlideGenerator.Settings.Domain.Abstractions;
+namespace SlideGenerator.Coordinator.Application.Abstractions;
 
-/// <summary>
-///     Provides read-only access to the current application configuration.
-/// </summary>
-public interface ISettingProvider
+/// <summary>Creates a fresh <see cref="ICoordinator" /> instance scoped to one workflow run.</summary>
+public interface ICoordinatorFactory
 {
-    /// <summary>
-    ///     Gets the current active <see cref="Setting" /> configuration.
-    /// </summary>
-    public Setting Current { get; }
+    /// <summary>Returns a new, empty coordinator for a single workflow run.</summary>
+    ICoordinator Create();
 }

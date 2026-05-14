@@ -37,7 +37,7 @@ using SlideGenerator.Ipc.Infrastructure.Adapters;
 using SlideGenerator.Logging.Domain.Abstractions;
 using SlideGenerator.Logging.Injection;
 using SlideGenerator.Scanning.Injection;
-using SlideGenerator.Settings.Domain.Abstractions;
+using SlideGenerator.Settings.Application.Abstractions;
 using SlideGenerator.Settings.Domain.Rules;
 using SlideGenerator.Settings.Injection;
 using StreamJsonRpc;
@@ -209,6 +209,9 @@ internal static class Program
 
         try
         {
+            logger.Information("Initializing application directories...");
+            NameAndPaths.InitializeDirectories();
+
             logger.Information("Loading settings...");
             await LoadSettingsAsync(services);
 

@@ -18,12 +18,14 @@
  */
 using Microsoft.Extensions.Configuration;
 using Serilog;
+using SlideGenerator.Common.Utilities;
 using Serilog.Events;
 using Serilog.Exceptions;
 using SlideGenerator.Logging.Domain.Abstractions;
 using SlideGenerator.Logging.Infrastructure.Formatting;
 using SlideGenerator.Logging.Infrastructure.Options;
 using SlideGenerator.Logging.Infrastructure.Services;
+using Serilog.Sinks.SystemConsole.Themes;
 
 namespace SlideGenerator.Logging.Injection;
 
@@ -58,7 +60,7 @@ public static class SystemLoggerBootstrapper
     }
 
     /// <summary>
-    ///     Initializes the System logger from runtime path and already resolved logging options.
+    ///     Initializes the System logger from the runtime path and already resolved logging options.
     /// </summary>
     /// <param name="systemLogDirectory">The runtime directory that stores System log files.</param>
     /// <param name="options">The resolved logging options.</param>
@@ -69,20 +71,29 @@ public static class SystemLoggerBootstrapper
 
         Directory.CreateDirectory(systemLogDirectory);
         var currentLogFile = Path.Combine(systemLogDirectory, $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.log");
-        var formatter = new ScopedExceptionFormatter();
+        var fileFormatter = new LogFormatter();
+        const string consoleTemplate =
+            "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Scope}] {Level:u3}: {Message:lj}{NewLine}{Exception}";
 
         var serilogLogger = new LoggerConfiguration()
             .ApplyMinimumLevel(options.SystemMinimumLevel)
             .Enrich.FromLogContext()
             .Enrich.WithExceptionDetails()
             .Enrich.WithProperty("LoggerName", "System")
-            .WriteTo.File(formatter, currentLogFile)
-            .WriteTo.Console(formatter, standardErrorFromLevel: LogEventLevel.Verbose)
+            .Enrich.WithProperty("Scope", "Global")
+            .WriteTo.File(fileFormatter, currentLogFile)
+            .WriteTo.Console(
+                outputTemplate: consoleTemplate,
+                theme: AnsiConsoleTheme.Code,
+                standardErrorFromLevel: LogEventLevel.Verbose)
             .CreateLogger();
 
         Log.Logger = serilogLogger;
         var logger = new SerilogAppLogger(serilogLogger, new SerilogScopeManager());
-        CreateLatestSymlink(systemLogDirectory, currentLogFile, logger);
+        CreateHardLink(systemLogDirectory, currentLogFile, logger);
+
+        logger.Information("System logger initialized. Current log file: {Path}", currentLogFile);
+
         return logger;
     }
 
@@ -104,24 +115,22 @@ public static class SystemLoggerBootstrapper
     }
 
     /// <summary>
-    ///     Recreates the <c>latest.log</c> symbolic link for the current System log file.
+    ///     Recreates the <c>latest.log</c> hard link for the current System log file.
     /// </summary>
     /// <param name="systemLogDirectory">The directory containing System log files.</param>
     /// <param name="currentLogFile">The concrete timestamped log file for the current process run.</param>
-    /// <param name="logger">The logger used to report symbolic-link creation failures.</param>
-    private static void CreateLatestSymlink(string systemLogDirectory, string currentLogFile, IAppLogger logger)
+    /// <param name="logger">The logger used to report hard-link creation failures.</param>
+    private static void CreateHardLink(string systemLogDirectory, string currentLogFile, IAppLogger logger)
     {
         var latestPath = Path.Combine(systemLogDirectory, "latest.log");
 
         try
         {
-            if (File.Exists(latestPath)) File.Delete(latestPath);
-
-            File.CreateSymbolicLink(latestPath, Path.GetFileName(currentLogFile));
+            HardLink.Create(latestPath, currentLogFile);
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or PlatformNotSupportedException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            logger.Warning("Could not create latest.log symbolic link: {Message}", ex.Message);
+            logger.Warning("Could not create latest.log hard link: {Message}", ex.Message);
         }
     }
 }
