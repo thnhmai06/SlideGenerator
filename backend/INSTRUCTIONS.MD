@@ -44,7 +44,7 @@ In Phase B (Resource Preparation), many items process in parallel.
 - **Current Issue**: `EditImage` step deletes the source file if it's a temporary download. This is a known risk for shared URLs across multiple shapes.
 
 ### 🖼️ Image Replacements
-Always use `IImageComposer` (from `SlideGenerator.Document`) to replace image content in shapes. Do not write directly to `shape.ImageData` as `IImageComposer` handles both `IPicture` and `PictureFill` cases correctly.
+You can replace image content in shapes by writing directly to `shape.ImageData`. This is the standard approach for both `IPicture` and `PictureFill` cases. Ensure that the image data is correctly formatted (e.g., PNG/JPG) before assignment.
 
 ### 🧵 Thread Safety
 - Always use `IGateLocker` when accessing shared resources (Syncfusion objects, file I/O).
