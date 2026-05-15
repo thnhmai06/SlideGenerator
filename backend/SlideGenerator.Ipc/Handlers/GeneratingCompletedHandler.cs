@@ -32,7 +32,7 @@ public sealed class GeneratingCompletedHandler(IGeneratingService generatingServ
     /// <summary>
     ///     Returns summaries of all completed, cancelled, or errored workflow instances.
     /// </summary>
-    public Task<IReadOnlyList<GeneratingInstanceSummary>> ListAsync(CancellationToken ct)
+    public Task<IReadOnlyList<GeneratingSummary>> ListAsync(CancellationToken ct)
     {
         return generatingService.ListCompletedAsync(ct);
     }
@@ -41,7 +41,7 @@ public sealed class GeneratingCompletedHandler(IGeneratingService generatingServ
     ///     Returns the summary of a specific completed workflow instance,
     ///     or <see langword="null" /> if not found.
     /// </summary>
-    public Task<GeneratingInstanceSummary?> QueryAsync(string workflowInstanceId, CancellationToken ct)
+    public Task<GeneratingSummary?> QueryAsync(string workflowInstanceId, CancellationToken ct)
     {
         return generatingService.QueryAsync(workflowInstanceId, ct);
     }

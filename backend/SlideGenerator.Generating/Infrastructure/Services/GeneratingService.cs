@@ -41,6 +41,7 @@ internal sealed class GeneratingService(
     IWorkflowController workflowController,
     IPersistenceProvider persistence,
     IGeneratingEventBus eventBus,
+    IRecipeRepository recipeRepository,
     ISystemLogger logger)
     : IGeneratingService
 {
@@ -98,9 +99,13 @@ internal sealed class GeneratingService(
     /// <inheritdoc />
     public async Task<string> StartAsync(GeneratingRequest request, CancellationToken ct = default)
     {
+        var recipeEntry = await recipeRepository.GetByIdAsync(request.RecipeId, ct).ConfigureAwait(false)
+                          ?? throw new InvalidOperationException($"Recipe {request.RecipeId} not found.");
+
         var context = new GeneratingContext
         {
             Request = request,
+            Recipe = recipeEntry.Recipe,
             WorkflowLogPath = ResolveWorkflowLogPath(request),
             WorkflowScope = ResolveWorkflowScope(request)
         };
@@ -158,7 +163,7 @@ internal sealed class GeneratingService(
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<GeneratingInstanceSummary>> ListActiveAsync(CancellationToken ct = default)
+    public async Task<IReadOnlyList<GeneratingSummary>> ListActiveAsync(CancellationToken ct = default)
     {
         var runnable = await persistence
             .GetWorkflowInstances(WorkflowStatus.Runnable, nameof(GeneratingWorkflow), null, null, 0, int.MaxValue)
@@ -170,7 +175,7 @@ internal sealed class GeneratingService(
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<GeneratingInstanceSummary>> ListCompletedAsync(CancellationToken ct = default)
+    public async Task<IReadOnlyList<GeneratingSummary>> ListCompletedAsync(CancellationToken ct = default)
     {
         var complete = await persistence
             .GetWorkflowInstances(WorkflowStatus.Complete, nameof(GeneratingWorkflow), null, null, 0, int.MaxValue)
@@ -182,7 +187,7 @@ internal sealed class GeneratingService(
     }
 
     /// <inheritdoc />
-    public async Task<GeneratingInstanceSummary?> QueryAsync(string instanceId, CancellationToken ct = default)
+    public async Task<GeneratingSummary?> QueryAsync(string instanceId, CancellationToken ct = default)
     {
         var instance = await persistence.GetWorkflowInstance(instanceId, ct).ConfigureAwait(false);
         return instance is null ? null : ToSummary(instance);
@@ -275,7 +280,7 @@ internal sealed class GeneratingService(
         await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
     }
 
-    private static GeneratingInstanceSummary ToSummary(WorkflowInstance instance)
+    private static GeneratingSummary ToSummary(WorkflowInstance instance)
     {
         var status = instance.Status switch
         {
@@ -286,7 +291,7 @@ internal sealed class GeneratingService(
             _ => GeneratingStatus.Running
         };
         var name = (instance.Data as GeneratingContext)?.Request.Name;
-        return new GeneratingInstanceSummary
+        return new GeneratingSummary
         {
             InstanceId = instance.Id,
             Name = name,

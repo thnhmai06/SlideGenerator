@@ -280,6 +280,7 @@ internal static class Program
 
         var generatingActiveHandler = services.GetRequiredService<GeneratingActiveHandler>();
         var generatingCompletedHandler = services.GetRequiredService<GeneratingCompletedHandler>();
+        var generatingRecipeHandler = services.GetRequiredService<GeneratingRecipeHandler>();
         var scanningHandler = services.GetRequiredService<ScanningHandler>();
         var settingsHandler = services.GetRequiredService<SettingsHandler>();
 
@@ -315,6 +316,21 @@ internal static class Program
         jsonRpc.AddLocalRpcMethod(
             GetMethod<GeneratingCompletedHandler>(nameof(GeneratingCompletedHandler.DeleteAllAsync)),
             generatingCompletedHandler, new JsonRpcMethodAttribute("generating.completed.deleteAll"));
+
+        #endregion
+
+        #region generating.recipe
+
+        jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingRecipeHandler>(nameof(GeneratingRecipeHandler.ListAsync)),
+            generatingRecipeHandler, new JsonRpcMethodAttribute("generating.recipe.list"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingRecipeHandler>(nameof(GeneratingRecipeHandler.QueryAsync)),
+            generatingRecipeHandler, Attr("generating.recipe.query"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingRecipeHandler>(nameof(GeneratingRecipeHandler.AddAsync)),
+            generatingRecipeHandler, new JsonRpcMethodAttribute("generating.recipe.add"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingRecipeHandler>(nameof(GeneratingRecipeHandler.UpdateAsync)),
+            generatingRecipeHandler, new JsonRpcMethodAttribute("generating.recipe.update"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingRecipeHandler>(nameof(GeneratingRecipeHandler.DeleteAsync)),
+            generatingRecipeHandler, Attr("generating.recipe.delete"));
 
         #endregion
 

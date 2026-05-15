@@ -67,18 +67,18 @@ public interface IGeneratingService
     /// <summary>
     ///     Returns summaries of all currently active (running or paused) workflow instances.
     /// </summary>
-    Task<IReadOnlyList<GeneratingInstanceSummary>> ListActiveAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<GeneratingSummary>> ListActiveAsync(CancellationToken ct = default);
 
     /// <summary>
     ///     Returns summaries of all completed, cancelled, or errored workflow instances.
     /// </summary>
-    Task<IReadOnlyList<GeneratingInstanceSummary>> ListCompletedAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<GeneratingSummary>> ListCompletedAsync(CancellationToken ct = default);
 
     /// <summary>
     ///     Returns the summary of a specific workflow instance by its identifier,
     ///     or <see langword="null" /> if not found.
     /// </summary>
-    Task<GeneratingInstanceSummary?> QueryAsync(string instanceId, CancellationToken ct = default);
+    Task<GeneratingSummary?> QueryAsync(string instanceId, CancellationToken ct = default);
 
     /// <summary>
     ///     Permanently deletes a single completed or cancelled workflow instance and all its associated data.

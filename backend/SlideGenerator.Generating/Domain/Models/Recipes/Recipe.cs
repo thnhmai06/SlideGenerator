@@ -45,11 +45,11 @@ public record Recipe(IReadOnlyList<MapNode> Nodes);
 
 /// <summary>
 ///     Represents a persisted recipe with its storage metadata.
-///     The display name and optional display string are stored alongside the recipe
+///     The display name and optional flow data are stored alongside the recipe
 ///     but are not part of the <see cref="Recipe" /> record itself.
 /// </summary>
 /// <param name="Id">The database-generated identifier.</param>
-/// <param name="Name">The human-readable display name of the recipe.</param>
+/// <param name="DisplayName">Optional human-readable display name of the recipe.</param>
 /// <param name="FlowData">Optional ReactFlow graph JSON for UI rendering.</param>
 /// <param name="Recipe">The recipe configuration.</param>
-public record RecipeEntry(int Id, string Name, string? FlowData, Recipe Recipe);
+public record RecipeEntry(int Id, Recipe Recipe, string? DisplayName, string? FlowData);

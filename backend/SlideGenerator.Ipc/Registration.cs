@@ -48,6 +48,7 @@ public static class Registration
         // JSON-RPC method handlers
         services.AddSingleton<GeneratingActiveHandler>();
         services.AddSingleton<GeneratingCompletedHandler>();
+        services.AddSingleton<GeneratingRecipeHandler>();
         services.AddSingleton<ScanningHandler>();
         services.AddSingleton<SettingsHandler>();
 

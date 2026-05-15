@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Generating
- * File: GeneratingInstanceSummary.cs
+ * File: GeneratingSummary.cs
  *
  * This file is part of this solution. You can find the full source code here: https://github.com/thnhmai06/SlideGenerator
  *
@@ -24,7 +24,7 @@ namespace SlideGenerator.Generating.Domain.Models;
 ///     <c>generating.active.query</c>, <c>generating.completed.list</c>, and
 ///     <c>generating.completed.query</c> IPC methods.
 /// </summary>
-public sealed record GeneratingInstanceSummary
+public sealed record GeneratingSummary
 {
     /// <summary>Gets the unique workflow instance identifier.</summary>
     public required string InstanceId { get; init; }

@@ -48,31 +48,23 @@ internal sealed class RecipeRepository : IRecipeRepository, IDisposable
     }
 
     /// <inheritdoc />
-    public async Task<int> GetOrAddAsync(Recipe recipe, string name, string? flowData, CancellationToken ct = default)
+    public async Task<int> AddAsync(Recipe recipe, string? displayName, string? flowData,
+        CancellationToken ct = default)
     {
-        var json = RecipeSerializer.Serialize(recipe);
-
-        await using (var insertCmd = _conn.CreateCommand())
-        {
-            insertCmd.CommandText =
-                "INSERT OR IGNORE INTO Recipes (Name, FlowData, RecipeJson) VALUES (@name, @flowData, @json)";
-            insertCmd.Parameters.AddWithValue("@name", name);
-            insertCmd.Parameters.AddWithValue("@flowData", (object?)flowData ?? DBNull.Value);
-            insertCmd.Parameters.AddWithValue("@json", json);
-            await insertCmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
-        }
-
-        await using var selectCmd = _conn.CreateCommand();
-        selectCmd.CommandText = "SELECT Id FROM Recipes WHERE RecipeJson = @json";
-        selectCmd.Parameters.AddWithValue("@json", json);
-        return Convert.ToInt32(await selectCmd.ExecuteScalarAsync(ct).ConfigureAwait(false));
+        await using var cmd = _conn.CreateCommand();
+        cmd.CommandText =
+            "INSERT INTO Recipes (DisplayName, FlowData, RecipeJson) VALUES (@displayName, @flowData, @json); SELECT last_insert_rowid();";
+        cmd.Parameters.AddWithValue("@displayName", (object?)displayName ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@flowData", (object?)flowData ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@json", RecipeSerializer.Serialize(recipe));
+        return Convert.ToInt32(await cmd.ExecuteScalarAsync(ct).ConfigureAwait(false));
     }
 
     /// <inheritdoc />
     public async Task<RecipeEntry?> GetByIdAsync(int id, CancellationToken ct = default)
     {
         await using var cmd = _conn.CreateCommand();
-        cmd.CommandText = "SELECT Id, Name, FlowData, RecipeJson FROM Recipes WHERE Id = @id";
+        cmd.CommandText = "SELECT Id, DisplayName, FlowData, RecipeJson FROM Recipes WHERE Id = @id";
         cmd.Parameters.AddWithValue("@id", id);
 
         await using var reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false);
@@ -81,9 +73,54 @@ internal sealed class RecipeRepository : IRecipeRepository, IDisposable
 
         return new RecipeEntry(
             reader.GetInt32(0),
-            reader.GetString(1),
-            reader.IsDBNull(2) ? null : reader.GetString(2),
-            RecipeSerializer.Deserialize(reader.GetString(3)));
+            RecipeSerializer.Deserialize(reader.GetString(3)), reader.IsDBNull(1) ? null : reader.GetString(1), reader.IsDBNull(2) ? null : reader.GetString(2));
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<RecipeEntry>> ListAsync(CancellationToken ct = default)
+    {
+        await using var cmd = _conn.CreateCommand();
+        cmd.CommandText = "SELECT Id, DisplayName, FlowData, RecipeJson FROM Recipes ORDER BY Id";
+
+        await using var reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false);
+        var results = new List<RecipeEntry>();
+        while (await reader.ReadAsync(ct).ConfigureAwait(false))
+            results.Add(new RecipeEntry(
+                reader.GetInt32(0),
+                RecipeSerializer.Deserialize(reader.GetString(3)), reader.IsDBNull(1) ? null : reader.GetString(1), reader.IsDBNull(2) ? null : reader.GetString(2)));
+
+        return results;
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> UpdateAsync(int id, string? displayName, string? flowData, Recipe? recipe = null,
+        CancellationToken ct = default)
+    {
+        await using var cmd = _conn.CreateCommand();
+        if (recipe is null)
+        {
+            cmd.CommandText = "UPDATE Recipes SET DisplayName = @displayName, FlowData = @flowData WHERE Id = @id";
+        }
+        else
+        {
+            cmd.CommandText =
+                "UPDATE Recipes SET DisplayName = @displayName, FlowData = @flowData, RecipeJson = @recipeJson WHERE Id = @id";
+            cmd.Parameters.AddWithValue("@recipeJson", RecipeSerializer.Serialize(recipe));
+        }
+
+        cmd.Parameters.AddWithValue("@displayName", (object?)displayName ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@flowData", (object?)flowData ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@id", id);
+        return await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false) > 0;
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> DeleteAsync(int id, CancellationToken ct = default)
+    {
+        await using var cmd = _conn.CreateCommand();
+        cmd.CommandText = "DELETE FROM Recipes WHERE Id = @id";
+        cmd.Parameters.AddWithValue("@id", id);
+        return await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false) > 0;
     }
 
     private void EnsureCreated()
@@ -91,10 +128,10 @@ internal sealed class RecipeRepository : IRecipeRepository, IDisposable
         using var cmd = _conn.CreateCommand();
         cmd.CommandText = """
                           CREATE TABLE IF NOT EXISTS Recipes (
-                              Id         INTEGER PRIMARY KEY AUTOINCREMENT,
-                              Name       TEXT    NOT NULL,
-                              FlowData   TEXT,
-                              RecipeJson TEXT    NOT NULL UNIQUE
+                              Id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                              DisplayName TEXT,
+                              FlowData    TEXT,
+                              RecipeJson  TEXT    NOT NULL
                           );
                           """;
         cmd.ExecuteNonQuery();

@@ -58,7 +58,7 @@ public sealed class GeneratingWorkflow : IWorkflow<GeneratingContext>
     {
         return builder
             .ForEach(data =>
-                data.Request.Recipe.Nodes.SelectMany(node =>
+                data.Recipe.Nodes.SelectMany(node =>
                     node.Sheets.Select(sheet => new ValidationItem(sheet, node))))
             .Do(x => x
                 .StartWith<ValidateRequest>()

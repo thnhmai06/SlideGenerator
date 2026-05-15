@@ -18,14 +18,13 @@
  */
 
 using SlideGenerator.Document.Domain.Models.Slide;
-using SlideGenerator.Generating.Domain.Models.Recipes;
 
 namespace SlideGenerator.Generating.Domain.Models;
 
 /// <summary>
 ///     Represents the user-provided request to start a slide generation process.
 /// </summary>
-/// <param name="Recipe">The mapping recipe defining data sources and targets.</param>
+/// <param name="RecipeId">The database id of the recipe to use.</param>
 /// <param name="Name">The display name of the generation job.</param>
 /// <param name="OutputType">The desired file extension for the output presentations.</param>
 /// <param name="SaveFolder">The root directory where generated presentations will be saved.</param>
@@ -42,7 +41,7 @@ namespace SlideGenerator.Generating.Domain.Models;
 ///     When set, images are written to the specified path and kept after processing.
 /// </param>
 public sealed record GeneratingRequest(
-    Recipe Recipe,
+    int RecipeId,
     string Name,
     PresentationType OutputType,
     string SaveFolder,

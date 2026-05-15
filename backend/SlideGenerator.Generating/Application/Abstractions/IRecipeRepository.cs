@@ -29,15 +29,14 @@ namespace SlideGenerator.Generating.Application.Abstractions;
 public interface IRecipeRepository
 {
     /// <summary>
-    ///     Returns the id of the existing recipe if one with the same content already exists,
-    ///     or inserts a new row and returns its generated id.
+    ///     Inserts a new recipe row and returns its generated id.
     /// </summary>
-    /// <param name="recipe">The recipe whose content determines identity.</param>
-    /// <param name="name">Display name — stored on the first insert, ignored on further calls with the same content.</param>
+    /// <param name="recipe">The recipe configuration to store.</param>
+    /// <param name="displayName">Optional human-readable display name.</param>
     /// <param name="flowData">Optional ReactFlow graph JSON for UI rendering.</param>
     /// <param name="ct">Cancellation token.</param>
-    /// <returns>The id of the matching or newly created recipe row.</returns>
-    Task<int> GetOrAddAsync(Recipe recipe, string name, string? flowData, CancellationToken ct = default);
+    /// <returns>The database-generated id of the new row.</returns>
+    Task<int> AddAsync(Recipe recipe, string? displayName, string? flowData, CancellationToken ct = default);
 
     /// <summary>
     ///     Retrieves a recipe entry by its id.
@@ -46,4 +45,31 @@ public interface IRecipeRepository
     /// <param name="ct">Cancellation token.</param>
     /// <returns>The <see cref="RecipeEntry" />, or <see langword="null" /> if not found.</returns>
     Task<RecipeEntry?> GetByIdAsync(int id, CancellationToken ct = default);
+
+    /// <summary>
+    ///     Returns all stored recipe entries ordered by id.
+    /// </summary>
+    /// <param name="ct">Cancellation token.</param>
+    Task<IReadOnlyList<RecipeEntry>> ListAsync(CancellationToken ct = default);
+
+    /// <summary>
+    ///     Updates an existing recipe entry.
+    ///     When <paramref name="recipe" /> is provided, the stored recipe content is replaced;
+    ///     if the new content already exists in another row, the update is rejected and returns <see langword="false" />.
+    /// </summary>
+    /// <param name="id">The database-generated id of the recipe to update.</param>
+    /// <param name="displayName">New display name.</param>
+    /// <param name="flowData">New ReactFlow graph JSON, or <see langword="null" /> to clear it.</param>
+    /// <param name="recipe">New recipe content, or <see langword="null" /> to leave content unchanged.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns><see langword="true" /> if a row was updated; <see langword="false" /> if the id was not found or content conflicts.</returns>
+    Task<bool> UpdateAsync(int id, string? displayName, string? flowData, Recipe? recipe = null, CancellationToken ct = default);
+
+    /// <summary>
+    ///     Permanently deletes a recipe entry by its id.
+    /// </summary>
+    /// <param name="id">The database-generated id.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns><see langword="true" /> if a row was deleted; <see langword="false" /> if the id was not found.</returns>
+    Task<bool> DeleteAsync(int id, CancellationToken ct = default);
 }

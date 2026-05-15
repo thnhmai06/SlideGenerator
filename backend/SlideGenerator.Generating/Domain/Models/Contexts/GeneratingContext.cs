@@ -24,6 +24,7 @@ using SlideGenerator.Document.Domain.Abstractions.Sheet;
 using SlideGenerator.Document.Domain.Abstractions.Slide;
 using SlideGenerator.Document.Domain.Models.Sheet;
 using SlideGenerator.Document.Domain.Models.Slide;
+using SlideGenerator.Generating.Domain.Models.Recipes;
 using SlideGenerator.Logging.Domain.Abstractions;
 
 namespace SlideGenerator.Generating.Domain.Models.Contexts;
@@ -38,6 +39,11 @@ public sealed class GeneratingContext : IDisposable
     ///     The initial generation request.
     /// </summary>
     public GeneratingRequest Request { get; init; } = null!;
+
+    /// <summary>
+    ///     The resolved recipe, looked up by <see cref="GeneratingRequest.RecipeId" /> before the workflow starts.
+    /// </summary>
+    public Recipe Recipe { get; set; } = null!;
 
     /// <summary>
     ///     Persisted path to the workflow log file, used to reattach the logger on resume.
