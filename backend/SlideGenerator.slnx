@@ -1,6 +1,7 @@
 <Solution>
-    <Project Path="SlideGenerator.Generating/SlideGenerator.Generating.csproj"/>
-    <Project Path="SlideGenerator.Scanning/SlideGenerator.Scanning.csproj"/>
+    <Project Path="SlideGenerator.Generator/SlideGenerator.Generator.csproj"/>
+    <Project Path="SlideGenerator.Summarization/SlideGenerator.Summarization.csproj"/>
+    <Project Path="SlideGenerator.Recipe/SlideGenerator.Recipe.csproj"/>
     <Project Path="SlideGenerator.Settings/SlideGenerator.Settings.csproj"/>
     <Project Path="SlideGenerator.Common/SlideGenerator.Common.csproj"/>
     <Project Path="SlideGenerator.Coordinator/SlideGenerator.Coordinator.csproj"/>

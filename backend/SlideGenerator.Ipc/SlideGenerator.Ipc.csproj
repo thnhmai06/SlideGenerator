@@ -25,8 +25,9 @@
 
     <ItemGroup>
         <ProjectReference Include="..\SlideGenerator.Cryptography\SlideGenerator.Cryptography.csproj"/>
-        <ProjectReference Include="..\SlideGenerator.Generating\SlideGenerator.Generating.csproj"/>
-        <ProjectReference Include="..\SlideGenerator.Scanning\SlideGenerator.Scanning.csproj"/>
+        <ProjectReference Include="..\SlideGenerator.Generator\SlideGenerator.Generator.csproj"/>
+        <ProjectReference Include="..\SlideGenerator.Summarization\SlideGenerator.Summarization.csproj"/>
+        <ProjectReference Include="..\SlideGenerator.Recipe\SlideGenerator.Recipe.csproj"/>
         <ProjectReference Include="..\SlideGenerator.Settings\SlideGenerator.Settings.csproj"/>
         <ProjectReference Include="..\SlideGenerator.Coordinator\SlideGenerator.Coordinator.csproj"/>
         <ProjectReference Include="..\SlideGenerator.Document\SlideGenerator.Document.csproj"/>

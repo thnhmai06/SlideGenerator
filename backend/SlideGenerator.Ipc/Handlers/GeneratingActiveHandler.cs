@@ -17,9 +17,9 @@
  * GNU Affero General Public License for more details.
  */
 
-using SlideGenerator.Generating.Application.Abstractions;
-using SlideGenerator.Generating.Application.Workflows;
-using SlideGenerator.Generating.Domain.Models;
+using SlideGenerator.Generator.Application.Abstractions;
+using SlideGenerator.Generator.Application.Workflows;
+using SlideGenerator.Generator.Domain.Models;
 
 namespace SlideGenerator.Ipc.Handlers;
 

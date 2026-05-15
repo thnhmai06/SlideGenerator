@@ -17,7 +17,7 @@
  * GNU Affero General Public License for more details.
  */
 
-using SlideGenerator.Generating.Domain.Models;
+using SlideGenerator.Generator.Domain.Models;
 using SlideGenerator.Logging.Domain.Abstractions;
 using StreamJsonRpc;
 

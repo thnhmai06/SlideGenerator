@@ -29,19 +29,19 @@ using SlideGenerator.Coordinator.Injection;
 using SlideGenerator.Cryptography.Injection;
 using SlideGenerator.Document.Injection;
 using SlideGenerator.Download.Injection;
-using SlideGenerator.Generating;
-using SlideGenerator.Generating.Application.Abstractions;
-using SlideGenerator.Generating.Injection;
+using SlideGenerator.Generator.Application.Abstractions;
+using SlideGenerator.Generator.Injection;
 using SlideGenerator.Image.Injection;
 using SlideGenerator.Ipc.Handlers;
 using SlideGenerator.Ipc.Infrastructure;
 using SlideGenerator.Ipc.Infrastructure.Adapters;
 using SlideGenerator.Logging.Domain.Abstractions;
 using SlideGenerator.Logging.Injection;
-using SlideGenerator.Scanning.Injection;
+using SlideGenerator.Recipe.Injection;
 using SlideGenerator.Settings.Application.Abstractions;
 using SlideGenerator.Settings.Domain.Rules;
 using SlideGenerator.Settings.Injection;
+using SlideGenerator.Summarization.Injection;
 using StreamJsonRpc;
 
 namespace SlideGenerator.Ipc;
@@ -185,7 +185,8 @@ internal static class Program
         services.AddDownloadServices();
         services.AddImageServices();
         services.AddGeneratingServices();
-        services.AddScanningServices();
+        services.AddSummarizationServices();
+        services.AddRecipeServices();
 
         systemLogger?.Information("Registering workflow and IPC infrastructure...");
         services.AddWorkflow(x => x.UseSqlite(NameAndPaths.WorkflowsFile.ConnectionString, true));
@@ -280,66 +281,77 @@ internal static class Program
 
         var generatingActiveHandler = services.GetRequiredService<GeneratingActiveHandler>();
         var generatingCompletedHandler = services.GetRequiredService<GeneratingCompletedHandler>();
-        var generatingRecipeHandler = services.GetRequiredService<GeneratingRecipeHandler>();
-        var scanningHandler = services.GetRequiredService<ScanningHandler>();
+        var recipeHandler = services.GetRequiredService<RecipeHandler>();
+        var summarizationHandler = services.GetRequiredService<SummarizationHandler>();
         var settingsHandler = services.GetRequiredService<SettingsHandler>();
 
-        #region generating.active
+        #region generator.active
 
         jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingActiveHandler>(nameof(GeneratingActiveHandler.StartAsync)),
-            generatingActiveHandler, Attr("generating.active.start"));
+            generatingActiveHandler, Attr("generator.active.start"));
         jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingActiveHandler>(nameof(GeneratingActiveHandler.CancelAsync)),
-            generatingActiveHandler, Attr("generating.active.cancel"));
+            generatingActiveHandler, Attr("generator.active.cancel"));
         jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingActiveHandler>(nameof(GeneratingActiveHandler.PauseAsync)),
-            generatingActiveHandler, Attr("generating.active.pause"));
+            generatingActiveHandler, Attr("generator.active.pause"));
         jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingActiveHandler>(nameof(GeneratingActiveHandler.ResumeAsync)),
-            generatingActiveHandler, Attr("generating.active.resume"));
+            generatingActiveHandler, Attr("generator.active.resume"));
         jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingActiveHandler>(nameof(GeneratingActiveHandler.CancelAllAsync)),
-            generatingActiveHandler, new JsonRpcMethodAttribute("generating.active.cancelAll"));
+            generatingActiveHandler, new JsonRpcMethodAttribute("generator.active.cancelAll"));
         jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingActiveHandler>(nameof(GeneratingActiveHandler.PauseAllAsync)),
-            generatingActiveHandler, new JsonRpcMethodAttribute("generating.active.pauseAll"));
+            generatingActiveHandler, new JsonRpcMethodAttribute("generator.active.pauseAll"));
         jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingActiveHandler>(nameof(GeneratingActiveHandler.ListAsync)),
-            generatingActiveHandler, new JsonRpcMethodAttribute("generating.active.list"));
+            generatingActiveHandler, new JsonRpcMethodAttribute("generator.active.list"));
         jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingActiveHandler>(nameof(GeneratingActiveHandler.QueryAsync)),
-            generatingActiveHandler, Attr("generating.active.query"));
+            generatingActiveHandler, Attr("generator.active.query"));
 
         #endregion
 
-        #region generating.completed
+        #region generator.completed
 
         jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingCompletedHandler>(nameof(GeneratingCompletedHandler.ListAsync)),
-            generatingCompletedHandler, new JsonRpcMethodAttribute("generating.completed.list"));
+            generatingCompletedHandler, new JsonRpcMethodAttribute("generator.completed.list"));
         jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingCompletedHandler>(nameof(GeneratingCompletedHandler.QueryAsync)),
-            generatingCompletedHandler, Attr("generating.completed.query"));
+            generatingCompletedHandler, Attr("generator.completed.query"));
         jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingCompletedHandler>(nameof(GeneratingCompletedHandler.DeleteAsync)),
-            generatingCompletedHandler, Attr("generating.completed.delete"));
+            generatingCompletedHandler, Attr("generator.completed.delete"));
         jsonRpc.AddLocalRpcMethod(
             GetMethod<GeneratingCompletedHandler>(nameof(GeneratingCompletedHandler.DeleteAllAsync)),
-            generatingCompletedHandler, new JsonRpcMethodAttribute("generating.completed.deleteAll"));
+            generatingCompletedHandler, new JsonRpcMethodAttribute("generator.completed.deleteAll"));
 
         #endregion
 
-        #region generating.recipe
+        #region recipe
 
-        jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingRecipeHandler>(nameof(GeneratingRecipeHandler.ListAsync)),
-            generatingRecipeHandler, new JsonRpcMethodAttribute("generating.recipe.list"));
-        jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingRecipeHandler>(nameof(GeneratingRecipeHandler.QueryAsync)),
-            generatingRecipeHandler, Attr("generating.recipe.query"));
-        jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingRecipeHandler>(nameof(GeneratingRecipeHandler.AddAsync)),
-            generatingRecipeHandler, new JsonRpcMethodAttribute("generating.recipe.add"));
-        jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingRecipeHandler>(nameof(GeneratingRecipeHandler.UpdateAsync)),
-            generatingRecipeHandler, new JsonRpcMethodAttribute("generating.recipe.update"));
-        jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingRecipeHandler>(nameof(GeneratingRecipeHandler.DeleteAsync)),
-            generatingRecipeHandler, Attr("generating.recipe.delete"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<RecipeHandler>(nameof(RecipeHandler.ListAsync)),
+            recipeHandler, new JsonRpcMethodAttribute("recipe.list"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<RecipeHandler>(nameof(RecipeHandler.QueryAsync)),
+            recipeHandler, Attr("recipe.query"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<RecipeHandler>(nameof(RecipeHandler.AddAsync)),
+            recipeHandler, new JsonRpcMethodAttribute("recipe.add"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<RecipeHandler>(nameof(RecipeHandler.UpdateAsync)),
+            recipeHandler, new JsonRpcMethodAttribute("recipe.update"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<RecipeHandler>(nameof(RecipeHandler.DeleteAsync)),
+            recipeHandler, Attr("recipe.delete"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<RecipeHandler>(nameof(RecipeHandler.ExportAsync)),
+            recipeHandler, new JsonRpcMethodAttribute("recipe.export"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<RecipeHandler>(nameof(RecipeHandler.ImportAsync)),
+            recipeHandler, new JsonRpcMethodAttribute("recipe.import"));
 
         #endregion
 
-        #region scanning
+        #region summarization
 
-        jsonRpc.AddLocalRpcMethod(GetMethod<ScanningHandler>(nameof(ScanningHandler.ScanWorkbookAsync)),
-            scanningHandler, Attr("scanning.scanWorkbook"));
-        jsonRpc.AddLocalRpcMethod(GetMethod<ScanningHandler>(nameof(ScanningHandler.ScanPresentationAsync)),
-            scanningHandler, Attr("scanning.scanPresentation"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<SummarizationHandler>(nameof(SummarizationHandler.SummarizeWorkbookAsync)),
+            summarizationHandler, Attr("summarization.workbook"));
+        jsonRpc.AddLocalRpcMethod(
+            GetMethod<SummarizationHandler>(nameof(SummarizationHandler.SummarizePresentationAsync)),
+            summarizationHandler, Attr("summarization.presentation"));
+        jsonRpc.AddLocalRpcMethod(
+            GetMethod<SummarizationHandler>(nameof(SummarizationHandler.SummarizeRecipeAsync)),
+            summarizationHandler, Attr("summarization.recipe"));
+        jsonRpc.AddLocalRpcMethod(
+            GetMethod<SummarizationHandler>(nameof(SummarizationHandler.SummarizeRecipeByIdAsync)),
+            summarizationHandler, Attr("summarization.recipeById"));
 
         #endregion
 

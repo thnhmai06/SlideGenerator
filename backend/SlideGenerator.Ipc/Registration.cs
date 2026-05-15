@@ -18,7 +18,7 @@
  */
 
 using Microsoft.Extensions.DependencyInjection;
-using SlideGenerator.Generating.Application.Abstractions;
+using SlideGenerator.Generator.Application.Abstractions;
 using SlideGenerator.Ipc.Handlers;
 using SlideGenerator.Ipc.Infrastructure;
 
@@ -48,8 +48,8 @@ public static class Registration
         // JSON-RPC method handlers
         services.AddSingleton<GeneratingActiveHandler>();
         services.AddSingleton<GeneratingCompletedHandler>();
-        services.AddSingleton<GeneratingRecipeHandler>();
-        services.AddSingleton<ScanningHandler>();
+        services.AddSingleton<RecipeHandler>();
+        services.AddSingleton<SummarizationHandler>();
         services.AddSingleton<SettingsHandler>();
 
         return services;

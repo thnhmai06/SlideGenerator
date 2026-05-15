@@ -40,8 +40,9 @@ Feature Modules
 └── SlideGenerator.Image         - MagickImage processing; ROI + face detection (OpenCV YuNet)
 
 Orchestration
-├── SlideGenerator.Scanning      - Synchronous workbook/presentation metadata scanner
-└── SlideGenerator.Generating    - WorkflowCore generating pipeline (3-phase workflow)
+├── SlideGenerator.Summarization - Workbook/presentation metadata scanner; IRecipeSummarizer (TODO stub)
+├── SlideGenerator.Recipe        - Recipe CRUD (SQLite) + export/import (*.recipe zip packages)
+└── SlideGenerator.Generator     - WorkflowCore generating pipeline (3-phase workflow)
 
 Entry Point
 └── SlideGenerator.Ipc           - JSON-RPC 2.0 IPC sidecar (StreamJsonRpc over stdin/stdout)
@@ -52,7 +53,7 @@ Entry Point
 - Dependencies flow downward only — no circular references.
 - Each module has `Injection/Registration.cs` (or root `Registration.cs`) as DI entry point.
 - `SlideGenerator.Ipc` is the executable that wires all modules.
-- Exception: `SlideGenerator.Generating` permits `Application/` and `Domain/` layers to depend on WorkflowCore directly.
+- Exception: `SlideGenerator.Generator` permits `Application/` and `Domain/` layers to depend on WorkflowCore directly.
 
 ## DI Registration Methods
 
@@ -68,8 +69,9 @@ Entry Point
 | Logging (with config) | `AddLoggingModule(IConfiguration)` |
 | Logging (defaults) | `AddLoggingModule()` |
 | Logging (pre-built logger) | `AddSystemLogging(ISystemLogger)` |
-| Scanning | `AddScanningServices()` |
-| Generating | `AddGeneratingServices()` |
+| Summarization | `AddSummarizationServices()` |
+| Recipe | `AddRecipeServices()` |
+| Generating (Generator) | `AddGeneratingServices()` |
 | Ipc | `AddIpcServices()` |
 | WorkflowCore + SQLite | `services.AddWorkflow(x => x.UseSqlite(NameAndPaths.WorkflowsFile.ConnectionString, true))` |
 
@@ -123,12 +125,27 @@ jsonRpc.AddLocalRpcMethod(method, handler, new JsonRpcMethodAttribute("settings.
 
 | Method | Handler |
 |---|---|
-| `workflow.start` | `WorkflowHandler.StartAsync` |
-| `workflow.cancel` | `WorkflowHandler.CancelAsync` |
-| `workflow.pause` | `WorkflowHandler.PauseAsync` |
-| `workflow.resume` | `WorkflowHandler.ResumeAsync` |
-| `scanning.scanWorkbook` | `ScanningHandler.ScanWorkbookAsync` |
-| `scanning.scanPresentation` | `ScanningHandler.ScanPresentationAsync` |
+| `generator.active.start` | `GeneratingActiveHandler.StartAsync` |
+| `generator.active.cancel` | `GeneratingActiveHandler.CancelAsync` |
+| `generator.active.pause` | `GeneratingActiveHandler.PauseAsync` |
+| `generator.active.resume` | `GeneratingActiveHandler.ResumeAsync` |
+| `generator.active.cancelAll` | `GeneratingActiveHandler.CancelAllAsync` |
+| `generator.active.pauseAll` | `GeneratingActiveHandler.PauseAllAsync` |
+| `generator.active.list` | `GeneratingActiveHandler.ListAsync` |
+| `generator.active.query` | `GeneratingActiveHandler.QueryAsync` |
+| `generator.completed.list` | `GeneratingCompletedHandler.ListAsync` |
+| `generator.completed.query` | `GeneratingCompletedHandler.QueryAsync` |
+| `generator.completed.delete` | `GeneratingCompletedHandler.DeleteAsync` |
+| `generator.completed.deleteAll` | `GeneratingCompletedHandler.DeleteAllAsync` |
+| `recipe.list` | `RecipeHandler.ListAsync` |
+| `recipe.query` | `RecipeHandler.QueryAsync` |
+| `recipe.add` | `RecipeHandler.AddAsync` |
+| `recipe.update` | `RecipeHandler.UpdateAsync` |
+| `recipe.delete` | `RecipeHandler.DeleteAsync` |
+| `recipe.export` | `RecipeHandler.ExportAsync` |
+| `recipe.import` | `RecipeHandler.ImportAsync` |
+| `summarization.workbook` | `SummarizationHandler.SummarizeWorkbookAsync` |
+| `summarization.presentation` | `SummarizationHandler.SummarizePresentationAsync` |
 | `settings.get` | `SettingsHandler.GetAsync` |
 | `settings.update` | `SettingsHandler.UpdateAsync` |
 | `settings.resetToDefaults` | `SettingsHandler.ResetToDefaultsAsync` |
