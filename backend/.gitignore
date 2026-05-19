@@ -516,3 +516,6 @@ FodyWeavers.xsd
 
 *.env
 **/*.lscache
+
+# Test fixture images — downloaded locally, not committed
+tests/fixtures/faces/

@@ -2,10 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Build Commands
+## Build & Test Commands
 
 ```bash
-# Build (uses SlideGenerator.slnx)
+# Build
 dotnet build
 
 # Build release
@@ -13,9 +13,48 @@ dotnet build -c Release
 
 # Clean
 dotnet clean
+
+# Run all tests
+dotnet test
+
+# Run tests for one project
+dotnet test tests/SlideGenerator.Settings.Tests/SlideGenerator.Settings.Tests.csproj
+
+# Run a single test by name filter
+dotnet test --filter "FullyQualifiedName~Load_SettingsFileNotFound_ReturnsFalse"
 ```
 
 SDK: .NET 10.0 (`global.json` pins to `latestMajor`).
+
+## Solution Layout
+
+```
+backend/
+├── src/                         — 13 source modules
+│   ├── SlideGenerator.Common/
+│   ├── SlideGenerator.Settings/
+│   ├── SlideGenerator.Resolver/
+│   ├── SlideGenerator.Cryptography/
+│   ├── SlideGenerator.Coordinator/
+│   ├── SlideGenerator.Download/
+│   ├── SlideGenerator.Document/
+│   ├── SlideGenerator.Logging/
+│   ├── SlideGenerator.Image/
+│   ├── SlideGenerator.Summarization/
+│   ├── SlideGenerator.Recipe/
+│   ├── SlideGenerator.Generator/
+│   └── SlideGenerator.Ipc/
+└── tests/                       — 9 test projects (standalone, not inside src/)
+    ├── SlideGenerator.Common.Tests/
+    ├── SlideGenerator.Cryptography.Tests/
+    ├── SlideGenerator.Coordinator.Tests/
+    ├── SlideGenerator.Settings.Tests/
+    ├── SlideGenerator.Resolver.Tests/
+    ├── SlideGenerator.Document.Tests/
+    ├── SlideGenerator.Image.Tests/
+    ├── SlideGenerator.Recipe.Tests/
+    └── SlideGenerator.Generator.Tests/
+```
 
 ## Architecture: Modular Monolith + IPC Sidecar
 
@@ -206,6 +245,69 @@ Phase boundaries are enforced with `ExecutionResult.Next()` barriers — all ite
 **Error resilience**: Each context class has a `ConcurrentDictionary<string, Exception> Errors`. Steps catch exceptions and record them, allowing partial success.
 
 `ScanningService` (synchronous) provides workbook and presentation metadata (`WorkbookSummary`, `PresentationSummary`) used to validate instructions before running generation.
+
+## Testing
+
+### Packages (all test projects)
+
+```xml
+<PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.*" />
+<PackageReference Include="xunit.v3" Version="1.*" />
+<PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
+    <PrivateAssets>all</PrivateAssets>
+    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+</PackageReference>
+<PackageReference Include="NSubstitute" Version="5.*" />
+<PackageReference Include="FluentAssertions" Version="8.*" />
+```
+
+- **xUnit v3** — use `xunit.v3` package, NOT `xunit` v2.
+- `PackageReference Remove="StyleCop.Analyzers"` at top of every test `.csproj` (inherited from `Directory.Build.props` but not wanted in tests).
+
+### Test naming
+
+`[Method]_[Scenario]_[ExpectedResult]` — e.g. `Load_SettingsFileNotFound_ReturnsFalse`.
+
+### XML documentation
+
+All test classes and test methods require full XML `<summary>` documentation in English.
+
+### InternalsVisibleTo
+
+When a test needs access to `internal` types, add to the **source** project's `.csproj`:
+
+```xml
+<ItemGroup>
+    <InternalsVisibleTo Include="SlideGenerator.XYZ.Tests" />
+</ItemGroup>
+```
+
+### NuGet transitivity pitfall
+
+`Directory.Build.props` sets `PrivateAssets="all"` on **all** `ProjectReference` items globally. This means NuGet packages from referenced projects do **not** flow transitively into test projects. Always add an explicit `PackageReference` for any NuGet package the test project uses directly — even if the source project already references it.
+
+Example: `SlideGenerator.Generator.Tests` must explicitly reference `WorkflowCore` even though `SlideGenerator.Generator` already does.
+
+### WorkflowCore unit testing
+
+`WorkflowInstance` is a **concrete class** (`WorkflowCore.Models`), not an interface. Use object initializer, not `Substitute.For<>()`:
+
+```csharp
+var workflow = new WorkflowInstance { Data = data };
+var ctx = Substitute.For<IStepExecutionContext>();
+ctx.Workflow.Returns(workflow);
+```
+
+### What NOT to unit test
+
+Generator steps that require a Syncfusion license + real `.xlsx`/`.pptx` files belong to integration tests, not unit tests:
+
+- `ValidateRequest` — opens workbook via Syncfusion
+- `CreateTemplate` — copies and opens real .pptx
+- `ExtractData` — reads Excel cells
+- `EditImage` — face detection + MagickImage crop from real file
+
+These steps are covered by integration tests only. Do not create unit stubs that bypass their core behavior.
 
 ## Development Patterns
 

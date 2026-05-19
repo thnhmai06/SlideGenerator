@@ -1,15 +1,23 @@
 <Solution>
-    <Project Path="SlideGenerator.Generator/SlideGenerator.Generator.csproj"/>
-    <Project Path="SlideGenerator.Summarization/SlideGenerator.Summarization.csproj"/>
-    <Project Path="SlideGenerator.Recipe/SlideGenerator.Recipe.csproj"/>
-    <Project Path="SlideGenerator.Settings/SlideGenerator.Settings.csproj"/>
-    <Project Path="SlideGenerator.Common/SlideGenerator.Common.csproj"/>
-    <Project Path="SlideGenerator.Coordinator/SlideGenerator.Coordinator.csproj"/>
-    <Project Path="SlideGenerator.Cryptography/SlideGenerator.Cryptography.csproj"/>
-    <Project Path="SlideGenerator.Document/SlideGenerator.Document.csproj"/>
-    <Project Path="SlideGenerator.Download/SlideGenerator.Download.csproj"/>
-    <Project Path="SlideGenerator.Image/SlideGenerator.Image.csproj"/>
-    <Project Path="SlideGenerator.Ipc/SlideGenerator.Ipc.csproj"/>
-    <Project Path="SlideGenerator.Logging/SlideGenerator.Logging.csproj"/>
-    <Project Path="SlideGenerator.Resolver/SlideGenerator.Resolver.csproj"/>
+    <Project Path="src/SlideGenerator.Acquisition/SlideGenerator.Acquisition.csproj"/>
+    <Project Path="src/SlideGenerator.Generator/SlideGenerator.Generator.csproj"/>
+    <Project Path="src/SlideGenerator.Summarization/SlideGenerator.Summarization.csproj"/>
+    <Project Path="src/SlideGenerator.Recipe/SlideGenerator.Recipe.csproj"/>
+    <Project Path="src/SlideGenerator.Settings/SlideGenerator.Settings.csproj"/>
+    <Project Path="src/SlideGenerator.Utilities/SlideGenerator.Utilities.csproj"/>
+    <Project Path="src/SlideGenerator.Coordinator/SlideGenerator.Coordinator.csproj"/>
+    <Project Path="src/SlideGenerator.Cryptography/SlideGenerator.Cryptography.csproj"/>
+    <Project Path="src/SlideGenerator.Document/SlideGenerator.Document.csproj"/>
+    <Project Path="src/SlideGenerator.Image/SlideGenerator.Image.csproj"/>
+    <Project Path="src/SlideGenerator.Ipc/SlideGenerator.Ipc.csproj"/>
+    <Project Path="src/SlideGenerator.Logging/SlideGenerator.Logging.csproj"/>
+    <Project Path="tests/SlideGenerator.Utilities.Tests/SlideGenerator.Utilities.Tests.csproj"/>
+    <Project Path="tests/SlideGenerator.Cryptography.Tests/SlideGenerator.Cryptography.Tests.csproj"/>
+    <Project Path="tests/SlideGenerator.Coordinator.Tests/SlideGenerator.Coordinator.Tests.csproj"/>
+    <Project Path="tests/SlideGenerator.Settings.Tests/SlideGenerator.Settings.Tests.csproj"/>
+    <Project Path="tests/SlideGenerator.Acquisition.Tests/SlideGenerator.Acquisition.Tests.csproj"/>
+    <Project Path="tests/SlideGenerator.Document.Tests/SlideGenerator.Document.Tests.csproj"/>
+    <Project Path="tests/SlideGenerator.Image.Tests/SlideGenerator.Image.Tests.csproj"/>
+    <Project Path="tests/SlideGenerator.Recipe.Tests/SlideGenerator.Recipe.Tests.csproj"/>
+    <Project Path="tests/SlideGenerator.Generator.Tests/SlideGenerator.Generator.Tests.csproj"/>
 </Solution>
