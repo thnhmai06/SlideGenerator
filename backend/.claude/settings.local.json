@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Skill(context7-mcp)"
+      "Skill(context7-mcp)",
+      "PowerShell(Get-ChildItem *)",
+      "Skill(unit-testing-test-generate)",
+      "Skill(clean-architecture)"
     ]
   }
 }
