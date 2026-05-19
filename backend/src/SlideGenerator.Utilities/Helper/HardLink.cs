@@ -2,7 +2,7 @@
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Common
+ * Project: SlideGenerator.Utilities
  * File: HardLink.cs
  *
  * This file is part of this solution. You can find the full source code here: https://github.com/thnhmai06/SlideGenerator
@@ -20,7 +20,7 @@
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 
-namespace SlideGenerator.Common.Utilities;
+namespace SlideGenerator.Utilities.Helper;
 
 /// <summary>Cross-platform hard-link creation.</summary>
 public static partial class HardLink
