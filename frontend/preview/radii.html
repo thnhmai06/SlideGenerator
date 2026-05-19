@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<link rel="stylesheet" href="_card.css" />
+<title>Radii</title>
+<style>
+.radii { display: flex; gap: 16px; align-items: flex-end; }
+.box {
+  width: 88px; height: 88px;
+  background: oklch(0.6929 0.1396 250 / 0.14);
+  box-shadow: inset 0 0 0 1px oklch(0.6929 0.1396 250 / 0.4);
+}
+.b-label { display: flex; flex-direction: column; gap: 2px; align-items: center; }
+.b-name { font-size: 12px; font-weight: 600; color: var(--foreground); }
+.b-value { font-family: var(--font-mono); font-size: 10.5px; color: var(--muted-foreground); }
+</style>
+</head>
+<body>
+<div class="card">
+  <p class="eyebrow">Radii — pills for buttons, rounded squircles for cards</p>
+  <div class="radii">
+    <div class="b-label"><div class="box" style="border-radius:6px"></div><div class="b-name">sm</div><div class="b-value">6px</div></div>
+    <div class="b-label"><div class="box" style="border-radius:10px"></div><div class="b-name">md</div><div class="b-value">10px</div></div>
+    <div class="b-label"><div class="box" style="border-radius:14px"></div><div class="b-name">lg</div><div class="b-value">14px</div></div>
+    <div class="b-label"><div class="box" style="border-radius:17.6px"></div><div class="b-name">--radius</div><div class="b-value">17.6px · 1.1rem</div></div>
+    <div class="b-label"><div class="box" style="border-radius:24px"></div><div class="b-name">2xl</div><div class="b-value">24px</div></div>
+    <div class="b-label"><div class="box" style="border-radius:32px"></div><div class="b-name">4xl · pill</div><div class="b-value">32px / button</div></div>
+    <div class="b-label"><div class="box" style="border-radius:9999px"></div><div class="b-name">full</div><div class="b-value">9999px</div></div>
+  </div>
+</div>
+</body>
+</html>

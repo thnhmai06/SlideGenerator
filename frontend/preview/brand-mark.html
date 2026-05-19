@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<link rel="stylesheet" href="_card.css" />
+<title>Brand Mark</title>
+<style>
+.brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 48px;
+  padding: 24px 0 8px;
+}
+.brand-logo {
+  width: 160px; height: 160px;
+  border-radius: 36px;
+  display: grid; place-items: center;
+  background: var(--card);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.06);
+}
+.brand-logo img { width: 132px; height: 132px; object-fit: contain; }
+.brand-meta { display: flex; flex-direction: column; gap: 6px; }
+.brand-meta .name { font-family: var(--font-heading); font-size: 32px; font-weight: 600; letter-spacing: -0.02em; }
+.brand-meta .tag { color: var(--muted-foreground); font-size: 14px; }
+.brand-meta .file { font-family: var(--font-mono); font-size: 11px; color: var(--muted-foreground); margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <p class="eyebrow">Brand mark</p>
+  <div class="brand">
+    <div class="brand-logo">
+      <img src="../assets/app-icon.png" alt="" />
+    </div>
+    <div class="brand-meta">
+      <div class="name">Slide Generator</div>
+      <div class="tag">Pie chart + recycle-arrows. Navy + cyan.</div>
+      <div class="file">assets/app-icon.png · assets/app-name.png</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

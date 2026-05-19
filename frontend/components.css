@@ -1,0 +1,186 @@
+/* SlideGenerator component primitives — replicates the
+   unsloth-studio shadcn classes in plain CSS so previews and
+   the UI kit can use them without Tailwind. */
+
+@import url("./colors_and_type.css");
+
+/* ---------- BUTTON ---------- */
+.sg-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  letter-spacing: -0.005em;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-out-quart),
+    color var(--duration-fast) var(--ease-out-quart),
+    border-color var(--duration-fast) var(--ease-out-quart);
+  white-space: nowrap;
+  user-select: none;
+}
+.sg-btn:focus-visible {
+  outline: none;
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 50%, transparent);
+}
+.sg-btn:disabled { opacity: 0.5; pointer-events: none; }
+
+.sg-btn--xs { height: 24px; padding: 0 10px; font-size: var(--text-xs); }
+.sg-btn--sm { height: 32px; padding: 0 12px; }
+.sg-btn--lg { height: 40px; padding: 0 16px; }
+.sg-btn--icon { width: 36px; padding: 0; }
+
+.sg-btn--primary {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+.sg-btn--primary:hover { background: color-mix(in oklch, var(--primary) 80%, transparent); }
+
+.sg-btn--dark {
+  background: var(--foreground);
+  color: var(--background);
+}
+.sg-btn--dark:hover { background: color-mix(in oklch, var(--foreground) 85%, transparent); }
+
+.sg-btn--secondary {
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+}
+.sg-btn--secondary:hover { background: color-mix(in oklch, var(--secondary) 80%, transparent); }
+
+.sg-btn--outline {
+  border-color: var(--border);
+  background: color-mix(in oklch, var(--input) 30%, transparent);
+  color: var(--foreground);
+}
+.sg-btn--outline:hover { background: color-mix(in oklch, var(--input) 50%, transparent); }
+
+.sg-btn--ghost {
+  background: transparent;
+  color: var(--foreground);
+}
+.sg-btn--ghost:hover { background: var(--muted); }
+
+.sg-btn--destructive {
+  background: color-mix(in oklch, var(--destructive) 10%, transparent);
+  color: var(--destructive);
+}
+.sg-btn--destructive:hover { background: color-mix(in oklch, var(--destructive) 20%, transparent); }
+
+/* ---------- BADGE ---------- */
+.sg-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+.sg-badge--default     { background: var(--primary); color: var(--primary-foreground); }
+.sg-badge--secondary   { background: var(--secondary); color: var(--secondary-foreground); }
+.sg-badge--outline     { background: color-mix(in oklch, var(--input) 30%, transparent); color: var(--foreground); border-color: var(--border); }
+.sg-badge--destructive { background: color-mix(in oklch, var(--destructive) 10%, transparent); color: var(--destructive); }
+.sg-badge--success     { background: color-mix(in oklch, var(--slide-success, oklch(0.72 0.16 156)) 14%, transparent); color: oklch(0.42 0.16 156); }
+.sg-badge--warning     { background: color-mix(in oklch, var(--slide-warning, oklch(0.78 0.14 78)) 18%, transparent); color: oklch(0.42 0.14 78); }
+
+/* ---------- INPUT ---------- */
+.sg-input {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  width: 100%;
+  padding: 0 12px;
+  border-radius: 9999px;
+  border: 1px solid var(--input);
+  background: color-mix(in oklch, var(--input) 30%, transparent);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  color: var(--foreground);
+  transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
+}
+.sg-input:focus-visible,
+.sg-input:focus {
+  outline: none;
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 50%, transparent);
+}
+.sg-input::placeholder { color: var(--muted-foreground); }
+.sg-input--mono { font-family: var(--font-mono); }
+
+/* ---------- CARD ---------- */
+.sg-card {
+  border-radius: 1.1rem;
+  background: var(--card);
+  color: var(--card-foreground);
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--foreground) 10%, transparent);
+  padding: 24px;
+}
+.sg-card-title { font-family: var(--font-sans); font-size: var(--text-md); font-weight: var(--weight-medium); margin: 0; }
+.sg-card-desc { font-family: var(--font-sans); font-size: var(--text-sm); color: var(--muted-foreground); margin: 4px 0 0; }
+
+/* ---------- STATUS DOT ---------- */
+.sg-dot {
+  width: 8px; height: 8px;
+  border-radius: 9999px;
+  display: inline-block;
+}
+.sg-dot--processing { background: oklch(0.70 0.13 230); animation: sg-pulse 1.4s ease-in-out infinite; }
+.sg-dot--success    { background: oklch(0.72 0.16 156); }
+.sg-dot--paused     { background: oklch(0.78 0.14 78); }
+.sg-dot--error      { background: oklch(0.65 0.21 25); }
+.sg-dot--pending    { background: color-mix(in oklch, var(--foreground) 25%, transparent); }
+.sg-dot--cancelled  { background: var(--muted-foreground); }
+
+@keyframes sg-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+/* ---------- SIDEBAR ITEM ---------- */
+.sg-sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: transparent;
+  border: none;
+  color: var(--sidebar-foreground);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  text-align: left;
+  transition: background-color var(--duration-fast), color var(--duration-fast), transform var(--duration-fast);
+}
+.sg-sidebar-item:hover {
+  background: var(--sidebar-accent);
+  transform: translateX(2px);
+}
+.sg-sidebar-item--active {
+  background: var(--sidebar-accent);
+  color: var(--sidebar-accent-foreground);
+}
+.sg-sidebar-item .sg-sidebar-icon {
+  width: 18px; height: 18px;
+  object-fit: contain;
+  opacity: 0.72;
+}
+.sg-sidebar-item--active .sg-sidebar-icon { opacity: 1; }

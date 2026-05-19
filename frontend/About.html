@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SlideGenerator — Giới thiệu</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --b900: #0d3d8f;
+      --b800: #1255b5;
+      --b600: #1976d2;
+      --b400: #42a5f5;
+      --b100: #bbdefb;
+      --b50:  #e8f4fd;
+      --tx:   #16213e;
+      --tx2:  #546e7a;
+      --tx3:  #90a4ae;
+      --bg:   #f4f7fb;
+      --surf: #ffffff;
+      --bdr:  #dde6f0;
+      --grn:  #2e7d32;
+      --r:    16px;
+    }
+
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+    html, body {
+      width:100%; height:100%;
+      font-family:'Nunito', sans-serif;
+      background: var(--bg);
+      color: var(--tx);
+    }
+
+    body { overflow-y: auto; }
+
+    /* ═══════════════════════════════
+       APP
+    ═══════════════════════════════ */
+    #app {
+      width: 100%;
+    }
+
+    .wrap {
+      max-width: 660px;
+      margin: 0 auto;
+      padding: 52px 28px 96px;
+    }
+
+    /* ── Header ── */
+    .hdr {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 20px;
+      padding-bottom: 44px;
+      border-bottom: 1.5px solid var(--bdr);
+    }
+
+    /*
+      Logo animation — split from center, plays once, stays at Finish
+      Layout: icon(72) + gap(10) + text(118) = 200px, center = 100px
+      Icon center  = 36px  → 64px LEFT  of group center → start translateX(+64px)
+      Text center  = 141px → 41px RIGHT of group center → start translateX(−41px)
+    */
+    .hdr-logo {
+      display: flex;
+      align-items: center;
+    }
+
+    /* ICON — starts at center, slides LEFT */
+    .hdr-icon {
+      width:72px; height:72px; display:block; flex-shrink:0;
+      transform: translateX(64px);
+      animation: abtIconLeft .80s .25s cubic-bezier(0.15,0.7,0.1,1) forwards;
+    }
+    @keyframes abtIconLeft { to { transform: translateX(0); } }
+
+    /* TEXT OUTER — starts at center, slides RIGHT */
+    .hdr-text-outer {
+      margin-left: 10px;
+      flex-shrink: 0;
+      transform: translateX(-41px);
+      animation: abtTextRight .80s .25s cubic-bezier(0.15,0.7,0.1,1) forwards;
+    }
+    @keyframes abtTextRight { to { transform: translateX(0); } }
+
+    /* MASK — expands 0 → 118px */
+    .hdr-mask {
+      overflow: hidden;
+      height: 72px;
+      width: 0;
+      animation: abtMaskExpand .80s .25s cubic-bezier(0.15,0.7,0.1,1) forwards;
+    }
+    @keyframes abtMaskExpand { to { width: 118px; } }
+
+    /* TEXT IMAGE — slight parallax */
+    .hdr-text {
+      height: 72px; width: 118px;
+      display: block; flex-shrink: 0;
+      transform: translateX(-10px);
+      animation: abtTextParallax .80s .25s cubic-bezier(0.15,0.7,0.1,1) forwards;
+    }
+    @keyframes abtTextParallax { to { transform: translateX(0); } }
+
+    .hdr-desc { text-align:center; }
+
+    .hdr-desc .en {
+      font-size: 14px; font-weight: 700;
+      color: var(--tx);
+      line-height: 1.5;
+    }
+
+    .hdr-desc .vi {
+      font-size: 12px; font-weight: 600;
+      color: var(--tx2);
+      margin-top: 3px;
+    }
+
+    /* ── Section ── */
+    .sec {
+      padding: 34px 0;
+      border-bottom: 1.5px solid var(--bdr);
+    }
+
+    .sec-lbl {
+      font-size: 10px; font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      color: var(--b800);
+      margin-bottom: 20px;
+    }
+
+    /* ── Update Card ── */
+    .upd-card {
+      background: var(--surf);
+      border: 1.5px solid var(--bdr);
+      border-radius: var(--r);
+      padding: 18px 22px;
+      display: flex; align-items: center;
+      justify-content: space-between;
+      gap: 16px; flex-wrap: wrap;
+    }
+
+    .upd-lft { display:flex; flex-direction:column; gap:4px; }
+
+    .upd-ver { display:flex; align-items:baseline; gap:8px; }
+
+    .upd-name { font-size:17px; font-weight:900; }
+
+    .upd-num {
+      font-size:13px; font-weight:800;
+      color: var(--b400);
+      background: var(--b50);
+      padding: 2px 8px; border-radius:6px;
+    }
+
+    .upd-date { font-size:11px; font-weight:600; color:var(--tx3); }
+
+    .upd-rgt { display:flex; align-items:center; gap:12px; }
+
+    .upd-status { display:flex; align-items:center; gap:7px; }
+
+    .upd-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
+    .dot-ok  { background: var(--grn); }
+    .dot-chk { background: var(--b400); animation: blink 1s infinite; }
+
+    @keyframes blink { 0%,100%{opacity:1}50%{opacity:.2} }
+
+    .upd-st-txt { font-size:12px; font-weight:800; }
+
+    .upd-btn {
+      padding: 8px 16px;
+      background: var(--b800); color: #fff;
+      border: none; border-radius:10px;
+      font-family:'Nunito',sans-serif;
+      font-size:12px; font-weight:800;
+      cursor:pointer;
+      transition: background .15s, transform .1s;
+      white-space: nowrap;
+    }
+
+    .upd-btn:hover  { background:var(--b900); transform:translateY(-1px); }
+    .upd-btn:active { transform:none; }
+    .upd-btn:disabled { background:#bbb; cursor:not-allowed; transform:none; }
+
+    /* ── Developers ── */
+    .dev-row {
+      display:flex; flex-wrap:wrap;
+      gap:28px;
+      margin-bottom:28px;
+    }
+
+    .dev {
+      display:flex; flex-direction:column;
+      align-items:center;
+      width:80px;
+      cursor:default;
+    }
+
+    .dev-av-wrap { position:relative; width:72px; height:72px; }
+
+    .dev-av {
+      width:72px; height:72px;
+      border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-size:28px; font-weight:900;
+      color:#fff;
+      box-shadow: 0 2px 14px rgba(21,101,192,.22);
+      transition: transform .2s, box-shadow .2s;
+      user-select:none;
+    }
+
+    .dev:hover .dev-av {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 24px rgba(21,101,192,.3);
+    }
+
+    .dev-badge {
+      position:absolute; bottom:-3px; right:-5px;
+      width:28px; height:28px;
+      background:#fff;
+      border-radius:50%;
+      box-shadow:0 2px 8px rgba(0,0,0,.14);
+      display:flex; align-items:center; justify-content:center;
+      transform: rotate(30deg);
+      transition: transform .25s cubic-bezier(.34,1.56,.64,1);
+      border:2px solid #fff;
+    }
+
+    .dev:hover .dev-badge { transform: rotate(0deg) scale(1.18); }
+
+    .dev-info {
+      margin-top:9px;
+      text-align:center;
+      height:32px;
+      display:flex; flex-direction:column;
+      align-items:center; gap:2px;
+    }
+
+    .dev-name {
+      font-size:12px; font-weight:800;
+      white-space:nowrap;
+      overflow:hidden; text-overflow:ellipsis;
+      max-width:88px;
+      opacity:0;
+      transform:translateY(5px);
+      transition: opacity .2s, transform .2s;
+    }
+
+    .dev-role {
+      font-size:10px; font-weight:700;
+      color:var(--tx2);
+      opacity:0;
+      transform:translateY(4px);
+      transition: opacity .2s .05s, transform .2s .05s;
+    }
+
+    .dev:hover .dev-name,
+    .dev:hover .dev-role { opacity:1; transform:translateY(0); }
+
+    /* GitHub */
+    .gh-btn {
+      display:inline-flex; align-items:center; gap:9px;
+      padding:11px 20px;
+      background:var(--tx);
+      color:#fff; border-radius:12px;
+      text-decoration:none;
+      font-size:13px; font-weight:800;
+      transition: background .15s, transform .12s;
+    }
+
+    .gh-btn:hover { background:#000; transform:translateY(-2px); }
+
+    /* ── Supporters ── */
+    .sup-hero {
+      background: linear-gradient(140deg, var(--b50) 0%, #d4e9fb 100%);
+      border: 1.5px solid var(--b100);
+      border-radius:20px;
+      padding: 30px 28px;
+      text-align:center;
+      margin-bottom:26px;
+    }
+
+    .sup-ico { display:flex; justify-content:center; margin-bottom:12px; }
+
+    .sup-hero h3 {
+      font-size:18px; font-weight:900;
+      color:var(--b900); margin-bottom:10px;
+    }
+
+    .sup-hero p {
+      font-size:13px; font-weight:600;
+      color:var(--tx2); line-height:1.75;
+      max-width:390px; margin:0 auto 20px;
+    }
+
+    .sup-hero p strong { color:var(--b800); }
+
+    .sup-cta {
+      display:inline-flex; align-items:center; gap:8px;
+      padding:12px 30px;
+      background: linear-gradient(135deg, var(--b800), var(--b400));
+      color:#fff; border:none; border-radius:13px;
+      font-family:'Nunito',sans-serif;
+      font-size:14px; font-weight:900;
+      cursor:pointer; text-decoration:none;
+      box-shadow:0 4px 18px rgba(21,101,192,.28);
+      transition: transform .2s, box-shadow .2s;
+    }
+
+    .sup-cta:hover {
+      transform:translateY(-2px);
+      box-shadow:0 8px 26px rgba(21,101,192,.38);
+    }
+
+    .sup-tier-legend {
+      display:flex; align-items:center; gap:16px;
+      margin-bottom:14px; flex-wrap:wrap;
+    }
+
+    .sup-tier-lbl {
+      font-size:11px; font-weight:800;
+      letter-spacing:.04em;
+      display:flex; align-items:center; gap:5px;
+    }
+
+    .sup-list-hd {
+      font-size:11px; font-weight:900;
+      text-transform:uppercase; letter-spacing:.09em;
+      color:var(--tx3);
+      margin-bottom:14px;
+    }
+
+    .sup-grid { display:flex; flex-wrap:wrap; gap:8px; }
+
+    .sup-chip {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:6px 14px;
+      background:var(--surf);
+      border:1.5px solid var(--bdr);
+      border-radius:999px;
+      font-size:13px; font-weight:700;
+      color:var(--tx);
+      transition: border-color .15s, background .15s, transform .12s;
+      cursor:default;
+    }
+
+    .sup-chip:hover { transform:translateY(-1px); }
+
+    .sup-chip .mk { font-size:12px; }
+
+    /* tiers */
+    .sup-chip.gold   { border-color:#ffe082; background:#fffde7; }
+    .sup-chip.gold   .mk { color:#f9a825; }
+    .sup-chip.silver { border-color:#cfd8dc; background:#fafafa; }
+    .sup-chip.silver .mk { color:#78909c; }
+    .sup-chip.blue   { border-color:#bbdefb; background:#f0f8ff; }
+    .sup-chip.blue   .mk { color:var(--b600); }
+
+    /* ── Footer ── */
+    .footer {
+      padding-top:40px;
+      text-align:center;
+      font-size:12px; font-weight:600;
+      color:var(--tx3);
+      line-height:1.8;
+    }
+
+    .footer a { color:var(--b600); text-decoration:none; }
+    .footer a:hover { text-decoration:underline; }
+
+    /* scrollbar */
+    #app::-webkit-scrollbar { width:5px; }
+    #app::-webkit-scrollbar-track { background:transparent; }
+    #app::-webkit-scrollbar-thumb { background:var(--bdr); border-radius:99px; }
+    #app::-webkit-scrollbar-thumb:hover { background:#b0bec5; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════ APP ═══════ -->
+<div id="app">
+  <div class="wrap">
+
+    <!-- ── Logo + mô tả ── -->
+    <div class="hdr">
+      <div class="hdr-logo">
+        <img class="hdr-icon" src="assets/app-icon.png" alt="">
+        <div class="hdr-text-outer">
+          <div class="hdr-mask">
+            <img class="hdr-text" src="assets/app-name.png" alt="Slide Generator">
+          </div>
+        </div>
+      </div>
+      <div class="hdr-desc">
+        <p class="en">An automated, template-based presentation generator</p>
+        <p class="vi">Phần mềm tự động tạo slide thuyết trình theo mẫu</p>
+      </div>
+    </div>
+
+    <!-- ── Phiên bản & cập nhật ── -->
+    <div class="sec">
+      <div class="sec-lbl">Phiên bản &amp; Cập nhật</div>
+      <div class="upd-card">
+        <div class="upd-lft">
+          <div class="upd-ver">
+            <span class="upd-name">SlideGenerator</span>
+            <span class="upd-num" id="vNum">v1.0.0</span>
+          </div>
+          <div class="upd-date" id="vDate">Build ngày 18/05/2026</div>
+        </div>
+        <div class="upd-rgt">
+          <div class="upd-status">
+            <div class="upd-dot dot-ok" id="uDot"></div>
+            <span class="upd-st-txt" id="uTxt" style="color:var(--grn)">Phiên bản mới nhất</span>
+          </div>
+          <button class="upd-btn" id="uBtn" onclick="checkUpdate()">Kiểm tra cập nhật</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Nhà phát triển ── -->
+    <div class="sec">
+      <div class="sec-lbl">Nhà phát triển</div>
+      <div class="dev-row">
+
+        <!-- Thành Mai — Owner — Crown -->
+        <div class="dev">
+          <div class="dev-av-wrap">
+            <div class="dev-av" style="background:linear-gradient(140deg,#0d3d8f,#1976d2)">T</div>
+            <div class="dev-badge"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#d4a017" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20v-2H2v2z"/><path d="M5 18l-2-9 5.5 4L12 5l3.5 8L21 9l-2 9H5z"/></svg></div>
+          </div>
+          <div class="dev-info">
+            <span class="dev-name">Thành Mai</span>
+            <span class="dev-role">Owner</span>
+          </div>
+        </div>
+
+        <!-- Hải — Developer — Laptop -->
+        <div class="dev">
+          <div class="dev-av-wrap">
+            <div class="dev-av" style="background:linear-gradient(140deg,#1255b5,#42a5f5)">H</div>
+            <div class="dev-badge"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1565c0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M0 20h24"/><line x1="8" y1="20" x2="16" y2="20"/></svg></div>
+          </div>
+          <div class="dev-info">
+            <span class="dev-name">Nguyễn Hải</span>
+            <span class="dev-role">Developer</span>
+          </div>
+        </div>
+
+        <!-- Designer — Palette -->
+        <div class="dev">
+          <div class="dev-av-wrap">
+            <div class="dev-av" style="background:linear-gradient(140deg,#6a1b9a,#ab47bc)">D</div>
+            <div class="dev-badge"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6a1b9a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="1" fill="#6a1b9a" stroke="none"/><circle cx="17.5" cy="10.5" r="1" fill="#6a1b9a" stroke="none"/><circle cx="8.5" cy="7.5" r="1" fill="#6a1b9a" stroke="none"/><circle cx="6.5" cy="12.5" r="1" fill="#6a1b9a" stroke="none"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg></div>
+          </div>
+          <div class="dev-info">
+            <span class="dev-name">Designer</span>
+            <span class="dev-role">UI / UX</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- GitHub -->
+      <a href="#" class="gh-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
+        </svg>
+        Kho lưu trữ GitHub
+      </a>
+    </div>
+
+    <!-- ── Supporters ── -->
+    <div class="sec">
+      <div class="sec-lbl">Ủng hộ dự án</div>
+
+      <div class="sup-hero">
+        <span class="sup-ico"><svg width="40" height="40" viewBox="0 0 24 24" fill="#bbdefb" stroke="#1255b5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span>
+        <h3>Ủng hộ SlideGenerator</h3>
+        <p>
+          SlideGenerator hoàn toàn <strong>miễn phí và mã nguồn mở</strong>.<br>
+          Nếu dự án này hữu ích với bạn, hãy cân nhắc ủng hộ để giúp chúng tôi
+          tiếp tục phát triển thêm nhiều tính năng mới!
+        </p>
+        <a href="#" class="sup-cta"><svg width="15" height="15" viewBox="0 0 24 24" fill="rgba(255,255,255,.75)" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> Ủng hộ ngay</a>
+      </div>
+
+      <div class="sup-list-hd">Những người đã ủng hộ</div>
+      <div class="sup-grid">
+        <!-- Gold -->
+        <div class="sup-chip gold"><span class="mk">★</span> Nguyễn Văn A</div>
+        <div class="sup-chip gold"><span class="mk">★</span> Trần Thị B</div>
+        <!-- Silver -->
+        <div class="sup-chip silver"><span class="mk">♥</span> Lê Văn C</div>
+        <div class="sup-chip silver"><span class="mk">♥</span> Phạm Thị D</div>
+        <!-- Blue -->
+        <div class="sup-chip blue"><span class="mk">♥</span> Hoàng Văn E</div>
+        <div class="sup-chip blue"><span class="mk">♥</span> Ngô Thị F</div>
+        <div class="sup-chip blue"><span class="mk">♥</span> Vũ Văn G</div>
+        <div class="sup-chip blue"><span class="mk">♥</span> Đặng Văn H</div>
+      </div>
+    </div>
+
+    <!-- ── Footer ── -->
+    <div class="footer">
+      © 2026 — Thành Mai.
+      Released under <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank">AGPL-3.0</a>.
+    </div>
+
+  </div><!-- /wrap -->
+</div><!-- /app -->
+
+<script>
+  /* ─── UPDATE CHECKER ─── */
+  function checkUpdate() {
+    const btn = document.getElementById('uBtn');
+    const dot = document.getElementById('uDot');
+    const txt = document.getElementById('uTxt');
+
+    btn.disabled = true;
+    btn.textContent = 'Đang kiểm tra…';
+    dot.className   = 'upd-dot dot-chk';
+    txt.style.color = 'var(--b400)';
+    txt.textContent = 'Đang kiểm tra…';
+
+    setTimeout(() => {
+      btn.disabled    = false;
+      btn.textContent = 'Kiểm tra cập nhật';
+      dot.className   = 'upd-dot dot-ok';
+      txt.style.color = 'var(--grn)';
+      txt.textContent = 'Phiên bản mới nhất';
+    }, 2200);
+  }
+</script>
+</body>
+</html>

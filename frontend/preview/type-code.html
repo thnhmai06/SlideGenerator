@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<link rel="stylesheet" href="_card.css" />
+<title>Fira Code — Code Blocks</title>
+<style>
+.specimen { font-family: "Fira Code", "IBM Plex Mono", monospace; color: var(--foreground); }
+.code-block {
+  background: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin: 4px 0;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.55;
+  font-feature-settings: "liga" 1, "calt" 1;
+  white-space: pre;
+  overflow-x: auto;
+}
+.eyebrow + .lead { color: var(--muted-foreground); font-size: 12px; margin: 2px 0 8px; }
+.tk-key { color: oklch(0.65 0.21 25); }
+.tk-str { color: oklch(0.6929 0.1396 250); }
+.tk-num { color: oklch(0.7497 0.1003 85.0057); }
+.tk-com { color: var(--muted-foreground); font-style: italic; }
+</style>
+</head>
+<body>
+<div class="card">
+  <p class="eyebrow">Code blocks · Fira Code · from unsloth-studio · ligatures on</p>
+  <p class="lead">Used for fenced code in chat/preview surfaces. `--font-code`. The mono UI font (`--font-mono`) stays IBM Plex Mono.</p>
+  <div class="specimen">
+    <div class="code-block">
+<span class="tk-com">// SlideGenerator.Framework — replace text in shapes</span>
+<span class="tk-key">foreach</span> (<span class="tk-key">var</span> shape <span class="tk-key">in</span> slide.Shapes)
+  <span class="tk-key">if</span> (shape.HasText <span class="tk-key">&&</span> shape.Text.Contains(<span class="tk-str">"{{title}}"</span>))
+    shape.Text <span class="tk-key">=</span> shape.Text.Replace(<span class="tk-str">"{{title}}"</span>, row[<span class="tk-num">0</span>]);
+<span class="tk-com">// =&gt; ligatures: =&gt; != &lt;= &gt;= &amp;&amp; -&gt; ::</span>
+    </div>
+  </div>
+</div>
+</body>
+</html>

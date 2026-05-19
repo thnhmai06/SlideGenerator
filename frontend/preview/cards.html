@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<link rel="stylesheet" href="../components.css" />
+<link rel="stylesheet" href="_card.css" />
+<title>Cards</title>
+<style>
+.row { display: flex; gap: 16px; }
+.row .sg-card { flex: 1; }
+.meta { display: flex; gap: 12px; margin-top: 12px; align-items: center; }
+.meta-label { font-family: var(--font-mono); font-size: 11px; color: var(--muted-foreground); }
+.meta-value { font-family: var(--font-mono); font-size: 11px; color: var(--foreground); font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="card">
+  <p class="eyebrow">Cards · ring-1 not border · 1.1rem radius · flat surface</p>
+  <div class="row">
+    <div class="sg-card">
+      <h3 class="sg-card-title">Template</h3>
+      <p class="sg-card-desc">q1-readout.potx · 12 text shapes · 4 image shapes</p>
+      <div class="meta">
+        <span class="sg-badge sg-badge--success">Loaded</span>
+        <span class="sg-badge sg-badge--outline">.potx</span>
+      </div>
+    </div>
+    <div class="sg-card">
+      <h3 class="sg-card-title">Data</h3>
+      <p class="sg-card-desc">members.xlsx · 12 sheets · 1,408 rows</p>
+      <div class="meta">
+        <span class="sg-badge sg-badge--success">Loaded</span>
+        <span class="sg-badge sg-badge--secondary">9 selected</span>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

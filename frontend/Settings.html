@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cài đặt — SlideGenerator</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --sp-xs:4px;  --sp-sm:8px;  --sp-md:12px; --sp-lg:16px;
+  --sp-xl:20px; --sp-2xl:24px;--sp-3xl:32px;--sp-4xl:40px;
+  --r-sm:6px; --r-md:10px; --r-lg:14px; --r-xl:18px; --r-full:999px;
+  --f-xs:12px; --f-sm:13px; --f-base:14px; --f-lg:16px;
+  --f-xl:20px; --f-2xl:24px; --f-3xl:32px;
+  --fw-md:500; --fw-semi:600; --fw-bold:700;
+  --tr-fast:120ms ease; --tr-base:220ms ease;
+}
+[data-theme='dark'] {
+  --bg0:#0f1c2e; --bg1:#142035; --bg2:#1a2a40; --bgh:#1f3050; --bga:#26385c;
+  --tx0:#e8f1fb; --tx1:#9db5ce; --tx2:#5d7c99;
+  --bd0:#1e3050; --bd1:#253868;
+  --ac:#42a5f5;  --ach:#64b5f6; --acs:rgba(66,165,245,.18);
+  --su:#66bb6a;  --da:#ef5350; --dah:#e53935;
+  --inp:#1a2a40; --inb:#253868; --int:#e8f1fb; --iph:#5d7c99;
+  --shs:0 6px 18px rgba(0,0,0,.35); --shm:0 14px 30px rgba(0,0,0,.45);
+  --foc:0 0 0 3px rgba(66,165,245,.22);
+}
+[data-theme='light'] {
+  --bg0:#f4f7fb; --bg1:#edf2f9; --bg2:#ffffff; --bgh:#e3ecf7; --bga:#d8e6f4;
+  --tx0:#16213e; --tx1:#546e7a; --tx2:#90a4ae;
+  --bd0:#dde6f0; --bd1:#c8d8ec;
+  --ac:#1255b5;  --ach:#0d3d8f; --acs:rgba(18,85,181,.10);
+  --su:#2e7d32;  --da:#c62828; --dah:#b71c1c;
+  --inp:#ffffff; --inb:#dde6f0; --int:#16213e; --iph:#90a4ae;
+  --shs:0 6px 18px rgba(22,33,62,.08); --shm:0 14px 30px rgba(22,33,62,.14);
+  --foc:0 0 0 3px rgba(18,85,181,.18);
+}
+
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+
+body {
+  font-family:'Nunito',sans-serif;
+  background:var(--bg0); color:var(--tx0);
+  font-size:var(--f-base); line-height:1.5;
+  min-height:100vh; padding:var(--sp-3xl) var(--sp-2xl);
+}
+.wrap { max-width:900px; margin:0 auto; display:flex; flex-direction:column; gap:var(--sp-2xl); }
+
+@keyframes notifIn  { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+@keyframes dialogIn { from{opacity:0;transform:scale(.94)} to{opacity:1;transform:scale(1)} }
+
+/* ── HEADER ── */
+.pg-header { display:flex; align-items:center; justify-content:space-between; gap:var(--sp-lg); }
+.pg-title  { font-size:var(--f-3xl); font-weight:var(--fw-bold); color:var(--tx0); }
+.theme-pill {
+  display:flex; align-items:center; gap:8px;
+  padding:7px 16px;
+  background:var(--bg2); border:1px solid var(--bd0); border-radius:var(--r-full);
+  color:var(--tx1); font-size:var(--f-sm); font-weight:var(--fw-semi);
+  cursor:pointer;
+  transition:border-color var(--tr-fast),color var(--tr-fast);
+}
+.theme-pill:hover { border-color:var(--ac); color:var(--tx0); }
+
+/* ── NOTIFICATIONS ── */
+#notifArea { min-height:0; }
+.notif {
+  display:flex; align-items:center; gap:var(--sp-md);
+  padding:12px 18px; border-radius:var(--r-lg);
+  font-size:var(--f-sm); font-weight:var(--fw-semi);
+  box-shadow:var(--shs); animation:notifIn 220ms ease both;
+}
+.notif-ok   { background:rgba(43,214,143,.12); border:1px solid rgba(43,214,143,.4); border-left:4px solid var(--su); color:var(--su); }
+.notif-warn { background:rgba(251,146,60,.12);  border:1px solid rgba(251,146,60,.4); border-left:4px solid #fb923c; color:#fb923c; }
+.notif-info { background:var(--acs); border:1px solid var(--ac); border-left:4px solid var(--ac); color:var(--ac); }
+.notif-err  { background:rgba(249,112,102,.12); border:1px solid rgba(249,112,102,.4); border-left:4px solid var(--da); color:var(--da); }
+
+/* ── TABS ── */
+.tab-bar { display:flex; flex-wrap:wrap; gap:var(--sp-sm); }
+.tab-btn {
+  display:flex; align-items:center; gap:7px;
+  padding:9px 16px; border-radius:var(--r-full);
+  border:1px solid var(--bd0); background:var(--bg2);
+  color:var(--tx1); font-size:var(--f-sm); font-weight:var(--fw-semi);
+  cursor:pointer; position:relative;
+  transition:background var(--tr-fast),border-color var(--tr-fast),color var(--tr-fast);
+}
+.tab-btn svg { opacity:.6; transition:opacity var(--tr-fast); flex-shrink:0; }
+.tab-btn:hover { border-color:var(--ac); color:var(--tx0); }
+.tab-btn:hover svg { opacity:1; }
+.tab-btn.active { background:var(--acs); border-color:var(--ac); color:var(--ac); }
+.tab-btn.active svg { opacity:1; }
+.tab-btn .dirty-dot { width:7px; height:7px; border-radius:50%; background:#fb923c; display:none; }
+.tab-btn.dirty .dirty-dot { display:block; }
+
+/* ── CONTENT ── */
+#tabContent { display:flex; flex-direction:column; gap:var(--sp-lg); }
+
+/* ── SECTIONS ── */
+.sec {
+  padding:var(--sp-2xl); background:var(--bg2); border:1px solid var(--bd0);
+  border-radius:var(--r-lg); box-shadow:var(--shs);
+  display:flex; flex-direction:column; gap:var(--sp-lg);
+}
+.sec-title {
+  font-size:var(--f-xl); font-weight:var(--fw-semi); color:var(--tx0);
+  display:flex; align-items:center; gap:10px;
+}
+.sec-title svg { color:var(--ac); flex-shrink:0; }
+.sg { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:var(--sp-lg); }
+.si { display:flex; flex-direction:column; gap:var(--sp-xs); }
+.sl { display:block; margin-bottom:var(--sp-sm); color:var(--tx1); font-size:var(--f-base); font-weight:var(--fw-md); }
+.sh { font-size:var(--f-xs); color:var(--tx2); margin-top:2px; }
+
+/* ── INPUTS ── */
+.inp, .sel {
+  width:100%; padding:10px 14px;
+  background:var(--inp); border:1px solid var(--inb);
+  border-radius:var(--r-md); color:var(--int);
+  font-size:var(--f-base); font-family:inherit; line-height:1.5;
+  transition:border-color var(--tr-fast),box-shadow var(--tr-fast);
+}
+.inp:focus, .sel:focus { outline:none; border-color:var(--ac); box-shadow:var(--foc); }
+.inp::placeholder { color:var(--iph); }
+.sel {
+  appearance:none; padding-right:36px; cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%235d7c99' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 12px center;
+}
+[data-theme='light'] .sel {
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2390a4ae' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+.igroup { display:flex; gap:var(--sp-sm); align-items:stretch; }
+.igroup > *:first-child { flex:1; }
+.iunit {
+  padding:10px 13px; background:var(--bg1); border:1px solid var(--bd0);
+  border-radius:var(--r-md); color:var(--tx2);
+  font-size:var(--f-sm); font-weight:var(--fw-semi); white-space:nowrap;
+}
+
+/* ── NUMBER STEPPER ── */
+.nstepper { display:flex; align-items:center; gap:var(--sp-sm); }
+.nstepper input {
+  width:72px; text-align:center; padding:8px 6px;
+  background:var(--inp); border:1px solid var(--inb); border-radius:var(--r-md);
+  color:var(--int); font-size:var(--f-base); font-family:inherit;
+  transition:border-color var(--tr-fast),box-shadow var(--tr-fast);
+  -moz-appearance:textfield;
+}
+.nstepper input::-webkit-outer-spin-button,
+.nstepper input::-webkit-inner-spin-button { -webkit-appearance:none; }
+.nstepper input:focus { outline:none; border-color:var(--ac); box-shadow:var(--foc); }
+.step-btn {
+  width:32px; height:32px; display:flex; align-items:center; justify-content:center;
+  background:var(--bg1); border:1px solid var(--bd0); border-radius:var(--r-md);
+  color:var(--tx1); font-size:17px; font-weight:300;
+  cursor:pointer; user-select:none; flex-shrink:0;
+  transition:background var(--tr-fast),border-color var(--tr-fast),color var(--tr-fast);
+}
+.step-btn:hover { background:var(--bgh); border-color:var(--ac); color:var(--ac); }
+
+/* ── TOGGLE SWITCH ── */
+.tog-card { background:var(--bg1); border:1px solid var(--bd0); border-radius:var(--r-md); padding:var(--sp-lg); }
+.tog-row  { display:flex; align-items:center; gap:var(--sp-lg); }
+.tog-lbl  { display:flex; flex-direction:column; gap:3px; flex:1; min-width:0; }
+.tog-name { font-weight:var(--fw-semi); color:var(--tx0); }
+.tog-desc { font-size:var(--f-sm); color:var(--tx2); }
+.tswitch  { position:relative; width:52px; height:28px; flex-shrink:0; margin-left:auto; }
+.tswitch input { opacity:0; width:0; height:0; position:absolute; }
+.tslider {
+  position:absolute; inset:0;
+  background:var(--bgh); border:1px solid var(--bd0); border-radius:999px;
+  cursor:pointer; transition:background var(--tr-fast),border-color var(--tr-fast);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);
+}
+.tslider::before {
+  content:''; position:absolute;
+  width:20px; height:20px; left:4px; top:3px;
+  background:#fff; border-radius:50%;
+  box-shadow:0 1px 4px rgba(0,0,0,.25);
+  transition:transform var(--tr-fast);
+}
+.tswitch input:checked+.tslider { background:var(--ac); border-color:var(--ac); }
+.tswitch input:checked+.tslider::before { transform:translateX(24px); }
+
+/* ── THEME CARDS ── */
+.theme-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:var(--sp-md); }
+.tcard {
+  border:2px solid var(--bd0); border-radius:var(--r-lg); overflow:hidden; cursor:pointer;
+  transition:border-color var(--tr-fast),box-shadow var(--tr-fast),transform var(--tr-fast);
+}
+.tcard:hover { border-color:var(--ac); transform:translateY(-2px); }
+.tcard.sel   { border-color:var(--ac); box-shadow:0 0 0 3px var(--acs); }
+.tcard-prev  { height:72px; display:flex; overflow:hidden; }
+.tcard-prev.dk { background:#0f1c2e; }
+.tcard-prev.lt { background:#f4f7fb; }
+.tcard-prev.sy { background:linear-gradient(135deg,#0f1c2e 50%,#f4f7fb 50%); }
+.tcard-sb    { width:28%; background:rgba(0,0,0,.18); }
+.tcard-ct    { flex:1; padding:9px 10px; display:flex; flex-direction:column; gap:5px; justify-content:center; }
+.tcard-bar   { height:6px; border-radius:3px; width:55%; }
+.tcard-row   { height:4px; border-radius:2px; width:80%; }
+.tcard-row.sh { width:50%; }
+.tcard-prev.dk .tcard-bar { background:rgba(66,165,245,.55); }
+.tcard-prev.lt .tcard-bar { background:rgba(18,85,181,.55); }
+.tcard-prev.sy .tcard-bar { background:rgba(18,85,181,.45); }
+.tcard-prev.dk .tcard-row { background:rgba(255,255,255,.14); }
+.tcard-prev.lt .tcard-row { background:rgba(22,33,62,.10); }
+.tcard-prev.sy .tcard-row { background:rgba(150,150,150,.2); }
+.tcard-lbl {
+  padding:8px; text-align:center;
+  font-size:var(--f-sm); font-weight:var(--fw-semi); color:var(--tx1);
+  background:var(--bg1);
+}
+.tcard.sel .tcard-lbl { color:var(--ac); }
+
+/* ── PERFORMANCE ── */
+.perf-list { display:flex; flex-direction:column; gap:var(--sp-xl); }
+.perf-item {
+  background:var(--bg1); border:1px solid var(--bd0);
+  border-radius:var(--r-lg); padding:var(--sp-lg) var(--sp-xl);
+  display:flex; flex-direction:column; gap:var(--sp-md);
+}
+.perf-hd   { display:flex; align-items:center; gap:var(--sp-md); }
+.perf-icon {
+  width:40px; height:40px; border-radius:var(--r-md);
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.perf-meta { flex:1; min-width:0; }
+.perf-name { font-weight:var(--fw-semi); color:var(--tx0); font-size:var(--f-base); }
+.perf-key  { font-size:11px; color:var(--tx2); font-family:monospace; margin-top:1px; }
+.perf-val  { font-size:22px; font-weight:var(--fw-bold); min-width:36px; text-align:right; }
+.slot-bar  { display:flex; gap:3px; }
+.slot      { flex:1; height:20px; border-radius:3px; transition:background 80ms; }
+.slot.off  { background:var(--bd0); }
+.perf-slider {
+  -webkit-appearance:none; appearance:none;
+  width:100%; height:4px; border-radius:2px; outline:none; cursor:pointer;
+}
+.perf-slider::-webkit-slider-thumb {
+  -webkit-appearance:none; width:18px; height:18px; border-radius:50%;
+  box-shadow:0 2px 6px rgba(0,0,0,.35); cursor:pointer;
+  transition:transform var(--tr-fast);
+}
+.perf-slider::-webkit-slider-thumb:hover { transform:scale(1.2); }
+.perf-slider::-moz-range-thumb { width:18px; height:18px; border:none; border-radius:50%; cursor:pointer; }
+
+/* ── PROXY COLLAPSIBLE ── */
+.proxy-fields {
+  display:flex; flex-direction:column; gap:var(--sp-lg);
+  overflow:hidden; max-height:0; opacity:0;
+  transition:max-height .32s ease, opacity .25s ease;
+}
+.proxy-fields.open { max-height:600px; opacity:1; }
+
+/* ── BUTTONS ── */
+.btn {
+  display:inline-flex; align-items:center; justify-content:center; gap:var(--sp-sm);
+  padding:10px 18px; border:none; border-radius:var(--r-md);
+  font-size:var(--f-base); font-weight:var(--fw-semi); font-family:inherit;
+  cursor:pointer; white-space:nowrap;
+  transition:transform var(--tr-fast),box-shadow var(--tr-fast),background var(--tr-fast);
+}
+.btn svg { flex-shrink:0; }
+.btn:disabled { opacity:.5; cursor:not-allowed; transform:none!important; box-shadow:none!important; }
+.btn-pri { background:linear-gradient(135deg,var(--ac),var(--ach)); color:#fff; box-shadow:var(--shs); }
+.btn-pri:hover:not(:disabled) { transform:translateY(-1px); box-shadow:var(--shm); }
+.btn-sec { background:var(--bg2); color:var(--tx0); border:1px solid var(--bd0); }
+.btn-sec:hover:not(:disabled) { border-color:var(--ac); box-shadow:var(--shs); }
+.btn-dan { background:linear-gradient(135deg,var(--da),var(--dah)); color:#fff; box-shadow:var(--shs); }
+.btn-dan:hover:not(:disabled) { transform:translateY(-1px); box-shadow:var(--shm); }
+.browse {
+  padding:10px 14px; background:var(--bg1); border:1px solid var(--bd0);
+  border-radius:var(--r-md); color:var(--tx0);
+  font-size:var(--f-sm); font-weight:var(--fw-semi); font-family:inherit;
+  cursor:pointer; white-space:nowrap; transition:border-color var(--tr-fast);
+}
+.browse:hover { border-color:var(--ac); }
+
+/* ── ACTIONS BAR ── */
+#actBar { display:flex; justify-content:flex-end; gap:var(--sp-md); padding-top:var(--sp-sm); }
+
+/* ── DIALOG ── */
+.dlg-ov {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,.55); backdrop-filter:blur(5px);
+  z-index:9999; align-items:center; justify-content:center;
+}
+.dlg-ov.on { display:flex; }
+.dlg {
+  background:var(--bg2); border:1px solid var(--bd1); border-radius:var(--r-xl);
+  padding:var(--sp-3xl); max-width:420px; width:90%;
+  box-shadow:var(--shm); display:flex; flex-direction:column; gap:var(--sp-lg);
+  animation:dialogIn 200ms ease both;
+}
+.dlg-icon  { display:flex; justify-content:center; }
+.dlg-title { font-size:var(--f-xl); font-weight:var(--fw-bold); text-align:center; color:var(--tx0); }
+.dlg-body  { font-size:var(--f-base); color:var(--tx1); text-align:center; line-height:1.65; }
+.dlg-acts  { display:flex; gap:var(--sp-sm); justify-content:flex-end; padding-top:4px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="pg-header">
+    <h1 class="pg-title">Cài đặt</h1>
+    <button class="theme-pill" id="themeBtn" onclick="toggleTheme()">
+      <span id="themeIco"></span><span id="themeTxt">Giao diện tối</span>
+    </button>
+  </div>
+  <div id="notifArea"></div>
+  <div class="tab-bar" id="tabBar"></div>
+  <div id="tabContent"></div>
+  <div id="actBar"></div>
+</div>
+
+<div class="dlg-ov" id="dlgOv">
+  <div class="dlg">
+    <div class="dlg-icon" id="dlgIconEl"></div>
+    <div class="dlg-title">Thay đổi chưa được lưu</div>
+    <div class="dlg-body">Tab <strong id="dlgTabName"></strong> có thay đổi chưa lưu.<br>Bạn có muốn lưu trước khi rời không?</div>
+    <div class="dlg-acts">
+      <button class="btn btn-sec" onclick="dlgAct('cancel')">Hủy</button>
+      <button class="btn btn-sec" onclick="dlgAct('discard')">Bỏ qua</button>
+      <button class="btn btn-pri" id="dlgSaveBtn" onclick="dlgAct('save')"></button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════
+   HUGEICONS — inline SVG helper
+   stroke-rounded style, 1.5px stroke
+══════════════════════════════════════ */
+function icon(name, size=16) {
+  const a = `width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"`;
+  const p = {
+    /* UI / theme */
+    sun:       `<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32 1.41-1.41"/>`,
+    moon:      `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>`,
+    /* Tabs */
+    palette:   `<circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>`,
+    wifi:      `<path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r=".5" fill="currentColor"/>`,
+    cpu:       `<rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3m6-3v3M9 20v3m6-3v3M1 9h3M1 14h3m17-5h-3m3 5h-3"/>`,
+    /* Performance item icons */
+    download:  `<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>`,
+    imageEdit: `<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"/><circle cx="8.5" cy="8.5" r="1.5"/>`,
+    presentation:`<path d="M2 3h20v13H2z"/><path d="m7 21 5-5 5 5"/><line x1="12" y1="16" x2="12" y2="21"/>`,
+    book:      `<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>`,
+    file:      `<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>`,
+    /* Actions */
+    save:      `<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>`,
+    refresh:   `<polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>`,
+    reset:     `<polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/>`,
+    /* Notifications / Dialog */
+    checkCircle:`<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>`,
+    info:      `<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>`,
+    alertTriangle:`<path d="m10.29 3.86-8.5 14.69A1 1 0 0 0 2.66 20h17.68a1 1 0 0 0 .87-1.5l-8.5-14.69a1 1 0 0 0-1.72 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>`,
+    xCircle:   `<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>`,
+    /* Network sections */
+    repeat:    `<polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>`,
+    shield:    `<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>`,
+    zap:       `<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>`,
+  };
+  return `<svg xmlns="http://www.w3.org/2000/svg" ${a}>${p[name]??''}</svg>`;
+}
+
+/* ══════════════════════════════════════
+   STATE
+══════════════════════════════════════ */
+const S = {
+  thm:'light', tab:'appearance', pend:null, dirty:{},
+  cfg:{
+    theme:'light', lang:'vi', anim:true, tray:false,
+    maxRetry:3, timeout:30,
+    proxy:false, pAddr:'', pUser:'', pPass:'', pDomain:'',
+    edPres:5, rdPres:5,
+  },
+  snap:null,
+};
+S.snap = clone(S.cfg);
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+
+/* ══════════════════════════════════════
+   TABS
+══════════════════════════════════════ */
+const TABS = [
+  { id:'appearance', lbl:'Giao diện', ico:'palette' },
+  { id:'network',    lbl:'Mạng',      ico:'wifi'    },
+  { id:'performance',lbl:'Hiệu năng', ico:'cpu'     },
+];
+
+const PERF = [
+  { k:'edPres', lbl:'Chỉnh sửa slide', ico:'presentation', color:'#a78bfa', key:'MaxParallelEditPresentation' },
+  { k:'rdPres', lbl:'Đọc slide',        ico:'file',         color:'#fb923c', key:'MaxParallelReadPresentation' },
+];
+const PMAX = 16;
+
+/* ══════════════════════════════════════
+   HELPERS
+══════════════════════════════════════ */
+function set(k,v)  { S.cfg[k]=v; dirty(); }
+function dirty()   { if(S.tab!=='appearance') S.dirty[S.tab]=true; renderTabs(); renderAct(); }
+function clean(t)  { S.dirty[t]=false; renderTabs(); renderAct(); }
+function isDirty(t){ return !!S.dirty[t]; }
+
+function step(k,mn,mx,d){ S.cfg[k]=Math.max(mn,Math.min(mx,(S.cfg[k]||0)+d)); dirty(); renderContent(); }
+
+function toggleTheme(){
+  S.thm = S.thm==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',S.thm);
+  document.getElementById('themeIco').innerHTML = icon(S.thm==='dark'?'sun':'moon',15);
+  document.getElementById('themeTxt').textContent = S.thm==='dark'?'Giao diện sáng':'Giao diện tối';
+  renderContent();
+}
+
+/* ══════════════════════════════════════
+   TABS RENDER
+══════════════════════════════════════ */
+function renderTabs(){
+  document.getElementById('tabBar').innerHTML = TABS.map(t=>`
+    <button class="tab-btn${t.id===S.tab?' active':''}${isDirty(t.id)?' dirty':''}"
+            onclick="switchTab('${t.id}')">
+      ${icon(t.ico,14)}
+      ${t.lbl}
+      <span class="dirty-dot"></span>
+    </button>`).join('');
+}
+
+function switchTab(id){
+  if(id===S.tab) return;
+  if(isDirty(S.tab) && S.tab!=='appearance'){
+    S.pend=id;
+    const n=TABS.find(t=>t.id===S.tab);
+    document.getElementById('dlgTabName').textContent=n?.lbl??S.tab;
+    document.getElementById('dlgIconEl').innerHTML=`<span style="color:#fb923c">${icon('alertTriangle',40)}</span>`;
+    document.getElementById('dlgSaveBtn').innerHTML=`${icon('save',15)} Lưu`;
+    document.getElementById('dlgOv').classList.add('on');
+    return;
+  }
+  goTab(id);
+}
+function goTab(id){ S.tab=id; renderTabs(); renderContent(); renderAct(); }
+
+/* ══════════════════════════════════════
+   DIALOG
+══════════════════════════════════════ */
+function dlgAct(a){
+  document.getElementById('dlgOv').classList.remove('on');
+  if(a==='cancel'){ S.pend=null; return; }
+  if(a==='save')   doSave(false);
+  if(a==='discard') clean(S.tab);
+  const p=S.pend; S.pend=null;
+  if(p) goTab(p);
+}
+
+/* ══════════════════════════════════════
+   ACTIONS BAR
+══════════════════════════════════════ */
+function renderAct(){
+  const el=document.getElementById('actBar');
+  if(S.tab==='appearance'){ el.innerHTML=''; return; }
+  el.innerHTML=`
+    <button class="btn btn-dan" onclick="doReset()">${icon('reset',15)} Khôi phục mặc định</button>
+    <button class="btn btn-sec" onclick="doReload()">${icon('refresh',15)} Làm mới</button>
+    <button class="btn btn-pri" onclick="doSave(true)">${icon('save',15)} Lưu</button>`;
+}
+
+let ntTimer;
+function notif(type,msg){
+  clearTimeout(ntTimer);
+  const cls={ok:'notif-ok',warn:'notif-warn',info:'notif-info',err:'notif-err'};
+  const ico={ok:'checkCircle',warn:'alertTriangle',info:'info',err:'xCircle'};
+  document.getElementById('notifArea').innerHTML=
+    `<div class="notif ${cls[type]}">${icon(ico[type],16)} ${msg}</div>`;
+  ntTimer=setTimeout(()=>document.getElementById('notifArea').innerHTML='',3500);
+}
+
+function doSave(showMsg=true){ S.snap=clone(S.cfg); clean(S.tab); if(showMsg) notif('ok','Đã lưu cài đặt thành công!'); }
+function doReload(){ Object.assign(S.cfg,clone(S.snap)); clean(S.tab); renderContent(); notif('info','Đã làm mới — tải lại từ bản đã lưu.'); }
+function doReset(){
+  const def={maxRetry:3,timeout:30,proxy:false,pAddr:'',pUser:'',pPass:'',pDomain:'',edPres:5,rdPres:5};
+  Object.assign(S.cfg,def); clean(S.tab); renderContent();
+  notif('warn','Đã khôi phục về cài đặt mặc định.');
+}
+
+/* ══════════════════════════════════════
+   COMPONENT BUILDERS
+══════════════════════════════════════ */
+function sec(titleHTML, body){
+  return `<div class="sec"><h3 class="sec-title">${titleHTML}</h3>${body}</div>`;
+}
+
+function tog(k,name,desc,extra=''){
+  return `
+    <div class="tog-card">
+      <div class="tog-row">
+        <div class="tog-lbl">
+          <span class="tog-name">${name}</span>
+          ${desc?`<span class="tog-desc">${desc}</span>`:''}
+        </div>
+        <label class="tswitch">
+          <input type="checkbox" ${S.cfg[k]?'checked':''} onchange="set('${k}',this.checked);${extra}">
+          <span class="tslider"></span>
+        </label>
+      </div>
+    </div>`;
+}
+
+function nstep(k,lbl,hint,mn=1,mx=99,unit=''){
+  const v=S.cfg[k]??0;
+  return `
+    <div class="si">
+      <label class="sl">${lbl}</label>
+      <div class="igroup">
+        <div class="nstepper">
+          <button class="step-btn" onclick="step('${k}',${mn},${mx},-1)">−</button>
+          <input type="number" value="${v}" min="${mn}" max="${mx}" oninput="set('${k}',+this.value)">
+          <button class="step-btn" onclick="step('${k}',${mn},${mx},1)">+</button>
+        </div>
+        ${unit?`<span class="iunit">${unit}</span>`:''}
+      </div>
+      ${hint?`<span class="sh">${hint}</span>`:''}
+    </div>`;
+}
+
+/* ══════════════════════════════════════
+   TAB RENDERERS
+══════════════════════════════════════ */
+function rAppearance(){
+  const c=S.cfg;
+  const themes=[{v:'dark',l:'Tối',cl:'dk'},{v:'light',l:'Sáng',cl:'lt'},{v:'system',l:'Hệ thống',cl:'sy'}];
+  return sec(`${icon('palette',18)} Hiển thị`,`
+    <div class="si">
+      <label class="sl">Chủ đề</label>
+      <div class="theme-cards">${themes.map(t=>`
+        <div class="tcard${c.theme===t.v?' sel':''}" onclick="set('theme','${t.v}');renderContent()">
+          <div class="tcard-prev ${t.cl}">
+            <div class="tcard-sb"></div>
+            <div class="tcard-ct">
+              <div class="tcard-bar"></div>
+              <div class="tcard-row"></div>
+              <div class="tcard-row sh"></div>
+            </div>
+          </div>
+          <div class="tcard-lbl">${t.l}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="si">
+      <label class="sl">Ngôn ngữ</label>
+      <select class="sel" onchange="set('lang',this.value)">
+        <option value="vi" ${c.lang==='vi'?'selected':''}>Tiếng Việt</option>
+        <option value="en" ${c.lang==='en'?'selected':''}>English</option>
+      </select>
+      <span class="sh">Khởi động lại để áp dụng thay đổi ngôn ngữ.</span>
+    </div>
+    ${tog('anim','Hiệu ứng chuyển động','Bật/tắt animation trong toàn bộ ứng dụng.')}
+    ${tog('tray','Thu nhỏ xuống khay hệ thống','Khi đóng cửa sổ, ứng dụng thu nhỏ thay vì thoát.')}
+  `);
+}
+
+function rNetwork(){
+  const c=S.cfg;
+  return `
+  ${sec(`${icon('repeat',18)} Retry — Thử lại khi lỗi`,`
+    <p style="font-size:var(--f-sm);color:var(--tx2);margin-bottom:4px;">
+      Áp dụng cho tất cả các thao tác tải xuống trong chương trình.
+    </p>
+    <div class="sg">
+      ${nstep('maxRetry','Số lần thử lại tối đa','0 = không thử lại khi gặp lỗi tải.',0,10,'lần')}
+      ${nstep('timeout','Thời gian chờ (Timeout)','Giây chờ trước khi huỷ khi mất kết nối.',1,3600,'giây')}
+    </div>
+  `)}
+  ${sec(`${icon('shield',18)} Proxy — Cấu hình uỷ quyền`,`
+    ${tog('proxy','Sử dụng Proxy','Bật để định tuyến lưu lượng qua máy chủ proxy.','toggleProxy()')}
+    <div class="proxy-fields${c.proxy?' open':''}" id="proxyFields">
+      <div class="si">
+        <label class="sl">Địa chỉ Proxy</label>
+        <input class="inp" type="text" value="${c.pAddr}" onchange="set('pAddr',this.value)"
+          placeholder="http://proxy.example.com:8080">
+        <span class="sh">URL đầy đủ bao gồm giao thức và cổng.</span>
+      </div>
+      <div class="sg">
+        <div class="si">
+          <label class="sl">Tên đăng nhập</label>
+          <input class="inp" type="text" value="${c.pUser}" onchange="set('pUser',this.value)" placeholder="Tùy chọn">
+        </div>
+        <div class="si">
+          <label class="sl">Mật khẩu</label>
+          <input class="inp" type="password" value="${c.pPass}" onchange="set('pPass',this.value)" placeholder="Tùy chọn">
+        </div>
+      </div>
+      <div class="si">
+        <label class="sl">Domain / Host</label>
+        <input class="inp" type="text" value="${c.pDomain}" onchange="set('pDomain',this.value)"
+          placeholder="Tùy chọn — e.g. WORKGROUP">
+        <span class="sh">Tên miền NTLM / Kerberos nếu cần xác thực doanh nghiệp.</span>
+      </div>
+    </div>
+  `)}`;
+}
+
+function toggleProxy(){
+  const f=document.getElementById('proxyFields');
+  if(f) f.classList.toggle('open',S.cfg.proxy);
+}
+
+function rPerformance(){
+  const total=PERF.reduce((s,p)=>s+(S.cfg[p.k]||0),0);
+  const slots=PERF.map(p=>{
+    const v=S.cfg[p.k]||1;
+    const pct=((v-1)/(PMAX-1)*100).toFixed(1);
+    const bars=Array.from({length:PMAX},(_,i)=>
+      `<div class="slot${i<v?` on" style="background:${p.color};"`:' off"'}></div>`
+    ).join('');
+    const track=`background:linear-gradient(to right,${p.color} ${pct}%,var(--bd0) ${pct}%)`;
+    return `
+      <div class="perf-item">
+        <div class="perf-hd">
+          <div class="perf-icon" style="background:${p.color}22;">
+            <span style="color:${p.color};display:flex">${icon(p.ico,20)}</span>
+          </div>
+          <div class="perf-meta">
+            <div class="perf-name">${p.lbl}</div>
+            <div class="perf-key">${p.key}</div>
+          </div>
+          <div class="perf-val" id="pv-${p.k}" style="color:${p.color}">${v}</div>
+        </div>
+        <div class="slot-bar" id="sb-${p.k}">${bars}</div>
+        <input type="range" class="perf-slider" min="1" max="${PMAX}" value="${v}"
+          style="${track}"
+          oninput="updPerf('${p.k}','${p.color}',+this.value,this)"
+          onchange="set('${p.k}',+this.value)">
+      </div>`;
+  }).join('');
+
+  return sec(`${icon('zap',18)} Hành động song song <span style="font-size:var(--f-sm);color:var(--tx2);font-weight:400;margin-left:8px;">Tổng: ${total} luồng</span>`,`
+    <p style="font-size:var(--f-sm);color:var(--tx2);">
+      Điều chỉnh số tác vụ chạy đồng thời cho từng loại hành động (1 – ${PMAX}).
+      Giá trị cao hơn = xử lý nhanh hơn nhưng tốn tài nguyên hơn.
+    </p>
+    <div class="perf-list">${slots}</div>
+  `);
+}
+
+function updPerf(k,color,v,el){
+  const vEl=document.getElementById('pv-'+k);
+  if(vEl) vEl.textContent=v;
+  const sb=document.getElementById('sb-'+k);
+  if(sb) sb.innerHTML=Array.from({length:PMAX},(_,i)=>
+    `<div class="slot${i<v?` on" style="background:${color};"`:' off"'}></div>`
+  ).join('');
+  const pct=((v-1)/(PMAX-1)*100).toFixed(1);
+  el.style.background=`linear-gradient(to right,${color} ${pct}%,var(--bd0) ${pct}%)`;
+  S.cfg[k]=v; S.dirty[S.tab]=true;
+  renderTabs(); renderAct();
+}
+
+/* ══════════════════════════════════════
+   RENDER
+══════════════════════════════════════ */
+const RENDERERS = { appearance:rAppearance, network:rNetwork, performance:rPerformance };
+
+function renderContent(){
+  const el=document.getElementById('tabContent');
+  el.innerHTML=RENDERERS[S.tab]?.()??' ';
+}
+
+/* ══════════════════════════════════════
+   INIT
+══════════════════════════════════════ */
+document.getElementById('themeIco').innerHTML = icon('moon',15);
+document.getElementById('themeTxt').textContent = 'Giao diện tối';
+document.getElementById('dlgSaveBtn').innerHTML = `${icon('save',15)} Lưu`;
+renderTabs(); renderContent(); renderAct();
+</script>
+</body>
+</html>

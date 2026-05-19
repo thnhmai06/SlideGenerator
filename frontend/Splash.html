@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SlideGenerator</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+  html, body {
+    width:100%; height:100%;
+    background:#ffffff;
+    display:flex; align-items:center; justify-content:center;
+    flex-direction:column;
+    overflow:hidden;
+    font-family:'Nunito',sans-serif;
+  }
+
+  /* ─── STAGE ─── */
+  #stage {
+    display:flex; flex-direction:column;
+    align-items:center;
+    opacity:0;
+    animation: stgIn .20s .05s ease forwards;
+  }
+  @keyframes stgIn { to { opacity:1; } }
+
+  .splash-logo {
+    display:block;
+  }
+
+  /* ─── LOADING ─── */
+  .load-wrap {
+    margin-top:64px;
+    width:400px;
+    opacity:0;
+    transition:opacity .30s ease;
+  }
+  .load-wrap.vis { opacity:1; }
+
+  .bar-bg {
+    height:4px;
+    background:#e8f0fa;
+    border-radius:99px;
+    overflow:hidden;
+    position:relative;
+  }
+  .bar-fg {
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg,#1255b5,#1f7ef0 52%,#42a5f5);
+    border-radius:99px;
+    position:relative;
+    overflow:hidden;
+    transition:width .34s cubic-bezier(0.15,0.7,0.1,1);
+  }
+  .bar-fg::after {
+    content:'';
+    position:absolute;
+    inset:0;
+    background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.55) 46%,transparent 78%);
+    transform:translateX(-120%);
+    animation:barShimmer 1.05s cubic-bezier(0.15,0.7,0.1,1) infinite;
+  }
+  .bar-bg::after {
+    content:'';
+    position:absolute;
+    top:0;
+    bottom:0;
+    left:-28%;
+    width:28%;
+    background:linear-gradient(90deg,transparent,rgba(18,85,181,.14),transparent);
+    animation:trackSweep 1.55s cubic-bezier(0.15,0.7,0.1,1) infinite;
+  }
+  .bar-bg.done::after,
+  .bar-bg.done .bar-fg::after {
+    animation:none;
+    opacity:0;
+  }
+  @keyframes barShimmer {
+    to { transform:translateX(120%); }
+  }
+  @keyframes trackSweep {
+    to { left:100%; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .bar-fg,
+    .done-msg {
+      transition:none;
+    }
+    .bar-fg::after,
+    .bar-bg::after {
+      animation:none;
+      display:none;
+    }
+  }
+  .bar-lbl {
+    margin-top:14px;
+    text-align:center;
+    font-size:13px; font-weight:700;
+    letter-spacing:.10em;
+    text-transform:uppercase;
+    color:#90a4ae;
+  }
+
+  /* ─── DONE ─── */
+  .done-msg {
+    margin-top:20px;
+    text-align:center;
+    font-size:14px; font-weight:600;
+    color:#b0bec5;
+    opacity:0;
+    transition:opacity .4s ease;
+  }
+  .done-msg.vis { opacity:1; }
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <img id="splashLogo" class="splash-logo" src="assets/app-logo.png" alt="SlideGenerator" height="180" style="display:block;">
+
+  <div class="load-wrap" id="loadingPanel">
+    <div class="bar-bg" id="barTrack"><div class="bar-fg" id="bar"></div></div>
+    <div class="bar-lbl" id="lbl">Đang khởi động…</div>
+    <div class="done-msg" id="doneMsg">Sẵn sàng! Đang mở giao diện…</div>
+  </div>
+
+</div>
+
+<script>
+  const bar  = document.getElementById('bar');
+  const barTrack = document.getElementById('barTrack');
+  const lbl  = document.getElementById('lbl');
+  const done = document.getElementById('doneMsg');
+  const loadingPanel = document.getElementById('loadingPanel');
+
+  const steps = [
+    { pct:8,   txt:'Khởi tạo ứng dụng…',      ms:520 },
+    { pct:24,  txt:'Tải giao diện…',          ms:760 },
+    { pct:43,  txt:'Nạp thành phần hệ thống…', ms:820 },
+    { pct:61,  txt:'Tải thư viện mẫu…',       ms:740 },
+    { pct:78,  txt:'Kết nối dịch vụ…',        ms:680 },
+    { pct:92,  txt:'Kiểm tra cấu hình…',      ms:620 },
+    { pct:100, txt:'Sẵn sàng!',               ms:420 },
+  ];
+
+  const loadingStartDelay = 1000;
+
+  let elapsed = 0;
+
+  setTimeout(() => {
+    loadingPanel.classList.add('vis');
+  }, loadingStartDelay);
+
+  steps.forEach((s, index) => {
+    const delay = loadingStartDelay + elapsed;
+    elapsed += s.ms;
+
+    setTimeout(() => {
+      bar.style.transitionDuration = s.ms + 'ms';
+      bar.style.width = s.pct + '%';
+      lbl.textContent = s.txt;
+      if (s.pct === 100) {
+        setTimeout(() => {
+          barTrack.classList.add('done');
+          done.classList.add('vis');
+        }, Math.min(340, s.ms));
+      }
+    }, delay);
+  });
+</script>
+</body>
+</html>

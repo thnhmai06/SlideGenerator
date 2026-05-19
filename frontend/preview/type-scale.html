@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<link rel="stylesheet" href="_card.css" />
+<title>Type Scale</title>
+<style>
+.scale-row {
+  display: grid;
+  grid-template-columns: 80px 96px 1fr;
+  align-items: baseline;
+  gap: 16px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+.scale-row:last-child { border: none; }
+.scale-row .token {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted-foreground);
+}
+.scale-row .px {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted-foreground);
+}
+.scale-row .sample {
+  font-family: var(--font-sans);
+  letter-spacing: -0.02em;
+  color: var(--foreground);
+}
+</style>
+</head>
+<body>
+<div class="card">
+  <p class="eyebrow">Type scale · Tailwind v4 rem · –0.02em tracking on headings</p>
+  <div>
+    <div class="scale-row"><span class="token">text-4xl</span><span class="px">2.25rem · 36px</span><span class="sample" style="font-size:36px; font-weight:600">Display heading</span></div>
+    <div class="scale-row"><span class="token">text-3xl</span><span class="px">1.875rem · 30px</span><span class="sample" style="font-size:30px; font-weight:600">Page heading</span></div>
+    <div class="scale-row"><span class="token">text-2xl</span><span class="px">1.5rem · 24px</span><span class="sample" style="font-size:24px; font-weight:600">Section heading</span></div>
+    <div class="scale-row"><span class="token">text-xl</span><span class="px">1.25rem · 20px</span><span class="sample" style="font-size:20px; font-weight:600">Subsection</span></div>
+    <div class="scale-row"><span class="token">text-md</span><span class="px">1rem · 16px</span><span class="sample" style="font-size:16px; font-weight:500">Card title</span></div>
+    <div class="scale-row"><span class="token">text-base</span><span class="px">0.875rem · 14px</span><span class="sample" style="font-size:14px">Body — the UI baseline</span></div>
+    <div class="scale-row"><span class="token">text-sm</span><span class="px">0.8125rem · 13px</span><span class="sample" style="font-size:13px; color: var(--muted-foreground)">Secondary text / hint</span></div>
+    <div class="scale-row"><span class="token">text-xs</span><span class="px">0.75rem · 12px</span><span class="sample" style="font-size:12px; color: var(--muted-foreground)">Eyebrow / caption</span></div>
+  </div>
+</div>
+</body>
+</html>

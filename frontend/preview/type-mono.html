@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<link rel="stylesheet" href="_card.css" />
+<title>IBM Plex Mono</title>
+<style>
+.specimen {
+  font-family: var(--font-mono);
+  color: var(--foreground);
+}
+.giant {
+  font-size: 36px; font-weight: 500; letter-spacing: -0.01em;
+  line-height: 1.1; margin: 4px 0 12px;
+}
+.row {
+  display: flex; align-items: baseline; gap: 16px; padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+.row:last-child { border: none; }
+.row .label {
+  flex: 0 0 96px;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.row .sample { font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <p class="eyebrow">Mono · IBM Plex Mono · paths, IDs, placeholders</p>
+  <div class="specimen">
+    <div class="giant">{{placeholder.col_03}} → row[i]</div>
+    <div>
+      <div class="row"><span class="label">400 Regular</span><span class="sample" style="font-weight:400">~/Documents/templates/quarterly-readout.pptx · row 312 of 1,408</span></div>
+      <div class="row"><span class="label">500 Medium</span><span class="sample" style="font-weight:500">~/Documents/templates/quarterly-readout.pptx · row 312 of 1,408</span></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

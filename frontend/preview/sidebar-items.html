@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<link rel="stylesheet" href="_card.css" />
+<title>Navigation — Topbar tabs + Subtabs</title>
+<style>
+.demo {
+  background: var(--card);
+  border-radius: 14px;
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--foreground) 8%, transparent);
+  padding: 18px;
+  display: flex; flex-direction: column;
+  gap: 18px;
+}
+
+/* ── Top tab pill ── */
+.tab-pill {
+  display: inline-flex;
+  align-items: center;
+  background: var(--card);
+  box-shadow: inset 0 0 0 1px var(--border);
+  border-radius: 9999px;
+  padding: 4px;
+  position: relative;
+}
+.tab-btn {
+  position: relative;
+  z-index: 2;
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 8px 18px;
+  border-radius: 9999px;
+  background: transparent; border: none;
+  color: var(--muted-foreground);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 150ms;
+}
+.tab-btn:hover { color: var(--foreground); }
+.tab-btn.active { color: var(--foreground); }
+.tab-btn svg { opacity: 0.55; }
+.tab-btn.active svg { opacity: 1; }
+.tab-indicator {
+  position: absolute;
+  top: 4px; bottom: 4px;
+  background: color-mix(in oklch, var(--muted) 70%, transparent);
+  border-radius: 9999px;
+  transition: left 220ms, width 220ms;
+  z-index: 1;
+}
+
+/* ── Subtabs (underline) ── */
+.subtabs {
+  display: flex; gap: 4px;
+  border-bottom: 1.5px solid var(--border);
+  position: relative;
+}
+.subtab-btn {
+  position: relative;
+  padding: 10px 4px;
+  margin-right: 24px;
+  background: transparent; border: none;
+  color: var(--muted-foreground);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px;
+  transition: color 150ms;
+}
+.subtab-btn:last-child { margin-right: 0; }
+.subtab-btn:hover { color: var(--foreground); }
+.subtab-btn.active { color: var(--primary); }
+.subtab-btn::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: -1.5px;
+  height: 3px;
+  background: var(--primary);
+  border-radius: 9999px;
+  transform: scaleX(0);
+  transition: transform 220ms;
+}
+.subtab-btn.active::after { transform: scaleX(1); }
+
+.badge-dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+  margin-left: 4px;
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--primary) 18%, transparent);
+}
+.badge-dot.running { animation: pulse 1.4s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1 } 50% { opacity: 0.35 } }
+
+.section-label {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.note { font-size: 12.5px; color: var(--muted-foreground); line-height: 1.55; }
+.note code { font-family: var(--font-mono); font-size: 11px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <p class="eyebrow">Studio navigation pattern — topbar tabs + subtabs (no sidebar)</p>
+
+  <div class="demo">
+    <div class="section-label">Topbar — main tabs (Recipes · Studio)</div>
+    <div class="tab-pill" id="topPill"></div>
+    <p class="note">
+      Pill switcher. Animated sliding indicator under <code>.tab-indicator</code>. Active tab gets full-colour foreground + 100% icon opacity; idle tabs are <code>--muted-foreground</code> with 55% icon opacity. Sits centered in the topbar between brand logo (left) and theme switch + utility icons (right).
+    </p>
+  </div>
+
+  <div class="demo">
+    <div class="section-label">Subtabs — Studio inner pages</div>
+    <div class="subtabs" id="subs"></div>
+    <p class="note">
+      Underline subtabs. The 3px bar under the active tab scales in over 220ms. Status dot (badge-dot) appears next to <em>Đang chạy</em> while a workflow is active (pulsing) and next to <em>Kết quả</em> after completion (steady). Use only one level of subtabs — Studio is intentionally flat.
+    </p>
+  </div>
+
+  <div class="demo">
+    <div class="section-label">Why no sidebar</div>
+    <p class="note">
+      Earlier drafts used a left-pinned sidebar (Create Task · Process · Results · Settings · About). The Studio surface compresses that into a single horizontal axis: brand → tab pill → utility cluster. Settings + About live as <code>icon-btn</code> in the topbar-right cluster, not as nav entries. The sidebar pattern is <strong>deprecated</strong>; do not introduce new sidebar items.
+    </p>
+  </div>
+</div>
+
+<script>
+const ICON = {
+  recipe:    `<path d="M18 13C20.2091 13 22 11.2091 22 9C22 6.79086 20.2091 5 18 5C17.1767 5 16.4115 5.24874 15.7754 5.67518M6 13C3.79086 13 2 11.2091 2 9C2 6.79086 3.79086 5 6 5C6.82332 5 7.58854 5.24874 8.22461 5.67518M15.7754 5.67518C15.2287 4.11714 13.7448 3 12 3C10.2552 3 8.77132 4.11714 8.22461 5.67518M15.7754 5.67518C15.9209 6.08981 16 6.53566 16 7C16 7.3453 15.9562 7.68038 15.874 8M9.46487 7C9.15785 6.46925 8.73238 6.0156 8.22461 5.67518"/><path d="M6 17.5C7.59905 16.8776 9.69952 16.5 12 16.5C14.3005 16.5 16.401 16.8776 18 17.5"/><path d="M5 21C6.86556 20.3776 9.3161 20 12 20C14.6839 20 17.1344 20.3776 19 21"/><path d="M18 12V20M6 12V20"/>`,
+  studio:    `<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>`,
+  configure: `<path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/><circle cx="12" cy="12" r="4"/>`,
+  running:   `<polygon points="6 4 18 12 6 20"/>`,
+  result:    `<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>`,
+};
+function svg(p, s = 16) {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+}
+
+/* Topbar tabs */
+const topTabs = [
+  { id: 'recipes', lbl: 'Recipes', ico: 'recipe' },
+  { id: 'studio',  lbl: 'Studio',  ico: 'studio', active: true },
+];
+const topPill = document.getElementById('topPill');
+topPill.innerHTML = topTabs.map(t =>
+  `<button class="tab-btn${t.active ? ' active' : ''}" data-id="${t.id}">${svg(ICON[t.ico])}<span>${t.lbl}</span></button>`
+).join('') + `<span class="tab-indicator" id="topInd"></span>`;
+const positionTopInd = () => {
+  const active = topPill.querySelector('.tab-btn.active');
+  const ind = document.getElementById('topInd');
+  ind.style.left = active.offsetLeft + 'px';
+  ind.style.width = active.offsetWidth + 'px';
+};
+requestAnimationFrame(positionTopInd);
+topPill.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => {
+  topPill.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  positionTopInd();
+}));
+
+/* Subtabs */
+const subTabs = [
+  { id: 'configure', lbl: 'Cấu hình',  ico: 'configure' },
+  { id: 'running',   lbl: 'Đang chạy', ico: 'running', dot: 'running', active: true },
+  { id: 'result',    lbl: 'Kết quả',   ico: 'result' },
+];
+document.getElementById('subs').innerHTML = subTabs.map(t =>
+  `<button class="subtab-btn${t.active ? ' active' : ''}" data-id="${t.id}">${svg(ICON[t.ico])}<span>${t.lbl}</span>${t.dot ? `<span class="badge-dot ${t.dot}"></span>` : ''}</button>`
+).join('');
+document.querySelectorAll('#subs .subtab-btn').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('#subs .subtab-btn').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+}));
+</script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<link rel="stylesheet" href="../components.css" />
+<link rel="stylesheet" href="_card.css" />
+<title>Inputs</title>
+<style>
+.stack { display: flex; flex-direction: column; gap: 12px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field-label { font-family: var(--font-sans); font-size: 12px; font-weight: 600; color: var(--foreground); }
+.field-hint  { font-family: var(--font-sans); font-size: 11px; color: var(--muted-foreground); }
+.combo { display: flex; gap: 8px; }
+.combo .sg-input { flex: 1; }
+</style>
+</head>
+<body>
+<div class="card">
+  <p class="eyebrow">Inputs · pill · always show focus ring</p>
+  <div class="stack">
+    <div class="field">
+      <span class="field-label">PowerPoint template (.pptx, .potx)</span>
+      <div class="combo">
+        <input class="sg-input sg-input--mono" placeholder="Select or enter template path..." value="~/templates/q1-readout.potx" />
+        <button class="sg-btn sg-btn--secondary">Browse</button>
+      </div>
+      <span class="field-hint">Template loaded. 12 text shapes · 4 image shapes.</span>
+    </div>
+    <div class="field">
+      <span class="field-label">Max retries</span>
+      <input class="sg-input" placeholder="0" value="3" style="max-width: 220px" />
+      <span class="field-hint">Max retry attempts (0–10)</span>
+    </div>
+  </div>
+</div>
+</body>
+</html>

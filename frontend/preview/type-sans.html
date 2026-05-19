@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<link rel="stylesheet" href="_card.css" />
+<title>Space Grotesk</title>
+<style>
+.specimen {
+  font-family: var(--font-sans);
+  letter-spacing: -0.02em;
+  color: var(--foreground);
+}
+.weights { display: flex; flex-direction: column; gap: 4px; }
+.row {
+  display: flex; align-items: baseline; gap: 16px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border);
+}
+.row:last-child { border: none; }
+.row .label {
+  flex: 0 0 96px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.row .sample { font-size: 22px; }
+.giant {
+  font-size: 60px; font-weight: 600; letter-spacing: -0.03em;
+  line-height: 1; margin: 4px 0 8px;
+}
+</style>
+</head>
+<body>
+<div class="card">
+  <p class="eyebrow">Sans · Space Grotesk · the UI workhorse</p>
+  <div class="specimen">
+    <div class="giant">Aa Slide Generator 2026</div>
+    <div class="weights">
+      <div class="row"><span class="label">400 Regular</span><span class="sample" style="font-weight:400">Software to generate PowerPoint slides from spreadsheet data.</span></div>
+      <div class="row"><span class="label">500 Medium</span><span class="sample" style="font-weight:500">Software to generate PowerPoint slides from spreadsheet data.</span></div>
+      <div class="row"><span class="label">600 SemiBold</span><span class="sample" style="font-weight:600">Software to generate PowerPoint slides from spreadsheet data.</span></div>
+      <div class="row"><span class="label">700 Bold</span><span class="sample" style="font-weight:700">Software to generate PowerPoint slides from spreadsheet data.</span></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
