@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+    <ItemGroup>
+        <InternalsVisibleTo Include="SlideGenerator.Generator.Tests"/>
+    </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.8"/>
+        <PackageReference Include="WorkflowCore" Version="3.18.0"/>
+        <PackageReference Remove="StyleCop.Analyzers"/>
+    </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\SlideGenerator.Utilities\SlideGenerator.Utilities.csproj"/>
+        <ProjectReference Include="..\SlideGenerator.Acquisition\SlideGenerator.Acquisition.csproj"/>
+        <ProjectReference Include="..\SlideGenerator.Cryptography\SlideGenerator.Cryptography.csproj"/>
+        <ProjectReference Include="..\SlideGenerator.Coordinator\SlideGenerator.Coordinator.csproj"/>
+        <ProjectReference Include="..\SlideGenerator.Image\SlideGenerator.Image.csproj"/>
+        <ProjectReference Include="..\SlideGenerator.Settings\SlideGenerator.Settings.csproj"/>
+        <ProjectReference Include="..\SlideGenerator.Document\SlideGenerator.Document.csproj"/>
+        <ProjectReference Include="..\SlideGenerator.Logging\SlideGenerator.Logging.csproj"/>
+        <ProjectReference Include="..\SlideGenerator.Summarization\SlideGenerator.Summarization.csproj"/>
+        <ProjectReference Include="..\SlideGenerator.Recipe\SlideGenerator.Recipe.csproj"/>
+    </ItemGroup>
+</Project>

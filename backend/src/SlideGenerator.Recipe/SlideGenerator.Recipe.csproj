@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="SharpZipLib" Version="1.4.2"/>
+        <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.8"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.8"/>
+        <PackageReference Remove="StyleCop.Analyzers"/>
+    </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\SlideGenerator.Settings\SlideGenerator.Settings.csproj"/>
+        <ProjectReference Include="..\SlideGenerator.Utilities\SlideGenerator.Utilities.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="SlideGenerator.Recipe.Tests"/>
+    </ItemGroup>
+
+</Project>
