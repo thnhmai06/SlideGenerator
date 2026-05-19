@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Remove="StyleCop.Analyzers"/>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.5.1"/>
+        <PackageReference Include="xunit.v3" Version="3.2.2"/>
+        <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="NSubstitute" Version="5.*"/>
+        <PackageReference Include="FluentAssertions" Version="8.10.0"/>
+        <PackageReference Include="WorkflowCore" Version="3.18.0"/>
+    </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="../../src/SlideGenerator.Generator/SlideGenerator.Generator.csproj"/>
+        <ProjectReference Include="../../src/SlideGenerator.Logging/SlideGenerator.Logging.csproj"/>
+        <ProjectReference Include="../../src/SlideGenerator.Coordinator/SlideGenerator.Coordinator.csproj"/>
+        <ProjectReference Include="../../src/SlideGenerator.Document/SlideGenerator.Document.csproj"/>
+        <ProjectReference Include="../../src/SlideGenerator.Acquisition/SlideGenerator.Acquisition.csproj"/>
+        <ProjectReference Include="../../src/SlideGenerator.Settings/SlideGenerator.Settings.csproj"/>
+        <ProjectReference Include="../../src/SlideGenerator.Image/SlideGenerator.Image.csproj"/>
+        <ProjectReference Include="../../src/SlideGenerator.Summarization/SlideGenerator.Summarization.csproj"/>
+    </ItemGroup>
+</Project>

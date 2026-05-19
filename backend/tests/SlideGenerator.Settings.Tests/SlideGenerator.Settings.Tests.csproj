@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Remove="StyleCop.Analyzers"/>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.5.1"/>
+        <PackageReference Include="xunit.v3" Version="3.2.2"/>
+        <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="FluentAssertions" Version="8.10.0"/>
+        <PackageReference Include="NSubstitute" Version="5.*"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../../src/SlideGenerator.Settings/SlideGenerator.Settings.csproj"/>
+        <ProjectReference Include="../../src/SlideGenerator.Cryptography/SlideGenerator.Cryptography.csproj"/>
+        <ProjectReference Include="../../src/SlideGenerator.Logging/SlideGenerator.Logging.csproj"/>
+    </ItemGroup>
+</Project>

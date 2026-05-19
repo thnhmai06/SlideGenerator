@@ -1,0 +1,58 @@
+/*
+ * Copyright (C) 2026 Thành Mai (thnhmai06)
+ *
+ * Solution: SlideGenerator
+ * Project: SlideGenerator.Generator.Tests
+ * File: CreateTemplateIntegrationTests.cs
+ *
+ * This file is part of this solution. You can find the full source code here: https://github.com/thnhmai06/SlideGenerator
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, version 3.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Affero General Public License for more details.
+ */
+
+using Xunit;
+
+namespace SlideGenerator.Generator.Tests.Integration;
+
+/// <summary>
+///     Integration tests for <see cref="SlideGenerator.Generator.Application.Steps.CreateTemplate" />
+///     verifying multi-sheet output preservation (BUG-7) and PreflightCleanup behavior (BUG-7).
+/// </summary>
+public sealed class CreateTemplateIntegrationTests
+{
+    /// <summary>
+    ///     INTEGRATION (BUG-7): Two sheets sharing the same workbook must yield two surviving
+    ///     output presentations after the full workflow completes. Verifies that
+    ///     <c>PreflightCleanup</c> wipes the output once before Phase A, and <c>CreateTemplate</c>
+    ///     does not delete sibling sheets' output with <c>Directory.Delete</c>.
+    ///     TODO: provide fixture under <c>tests/fixtures/bug-7/twosheets.xlsx</c> and
+    ///     <c>tests/fixtures/bug-7/template.pptx</c>.
+    /// </summary>
+    [Fact(DisplayName = "INTEGRATION (BUG-7): two-sheet workbook preserves both outputs — TODO fixture")]
+    public Task CreateTemplate_TwoSheetsSameWorkbook_BothOutputsPreserved()
+    {
+        Assert.Fail(
+            "TODO: provide real .xlsx + .pptx fixture at tests/fixtures/bug-7/; see plan h-ng-x-l-keen-pelican.md");
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    ///     INTEGRATION (BUG-7): <c>PreflightCleanup</c> must delete only the target output
+    ///     directories derived from the recipe nodes, not sibling or unrelated directories.
+    ///     TODO: provide fixture under <c>tests/fixtures/bug-7/</c>.
+    /// </summary>
+    [Fact(DisplayName = "INTEGRATION (BUG-7): PreflightCleanup wipes only target output dirs — TODO fixture")]
+    public Task PreflightCleanup_RunBeforePhaseA_WipesOnlyTargetOutputDirs()
+    {
+        Assert.Fail(
+            "TODO: provide real .xlsx + .pptx fixture at tests/fixtures/bug-7/; see plan h-ng-x-l-keen-pelican.md");
+        return Task.CompletedTask;
+    }
+}
