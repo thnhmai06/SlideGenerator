@@ -18,11 +18,11 @@
  */
 
 using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Logging;
 using SlideGenerator.Generator.Application.Abstractions;
 using SlideGenerator.Generator.Application.Workflows;
 using SlideGenerator.Generator.Domain.Models;
 using SlideGenerator.Generator.Domain.Models.Contexts;
-using SlideGenerator.Logging.Domain.Abstractions;
 using SlideGenerator.Recipe.Application.Abstractions;
 using SlideGenerator.Settings.Domain.Rules;
 using SlideGenerator.Utilities.Helper;
@@ -43,7 +43,7 @@ internal sealed class GeneratingService(
     IPersistenceProvider persistence,
     IGeneratingEventBus eventBus,
     IRecipeRepository recipeRepository,
-    ISystemLogger logger)
+    ILogger<GeneratingService> logger)
     : IGeneratingService
 {
     private bool _isStarted;
@@ -59,7 +59,7 @@ internal sealed class GeneratingService(
 
         await workflowHost.StartAsync(ct).ConfigureAwait(false);
         _isStarted = true;
-        logger.Information("WorkflowCore host started and GeneratingWorkflow registered.");
+        logger.LogInformation("WorkflowCore host started and GeneratingWorkflow registered.");
     }
 
     /// <inheritdoc />
@@ -67,7 +67,7 @@ internal sealed class GeneratingService(
     {
         if (!_isStarted)
         {
-            logger.Debug("WorkflowCore host was not started; skipping stop.");
+            logger.LogDebug("WorkflowCore host was not started; skipping stop.");
             return;
         }
 
@@ -76,12 +76,14 @@ internal sealed class GeneratingService(
 
         await workflowHost.StopAsync(ct).ConfigureAwait(false);
         _isStarted = false;
-        logger.Information("WorkflowCore host stopped.");
+        logger.LogInformation("WorkflowCore host stopped.");
     }
 
     /// <inheritdoc />
     public async Task<string> StartAsync(GeneratingRequest request, CancellationToken ct = default)
     {
+        using var scope = logger.BeginScope("Start/{RecipeId}/{RequestName}", request.RecipeId, request.Name);
+
         _ = await recipeRepository.GetByIdAsync(request.RecipeId, ct).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"Recipe {request.RecipeId} not found.");
 
@@ -95,7 +97,7 @@ internal sealed class GeneratingService(
             .StartWorkflow(nameof(GeneratingWorkflow), 1, context)
             .ConfigureAwait(false);
 
-        logger.Information("Started workflow {InstanceId} for request.", instanceId);
+        logger.LogInformation("Workflow started | InstanceId: {InstanceId}", instanceId);
         return instanceId;
     }
 
@@ -107,9 +109,9 @@ internal sealed class GeneratingService(
             .ConfigureAwait(false);
 
         if (success)
-            logger.Information("Cancelled workflow {InstanceId}.", instanceId);
+            logger.LogInformation("Cancelled workflow {InstanceId}.", instanceId);
         else
-            logger.Warning("Failed to cancel workflow {InstanceId} - may not be running.", instanceId);
+            logger.LogWarning("Failed to cancel workflow {InstanceId} - may not be running.", instanceId);
 
         return success;
     }
@@ -122,9 +124,9 @@ internal sealed class GeneratingService(
             .ConfigureAwait(false);
 
         if (success)
-            logger.Information("Paused workflow {InstanceId}.", instanceId);
+            logger.LogInformation("Paused workflow {InstanceId}.", instanceId);
         else
-            logger.Warning("Failed to pause workflow {InstanceId}.", instanceId);
+            logger.LogWarning("Failed to pause workflow {InstanceId}.", instanceId);
 
         return success;
     }
@@ -137,9 +139,9 @@ internal sealed class GeneratingService(
             .ConfigureAwait(false);
 
         if (success)
-            logger.Information("Resumed workflow {InstanceId}.", instanceId);
+            logger.LogInformation("Resumed workflow {InstanceId}.", instanceId);
         else
-            logger.Warning("Failed to resume workflow {InstanceId}.", instanceId);
+            logger.LogWarning("Failed to resume workflow {InstanceId}.", instanceId);
 
         return success;
     }
@@ -203,12 +205,14 @@ internal sealed class GeneratingService(
 
             tx.Commit();
 
-            if (rows > 0) logger.Information("Deleted completed workflow {InstanceId}.", instanceId);
-            else logger.Warning("Workflow {InstanceId} not found or still active — delete skipped.", instanceId);
+            if (rows > 0) logger.LogInformation("Deleted completed workflow {InstanceId}.", instanceId);
+            else logger.LogWarning("Workflow {InstanceId} not found or still active — delete skipped.", instanceId);
             return rows > 0;
         }
-        catch
+        catch (Exception ex)
         {
+            logger.LogError(ex, "Failed to delete workflow | Reason: DB transaction error | InstanceId: {InstanceId}",
+                instanceId);
             tx.Rollback();
             throw;
         }
@@ -234,11 +238,12 @@ internal sealed class GeneratingService(
             var rows = await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
 
             tx.Commit();
-            logger.Information("Deleted {Count} completed/cancelled workflow(s).", rows);
+            logger.LogInformation("Deleted {Count} completed/cancelled workflow(s).", rows);
             return rows;
         }
-        catch
+        catch (Exception ex)
         {
+            logger.LogError(ex, "Failed to delete completed workflows | Reason: DB transaction error");
             tx.Rollback();
             throw;
         }

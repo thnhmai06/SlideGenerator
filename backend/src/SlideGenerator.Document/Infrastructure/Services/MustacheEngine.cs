@@ -19,8 +19,8 @@
 
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging;
 using SlideGenerator.Document.Application.Abstractions;
-using SlideGenerator.Logging.Domain.Abstractions;
 using Stubble.Core;
 using Stubble.Core.Builders;
 
@@ -47,7 +47,7 @@ namespace SlideGenerator.Document.Infrastructure.Services;
 ///         <item>Comma-separated (complex keys only): v1,v2,v3 → List of strings</item>
 ///     </list>
 /// </remarks>
-internal sealed partial class MustacheEngine(ISystemLogger logger) : ITemplateEngine
+internal sealed partial class MustacheEngine(ILogger<MustacheEngine>? logger = null) : ITemplateEngine
 {
     private static readonly StubbleVisitorRenderer Renderer = new StubbleBuilder()
         .Configure(settings => settings.SetEncodingFunction(value => value))
@@ -61,7 +61,7 @@ internal sealed partial class MustacheEngine(ISystemLogger logger) : ITemplateEn
     {
         if (string.IsNullOrWhiteSpace(templateText)) return [];
 
-        logger.Debug("Scanning template text for mustache placeholders");
+        logger?.LogDebug("Scanning template text for mustache placeholders");
 
         var matches = TagRegex.Matches(templateText);
         var keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -77,7 +77,7 @@ internal sealed partial class MustacheEngine(ISystemLogger logger) : ITemplateEn
         }
 
         if (keys.Count > 0)
-            logger.Debug("Found {Count} unique placeholders in template text: {Keys}",
+            logger?.LogDebug("Found {Count} unique placeholders in template text: {Keys}",
                 keys.Count, string.Join(", ", keys));
 
         return keys;
@@ -89,7 +89,7 @@ internal sealed partial class MustacheEngine(ISystemLogger logger) : ITemplateEn
         if (string.IsNullOrWhiteSpace(templateText) || resolvedValue.Count == 0)
             return templateText;
 
-        logger.Debug("Attempting text replacement with {Count} values", resolvedValue.Count);
+        logger?.LogDebug("Attempting text replacement with {Count} values", resolvedValue.Count);
 
         // 1. Identify keys used in complex contexts (sections, property access)
         var complexKeys = GetComplexKeys(templateText);
@@ -105,7 +105,7 @@ internal sealed partial class MustacheEngine(ISystemLogger logger) : ITemplateEn
         // 3. Render the template
         var rendered = Renderer.Render(templateText, data);
 
-        logger.Debug(rendered == templateText
+        logger?.LogDebug(rendered == templateText
             ? "Rendering produced no changes"
             : "Successfully rendered template text");
 

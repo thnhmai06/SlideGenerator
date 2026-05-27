@@ -18,6 +18,7 @@
  */
 
 using System.Collections.ObjectModel;
+using Microsoft.Extensions.Logging;
 using SlideGenerator.Cloud.Application;
 using SlideGenerator.Cloud.Application.Abstractions;
 using SlideGenerator.Cloud.Domain.Models;
@@ -30,7 +31,7 @@ namespace SlideGenerator.Cloud.Infrastructure.Services;
 ///     first expanding any HTTP redirects (e.g., short links) before provider matching.
 ///     Registered modules: Google Drive.
 /// </summary>
-internal sealed class CloudResolver(ICloudClient cloudClient) : ICloudResolver
+internal sealed class CloudResolver(ICloudClient cloudClient, ILogger<CloudResolver>? logger = null) : ICloudResolver
 {
     private readonly ReadOnlyDictionary<CloudHost, CloudResolveModule> _resolvers =
         new Dictionary<CloudHost, CloudResolveModule>
@@ -70,20 +71,30 @@ internal sealed class CloudResolver(ICloudClient cloudClient) : ICloudResolver
         HttpClient? httpClient = null,
         CancellationToken cancellationToken = default)
     {
+        logger?.LogDebug("Cloud resolve start | Url: {Url}", url);
+
         if (!Utilities.TryCreateUri(url, out var uri)) return null;
 
         if (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)
+        {
+            logger?.LogWarning("URL scheme not supported, skipped | Scheme: {Scheme}, Url: {Url}", uri.Scheme, url);
             throw new ArgumentException(
                 $"Unsupported URI scheme '{uri.Scheme}'. Only HTTP and HTTPS are supported.",
                 nameof(url));
+        }
 
         httpClient ??= new HttpClient(new HttpClientHandler { AllowAutoRedirect = true });
 
         var info = await cloudClient.InspectAsync(uri, httpClient, cancellationToken).ConfigureAwait(false);
         uri = info?.Uri ?? uri;
 
-        if (!CanBeResolved(uri, out var host)) return uri;
+        if (!CanBeResolved(uri, out var host))
+        {
+            logger?.LogDebug("No cloud provider matched, return direct URI | Uri: {Uri}", uri);
+            return uri;
+        }
 
+        logger?.LogDebug("Cloud provider matched | Host: {Host}, Uri: {Uri}", host, uri);
         return await _resolvers[host]
             .ResolveAsync(uri, httpClient, cancellationToken)
             .ConfigureAwait(false);

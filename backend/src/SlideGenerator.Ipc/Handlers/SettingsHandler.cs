@@ -17,7 +17,7 @@
  * GNU Affero General Public License for more details.
  */
 
-using SlideGenerator.Ipc.Handlers.Dtos;
+using SlideGenerator.Ipc.Handlers.Models;
 using SlideGenerator.Settings.Application.Abstractions;
 using SlideGenerator.Settings.Domain.Entities;
 

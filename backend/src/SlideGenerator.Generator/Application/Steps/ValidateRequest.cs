@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
@@ -17,6 +17,7 @@
  * GNU Affero General Public License for more details.
  */
 
+using Microsoft.Extensions.Logging;
 using SlideGenerator.Coordinator.Application.Abstractions;
 using SlideGenerator.Coordinator.Domain.Models;
 using SlideGenerator.Document.Application.Abstractions;
@@ -56,7 +57,7 @@ public sealed class ValidateRequest(
         var node = Item.Node;
         var slide = node.Slide;
 
-        data.Logger.Information("Validating request for sheet {SheetName} and slide index {SlideIndex}",
+        data.Logger.LogInformation("Validating request for sheet {SheetName} and slide index {SlideIndex}",
             sheet.SheetName, slide.SlideIndex);
 
         try
@@ -64,7 +65,7 @@ public sealed class ValidateRequest(
             await ValidateWorksheetAsync(data, sheet, ct).ConfigureAwait(false);
             await ValidatePresentationAndMapOutputAsync(data, sheet, node, slide, ct).ConfigureAwait(false);
 
-            data.Logger.Information("Validation successful for sheet {SheetName}", sheet.SheetName);
+            data.Logger.LogInformation("Validation successful for sheet {SheetName}", sheet.SheetName);
         }
         catch (Exception ex) when (ex is not NullReferenceException and not InvalidCastException
                                        and not IndexOutOfRangeException)
@@ -72,7 +73,7 @@ public sealed class ValidateRequest(
             var path = $"{sheet.BookPath}_{sheet.SheetName}";
             using (data.Logger.BeginScope(path))
             {
-                data.Logger.Error(ex, "Validation failed");
+                data.Logger.LogError(ex, "Validation failed");
             }
         }
 
@@ -91,7 +92,7 @@ public sealed class ValidateRequest(
                 throw new ArgumentException(
                     $"Sheet '{sheet.SheetName}' not found in workbook '{Path.GetFileName(sheet.BookPath)}'.");
 
-            data.Logger.Debug("Verified workbook '{BookName}' contains sheet '{SheetName}'",
+            data.Logger.LogDebug("Verified workbook '{BookName}' contains sheet '{SheetName}'",
                 Path.GetFileName(sheet.BookPath), sheet.SheetName);
         }
         finally
@@ -113,7 +114,7 @@ public sealed class ValidateRequest(
                 throw new ArgumentException(
                     $"Slide index {slide.SlideIndex} is out of range for '{Path.GetFileName(slide.PresentationPath)}' (Count: {template.SlidesCount}).");
 
-            data.Logger.Debug("Verified presentation '{PresentationName}' contains slide index {Index}",
+            data.Logger.LogDebug("Verified presentation '{PresentationName}' contains slide index {Index}",
                 Path.GetFileName(slide.PresentationPath), slide.SlideIndex);
 
             // Successful validation: Prepare output mapping
@@ -125,7 +126,7 @@ public sealed class ValidateRequest(
 
             data.ValidWorksheets.TryAdd(sheet, new SheetContext(sheet, slide, node, outputIdentifier));
 
-            data.Logger.Debug("Output path mapped to: '{Path}'", outputPath);
+            data.Logger.LogDebug("Output path mapped to: '{Path}'", outputPath);
         }
         finally
         {

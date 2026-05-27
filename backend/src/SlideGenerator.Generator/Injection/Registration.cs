@@ -39,6 +39,8 @@ public static class Registration
     /// <returns>The updated service collection.</returns>
     public static IServiceCollection AddGeneratorServices(this IServiceCollection services)
     {
+        services.AddLogging();
+
         // WorkflowCore Step registrations (Transient — WorkflowCore resolves per-execution via IServiceScope)
         services.AddTransient<LoadRecipeSummary>();
         services.AddTransient<PreflightCleanup>();

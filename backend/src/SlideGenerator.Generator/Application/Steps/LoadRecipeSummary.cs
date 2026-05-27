@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
@@ -17,6 +17,7 @@
  * GNU Affero General Public License for more details.
  */
 
+using Microsoft.Extensions.Logging;
 using SlideGenerator.Generator.Domain.Models.Contexts;
 using SlideGenerator.Recipe.Application.Abstractions;
 using SlideGenerator.Summarization.Application.Abstractions;
@@ -52,7 +53,7 @@ public sealed class LoadRecipeSummary(
             .SelectMany(node => node.Sheets.Select(sheet => new ValidationItem(sheet, node)))
             .ToList();
 
-        data.Logger.Information(
+        data.Logger.LogInformation(
             "Loaded recipe {RecipeId} with {NodeCount} node(s) and {ItemCount} validation item(s).",
             data.Request.RecipeId, data.RecipeSummary.Nodes.Count, data.ValidationItems.Count);
 

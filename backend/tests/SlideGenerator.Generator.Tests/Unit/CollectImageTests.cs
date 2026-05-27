@@ -17,6 +17,7 @@
  * GNU Affero General Public License for more details.
  */
 
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using SlideGenerator.Cloud.Application.Abstractions;
 using SlideGenerator.Cloud.Domain.Models;
@@ -76,7 +77,12 @@ public sealed class CollectImageTests
         await _cloudClient.DidNotReceive().DownloadAsync(
             Arg.Any<Uri>(), Arg.Any<string>(),
             Arg.Any<HttpClient?>(), Arg.Any<CancellationToken>());
-        data.Logger!.Received().Warning(Arg.Any<string>(), Arg.Any<object?[]>());
+        data.Logger!.Received().Log(
+            LogLevel.Warning,
+            Arg.Any<EventId>(),
+            Arg.Any<object>(),
+            Arg.Any<Exception?>(),
+            Arg.Any<Func<object, Exception?, string>>());
     }
 
     #endregion
@@ -155,7 +161,12 @@ public sealed class CollectImageTests
 
         await step.RunAsync(ctx);
 
-        data.Logger!.Received().Warning(Arg.Any<string>());
+        data.Logger!.Received().Log(
+            LogLevel.Warning,
+            Arg.Any<EventId>(),
+            Arg.Any<object>(),
+            Arg.Any<Exception?>(),
+            Arg.Any<Func<object, Exception?, string>>());
     }
 
     #endregion

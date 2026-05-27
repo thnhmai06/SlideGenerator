@@ -18,6 +18,7 @@
  */
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using SlideGenerator.Cloud.Application.Abstractions;
 using SlideGenerator.Cloud.Infrastructure.Services;
 
@@ -37,8 +38,12 @@ public static class Registration
         /// <returns>The updated service collection.</returns>
         public IServiceCollection AddCloudServices()
         {
-            services.AddSingleton<ICloudResolver, CloudResolver>();
-            services.AddSingleton<ICloudClient, CloudClient>();
+            services.AddSingleton<ICloudClient>(sp =>
+                new CloudClient(sp.GetService<ILogger<CloudClient>>()));
+            services.AddSingleton<ICloudResolver>(sp =>
+                new CloudResolver(
+                    sp.GetRequiredService<ICloudClient>(),
+                    sp.GetService<ILogger<CloudResolver>>()));
             return services;
         }
     }

@@ -61,3 +61,4 @@ public interface IFileCollector
         DownloadConfiguration configuration,
         CancellationToken ct = default);
 }
+

@@ -17,6 +17,7 @@
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.8"/>
+        <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.8"/>
         <PackageReference Include="Syncfusion.XlsIO.NET" Version="*"/>
         <PackageReference Include="Syncfusion.Presentation.NET" Version="*"/>
         <PackageReference Include="Stubble.Core" Version="1.10.8"/>
@@ -26,7 +27,6 @@
     <ItemGroup>
         <ProjectReference Include="..\SlideGenerator.Coordinator\SlideGenerator.Coordinator.csproj"/>
         <ProjectReference Include="..\SlideGenerator.Image\SlideGenerator.Image.csproj"/>
-        <ProjectReference Include="..\SlideGenerator.Logging\SlideGenerator.Logging.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

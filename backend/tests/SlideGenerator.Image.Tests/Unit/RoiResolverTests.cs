@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
@@ -19,13 +19,13 @@
 
 using System.Drawing;
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using SlideGenerator.Image.Application.Abstractions;
 using SlideGenerator.Image.Application.Models;
 using SlideGenerator.Image.Application.Services;
 using SlideGenerator.Image.Domain.Entities;
 using SlideGenerator.Image.Domain.Models;
-using SlideGenerator.Logging.Domain.Abstractions;
 using Xunit;
 
 namespace SlideGenerator.Image.Tests.Unit;
@@ -44,7 +44,7 @@ public sealed class RoiResolverTests
     public RoiResolverTests()
     {
         _matFactory.Create(Arg.Any<IImage>()).Returns(Substitute.For<IMat>());
-        _resolver = new RoiResolver(_faceDetector, _matFactory, Substitute.For<ISystemLogger>());
+        _resolver = new RoiResolver(_faceDetector, _matFactory, NullLogger<RoiResolver>.Instance);
     }
 
     #region ROI bounds invariant

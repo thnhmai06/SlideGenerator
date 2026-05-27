@@ -19,11 +19,11 @@
 
 using System.Collections.ObjectModel;
 using System.Drawing;
+using Microsoft.Extensions.Logging;
 using SlideGenerator.Image.Application.Abstractions;
 using SlideGenerator.Image.Application.Entities;
 using SlideGenerator.Image.Application.Models;
 using SlideGenerator.Image.Domain.Entities;
-using SlideGenerator.Logging.Domain.Abstractions;
 
 namespace SlideGenerator.Image.Application.Services;
 
@@ -34,7 +34,8 @@ namespace SlideGenerator.Image.Application.Services;
 ///     This service routes ROI calculation requests to appropriate calculator implementations
 ///     (Center or Rule of Thirds) and supports intelligent feature detection via face detection.
 /// </remarks>
-public sealed class RoiResolver(IFaceDetector faceDetector, IMatFactory matFactory, ISystemLogger logger) : IRoiResolver
+public sealed class RoiResolver(IFaceDetector faceDetector, IMatFactory matFactory, ILogger<RoiResolver>? logger = null)
+    : IRoiResolver
 {
     private readonly ReadOnlyDictionary<RoiType, RoiCalculator> _calculators =
         new Dictionary<RoiType, RoiCalculator>
@@ -46,19 +47,19 @@ public sealed class RoiResolver(IFaceDetector faceDetector, IMatFactory matFacto
     public async ValueTask<Rectangle> CalculateRoiAsync(IImage image, Size targetSize,
         RoiOption option)
     {
-        logger.Debug("Calculating ROI using {Type} algorithm for image ({Width}x{Height}) targeting {TargetSize}",
+        logger?.LogDebug("Calculating ROI using {Type} algorithm for image ({Width}x{Height}) targeting {TargetSize}",
             option.Type, image.Info.Width, image.Info.Height, targetSize);
 
         try
         {
             var roi = await GetCalculator(option.Type).CalculateRoiAsync(image, targetSize, option)
                 .ConfigureAwait(false);
-            logger.Debug("Calculated ROI: {ROI}", roi);
+            logger?.LogDebug("Calculated ROI: {ROI}", roi);
             return roi;
         }
         catch (Exception ex)
         {
-            logger.Error(ex, "Failed to calculate ROI using {Type} algorithm", option.Type);
+            logger?.LogError(ex, "Failed to calculate ROI using {Type} algorithm", option.Type);
             throw;
         }
     }

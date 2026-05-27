@@ -41,3 +41,4 @@ public interface ICloudResolver
     Task<Uri> ResolveUriAsync(Uri supportedUri, HttpClient httpClient,
         CancellationToken cancellationToken = default);
 }
+

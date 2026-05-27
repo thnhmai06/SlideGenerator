@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
@@ -19,11 +19,10 @@
 
 using System.Drawing;
 using FluentAssertions;
-using NSubstitute;
+using Microsoft.Extensions.Logging.Abstractions;
 using SlideGenerator.Document.Application.Services;
 using SlideGenerator.Document.Domain.Abstractions.Slide;
 using SlideGenerator.Document.Infrastructure.Services;
-using SlideGenerator.Logging.Domain.Abstractions;
 using Xunit;
 
 namespace SlideGenerator.Document.Tests.Unit;
@@ -37,7 +36,7 @@ namespace SlideGenerator.Document.Tests.Unit;
 public sealed class TextComposerTests
 {
     private readonly TextComposer _composer =
-        new(new MustacheEngine(Substitute.For<ISystemLogger>()));
+        new(new MustacheEngine(NullLogger<MustacheEngine>.Instance));
 
     #region Helpers
 

@@ -18,14 +18,16 @@
  */
 
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Events;
 using Serilog.Exceptions;
+using Serilog.Extensions.Logging;
 using Serilog.Sinks.SystemConsole.Themes;
-using SlideGenerator.Logging.Domain.Abstractions;
 using SlideGenerator.Logging.Infrastructure.Formatting;
 using SlideGenerator.Logging.Infrastructure.Options;
 using SlideGenerator.Logging.Infrastructure.Services;
+using ILogger = Microsoft.Extensions.Logging.ILogger;
 using HardLink = SlideGenerator.Utilities.Helper.HardLink;
 
 namespace SlideGenerator.Logging.Injection;
@@ -35,7 +37,7 @@ namespace SlideGenerator.Logging.Injection;
 /// </summary>
 /// <remarks>
 ///     The System logger writes to a timestamped file inside the runtime log directory and to standard error.
-///     It also refreshes <c>latest.log</c> as a symbolic link to the current System log file.
+///     It also refreshes <c>latest.log</c> as a hard link to the current System log file.
 /// </remarks>
 public static class SystemLoggerBootstrapper
 {
@@ -44,7 +46,7 @@ public static class SystemLoggerBootstrapper
     /// </summary>
     /// <param name="systemLogDirectory">The directory that stores System log files.</param>
     /// <returns>The initialized System logger.</returns>
-    public static ISystemLogger Initialize(string systemLogDirectory)
+    public static ILogger Initialize(string systemLogDirectory)
     {
         return Initialize(systemLogDirectory, new LoggingOptions());
     }
@@ -55,7 +57,7 @@ public static class SystemLoggerBootstrapper
     /// <param name="systemLogDirectory">The runtime directory that stores System log files.</param>
     /// <param name="configuration">The application configuration.</param>
     /// <returns>The initialized System logger.</returns>
-    public static ISystemLogger Initialize(string systemLogDirectory, IConfiguration configuration)
+    public static ILogger Initialize(string systemLogDirectory, IConfiguration configuration)
     {
         return Initialize(systemLogDirectory, LoggingOptionsReader.Read(configuration));
     }
@@ -66,7 +68,7 @@ public static class SystemLoggerBootstrapper
     /// <param name="systemLogDirectory">The runtime directory that stores System log files.</param>
     /// <param name="options">The resolved logging options.</param>
     /// <returns>The initialized System logger.</returns>
-    internal static ISystemLogger Initialize(string systemLogDirectory, LoggingOptions options)
+    internal static ILogger Initialize(string systemLogDirectory, LoggingOptions options)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(systemLogDirectory);
 
@@ -74,7 +76,7 @@ public static class SystemLoggerBootstrapper
         var currentLogFile = Path.Combine(systemLogDirectory, $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.log");
         var fileFormatter = new LogFormatter();
         const string consoleTemplate =
-            "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Scope}] {Level:u3}: {Message:lj}{NewLine}{Exception}";
+            "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{LoggerName}/{Scope}] {Level:u3}: {Message:lj}{NewLine}{Exception}";
 
         var serilogLogger = new LoggerConfiguration()
             .ApplyMinimumLevel(options.SystemMinimumLevel)
@@ -90,10 +92,10 @@ public static class SystemLoggerBootstrapper
             .CreateLogger();
 
         Log.Logger = serilogLogger;
-        var logger = new SerilogAppLogger(serilogLogger, new SerilogScopeManager());
+        var logger = new SerilogLoggerFactory(serilogLogger, false).CreateLogger("System");
         CreateHardLink(systemLogDirectory, currentLogFile, logger);
 
-        logger.Information("System logger initialized. Current log file: {Path}", currentLogFile);
+        logger.LogInformation("System logger initialized. Current log file: {Path}", currentLogFile);
 
         return logger;
     }
@@ -121,7 +123,7 @@ public static class SystemLoggerBootstrapper
     /// <param name="systemLogDirectory">The directory containing System log files.</param>
     /// <param name="currentLogFile">The concrete timestamped log file for the current process run.</param>
     /// <param name="logger">The logger used to report hard-link creation failures.</param>
-    private static void CreateHardLink(string systemLogDirectory, string currentLogFile, IAppLogger logger)
+    private static void CreateHardLink(string systemLogDirectory, string currentLogFile, ILogger logger)
     {
         var latestPath = Path.Combine(systemLogDirectory, "latest.log");
 
@@ -131,7 +133,7 @@ public static class SystemLoggerBootstrapper
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            logger.Warning("Could not create latest.log hard link: {Message}", ex.Message);
+            logger.LogWarning("Could not create latest.log hard link: {Message}", ex.Message);
         }
     }
 }

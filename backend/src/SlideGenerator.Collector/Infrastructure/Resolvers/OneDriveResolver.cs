@@ -62,3 +62,4 @@ internal sealed class OneDriveResolver(ISystemLogger logger) : ICloudResolver
         return Task.FromResult(resolvedUri);
     }
 }
+

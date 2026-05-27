@@ -167,3 +167,4 @@ public sealed class GoogleDriveResolverTests
 
     #endregion
 }
+

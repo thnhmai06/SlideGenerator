@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
@@ -17,6 +17,7 @@
  * GNU Affero General Public License for more details.
  */
 
+using Microsoft.Extensions.Logging;
 using SlideGenerator.Coordinator.Application.Abstractions;
 using SlideGenerator.Coordinator.Domain.Models;
 using SlideGenerator.Document.Application.Abstractions;
@@ -52,19 +53,19 @@ public sealed class CreateTemplate(
                 $"Worksheet '{Item.Sheet.SheetName}' was not found in validated results.");
             using (data.Logger.BeginScope(Item.Sheet.SheetName))
             {
-                data.Logger.Error(ex, "CreateTemplate validation failed");
+                data.Logger.LogError(ex, "CreateTemplate validation failed");
             }
         }
         else
         {
             try
             {
-                data.Logger.Information("Initializing output template for sheet {SheetName}",
+                data.Logger.LogInformation("Initializing output template for sheet {SheetName}",
                     worksheet.Identifier.SheetName);
 
                 await CreateTemplateFileAsync(data, worksheet, ct).ConfigureAwait(false);
 
-                data.Logger.Information("Successfully initialized output presentation at '{Path}'",
+                data.Logger.LogInformation("Successfully initialized output presentation at '{Path}'",
                     worksheet.OutputIdentifier.PresentationPath);
             }
             catch (Exception ex) when (ex is not NullReferenceException and not InvalidCastException
@@ -72,7 +73,7 @@ public sealed class CreateTemplate(
             {
                 using (data.Logger.BeginScope(worksheet.Identifier.SheetName))
                 {
-                    data.Logger.Error(ex, "CreateTemplate execution failed");
+                    data.Logger.LogError(ex, "CreateTemplate execution failed");
                 }
             }
         }
@@ -89,11 +90,11 @@ public sealed class CreateTemplate(
         if (outputDir != null)
         {
             Directory.CreateDirectory(outputDir);
-            data.Logger.Debug("Ensured output directory exists: '{Path}'", outputDir);
+            data.Logger.LogDebug("Ensured output directory exists: '{Path}'", outputDir);
         }
 
         // 2. Copy the template to the output path (overwrite if it exists)
-        data.Logger.Debug("Copying template from '{Source}' to '{Destination}'",
+        data.Logger.LogDebug("Copying template from '{Source}' to '{Destination}'",
             validatedSheet.TemplateSlide.PresentationPath, validatedSheet.OutputIdentifier.PresentationPath);
         File.Copy(validatedSheet.TemplateSlide.PresentationPath, validatedSheet.OutputIdentifier.PresentationPath,
             true);
@@ -102,7 +103,7 @@ public sealed class CreateTemplate(
         await gateLocker.AcquireAsync(GateType.EditPresentation, ct).ConfigureAwait(false);
         try
         {
-            data.Logger.Debug("Isolating slide at index {Index} in output presentation",
+            data.Logger.LogDebug("Isolating slide at index {Index} in output presentation",
                 validatedSheet.TemplateSlide.SlideIndex);
 
             var presentation = presentationProvider.OpenPresentation(validatedSheet.OutputIdentifier);
@@ -116,7 +117,7 @@ public sealed class CreateTemplate(
                 if (i != templateIndex)
                     presentation.RemoveSlideAt(i);
 
-            data.Logger.Debug("Removed {Count} unrelated slides from the template copy", originalCount - 1);
+            data.Logger.LogDebug("Removed {Count} unrelated slides from the template copy", originalCount - 1);
 
             presentation.RemoveEncryption();
             presentation.RemoveWriteProtection();

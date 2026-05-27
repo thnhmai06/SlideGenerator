@@ -108,3 +108,4 @@ public sealed class CollectorIntegrationTests
             new(new HttpClientHandler { AllowAutoRedirect = true });
     }
 }
+

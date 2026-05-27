@@ -18,6 +18,7 @@
  */
 
 using System.Net;
+using Microsoft.Extensions.Logging;
 using SlideGenerator.Cloud.Application.Abstractions;
 using SlideGenerator.Cloud.Domain.Models;
 
@@ -28,7 +29,7 @@ namespace SlideGenerator.Cloud.Infrastructure.Services;
 ///     All methods accept an optional <see cref="HttpClient" />; a new auto-redirect instance is
 ///     created automatically when <see langword="null" /> is supplied.
 /// </summary>
-internal sealed class CloudClient : ICloudClient
+internal sealed class CloudClient(ILogger<CloudClient>? logger = null) : ICloudClient
 {
     /// <inheritdoc />
     /// <remarks>
@@ -46,6 +47,7 @@ internal sealed class CloudClient : ICloudClient
         CancellationToken cancellationToken = default)
     {
         httpClient ??= CreateClient();
+        logger?.LogDebug("HTTP inspect start | Uri: {Uri}", uri);
 
         try
         {
@@ -73,11 +75,14 @@ internal sealed class CloudClient : ICloudClient
                 var rawLength = response.Content.Headers.ContentLength;
                 var length = rawLength is > 0 ? (uint)rawLength.Value : (uint?)null;
 
+                logger?.LogDebug("HTTP inspect completed | FinalUri: {FinalUri}, ContentType: {ContentType}", finalUri,
+                    type);
                 return new ContentInfo(finalUri, type, length);
             }
         }
-        catch
+        catch (Exception ex)
         {
+            logger?.LogWarning(ex, "HTTP inspect failed, skipped | Uri: {Uri}", uri);
             return null;
         }
     }
@@ -94,12 +99,15 @@ internal sealed class CloudClient : ICloudClient
         CancellationToken cancellationToken = default)
     {
         httpClient ??= CreateClient();
+        logger?.LogDebug("Download start | Uri: {Uri}, Path: {Path}", uri, savePath);
 
         await using var stream = await httpClient
             .GetStreamAsync(uri, cancellationToken)
             .ConfigureAwait(false);
         await using var fs = new FileStream(savePath, FileMode.Create, FileAccess.Write, FileShare.None);
         await stream.CopyToAsync(fs, cancellationToken).ConfigureAwait(false);
+
+        logger?.LogDebug("Download completed | Uri: {Uri}, Path: {Path}", uri, savePath);
     }
 
     /// <summary>Creates a new <see cref="HttpClient" /> with auto-redirect enabled (the default).</summary>

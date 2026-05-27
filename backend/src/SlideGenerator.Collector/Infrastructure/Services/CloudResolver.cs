@@ -59,3 +59,4 @@ internal sealed class CloudResolver(ISystemLogger logger) : ICloudResolver
         return uri;
     }
 }
+

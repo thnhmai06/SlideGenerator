@@ -32,3 +32,4 @@ public enum CloudResolverKey
     /// <summary>Microsoft OneDrive sharing link.</summary>
     OneDrive
 }
+

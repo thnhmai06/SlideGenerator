@@ -36,45 +36,21 @@ public static class Registration
     extension(IServiceCollection services)
     {
         /// <summary>
-        ///     Adds the logging abstraction and normal logger factory.
+        ///     Adds the logging factory and bridges Serilog as the MEL provider.
         /// </summary>
         /// <param name="configuration">The application configuration.</param>
         /// <returns>The updated service collection.</returns>
-        public IServiceCollection AddLoggingServices(IConfiguration configuration)
+        public IServiceCollection AddLoggingServices(IConfiguration? configuration = null)
         {
-            services.AddSingleton(LoggingOptionsReader.Read(configuration));
-            services.AddSingleton<IScopeManager, SerilogScopeManager>();
+            services.AddSingleton(configuration is null
+                ? new LoggingOptions()
+                : LoggingOptionsReader.Read(configuration));
             services.AddSingleton<IAppLoggerFactory, SerilogAppLoggerFactory>();
-            return services;
-        }
-
-        /// <summary>
-        ///     Adds the logging abstraction and normal logger factory with default settings.
-        /// </summary>
-        /// <returns>The updated service collection.</returns>
-        public IServiceCollection AddLoggingServices()
-        {
-            services.AddSingleton(new LoggingOptions());
-            services.AddSingleton<IScopeManager, SerilogScopeManager>();
-            services.AddSingleton<IAppLoggerFactory, SerilogAppLoggerFactory>();
-            return services;
-        }
-
-        /// <summary>
-        ///     Adds an already initialized System logger to the service collection.
-        /// </summary>
-        /// <param name="systemLogger">The System logger.</param>
-        /// <returns>The updated service collection.</returns>
-        public IServiceCollection AddLoggingServices(ISystemLogger systemLogger)
-        {
-            services.AddSingleton(systemLogger);
-            services.AddSingleton<IAppLogger>(systemLogger);
             services.AddLogging(builder =>
             {
                 builder.ClearProviders();
                 builder.AddSerilog(Log.Logger);
             });
-
             return services;
         }
     }

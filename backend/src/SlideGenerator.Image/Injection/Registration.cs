@@ -18,6 +18,7 @@
  */
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using OpenCvSharp;
 using SlideGenerator.Image.Application.Abstractions;
 using SlideGenerator.Image.Application.Services;
@@ -41,7 +42,10 @@ public static class Registration
             new YuNet(
                 FaceDetectorYN.Create(ModelPath, string.Empty,
                     Rules.FaceInputSize.ToOpenCv(), Rules.FaceConfidence), Rules.FaceInputSize.ToOpenCv()));
-        services.AddSingleton<IRoiResolver, RoiResolver>();
+        services.AddSingleton<IRoiResolver>(sp => new RoiResolver(
+            sp.GetRequiredService<IFaceDetector>(),
+            sp.GetRequiredService<IMatFactory>(),
+            sp.GetService<ILogger<RoiResolver>>()));
         return services;
     }
 }

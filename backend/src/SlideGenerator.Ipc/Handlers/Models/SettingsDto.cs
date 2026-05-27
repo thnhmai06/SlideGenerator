@@ -19,7 +19,7 @@
 
 using SlideGenerator.Settings.Domain.Entities;
 
-namespace SlideGenerator.Ipc.Handlers.Dtos;
+namespace SlideGenerator.Ipc.Handlers.Models;
 
 /// <summary>
 ///     Wire envelope returned by <c>settings.get</c>. Wraps the persisted <see cref="Setting" />

@@ -18,9 +18,9 @@
  */
 
 using System.Collections.Concurrent;
+using Microsoft.Extensions.Logging;
 using SlideGenerator.Coordinator.Application.Abstractions;
 using SlideGenerator.Coordinator.Domain.Models;
-using SlideGenerator.Logging.Domain.Abstractions;
 using SlideGenerator.Settings.Application.Abstractions;
 
 namespace SlideGenerator.Coordinator.Infrastructure.Services;
@@ -29,7 +29,7 @@ namespace SlideGenerator.Coordinator.Infrastructure.Services;
 ///     High-level concurrency gate for <see cref="GateType" />.
 ///     Manages per-gate limits dynamically using a pure counting mechanism.
 /// </summary>
-internal sealed class GateLocker(ISettingProvider settingProvider, ISystemLogger logger) : IGateLocker
+internal sealed class GateLocker(ISettingProvider settingProvider, ILogger<GateLocker>? logger = null) : IGateLocker
 {
     /// <summary>
     ///     The dictionary of gate states, keyed by <see cref="GateType" />.
@@ -75,11 +75,11 @@ internal sealed class GateLocker(ISettingProvider settingProvider, ISystemLogger
             if (state.ActiveCount < limit)
             {
                 state.ActiveCount++;
-                logger.Trace("Acquired gate {Gate} (Active: {Count}/{Limit})", gate, state.ActiveCount, limit);
+                logger?.LogTrace("Acquired gate {Gate} (Active: {Count}/{Limit})", gate, state.ActiveCount, limit);
                 return;
             }
 
-            logger.Debug("Gate {Gate} reached limit ({Limit}). Waiting for admission.", gate, limit);
+            logger?.LogDebug("Gate {Gate} reached limit ({Limit}). Waiting for admission.", gate, limit);
             var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
             var node = state.Waiters.AddLast(tcs);
             waitTask = tcs.Task;
@@ -100,7 +100,7 @@ internal sealed class GateLocker(ISettingProvider settingProvider, ISystemLogger
         try
         {
             await waitTask.ConfigureAwait(false);
-            logger.Trace("Acquired gate {Gate} after waiting (Active: {Count}/{Limit})", gate, state.ActiveCount,
+            logger?.LogTrace("Acquired gate {Gate} after waiting (Active: {Count}/{Limit})", gate, state.ActiveCount,
                 limit);
         }
         finally
@@ -125,13 +125,13 @@ internal sealed class GateLocker(ISettingProvider settingProvider, ISystemLogger
 
             if (state.ActiveCount >= limit)
             {
-                logger.Trace("Failed to try-acquire gate {Gate} (Active: {Count}/{Limit})", gate, state.ActiveCount,
+                logger?.LogTrace("Failed to try-acquire gate {Gate} (Active: {Count}/{Limit})", gate, state.ActiveCount,
                     limit);
                 return false;
             }
 
             state.ActiveCount++;
-            logger.Trace("Try-acquired gate {Gate} (Active: {Count}/{Limit})", gate, state.ActiveCount, limit);
+            logger?.LogTrace("Try-acquired gate {Gate} (Active: {Count}/{Limit})", gate, state.ActiveCount, limit);
             return true;
         }
     }
@@ -149,7 +149,7 @@ internal sealed class GateLocker(ISettingProvider settingProvider, ISystemLogger
         lock (state)
         {
             if (state.ActiveCount > 0) state.ActiveCount--;
-            logger.Trace("Released gate {Gate} (Active: {Count}/{Limit})", gate, state.ActiveCount, limit);
+            logger?.LogTrace("Released gate {Gate} (Active: {Count}/{Limit})", gate, state.ActiveCount, limit);
             state.TryAdmit(limit);
         }
     }

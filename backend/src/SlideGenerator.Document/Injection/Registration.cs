@@ -18,10 +18,10 @@
  */
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using SlideGenerator.Document.Application.Abstractions;
 using SlideGenerator.Document.Application.Services;
 using SlideGenerator.Document.Infrastructure.Services;
-using SlideGenerator.Logging.Domain.Abstractions;
 using Syncfusion.Licensing;
 using MustacheEngine = SlideGenerator.Document.Infrastructure.Services.MustacheEngine;
 
@@ -32,26 +32,28 @@ namespace SlideGenerator.Document.Injection;
 /// </summary>
 public static class Registration
 {
-    public static IServiceCollection AddDocumentServices(this IServiceCollection services, ISystemLogger? systemLogger)
+    public static IServiceCollection AddDocumentServices(this IServiceCollection services,
+        ILogger? startupLogger = null)
     {
         var licenseKey = SyncfusionLicense.Key; // decoded from XOR-encoded bytes at build time
         if (!string.IsNullOrWhiteSpace(licenseKey) && licenseKey != "empty")
             SyncfusionLicenseProvider.RegisterLicense(licenseKey);
         else
-            systemLogger?.Warning(
+            startupLogger?.LogWarning(
                 "Syncfusion license key is missing or empty. Please provide a valid Syncfusion license key to enable full functionality of the document generation features.");
         if (!SyncfusionLicenseProvider.ValidateLicense(Platform.Excel))
-            systemLogger?.Warning(
+            startupLogger?.LogWarning(
                 "Excel license is invalid. The Excel Engine will not work properly. Please provide a valid Syncfusion license key.");
-        else systemLogger?.Debug("Excel license is valid.");
+        else startupLogger?.LogDebug("Excel license is valid.");
         if (!SyncfusionLicenseProvider.ValidateLicense(Platform.PowerPoint))
-            systemLogger?.Warning(
+            startupLogger?.LogWarning(
                 "PowerPoint license is invalid. The PowerPoint Engine will not work properly. Please provide a valid Syncfusion license key.");
-        else systemLogger?.Debug("PowerPoint license is valid.");
+        else startupLogger?.LogDebug("PowerPoint license is valid.");
 
         services.AddSingleton<IWorkbookProvider, SfWorkbookProvider>();
         services.AddSingleton<IPresentationProvider, SfPresentationProvider>();
-        services.AddSingleton<ITemplateEngine, MustacheEngine>();
+        services.AddSingleton<ITemplateEngine>(sp => new MustacheEngine(
+            sp.GetService<ILogger<MustacheEngine>>()));
         services.AddSingleton<ITextComposer, TextComposer>();
 
         return services;

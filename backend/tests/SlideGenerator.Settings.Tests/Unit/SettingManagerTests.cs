@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
@@ -18,9 +18,10 @@
  */
 
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using SlideGenerator.Cryptography.Application.Abstractions;
-using SlideGenerator.Logging.Domain.Abstractions;
 using SlideGenerator.Settings.Application.Abstractions;
 using SlideGenerator.Settings.Domain.Entities;
 using SlideGenerator.Settings.Domain.Rules;
@@ -37,7 +38,7 @@ public sealed class SettingManagerTests : IDisposable
 {
     private static readonly Setting DefaultSetting = new();
     private readonly IEncrypter _encrypter = Substitute.For<IEncrypter>();
-    private readonly ISystemLogger _logger = Substitute.For<ISystemLogger>();
+    private readonly ILogger<SettingManager> _logger = NullLogger<SettingManager>.Instance;
     private readonly SettingManager _manager;
     private readonly ISerializer _serializer = Substitute.For<ISerializer>();
     private readonly string _testFilePath;

@@ -22,7 +22,7 @@ using SlideGenerator.Generator.Application.Abstractions;
 using SlideGenerator.Ipc.Handlers;
 using SlideGenerator.Ipc.Infrastructure;
 
-namespace SlideGenerator.Ipc;
+namespace SlideGenerator.Ipc.Injection;
 
 /// <summary>
 ///     Provides extension methods to register all IPC infrastructure and handler services

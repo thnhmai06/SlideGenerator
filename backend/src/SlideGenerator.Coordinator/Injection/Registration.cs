@@ -18,9 +18,11 @@
  */
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using SlideGenerator.Coordinator.Application.Abstractions;
 using SlideGenerator.Coordinator.Application.Services;
 using SlideGenerator.Coordinator.Infrastructure.Services;
+using SlideGenerator.Settings.Application.Abstractions;
 
 namespace SlideGenerator.Coordinator.Injection;
 
@@ -28,7 +30,9 @@ public static class Registration
 {
     public static IServiceCollection AddCoordinatorServices(this IServiceCollection services)
     {
-        services.AddSingleton<IGateLocker, GateLocker>();
+        services.AddSingleton<IGateLocker>(sp => new GateLocker(
+            sp.GetRequiredService<ISettingProvider>(),
+            sp.GetService<ILogger<GateLocker>>()));
         services.AddSingleton<ICoordinatorFactory, CoordinatorFactory>();
         return services;
     }

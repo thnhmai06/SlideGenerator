@@ -135,3 +135,4 @@ internal sealed class FileCollector(
 
     #endregion
 }
+

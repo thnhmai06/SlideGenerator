@@ -18,6 +18,7 @@
  */
 
 using System.Collections.Concurrent;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using SlideGenerator.Coordinator.Application.Abstractions;
 using SlideGenerator.Document.Domain.Abstractions.Sheet;
@@ -25,7 +26,6 @@ using SlideGenerator.Document.Domain.Abstractions.Slide;
 using SlideGenerator.Document.Domain.Models.Sheet;
 using SlideGenerator.Document.Domain.Models.Slide;
 using SlideGenerator.Generator.Application.Steps;
-using SlideGenerator.Logging.Domain.Abstractions;
 using SlideGenerator.Summarization.Domain.Models.Recipes;
 
 namespace SlideGenerator.Generator.Domain.Models.Contexts;
@@ -68,7 +68,7 @@ public sealed class GeneratingContext : IDisposable
     ///     Not serialized — recreated by <c>GeneratingMiddleware</c> before each step.
     /// </summary>
     [JsonIgnore]
-    public IAppLogger? Logger { get; set; } = null!;
+    public ILogger? Logger { get; set; } = null!;
 
     /// <summary>
     ///     Gets or sets the per-workflow asset deduplication coordinator.

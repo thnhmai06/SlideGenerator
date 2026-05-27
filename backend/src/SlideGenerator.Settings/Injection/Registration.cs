@@ -18,6 +18,8 @@
  */
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using SlideGenerator.Cryptography.Application.Abstractions;
 using SlideGenerator.Settings.Application.Abstractions;
 using SlideGenerator.Settings.Infrastructure.Services;
 
@@ -37,7 +39,10 @@ public static class Registration
     {
         services.AddSingleton<ISerializer, YamlSerializer>();
 
-        services.AddSingleton<ISettingManager, SettingManager>();
+        services.AddSingleton<ISettingManager>(sp => new SettingManager(
+            sp.GetRequiredService<IEncrypter>(),
+            sp.GetRequiredService<ISerializer>(),
+            sp.GetService<ILogger<SettingManager>>()));
         services.AddSingleton<ISettingProvider>(sp => sp.GetRequiredService<ISettingManager>());
         return services;
     }

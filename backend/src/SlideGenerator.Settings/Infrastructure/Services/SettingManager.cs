@@ -18,8 +18,8 @@
  */
 
 using System.Security.Cryptography;
+using Microsoft.Extensions.Logging;
 using SlideGenerator.Cryptography.Application.Abstractions;
-using SlideGenerator.Logging.Domain.Abstractions;
 using SlideGenerator.Settings.Application.Abstractions;
 using SlideGenerator.Settings.Domain.Entities;
 using SlideGenerator.Settings.Domain.Rules;
@@ -31,7 +31,10 @@ namespace SlideGenerator.Settings.Infrastructure.Services;
 /// </summary>
 /// <param name="serializer">The serializer used to persist settings to disk.</param>
 /// <param name="logger">The logger instance.</param>
-internal sealed class SettingManager(IEncrypter encrypter, ISerializer serializer, ISystemLogger logger)
+internal sealed class SettingManager(
+    IEncrypter encrypter,
+    ISerializer serializer,
+    ILogger<SettingManager>? logger = null)
     : ISettingManager
 {
     /// <summary>
@@ -53,7 +56,7 @@ internal sealed class SettingManager(IEncrypter encrypter, ISerializer serialize
     {
         if (!File.Exists(FilePath))
         {
-            logger.Information("Setting file not found at {Path}. Using default settings.", FilePath);
+            logger?.LogInformation("Setting file not found at {Path}. Using default settings.", FilePath);
             return false;
         }
 
@@ -61,7 +64,7 @@ internal sealed class SettingManager(IEncrypter encrypter, ISerializer serialize
 
         try
         {
-            logger.Debug("Loading settings from {Path}", FilePath);
+            logger?.LogDebug("Loading settings from {Path}", FilePath);
             var source = await File.ReadAllTextAsync(FilePath).ConfigureAwait(false);
             var loaded = serializer.Deserialize<Setting>(source);
 
@@ -83,7 +86,7 @@ internal sealed class SettingManager(IEncrypter encrypter, ISerializer serialize
                 }
                 catch (Exception ex) when (ex is CryptographicException or FormatException)
                 {
-                    logger.Warning(ex,
+                    logger?.LogWarning(ex,
                         "Failed to decrypt proxy password; the settings file likely originated " +
                         "on a different machine or user. Clearing the field and asking the client to re-enter it.");
                     loaded = loaded with
@@ -97,11 +100,11 @@ internal sealed class SettingManager(IEncrypter encrypter, ISerializer serialize
                 }
 
             Current = loaded;
-            logger.Information("Successfully loaded settings from {Path}", FilePath);
+            logger?.LogInformation("Successfully loaded settings from {Path}", FilePath);
         }
         catch (Exception e)
         {
-            logger.Error(e, "Error loading settings from {Path}. Resetting to defaults.", FilePath);
+            logger?.LogError(e, "Error loading settings from {Path}. Resetting to defaults.", FilePath);
             await ResetToDefaults().ConfigureAwait(false);
             return false;
         }
@@ -117,7 +120,7 @@ internal sealed class SettingManager(IEncrypter encrypter, ISerializer serialize
     {
         try
         {
-            logger.Debug("Saving settings to {Path}", FilePath);
+            logger?.LogDebug("Saving settings to {Path}", FilePath);
             var folderName = Path.GetDirectoryName(FilePath);
             if (!string.IsNullOrEmpty(folderName)) Directory.CreateDirectory(folderName);
 
@@ -138,11 +141,11 @@ internal sealed class SettingManager(IEncrypter encrypter, ISerializer serialize
 
             var content = serializer.Serialize(toSave);
             await File.WriteAllTextAsync(FilePath, content).ConfigureAwait(false);
-            logger.Information("Successfully saved settings to {Path}", FilePath);
+            logger?.LogInformation("Successfully saved settings to {Path}", FilePath);
         }
         catch (Exception e)
         {
-            logger.Error(e, "Error saving settings to {Path}", FilePath);
+            logger?.LogError(e, "Error saving settings to {Path}", FilePath);
             throw;
         }
     }

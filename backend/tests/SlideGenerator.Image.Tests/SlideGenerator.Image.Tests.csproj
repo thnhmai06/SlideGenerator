@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
@@ -14,6 +14,7 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.8"/>
         <PackageReference Include="NSubstitute" Version="5.*"/>
         <PackageReference Include="FluentAssertions" Version="8.10.0"/>
         <PackageReference Include="OpenCvSharp4" Version="4.13.0.20260427"/>
@@ -21,7 +22,6 @@
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="../../src/SlideGenerator.Image/SlideGenerator.Image.csproj"/>
-        <ProjectReference Include="../../src/SlideGenerator.Logging/SlideGenerator.Logging.csproj"/>
     </ItemGroup>
     <ItemGroup>
         <!-- YuNet.onnx is declared as <None> in SlideGenerator.Image, which does not propagate

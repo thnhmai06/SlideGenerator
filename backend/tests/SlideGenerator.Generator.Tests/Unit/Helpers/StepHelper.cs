@@ -17,12 +17,12 @@
  * GNU Affero General Public License for more details.
  */
 
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using SlideGenerator.Document.Domain.Models.Sheet;
 using SlideGenerator.Document.Domain.Models.Slide;
 using SlideGenerator.Generator.Domain.Models;
 using SlideGenerator.Generator.Domain.Models.Contexts;
-using SlideGenerator.Logging.Domain.Abstractions;
 using SlideGenerator.Summarization.Domain.Models.Recipes;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
@@ -42,9 +42,6 @@ internal static class StepHelper
     /// </summary>
     internal static (IStepExecutionContext Ctx, GeneratingContext Data) CreateContextPair()
     {
-        var logger = Substitute.For<IAppLogger>();
-        logger.BeginScope(Arg.Any<string>()).Returns(Substitute.For<IDisposable>());
-
         var data = new GeneratingContext
         {
             Request = new GeneratingRequest(
@@ -54,7 +51,7 @@ internal static class StepHelper
                 Path.GetTempPath()),
             WorkflowLogPath = Path.Combine(Path.GetTempPath(), "test.log"),
             WorkflowScope = "TestScope",
-            Logger = logger
+            Logger = Substitute.For<ILogger>()
         };
 
         var workflow = new WorkflowInstance { Data = data };

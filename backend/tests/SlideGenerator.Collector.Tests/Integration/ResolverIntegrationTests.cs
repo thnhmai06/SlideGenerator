@@ -109,3 +109,4 @@ public sealed class ResolverIntegrationTests
         return Uri.TryCreate(trimmed, UriKind.Absolute, out var uri) ? uri : null;
     }
 }
+

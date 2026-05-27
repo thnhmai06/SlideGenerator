@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
@@ -17,6 +17,7 @@
  * GNU Affero General Public License for more details.
  */
 
+using Microsoft.Extensions.Logging;
 using SlideGenerator.Cloud.Application.Abstractions;
 using SlideGenerator.Coordinator.Application.Abstractions;
 using SlideGenerator.Coordinator.Domain.Models;
@@ -60,7 +61,7 @@ public sealed class CollectImage(
             var path = $"Row{Task.RowIndex}_{Task.ColumnName}";
             using (data.Logger.BeginScope(path))
             {
-                data.Logger.Warning("URL is not valid. Skipping.");
+                data.Logger.LogWarning("URL is not valid. Skipping.");
             }
 
             return ExecutionResult.Next();
@@ -130,15 +131,14 @@ public sealed class CollectImage(
             try
             {
                 using var testImage = imageFactory.Open(Task.DownloadPath);
-                data.Logger!.Debug("Image for row {RowIndex} already exists and is valid, skipping acquisition",
+                data.Logger!.LogDebug("Image for row {RowIndex} already exists and is valid, skipping acquisition",
                     Task.RowIndex);
                 primary.SubmitResult(Task.DownloadPath);
                 return ExecutionResult.Next();
             }
-            catch
+            catch (Exception ex)
             {
-                data.Logger!.Warning("Existing image for row {RowIndex} is corrupt. Retrying acquisition.",
-                    Task.RowIndex);
+                data.Logger!.LogWarning(ex, "Image corrupt, retrying acquisition | Row: {RowIndex}", Task.RowIndex);
                 File.Delete(Task.DownloadPath);
             }
 
@@ -148,14 +148,14 @@ public sealed class CollectImage(
         await gateLocker.AcquireAsync(GateType.DownloadImage, ct).ConfigureAwait(false);
         try
         {
-            data.Logger!.Debug("Acquiring image for row {RowIndex} from '{Url}'", Task.RowIndex, Task.SourceUrl);
+            data.Logger!.LogDebug("Acquiring image for row {RowIndex} from '{Url}'", Task.RowIndex, Task.SourceUrl);
 
             if (File.Exists(Task.SourceUrl!))
             {
                 // Local file path
                 if (!data.Request.AllowLocalImagePaths)
                 {
-                    data.Logger!.Warning(
+                    data.Logger!.LogWarning(
                         "Source '{Url}' is a local file but local paths are not allowed. Skipping.",
                         Task.SourceUrl);
                     primary.SubmitResult(null);
@@ -173,7 +173,7 @@ public sealed class CollectImage(
 
                 if (resolvedUri == null)
                 {
-                    data.Logger!.Warning(
+                    data.Logger!.LogWarning(
                         "URL '{Url}' did not resolve to a downloadable image. Skipping.", Task.SourceUrl);
                     primary.SubmitResult(null);
                     notified = true;
@@ -185,7 +185,7 @@ public sealed class CollectImage(
                     .ConfigureAwait(false);
             }
 
-            data.Logger!.Information("Successfully acquired image for row {RowIndex}, column {ColumnName}",
+            data.Logger!.LogDebug("Image acquired | Row: {RowIndex}, Column: {ColumnName}",
                 Task.RowIndex, Task.ColumnName);
             primary.SubmitResult(Task.DownloadPath);
             notified = true;
@@ -197,7 +197,7 @@ public sealed class CollectImage(
             var path = $"Row{Task.RowIndex}_{Task.ColumnName}";
             using (data.Logger!.BeginScope(path))
             {
-                data.Logger.Error(ex, "Acquisition failed");
+                data.Logger.LogError(ex, "Acquisition failed");
             }
 
             primary.SubmitException(ex);
@@ -219,7 +219,7 @@ public sealed class CollectImage(
         // Idempotency: own file already exists (resume scenario)
         if (File.Exists(Task.DownloadPath))
         {
-            data.Logger!.Debug(
+            data.Logger!.LogDebug(
                 "Image for row {RowIndex} already exists (resume), skipping secondary hardlink", Task.RowIndex);
             return ExecutionResult.Next();
         }
@@ -232,13 +232,13 @@ public sealed class CollectImage(
             if (dir != null && !Directory.Exists(dir)) Directory.CreateDirectory(dir);
 
             HardLink.Create(Task.DownloadPath, primaryPath);
-            data.Logger!.Debug(
+            data.Logger!.LogDebug(
                 "Hard-linked image for row {RowIndex} from primary path '{PrimaryPath}'",
                 Task.RowIndex, primaryPath);
         }
         else
         {
-            data.Logger!.Warning(
+            data.Logger!.LogWarning(
                 "Primary acquisition failed for URL '{Url}', row {RowIndex} will have no image",
                 Task.SourceUrl, Task.RowIndex);
         }

@@ -17,8 +17,8 @@
  * GNU Affero General Public License for more details.
  */
 
+using Microsoft.Extensions.Logging;
 using SlideGenerator.Generator.Domain.Models;
-using SlideGenerator.Logging.Domain.Abstractions;
 using StreamJsonRpc;
 
 namespace SlideGenerator.Ipc.Infrastructure;
@@ -29,7 +29,7 @@ namespace SlideGenerator.Ipc.Infrastructure;
 ///     The connection is bound at runtime via <see cref="Attach" /> rather than at construction time
 ///     because <see cref="JsonRpc" /> is created after the DI container is built.
 /// </summary>
-internal sealed class WorkflowProgressObserver(ISystemLogger logger)
+internal sealed class WorkflowProgressObserver(ILogger<WorkflowProgressObserver> logger)
 {
     private JsonRpc? _jsonRpc;
 
@@ -63,7 +63,7 @@ internal sealed class WorkflowProgressObserver(ISystemLogger logger)
 
         _ = _jsonRpc.NotifyWithParameterObjectAsync("workflow/progress", progress)
             .ContinueWith(
-                t => logger.Warning(t.Exception!, "Failed to send workflow/progress notification."),
+                t => logger.LogWarning(t.Exception!, "Failed to send workflow/progress notification."),
                 CancellationToken.None,
                 TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously,
                 TaskScheduler.Default);

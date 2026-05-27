@@ -36,3 +36,4 @@ internal sealed record TestCaseRow
     /// <summary>Gets the source URL for this test case, or <see langword="null" /> / empty if absent.</summary>
     public string? Url { get; init; }
 }
+

@@ -20,23 +20,20 @@
 using System.Globalization;
 using Serilog.Events;
 using Serilog.Formatting;
-using Serilog.Formatting.Json;
 
 namespace SlideGenerator.Logging.Infrastructure.Formatting;
 
 /// <summary>
-///     Formats log events as scoped single-line messages and optional exception-detail JSON.
+///     Formats log events as structured single-line messages with optional human-readable exception detail.
 /// </summary>
 /// <remarks>
-///     The first line is always formatted as <c>[Timestamp] [Scope] LVL: Message</c>.
-///     For <see cref="LogEventLevel.Error" /> and <see cref="LogEventLevel.Fatal" /> events that contain an exception,
-///     the formatter writes one additional JSON line using the <c>ExceptionDetail</c> property enriched by
-///     Serilog.Exceptions when available.
+///     The first line is always formatted as <c>[Timestamp] [LoggerName/Scope] LVL: Message</c>.
+///     For <see cref="LogEventLevel.Warning" /> events that contain an exception, one summary line is appended.
+///     For <see cref="LogEventLevel.Error" /> and <see cref="LogEventLevel.Fatal" /> events, the full exception
+///     chain with stack trace is written in a human-readable indented format.
 /// </remarks>
 internal sealed class LogFormatter : ITextFormatter
 {
-    private readonly JsonValueFormatter _jsonValueFormatter = new("$type");
-
     /// <inheritdoc />
     public void Format(LogEvent logEvent, TextWriter output)
     {
@@ -52,33 +49,21 @@ internal sealed class LogFormatter : ITextFormatter
             _ => "???"
         };
 
+        var loggerName = GetScalarValue(logEvent, "LoggerName") ?? "?";
         var scope = GetScalarValue(logEvent, "Scope") ?? "Global";
         var message = logEvent.RenderMessage(CultureInfo.InvariantCulture);
 
-        output.WriteLine($"[{timestamp}] [{scope}] {levelAbbr}: {message}");
-        if (logEvent.Exception is null || logEvent.Level < LogEventLevel.Error) return;
-        output.WriteLine(CreateExceptionJson(logEvent));
-    }
+        output.WriteLine($"[{timestamp}] [{loggerName}/{scope}] {levelAbbr}: {message}");
 
-    /// <summary>
-    ///     Creates the JSON line that represents exception details for an error or fatal event.
-    /// </summary>
-    /// <param name="logEvent">The Serilog event that contains the exception.</param>
-    /// <returns>A single-line JSON representation of the exception details.</returns>
-    private string CreateExceptionJson(LogEvent logEvent)
-    {
-        using var writer = new StringWriter(CultureInfo.InvariantCulture);
+        if (logEvent.Exception is null || logEvent.Level < LogEventLevel.Warning) return;
 
-        if (logEvent.Properties.TryGetValue("ExceptionDetail", out var exceptionDetail))
+        if (logEvent.Level < LogEventLevel.Error)
         {
-            _jsonValueFormatter.Format(exceptionDetail, writer);
-            return writer.ToString();
+            output.WriteLine($"  ! {logEvent.Exception.GetType().Name}: {logEvent.Exception.Message}");
+            return;
         }
 
-        var ex = logEvent.Exception!;
-        writer.Write(
-            $"{{\"Type\":\"{JsonEncodedString(ex.GetType().FullName ?? ex.GetType().Name)}\",\"Message\":\"{JsonEncodedString(ex.Message)}\",\"StackTrace\":\"{JsonEncodedString(ex.StackTrace ?? string.Empty)}\"}}");
-        return writer.ToString();
+        WriteExceptionDetail(logEvent.Exception, output);
     }
 
     /// <summary>
@@ -96,16 +81,21 @@ internal sealed class LogFormatter : ITextFormatter
     }
 
     /// <summary>
-    ///     Escapes a string value for safe insertion into a minimal JSON string literal.
+    ///     Writes a human-readable exception chain with indented stack traces to <paramref name="output" />.
     /// </summary>
-    /// <param name="value">The unescaped value.</param>
-    /// <returns>The escaped JSON string content without surrounding quotes.</returns>
-    private static string JsonEncodedString(string value)
+    private static void WriteExceptionDetail(Exception ex, TextWriter output, int depth = 0)
     {
-        return value
-            .Replace("\\", @"\\", StringComparison.Ordinal)
-            .Replace("\"", "\\\"", StringComparison.Ordinal)
-            .Replace("\r", "\\r", StringComparison.Ordinal)
-            .Replace("\n", "\\n", StringComparison.Ordinal);
+        var indent = new string(' ', depth * 2);
+        output.WriteLine($"{indent}  ! {ex.GetType().FullName}: {ex.Message}");
+
+        if (!string.IsNullOrEmpty(ex.StackTrace))
+            output.WriteLine(
+                $"{indent}    {ex.StackTrace.Replace(Environment.NewLine, $"{Environment.NewLine}{indent}    ", StringComparison.Ordinal)}");
+
+        if (ex.InnerException is not null)
+        {
+            output.WriteLine($"{indent}  Caused by:");
+            WriteExceptionDetail(ex.InnerException, output, depth + 1);
+        }
     }
 }

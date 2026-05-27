@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
@@ -24,6 +24,7 @@ using System.Text.Json.Serialization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using SlideGenerator.Cloud.Injection;
 using SlideGenerator.Coordinator.Injection;
 using SlideGenerator.Cryptography.Injection;
@@ -34,7 +35,7 @@ using SlideGenerator.Image.Injection;
 using SlideGenerator.Ipc.Handlers;
 using SlideGenerator.Ipc.Infrastructure;
 using SlideGenerator.Ipc.Infrastructure.Adapters;
-using SlideGenerator.Logging.Domain.Abstractions;
+using SlideGenerator.Ipc.Injection;
 using SlideGenerator.Logging.Injection;
 using SlideGenerator.Recipe.Injection;
 using SlideGenerator.Settings.Application.Abstractions;
@@ -53,7 +54,7 @@ namespace SlideGenerator.Ipc;
 internal static class Program
 {
     public static readonly DateTime StartupTime = DateTime.UtcNow;
-    private static ISystemLogger? _systemLogger;
+    private static ILogger? _systemLogger;
 
     /// <summary>Application entry point.</summary>
     /// <param name="args">Command-line arguments passed by the Tauri sidecar launcher.</param>
@@ -74,19 +75,19 @@ internal static class Program
 
         try
         {
-            _systemLogger.Information("Application starting...");
+            _systemLogger.LogInformation("Application starting...");
 
             // Set up global exception logging and prevent crashes where possible
             AppDomain.CurrentDomain.UnhandledException += (_, e) =>
             {
                 if (e.ExceptionObject is Exception ex)
-                    _systemLogger?.Fatal(ex, "Unhandled AppDomain exception. IsTerminating: {IsTerminating}",
+                    _systemLogger?.LogCritical(ex, "Unhandled AppDomain exception. IsTerminating: {IsTerminating}",
                         e.IsTerminating);
             };
 
             TaskScheduler.UnobservedTaskException += (_, e) =>
             {
-                _systemLogger?.Fatal(e.Exception, "Unobserved Task exception.");
+                _systemLogger?.LogCritical(e.Exception, "Unobserved Task exception.");
 #if !DEBUG
                 e.SetObserved();
 #endif
@@ -95,7 +96,7 @@ internal static class Program
             // Ensure logs are flushed on unexpected process exit
             AppDomain.CurrentDomain.ProcessExit += (_, _) =>
             {
-                _systemLogger?.Information("Process exiting, flushing logs...");
+                _systemLogger?.LogInformation("Process exiting, flushing logs...");
                 SystemLoggerBootstrapper.Flush();
             };
 
@@ -109,7 +110,7 @@ internal static class Program
             Console.CancelKeyPress += (_, e) =>
             {
                 e.Cancel = true; // Prevent immediate termination
-                _systemLogger.Warning("Ctrl+C detected. Initiating graceful shutdown...");
+                _systemLogger.LogWarning("Ctrl+C detected. Initiating graceful shutdown...");
                 lifetime.StopApplication();
             };
 
@@ -122,7 +123,7 @@ internal static class Program
         }
         catch (Exception ex)
         {
-            _systemLogger.Fatal(ex, "Fatal exception in Main");
+            _systemLogger.LogCritical(ex, "Fatal exception in Main");
 #if DEBUG
             throw;
 #else
@@ -169,14 +170,13 @@ internal static class Program
     private static void ConfigureServices(
         IServiceCollection services,
         IConfiguration configuration,
-        ISystemLogger? systemLogger)
+        ILogger? systemLogger)
     {
-        systemLogger?.Information("Registering core services...");
+        systemLogger?.LogInformation("Registering core services...");
         services.AddLoggingServices(configuration);
-        if (systemLogger is not null) services.AddLoggingServices(systemLogger);
         services.AddCryptographyServices();
 
-        systemLogger?.Information("Registering domain modules...");
+        systemLogger?.LogInformation("Registering domain modules...");
         services.AddSettingsServices();
         services.AddDocumentServices(systemLogger);
         services.AddCoordinatorServices();
@@ -186,7 +186,7 @@ internal static class Program
         services.AddSummarizationServices();
         services.AddRecipeServices();
 
-        systemLogger?.Information("Registering workflow and IPC infrastructure...");
+        systemLogger?.LogInformation("Registering workflow and IPC infrastructure...");
         services.AddWorkflow(x => x.UseSqlite(NameAndPaths.WorkflowsFile.ConnectionString, true));
         services.AddIpcServices();
     }
@@ -204,26 +204,26 @@ internal static class Program
     private static async Task StartupAsync(IHost host, JsonSerializerOptions jsonOptions)
     {
         var services = host.Services;
-        var logger = services.GetRequiredService<ISystemLogger>();
+        var logger = _systemLogger!;
         var workflowService = services.GetRequiredService<IGeneratingService>();
         JsonRpc? jsonRpc = null;
 
         try
         {
-            logger.Information("Initializing application directories...");
+            logger.LogInformation("Initializing application directories...");
             NameAndPaths.InitializeDirectories();
 
-            logger.Information("Loading settings...");
+            logger.LogInformation("Loading settings...");
             await LoadSettingsAsync(services);
 
-            logger.Information("Starting workflow host...");
+            logger.LogInformation("Starting workflow host...");
             await workflowService.InitializeAsync(CancellationToken.None);
 
-            logger.Information("Initializing JSON-RPC connection...");
+            logger.LogInformation("Initializing JSON-RPC connection...");
             jsonRpc = CreateAndConfigureJsonRpc(services, jsonOptions);
             AttachProgressObserver(services, jsonRpc);
 
-            logger.Information("Setup completed! Application is listening.");
+            logger.LogInformation("Setup completed! Application is listening.");
 
             // Wait for either the RPC connection to close OR the host to signal shutdown (e.g., via Ctrl+C)
             var lifetime = services.GetRequiredService<IHostApplicationLifetime>();
@@ -231,7 +231,7 @@ internal static class Program
         }
         catch (Exception ex)
         {
-            logger.Error(ex, "Exception occurred during IPC lifecycle.");
+            logger.LogError(ex, "Exception occurred during IPC lifecycle.");
 #if DEBUG
             throw;
 #endif
@@ -247,14 +247,14 @@ internal static class Program
     /// </summary>
     private static void PrintWelcomeMessage()
     {
-        _systemLogger?.Information("\n{AsciiArt}", WelcomeMessages.Name);
-        _systemLogger?.Information(WelcomeMessages.Line);
-        _systemLogger?.Information(WelcomeMessages.Version);
-        _systemLogger?.Information(WelcomeMessages.Description);
-        _systemLogger?.Information(WelcomeMessages.Line);
-        _systemLogger?.Information(WelcomeMessages.License);
-        _systemLogger?.Information(WelcomeMessages.RepositoryUrl);
-        _systemLogger?.Information(WelcomeMessages.Line);
+        _systemLogger?.LogInformation("\n{AsciiArt}", WelcomeMessages.Name);
+        _systemLogger?.LogInformation(WelcomeMessages.Line);
+        _systemLogger?.LogInformation(WelcomeMessages.Version);
+        _systemLogger?.LogInformation(WelcomeMessages.Description);
+        _systemLogger?.LogInformation(WelcomeMessages.Line);
+        _systemLogger?.LogInformation(WelcomeMessages.License);
+        _systemLogger?.LogInformation(WelcomeMessages.RepositoryUrl);
+        _systemLogger?.LogInformation(WelcomeMessages.Line);
     }
 
     /// <summary>
@@ -403,7 +403,7 @@ internal static class Program
         IGeneratingService generatingService,
         JsonRpc? jsonRpc)
     {
-        var logger = services.GetRequiredService<ISystemLogger>();
+        var logger = _systemLogger!;
 
         try
         {
@@ -418,7 +418,7 @@ internal static class Program
         }
         catch (Exception ex)
         {
-            logger.Error(ex, "Error during TeardownAsync.");
+            logger.LogError(ex, "Error during TeardownAsync.");
         }
         finally
         {

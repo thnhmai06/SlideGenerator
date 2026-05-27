@@ -35,3 +35,4 @@ public sealed record DownloadConfiguration
     /// <summary>Gets the optional HTTP proxy to use.</summary>
     public IWebProxy? Proxy { get; init; }
 }
+

@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
@@ -17,7 +17,7 @@
  * GNU Affero General Public License for more details.
  */
 
-using NSubstitute;
+using Microsoft.Extensions.Logging.Abstractions;
 using OpenCvSharp;
 using SlideGenerator.Image.Application.Abstractions;
 using SlideGenerator.Image.Application.Services;
@@ -25,7 +25,6 @@ using SlideGenerator.Image.Domain;
 using SlideGenerator.Image.Infrastructure;
 using SlideGenerator.Image.Infrastructure.Adapters;
 using SlideGenerator.Image.Infrastructure.Services;
-using SlideGenerator.Logging.Domain.Abstractions;
 
 namespace SlideGenerator.Image.Tests.Integration.Fixtures;
 
@@ -60,7 +59,7 @@ public sealed class ImageServiceFixture : IDisposable
         var core = FaceDetectorYN.Create(ModelPath, string.Empty, inputSize, Rules.FaceConfidence);
         FaceDetector = new YuNet(core, inputSize);
 
-        RoiResolver = new RoiResolver(FaceDetector, MatFactory, Substitute.For<ISystemLogger>());
+        RoiResolver = new RoiResolver(FaceDetector, MatFactory, NullLogger<RoiResolver>.Instance);
     }
 
     /// <summary>Real YuNet face detector backed by YuNet.onnx.</summary>

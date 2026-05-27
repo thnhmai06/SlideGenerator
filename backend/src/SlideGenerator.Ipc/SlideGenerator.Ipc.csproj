@@ -10,6 +10,7 @@
         <IsPackable>false</IsPackable>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <WarningsAsErrors>CS1591</WarningsAsErrors>
+        <ApplicationIcon>appicon.ico</ApplicationIcon>
     </PropertyGroup>
 
     <ItemGroup>

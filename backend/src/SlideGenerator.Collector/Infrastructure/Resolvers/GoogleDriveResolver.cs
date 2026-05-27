@@ -84,3 +84,4 @@ internal sealed partial class GoogleDriveResolver(ISystemLogger logger) : ICloud
     [GeneratedRegex(@"/file/d/([^/?]+)", RegexOptions.Compiled)]
     private static partial Regex GoogleDriveFileIdRegex();
 }
+

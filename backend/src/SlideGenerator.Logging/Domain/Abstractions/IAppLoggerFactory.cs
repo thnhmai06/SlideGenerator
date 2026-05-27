@@ -17,20 +17,22 @@
  * GNU Affero General Public License for more details.
  */
 
+using Microsoft.Extensions.Logging;
+
 namespace SlideGenerator.Logging.Domain.Abstractions;
 
 /// <summary>
-///     Creates application loggers without exposing the underlying logging framework.
+///     Creates file-backed loggers for use-cases that require isolated log files (e.g., per-workflow logs).
 /// </summary>
 public interface IAppLoggerFactory
 {
     /// <summary>
-    ///     Creates a normal logger that writes to a concrete log file path.
+    ///     Creates a logger that writes to a concrete log file path.
     /// </summary>
-    /// <param name="name">The logical logger name.</param>
+    /// <param name="name">The logical logger name (used as MEL category).</param>
     /// <param name="logFilePath">The concrete file path where the logger writes.</param>
     /// <returns>The created logger.</returns>
-    IAppLogger CreateLogger(string name, string logFilePath);
+    ILogger CreateLogger(string name, string logFilePath);
 
     /// <summary>
     ///     Creates a workflow logger that writes user-facing workflow progress to a concrete log file path.
@@ -38,5 +40,5 @@ public interface IAppLoggerFactory
     /// <param name="workflowId">The workflow instance identifier.</param>
     /// <param name="logFilePath">The concrete file path where the workflow logger writes.</param>
     /// <returns>The created workflow logger.</returns>
-    IAppLogger CreateWorkflowLogger(string workflowId, string logFilePath);
+    ILogger CreateWorkflowLogger(string workflowId, string logFilePath);
 }

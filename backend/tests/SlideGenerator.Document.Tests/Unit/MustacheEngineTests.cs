@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
@@ -18,9 +18,8 @@
  */
 
 using FluentAssertions;
-using NSubstitute;
+using Microsoft.Extensions.Logging.Abstractions;
 using SlideGenerator.Document.Infrastructure.Services;
-using SlideGenerator.Logging.Domain.Abstractions;
 using Xunit;
 
 namespace SlideGenerator.Document.Tests.Unit;
@@ -31,7 +30,7 @@ namespace SlideGenerator.Document.Tests.Unit;
 /// </summary>
 public sealed class MustacheEngineTests
 {
-    private readonly MustacheEngine _engine = new(Substitute.For<ISystemLogger>());
+    private readonly MustacheEngine _engine = new(NullLogger<MustacheEngine>.Instance);
 
     #region ScanPlaceholders
 

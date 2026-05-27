@@ -56,3 +56,4 @@ internal static class CollectorTestHelpers
         }
     }
 }
+

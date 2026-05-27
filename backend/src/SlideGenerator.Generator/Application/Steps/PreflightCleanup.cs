@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
@@ -17,6 +17,7 @@
  * GNU Affero General Public License for more details.
  */
 
+using Microsoft.Extensions.Logging;
 using SlideGenerator.Generator.Domain.Models.Contexts;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
@@ -38,7 +39,7 @@ public sealed class PreflightCleanup : StepBody
 
         if (data.RecipeSummary == null)
         {
-            data.Logger.Debug("No recipe summary present; nothing to clean.");
+            data.Logger.LogDebug("No recipe summary present; nothing to clean.");
             return ExecutionResult.Next();
         }
 
@@ -57,7 +58,7 @@ public sealed class PreflightCleanup : StepBody
                 if (Directory.Exists(dir))
                 {
                     Directory.Delete(dir, true);
-                    data.Logger.Debug("Removed existing output directory '{Dir}'", dir);
+                    data.Logger.LogDebug("Removed existing output directory '{Dir}'", dir);
                 }
 
                 Directory.CreateDirectory(dir);
@@ -66,7 +67,7 @@ public sealed class PreflightCleanup : StepBody
                                            and not InvalidCastException
                                            and not IndexOutOfRangeException)
             {
-                data.Logger.Warning(ex, "Failed to clean output directory '{Dir}'", dir);
+                data.Logger.LogWarning(ex, "Failed to clean output directory '{Dir}'", dir);
             }
         }
 

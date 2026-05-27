@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
@@ -16,12 +16,12 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="FluentAssertions" Version="8.10.0"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.8"/>
         <PackageReference Include="NSubstitute" Version="5.*"/>
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="../../src/SlideGenerator.Coordinator/SlideGenerator.Coordinator.csproj"/>
         <ProjectReference Include="../../src/SlideGenerator.Settings/SlideGenerator.Settings.csproj"/>
-        <ProjectReference Include="../../src/SlideGenerator.Logging/SlideGenerator.Logging.csproj"/>
     </ItemGroup>
 </Project>

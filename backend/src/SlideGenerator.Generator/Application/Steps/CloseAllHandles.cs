@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
@@ -17,6 +17,7 @@
  * GNU Affero General Public License for more details.
  */
 
+using Microsoft.Extensions.Logging;
 using SlideGenerator.Generator.Domain.Models.Contexts;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
@@ -35,7 +36,7 @@ public sealed class CloseAllHandles : StepBody
         var data = (GeneratingContext)context.Workflow.Data;
         using var scope = data.Logger.BeginScope("CloseAllHandles");
 
-        data.Logger.Information("Closing all workbook and presentation handles. Workflow complete.");
+        data.Logger.LogInformation("Closing all workbook and presentation handles. Workflow complete.");
 
         data.Dispose();
         return ExecutionResult.Next();

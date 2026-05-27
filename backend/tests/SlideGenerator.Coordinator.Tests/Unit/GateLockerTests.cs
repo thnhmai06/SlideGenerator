@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
@@ -18,10 +18,10 @@
  */
 
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using SlideGenerator.Coordinator.Domain.Models;
 using SlideGenerator.Coordinator.Infrastructure.Services;
-using SlideGenerator.Logging.Domain.Abstractions;
 using SlideGenerator.Settings.Application.Abstractions;
 using SlideGenerator.Settings.Domain.Entities;
 using Xunit;
@@ -56,7 +56,7 @@ public sealed class GateLockerTests
         };
         var provider = Substitute.For<ISettingProvider>();
         provider.Current.Returns(setting);
-        var logger = Substitute.For<ISystemLogger>();
+        var logger = NullLogger<GateLocker>.Instance;
         return new GateLocker(provider, logger);
     }
 

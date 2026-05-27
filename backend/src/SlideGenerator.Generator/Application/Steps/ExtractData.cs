@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
@@ -18,6 +18,7 @@
  */
 
 using System.Drawing;
+using Microsoft.Extensions.Logging;
 using SlideGenerator.Coordinator.Application.Abstractions;
 using SlideGenerator.Coordinator.Domain.Models;
 using SlideGenerator.Cryptography.Application.Abstractions;
@@ -53,12 +54,12 @@ public sealed class ExtractData(
 
         if (data.SlideContexts.Any(s => s.SheetContext.Identifier == Worksheet.Identifier))
         {
-            data.Logger.Debug("ExtractData already processed sheet {SheetName} — skipping (resume idempotency).",
+            data.Logger.LogDebug("ExtractData already processed sheet {SheetName} — skipping (resume idempotency).",
                 Worksheet.Identifier.SheetName);
             return ExecutionResult.Next();
         }
 
-        data.Logger.Information("Starting data extraction for sheet {SheetName} in {BookPath}",
+        data.Logger.LogInformation("Starting data extraction for sheet {SheetName} in {BookPath}",
             Worksheet.Identifier.SheetName, Worksheet.Identifier.BookPath);
 
         try
@@ -68,7 +69,7 @@ public sealed class ExtractData(
 
             ConstructTasks(data, rowCount, headerMap, sheet, shapeData);
 
-            data.Logger.Information("Successfully extracted data and constructed tasks for sheet {SheetName}",
+            data.Logger.LogInformation("Successfully extracted data and constructed tasks for sheet {SheetName}",
                 Worksheet.Identifier.SheetName);
         }
         catch (Exception ex) when (ex is not NullReferenceException and not InvalidCastException
@@ -76,7 +77,7 @@ public sealed class ExtractData(
         {
             using (data.Logger.BeginScope(Worksheet.Identifier.SheetName))
             {
-                data.Logger.Error(ex, "ExtractData failed");
+                data.Logger.LogError(ex, "ExtractData failed");
             }
         }
 
@@ -102,7 +103,8 @@ public sealed class ExtractData(
                 if (!headerMap.ContainsKey(headers[i]))
                     headerMap[headers[i]] = i;
 
-            data.Logger.Debug("Found {RowCount} rows in sheet {SheetName}", rowCount, Worksheet.Identifier.SheetName);
+            data.Logger.LogDebug("Found {RowCount} rows in sheet {SheetName}", rowCount,
+                Worksheet.Identifier.SheetName);
 
             return (rowCount, headerMap, sheet);
         }
@@ -140,12 +142,12 @@ public sealed class ExtractData(
                     shapeData[shapeId] = (shape.Name, tags, bounds);
                 }
 
-                data.Logger.Debug("Extracted metadata for {Count} shapes from template slide", shapeData.Count);
+                data.Logger.LogDebug("Extracted metadata for {Count} shapes from template slide", shapeData.Count);
 
                 // Clone slides
                 if (rowCount > 1)
                 {
-                    data.Logger.Debug("Cloning {Count} additional slides for output", rowCount - 1);
+                    data.Logger.LogDebug("Cloning {Count} additional slides for output", rowCount - 1);
                     for (var i = 1; i < rowCount; i++)
                         wrapper.CloneSlide(0);
                 }
@@ -184,7 +186,7 @@ public sealed class ExtractData(
             if (slideTask.TextReplacements.Count > 0 || slideTask.ImageReplacements.Count > 0)
             {
                 data.SlideContexts.Add(slideTask);
-                data.Logger.Debug("Mapped {TextCount} text and {ImageCount} image replacements for row {RowIndex}",
+                data.Logger.LogDebug("Mapped {TextCount} text and {ImageCount} image replacements for row {RowIndex}",
                     slideTask.TextReplacements.Count, slideTask.ImageReplacements.Count, rowIndex);
             }
         }
