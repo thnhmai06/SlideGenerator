@@ -15,14 +15,15 @@ Welcome to the SlideGenerator backend documentation. This project is a **Modular
 ## 📖 Reference
 - [IPC API Reference](Reference/IPC-API-Reference.md): JSON-RPC 2.0 endpoints and protocols.
 - **[Module Reference](Reference/Modules/)**: Detailed documentation for each internal project.
-  - [Generating](Reference/Modules/Generating.md)
-  - [Document](Reference/Modules/Document.md)
-  - [Image](Reference/Modules/Image.md)
-  - [Scanning](Reference/Modules/Scanning.md)
-  - [Coordinator](Reference/Modules/Coordinator.md)
+  - [Utilities](Reference/Modules/Utilities.md)
   - [Settings](Reference/Modules/Settings.md)
-  - [Resolver](Reference/Modules/Resolver.md)
+  - [Cloud](Reference/Modules/Cloud.md)
   - [Cryptography](Reference/Modules/Cryptography.md)
-  - [Download](Reference/Modules/Download.md)
+  - [Coordinator](Reference/Modules/Coordinator.md)
+  - [Document](Reference/Modules/Document.md)
   - [Logging](Reference/Modules/Logging.md)
-  - [Common](Reference/Modules/Common.md)
+  - [Image](Reference/Modules/Image.md)
+  - [Summarization](Reference/Modules/Summarization.md)
+  - [Recipe](Reference/Modules/Recipe.md)
+  - [Generator](Reference/Modules/Generator.md)
+  - [Ipc](Reference/Modules/Ipc.md)

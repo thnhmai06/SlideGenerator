@@ -52,8 +52,7 @@ Open `SlideGenerator.slnx` in your IDE. It will automatically detect the project
 The backend is an executable intended to be launched by a frontend. However, you can run it manually for testing:
 
 ```bash
-cd SlideGenerator.Ipc
-dotnet run
+dotnet run --project src/SlideGenerator.Ipc/SlideGenerator.Ipc.csproj
 ```
 
 The application will print a welcome message and wait for JSON-RPC commands on `stdin`. You can pipe commands into it or use a tool like `StreamJsonRpc` tester.

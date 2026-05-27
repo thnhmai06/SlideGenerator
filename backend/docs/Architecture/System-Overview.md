@@ -9,13 +9,14 @@ SlideGenerator is built as a **Modular Monolith**. While it is deployed as a sin
 ### Why Modular Monolith?
 - **Isolation**: Each module has its own responsibility (e.g., Image processing, Presentation editing).
 - **Maintainability**: Clear boundaries prevent the "big ball of mud" where changes in one area unexpectedly break another.
-- **Dependency Flow**: Dependencies are strictly hierarchical. Foundation modules (Settings, Resolver) have zero dependencies, while Orchestration modules (Generating) tie everything together.
+- **Dependency Flow**: Dependencies are strictly hierarchical. Foundation modules (`Utilities`, `Settings`, `Cloud`) have zero or minimal dependencies, while Orchestration modules (`Generator`) tie everything together.
 
 ### Module Categories
-1. **Foundation**: Zero external dependencies. Core infrastructure.
-2. **Core Services**: Depend on Foundation. Provide shared capabilities like Download and Cryptography.
-3. **Feature Modules**: Domain-specific logic for MagickImage or Syncfusion abstractions.
-4. **Orchestration**: The glue that coordinates workflows.
+1. **Foundation** (`Utilities`, `Settings`, `Cloud`): Zero external module dependencies. Core infrastructure and provider integrations.
+2. **Core Services** (`Cryptography`, `Coordinator`, `Document`, `Logging`): Depend on Foundation. Provide shared capabilities such as concurrency throttling and Syncfusion abstractions.
+3. **Feature Modules** (`Image`): Domain-specific logic for MagickImage processing and ROI/face detection.
+4. **Orchestration** (`Summarization`, `Recipe`, `Generator`): The glue that scans inputs, persists user recipes, and runs the WorkflowCore pipeline.
+5. **Entry Point** (`Ipc`): Executable that wires every module and exposes them through JSON-RPC 2.0.
 
 ---
 
@@ -39,6 +40,6 @@ The backend is designed to run as an **IPC Sidecar** for a frontend application 
 
 The system uses **WorkflowCore** to manage long-running, stateful processes.
 
-1. **Request**: The frontend sends a `workflow.start` request via IPC.
+1. **Request**: The frontend sends a `generator.active.start` request via IPC.
 2. **Persistence**: The workflow state is persisted to a SQLite database. If the process crashes or is paused, it can resume from the last successful step.
 3. **Observation**: A `WorkflowProgressObserver` listens to events and pushes notifications back to the frontend in real-time.

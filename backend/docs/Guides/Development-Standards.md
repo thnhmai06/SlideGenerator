@@ -20,7 +20,7 @@ Every module MUST follow this consistent layout:
 
 ## 3. Dependency Injection Rules
 
-- **Registration**: Each module provides an extension method `Add[ModuleName]Services(this IServiceCollection services)`.
+- **Registration**: Each module provides an extension method `Add[ModuleName]Services(this IServiceCollection services)` declared inside `extension(IServiceCollection services)` (C# 14 extension member syntax) where applicable. Examples: `AddSettingsServices()`, `AddCloudServices()`, `AddLoggingServices(IConfiguration?)`, `AddGeneratorServices()`, `AddIpcServices()`.
 - **Constructor Injection**: Always favor constructor injection over property injection.
 - **Lifetimes**: 
     - Stateless services: `Singleton` or `Transient`.

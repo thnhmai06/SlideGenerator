@@ -6,16 +6,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 # Build
-dotnet build
+dotnet build SlideGenerator.slnx
 
 # Build release
-dotnet build -c Release
+dotnet build SlideGenerator.slnx -c Release
 
 # Clean
-dotnet clean
+dotnet clean SlideGenerator.slnx
 
 # Run all tests
-dotnet test
+dotnet test SlideGenerator.slnx
 
 # Run tests for one project
 dotnet test tests/SlideGenerator.Settings.Tests/SlideGenerator.Settings.Tests.csproj
@@ -24,19 +24,18 @@ dotnet test tests/SlideGenerator.Settings.Tests/SlideGenerator.Settings.Tests.cs
 dotnet test --filter "FullyQualifiedName~Load_SettingsFileNotFound_ReturnsFalse"
 ```
 
-SDK: .NET 10.0 (`global.json` pins to `latestMajor`).
+SDK: .NET 10.0 (`global.json` pins to `latestMajor`, allows prerelease). The solution uses the XML-based `SlideGenerator.slnx` (no `.sln`). A Syncfusion license is required at runtime: copy `.env.example` to `.env` and fill `SYNCFUSION_LICENSE_KEY` before running the Ipc sidecar.
 
 ## Solution Layout
 
 ```
 backend/
-├── src/                         — 13 source modules
-│   ├── SlideGenerator.Common/
+├── src/                                — 12 source modules (slnx-tracked)
+│   ├── SlideGenerator.Utilities/
 │   ├── SlideGenerator.Settings/
-│   ├── SlideGenerator.Resolver/
+│   ├── SlideGenerator.Cloud/
 │   ├── SlideGenerator.Cryptography/
 │   ├── SlideGenerator.Coordinator/
-│   ├── SlideGenerator.Download/
 │   ├── SlideGenerator.Document/
 │   ├── SlideGenerator.Logging/
 │   ├── SlideGenerator.Image/
@@ -44,34 +43,37 @@ backend/
 │   ├── SlideGenerator.Recipe/
 │   ├── SlideGenerator.Generator/
 │   └── SlideGenerator.Ipc/
-└── tests/                       — 9 test projects (standalone, not inside src/)
-    ├── SlideGenerator.Common.Tests/
+└── tests/                              — 9 test projects (mirrors src, standalone)
+    ├── SlideGenerator.Utilities.Tests/
     ├── SlideGenerator.Cryptography.Tests/
+    ├── SlideGenerator.Cloud.Tests/
     ├── SlideGenerator.Coordinator.Tests/
     ├── SlideGenerator.Settings.Tests/
-    ├── SlideGenerator.Resolver.Tests/
     ├── SlideGenerator.Document.Tests/
     ├── SlideGenerator.Image.Tests/
     ├── SlideGenerator.Recipe.Tests/
     └── SlideGenerator.Generator.Tests/
 ```
 
+`src/SlideGenerator.Acquisition/` and `src/SlideGenerator.Collector/` exist on disk but are **not in `SlideGenerator.slnx`** — treat them as orphan/in-progress folders unless re-added to the solution.
+
+`Logging`, `Summarization`, and `Ipc` have no dedicated test project.
+
 ## Architecture: Modular Monolith + IPC Sidecar
 
-SlideGenerator automates PowerPoint generation from Excel data and templates. It uses a **Modular Monolith** with independent modules coordinated via WorkflowCore orchestration, exposed to a Tauri frontend through a JSON-RPC 2.0 IPC sidecar.
+SlideGenerator automates PowerPoint generation from Excel data and templates. It is a **Modular Monolith** with independent modules coordinated by WorkflowCore, exposed to a Tauri frontend through a JSON-RPC 2.0 IPC sidecar.
 
 ### Module Map
 
 ```
-Foundation Modules (no external dependencies)
-├── SlideGenerator.Common        - Shared utilities (string normalization)
+Foundation Modules
+├── SlideGenerator.Utilities     - Shared utilities (string normalization, helpers)
 ├── SlideGenerator.Settings      - YAML-based configuration; ISettingProvider
-└── SlideGenerator.Resolver      - Multi-cloud URI resolver (Google Drive, OneDrive, SharePoint)
+└── SlideGenerator.Cloud         - Multi-cloud URI resolver (Google Drive, OneDrive, SharePoint)
 
-Core Services (depend on Settings)
+Core Services
 ├── SlideGenerator.Cryptography  - AES-256 encryption + file hash registry
 ├── SlideGenerator.Coordinator   - Concurrency throttling; IGateLocker + GateType
-├── SlideGenerator.Download      - HTTP downloading with throttling and progress
 ├── SlideGenerator.Document      - Syncfusion Excel/PowerPoint abstractions + Mustache template engine
 └── SlideGenerator.Logging       - Serilog: IAppLogger, IAppLoggerFactory, ISystemLogger
 
@@ -79,7 +81,7 @@ Feature Modules
 └── SlideGenerator.Image         - MagickImage processing; ROI + face detection (OpenCV YuNet)
 
 Orchestration
-├── SlideGenerator.Summarization - Workbook/presentation metadata scanner; IRecipeSummarizer (TODO stub)
+├── SlideGenerator.Summarization - Workbook/presentation/recipe metadata scanner
 ├── SlideGenerator.Recipe        - Recipe CRUD (SQLite) + export/import (*.recipe zip packages)
 └── SlideGenerator.Generator     - WorkflowCore generating pipeline (3-phase workflow)
 
@@ -98,21 +100,20 @@ Entry Point
 
 | Module | Extension Method |
 |---|---|
-| Settings | `AddSettingServices()` |
-| Resolver | `AddCloudServices()` |
+| Settings | `AddSettingsServices()` |
+| Cloud | `AddCloudServices()` |
 | Cryptography | `AddCryptographyServices()` |
 | Coordinator | `AddCoordinatorServices()` |
-| Download | `AddDownloadServices()` |
-| Document | `AddDocumentServices()` |
+| Document | `AddDocumentServices(ILogger systemLogger)` |
 | Image | `AddImageServices()` |
-| Logging (with config) | `AddLoggingModule(IConfiguration)` |
-| Logging (defaults) | `AddLoggingModule()` |
-| Logging (pre-built logger) | `AddSystemLogging(ISystemLogger)` |
+| Logging | `AddLoggingServices(IConfiguration? configuration = null)` |
 | Summarization | `AddSummarizationServices()` |
 | Recipe | `AddRecipeServices()` |
-| Generating (Generator) | `AddGeneratingServices()` |
+| Generator | `AddGeneratorServices()` |
 | Ipc | `AddIpcServices()` |
 | WorkflowCore + SQLite | `services.AddWorkflow(x => x.UseSqlite(NameAndPaths.WorkflowsFile.ConnectionString, true))` |
+
+The system logger is created up-front in `Program.cs` via `SystemLoggerBootstrapper.Initialize(...)` (file Serilog sink → `stderr` only) and passed into `AddDocumentServices`. It is **not** added to DI through an `AddSystemLogging` helper.
 
 `Registration.cs` files use C# 14 **extension member syntax**:
 ```csharp
@@ -139,8 +140,8 @@ JSON-RPC 2.0 over stdin/stdout using **StreamJsonRpc** with NDJSON framing (`New
 `JsonRpc` is created **after** the DI container is built (raw stream access). Not registered in DI. Methods wired via `AddLocalRpcMethod`:
 
 ```csharp
-// DTO param → UseSingleObjectParameterDeserialization = true
-jsonRpc.AddLocalRpcMethod(method, handler, new JsonRpcMethodAttribute("workflow.start") { UseSingleObjectParameterDeserialization = true });
+// DTO param → UseSingleObjectParameterDeserialization = true (via local Attr() helper)
+jsonRpc.AddLocalRpcMethod(method, handler, Attr("workflow.start"));
 
 // No DTO param
 jsonRpc.AddLocalRpcMethod(method, handler, new JsonRpcMethodAttribute("settings.get"));
@@ -185,9 +186,13 @@ jsonRpc.AddLocalRpcMethod(method, handler, new JsonRpcMethodAttribute("settings.
 | `recipe.import` | `RecipeHandler.ImportAsync` |
 | `summarization.workbook` | `SummarizationHandler.SummarizeWorkbookAsync` |
 | `summarization.presentation` | `SummarizationHandler.SummarizePresentationAsync` |
+| `summarization.recipe` | `SummarizationHandler.SummarizeRecipeAsync` |
+| `summarization.recipeById` | `SummarizationHandler.SummarizeRecipeByIdAsync` |
 | `settings.get` | `SettingsHandler.GetAsync` |
 | `settings.update` | `SettingsHandler.UpdateAsync` |
 | `settings.resetToDefaults` | `SettingsHandler.ResetToDefaultsAsync` |
+
+Notifications emitted by the sidecar: `workflow/progress`.
 
 ## Concurrency: GateLocker
 
@@ -199,7 +204,7 @@ try { /* ... */ }
 finally { gateLocker.Release(GateType.DownloadImage); }
 ```
 
-Gate types: `DownloadImage`, `EditImage`, `EditPresentation`, `ReadWorkbook`, `ReadPresentation`.
+Gate types (`SlideGenerator.Coordinator.Domain.Models.GateType`): `DownloadImage`, `EditImage`, `EditPresentation`, `ReadWorkbook`, `ReadPresentation`.
 
 ## Image Processing
 
@@ -213,23 +218,24 @@ Both `SlideGenerator.Image` and `SlideGenerator.Document` use **MagickImage** as
 
 ## Workflow System (WorkflowCore)
 
-`GeneratingWorkflow` orchestrates the full slide generation pipeline in 3 phases:
+`GeneratingWorkflow` orchestrates the full slide generation pipeline. It begins with two preparation steps before the phased pipeline:
 
-| Phase | Steps |
+| Stage | Steps |
 |---|---|
-| A – Validation & Setup | `ValidateRequest` → `CreateTemplate` |
-| B – Resource Prep | `ExtractData` → `DownloadImage` → `EditImage` |
-| C – Assembly & Cleanup | `ReplaceSlideData` → `CloseAllHandles` |
+| Prep | `LoadRecipeSummary` → `PreflightCleanup` |
+| Phase A – Validation & Setup | `ValidateRequest` → `CreateTemplate` (`.ForEach(ValidationItems)`) |
+| Phase B – Resource Prep | `ExtractData` (`.ForEach(ValidWorksheets)`) → `CollectImage` → `EditImage` (`.ForEach(ImageContexts)`) |
+| Phase C – Assembly & Cleanup | `ReplaceSlideData` (`.ForEach(SlideContexts)`) → `CloseAllHandles` |
 
 Phase boundaries are enforced with `ExecutionResult.Next()` barriers — all items in a phase must complete before the next phase begins.
 
 **Strict iteration rule**: Use WorkflowCore `.ForEach()` for all collection iteration. **Never** use C# `foreach`, `Parallel.ForEach`, or `Task.WhenAll` inside a Step.
 
-**Data model**: `GeneratingContext` is the workflow's state class. Intermediate contexts (`SheetContext`, `ImageContext`, `SlideContext`) are populated per phase and fed into `.ForEach()` loops. All live in `Domain/Models/Contexts/`.
+**Data model**: `GeneratingContext` is the workflow's state class. Intermediate contexts (`SheetContext`, `ImageContext`, `SlideContext`, `ValidationItem`) are populated per phase and fed into `.ForEach()` loops. All live in `Domain/Models/Contexts/`.
 
 **Persistence**: WorkflowCore persists `GeneratingContext` to SQLite (`%LOCALAPPDATA%\SlideGenerator\Workflows.db`) via Newtonsoft.Json. Fields that cannot serialize (file handles, `IAppLogger`) carry `[Newtonsoft.Json.JsonIgnore]`. Handles are lazily reopened after resume via `GetOrOpenWorkbook`/`GetOrOpenPresentation`/`GetOrOpenOutput` extension methods in `Application/Utilities.cs`.
 
-**Step middleware** (registered in `GeneratingServices`):
+**Step middleware** (registered in `AddGeneratorServices`):
 - `GeneratingLoggerMiddleware` — lazily initializes `GeneratingContext.Logger` before each step using `WorkflowLogPath`/`WorkflowScope` stored in context (survives persistence resume)
 - `GeneratingProgressMiddleware` — publishes `GeneratingEvent.StepCompleted` + resolved `GeneratingPhase` after each step
 
@@ -284,7 +290,7 @@ When a test needs access to `internal` types, add to the **source** project's `.
 
 ### NuGet transitivity pitfall
 
-`Directory.Build.props` sets `PrivateAssets="all"` on **all** `ProjectReference` items globally. This means NuGet packages from referenced projects do **not** flow transitively into test projects. Always add an explicit `PackageReference` for any NuGet package the test project uses directly — even if the source project already references it.
+`Directory.Build.props` sets `PrivateAssets="all"` on **all** `ProjectReference` items globally. NuGet packages from referenced projects do **not** flow transitively into test projects. Always add an explicit `PackageReference` for any NuGet package the test project uses directly — even if the source project already references it.
 
 Example: `SlideGenerator.Generator.Tests` must explicitly reference `WorkflowCore` even though `SlideGenerator.Generator` already does.
 
@@ -313,7 +319,7 @@ These steps are covered by integration tests only. Do not create unit stubs that
 
 ### Folder structure (Clean Architecture)
 
-All modules follow layered folder layout:
+All modules follow a layered folder layout:
 
 ```
 Domain/
@@ -322,12 +328,12 @@ Domain/
 Application/
   Abstractions/   — use-case interfaces (input/output ports)
   Services/       — use-case implementations
-  Steps/          — WorkflowCore step bodies (Generating only)
-  Workflows/      — WorkflowCore workflow definitions (Generating only)
+  Steps/          — WorkflowCore step bodies (Generator only)
+  Workflows/      — WorkflowCore workflow definitions (Generator only)
 Infrastructure/
   Adapters/       — anti-corruption wrappers around external libs
   Services/       — infrastructure implementations (DB, HTTP, file)
-  Middleware/     — WorkflowCore step middleware (Generating only)
+  Middleware/     — WorkflowCore step middleware (Generator only)
 Injection/
   Registration.cs — DI entry point
 ```
@@ -366,5 +372,5 @@ Injection/
 - [ ] `[Newtonsoft.Json.JsonIgnore]` on any non-serializable field in WorkflowCore data classes
 - [ ] Image handling uses MagickImage; byte arrays only at boundaries
 - [ ] All public APIs have XML documentation comments
-- [ ] IPC methods with a DTO param use `UseSingleObjectParameterDeserialization = true`
+- [ ] IPC methods with a DTO param use `UseSingleObjectParameterDeserialization = true` (via the `Attr()` helper in `Program.cs`)
 - [ ] Serilog never writes to stdout — stderr only

@@ -4,7 +4,7 @@ This guide explains how to create, implement, and register a new step in the sli
 
 ## 1. Create the Step Body
 
-All steps live in `SlideGenerator.Generating/Application/Steps/`.
+All steps live in `SlideGenerator.Generator/Application/Steps/`.
 
 Inherit from `StepBody` (synchronous) or `StepBodyAsync` (asynchronous). Use **Primary Constructors** for dependency injection.
 
@@ -30,7 +30,7 @@ public sealed class MyNewStep(IMyService myService) : StepBodyAsync
 
 ## 2. Register the Step
 
-Open `SlideGenerator.Generating/Injection/Registration.cs` and add your step to the DI container:
+Open `SlideGenerator.Generator/Injection/Registration.cs` and add your step inside `AddGeneratorServices()`:
 
 ```csharp
 services.AddTransient<MyNewStep>();
@@ -38,7 +38,7 @@ services.AddTransient<MyNewStep>();
 
 ## 3. Map the Step in the Workflow
 
-Open `SlideGenerator.Generating/Application/Workflows/GeneratingWorkflow.cs`. Find the appropriate Phase (A, B, or C) and insert your step using the Fluent API.
+Open `SlideGenerator.Generator/Application/Workflows/GeneratingWorkflow.cs`. Find the appropriate Phase (A, B, or C) and insert your step using the Fluent API.
 
 ```csharp
 .Then<MyNewStep>()

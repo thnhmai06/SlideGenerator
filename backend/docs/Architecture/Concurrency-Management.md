@@ -17,7 +17,8 @@ Without throttling, the system would quickly run out of memory or be blocked by 
 The `GateLocker` is a centralized concurrency controller that enforces limits on specific types of operations, known as **Gates**.
 
 ### Gate Types
-- `DownloadImage`: Prevents IP blocking and network congestion.
+Defined in `SlideGenerator.Coordinator.Domain.Models.GateType`:
+- `DownloadImage`: Prevents IP blocking and network congestion (used by `CollectImage`).
 - `EditImage`: Limits concurrent CPU-heavy image manipulations.
 - `EditPresentation`: Protects against file-lock contention and excessive RAM usage during PPTX assembly.
 - `ReadWorkbook` / `ReadPresentation`: Throttles initial parsing of large documents.
