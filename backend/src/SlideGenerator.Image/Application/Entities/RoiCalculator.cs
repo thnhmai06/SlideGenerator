@@ -32,6 +32,8 @@ internal abstract class RoiCalculator
     /// <param name="targetSize">The desired ROI size.</param>
     /// <param name="option">The customized ROI option used to resolve the target calculator.</param>
     /// <returns>The calculated ROI rectangle.</returns>
-    public abstract ValueTask<Rectangle> CalculateRoiAsync(IImage image, Size targetSize,
+    public abstract ValueTask<Rectangle> CalculateRoiAsync(
+        IImage image,
+        Size targetSize,
         RoiOption option);
 }

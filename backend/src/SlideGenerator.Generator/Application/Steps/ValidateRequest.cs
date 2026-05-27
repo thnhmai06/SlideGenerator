@@ -119,7 +119,7 @@ public sealed class ValidateRequest(
             // Successful validation: Prepare output mapping
             var bookName = Path.GetFileNameWithoutExtension(sheet.BookPath);
             var outputFileName =
-                $"{Normalization.NormalizeFileName(sheet.SheetName)}{data.Request.OutputType.ToExtension()}";
+                $"{Normalization.SanitizeFileName(sheet.SheetName)}{data.Request.OutputType.ToExtension()}";
             var outputPath = Path.Combine(data.Request.SaveFolder, bookName, outputFileName);
             var outputIdentifier = new PresentationIdentifier(outputPath);
 

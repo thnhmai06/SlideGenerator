@@ -82,9 +82,9 @@ public static class NameAndPaths
             assetsPath ??= DefaultAssetsPath;
             var bookName = Path.GetFileNameWithoutExtension(bookPath);
             var hash = registry.GetShortHash(bookPath);
-            var bookFolder = $"{Normalization.NormalizeFileName(bookName)}_{hash}";
-            sheetName = Normalization.NormalizeFileName(sheetName);
-            colName = Normalization.NormalizeFileName(colName);
+            var bookFolder = $"{Normalization.SanitizeFileName(bookName)}_{hash}";
+            sheetName = Normalization.SanitizeFileName(sheetName);
+            colName = Normalization.SanitizeFileName(colName);
             return Path.Combine(assetsPath, bookFolder, sheetName, colName, "Download");
         }
 
@@ -94,9 +94,9 @@ public static class NameAndPaths
             assetsPath ??= DefaultAssetsPath;
             var bookName = Path.GetFileNameWithoutExtension(bookPath);
             var hash = registry.GetShortHash(bookPath);
-            var bookFolder = $"{Normalization.NormalizeFileName(bookName)}_{hash}";
-            sheetName = Normalization.NormalizeFileName(sheetName);
-            colName = Normalization.NormalizeFileName(colName);
+            var bookFolder = $"{Normalization.SanitizeFileName(bookName)}_{hash}";
+            sheetName = Normalization.SanitizeFileName(sheetName);
+            colName = Normalization.SanitizeFileName(colName);
             return Path.Combine(assetsPath, bookFolder, sheetName, colName, "Edit");
         }
     }

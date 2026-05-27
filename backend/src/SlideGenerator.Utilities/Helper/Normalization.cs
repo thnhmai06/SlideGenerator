@@ -22,35 +22,20 @@ namespace SlideGenerator.Utilities.Helper;
 public static class Normalization
 {
     /// <summary>
-    ///     Normalizes a raw string value into a valid URI.
-    /// </summary>
-    /// <param name="value">The raw string value (e.g., from a spreadsheet cell).</param>
-    /// <returns>A normalized <see cref="Uri" />, or <see langword="null" /> if the value is invalid or not a link.</returns>
-    public static Uri? NormalizeUri(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value)) return null;
-
-        var trimmed = value.Trim();
-        if (!trimmed.Contains("://")) trimmed = "https://" + trimmed;
-
-        return Uri.TryCreate(trimmed, UriKind.Absolute, out var uri) ? uri : null;
-    }
-
-    /// <summary>
     ///     Normalizes a file name by replacing invalid characters with underscores.
     /// </summary>
     /// <param name="value">The original string to normalize.</param>
-    /// <param name="defaultValue">The default value to return if the input is null, empty, or whitespace.</param>
+    /// <param name="default">The default value to return if the input is null, empty, or whitespace.</param>
     /// <returns>A safe string suitable for use as a file or directory name.</returns>
-    public static string NormalizeFileName(string? value, string? defaultValue = null)
+    public static string SanitizeFileName(string? value, string? @default = null)
     {
-        defaultValue ??= string.Empty;
-        if (string.IsNullOrWhiteSpace(value)) return defaultValue;
+        @default ??= string.Empty;
+        if (string.IsNullOrWhiteSpace(value)) return @default;
 
         var normalized = value.Trim();
         normalized = string.Join("_",
             normalized.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
 
-        return string.IsNullOrWhiteSpace(normalized) ? defaultValue : normalized;
+        return string.IsNullOrWhiteSpace(normalized) ? @default : normalized;
     }
 }

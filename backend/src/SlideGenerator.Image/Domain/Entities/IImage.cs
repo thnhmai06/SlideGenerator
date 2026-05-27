@@ -27,17 +27,9 @@ namespace SlideGenerator.Image.Domain.Entities;
 /// <remarks>
 ///     This interface decouples the core logic from specific image processing libraries like Magick.NET.
 /// </remarks>
-public interface IImage : IDisposable
+public interface IImage : IDisposable, ICloneable
 {
-    /// <summary>
-    ///     Gets the width of the image.
-    /// </summary>
-    uint Width { get; }
-
-    /// <summary>
-    ///     Gets the height of the image.
-    /// </summary>
-    uint Height { get; }
+    IImageInfo Info { get; }
 
     /// <summary>
     ///     Crops the image to the specified region.
@@ -59,20 +51,8 @@ public interface IImage : IDisposable
     Task WriteAsync(string path);
 
     /// <summary>
-    ///     Converts the image to a byte array.
-    /// </summary>
-    /// <returns>A byte array containing the image data.</returns>
-    byte[] ToByteArray();
-
-    /// <summary>
     ///     Converts the image to a byte array in PNG format.
     /// </summary>
     /// <returns>A byte array containing the image data in PNG format.</returns>
-    byte[] ToPngByteArray();
-
-    /// <summary>
-    ///     Clones the current image.
-    /// </summary>
-    /// <returns>A new <see cref="IImage" /> instance that is a copy of this image.</returns>
-    IImage Clone();
+    byte[] ToBytes();
 }

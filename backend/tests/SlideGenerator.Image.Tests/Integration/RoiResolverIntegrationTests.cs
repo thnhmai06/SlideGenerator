@@ -55,7 +55,7 @@ public sealed class RoiResolverIntegrationTests(FaceDatasetFixture dataset, Imag
 
         var roi = await services.RoiResolver.CalculateRoiAsync(image, targetSize, option);
 
-        AssertRoiWithinBounds(roi, image.Width, image.Height, targetSize);
+        AssertRoiWithinBounds(roi, image.Info.Width, image.Info.Height, targetSize);
     }
 
     #endregion
@@ -84,7 +84,7 @@ public sealed class RoiResolverIntegrationTests(FaceDatasetFixture dataset, Imag
         {
             using var image = services.ImageFactory.Open(path);
             var roi = await services.RoiResolver.CalculateRoiAsync(image, targetSize, option);
-            AssertRoiWithinBounds(roi, image.Width, image.Height, targetSize);
+            AssertRoiWithinBounds(roi, image.Info.Width, image.Info.Height, targetSize);
         }
     }
 
@@ -125,7 +125,7 @@ public sealed class RoiResolverIntegrationTests(FaceDatasetFixture dataset, Imag
 
         var roi = await services.RoiResolver.CalculateRoiAsync(image, targetSize, option);
 
-        AssertRoiWithinBounds(roi, image.Width, image.Height, targetSize);
+        AssertRoiWithinBounds(roi, image.Info.Width, image.Info.Height, targetSize);
     }
 
     /// <summary>
@@ -146,7 +146,7 @@ public sealed class RoiResolverIntegrationTests(FaceDatasetFixture dataset, Imag
 
         var roi = await services.RoiResolver.CalculateRoiAsync(image, targetSize, option);
 
-        AssertRoiWithinBounds(roi, image.Width, image.Height, targetSize);
+        AssertRoiWithinBounds(roi, image.Info.Width, image.Info.Height, targetSize);
     }
 
     #endregion

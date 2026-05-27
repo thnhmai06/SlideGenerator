@@ -37,7 +37,7 @@ internal sealed class RuleOfThirdsRoi(IFaceDetector faceDetector, IMatFactory ma
 
         var ruleOption = option as RuleOfThirdsOption;
         var pivot = ruleOption?.Pivot;
-        var sourceSize = new Size((int)image.Width, (int)image.Height);
+        var sourceSize = new Size((int)image.Info.Width, (int)image.Info.Height);
 
         using var mat = matFactory.Create(image);
         var faces = await faceDetector.DetectAsync(mat).ConfigureAwait(false);

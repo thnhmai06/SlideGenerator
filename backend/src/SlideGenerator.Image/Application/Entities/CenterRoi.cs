@@ -38,7 +38,7 @@ internal sealed class CenterRoi(IFaceDetector faceDetector, IMatFactory matFacto
 
         var centerOption = option as CenterOption;
         var pivot = centerOption!.Pivot;
-        var sourceSize = new Size((int)image.Width, (int)image.Height);
+        var sourceSize = new Size((int)image.Info.Width, (int)image.Info.Height);
 
         return option is CenterOption { UseFaceAlignment: true }
             ? await CalculateRoiByFaceAsync(image, targetSize, pivot).ConfigureAwait(false)
@@ -47,7 +47,7 @@ internal sealed class CenterRoi(IFaceDetector faceDetector, IMatFactory matFacto
 
     private async ValueTask<Rectangle> CalculateRoiByFaceAsync(IImage image, Size targetSize, Vector2 pivot)
     {
-        var sourceSize = new Size((int)image.Width, (int)image.Height);
+        var sourceSize = new Size((int)image.Info.Width, (int)image.Info.Height);
         using var mat = matFactory.Create(image);
         var faces = await faceDetector.DetectAsync(mat).ConfigureAwait(false);
         var faceCenter = faces.Centroid(face => face.FaceCenter);

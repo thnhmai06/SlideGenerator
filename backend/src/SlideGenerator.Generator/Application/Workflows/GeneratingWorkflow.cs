@@ -81,7 +81,7 @@ public sealed class GeneratingWorkflow : IWorkflow<GeneratingContext>
             .Then(_ => ExecutionResult.Next())
             .ForEach(data => data.ImageContexts)
             .Do(x => x
-                .StartWith<AcquireImage>()
+                .StartWith<CollectImage>()
                 .Input(step => step.Task, (data, context) => context.Item as ImageContext)
                 .Then<EditImage>()
                 .Input(step => step.Task, (data, context) => context.Item as ImageContext))

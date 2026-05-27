@@ -58,7 +58,7 @@ internal sealed class GeneratingProgressMiddleware(IGeneratingEventBus eventBus)
         return body switch
         {
             ValidateRequest or CreateTemplate => GeneratingPhase.PhaseA,
-            ExtractData or AcquireImage or EditImage => GeneratingPhase.PhaseB,
+            ExtractData or CollectImage or EditImage => GeneratingPhase.PhaseB,
             ReplaceSlideData or CloseAllHandles => GeneratingPhase.PhaseC,
             _ => null
         };

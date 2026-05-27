@@ -1,0 +1,19 @@
+Provider,Type,ShouldDownload,Url
+Google Drive,Empty Folder,FALSE,https://drive.google.com/drive/folders/1-jP4PxmQKTHBRfnWNbO4uBktHmUfuvRV?usp=sharing
+Google Drive,Deep Image Folder,FALSE,https://drive.google.com/drive/folders/1lFT77DrRDOIh1ah8jHoMTiNPTc9y6Ayb?usp=sharing
+Google Drive,Multi Image Folder,TRUE,https://drive.google.com/drive/folders/1-p1DISAaTCF0UpBjeeNciNRn4z3s5ckc?usp=sharing
+Google Drive,Not Image Folder,FALSE,https://drive.google.com/drive/folders/13Mk2vaDCPo0niAJ3Bq8XdJOeK0iYIDI2?usp=sharing
+Google Drive,Permissions Denied Folder,FALSE,https://drive.google.com/drive/folders/1-pj4Q_hRN6dIb6SUfBrrTGm1gjgxH33b?usp=sharing
+Google Drive,Single Image Folder,TRUE,https://drive.google.com/drive/folders/14C0Vw_1TMdZ7XwaunOCOo4xwFelSM4rj?usp=sharing
+Google Drive,Image No Extensions,TRUE,https://drive.google.com/file/d/1g5KXiOvhFfkZT8bpZy5snG3tHCPNBEor/view?usp=sharing
+Google Drive,Normal Image,TRUE,https://drive.google.com/file/d/1idspIFekGFkBg9Egsz1AaAv7gKvU45S4/view?usp=sharing
+Google Drive,Large Image File,FALSE,https://drive.google.com/file/d/1RvUI2U4BpHWeM67QPOHS097KDjan6SZz/view?usp=sharing
+Google Drive,No Schema Url (https),TRUE,drive.google.com/file/d/1idspIFekGFkBg9Egsz1AaAv7gKvU45S4/view?usp=sharing
+Google Drive,File does not Exist,FALSE,https://drive.google.com/file/d/1idspIFekGFkBg9Egsz1AaAv7gKv695S4/view?usp=sharing
+Google Drive,Folder does not Exist,FALSE,https://drive.google.com/drive/folders/14C0Vw_1TMdZ7XwaunOCOo4xwFelSM99j?usp=sharing
+Google Drive,Normal Image Redirect Link,TRUE,https://bit.ly/4ulfuR6
+Raw,Random Image (720x1280),TRUE,https://picsum.photos/720/1280
+Raw,Random Image (720x1280) Redirect link,TRUE,https://bit.ly/4wKbQlw
+Raw,Not Url,FALSE,"This is not a URL, and the application should not download it"
+Raw,Empty,FALSE,
+Raw,Not Image URL,FALSE,https://www.facebook.com/

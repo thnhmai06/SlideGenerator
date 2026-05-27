@@ -184,8 +184,8 @@ public sealed class FaceDetectionIntegrationTests(FaceDatasetFixture dataset, Im
         {
             face.Rect.X.Should().BeGreaterThanOrEqualTo(0);
             face.Rect.Y.Should().BeGreaterThanOrEqualTo(0);
-            face.Rect.Right.Should().BeLessThanOrEqualTo((int)image.Width);
-            face.Rect.Bottom.Should().BeLessThanOrEqualTo((int)image.Height);
+            face.Rect.Right.Should().BeLessThanOrEqualTo((int)image.Info.Width);
+            face.Rect.Bottom.Should().BeLessThanOrEqualTo((int)image.Info.Height);
         }
     }
 

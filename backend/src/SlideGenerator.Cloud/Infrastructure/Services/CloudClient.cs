@@ -1,0 +1,110 @@
+/*
+ * Copyright (C) 2026 Thành Mai (thnhmai06)
+ *
+ * Solution: SlideGenerator
+ * Project: SlideGenerator.Cloud
+ * File: CloudClient.cs
+ *
+ * This file is part of this solution. You can find the full source code here: https://github.com/thnhmai06/SlideGenerator
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, version 3.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Affero General Public License for more details.
+ */
+
+using System.Net;
+using SlideGenerator.Cloud.Application.Abstractions;
+using SlideGenerator.Cloud.Domain.Models;
+
+namespace SlideGenerator.Cloud.Infrastructure.Services;
+
+/// <summary>
+///     HTTP client facade that follows redirects, inspects resource metadata, and downloads files.
+///     All methods accept an optional <see cref="HttpClient" />; a new auto-redirect instance is
+///     created automatically when <see langword="null" /> is supplied.
+/// </summary>
+internal sealed class CloudClient : ICloudClient
+{
+    /// <inheritdoc />
+    /// <remarks>
+    ///     Sends a HEAD request first; if the server responds with 405 MethodNotAllowed, falls back
+    ///     to a GET request with <see cref="HttpCompletionOption.ResponseHeadersRead" /> so that the
+    ///     response body is never downloaded.  Because auto-redirect is enabled, the underlying
+    ///     handler transparently follows redirects and the final destination URI is read from
+    ///     <c>response.RequestMessage.RequestUri</c>.  Content-type and content-length are taken
+    ///     from the response headers.  Any exception (network, timeout, DNS) is caught and
+    ///     <see langword="null" /> is returned.
+    /// </remarks>
+    public async Task<ContentInfo?> InspectAsync(
+        Uri uri,
+        HttpClient? httpClient = null,
+        CancellationToken cancellationToken = default)
+    {
+        httpClient ??= CreateClient();
+
+        try
+        {
+            var headResp = await httpClient
+                .SendAsync(new HttpRequestMessage(HttpMethod.Head, uri), cancellationToken)
+                .ConfigureAwait(false);
+
+            HttpResponseMessage response;
+            if (headResp.StatusCode == HttpStatusCode.MethodNotAllowed)
+            {
+                headResp.Dispose();
+                response = await httpClient
+                    .GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            else
+            {
+                response = headResp;
+            }
+
+            using (response)
+            {
+                var finalUri = response.RequestMessage?.RequestUri ?? uri;
+                var type = response.Content.Headers.ContentType?.MediaType;
+                var rawLength = response.Content.Headers.ContentLength;
+                var length = rawLength is > 0 ? (uint)rawLength.Value : (uint?)null;
+
+                return new ContentInfo(finalUri, type, length);
+            }
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <inheritdoc />
+    /// <remarks>
+    ///     Streams the response body directly to <paramref name="savePath" />, creating or
+    ///     overwriting the file.  The caller is responsible for ensuring the directory exists.
+    /// </remarks>
+    public async Task DownloadAsync(
+        Uri uri,
+        string savePath,
+        HttpClient? httpClient = null,
+        CancellationToken cancellationToken = default)
+    {
+        httpClient ??= CreateClient();
+
+        await using var stream = await httpClient
+            .GetStreamAsync(uri, cancellationToken)
+            .ConfigureAwait(false);
+        await using var fs = new FileStream(savePath, FileMode.Create, FileAccess.Write, FileShare.None);
+        await stream.CopyToAsync(fs, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Creates a new <see cref="HttpClient" /> with auto-redirect enabled (the default).</summary>
+    private static HttpClient CreateClient()
+    {
+        return new HttpClient(new HttpClientHandler { AllowAutoRedirect = true });
+    }
+}

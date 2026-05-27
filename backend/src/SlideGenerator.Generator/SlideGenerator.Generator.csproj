@@ -10,12 +10,13 @@
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.8"/>
+        <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.8"/>
         <PackageReference Include="WorkflowCore" Version="3.18.0"/>
         <PackageReference Remove="StyleCop.Analyzers"/>
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\SlideGenerator.Utilities\SlideGenerator.Utilities.csproj"/>
-        <ProjectReference Include="..\SlideGenerator.Acquisition\SlideGenerator.Acquisition.csproj"/>
+        <ProjectReference Include="..\SlideGenerator.Cloud\SlideGenerator.Cloud.csproj"/>
         <ProjectReference Include="..\SlideGenerator.Cryptography\SlideGenerator.Cryptography.csproj"/>
         <ProjectReference Include="..\SlideGenerator.Coordinator\SlideGenerator.Coordinator.csproj"/>
         <ProjectReference Include="..\SlideGenerator.Image\SlideGenerator.Image.csproj"/>

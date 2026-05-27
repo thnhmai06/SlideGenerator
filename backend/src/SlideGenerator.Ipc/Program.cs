@@ -24,7 +24,7 @@ using System.Text.Json.Serialization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using SlideGenerator.Acquisition.Injection;
+using SlideGenerator.Cloud.Injection;
 using SlideGenerator.Coordinator.Injection;
 using SlideGenerator.Cryptography.Injection;
 using SlideGenerator.Document.Injection;
@@ -180,7 +180,7 @@ internal static class Program
         services.AddSettingsServices();
         services.AddDocumentServices(systemLogger);
         services.AddCoordinatorServices();
-        services.AddAcquisitionServices();
+        services.AddCloudServices();
         services.AddImageServices();
         services.AddGeneratorServices();
         services.AddSummarizationServices();

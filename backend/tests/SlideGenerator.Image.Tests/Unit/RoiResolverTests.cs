@@ -79,8 +79,8 @@ public sealed class RoiResolverTests
     private static IImage FakeImage(uint width = 300, uint height = 200)
     {
         var image = Substitute.For<IImage>();
-        image.Width.Returns(width);
-        image.Height.Returns(height);
+        image.Info.Width.Returns(width);
+        image.Info.Height.Returns(height);
         return image;
     }
 

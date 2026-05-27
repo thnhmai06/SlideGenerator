@@ -45,7 +45,7 @@ public static class Registration
         services.AddTransient<ValidateRequest>();
         services.AddTransient<CreateTemplate>();
         services.AddTransient<ExtractData>();
-        services.AddTransient<AcquireImage>();
+        services.AddTransient<CollectImage>();
         services.AddTransient<EditImage>();
         services.AddTransient<ReplaceSlideData>();
         services.AddTransient<CloseAllHandles>();

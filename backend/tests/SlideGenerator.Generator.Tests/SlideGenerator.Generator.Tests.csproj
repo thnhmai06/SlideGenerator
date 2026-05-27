@@ -23,7 +23,7 @@
         <ProjectReference Include="../../src/SlideGenerator.Logging/SlideGenerator.Logging.csproj"/>
         <ProjectReference Include="../../src/SlideGenerator.Coordinator/SlideGenerator.Coordinator.csproj"/>
         <ProjectReference Include="../../src/SlideGenerator.Document/SlideGenerator.Document.csproj"/>
-        <ProjectReference Include="../../src/SlideGenerator.Acquisition/SlideGenerator.Acquisition.csproj"/>
+        <ProjectReference Include="..\..\src\SlideGenerator.Cloud\SlideGenerator.Cloud.csproj"/>
         <ProjectReference Include="../../src/SlideGenerator.Settings/SlideGenerator.Settings.csproj"/>
         <ProjectReference Include="../../src/SlideGenerator.Image/SlideGenerator.Image.csproj"/>
         <ProjectReference Include="../../src/SlideGenerator.Summarization/SlideGenerator.Summarization.csproj"/>

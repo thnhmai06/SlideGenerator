@@ -147,7 +147,7 @@ public sealed class EditImage(
                 data.Logger.Debug("Applying crop {ROI} to image for row {RowIndex}", roi, Task.RowIndex);
                 image.Crop(roi);
 
-                var currentSize = new Size((int)image.Width, (int)image.Height);
+                var currentSize = new Size((int)image.Info.Width, (int)image.Info.Height);
                 var maxAspectSize = currentSize.GetMaxAspectSize(targetSize);
 
                 data.Logger.Debug("Resizing image for row {RowIndex} to {Size}", Task.RowIndex, maxAspectSize);

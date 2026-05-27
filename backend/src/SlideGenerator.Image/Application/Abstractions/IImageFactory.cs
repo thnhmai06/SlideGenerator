@@ -17,6 +17,7 @@
  * GNU Affero General Public License for more details.
  */
 
+using System.Diagnostics.CodeAnalysis;
 using SlideGenerator.Image.Domain.Entities;
 
 namespace SlideGenerator.Image.Application.Abstractions;
@@ -27,13 +28,6 @@ namespace SlideGenerator.Image.Application.Abstractions;
 public interface IImageFactory
 {
     /// <summary>
-    ///     Decodes the specified byte array into an <see cref="IImage" />.
-    /// </summary>
-    /// <param name="data">The raw image data bytes.</param>
-    /// <returns>A new <see cref="IImage" /> instance.</returns>
-    IImage Open(byte[] data);
-
-    /// <summary>
     ///     Loads an <see cref="IImage" /> from the specified file path.
     /// </summary>
     /// <param name="path">The file path to the image.</param>
@@ -41,9 +35,22 @@ public interface IImageFactory
     IImage Open(string path);
 
     /// <summary>
-    ///     Converts an <see cref="IMat" /> to an <see cref="IImage" />.
+    ///     Retrieves metadata about an image, such as its dimensions, from the specified file path.
     /// </summary>
-    /// <param name="mat">The image matrix.</param>
-    /// <returns>A new <see cref="IImage" /> instance.</returns>
-    IImage Open(IMat mat);
+    /// <param name="path">The file path to the image.</param>
+    /// <returns>An <see cref="IImageInfo" /> instance containing metadata about the image.</returns>
+    IImageInfo GetInfo(string path);
+
+    /// <summary>
+    ///     Attempts to retrieve metadata about an image from the specified file path.
+    /// </summary>
+    /// <param name="path">The file path to the image.</param>
+    /// <param name="info">
+    ///     When this method returns, contains an <see cref="IImageInfo" /> instance containing metadata about the image,
+    ///     if the operation was successful; otherwise, <c>null</c>.
+    /// </param>
+    /// <returns>
+    ///     <c>true</c> if the metadata was successfully retrieved; otherwise, <c>false</c>.
+    /// </returns>
+    bool TryGetInfo(string path, [MaybeNullWhen(false)] out IImageInfo info);
 }

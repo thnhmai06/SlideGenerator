@@ -28,8 +28,7 @@ namespace SlideGenerator.Image.Infrastructure.Adapters;
 /// </summary>
 internal sealed class MagickImage(ImageMagick.MagickImage image) : IImage
 {
-    public uint Width => image.Width;
-    public uint Height => image.Height;
+    public IImageInfo Info { get; } = new ImageInfo(image);
 
     public void Crop(Rectangle region)
     {
@@ -46,23 +45,24 @@ internal sealed class MagickImage(ImageMagick.MagickImage image) : IImage
         return image.WriteAsync(path);
     }
 
-    public byte[] ToByteArray()
-    {
-        return image.ToByteArray();
-    }
-
-    public byte[] ToPngByteArray()
+    public byte[] ToBytes()
     {
         return image.ToByteArray(MagickFormat.Png);
-    }
-
-    public IImage Clone()
-    {
-        return new MagickImage(new ImageMagick.MagickImage(image));
     }
 
     public void Dispose()
     {
         image.Dispose();
+    }
+
+    object ICloneable.Clone()
+    {
+        return new MagickImage(new ImageMagick.MagickImage(image));
+    }
+
+    private class ImageInfo(ImageMagick.MagickImage image) : IImageInfo
+    {
+        public uint Width => image.Width;
+        public uint Height => image.Height;
     }
 }

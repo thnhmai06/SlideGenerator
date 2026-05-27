@@ -47,7 +47,7 @@ public sealed class RoiResolver(IFaceDetector faceDetector, IMatFactory matFacto
         RoiOption option)
     {
         logger.Debug("Calculating ROI using {Type} algorithm for image ({Width}x{Height}) targeting {TargetSize}",
-            option.Type, image.Width, image.Height, targetSize);
+            option.Type, image.Info.Width, image.Info.Height, targetSize);
 
         try
         {

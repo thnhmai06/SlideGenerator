@@ -17,31 +17,37 @@
  * GNU Affero General Public License for more details.
  */
 
+using System.Diagnostics.CodeAnalysis;
 using SlideGenerator.Image.Application.Abstractions;
 using SlideGenerator.Image.Domain.Entities;
-using SlideGenerator.Image.Infrastructure.Adapters;
 using MagickImage = SlideGenerator.Image.Infrastructure.Adapters.MagickImage;
+using MagickImageInfo = SlideGenerator.Image.Infrastructure.Adapters.MagickImageInfo;
 
 namespace SlideGenerator.Image.Infrastructure.Services;
 
 internal sealed class MagickImageFactory : IImageFactory
 {
-    public IImage Open(byte[] data)
-    {
-        return new MagickImage(new ImageMagick.MagickImage(data));
-    }
-
     public IImage Open(string path)
     {
         return new MagickImage(new ImageMagick.MagickImage(path));
     }
 
-    public IImage Open(IMat mat)
+    public IImageInfo GetInfo(string path)
     {
-        if (mat is not OpenCvMat adapter)
-            throw new ArgumentException($"IMat must be an instance of {nameof(OpenCvMat)}.", nameof(mat));
+        return new MagickImageInfo(new ImageMagick.MagickImageInfo(path));
+    }
 
-        var bytes = adapter.Mat.ToBytes();
-        return Open(bytes);
+    public bool TryGetInfo(string path, [MaybeNullWhen(false)] out IImageInfo info)
+    {
+        try
+        {
+            info = GetInfo(path);
+            return true;
+        }
+        catch
+        {
+            info = null;
+            return false;
+        }
     }
 }

@@ -33,11 +33,7 @@ internal sealed class OpenCvMatFactory : IMatFactory
 
     public IMat Create(IImage image)
     {
-        if (image is not MagickImage adapter)
-            throw new ArgumentException($"IImage must be an instance of {nameof(MagickImage)}.", nameof(image));
-
-        var bytes = adapter.ToByteArray();
-        return Create(bytes);
+        return Create(image.ToBytes());
     }
 
     public IMat Empty()
