@@ -20,16 +20,19 @@
 using System.Text;
 using FluentAssertions;
 using SlideGenerator.Cryptography.Application.Services;
+using SlideGenerator.Cryptography.Infrastructure;
 using Xunit;
 
 namespace SlideGenerator.Cryptography.Tests.Unit;
 
 /// <summary>
-///     Unit tests for the <see cref="Sha256Hasher" /> static utility class, covering both
+///     Unit tests for <see cref="Sha256Hasher" />, covering both
 ///     file-based SHA-256 computation and text-based shortened hash generation.
 /// </summary>
 public sealed class Sha256HasherTests
 {
+    private readonly Sha256Hasher _hasher = new();
+
     #region Helpers
 
     private static readonly string UnicodeChars = MakeUnicodeChars();
@@ -64,11 +67,12 @@ public sealed class Sha256HasherTests
 
     public static TheoryData<int> GetRandomHashLengths()
     {
+        var max = new Sha256Hasher().MaxLength;
         return
         [
-            Random.Shared.Next(1, Sha256Hasher.MaxLength),
-            Sha256Hasher.MaxLength,
-            Sha256Hasher.MaxLength + Random.Shared.Next(1, Sha256Hasher.MaxLength)
+            Random.Shared.Next(1, max),
+            max,
+            max + Random.Shared.Next(1, max)
         ];
     }
 
@@ -85,7 +89,7 @@ public sealed class Sha256HasherTests
     [InlineData("")]
     public void ComputeHash_NullOrEmpty_ReturnsDefault(string? text)
     {
-        var result = Sha256Hasher.ComputeHash(text!);
+        var result = _hasher.ComputeHash(text!);
 
         result.Should().BeEmpty();
     }
@@ -99,9 +103,9 @@ public sealed class Sha256HasherTests
     public void ComputeHash_ValidAsciiText_ReturnsCorrectLengthCharHexString(int length)
     {
         var input = GetRandomString(AsciiChars, AsciiChars.Length);
-        var result = Sha256Hasher.ComputeHash(input, length);
+        var result = _hasher.ComputeHash(input, length);
 
-        var expectedLength = Math.Min(length, Sha256Hasher.MaxLength);
+        var expectedLength = Math.Min(length, _hasher.MaxLength);
         result.Should().HaveLength(expectedLength).And.MatchRegex("^[0-9a-f]+$");
     }
 
@@ -114,9 +118,9 @@ public sealed class Sha256HasherTests
     public void ComputeHash_ValidUnicodeText_ReturnsCorrectLengthCharHexString(int length)
     {
         var input = GetRandomString(UnicodeChars, UnicodeChars.Length);
-        var result = Sha256Hasher.ComputeHash(input, length);
+        var result = _hasher.ComputeHash(input, length);
 
-        var expectedLength = Math.Min(length, Sha256Hasher.MaxLength);
+        var expectedLength = Math.Min(length, _hasher.MaxLength);
         result.Should().HaveLength(expectedLength).And.MatchRegex("^[0-9a-f]+$");
     }
 
@@ -131,8 +135,8 @@ public sealed class Sha256HasherTests
     {
         var charset = useUnicode ? UnicodeChars : AsciiChars;
         var input = GetRandomString(charset, charset.Length);
-        var first = Sha256Hasher.ComputeHash(input);
-        var second = Sha256Hasher.ComputeHash(input);
+        var first = _hasher.ComputeHash(input);
+        var second = _hasher.ComputeHash(input);
 
         first.Should().Be(second);
     }
@@ -147,8 +151,8 @@ public sealed class Sha256HasherTests
     {
         var charset = useUnicode ? UnicodeChars : AsciiChars;
         var sample = GetRandomString(charset, charset.Length);
-        var first = Sha256Hasher.ComputeHash(sample + "123");
-        var second = Sha256Hasher.ComputeHash(sample + "213");
+        var first = _hasher.ComputeHash(sample + "123");
+        var second = _hasher.ComputeHash(sample + "213");
 
         first.Should().NotBe(second);
     }
@@ -166,7 +170,7 @@ public sealed class Sha256HasherTests
     {
         var nonExistentPath = Path.Combine(Path.GetTempPath(), "non-existent-file-xyz-123.dat");
 
-        var act = () => Sha256Hasher.ComputeHashFile(nonExistentPath);
+        var act = () => _hasher.ComputeHashFile(nonExistentPath);
 
         act.Should().Throw<FileNotFoundException>();
     }
@@ -184,9 +188,9 @@ public sealed class Sha256HasherTests
         {
             File.WriteAllText(tempFile, "sample content for hashing");
 
-            var result = Sha256Hasher.ComputeHashFile(tempFile, length);
+            var result = _hasher.ComputeHashFile(tempFile, length);
 
-            var expectedLength = Math.Min(length, Sha256Hasher.MaxLength);
+            var expectedLength = Math.Min(length, _hasher.MaxLength);
             result.Should().HaveLength(expectedLength).And.MatchRegex("^[0-9a-f]+$");
         }
         finally
@@ -207,8 +211,8 @@ public sealed class Sha256HasherTests
         {
             File.WriteAllBytes(tempFile, [0x01, 0x02, 0x03]);
 
-            var first = Sha256Hasher.ComputeHashFile(tempFile);
-            var second = Sha256Hasher.ComputeHashFile(tempFile);
+            var first = _hasher.ComputeHashFile(tempFile);
+            var second = _hasher.ComputeHashFile(tempFile);
 
             first.Should().Be(second);
         }
@@ -232,8 +236,8 @@ public sealed class Sha256HasherTests
             File.WriteAllText(fileA, "content-a");
             File.WriteAllText(fileB, "content-b");
 
-            var hashA = Sha256Hasher.ComputeHashFile(fileA);
-            var hashB = Sha256Hasher.ComputeHashFile(fileB);
+            var hashA = _hasher.ComputeHashFile(fileA);
+            var hashB = _hasher.ComputeHashFile(fileB);
 
             hashA.Should().NotBe(hashB);
         }

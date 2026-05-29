@@ -37,6 +37,7 @@ public static class Registration
     public static IServiceCollection AddCryptographyServices(this IServiceCollection services)
     {
         services.AddSingleton<IEncrypter, Aes256Encrypter>();
+        services.AddSingleton<IHasher, Sha256Hasher>();
         services.AddSingleton<IHashPathRegistry, HashPathRegistry>();
 
         return services;

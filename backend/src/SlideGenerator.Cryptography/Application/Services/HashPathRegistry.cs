@@ -26,7 +26,7 @@ namespace SlideGenerator.Cryptography.Application.Services;
 ///     A thread-safe registry for storing and retrieving file path hashes.
 ///     Computes the hash automatically if it's not already cached.
 /// </summary>
-internal sealed class HashPathRegistry : IHashPathRegistry
+internal sealed class HashPathRegistry(IHasher hasher) : IHashPathRegistry
 {
     private const int HashLength = 7;
     private readonly ConcurrentDictionary<string, string> _hashes = new(StringComparer.OrdinalIgnoreCase);
@@ -38,7 +38,7 @@ internal sealed class HashPathRegistry : IHashPathRegistry
     /// <returns>A 7-character hexadecimal string.</returns>
     public string GetShortHash(string path)
     {
-        return _hashes.GetOrAdd(path, p => Sha256Hasher.ComputeHash(p, HashLength));
+        return _hashes.GetOrAdd(path, static (p, h) => h.ComputeHash(p, HashLength), hasher);
     }
 
     /// <summary>

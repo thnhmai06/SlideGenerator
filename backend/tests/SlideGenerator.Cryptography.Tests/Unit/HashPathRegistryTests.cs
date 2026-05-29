@@ -19,6 +19,7 @@
 
 using FluentAssertions;
 using SlideGenerator.Cryptography.Application.Services;
+using SlideGenerator.Cryptography.Infrastructure;
 using Xunit;
 
 namespace SlideGenerator.Cryptography.Tests.Unit;
@@ -29,7 +30,7 @@ namespace SlideGenerator.Cryptography.Tests.Unit;
 /// </summary>
 public sealed class HashPathRegistryTests
 {
-    private readonly HashPathRegistry _registry = new();
+    private readonly HashPathRegistry _registry = new(new Sha256Hasher());
 
     #region SetHash
 
