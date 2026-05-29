@@ -34,9 +34,9 @@ public sealed class CloseAllHandles : StepBody
     public override ExecutionResult Run(IStepExecutionContext context)
     {
         var data = (GeneratingContext)context.Workflow.Data;
-        using var scope = data.Logger.BeginScope("CloseAllHandles");
+        using var scope = data.Logger?.BeginScope("CloseAllHandles");
 
-        data.Logger.LogInformation("Closing all workbook and presentation handles. Workflow complete.");
+        data.Logger?.LogInformation("Closing all workbook and presentation handles. Workflow complete.");
 
         data.Dispose();
         return ExecutionResult.Next();

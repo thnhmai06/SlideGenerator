@@ -4,7 +4,8 @@
       "Skill(context7-mcp)",
       "PowerShell(Get-ChildItem *)",
       "Skill(unit-testing-test-generate)",
-      "Skill(clean-architecture)"
+      "Skill(clean-architecture)",
+      "mcp__ide__getDiagnostics"
     ]
   }
 }

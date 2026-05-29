@@ -137,7 +137,7 @@ public sealed class EditImage(
                 using var image = imageFactory.Open(sourceFile);
                 var targetSize = new Size((int)Math.Round(Task.Width), (int)Math.Round(Task.Height));
 
-                data.Logger.LogDebug("Calculating ROI for row {RowIndex} using {Algorithm}", Task.RowIndex,
+                data.Logger?.LogDebug("Calculating ROI for row {RowIndex} using {Algorithm}", Task.RowIndex,
                     Task.EditOptions.RoiOption);
 
                 var roi = await roiResolver.CalculateRoiAsync(
@@ -145,18 +145,18 @@ public sealed class EditImage(
                     targetSize,
                     Task.EditOptions.RoiOption).ConfigureAwait(false);
 
-                data.Logger.LogDebug("Applying crop {ROI} to image for row {RowIndex}", roi, Task.RowIndex);
+                data.Logger?.LogDebug("Applying crop {ROI} to image for row {RowIndex}", roi, Task.RowIndex);
                 image.Crop(roi);
 
                 var currentSize = new Size((int)image.Info.Width, (int)image.Info.Height);
                 var maxAspectSize = currentSize.GetMaxAspectSize(targetSize);
 
-                data.Logger.LogDebug("Resizing image for row {RowIndex} to {Size}", Task.RowIndex, maxAspectSize);
+                data.Logger?.LogDebug("Resizing image for row {RowIndex} to {Size}", Task.RowIndex, maxAspectSize);
                 image.Resize(maxAspectSize);
 
                 await image.WriteAsync(finalEditPath).ConfigureAwait(false);
 
-                data.Logger.LogDebug("Image edited | Row: {RowIndex}, Shape: {ShapeName}",
+                data.Logger?.LogDebug("Image edited | Row: {RowIndex}, Shape: {ShapeName}",
                     Task.RowIndex, Task.ShapeName);
 
                 owner.SubmitResult(finalEditPath);

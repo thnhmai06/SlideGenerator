@@ -63,7 +63,8 @@ internal sealed class YuNet(FaceDetectorYN core, Size inputSize) : IFaceDetector
 
         var matBorder = new Rectangle(0, 0, mat.Width, mat.Height);
 
-        for (var i = 0; i < result.Rows; i++)
+        var rows = result.Rows;
+        for (var i = 0; i < rows; i++)
         {
             var score = GetFloat(14);
             var rawBbox = new Rectangle(GetInt(0), GetInt(1), GetInt(2), GetInt(3));

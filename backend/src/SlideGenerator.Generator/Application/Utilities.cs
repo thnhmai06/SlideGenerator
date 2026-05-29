@@ -61,7 +61,7 @@ public static class Utilities
                     data.WorkbookFactories.TryRemove(id, out _);
                     throw;
                 }
-            }, LazyThreadSafetyMode.PublicationOnly));
+            }, LazyThreadSafetyMode.ExecutionAndPublication));
             var opened = lazy.Value;
             data.WorkbookHandles.TryAdd(identifier, opened);
             return opened;
@@ -95,7 +95,7 @@ public static class Utilities
                     data.TemplateFactories.TryRemove(id, out _);
                     throw;
                 }
-            }, LazyThreadSafetyMode.PublicationOnly));
+            }, LazyThreadSafetyMode.ExecutionAndPublication));
             var opened = lazy.Value;
             data.TemplateHandles.TryAdd(identifier, opened);
             return opened;
@@ -130,7 +130,7 @@ public static class Utilities
                     data.OutputFactories.TryRemove(id, out _);
                     throw;
                 }
-            }, LazyThreadSafetyMode.PublicationOnly));
+            }, LazyThreadSafetyMode.ExecutionAndPublication));
             var opened = lazy.Value;
             data.OutputHandles.TryAdd(identifier, opened);
             return opened;

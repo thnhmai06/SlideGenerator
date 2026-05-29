@@ -50,16 +50,16 @@ public sealed class ExtractData(
     {
         var data = (GeneratingContext)context.Workflow.Data;
         var ct = context.CancellationToken;
-        using var scope = data.Logger.BeginScope("ExtractData");
+        using var scope = data.Logger?.BeginScope("ExtractData");
 
         if (data.SlideContexts.Any(s => s.SheetContext.Identifier == Worksheet.Identifier))
         {
-            data.Logger.LogDebug("ExtractData already processed sheet {SheetName} — skipping (resume idempotency).",
+            data.Logger?.LogDebug("ExtractData already processed sheet {SheetName} — skipping (resume idempotency).",
                 Worksheet.Identifier.SheetName);
             return ExecutionResult.Next();
         }
 
-        data.Logger.LogInformation("Starting data extraction for sheet {SheetName} in {BookPath}",
+        data.Logger?.LogInformation("Starting data extraction for sheet {SheetName} in {BookPath}",
             Worksheet.Identifier.SheetName, Worksheet.Identifier.BookPath);
 
         try
@@ -69,15 +69,15 @@ public sealed class ExtractData(
 
             ConstructTasks(data, rowCount, headerMap, sheet, shapeData);
 
-            data.Logger.LogInformation("Successfully extracted data and constructed tasks for sheet {SheetName}",
+            data.Logger?.LogInformation("Successfully extracted data and constructed tasks for sheet {SheetName}",
                 Worksheet.Identifier.SheetName);
         }
         catch (Exception ex) when (ex is not NullReferenceException and not InvalidCastException
                                        and not IndexOutOfRangeException)
         {
-            using (data.Logger.BeginScope(Worksheet.Identifier.SheetName))
+            using (data.Logger?.BeginScope(Worksheet.Identifier.SheetName))
             {
-                data.Logger.LogError(ex, "ExtractData failed");
+                data.Logger?.LogError(ex, "ExtractData failed");
             }
         }
 
@@ -103,7 +103,7 @@ public sealed class ExtractData(
                 if (!headerMap.ContainsKey(headers[i]))
                     headerMap[headers[i]] = i;
 
-            data.Logger.LogDebug("Found {RowCount} rows in sheet {SheetName}", rowCount,
+            data.Logger?.LogDebug("Found {RowCount} rows in sheet {SheetName}", rowCount,
                 Worksheet.Identifier.SheetName);
 
             return (rowCount, headerMap, sheet);
@@ -142,12 +142,12 @@ public sealed class ExtractData(
                     shapeData[shapeId] = (shape.Name, tags, bounds);
                 }
 
-                data.Logger.LogDebug("Extracted metadata for {Count} shapes from template slide", shapeData.Count);
+                data.Logger?.LogDebug("Extracted metadata for {Count} shapes from template slide", shapeData.Count);
 
                 // Clone slides
                 if (rowCount > 1)
                 {
-                    data.Logger.LogDebug("Cloning {Count} additional slides for output", rowCount - 1);
+                    data.Logger?.LogDebug("Cloning {Count} additional slides for output", rowCount - 1);
                     for (var i = 1; i < rowCount; i++)
                         wrapper.CloneSlide(0);
                 }
@@ -183,12 +183,10 @@ public sealed class ExtractData(
             MapTextReplacements(slideTask, rowData, headerMap, sheet, shapeData);
             MapImageReplacements(data, slideTask, rowData, headerMap, sheet, shapeData, rowIndex);
 
-            if (slideTask.TextReplacements.Count > 0 || slideTask.ImageReplacements.Count > 0)
-            {
-                data.SlideContexts.Add(slideTask);
-                data.Logger.LogDebug("Mapped {TextCount} text and {ImageCount} image replacements for row {RowIndex}",
-                    slideTask.TextReplacements.Count, slideTask.ImageReplacements.Count, rowIndex);
-            }
+            if (slideTask.TextReplacements.Count <= 0 && slideTask.ImageReplacements.Count <= 0) continue;
+            data.SlideContexts.Add(slideTask);
+            data.Logger?.LogDebug("Mapped {TextCount} text and {ImageCount} image replacements for row {RowIndex}",
+                slideTask.TextReplacements.Count, slideTask.ImageReplacements.Count, rowIndex);
         }
     }
 
