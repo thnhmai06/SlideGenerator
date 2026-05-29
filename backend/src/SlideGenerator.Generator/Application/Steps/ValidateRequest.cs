@@ -25,7 +25,7 @@ using SlideGenerator.Document.Domain.Models.Slide;
 using SlideGenerator.Generator.Domain.Models;
 using SlideGenerator.Generator.Domain.Models.Contexts;
 using SlideGenerator.Summarization.Domain.Models.Recipes;
-using SlideGenerator.Utilities.Helper;
+using SlideGenerator.Utilities;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
 

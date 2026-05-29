@@ -25,7 +25,7 @@ using SlideGenerator.Generator.Domain.Models;
 using SlideGenerator.Generator.Domain.Models.Contexts;
 using SlideGenerator.Recipe.Application.Abstractions;
 using SlideGenerator.Settings.Domain.Rules;
-using SlideGenerator.Utilities.Helper;
+using SlideGenerator.Utilities;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
 using WorkflowCore.Models.LifeCycleEvents;

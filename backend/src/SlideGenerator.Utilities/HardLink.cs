@@ -20,20 +20,20 @@
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 
-namespace SlideGenerator.Utilities.Helper;
+namespace SlideGenerator.Utilities;
 
-/// <summary>Cross-platform hard-link creation.</summary>
+/// <summary>Cross-platform hard-Link creation.</summary>
 public static partial class HardLink
 {
     /// <summary>
-    ///     Creates a hard link at <paramref name="linkPath" /> pointing to the existing file at
+    ///     Creates a hard Link at <paramref name="linkPath" /> pointing to the existing file at
     ///     <paramref name="targetPath" />. Both paths must reside on the same volume.
     /// </summary>
-    /// <param name="linkPath">Path where the hard link will be created.</param>
-    /// <param name="targetPath">Path to the existing file to link to.</param>
+    /// <param name="linkPath">Path where the hard Link will be created.</param>
+    /// <param name="targetPath">Path to the existing file to Link to.</param>
     /// <param name="force">
     ///     When <c>true</c> (default), deletes any existing file at <paramref name="linkPath" /> before creating
-    ///     the link. When <c>false</c>, throws <see cref="IOException" /> if the path is already occupied.
+    ///     the Link. When <c>false</c>, throws <see cref="IOException" /> if the path is already occupied.
     /// </param>
     /// <exception cref="IOException">The OS call failed or <paramref name="force" /> is false and the path exists.</exception>
     public static void Create(string linkPath, string targetPath, bool force = true)
@@ -65,16 +65,15 @@ public static partial class HardLink
 
     #region Unix
 
-    [LibraryImport("libc", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
-    // ReSharper disable once InconsistentNaming
-    private static partial int link(string oldpath, string newpath);
+    [LibraryImport("libc", EntryPoint = "Link", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+    private static partial int Link(string oldPath, string newPath);
 
     private static void CreateUnix(string linkPath, string targetPath)
     {
-        if (link(targetPath, linkPath) != 0)
+        if (Link(targetPath, linkPath) != 0)
             throw new IOException(
                 new Win32Exception(Marshal.GetLastWin32Error()).Message +
-                $" link({targetPath}, {linkPath})");
+                $" Link({targetPath}, {linkPath})");
     }
 
     #endregion

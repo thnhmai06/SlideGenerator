@@ -26,7 +26,7 @@ using SlideGenerator.Generator.Domain.Models.Contexts;
 using SlideGenerator.Image.Application.Abstractions;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
-using HardLink = SlideGenerator.Utilities.Helper.HardLink;
+using HardLink = SlideGenerator.Utilities.HardLink;
 
 namespace SlideGenerator.Generator.Application.Steps;
 

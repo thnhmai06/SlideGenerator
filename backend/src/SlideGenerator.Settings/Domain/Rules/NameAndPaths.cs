@@ -18,7 +18,7 @@
  */
 
 using SlideGenerator.Cryptography.Application.Abstractions;
-using SlideGenerator.Utilities.Helper;
+using SlideGenerator.Utilities;
 
 namespace SlideGenerator.Settings.Domain.Rules;
 

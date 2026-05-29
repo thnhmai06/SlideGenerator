@@ -28,7 +28,7 @@ using SlideGenerator.Logging.Infrastructure.Formatting;
 using SlideGenerator.Logging.Infrastructure.Options;
 using SlideGenerator.Logging.Infrastructure.Services;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
-using HardLink = SlideGenerator.Utilities.Helper.HardLink;
+using HardLink = SlideGenerator.Utilities.HardLink;
 
 namespace SlideGenerator.Logging.Injection;
 

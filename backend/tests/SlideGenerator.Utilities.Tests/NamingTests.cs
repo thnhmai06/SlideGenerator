@@ -18,10 +18,9 @@
  */
 
 using FluentAssertions;
-using SlideGenerator.Utilities.Helper;
 using Xunit;
 
-namespace SlideGenerator.Utilities.Tests.Unit;
+namespace SlideGenerator.Utilities.Tests;
 
 /// <summary>
 ///     Unit tests for the <see cref="Naming" /> utility class, covering file name sanitization logic.

@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Utilities
- * File: SqliteConnectionFactory.cs
+ * File: Utilities.cs
  *
  * This file is part of this solution. You can find the full source code here: https://github.com/thnhmai06/SlideGenerator
  *
@@ -19,13 +19,12 @@
 
 using Microsoft.Data.Sqlite;
 
-namespace SlideGenerator.Utilities.Database;
+namespace SlideGenerator.Recipe.Infrastructure;
 
 /// <summary>
-///     Factory helpers for creating short-lived <see cref="SqliteConnection" /> instances.
-///     Each caller owns the returned connection and is responsible for disposing it.
+///     General utility helpers for the infrastructure layer, including SQLite connection extensions.
 /// </summary>
-public static class SqliteConnectionFactory
+public static class Utilities
 {
     extension(SqliteConnectionStringBuilder builder)
     {

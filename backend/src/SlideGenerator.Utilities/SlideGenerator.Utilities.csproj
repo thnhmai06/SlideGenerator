@@ -12,7 +12,6 @@
 
     <ItemGroup>
         <PackageReference Update="StyleCop.Analyzers" Version="1.1.118"/>
-        <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.8"/>
     </ItemGroup>
 
 </Project>

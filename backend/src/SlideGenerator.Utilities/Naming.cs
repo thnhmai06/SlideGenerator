@@ -17,7 +17,7 @@
  * GNU Affero General Public License for more details.
  */
 
-namespace SlideGenerator.Utilities.Helper;
+namespace SlideGenerator.Utilities;
 
 public static class Naming
 {

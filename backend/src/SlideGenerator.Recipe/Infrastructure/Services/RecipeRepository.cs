@@ -25,7 +25,6 @@ using Microsoft.Data.Sqlite;
 using SlideGenerator.Recipe.Application.Abstractions;
 using SlideGenerator.Recipe.Domain.Models;
 using SlideGenerator.Recipe.Domain.Rules;
-using SlideGenerator.Utilities.Database;
 
 namespace SlideGenerator.Recipe.Infrastructure.Services;
 
