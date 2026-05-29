@@ -70,11 +70,11 @@ public sealed class YamlSerializerTests
     public void Serialize_ThenDeserialize_CustomPerformanceSetting_PreservesValues()
     {
         var random = new Random();
-        var download = random.Next(1, 100);
-        var editImg = random.Next(1, 100);
-        var editPres = random.Next(1, 100);
-        var readWork = random.Next(1, 100);
-        var readPres = random.Next(1, 100);
+        var download = (uint)random.Next(1, 100);
+        var editImg = (uint)random.Next(1, 100);
+        var editPres = (uint)random.Next(1, 100);
+        var readWork = (uint)random.Next(1, 100);
+        var readPres = (uint)random.Next(1, 100);
 
         var original = new Setting
         {

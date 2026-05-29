@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator

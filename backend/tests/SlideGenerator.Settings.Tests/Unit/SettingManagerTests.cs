@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
@@ -69,7 +69,7 @@ public sealed class SettingManagerTests : IDisposable
         _serializer.Serialize(Arg.Any<Setting>()).Returns("serialized-content");
         var custom = new Setting
         {
-            Performance = new Setting.PerformanceSetting { MaxParallelDownloadImage = 42 }
+            Performance = new Setting.PerformanceSetting { MaxParallelDownloadImage = 42u }
         };
         await _manager.Update(custom);
 
@@ -92,7 +92,7 @@ public sealed class SettingManagerTests : IDisposable
         _serializer.Serialize(Arg.Any<Setting>()).Returns("serialized-content");
         var newSetting = new Setting
         {
-            Performance = new Setting.PerformanceSetting { MaxParallelEditImage = 7 }
+            Performance = new Setting.PerformanceSetting { MaxParallelEditImage = 7u }
         };
 
         await _manager.Update(newSetting);
@@ -129,7 +129,7 @@ public sealed class SettingManagerTests : IDisposable
     {
         var expected = new Setting
         {
-            Performance = new Setting.PerformanceSetting { MaxParallelDownloadImage = 99 }
+            Performance = new Setting.PerformanceSetting { MaxParallelDownloadImage = 99u }
         };
         await File.WriteAllTextAsync(_testFilePath, "serialized-content", TestContext.Current.CancellationToken);
         _serializer.Deserialize<Setting>("serialized-content").Returns(expected);
@@ -137,7 +137,7 @@ public sealed class SettingManagerTests : IDisposable
         var result = await _manager.Load();
 
         result.Should().BeTrue();
-        _manager.Current.Performance.MaxParallelDownloadImage.Should().Be(99);
+        _manager.Current.Performance.MaxParallelDownloadImage.Should().Be(99u);
     }
 
     /// <summary>

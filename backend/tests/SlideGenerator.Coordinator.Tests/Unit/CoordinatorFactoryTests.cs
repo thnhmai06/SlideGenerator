@@ -65,7 +65,7 @@ public sealed class CoordinatorFactoryTests
 
     /// <summary>
     ///     Verifies that a freshly created coordinator starts in an empty state: the first enlistment
-    ///     for any key must be a <see cref="PrimaryEnlistment" />, not a secondary.
+    ///     for any key must be a <see cref="OwnerEnlistment" />, not a secondary.
     /// </summary>
     [Fact]
     public void Create_FreshInstance_FirstEnlistmentIsPrimary()
@@ -75,12 +75,12 @@ public sealed class CoordinatorFactoryTests
 
         var enlistment = coordinator.Enlist("any-key");
 
-        enlistment.Should().BeOfType<PrimaryEnlistment>();
+        enlistment.Should().BeOfType<OwnerEnlistment>();
     }
 
     /// <summary>
     ///     Verifies that within a single created coordinator, further enlistments for the same key
-    ///     correctly result in <see cref="SecondaryEnlistment" /> instances.
+    ///     correctly result in <see cref="WaiterEnlistment" /> instances.
     /// </summary>
     [Fact]
     public void Create_FreshInstance_AnotherEnlistmentIsSecondary()
@@ -92,9 +92,9 @@ public sealed class CoordinatorFactoryTests
         var secondEnlistment = coordinator.Enlist("shared-key");
         var thirdEnlistment = coordinator.Enlist("shared-key");
 
-        firstEnlistment.Should().BeOfType<PrimaryEnlistment>();
-        secondEnlistment.Should().BeOfType<SecondaryEnlistment>();
-        thirdEnlistment.Should().BeOfType<SecondaryEnlistment>();
+        firstEnlistment.Should().BeOfType<OwnerEnlistment>();
+        secondEnlistment.Should().BeOfType<WaiterEnlistment>();
+        thirdEnlistment.Should().BeOfType<WaiterEnlistment>();
     }
 
     /// <summary>
@@ -111,8 +111,8 @@ public sealed class CoordinatorFactoryTests
         var enlistmentA = first.Enlist("shared-key");
         var enlistmentB = second.Enlist("shared-key");
 
-        enlistmentA.Should().BeOfType<PrimaryEnlistment>();
-        enlistmentB.Should().BeOfType<PrimaryEnlistment>();
+        enlistmentA.Should().BeOfType<OwnerEnlistment>();
+        enlistmentB.Should().BeOfType<OwnerEnlistment>();
     }
 
     #endregion

@@ -19,10 +19,10 @@
 
 using NSubstitute;
 using SlideGenerator.Coordinator.Application.Abstractions;
-using SlideGenerator.Coordinator.Domain.Models;
 using SlideGenerator.Document.Application.Abstractions;
 using SlideGenerator.Document.Domain.Abstractions.Slide;
 using SlideGenerator.Generator.Application.Steps;
+using SlideGenerator.Generator.Domain.Models;
 using SlideGenerator.Generator.Domain.Models.Contexts;
 using SlideGenerator.Generator.Tests.Unit.Helpers;
 using Xunit;
@@ -35,7 +35,7 @@ namespace SlideGenerator.Generator.Tests.Unit;
 /// </summary>
 public sealed class ReplaceSlideDataTests
 {
-    private readonly IGateLocker _gateLocker = Substitute.For<IGateLocker>();
+    private readonly IGateLocker<GateType> _gateLocker = Substitute.For<IGateLocker<GateType>>();
     private readonly IPresentationProvider _presentationProvider = Substitute.For<IPresentationProvider>();
     private readonly ITextComposer _textComposer = Substitute.For<ITextComposer>();
 

@@ -17,28 +17,32 @@
  * GNU Affero General Public License for more details.
  */
 
-using SlideGenerator.Coordinator.Domain.Models;
-
 namespace SlideGenerator.Coordinator.Application.Abstractions;
 
 /// <summary>
-///     Defines a concurrency gate that limits parallel operations per <see cref="GateType" />.
+///     Limits the number of concurrent operations per gate value of <typeparamref name="TGate" />.
 ///     Consumers depend on this abstraction; the concrete scheduling mechanism is in Infrastructure.
 /// </summary>
-public interface IGateLocker : IDisposable
+/// <typeparam name="TGate">An enum whose values each represent an independent concurrency gate.</typeparam>
+public interface IGateLocker<in TGate> : IDisposable where TGate : struct, Enum
 {
     /// <summary>
-    ///     Asynchronously waits to acquire a slot for the specified gate.
+    ///     Asynchronously waits until a slot is available for the specified gate, then acquires it.
     /// </summary>
-    ValueTask AcquireAsync(GateType gate, CancellationToken ct = default);
+    /// <param name="gate">The gate to acquire.</param>
+    /// <param name="ct">Token that cancels the wait.</param>
+    ValueTask AcquireAsync(TGate gate, CancellationToken ct = default);
 
     /// <summary>
-    ///     Tries to acquire a slot immediately without blocking.
+    ///     Attempts to acquire a slot for the specified gate immediately without blocking.
     /// </summary>
-    bool TryAcquire(GateType gate);
+    /// <param name="gate">The gate to acquire.</param>
+    /// <returns><see langword="true" /> if the slot was acquired; <see langword="false" /> if the gate is at capacity.</returns>
+    bool TryAcquire(TGate gate);
 
     /// <summary>
-    ///     Releases a previously acquired slot for the specified gate.
+    ///     Releases a previously acquired slot for the specified gate and admits the next waiter if any.
     /// </summary>
-    void Release(GateType gate);
+    /// <param name="gate">The gate to release.</param>
+    void Release(TGate gate);
 }

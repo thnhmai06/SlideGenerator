@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Utilities
- * File: Normalization.cs
+ * File: Naming.cs
  *
  * This file is part of this solution. You can find the full source code here: https://github.com/thnhmai06/SlideGenerator
  *
@@ -19,7 +19,7 @@
 
 namespace SlideGenerator.Utilities.Helper;
 
-public static class Normalization
+public static class Naming
 {
     /// <summary>
     ///     Normalizes a file name by replacing invalid characters with underscores.

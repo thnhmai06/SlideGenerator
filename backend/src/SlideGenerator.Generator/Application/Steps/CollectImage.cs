@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
@@ -35,13 +35,13 @@ namespace SlideGenerator.Generator.Application.Steps;
 ///     For URLs, applies a three-step pipeline: redirect-following inspect → cloud-resolve
 ///     (if applicable) → image-check inspect → download.
 ///     Implements idempotency by skipping existing valid files.
-///     Deduplicates identical URLs: only one step downloads; others hard-link the result.
+///     Deduplicates identical URLs: the owner step downloads; waiters hard-link the result.
 /// </summary>
 public sealed class CollectImage(
     ICloudClient cloudClient,
     ICloudResolver cloudResolver,
     IImageFactory imageFactory,
-    IGateLocker gateLocker,
+    IGateLocker<GateType> gateLocker,
     IHttpClientFactory httpClientFactory) : StepBodyAsync
 {
     /// <summary>
@@ -71,8 +71,8 @@ public sealed class CollectImage(
 
         return enlistResult switch
         {
-            PrimaryEnlistment primary => await RunPrimaryAsync(context, data, primary).ConfigureAwait(false),
-            SecondaryEnlistment secondary => await RunSecondaryAsync(data, secondary.WaitTask).ConfigureAwait(false),
+            OwnerEnlistment owner => await RunOwnerAsync(context, data, owner).ConfigureAwait(false),
+            WaiterEnlistment waiter => await RunWaiterAsync(data, waiter.WaitTask).ConfigureAwait(false),
             _ => ExecutionResult.Next()
         };
     }
@@ -118,10 +118,10 @@ public sealed class CollectImage(
 
     #region Primary / Secondary
 
-    private async Task<ExecutionResult> RunPrimaryAsync(
+    private async Task<ExecutionResult> RunOwnerAsync(
         IStepExecutionContext context,
         GeneratingContext data,
-        PrimaryEnlistment primary)
+        OwnerEnlistment owner)
     {
         var ct = context.CancellationToken;
         var notified = false;
@@ -133,7 +133,7 @@ public sealed class CollectImage(
                 using var testImage = imageFactory.Open(Task.DownloadPath);
                 data.Logger!.LogDebug("Image for row {RowIndex} already exists and is valid, skipping acquisition",
                     Task.RowIndex);
-                primary.SubmitResult(Task.DownloadPath);
+                owner.SubmitResult(Task.DownloadPath);
                 return ExecutionResult.Next();
             }
             catch (Exception ex)
@@ -158,7 +158,7 @@ public sealed class CollectImage(
                     data.Logger!.LogWarning(
                         "Source '{Url}' is a local file but local paths are not allowed. Skipping.",
                         Task.SourceUrl);
-                    primary.SubmitResult(null);
+                    owner.SubmitResult(null);
                     notified = true;
                     return ExecutionResult.Next();
                 }
@@ -175,7 +175,7 @@ public sealed class CollectImage(
                 {
                     data.Logger!.LogWarning(
                         "URL '{Url}' did not resolve to a downloadable image. Skipping.", Task.SourceUrl);
-                    primary.SubmitResult(null);
+                    owner.SubmitResult(null);
                     notified = true;
                     return ExecutionResult.Next();
                 }
@@ -187,7 +187,7 @@ public sealed class CollectImage(
 
             data.Logger!.LogDebug("Image acquired | Row: {RowIndex}, Column: {ColumnName}",
                 Task.RowIndex, Task.ColumnName);
-            primary.SubmitResult(Task.DownloadPath);
+            owner.SubmitResult(Task.DownloadPath);
             notified = true;
         }
         catch (Exception ex) when (ex is not NullReferenceException
@@ -200,21 +200,21 @@ public sealed class CollectImage(
                 data.Logger.LogError(ex, "Acquisition failed");
             }
 
-            primary.SubmitException(ex);
+            owner.SubmitException(ex);
             notified = true;
         }
         finally
         {
             gateLocker.Release(GateType.DownloadImage);
             if (!notified)
-                primary.SubmitException(
+                owner.SubmitException(
                     new WorkflowFaultedException("CollectImage primary faulted before completing.", null));
         }
 
         return ExecutionResult.Next();
     }
 
-    private async Task<ExecutionResult> RunSecondaryAsync(GeneratingContext data, Task<string?> waitTask)
+    private async Task<ExecutionResult> RunWaiterAsync(GeneratingContext data, Task<string?> waitTask)
     {
         // Idempotency: own file already exists (resume scenario)
         if (File.Exists(Task.DownloadPath))

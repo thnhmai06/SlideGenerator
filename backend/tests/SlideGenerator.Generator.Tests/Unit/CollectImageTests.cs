@@ -25,6 +25,7 @@ using SlideGenerator.Coordinator.Application.Abstractions;
 using SlideGenerator.Coordinator.Domain.Models;
 using SlideGenerator.Document.Domain.Models.Sheet;
 using SlideGenerator.Generator.Application.Steps;
+using SlideGenerator.Generator.Domain.Models;
 using SlideGenerator.Generator.Domain.Models.Contexts;
 using SlideGenerator.Generator.Tests.Unit.Helpers;
 using SlideGenerator.Image.Application.Abstractions;
@@ -43,7 +44,7 @@ public sealed class CollectImageTests
 {
     private readonly ICloudClient _cloudClient = Substitute.For<ICloudClient>();
     private readonly ICloudResolver _cloudResolver = Substitute.For<ICloudResolver>();
-    private readonly IGateLocker _gateLocker = Substitute.For<IGateLocker>();
+    private readonly IGateLocker<GateType> _gateLocker = Substitute.For<IGateLocker<GateType>>();
     private readonly IHttpClientFactory _httpClientFactory = Substitute.For<IHttpClientFactory>();
     private readonly IImageFactory _imageFactory = Substitute.For<IImageFactory>();
 
@@ -116,12 +117,12 @@ public sealed class CollectImageTests
 
     /// <summary>
     ///     Creates a coordinator stub whose <c>Enlist</c> call for <paramref name="url" />
-    ///     returns a <see cref="PrimaryEnlistment" /> with no-op callbacks.
+    ///     returns an <see cref="OwnerEnlistment" /> with no-op callbacks.
     /// </summary>
     private static ICoordinator BuildPrimaryCoordinator(string url)
     {
         var coordinator = Substitute.For<ICoordinator>();
-        coordinator.Enlist(url).Returns(new PrimaryEnlistment(_ => { }, _ => { }));
+        coordinator.Enlist(url).Returns(new OwnerEnlistment(_ => { }, _ => { }));
         return coordinator;
     }
 

@@ -18,10 +18,15 @@
  */
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using SlideGenerator.Coordinator.Application.Abstractions;
+using SlideGenerator.Coordinator.Application.Services;
 using SlideGenerator.Generator.Application.Abstractions;
 using SlideGenerator.Generator.Application.Steps;
+using SlideGenerator.Generator.Domain.Models;
 using SlideGenerator.Generator.Infrastructure.Middleware;
 using SlideGenerator.Generator.Infrastructure.Services;
+using SlideGenerator.Settings.Application.Abstractions;
 
 namespace SlideGenerator.Generator.Injection;
 
@@ -40,6 +45,25 @@ public static class Registration
     public static IServiceCollection AddGeneratorServices(this IServiceCollection services)
     {
         services.AddLogging();
+
+        // Concurrency gate limiter — limits resolved at runtime from ISettingProvider
+        services.AddSingleton<IGateLocker<GateType>>(sp => new GateLocker<GateType>(
+            gate =>
+            {
+                var settingProvider = sp.GetRequiredService<ISettingProvider>();
+                var setting = settingProvider.Current;
+                var perf = setting.Performance;
+                return gate switch
+                {
+                    GateType.DownloadImage => perf.MaxParallelDownloadImage,
+                    GateType.EditImage => perf.MaxParallelEditImage,
+                    GateType.EditPresentation => perf.MaxParallelEditPresentation,
+                    GateType.ReadWorkbook => perf.MaxParallelReadWorkbook,
+                    GateType.ReadPresentation => perf.MaxParallelReadPresentation,
+                    _ => throw new ArgumentOutOfRangeException(nameof(gate), gate, null)
+                };
+            },
+            sp.GetService<ILogger<GateLocker<GateType>>>()));
 
         // WorkflowCore Step registrations (Transient — WorkflowCore resolves per-execution via IServiceScope)
         services.AddTransient<LoadRecipeSummary>();

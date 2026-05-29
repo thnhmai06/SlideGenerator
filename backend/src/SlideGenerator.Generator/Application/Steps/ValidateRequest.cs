@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
@@ -19,10 +19,10 @@
 
 using Microsoft.Extensions.Logging;
 using SlideGenerator.Coordinator.Application.Abstractions;
-using SlideGenerator.Coordinator.Domain.Models;
 using SlideGenerator.Document.Application.Abstractions;
 using SlideGenerator.Document.Domain.Models.Sheet;
 using SlideGenerator.Document.Domain.Models.Slide;
+using SlideGenerator.Generator.Domain.Models;
 using SlideGenerator.Generator.Domain.Models.Contexts;
 using SlideGenerator.Summarization.Domain.Models.Recipes;
 using SlideGenerator.Utilities.Helper;
@@ -39,7 +39,7 @@ public sealed record ValidationItem(SheetIdentifier Sheet, MapNode Node);
 public sealed class ValidateRequest(
     IWorkbookProvider workbookProvider,
     IPresentationProvider presentationProvider,
-    IGateLocker gateLocker) : StepBodyAsync
+    IGateLocker<GateType> gateLocker) : StepBodyAsync
 {
     /// <summary>
     ///     The sheet and its associated map node to validate.
@@ -120,7 +120,7 @@ public sealed class ValidateRequest(
             // Successful validation: Prepare output mapping
             var bookName = Path.GetFileNameWithoutExtension(sheet.BookPath);
             var outputFileName =
-                $"{Normalization.SanitizeFileName(sheet.SheetName)}{data.Request.OutputType.ToExtension()}";
+                $"{Naming.SanitizeFileName(sheet.SheetName)}{data.Request.OutputType.ToExtension()}";
             var outputPath = Path.Combine(data.Request.SaveFolder, bookName, outputFileName);
             var outputIdentifier = new PresentationIdentifier(outputPath);
 

@@ -20,32 +20,32 @@
 namespace SlideGenerator.Coordinator.Domain.Models;
 
 /// <summary>
-///     Represents a participation model in the workflow coordination process.
-///     Determines the role (primary or secondary) of a participant in handling
-///     operations for a specific workflow key.
+///     Represents the role assigned to a caller that enlists a key.
+///     The first caller becomes the owner; all following callers become waiters.
 /// </summary>
 public abstract record Enlistment;
 
 /// <summary>
-///     Returned to the first caller: this step owns the operation.
-///     Call <see cref="SubmitResult" /> with the output path on success, or
-///     <see cref="SubmitException" /> with the failure cause. Exactly one of the two must be
-///     invoked — otherwise secondary waiters hang forever.
+///     Assigned to the first caller for a given key: this caller owns the operation and is
+///     responsible for producing (or failing) the result.
+///     Exactly one of <see cref="SubmitResult" /> or <see cref="SubmitException" /> must be
+///     invoked — otherwise all waiters hang indefinitely.
 /// </summary>
 /// <param name="SubmitResult">
-///     Reports the produced output path (or <c>null</c> if the primary completed but produced no
-///     artifact).
+///     Completes the shared result with the supplied value (<c>null</c> is a valid outcome
+///     meaning the operation produced no artifact).
 /// </param>
 /// <param name="SubmitException">
-///     Faults every secondary's <see cref="SecondaryEnlistment.WaitTask" /> with the supplied
-///     exception.
+///     Faults every waiter's <see cref="WaiterEnlistment.WaitTask" /> with the supplied exception.
 /// </param>
-public sealed record PrimaryEnlistment(
+public sealed record OwnerEnlistment(
     Action<string?> SubmitResult,
     Action<Exception> SubmitException) : Enlistment;
 
 /// <summary>
-///     Returned to every subsequent caller: await <see cref="WaitTask" /> to get
-///     the primary's output path (<c>null</c> if the primary failed).
+///     Assigned to every caller after the first for the same key.
+///     Await <see cref="WaitTask" /> to receive the owner's result
+///     (<c>null</c> if the owner completed with no artifact, or faulted if the owner called
+///     <see cref="OwnerEnlistment.SubmitException" />).
 /// </summary>
-public sealed record SecondaryEnlistment(Task<string?> WaitTask) : Enlistment;
+public sealed record WaiterEnlistment(Task<string?> WaitTask) : Enlistment;

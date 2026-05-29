@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
@@ -20,11 +20,11 @@
 using System.Drawing;
 using Microsoft.Extensions.Logging;
 using SlideGenerator.Coordinator.Application.Abstractions;
-using SlideGenerator.Coordinator.Domain.Models;
 using SlideGenerator.Cryptography.Application.Abstractions;
 using SlideGenerator.Document.Application.Abstractions;
 using SlideGenerator.Document.Domain.Abstractions.Sheet;
 using SlideGenerator.Document.Domain.Models.Slide;
+using SlideGenerator.Generator.Domain.Models;
 using SlideGenerator.Generator.Domain.Models.Contexts;
 using SlideGenerator.Settings.Domain.Rules;
 using WorkflowCore.Interface;
@@ -38,7 +38,7 @@ namespace SlideGenerator.Generator.Application.Steps;
 ///     and generates all SlideContexts and ImageContexts required for the worksheet.
 /// </summary>
 public sealed class ExtractData(
-    IGateLocker gateLocker,
+    IGateLocker<GateType> gateLocker,
     IWorkbookProvider workbookProvider,
     ITemplateEngine templateEngine,
     IHashPathRegistry hashPathRegistry)

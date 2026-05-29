@@ -92,7 +92,7 @@ public static class SystemLoggerBootstrapper
             .CreateLogger();
 
         Log.Logger = serilogLogger;
-        var logger = new SerilogLoggerFactory(serilogLogger, false).CreateLogger("System");
+        var logger = new SerilogLoggerFactory(serilogLogger).CreateLogger("System");
         CreateHardLink(systemLogDirectory, currentLogFile, logger);
 
         logger.LogInformation("System logger initialized. Current log file: {Path}", currentLogFile);

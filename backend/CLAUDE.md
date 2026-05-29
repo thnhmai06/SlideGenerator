@@ -73,7 +73,7 @@ Foundation Modules
 
 Core Services
 ├── SlideGenerator.Cryptography  - AES-256 encryption + file hash registry
-├── SlideGenerator.Coordinator   - Concurrency throttling; IGateLocker + GateType
+├── SlideGenerator.Coordinator   - Concurrency throttling; IGateLocker<TGate> + GateLocker<TGate>
 ├── SlideGenerator.Document      - Syncfusion Excel/PowerPoint abstractions + Mustache template engine
 └── SlideGenerator.Logging       - Serilog: IAppLogger, IAppLoggerFactory, ISystemLogger
 
@@ -196,7 +196,7 @@ Notifications emitted by the sidecar: `workflow/progress`.
 
 ## Concurrency: GateLocker
 
-`GateLocker` (in `SlideGenerator.Coordinator`) provides per-gate semaphores. Limits read from settings at runtime:
+`GateLocker<TGate>` (in `SlideGenerator.Coordinator`) provides per-gate semaphores parameterized over any enum. The concrete `GateType` enum lives in `SlideGenerator.Generator.Domain.Models` and is Generator-specific. `IGateLocker<GateType>` is registered in **Generator's** `Registration.cs` — not in Coordinator — with a lambda that reads limits from `ISettingProvider.Current.Performance` at runtime.
 
 ```csharp
 await gateLocker.AcquireAsync(GateType.DownloadImage, ct);
@@ -204,7 +204,7 @@ try { /* ... */ }
 finally { gateLocker.Release(GateType.DownloadImage); }
 ```
 
-Gate types (`SlideGenerator.Coordinator.Domain.Models.GateType`): `DownloadImage`, `EditImage`, `EditPresentation`, `ReadWorkbook`, `ReadPresentation`.
+Gate types (`SlideGenerator.Generator.Domain.Models.GateType`): `DownloadImage`, `EditImage`, `EditPresentation`, `ReadWorkbook`, `ReadPresentation`.
 
 ## Image Processing
 
@@ -343,7 +343,7 @@ Injection/
 - Inherit `StepBody` or `StepBodyAsync`.
 - Live in `Application/Steps/`.
 - Process a single item (from `context.Item`); receive via `.Input()` mapping in `Build()`.
-- Inject `IGateLocker` via constructor; call `AcquireAsync`/`Release` around shared resource access.
+- Inject `IGateLocker<GateType>` via constructor; call `AcquireAsync`/`Release` around shared resource access.
 - Register as `Transient` in `Registration.cs`.
 
 ### Workflow

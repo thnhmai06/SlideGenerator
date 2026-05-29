@@ -20,21 +20,24 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
 using SlideGenerator.Coordinator.Application.Abstractions;
-using SlideGenerator.Coordinator.Domain.Models;
-using SlideGenerator.Settings.Application.Abstractions;
 
-namespace SlideGenerator.Coordinator.Infrastructure.Services;
+namespace SlideGenerator.Coordinator.Application.Services;
 
 /// <summary>
-///     High-level concurrency gate for <see cref="GateType" />.
-///     Manages per-gate limits dynamically using a pure counting mechanism.
+///     Concurrency gate implementation for <typeparamref name="TGate" />.
+///     Maintains per-gate active counts and a FIFO waiter queue; slot limits are
+///     resolved at runtime via a caller-supplied delegate.
 /// </summary>
-internal sealed class GateLocker(ISettingProvider settingProvider, ILogger<GateLocker>? logger = null) : IGateLocker
+/// <typeparam name="TGate">An enum whose values each represent an independent concurrency gate.</typeparam>
+public sealed class GateLocker<TGate>(
+    Func<TGate, uint> limitResolver,
+    ILogger<GateLocker<TGate>>? logger = null) : IGateLocker<TGate>
+    where TGate : struct, Enum
 {
     /// <summary>
-    ///     The dictionary of gate states, keyed by <see cref="GateType" />.
+    ///     Per-gate state, keyed by <typeparamref name="TGate" /> value.
     /// </summary>
-    private readonly ConcurrentDictionary<GateType, GateState> _gates = new();
+    private readonly ConcurrentDictionary<TGate, GateState> _gates = new();
 
     /// <inheritdoc />
     public void Dispose()
@@ -52,18 +55,13 @@ internal sealed class GateLocker(ISettingProvider settingProvider, ILogger<GateL
         _gates.Clear();
     }
 
-    /// <summary>
-    ///     Asynchronously waits to acquire a lock for the specified gate.
-    /// </summary>
-    /// <param name="gate">The gate type.</param>
-    /// <param name="ct">The cancellation token.</param>
-    /// <returns>A <see cref="ValueTask" /> representing the asynchronous operation.</returns>
-    public async ValueTask AcquireAsync(GateType gate, CancellationToken ct = default)
+    /// <inheritdoc />
+    public async ValueTask AcquireAsync(TGate gate, CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
 
         var state = _gates.GetOrAdd(gate, _ => new GateState());
-        var limit = Math.Max(1, ResolveLimit(gate));
+        var limit = (int)Math.Max(1u, limitResolver(gate));
 
         Task waitTask;
         CancellationTokenRegistration ctr = default;
@@ -109,15 +107,11 @@ internal sealed class GateLocker(ISettingProvider settingProvider, ILogger<GateL
         }
     }
 
-    /// <summary>
-    ///     Tries to acquire a lock for the specified gate immediately without blocking.
-    /// </summary>
-    /// <param name="gate">The gate type.</param>
-    /// <returns><see langword="true" /> if the lock was acquired; otherwise, <see langword="false" />.</returns>
-    public bool TryAcquire(GateType gate)
+    /// <inheritdoc />
+    public bool TryAcquire(TGate gate)
     {
         var state = _gates.GetOrAdd(gate, _ => new GateState());
-        var limit = Math.Max(1, ResolveLimit(gate));
+        var limit = (int)Math.Max(1u, limitResolver(gate));
 
         lock (state)
         {
@@ -136,15 +130,12 @@ internal sealed class GateLocker(ISettingProvider settingProvider, ILogger<GateL
         }
     }
 
-    /// <summary>
-    ///     Releases the lock for the specified gate.
-    /// </summary>
-    /// <param name="gate">The gate type.</param>
-    public void Release(GateType gate)
+    /// <inheritdoc />
+    public void Release(TGate gate)
     {
         if (!_gates.TryGetValue(gate, out var state)) return;
 
-        var limit = Math.Max(1, ResolveLimit(gate));
+        var limit = (int)Math.Max(1u, limitResolver(gate));
 
         lock (state)
         {
@@ -154,40 +145,26 @@ internal sealed class GateLocker(ISettingProvider settingProvider, ILogger<GateL
         }
     }
 
-    private int ResolveLimit(GateType gate)
-    {
-        var setting = settingProvider.Current;
-        return gate switch
-        {
-            GateType.DownloadImage => setting.Performance.MaxParallelDownloadImage,
-            GateType.EditImage => setting.Performance.MaxParallelEditImage,
-            GateType.EditPresentation => setting.Performance.MaxParallelEditPresentation,
-            GateType.ReadWorkbook => setting.Performance.MaxParallelReadWorkbook,
-            GateType.ReadPresentation => setting.Performance.MaxParallelReadPresentation,
-            _ => throw new ArgumentOutOfRangeException(nameof(gate), gate, null)
-        };
-    }
-
     /// <summary>
-    ///     Represents the current state of a concurrency gate.
+    ///     Tracks the active count and pending waiter queue for a single gate value.
     /// </summary>
     private sealed class GateState
     {
         /// <summary>
-        ///     The ordered list of waiters pending admission.
-        ///     <see cref="LinkedList{T}" /> allows O(1) removal of canceled waiters via stored node references.
+        ///     Ordered queue of waiters pending admission.
+        ///     <see cref="LinkedList{T}" /> enables O(1) removal of cancelled waiters via stored node references.
         /// </summary>
         public readonly LinkedList<TaskCompletionSource<bool>> Waiters = [];
 
         /// <summary>
-        ///     The number of active operations currently holding a lock for this gate.
+        ///     Number of callers currently holding an acquired slot for this gate.
         /// </summary>
         public int ActiveCount;
 
         /// <summary>
-        ///     Attempts to admit pending waiters if the current active count is below the specified limit.
+        ///     Admits pending waiters while the active count is below <paramref name="limit" />.
         /// </summary>
-        /// <param name="limit">The maximum number of active operations allowed for the gate.</param>
+        /// <param name="limit">Maximum number of concurrent holders allowed.</param>
         public void TryAdmit(int limit)
         {
             while (ActiveCount < limit && Waiters.Count > 0)

@@ -15,7 +15,5 @@
         <InternalsVisibleTo Include="SlideGenerator.Coordinator.Tests"/>
     </ItemGroup>
 
-    <ItemGroup>
-        <ProjectReference Include="..\SlideGenerator.Settings\SlideGenerator.Settings.csproj"/>
-    </ItemGroup>
+
 </Project>

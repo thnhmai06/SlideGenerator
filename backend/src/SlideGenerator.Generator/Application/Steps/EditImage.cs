@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
@@ -40,7 +40,7 @@ namespace SlideGenerator.Generator.Application.Steps;
 public sealed class EditImage(
     IRoiResolver roiResolver,
     IImageFactory imageFactory,
-    IGateLocker gateLocker) : StepBodyAsync
+    IGateLocker<GateType> gateLocker) : StepBodyAsync
 {
     /// <summary>
     ///     The editing task to process.
@@ -77,16 +77,16 @@ public sealed class EditImage(
 
         return enlistResult switch
         {
-            PrimaryEnlistment primary => await RunPrimaryAsync(context, data, primary, finalEditPath)
+            OwnerEnlistment owner => await RunOwnerAsync(context, data, owner, finalEditPath)
                 .ConfigureAwait(false),
-            SecondaryEnlistment secondary => await RunSecondaryAsync(data, secondary.WaitTask, finalEditPath)
+            WaiterEnlistment waiter => await RunWaiterAsync(data, waiter.WaitTask, finalEditPath)
                 .ConfigureAwait(false),
             _ => ExecutionResult.Next()
         };
     }
 
-    private async Task<ExecutionResult> RunPrimaryAsync(
-        IStepExecutionContext context, GeneratingContext data, PrimaryEnlistment primary, string finalEditPath)
+    private async Task<ExecutionResult> RunOwnerAsync(
+        IStepExecutionContext context, GeneratingContext data, OwnerEnlistment owner, string finalEditPath)
     {
         var ct = context.CancellationToken;
 
@@ -117,7 +117,7 @@ public sealed class EditImage(
                                 Task.DownloadPath), "Missing source");
                     }
 
-                primary.SubmitResult(null);
+                owner.SubmitResult(null);
                 return ExecutionResult.Next();
             }
         }
@@ -159,7 +159,7 @@ public sealed class EditImage(
                 data.Logger.LogDebug("Image edited | Row: {RowIndex}, Shape: {ShapeName}",
                     Task.RowIndex, Task.ShapeName);
 
-                primary.SubmitResult(finalEditPath);
+                owner.SubmitResult(finalEditPath);
                 notified = true;
 
                 if (data.Request.DownloadAssetsPath == null && sourceFile != Task.FallbackImagePath)
@@ -180,7 +180,7 @@ public sealed class EditImage(
                     data.Logger.LogError(ex, "Edit image failed");
                 }
 
-                primary.SubmitException(ex);
+                owner.SubmitException(ex);
                 notified = true;
             }
         }
@@ -190,14 +190,14 @@ public sealed class EditImage(
             // NRE/ICE/IOOR bypass inner catch and re-throw into WorkflowCore lifecycle —
             // fault secondaries first so they don't hang.
             if (!notified)
-                primary.SubmitException(
+                owner.SubmitException(
                     new WorkflowFaultedException("EditImage primary faulted before completing.", null));
         }
 
         return ExecutionResult.Next();
     }
 
-    private async Task<ExecutionResult> RunSecondaryAsync(
+    private async Task<ExecutionResult> RunWaiterAsync(
         GeneratingContext data, Task<string?> waitTask, string finalEditPath)
     {
         // Idempotency: own edit file already exists (resume scenario)

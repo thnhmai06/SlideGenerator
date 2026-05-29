@@ -35,10 +35,10 @@ internal sealed class Coordinator : ICoordinator
         var tcs = new TaskCompletionSource<string?>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         if (_entries.TryAdd(key, tcs))
-            return new PrimaryEnlistment(
+            return new OwnerEnlistment(
                 outputPath => tcs.TrySetResult(outputPath),
                 ex => tcs.TrySetException(ex));
 
-        return new SecondaryEnlistment(_entries[key].Task);
+        return new WaiterEnlistment(_entries[key].Task);
     }
 }

@@ -65,6 +65,12 @@ GNU Affero General Public License for more details.</s:String>
   &lt;Assembly Path="V:\.cache\nuget\microsoft.visualstudio.validation\17.8.8\lib\net6.0\Microsoft.VisualStudio.Validation.dll" /&gt;&#xD;
 &lt;/AssemblyExplorer&gt;</s:String>
 	<s:Boolean x:Key="/Default/Environment/SettingsMigration/IsMigratorApplied/=JetBrains_002EReSharper_002EFeature_002EServices_002ECodeCleanup_002EFileHeader_002EFileHeaderSettingsMigrate/@EntryIndexedValue">True</s:Boolean>
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=ca52beda_002D6b33_002D42f0_002D83cf_002Db92d6c5faa7a/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="All tests from &amp;lt;SlideGenerator.Cloud.Tests&amp;gt;" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;Or&gt;&#xD;
+    &lt;Project Location="V:\Code\.multi\SlideGenerator\backend\tests\SlideGenerator.Cloud.Tests" Presentation="&amp;lt;SlideGenerator.Cloud.Tests&amp;gt;" /&gt;&#xD;
+    &lt;Project Location="V:\Code\.multi\SlideGenerator\backend\tests\SlideGenerator.Coordinator.Tests" Presentation="&amp;lt;SlideGenerator.Coordinator.Tests&amp;gt;" /&gt;&#xD;
+  &lt;/Or&gt;&#xD;
+&lt;/SessionState&gt;</s:String>
 	
 	
 	

@@ -40,7 +40,9 @@ internal static class WelcomeMessages
 
     public const string Line = "────────────────────────────────────────────────────────────";
     public const string License = "Copyright (c) 2026 Thành Mai (thnhmai06). Licensed under the GNU AGPLv3.";
-    public const string RepositoryUrl = "This software is FREE and OPEN-SOURCE. The source code is available here: https://github.com/thnhmai06/SlideGenerator";
+
+    public const string RepositoryUrl =
+        "This software is FREE and OPEN-SOURCE. The source code is available here: https://github.com/thnhmai06/SlideGenerator";
 
     public static readonly string Version =
         $"Version: v{Assembly.GetExecutingAssembly().GetName().Version?.ToString(3)}";

@@ -336,7 +336,7 @@ internal sealed class GeneratingService(
 
     private static string ResolveWorkflowLogPath(GeneratingRequest request)
     {
-        var fileName = Normalization.SanitizeFileName(request.Name);
+        var fileName = Naming.SanitizeFileName(request.Name);
         if (string.IsNullOrWhiteSpace(fileName)) fileName = "workflow";
         return Path.Combine(NameAndPaths.LogsFolder.Workflows, $"{fileName}.log");
     }

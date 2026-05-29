@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
@@ -19,9 +19,9 @@
 
 using Microsoft.Extensions.Logging;
 using SlideGenerator.Coordinator.Application.Abstractions;
-using SlideGenerator.Coordinator.Domain.Models;
 using SlideGenerator.Document.Application.Abstractions;
 using SlideGenerator.Document.Domain.Abstractions.Slide;
+using SlideGenerator.Generator.Domain.Models;
 using SlideGenerator.Generator.Domain.Models.Contexts;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
@@ -33,7 +33,7 @@ namespace SlideGenerator.Generator.Application.Steps;
 ///     Avoids redundant file I/O by executing all replacements for a slide in one pass.
 /// </summary>
 public sealed class ReplaceSlideData(
-    IGateLocker gateLocker,
+    IGateLocker<GateType> gateLocker,
     ITextComposer textComposer,
     IPresentationProvider presentationProvider) : StepBodyAsync
 {

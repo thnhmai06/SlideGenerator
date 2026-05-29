@@ -22,6 +22,5 @@
 
     <ItemGroup>
         <ProjectReference Include="../../src/SlideGenerator.Coordinator/SlideGenerator.Coordinator.csproj"/>
-        <ProjectReference Include="../../src/SlideGenerator.Settings/SlideGenerator.Settings.csproj"/>
     </ItemGroup>
 </Project>

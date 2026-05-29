@@ -22,15 +22,21 @@ using SlideGenerator.Coordinator.Domain.Models;
 namespace SlideGenerator.Coordinator.Application.Abstractions;
 
 /// <summary>
-///     Deduplicates expensive per-workflow asset operations (download/edit) across concurrent ForEach steps.
-///     Each instance is scoped to exactly one workflow run; the first caller for a given key becomes
-///     primary and performs the work, the following callers await the result then create a hard link.
+///     Deduplicates identical keyed operations across concurrent callers.
+///     Each instance tracks which keys have been enlisted; the first caller for a given key
+///     becomes the owner and performs the work, the following callers wait for the owner's result.
 /// </summary>
 public interface ICoordinator
 {
     /// <summary>
-    ///     Enlist a key. First caller → <see cref="PrimaryEnlistment" /> (owns the operation, holds the
-    ///     completion delegate). Subsequent callers → <see cref="SecondaryEnlistment" /> (await the result).
+    ///     Enlists a key.
+    ///     First caller receives an <see cref="OwnerEnlistment" /> and must produce or fault the result.
+    ///     Subsequent callers receive a <see cref="WaiterEnlistment" /> and await the owner's result.
     /// </summary>
+    /// <param name="key">The deduplication key identifying the operation.</param>
+    /// <returns>
+    ///     An <see cref="OwnerEnlistment" /> for the first caller, or a <see cref="WaiterEnlistment" />
+    ///     for every caller after the first.
+    /// </returns>
     Enlistment Enlist(string key);
 }

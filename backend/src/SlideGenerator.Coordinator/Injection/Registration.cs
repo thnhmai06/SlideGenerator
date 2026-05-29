@@ -18,21 +18,26 @@
  */
 
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using SlideGenerator.Coordinator.Application.Abstractions;
 using SlideGenerator.Coordinator.Application.Services;
-using SlideGenerator.Coordinator.Infrastructure.Services;
-using SlideGenerator.Settings.Application.Abstractions;
 
 namespace SlideGenerator.Coordinator.Injection;
 
+/// <summary>
+///     Provides extension methods to register the coordinator services into the dependency injection container.
+/// </summary>
 public static class Registration
 {
+    /// <summary>
+    ///     Adds <see cref="ICoordinatorFactory" /> to the service collection.
+    ///     <see cref="IGateLocker{TGate}" /> is intentionally not registered here — callers that require a
+    ///     gate locker must register their own <see cref="IGateLocker{TGate}" /> instance with an appropriate
+    ///     limit-resolver delegate for their specific gate enum.
+    /// </summary>
+    /// <param name="services">The service collection to add the services to.</param>
+    /// <returns>The updated service collection.</returns>
     public static IServiceCollection AddCoordinatorServices(this IServiceCollection services)
     {
-        services.AddSingleton<IGateLocker>(sp => new GateLocker(
-            sp.GetRequiredService<ISettingProvider>(),
-            sp.GetService<ILogger<GateLocker>>()));
         services.AddSingleton<ICoordinatorFactory, CoordinatorFactory>();
         return services;
     }

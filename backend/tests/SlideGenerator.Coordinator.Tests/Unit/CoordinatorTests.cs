@@ -36,8 +36,8 @@ public sealed class CoordinatorTests
 
     /// <summary>
     ///     Verifies that under concurrent enlistment of the same key from many threads,
-    ///     exactly one <see cref="PrimaryEnlistment" /> is produced and all others become
-    ///     <see cref="SecondaryEnlistment" /> instances. This confirms the <c>TryAdd</c> atomicity guarantee.
+    ///     exactly one <see cref="OwnerEnlistment" /> is produced and all others become
+    ///     <see cref="WaiterEnlistment" /> instances. This confirms the <c>TryAdd</c> atomicity guarantee.
     /// </summary>
     [Fact]
     public async Task Enlist_ConcurrentCallersForSameKey_ExactlyOnePrimary()
@@ -48,8 +48,8 @@ public sealed class CoordinatorTests
         await Task.WhenAll(Enumerable.Range(0, 50)
             .Select(_ => Task.Run(() => enlistments.Add(coordinator.Enlist("race-key")))));
 
-        enlistments.OfType<PrimaryEnlistment>().Should().HaveCount(1);
-        enlistments.OfType<SecondaryEnlistment>().Should().HaveCount(49);
+        enlistments.OfType<OwnerEnlistment>().Should().HaveCount(1);
+        enlistments.OfType<WaiterEnlistment>().Should().HaveCount(49);
     }
 
     #endregion
@@ -58,39 +58,39 @@ public sealed class CoordinatorTests
 
     /// <summary>
     ///     Verifies that the first caller to <see cref="Coordinator.Enlist" /> for a given key
-    ///     receives a <see cref="PrimaryEnlistment" />, marking it as the owner of that operation.
+    ///     receives a <see cref="OwnerEnlistment" />, marking it as the owner of that operation.
     /// </summary>
     [Fact]
-    public void Enlist_FirstCallerForKey_ReturnsPrimaryEnlistment()
+    public void Enlist_FirstCallerForKey_ReturnsOwnerEnlistment()
     {
         var coordinator = new CoordinatorImpl();
 
         var enlistment = coordinator.Enlist("key-1");
 
-        enlistment.Should().BeOfType<PrimaryEnlistment>();
+        enlistment.Should().BeOfType<OwnerEnlistment>();
     }
 
     /// <summary>
     ///     Verifies that the second caller to <see cref="Coordinator.Enlist" /> for the same key
-    ///     receives a <see cref="SecondaryEnlistment" />, which awaits the primary's result.
+    ///     receives a <see cref="WaiterEnlistment" />, which awaits the primary's result.
     /// </summary>
     [Fact]
-    public void Enlist_SecondCallerForSameKey_ReturnsSecondaryEnlistment()
+    public void Enlist_SecondCallerForSameKey_ReturnsWaiterEnlistment()
     {
         var coordinator = new CoordinatorImpl();
         coordinator.Enlist("key-1");
 
         var enlistment = coordinator.Enlist("key-1");
 
-        enlistment.Should().BeOfType<SecondaryEnlistment>();
+        enlistment.Should().BeOfType<WaiterEnlistment>();
     }
 
     /// <summary>
     ///     Verifies that all further callers (beyond the second) for the same key also receive
-    ///     <see cref="SecondaryEnlistment" /> instances, each awaiting the same primary result.
+    ///     <see cref="WaiterEnlistment" /> instances, each awaiting the same primary result.
     /// </summary>
     [Fact]
-    public void Enlist_MultipleSubsequentCallersForSameKey_AllReturnSecondaryEnlistment()
+    public void Enlist_MultipleSubsequentCallersForSameKey_AllReturnWaiterEnlistment()
     {
         var coordinator = new CoordinatorImpl();
         coordinator.Enlist("key-1"); // primary
@@ -99,14 +99,14 @@ public sealed class CoordinatorTests
         var third = coordinator.Enlist("key-1");
         var fourth = coordinator.Enlist("key-1");
 
-        second.Should().BeOfType<SecondaryEnlistment>();
-        third.Should().BeOfType<SecondaryEnlistment>();
-        fourth.Should().BeOfType<SecondaryEnlistment>();
+        second.Should().BeOfType<WaiterEnlistment>();
+        third.Should().BeOfType<WaiterEnlistment>();
+        fourth.Should().BeOfType<WaiterEnlistment>();
     }
 
     /// <summary>
     ///     Verifies that different keys are treated as independent operations: each unique key
-    ///     produces its own <see cref="PrimaryEnlistment" /> regardless of other enlisted keys.
+    ///     produces its own <see cref="OwnerEnlistment" /> regardless of other enlisted keys.
     /// </summary>
     [Fact]
     public void Enlist_DifferentKeys_EachKeyGetsSeparatePrimary()
@@ -117,9 +117,9 @@ public sealed class CoordinatorTests
         var second = coordinator.Enlist("key-b");
         var third = coordinator.Enlist("key-c");
 
-        first.Should().BeOfType<PrimaryEnlistment>();
-        second.Should().BeOfType<PrimaryEnlistment>();
-        third.Should().BeOfType<PrimaryEnlistment>();
+        first.Should().BeOfType<OwnerEnlistment>();
+        second.Should().BeOfType<OwnerEnlistment>();
+        third.Should().BeOfType<OwnerEnlistment>();
     }
 
     #endregion
@@ -128,14 +128,14 @@ public sealed class CoordinatorTests
 
     /// <summary>
     ///     Verifies that when the primary submits a non-null result path via
-    ///     <see cref="PrimaryEnlistment.SubmitResult" />, all secondaries receive that exact path value.
+    ///     <see cref="OwnerEnlistment.SubmitResult" />, all secondaries receive that exact path value.
     /// </summary>
     [Fact]
     public async Task Enlist_PrimarySubmitsPath_SecondaryReceivesSamePath()
     {
         var coordinator = new CoordinatorImpl();
-        var primary = (PrimaryEnlistment)coordinator.Enlist("key-1");
-        var secondary = (SecondaryEnlistment)coordinator.Enlist("key-1");
+        var primary = (OwnerEnlistment)coordinator.Enlist("key-1");
+        var secondary = (WaiterEnlistment)coordinator.Enlist("key-1");
 
         primary.SubmitResult("/output/slides.pptx");
 
@@ -151,8 +151,8 @@ public sealed class CoordinatorTests
     public async Task Enlist_PrimarySubmitsNull_SecondaryReceivesNull()
     {
         var coordinator = new CoordinatorImpl();
-        var primary = (PrimaryEnlistment)coordinator.Enlist("key-1");
-        var secondary = (SecondaryEnlistment)coordinator.Enlist("key-1");
+        var primary = (OwnerEnlistment)coordinator.Enlist("key-1");
+        var secondary = (WaiterEnlistment)coordinator.Enlist("key-1");
 
         primary.SubmitResult(null);
 
@@ -168,9 +168,9 @@ public sealed class CoordinatorTests
     public async Task Enlist_MultipleSecondaries_AllReceivePrimaryResult()
     {
         var coordinator = new CoordinatorImpl();
-        var primary = (PrimaryEnlistment)coordinator.Enlist("shared-key");
+        var primary = (OwnerEnlistment)coordinator.Enlist("shared-key");
         var secondaries = Enumerable.Range(0, 5)
-            .Select(_ => (SecondaryEnlistment)coordinator.Enlist("shared-key"))
+            .Select(_ => (WaiterEnlistment)coordinator.Enlist("shared-key"))
             .ToList();
 
         primary.SubmitResult("/shared/output.pptx");

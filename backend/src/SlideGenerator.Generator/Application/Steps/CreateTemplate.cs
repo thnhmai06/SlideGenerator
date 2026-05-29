@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
@@ -19,8 +19,8 @@
 
 using Microsoft.Extensions.Logging;
 using SlideGenerator.Coordinator.Application.Abstractions;
-using SlideGenerator.Coordinator.Domain.Models;
 using SlideGenerator.Document.Application.Abstractions;
+using SlideGenerator.Generator.Domain.Models;
 using SlideGenerator.Generator.Domain.Models.Contexts;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
@@ -32,7 +32,7 @@ namespace SlideGenerator.Generator.Application.Steps;
 ///     the single template slide to be used for cloning.
 /// </summary>
 public sealed class CreateTemplate(
-    IGateLocker gateLocker,
+    IGateLocker<GateType> gateLocker,
     IPresentationProvider presentationProvider) : StepBodyAsync
 {
     /// <summary>

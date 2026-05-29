@@ -28,18 +28,18 @@ public sealed partial record Setting
     public sealed record PerformanceSetting
     {
         /// <summary>Gets the maximum number of concurrent image downloads.</summary>
-        public int MaxParallelDownloadImage { get; init; } = 5;
+        public uint MaxParallelDownloadImage { get; init; } = 5;
 
         /// <summary>Gets the maximum number of concurrent image editing operations.</summary>
-        public int MaxParallelEditImage { get; init; } = 5;
+        public uint MaxParallelEditImage { get; init; } = 5;
 
         /// <summary>Gets the maximum number of concurrent presentation editing operations (slides filling).</summary>
-        public int MaxParallelEditPresentation { get; init; } = 5;
+        public uint MaxParallelEditPresentation { get; init; } = 5;
 
         /// <summary>Gets the maximum number of concurrent workbook reading operations.</summary>
-        public int MaxParallelReadWorkbook { get; init; } = 5;
+        public uint MaxParallelReadWorkbook { get; init; } = 5;
 
         /// <summary>Gets the maximum number of concurrent presentation reading operations.</summary>
-        public int MaxParallelReadPresentation { get; init; } = 5;
+        public uint MaxParallelReadPresentation { get; init; } = 5;
     }
 }

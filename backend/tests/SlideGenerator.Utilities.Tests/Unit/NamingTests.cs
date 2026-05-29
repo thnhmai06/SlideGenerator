@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Utilities.Tests
- * File: NormalizationTests.cs
+ * File: NamingTests.cs
  *
  * This file is part of this solution. You can find the full source code here: https://github.com/thnhmai06/SlideGenerator
  *
@@ -24,14 +24,14 @@ using Xunit;
 namespace SlideGenerator.Utilities.Tests.Unit;
 
 /// <summary>
-///     Unit tests for the <see cref="Normalization" /> utility class, covering file name sanitization logic.
+///     Unit tests for the <see cref="Naming" /> utility class, covering file name sanitization logic.
 /// </summary>
-public sealed class NormalizationTests
+public sealed class NamingTests
 {
     #region SanitizeFileName
 
     /// <summary>
-    ///     Verifies that <see cref="Normalization.SanitizeFileName" /> returns the specified
+    ///     Verifies that <see cref="Naming.SanitizeFileName" /> returns the specified
     ///     <paramref name="defaultValue" /> when the input is <see langword="null" />, empty, or whitespace.
     /// </summary>
     [Theory]
@@ -41,13 +41,13 @@ public sealed class NormalizationTests
     public void NormalizeFileName_NullOrWhitespace_ReturnsDefaultValue(
         string? input, string defaultValue, string expected)
     {
-        var result = Normalization.SanitizeFileName(input, defaultValue);
+        var result = Naming.SanitizeFileName(input, defaultValue);
 
         result.Should().Be(expected);
     }
 
     /// <summary>
-    ///     Verifies that <see cref="Normalization.SanitizeFileName" /> returns an empty string
+    ///     Verifies that <see cref="Naming.SanitizeFileName" /> returns an empty string
     ///     when the input is <see langword="null" /> or empty and no explicit default value is supplied.
     /// </summary>
     [Theory]
@@ -55,13 +55,13 @@ public sealed class NormalizationTests
     [InlineData("")]
     public void NormalizeFileName_NullOrEmptyNoDefault_ReturnsEmpty(string? input)
     {
-        var result = Normalization.SanitizeFileName(input);
+        var result = Naming.SanitizeFileName(input);
 
         result.Should().BeEmpty();
     }
 
     /// <summary>
-    ///     Verifies that <see cref="Normalization.SanitizeFileName" /> replaces characters that are
+    ///     Verifies that <see cref="Naming.SanitizeFileName" /> replaces characters that are
     ///     invalid in file names (as determined by <see cref="Path.GetInvalidFileNameChars" />) with underscores.
     /// </summary>
     [Theory]
@@ -71,13 +71,13 @@ public sealed class NormalizationTests
     [InlineData("report|2026", "report_2026")]
     public void NormalizeFileName_ContainsInvalidChars_ReplacesWithUnderscore(string input, string expected)
     {
-        var result = Normalization.SanitizeFileName(input);
+        var result = Naming.SanitizeFileName(input);
 
         result.Should().Be(expected);
     }
 
     /// <summary>
-    ///     Verifies that <see cref="Normalization.SanitizeFileName" /> returns the input unchanged
+    ///     Verifies that <see cref="Naming.SanitizeFileName" /> returns the input unchanged
     ///     when it contains only valid file name characters.
     /// </summary>
     [Fact]
@@ -85,13 +85,13 @@ public sealed class NormalizationTests
     {
         const string input = "valid-file_name 123.txt";
 
-        var result = Normalization.SanitizeFileName(input);
+        var result = Naming.SanitizeFileName(input);
 
         result.Should().Be(input);
     }
 
     /// <summary>
-    ///     Verifies that <see cref="Normalization.SanitizeFileName" /> returns the specified default value
+    ///     Verifies that <see cref="Naming.SanitizeFileName" /> returns the specified default value
     ///     when the entire input consists of invalid characters, leaving an empty normalized string.
     /// </summary>
     [Fact]
@@ -100,19 +100,19 @@ public sealed class NormalizationTests
         var allInvalid = new string(Path.GetInvalidFileNameChars());
         const string defaultValue = "fallback";
 
-        var result = Normalization.SanitizeFileName(allInvalid, defaultValue);
+        var result = Naming.SanitizeFileName(allInvalid, defaultValue);
 
         result.Should().Be(defaultValue);
     }
 
     /// <summary>
-    ///     Verifies that <see cref="Normalization.SanitizeFileName" /> trims surrounding whitespace
+    ///     Verifies that <see cref="Naming.SanitizeFileName" /> trims surrounding whitespace
     ///     from the input before processing.
     /// </summary>
     [Fact]
     public void NormalizeFileName_SurroundingWhitespace_Trimmed()
     {
-        var result = Normalization.SanitizeFileName("  report.xlsx  ");
+        var result = Naming.SanitizeFileName("  report.xlsx  ");
 
         result.Should().Be("report.xlsx");
     }
