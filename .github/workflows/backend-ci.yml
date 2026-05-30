@@ -1,0 +1,111 @@
+name: Backend CI
+
+on:
+  push:
+  pull_request:
+    paths:
+      - "backend/**/*"
+      - "Taskfile.yml"
+      - ".github/workflows/backend-ci.yml"
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  SYNCFUSION_LICENSE_KEY: ${{ secrets.SYNCFUSION_LICENSE_KEY || 'empty' }}
+
+concurrency:
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci-gate:
+    name: Check CI gate
+    runs-on: ubuntu-latest
+    outputs:
+      should-run: ${{ steps.skip.outputs.should-run }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 1
+
+      - name: Check skip prefix
+        id: skip
+        shell: bash
+        run: |
+          message="$(git log -1 --pretty=%B)"
+          if [[ "$message" == "[skip ci]"* ]]; then
+            echo "should-run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "should-run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  test:
+    name: Test backend
+    needs: ci-gate
+    if: ${{ needs.ci-gate.outputs.should-run == 'true' }}
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Task
+        uses: go-task/setup-task@v2
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: backend/global.json
+
+      - name: Test
+        run: task backend:test
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: backend-test-results-${{ github.run_attempt }}
+          path: backend/TestResults/**/*.trx
+          if-no-files-found: warn
+          retention-days: 14
+
+  build:
+    name: Build backend (${{ matrix.name }})
+    needs: ci-gate
+    if: ${{ needs.ci-gate.outputs.should-run == 'true' }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: windows-x64
+            runner: windows-latest
+          - name: linux-x64
+            runner: ubuntu-24.04
+          - name: linux-arm64
+            runner: ubuntu-24.04-arm
+          - name: macos-x64
+            runner: macos-13
+          - name: macos-arm64
+            runner: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Task
+        uses: go-task/setup-task@v2
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: backend/global.json
+
+      - name: Build
+        run: task backend:build

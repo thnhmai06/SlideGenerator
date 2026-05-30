@@ -4,8 +4,9 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <IsPackable>false</IsPackable>
-        <Obfuscate Condition="'$(Configuration)' == 'Release'">true</Obfuscate>
         <ConfuserProject>Confuser.crproj</ConfuserProject>
+        <Obfuscate Condition="'$(Configuration)' == 'Release' AND Exists('$(MSBuildProjectDirectory)\$(ConfuserProject)')">true</Obfuscate>
+        <Obfuscate Condition="'$(Obfuscate)' == ''">false</Obfuscate>
         <ConfuserReplaceOutput>true</ConfuserReplaceOutput>
         <AssemblyName>SlideGenerator.Document</AssemblyName>
         <RootNamespace>SlideGenerator.Document</RootNamespace>
@@ -115,6 +116,7 @@ internal static class SyncfusionLicense
             <SyncfusionKey Condition="'$(SyncfusionKey)' == ''">empty</SyncfusionKey>
             <LicenseGenOutput>$(IntermediateOutputPath)SyncfusionLicense.g.cs</LicenseGenOutput>
         </PropertyGroup>
+        <MakeDir Directories="$(IntermediateOutputPath)"/>
         <GenerateXorLicense LicenseKey="$(SyncfusionKey)" OutputFile="$(LicenseGenOutput)"/>
         <ItemGroup>
             <Compile Include="$(LicenseGenOutput)"/>

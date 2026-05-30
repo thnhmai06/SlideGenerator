@@ -35,8 +35,9 @@ public sealed class RecipeRepositoryRoundTripTests
     ///     TODO: provide fixtures at <c>tests/fixtures/recipe-roundtrip/source.xlsx</c> and
     ///     <c>tests/fixtures/recipe-roundtrip/source.pptx</c>.
     /// </summary>
-    [Fact(DisplayName =
-        "INTEGRATION: export+import round-trip bundles and restores workbook+presentation — TODO fixture")]
+    [Fact(
+        DisplayName = "INTEGRATION: export+import round-trip bundles and restores workbook+presentation — TODO fixture",
+        Skip = "TODO: provide fixtures at tests/fixtures/recipe-roundtrip/")]
     public Task Export_WithWorkbooksAndPresentations_BundlesAllFiles_AndImportRestores()
     {
         Assert.Fail(

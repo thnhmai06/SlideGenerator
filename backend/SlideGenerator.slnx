@@ -13,6 +13,9 @@
         <Project Path="src/SlideGenerator.Document/SlideGenerator.Document.csproj" />
         <Project Path="src/SlideGenerator.Summarization/SlideGenerator.Summarization.csproj" />
     </Folder>
+    <Folder Name="/Scripts/">
+        <Project Path="scripts/ApplyCopyright/ApplyCopyright.csproj" />
+    </Folder>
     <Folder Name="/Sources/" />
     <Folder Name="/Sources/Application/">
         <Project Path="src/SlideGenerator.Generator/SlideGenerator.Generator.csproj" />

@@ -16,11 +16,11 @@
     </ItemGroup>
 
     <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Linux')) AND '$(PROCESSOR_ARCHITECTURE)' != 'ARM64'">
-        <PackageReference Include="OpenCvSharp4.official.runtime.linux-x64" Version="4.13.0.20260427"/>
+        <PackageReference Include="OpenCvSharp4.official.runtime.linux-x64" Version="4.13.0.20260528"/>
     </ItemGroup>
 
     <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Linux')) AND '$(PROCESSOR_ARCHITECTURE)' == 'ARM64'">
-        <PackageReference Include="OpenCvSharp4.runtime.linux-arm" Version="4.13.0.20260427"/>
+        <PackageReference Include="OpenCvSharp4.runtime.linux-arm" Version="4.13.0.20260528"/>
     </ItemGroup>
 
     <ItemGroup Condition="$([MSBuild]::IsOSPlatform('OSX')) AND '$(PROCESSOR_ARCHITECTURE)' == 'ARM64'">
