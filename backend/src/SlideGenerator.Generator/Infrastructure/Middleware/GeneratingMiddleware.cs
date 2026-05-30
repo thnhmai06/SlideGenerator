@@ -30,7 +30,7 @@ namespace SlideGenerator.Generator.Infrastructure.Middleware;
 ///     supporting both first-run and persistence resume scenarios.
 /// </summary>
 internal sealed class GeneratingMiddleware(
-    IAppLoggerFactory loggerFactory,
+    IFileLoggerFactory fileLoggerFactory,
     ICoordinatorFactory coordinatorFactory) : IWorkflowStepMiddleware
 {
     /// <inheritdoc />
@@ -39,7 +39,9 @@ internal sealed class GeneratingMiddleware(
     {
         if (context.Workflow.Data is not GeneratingContext data) return await next();
 
-        data.Logger ??= loggerFactory.CreateWorkflowLogger(data.WorkflowScope, data.WorkflowLogPath);
+        data.LoggerFactory ??= fileLoggerFactory.CreateFile(
+            data.WorkflowLogPath,
+            scope: $"Workflow/{data.WorkflowScope}");
         data.AssetCoordinator ??= coordinatorFactory.Create();
 
         return await next();

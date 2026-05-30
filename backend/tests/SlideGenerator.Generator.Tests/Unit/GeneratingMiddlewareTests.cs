@@ -1,0 +1,143 @@
+/*
+ * Copyright (C) 2026 Thành Mai (thnhmai06)
+ *
+ * Solution: SlideGenerator
+ * Project: SlideGenerator.Generator.Tests
+ * File: GeneratingMiddlewareTests.cs
+ *
+ * This file is part of this solution. You can find the full source code here: https://github.com/thnhmai06/SlideGenerator
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, version 3.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Affero General Public License for more details.
+ */
+
+using FluentAssertions;
+using Microsoft.Extensions.Logging;
+using Xunit;
+using NSubstitute;
+using SlideGenerator.Coordinator.Application.Abstractions;
+using SlideGenerator.Document.Domain.Models.Slide;
+using SlideGenerator.Generator.Domain.Models;
+using SlideGenerator.Generator.Domain.Models.Contexts;
+using SlideGenerator.Generator.Infrastructure.Middleware;
+using SlideGenerator.Logging.Domain.Abstractions;
+using WorkflowCore.Interface;
+using WorkflowCore.Models;
+
+namespace SlideGenerator.Generator.Tests.Unit;
+
+/// <summary>
+///     Unit tests for <see cref="GeneratingMiddleware" />.
+/// </summary>
+public sealed class GeneratingMiddlewareTests
+{
+    private readonly IFileLoggerFactory _fileLoggerFactory = Substitute.For<IFileLoggerFactory>();
+    private readonly ICoordinatorFactory _coordinatorFactory = Substitute.For<ICoordinatorFactory>();
+    private readonly IStepBody _body = Substitute.For<IStepBody>();
+
+    private static readonly WorkflowStepDelegate NextResult =
+        () => Task.FromResult(ExecutionResult.Next());
+
+    private GeneratingMiddleware CreateMiddleware()
+        => new(_fileLoggerFactory, _coordinatorFactory);
+
+    private static (IStepExecutionContext Context, GeneratingContext Data) CreateGeneratingContext()
+    {
+        var data = new GeneratingContext
+        {
+            Request = new GeneratingRequest(1, "Test", PresentationType.Pptx, Path.GetTempPath()),
+            WorkflowLogPath = Path.Combine(Path.GetTempPath(), "test.log"),
+            WorkflowScope = "TestScope"
+        };
+        var workflow = new WorkflowInstance { Data = data };
+        var context = Substitute.For<IStepExecutionContext>();
+        context.Workflow.Returns(workflow);
+        return (context, data);
+    }
+
+    /// <summary>When workflow data is not GeneratingContext, next() is called and factory is not touched.</summary>
+    [Fact]
+    public async Task HandleAsync_NonGeneratingContextData_CallsNextWithoutInit()
+    {
+        var workflow = new WorkflowInstance { Data = new object() };
+        var context = Substitute.For<IStepExecutionContext>();
+        context.Workflow.Returns(workflow);
+
+        var middleware = CreateMiddleware();
+        await middleware.HandleAsync(context, _body, NextResult).ConfigureAwait(false);
+
+        _fileLoggerFactory.DidNotReceive().CreateFile(Arg.Any<string>(), Arg.Any<string?>());
+        _coordinatorFactory.DidNotReceive().Create();
+    }
+
+    /// <summary>When LoggerFactory is null, CreateFile is called with WorkflowLogPath and correct scope.</summary>
+    [Fact]
+    public async Task HandleAsync_LoggerFactoryNull_CreatesFromFactory()
+    {
+        var (context, data) = CreateGeneratingContext();
+        data.LoggerFactory = null;
+        _fileLoggerFactory
+            .CreateFile(Arg.Any<string>(), Arg.Any<string?>())
+            .Returns(Substitute.For<ILoggerFactory>());
+
+        var middleware = CreateMiddleware();
+        await middleware.HandleAsync(context, _body, NextResult).ConfigureAwait(false);
+
+        _fileLoggerFactory.Received(1).CreateFile(
+            data.WorkflowLogPath,
+            $"Workflow/{data.WorkflowScope}");
+        data.LoggerFactory.Should().NotBeNull();
+    }
+
+    /// <summary>When LoggerFactory is already set, CreateFile is not called again.</summary>
+    [Fact]
+    public async Task HandleAsync_LoggerFactoryAlreadySet_DoesNotReinitialize()
+    {
+        var (context, data) = CreateGeneratingContext();
+        var existingFactory = Substitute.For<ILoggerFactory>();
+        data.LoggerFactory = existingFactory;
+
+        var middleware = CreateMiddleware();
+        await middleware.HandleAsync(context, _body, NextResult).ConfigureAwait(false);
+
+        _fileLoggerFactory.DidNotReceive().CreateFile(Arg.Any<string>(), Arg.Any<string?>());
+        data.LoggerFactory.Should().BeSameAs(existingFactory);
+    }
+
+    /// <summary>When AssetCoordinator is null, coordinatorFactory.Create() is called once.</summary>
+    [Fact]
+    public async Task HandleAsync_AssetCoordinatorNull_CreatesFromFactory()
+    {
+        var (context, data) = CreateGeneratingContext();
+        data.LoggerFactory = Substitute.For<ILoggerFactory>();
+        data.AssetCoordinator = null;
+        var coordinator = Substitute.For<ICoordinator>();
+        _coordinatorFactory.Create().Returns(coordinator);
+
+        var middleware = CreateMiddleware();
+        await middleware.HandleAsync(context, _body, NextResult).ConfigureAwait(false);
+
+        _coordinatorFactory.Received(1).Create();
+        data.AssetCoordinator.Should().BeSameAs(coordinator);
+    }
+
+    /// <summary>HandleAsync always returns the result produced by next().</summary>
+    [Fact]
+    public async Task HandleAsync_AlwaysReturnsNextResult()
+    {
+        var (context, data) = CreateGeneratingContext();
+        data.LoggerFactory = Substitute.For<ILoggerFactory>();
+        data.AssetCoordinator = Substitute.For<ICoordinator>();
+
+        var middleware = CreateMiddleware();
+        var result = await middleware.HandleAsync(context, _body, NextResult).ConfigureAwait(false);
+
+        result.Proceed.Should().BeTrue();
+    }
+}

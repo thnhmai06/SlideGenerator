@@ -12,6 +12,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <InternalsVisibleTo Include="SlideGenerator.Logging.Tests"/>
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.8"/>
         <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.8"/>
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.8"/>

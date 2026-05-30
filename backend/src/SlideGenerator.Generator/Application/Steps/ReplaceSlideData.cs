@@ -43,17 +43,17 @@ public sealed class ReplaceSlideData(
     {
         var ct = context.CancellationToken;
         var data = (GeneratingContext)context.Workflow.Data;
-        using var scope = data.Logger?.BeginScope("ReplaceSlideData");
+        var logger = data.LoggerFactory!.CreateLogger(nameof(ReplaceSlideData));
 
         if (Task.TextReplacements.Count == 0 && Task.ImageReplacements.Count == 0)
         {
-            data.Logger?.LogDebug("No replacements found for row {RowIndex} in sheet {SheetName}. Skipping.",
+            logger.LogDebug("No replacements found for row {RowIndex} in sheet {SheetName}. Skipping.",
                 Task.RowIndex,
                 Task.SheetContext.Identifier.SheetName);
             return ExecutionResult.Next();
         }
 
-        data.Logger?.LogDebug("Data replacement start | Row: {RowIndex}, Sheet: {SheetName}", Task.RowIndex,
+        logger.LogDebug("Data replacement start | Row: {RowIndex}, Sheet: {SheetName}", Task.RowIndex,
             Task.SheetContext.Identifier.SheetName);
 
         await gateLocker.AcquireAsync(GateType.EditPresentation, ct).ConfigureAwait(false);
@@ -67,26 +67,23 @@ public sealed class ReplaceSlideData(
                 if (string.IsNullOrEmpty(shape.Name))
                     continue;
 
-                data.Logger?.LogDebug("Processing shape '{ShapeName}' for row {RowIndex}", shape.Name,
+                logger.LogDebug("Processing shape '{ShapeName}' for row {RowIndex}", shape.Name,
                     Task.RowIndex);
 
-                ApplyTextReplacements(data, shape);
-                await ApplyImageReplacementsAsync(data, shape).ConfigureAwait(false);
+                ApplyTextReplacements(logger, shape);
+                await ApplyImageReplacementsAsync(data, logger, shape).ConfigureAwait(false);
             }
 
             wrapper.Save();
 
-            data.Logger?.LogDebug("Data replacement completed | Row: {RowIndex}, Sheet: {SheetName}",
+            logger.LogDebug("Data replacement completed | Row: {RowIndex}, Sheet: {SheetName}",
                 Task.RowIndex, Task.SheetContext.Identifier.SheetName);
         }
         catch (Exception ex) when (ex is not NullReferenceException and not InvalidCastException
                                        and not IndexOutOfRangeException)
         {
-            var path = $"{Task.SheetContext.Identifier.SheetName}_{Task.RowIndex}";
-            using (data.Logger?.BeginScope(path))
-            {
-                data.Logger?.LogError(ex, "FillSlideData failed");
-            }
+            logger.LogError(ex, "FillSlideData failed for {SheetName} row {RowIndex}",
+                Task.SheetContext.Identifier.SheetName, Task.RowIndex);
         }
         finally
         {
@@ -96,15 +93,15 @@ public sealed class ReplaceSlideData(
         return ExecutionResult.Next();
     }
 
-    private void ApplyTextReplacements(GeneratingContext data, IShape shape)
+    private void ApplyTextReplacements(ILogger logger, IShape shape)
     {
         if (Task.TextReplacements.Count <= 0) return;
-        data.Logger?.LogDebug("Applying text replacements to shape '{ShapeName}' (Count: {Count})", shape.Name,
+        logger.LogDebug("Applying text replacements to shape '{ShapeName}' (Count: {Count})", shape.Name,
             Task.TextReplacements.Count);
         textComposer.Compose(shape, Task.TextReplacements);
     }
 
-    private async Task ApplyImageReplacementsAsync(GeneratingContext data, IShape shape)
+    private async Task ApplyImageReplacementsAsync(GeneratingContext data, ILogger logger, IShape shape)
     {
         var matchingImageContext = Task.ImageReplacements.Values.FirstOrDefault(t =>
             t.ShapeName.Equals(shape.Name, StringComparison.OrdinalIgnoreCase));
@@ -114,7 +111,7 @@ public sealed class ReplaceSlideData(
             var finalEditPath = matchingImageContext.EditPath + ".png";
             if (File.Exists(finalEditPath))
             {
-                data.Logger?.LogDebug("Image shape replaced | Shape: {ShapeName}, Path: {Path}", shape.Name,
+                logger.LogDebug("Image shape replaced | Shape: {ShapeName}, Path: {Path}", shape.Name,
                     finalEditPath);
 
                 shape.ImageData = await File.ReadAllBytesAsync(finalEditPath).ConfigureAwait(false);
@@ -126,12 +123,12 @@ public sealed class ReplaceSlideData(
                     }
                     catch (Exception ex)
                     {
-                        data.Logger?.LogTrace(ex, "Temp file cleanup skipped | Path: {Path}", finalEditPath);
+                        logger.LogTrace(ex, "Temp file cleanup skipped | Path: {Path}", finalEditPath);
                     }
             }
             else
             {
-                data.Logger?.LogWarning("Edited image not found at '{Path}' for shape '{ShapeName}'", finalEditPath,
+                logger.LogWarning("Edited image not found at '{Path}' for shape '{ShapeName}'", finalEditPath,
                     shape.Name);
             }
         }

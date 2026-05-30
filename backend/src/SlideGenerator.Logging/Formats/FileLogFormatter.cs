@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Logging
- * File: LogFormatter.cs
+ * File: FileLogFormatter.cs
  *
  * This file is part of this solution. You can find the full source code here: https://github.com/thnhmai06/SlideGenerator
  *
@@ -21,10 +21,10 @@ using System.Globalization;
 using Serilog.Events;
 using Serilog.Formatting;
 
-namespace SlideGenerator.Logging.Infrastructure.Formatting;
+namespace SlideGenerator.Logging.Formats;
 
 /// <summary>
-///     Formats log events as structured single-line messages with optional human-readable exception detail.
+///     Formats log events for file output as structured single-line messages with human-readable exception detail.
 /// </summary>
 /// <remarks>
 ///     The first line is always formatted as <c>[Timestamp] [LoggerName/Scope] LVL: Message</c>.
@@ -32,7 +32,7 @@ namespace SlideGenerator.Logging.Infrastructure.Formatting;
 ///     For <see cref="LogEventLevel.Error" /> and <see cref="LogEventLevel.Fatal" /> events, the full exception
 ///     chain with stack trace is written in a human-readable indented format.
 /// </remarks>
-internal sealed class LogFormatter : ITextFormatter
+public sealed class FileLogFormatter : ITextFormatter
 {
     /// <inheritdoc />
     public void Format(LogEvent logEvent, TextWriter output)
@@ -49,8 +49,10 @@ internal sealed class LogFormatter : ITextFormatter
             _ => "???"
         };
 
-        var loggerName = GetScalarValue(logEvent, "LoggerName") ?? "?";
-        var scope = GetScalarValue(logEvent, "Scope") ?? "Global";
+        var loggerName = logEvent.GetScalarValue("LoggerName")
+                         ?? logEvent.GetScalarValue("SourceContext")
+                         ?? "?";
+        var scope = logEvent.GetScalarValue("Scope") ?? "Global";
         var message = logEvent.RenderMessage(CultureInfo.InvariantCulture);
 
         output.WriteLine($"[{timestamp}] [{loggerName}/{scope}] {levelAbbr}: {message}");
@@ -67,35 +69,23 @@ internal sealed class LogFormatter : ITextFormatter
     }
 
     /// <summary>
-    ///     Reads a scalar Serilog property value as text.
-    /// </summary>
-    /// <param name="logEvent">The event containing structured properties.</param>
-    /// <param name="propertyName">The name of the scalar property to read.</param>
-    /// <returns>The scalar value as text, or <see langword="null" /> when it is missing or not scalar.</returns>
-    private static string? GetScalarValue(LogEvent logEvent, string propertyName)
-    {
-        return logEvent.Properties.TryGetValue(propertyName, out var value) &&
-               value is ScalarValue { Value: not null } scalar
-            ? scalar.Value.ToString()
-            : null;
-    }
-
-    /// <summary>
     ///     Writes a human-readable exception chain with indented stack traces to <paramref name="output" />.
     /// </summary>
     private static void WriteExceptionDetail(Exception ex, TextWriter output, int depth = 0)
     {
-        var indent = new string(' ', depth * 2);
-        output.WriteLine($"{indent}  ! {ex.GetType().FullName}: {ex.Message}");
-
-        if (!string.IsNullOrEmpty(ex.StackTrace))
-            output.WriteLine(
-                $"{indent}    {ex.StackTrace.Replace(Environment.NewLine, $"{Environment.NewLine}{indent}    ", StringComparison.Ordinal)}");
-
-        if (ex.InnerException is not null)
+        while (true)
         {
+            var indent = new string(' ', depth * 2);
+            output.WriteLine($"{indent}  ! {ex.GetType().FullName}: {ex.Message}");
+
+            if (!string.IsNullOrEmpty(ex.StackTrace))
+                output.WriteLine($"{indent}\t{ex.StackTrace.Replace(
+                    Environment.NewLine, $"{Environment.NewLine}{indent}\t", StringComparison.Ordinal)}");
+
+            if (ex.InnerException is null) return;
             output.WriteLine($"{indent}  Caused by:");
-            WriteExceptionDetail(ex.InnerException, output, depth + 1);
+            ex = ex.InnerException;
+            depth++;
         }
     }
 }

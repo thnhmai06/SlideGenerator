@@ -52,14 +52,14 @@ public sealed class EditImage(
     public override async Task<ExecutionResult> RunAsync(IStepExecutionContext context)
     {
         var data = (GeneratingContext)context.Workflow.Data;
-        using var scope = data.Logger!.BeginScope("EditImage");
+        var logger = data.LoggerFactory!.CreateLogger(nameof(EditImage));
 
         var finalEditPath = Task.EditPath + ".png";
 
         // Idempotency: skip if the file already exists
         if (File.Exists(finalEditPath))
         {
-            data.Logger.LogDebug("Edited image for row {RowIndex} already exists at '{Path}', skipping edit",
+            logger.LogDebug("Edited image for row {RowIndex} already exists at '{Path}', skipping edit",
                 Task.RowIndex, finalEditPath);
             return ExecutionResult.Next();
         }
@@ -67,7 +67,7 @@ public sealed class EditImage(
         // Skip if SourceUrl is null and no FallbackImagePath is provided
         if (Task.SourceUrl == null && string.IsNullOrWhiteSpace(Task.FallbackImagePath))
         {
-            data.Logger.LogDebug("No source URI or fallback image for row {RowIndex}, shape {ShapeName}. Skipping.",
+            logger.LogDebug("No source URI or fallback image for row {RowIndex}, shape {ShapeName}. Skipping.",
                 Task.RowIndex, Task.ShapeName);
             return ExecutionResult.Next();
         }
@@ -77,16 +77,17 @@ public sealed class EditImage(
 
         return enlistResult switch
         {
-            OwnerEnlistment owner => await RunOwnerAsync(context, data, owner, finalEditPath)
+            OwnerEnlistment owner => await RunOwnerAsync(context, data, logger, owner, finalEditPath)
                 .ConfigureAwait(false),
-            WaiterEnlistment waiter => await RunWaiterAsync(data, waiter.WaitTask, finalEditPath)
+            WaiterEnlistment waiter => await RunWaiterAsync(data, logger, waiter.WaitTask, finalEditPath)
                 .ConfigureAwait(false),
             _ => ExecutionResult.Next()
         };
     }
 
     private async Task<ExecutionResult> RunOwnerAsync(
-        IStepExecutionContext context, GeneratingContext data, OwnerEnlistment owner, string finalEditPath)
+        IStepExecutionContext context, GeneratingContext data, ILogger logger,
+        OwnerEnlistment owner, string finalEditPath)
     {
         var ct = context.CancellationToken;
 
@@ -104,18 +105,16 @@ public sealed class EditImage(
             if (!string.IsNullOrWhiteSpace(Task.FallbackImagePath) && File.Exists(Task.FallbackImagePath))
             {
                 sourceFile = Task.FallbackImagePath;
-                data.Logger!.LogDebug("Primary source missing for row {RowIndex}, using fallback: '{Fallback}'",
+                logger.LogDebug("Primary source missing for row {RowIndex}, using fallback: '{Fallback}'",
                     Task.RowIndex, sourceFile);
             }
             else
             {
                 if (Task.SourceUrl != null)
-                    using (data.Logger!.BeginScope(downloadPrefix))
-                    {
-                        data.Logger.LogError(
-                            new FileNotFoundException("Source image and fallback not found for editing.",
-                                Task.DownloadPath), "Missing source");
-                    }
+                    logger.LogError(
+                        new FileNotFoundException("Source image and fallback not found for editing.",
+                            Task.DownloadPath),
+                        "Missing source for row {RowIndex} prefix '{Prefix}'", Task.RowIndex, downloadPrefix);
 
                 owner.SubmitResult(null);
                 return ExecutionResult.Next();
@@ -131,13 +130,13 @@ public sealed class EditImage(
         {
             try
             {
-                data.Logger!.LogDebug("Editing image '{Source}' for shape '{ShapeName}' (Row {RowIndex})", sourceFile,
+                logger.LogDebug("Editing image '{Source}' for shape '{ShapeName}' (Row {RowIndex})", sourceFile,
                     Task.ShapeName, Task.RowIndex);
 
                 using var image = imageFactory.Open(sourceFile);
                 var targetSize = new Size((int)Math.Round(Task.Width), (int)Math.Round(Task.Height));
 
-                data.Logger?.LogDebug("Calculating ROI for row {RowIndex} using {Algorithm}", Task.RowIndex,
+                logger.LogDebug("Calculating ROI for row {RowIndex} using {Algorithm}", Task.RowIndex,
                     Task.EditOptions.RoiOption);
 
                 var roi = await roiResolver.CalculateRoiAsync(
@@ -145,18 +144,18 @@ public sealed class EditImage(
                     targetSize,
                     Task.EditOptions.RoiOption).ConfigureAwait(false);
 
-                data.Logger?.LogDebug("Applying crop {ROI} to image for row {RowIndex}", roi, Task.RowIndex);
+                logger.LogDebug("Applying crop {ROI} to image for row {RowIndex}", roi, Task.RowIndex);
                 image.Crop(roi);
 
                 var currentSize = new Size((int)image.Info.Width, (int)image.Info.Height);
                 var maxAspectSize = currentSize.GetMaxAspectSize(targetSize);
 
-                data.Logger?.LogDebug("Resizing image for row {RowIndex} to {Size}", Task.RowIndex, maxAspectSize);
+                logger.LogDebug("Resizing image for row {RowIndex} to {Size}", Task.RowIndex, maxAspectSize);
                 image.Resize(maxAspectSize);
 
                 await image.WriteAsync(finalEditPath).ConfigureAwait(false);
 
-                data.Logger?.LogDebug("Image edited | Row: {RowIndex}, Shape: {ShapeName}",
+                logger.LogDebug("Image edited | Row: {RowIndex}, Shape: {ShapeName}",
                     Task.RowIndex, Task.ShapeName);
 
                 owner.SubmitResult(finalEditPath);
@@ -169,17 +168,13 @@ public sealed class EditImage(
                     }
                     catch (Exception ex)
                     {
-                        data.Logger?.LogTrace(ex, "Temp file cleanup skipped | Path: {Path}", sourceFile);
+                        logger.LogTrace(ex, "Temp file cleanup skipped | Path: {Path}", sourceFile);
                     }
             }
             catch (Exception ex) when (ex is not NullReferenceException and not InvalidCastException
                                            and not IndexOutOfRangeException)
             {
-                using (data.Logger!.BeginScope(Path.GetFileName(finalEditPath)))
-                {
-                    data.Logger.LogError(ex, "Edit image failed");
-                }
-
+                logger.LogError(ex, "Edit image failed for '{Path}'", Path.GetFileName(finalEditPath));
                 owner.SubmitException(ex);
                 notified = true;
             }
@@ -198,12 +193,12 @@ public sealed class EditImage(
     }
 
     private async Task<ExecutionResult> RunWaiterAsync(
-        GeneratingContext data, Task<string?> waitTask, string finalEditPath)
+        GeneratingContext data, ILogger logger, Task<string?> waitTask, string finalEditPath)
     {
         // Idempotency: own edit file already exists (resume scenario)
         if (File.Exists(finalEditPath))
         {
-            data.Logger!.LogDebug(
+            logger.LogDebug(
                 "Edited image for row {RowIndex} already exists (resume), skipping secondary hardlink",
                 Task.RowIndex);
             return ExecutionResult.Next();
@@ -217,7 +212,7 @@ public sealed class EditImage(
             if (editDir != null && !Directory.Exists(editDir)) Directory.CreateDirectory(editDir);
 
             HardLink.Create(finalEditPath, primaryPath);
-            data.Logger!.LogDebug(
+            logger.LogDebug(
                 "Hard-linked edit for row {RowIndex}, shape {ShapeName} from primary path '{PrimaryPath}'",
                 Task.RowIndex, Task.ShapeName, primaryPath);
 
@@ -236,14 +231,14 @@ public sealed class EditImage(
                         }
                         catch (Exception ex)
                         {
-                            data.Logger?.LogTrace(ex, "Temp file cleanup skipped | Path: {Path}", sourceFile);
+                            logger.LogTrace(ex, "Temp file cleanup skipped | Path: {Path}", sourceFile);
                         }
                 }
             }
         }
         else
         {
-            data.Logger!.LogWarning(
+            logger.LogWarning(
                 "Primary edit failed for row {RowIndex}, shape {ShapeName} will have no image",
                 Task.RowIndex, Task.ShapeName);
         }

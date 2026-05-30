@@ -17,40 +17,35 @@
  * GNU Affero General Public License for more details.
  */
 
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
-using SlideGenerator.Logging.Domain.Abstractions;
-using SlideGenerator.Logging.Infrastructure.Options;
-using SlideGenerator.Logging.Infrastructure.Services;
+using SlideGenerator.Logging.Abstractions;
+using SlideGenerator.Logging.Services;
 
-namespace SlideGenerator.Logging.Injection;
+namespace SlideGenerator.Logging;
 
 /// <summary>
 ///     Registers logging services.
 /// </summary>
 public static class Registration
 {
-    /// <param name="services">The service collection to update.</param>
     extension(IServiceCollection services)
     {
         /// <summary>
-        ///     Adds the logging factory and bridges Serilog as the MEL provider.
+        ///     Adds the file logger factory service.
         /// </summary>
-        /// <param name="configuration">The application configuration.</param>
         /// <returns>The updated service collection.</returns>
-        public IServiceCollection AddLoggingServices(IConfiguration? configuration = null)
+        public IServiceCollection AddLoggingServices()
         {
-            services.AddSingleton(configuration is null
-                ? new LoggingOptions()
-                : LoggingOptionsReader.Read(configuration));
-            services.AddSingleton<IAppLoggerFactory, SerilogAppLoggerFactory>();
             services.AddLogging(builder =>
             {
                 builder.ClearProviders();
-                builder.AddSerilog(Log.Logger);
+                builder.AddSerilog(dispose: true);
             });
+            services
+                .AddTransient<IFileLoggerFactory,
+                    SerilogFileLoggerFactory>(); // must have to be Transient, not Singleton
             return services;
         }
     }

@@ -41,7 +41,7 @@ public sealed class LoadRecipeSummary(
     {
         var data = (GeneratingContext)context.Workflow.Data;
         var ct = context.CancellationToken;
-        using var scope = data.Logger!.BeginScope("LoadRecipeSummary");
+        var logger = data.LoggerFactory!.CreateLogger(nameof(LoadRecipeSummary));
 
         var entry = await recipeRepository.GetByIdAsync(data.Request.RecipeId, ct).ConfigureAwait(false)
                     ?? throw new InvalidOperationException(
@@ -53,7 +53,7 @@ public sealed class LoadRecipeSummary(
             .SelectMany(node => node.Sheets.Select(sheet => new ValidationItem(sheet, node)))
             .ToList();
 
-        data.Logger.LogInformation(
+        logger.LogInformation(
             "Loaded recipe {RecipeId} with {NodeCount} node(s) and {ItemCount} validation item(s).",
             data.Request.RecipeId, data.RecipeSummary.Nodes.Count, data.ValidationItems.Count);
 

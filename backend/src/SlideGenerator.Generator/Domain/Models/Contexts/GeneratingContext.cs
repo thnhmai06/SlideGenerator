@@ -64,11 +64,12 @@ public sealed class GeneratingContext : IDisposable
     public string WorkflowScope { get; init; } = null!;
 
     /// <summary>
-    ///     Gets or sets the workflow-scoped logger.
+    ///     Gets or sets the workflow-scoped logger factory, backed by a dedicated file sink.
     ///     Not serialized — recreated by <c>GeneratingMiddleware</c> before each step.
+    ///     Steps call <c>LoggerFactory.CreateLogger(nameof(Step))</c> to obtain a named <see cref="ILogger" />.
     /// </summary>
     [JsonIgnore]
-    public ILogger? Logger { get; set; } = null!;
+    public ILoggerFactory? LoggerFactory { get; set; }
 
     /// <summary>
     ///     Gets or sets the per-workflow asset deduplication coordinator.
@@ -132,10 +133,11 @@ public sealed class GeneratingContext : IDisposable
     public ConcurrentDictionary<PresentationIdentifier, Lazy<IPresentation>> OutputFactories { get; } = new();
 
     /// <summary>
-    ///     Disposes of all open workbook and presentation handles.
+    ///     Disposes of all open workbook and presentation handles and the workflow logger factory.
     /// </summary>
     public void Dispose()
     {
+        LoggerFactory?.Dispose();
         DisposeAndClear(WorkbookHandles);
         DisposeAndClear(TemplateHandles);
         DisposeAndClear(OutputHandles);

@@ -67,7 +67,7 @@ public sealed class CollectImageTests
     public async Task RunAsync_FirstInspectReturnsNull_LogsWarningAndSkipsDownload()
     {
         const string url = "https://example.com/image.jpg";
-        var (ctx, data) = StepHelper.CreateContextPair();
+        var (ctx, data, mockLogger) = StepHelper.CreateContextPairWithLogger();
         data.AssetCoordinator = BuildPrimaryCoordinator(url);
 
         // InspectAsync returns null by default (NSubstitute default for Task<T?> → null)
@@ -78,7 +78,7 @@ public sealed class CollectImageTests
         await _cloudClient.DidNotReceive().DownloadAsync(
             Arg.Any<Uri>(), Arg.Any<string>(),
             Arg.Any<HttpClient?>(), Arg.Any<CancellationToken>());
-        data.Logger!.Received().Log(
+        mockLogger.Received().Log(
             LogLevel.Warning,
             Arg.Any<EventId>(),
             Arg.Any<object>(),
@@ -156,13 +156,13 @@ public sealed class CollectImageTests
     [Fact]
     public async Task RunAsync_NullUrl_LogsWarning()
     {
-        var (ctx, data) = StepHelper.CreateContextPair();
+        var (ctx, data, mockLogger) = StepHelper.CreateContextPairWithLogger();
         data.AssetCoordinator = Substitute.For<ICoordinator>();
         var step = BuildStep(BuildImageContext(null));
 
         await step.RunAsync(ctx);
 
-        data.Logger!.Received().Log(
+        mockLogger.Received().Log(
             LogLevel.Warning,
             Arg.Any<EventId>(),
             Arg.Any<object>(),

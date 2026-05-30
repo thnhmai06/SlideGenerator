@@ -13,6 +13,7 @@
         <Project Path="src/SlideGenerator.Document/SlideGenerator.Document.csproj" />
         <Project Path="src/SlideGenerator.Summarization/SlideGenerator.Summarization.csproj" />
     </Folder>
+    <Folder Name="/Sources/" />
     <Folder Name="/Sources/Application/">
         <Project Path="src/SlideGenerator.Generator/SlideGenerator.Generator.csproj" />
         <Project Path="src/SlideGenerator.Ipc/SlideGenerator.Ipc.csproj" />
@@ -23,12 +24,14 @@
         <Project Path="tests/SlideGenerator.Cloud.Tests/SlideGenerator.Cloud.Tests.csproj" />
         <Project Path="tests/SlideGenerator.Cryptography.Tests/SlideGenerator.Cryptography.Tests.csproj" />
         <Project Path="tests/SlideGenerator.Settings.Tests/SlideGenerator.Settings.Tests.csproj" />
+        <Project Path="tests/SlideGenerator.Logging.Tests/SlideGenerator.Logging.Tests.csproj" />
     </Folder>
     <Folder Name="/Tests/Domain/">
         <Project Path="tests/SlideGenerator.Image.Tests/SlideGenerator.Image.Tests.csproj" />
         <Project Path="tests/SlideGenerator.Recipe.Tests/SlideGenerator.Recipe.Tests.csproj" />
         <Project Path="tests/SlideGenerator.Document.Tests/SlideGenerator.Document.Tests.csproj" />
     </Folder>
+    <Folder Name="/Tests/" />
     <Folder Name="/Tests/Application/">
         <Project Path="tests/SlideGenerator.Generator.Tests/SlideGenerator.Generator.Tests.csproj" />
     </Folder>

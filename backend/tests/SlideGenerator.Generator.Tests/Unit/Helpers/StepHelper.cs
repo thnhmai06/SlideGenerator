@@ -37,11 +37,25 @@ internal static class StepHelper
     /// <summary>
     ///     Creates a matched pair of a mocked <see cref="IStepExecutionContext" /> and a real
     ///     <see cref="GeneratingContext" /> wired through a <see cref="WorkflowInstance" />.
-    ///     The context's <see cref="GeneratingContext.Logger" /> is pre-configured with a no-op
-    ///     <see cref="IDisposable" /> scope so steps can call <c>BeginScope</c> freely.
+    ///     The context's <see cref="GeneratingContext.LoggerFactory" /> is pre-configured with
+    ///     a substitute that returns a no-op <see cref="ILogger" /> for any category name.
     /// </summary>
     internal static (IStepExecutionContext Ctx, GeneratingContext Data) CreateContextPair()
     {
+        var (ctx, data, _) = CreateContextPairWithLogger();
+        return (ctx, data);
+    }
+
+    /// <summary>
+    ///     Like <see cref="CreateContextPair" /> but also returns the underlying <see cref="ILogger" />
+    ///     substitute so tests can assert on logged calls.
+    /// </summary>
+    internal static (IStepExecutionContext Ctx, GeneratingContext Data, ILogger MockLogger) CreateContextPairWithLogger()
+    {
+        var mockLogger = Substitute.For<ILogger>();
+        var mockLoggerFactory = Substitute.For<ILoggerFactory>();
+        mockLoggerFactory.CreateLogger(Arg.Any<string>()).Returns(mockLogger);
+
         var data = new GeneratingContext
         {
             Request = new GeneratingRequest(
@@ -51,7 +65,7 @@ internal static class StepHelper
                 Path.GetTempPath()),
             WorkflowLogPath = Path.Combine(Path.GetTempPath(), "test.log"),
             WorkflowScope = "TestScope",
-            Logger = Substitute.For<ILogger>()
+            LoggerFactory = mockLoggerFactory
         };
 
         var workflow = new WorkflowInstance { Data = data };
@@ -59,7 +73,7 @@ internal static class StepHelper
         var ctx = Substitute.For<IStepExecutionContext>();
         ctx.Workflow.Returns(workflow);
 
-        return (ctx, data);
+        return (ctx, data, mockLogger);
     }
 
     /// <summary>

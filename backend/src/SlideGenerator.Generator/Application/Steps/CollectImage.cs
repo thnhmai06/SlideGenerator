@@ -54,16 +54,12 @@ public sealed class CollectImage(
     public override async Task<ExecutionResult> RunAsync(IStepExecutionContext context)
     {
         var data = (GeneratingContext)context.Workflow.Data;
-        using var scope = data.Logger!.BeginScope("CollectImage");
+        var logger = data.LoggerFactory!.CreateLogger(nameof(CollectImage));
 
         if (Task.SourceUrl == null)
         {
-            var path = $"Row{Task.RowIndex}_{Task.ColumnName}";
-            using (data.Logger.BeginScope(path))
-            {
-                data.Logger.LogWarning("URL is not valid. Skipping.");
-            }
-
+            logger.LogWarning("URL is not valid for row {RowIndex}, column {ColumnName}. Skipping.",
+                Task.RowIndex, Task.ColumnName);
             return ExecutionResult.Next();
         }
 
@@ -71,8 +67,8 @@ public sealed class CollectImage(
 
         return enlistResult switch
         {
-            OwnerEnlistment owner => await RunOwnerAsync(context, data, owner).ConfigureAwait(false),
-            WaiterEnlistment waiter => await RunWaiterAsync(data, waiter.WaitTask).ConfigureAwait(false),
+            OwnerEnlistment owner => await RunOwnerAsync(context, data, logger, owner).ConfigureAwait(false),
+            WaiterEnlistment waiter => await RunWaiterAsync(data, logger, waiter.WaitTask).ConfigureAwait(false),
             _ => ExecutionResult.Next()
         };
     }
@@ -121,6 +117,7 @@ public sealed class CollectImage(
     private async Task<ExecutionResult> RunOwnerAsync(
         IStepExecutionContext context,
         GeneratingContext data,
+        ILogger logger,
         OwnerEnlistment owner)
     {
         var ct = context.CancellationToken;
@@ -131,14 +128,14 @@ public sealed class CollectImage(
             try
             {
                 using var testImage = imageFactory.Open(Task.DownloadPath);
-                data.Logger!.LogDebug("Image for row {RowIndex} already exists and is valid, skipping acquisition",
+                logger.LogDebug("Image for row {RowIndex} already exists and is valid, skipping acquisition",
                     Task.RowIndex);
                 owner.SubmitResult(Task.DownloadPath);
                 return ExecutionResult.Next();
             }
             catch (Exception ex)
             {
-                data.Logger!.LogWarning(ex, "Image corrupt, retrying acquisition | Row: {RowIndex}", Task.RowIndex);
+                logger.LogWarning(ex, "Image corrupt, retrying acquisition | Row: {RowIndex}", Task.RowIndex);
                 File.Delete(Task.DownloadPath);
             }
 
@@ -148,14 +145,14 @@ public sealed class CollectImage(
         await gateLocker.AcquireAsync(GateType.DownloadImage, ct).ConfigureAwait(false);
         try
         {
-            data.Logger!.LogDebug("Acquiring image for row {RowIndex} from '{Url}'", Task.RowIndex, Task.SourceUrl);
+            logger.LogDebug("Acquiring image for row {RowIndex} from '{Url}'", Task.RowIndex, Task.SourceUrl);
 
             if (File.Exists(Task.SourceUrl!))
             {
                 // Local file path
                 if (!data.Request.AllowLocalImagePaths)
                 {
-                    data.Logger!.LogWarning(
+                    logger.LogWarning(
                         "Source '{Url}' is a local file but local paths are not allowed. Skipping.",
                         Task.SourceUrl);
                     owner.SubmitResult(null);
@@ -173,7 +170,7 @@ public sealed class CollectImage(
 
                 if (resolvedUri == null)
                 {
-                    data.Logger!.LogWarning(
+                    logger.LogWarning(
                         "URL '{Url}' did not resolve to a downloadable image. Skipping.", Task.SourceUrl);
                     owner.SubmitResult(null);
                     notified = true;
@@ -185,7 +182,7 @@ public sealed class CollectImage(
                     .ConfigureAwait(false);
             }
 
-            data.Logger!.LogDebug("Image acquired | Row: {RowIndex}, Column: {ColumnName}",
+            logger.LogDebug("Image acquired | Row: {RowIndex}, Column: {ColumnName}",
                 Task.RowIndex, Task.ColumnName);
             owner.SubmitResult(Task.DownloadPath);
             notified = true;
@@ -194,12 +191,8 @@ public sealed class CollectImage(
                                        and not InvalidCastException
                                        and not IndexOutOfRangeException)
         {
-            var path = $"Row{Task.RowIndex}_{Task.ColumnName}";
-            using (data.Logger!.BeginScope(path))
-            {
-                data.Logger.LogError(ex, "Acquisition failed");
-            }
-
+            logger.LogError(ex, "Acquisition failed | Row: {RowIndex}, Column: {ColumnName}",
+                Task.RowIndex, Task.ColumnName);
             owner.SubmitException(ex);
             notified = true;
         }
@@ -214,12 +207,13 @@ public sealed class CollectImage(
         return ExecutionResult.Next();
     }
 
-    private async Task<ExecutionResult> RunWaiterAsync(GeneratingContext data, Task<string?> waitTask)
+    private async Task<ExecutionResult> RunWaiterAsync(
+        GeneratingContext data, ILogger logger, Task<string?> waitTask)
     {
         // Idempotency: own file already exists (resume scenario)
         if (File.Exists(Task.DownloadPath))
         {
-            data.Logger!.LogDebug(
+            logger.LogDebug(
                 "Image for row {RowIndex} already exists (resume), skipping secondary hardlink", Task.RowIndex);
             return ExecutionResult.Next();
         }
@@ -232,13 +226,13 @@ public sealed class CollectImage(
             if (dir != null && !Directory.Exists(dir)) Directory.CreateDirectory(dir);
 
             HardLink.Create(Task.DownloadPath, primaryPath);
-            data.Logger!.LogDebug(
+            logger.LogDebug(
                 "Hard-linked image for row {RowIndex} from primary path '{PrimaryPath}'",
                 Task.RowIndex, primaryPath);
         }
         else
         {
-            data.Logger!.LogWarning(
+            logger.LogWarning(
                 "Primary acquisition failed for URL '{Url}', row {RowIndex} will have no image",
                 Task.SourceUrl, Task.RowIndex);
         }

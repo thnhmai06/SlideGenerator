@@ -35,11 +35,11 @@ public sealed class PreflightCleanup : StepBody
     public override ExecutionResult Run(IStepExecutionContext context)
     {
         var data = (GeneratingContext)context.Workflow.Data;
-        using var scope = data.Logger!.BeginScope("PreflightCleanup");
+        var logger = data.LoggerFactory!.CreateLogger(nameof(PreflightCleanup));
 
         if (data.RecipeSummary == null)
         {
-            data.Logger.LogDebug("No recipe summary present; nothing to clean.");
+            logger.LogDebug("No recipe summary present; nothing to clean.");
             return ExecutionResult.Next();
         }
 
@@ -58,7 +58,7 @@ public sealed class PreflightCleanup : StepBody
                 if (Directory.Exists(dir))
                 {
                     Directory.Delete(dir, true);
-                    data.Logger.LogDebug("Removed existing output directory '{Dir}'", dir);
+                    logger.LogDebug("Removed existing output directory '{Dir}'", dir);
                 }
 
                 Directory.CreateDirectory(dir);
@@ -67,7 +67,7 @@ public sealed class PreflightCleanup : StepBody
                                            and not InvalidCastException
                                            and not IndexOutOfRangeException)
             {
-                data.Logger.LogWarning(ex, "Failed to clean output directory '{Dir}'", dir);
+                logger.LogWarning(ex, "Failed to clean output directory '{Dir}'", dir);
             }
         }
 

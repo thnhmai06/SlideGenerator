@@ -50,42 +50,39 @@ public sealed class ExtractData(
     {
         var data = (GeneratingContext)context.Workflow.Data;
         var ct = context.CancellationToken;
-        using var scope = data.Logger?.BeginScope("ExtractData");
+        var logger = data.LoggerFactory!.CreateLogger(nameof(ExtractData));
 
         if (data.SlideContexts.Any(s => s.SheetContext.Identifier == Worksheet.Identifier))
         {
-            data.Logger?.LogDebug("ExtractData already processed sheet {SheetName} — skipping (resume idempotency).",
+            logger.LogDebug("ExtractData already processed sheet {SheetName} — skipping (resume idempotency).",
                 Worksheet.Identifier.SheetName);
             return ExecutionResult.Next();
         }
 
-        data.Logger?.LogInformation("Starting data extraction for sheet {SheetName} in {BookPath}",
+        logger.LogInformation("Starting data extraction for sheet {SheetName} in {BookPath}",
             Worksheet.Identifier.SheetName, Worksheet.Identifier.BookPath);
 
         try
         {
-            var (rowCount, headerMap, sheet) = await ReadWorkbookMetadataAsync(data, ct).ConfigureAwait(false);
-            var shapeData = await CloneSlidesAndExtractShapeDataAsync(data, rowCount, ct).ConfigureAwait(false);
+            var (rowCount, headerMap, sheet) = await ReadWorkbookMetadataAsync(data, logger, ct).ConfigureAwait(false);
+            var shapeData = await CloneSlidesAndExtractShapeDataAsync(data, logger, rowCount, ct).ConfigureAwait(false);
 
-            ConstructTasks(data, rowCount, headerMap, sheet, shapeData);
+            ConstructTasks(data, logger, rowCount, headerMap, sheet, shapeData);
 
-            data.Logger?.LogInformation("Successfully extracted data and constructed tasks for sheet {SheetName}",
+            logger.LogInformation("Successfully extracted data and constructed tasks for sheet {SheetName}",
                 Worksheet.Identifier.SheetName);
         }
         catch (Exception ex) when (ex is not NullReferenceException and not InvalidCastException
                                        and not IndexOutOfRangeException)
         {
-            using (data.Logger?.BeginScope(Worksheet.Identifier.SheetName))
-            {
-                data.Logger?.LogError(ex, "ExtractData failed");
-            }
+            logger.LogError(ex, "ExtractData failed for sheet {SheetName}", Worksheet.Identifier.SheetName);
         }
 
         return ExecutionResult.Next();
     }
 
     private async Task<(int RowCount, Dictionary<string, int> HeaderMap, IReadOnlyWorksheet Sheet)>
-        ReadWorkbookMetadataAsync(GeneratingContext data, CancellationToken ct)
+        ReadWorkbookMetadataAsync(GeneratingContext data, ILogger logger, CancellationToken ct)
     {
         await gateLocker.AcquireAsync(GateType.ReadWorkbook, ct).ConfigureAwait(false);
         try
@@ -103,7 +100,7 @@ public sealed class ExtractData(
                 if (!headerMap.ContainsKey(headers[i]))
                     headerMap[headers[i]] = i;
 
-            data.Logger?.LogDebug("Found {RowCount} rows in sheet {SheetName}", rowCount,
+            logger.LogDebug("Found {RowCount} rows in sheet {SheetName}", rowCount,
                 Worksheet.Identifier.SheetName);
 
             return (rowCount, headerMap, sheet);
@@ -115,7 +112,7 @@ public sealed class ExtractData(
     }
 
     private async Task<Dictionary<ShapeIdentifier, (string ShapeName, HashSet<string> Tags, RectangleF Bounds)>>
-        CloneSlidesAndExtractShapeDataAsync(GeneratingContext data, int rowCount, CancellationToken ct)
+        CloneSlidesAndExtractShapeDataAsync(GeneratingContext data, ILogger logger, int rowCount, CancellationToken ct)
     {
         var shapeData = new Dictionary<ShapeIdentifier, (string ShapeName, HashSet<string> Tags, RectangleF Bounds)>();
 
@@ -142,12 +139,12 @@ public sealed class ExtractData(
                     shapeData[shapeId] = (shape.Name, tags, bounds);
                 }
 
-                data.Logger?.LogDebug("Extracted metadata for {Count} shapes from template slide", shapeData.Count);
+                logger.LogDebug("Extracted metadata for {Count} shapes from template slide", shapeData.Count);
 
                 // Clone slides
                 if (rowCount > 1)
                 {
-                    data.Logger?.LogDebug("Cloning {Count} additional slides for output", rowCount - 1);
+                    logger.LogDebug("Cloning {Count} additional slides for output", rowCount - 1);
                     for (var i = 1; i < rowCount; i++)
                         wrapper.CloneSlide(0);
                 }
@@ -170,6 +167,7 @@ public sealed class ExtractData(
 
     private void ConstructTasks(
         GeneratingContext data,
+        ILogger logger,
         int rowCount,
         Dictionary<string, int> headerMap,
         IReadOnlyWorksheet sheet,
@@ -185,7 +183,7 @@ public sealed class ExtractData(
 
             if (slideTask.TextReplacements.Count <= 0 && slideTask.ImageReplacements.Count <= 0) continue;
             data.SlideContexts.Add(slideTask);
-            data.Logger?.LogDebug("Mapped {TextCount} text and {ImageCount} image replacements for row {RowIndex}",
+            logger.LogDebug("Mapped {TextCount} text and {ImageCount} image replacements for row {RowIndex}",
                 slideTask.TextReplacements.Count, slideTask.ImageReplacements.Count, rowIndex);
         }
     }

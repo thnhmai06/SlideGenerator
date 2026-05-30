@@ -75,7 +75,7 @@ Core Services
 ├── SlideGenerator.Cryptography  - AES-256 encryption + file hash registry
 ├── SlideGenerator.Coordinator   - Concurrency throttling; IGateLocker<TGate> + GateLocker<TGate>
 ├── SlideGenerator.Document      - Syncfusion Excel/PowerPoint abstractions + Mustache template engine
-└── SlideGenerator.Logging       - Serilog: IAppLogger, IAppLoggerFactory, ISystemLogger
+└── SlideGenerator.Logging       - Serilog: IAppLogger, IFileLoggerFactory, ISystemLogger
 
 Feature Modules
 └── SlideGenerator.Image         - MagickImage processing; ROI + face detection (OpenCV YuNet)
@@ -233,10 +233,10 @@ Phase boundaries are enforced with `ExecutionResult.Next()` barriers — all ite
 
 **Data model**: `GeneratingContext` is the workflow's state class. Intermediate contexts (`SheetContext`, `ImageContext`, `SlideContext`, `ValidationItem`) are populated per phase and fed into `.ForEach()` loops. All live in `Domain/Models/Contexts/`.
 
-**Persistence**: WorkflowCore persists `GeneratingContext` to SQLite (`%LOCALAPPDATA%\SlideGenerator\Workflows.db`) via Newtonsoft.Json. Fields that cannot serialize (file handles, `IAppLogger`) carry `[Newtonsoft.Json.JsonIgnore]`. Handles are lazily reopened after resume via `GetOrOpenWorkbook`/`GetOrOpenPresentation`/`GetOrOpenOutput` extension methods in `Application/Utilities.cs`.
+**Persistence**: WorkflowCore persists `GeneratingContext` to SQLite (`%LOCALAPPDATA%\SlideGenerator\Workflows.db`) via Newtonsoft.Json. Fields that cannot serialize (file handles, `ILoggerFactory`) carry `[Newtonsoft.Json.JsonIgnore]`. Handles are lazily reopened after resume via `GetOrOpenWorkbook`/`GetOrOpenPresentation`/`GetOrOpenOutput` extension methods in `Application/Utilities.cs`.
 
 **Step middleware** (registered in `AddGeneratorServices`):
-- `GeneratingLoggerMiddleware` — lazily initializes `GeneratingContext.Logger` before each step using `WorkflowLogPath`/`WorkflowScope` stored in context (survives persistence resume)
+- `GeneratingMiddleware` — lazily initializes `GeneratingContext.LoggerFactory` (via `IFileLoggerFactory.CreateForFile`) before each step using `WorkflowLogPath`/`WorkflowScope` stored in context (survives persistence resume). Each step calls `data.LoggerFactory.CreateLogger(nameof(Step))` to get a named `ILogger`.
 - `GeneratingProgressMiddleware` — publishes `GeneratingEvent.StepCompleted` + resolved `GeneratingPhase` after each step
 
 **Lifecycle events**: `GeneratingService` subscribes to `IWorkflowHost.OnLifeCycleEvent` to publish `WorkflowCompleted`/`WorkflowError` via `IGeneratingEventBus`. Event types are in `WorkflowCore.Models.LifeCycleEvents`: `WorkflowCompleted`, `WorkflowError`, `WorkflowStarted`, `WorkflowSuspended`, `WorkflowResumed`, `WorkflowTerminated`.
