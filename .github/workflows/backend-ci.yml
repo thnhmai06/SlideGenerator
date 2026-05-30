@@ -45,23 +45,22 @@ jobs:
             echo "should-run=true" >> "$GITHUB_OUTPUT"
           fi
 
-  # ── Foundation ──────────────────────────────────────────────────────────────
-  # Utilities, Cryptography, Cloud, Settings, Logging
-  # No inter-project deps; all run in parallel. Failure of one does not block siblings.
-  test-foundation:
-    name: Test [Foundation] / ${{ matrix.project }}
+  # ── Per-OS pipeline ──────────────────────────────────────────────────────────
+  # Each OS runs independently: build → Foundation → Domain → Application.
+  # Tests start as soon as that OS's build finishes — no cross-OS waiting.
+  pipeline:
+    name: ${{ matrix.os.name }}
     needs: ci-gate
     if: ${{ needs.ci-gate.outputs.should-run == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os.runner }}
     strategy:
       fail-fast: false
       matrix:
-        project:
-          - SlideGenerator.Utilities.Tests
-          - SlideGenerator.Cryptography.Tests
-          - SlideGenerator.Cloud.Tests
-          - SlideGenerator.Settings.Tests
-          - SlideGenerator.Logging.Tests
+        os:
+          - { name: windows-x64, runner: windows-latest     }
+          - { name: linux-x64,   runner: ubuntu-24.04       }
+          - { name: linux-arm64, runner: ubuntu-24.04-arm   }
+          - { name: macos-x64,   runner: macos-13           }
 
     steps:
       - name: Checkout
@@ -72,154 +71,136 @@ jobs:
         with:
           global-json-file: backend/global.json
 
+      # ── Native dependencies (linux-arm64 only) ──────────────────────────────────
+      - name: Install native dependencies
+        if: matrix.os.name == 'linux-arm64'
+        run: |
+          sudo apt-get clean
+          sudo rm -rf /var/lib/apt/lists/*
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            tesseract-ocr \
+            ffmpeg
+
+      # ── Build ─────────────────────────────────────────────────────────────
       - name: Restore
         working-directory: backend
         run: dotnet restore SlideGenerator.slnx
-
-      - name: Test
-        working-directory: backend
-        run: >-
-          dotnet test
-          tests/${{ matrix.project }}/${{ matrix.project }}.csproj
-          --no-restore
-          --logger "trx;LogFilePrefix=${{ matrix.project }}"
-          --results-directory TestResults
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: test-results-foundation-${{ matrix.project }}-${{ github.run_attempt }}
-          path: backend/TestResults/**/*.trx
-          if-no-files-found: warn
-          retention-days: 14
-
-  # ── Domain ──────────────────────────────────────────────────────────────────
-  # Coordinator, Document
-  # Starts after Foundation regardless of Foundation outcome.
-  test-domain:
-    name: Test [Domain] / ${{ matrix.project }}
-    needs: [ci-gate, test-foundation]
-    if: ${{ always() && needs.ci-gate.outputs.should-run == 'true' }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        project:
-          - SlideGenerator.Coordinator.Tests
-          - SlideGenerator.Document.Tests
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5
-        with:
-          global-json-file: backend/global.json
-
-      - name: Restore
-        working-directory: backend
-        run: dotnet restore SlideGenerator.slnx
-
-      - name: Test
-        working-directory: backend
-        run: >-
-          dotnet test
-          tests/${{ matrix.project }}/${{ matrix.project }}.csproj
-          --no-restore
-          --logger "trx;LogFilePrefix=${{ matrix.project }}"
-          --results-directory TestResults
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: test-results-domain-${{ matrix.project }}-${{ github.run_attempt }}
-          path: backend/TestResults/**/*.trx
-          if-no-files-found: warn
-          retention-days: 14
-
-  # ── Application ─────────────────────────────────────────────────────────────
-  # Image, Recipe, Generator, Stdio
-  # Starts after Domain regardless of Domain outcome.
-  test-application:
-    name: Test [Application] / ${{ matrix.project }}
-    needs: [ci-gate, test-domain]
-    if: ${{ always() && needs.ci-gate.outputs.should-run == 'true' }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        project:
-          - SlideGenerator.Image.Tests
-          - SlideGenerator.Recipe.Tests
-          - SlideGenerator.Generator.Tests
-          - SlideGenerator.Stdio.Tests
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5
-        with:
-          global-json-file: backend/global.json
-
-      - name: Restore
-        working-directory: backend
-        run: dotnet restore SlideGenerator.slnx
-
-      - name: Test
-        working-directory: backend
-        run: >-
-          dotnet test
-          tests/${{ matrix.project }}/${{ matrix.project }}.csproj
-          --no-restore
-          --logger "trx;LogFilePrefix=${{ matrix.project }}"
-          --results-directory TestResults
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: test-results-application-${{ matrix.project }}-${{ github.run_attempt }}
-          path: backend/TestResults/**/*.trx
-          if-no-files-found: warn
-          retention-days: 14
-
-  # ── Build ────────────────────────────────────────────────────────────────────
-  build:
-    name: Build backend (${{ matrix.name }})
-    needs: ci-gate
-    if: ${{ needs.ci-gate.outputs.should-run == 'true' }}
-    runs-on: ${{ matrix.runner }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: windows-x64
-            runner: windows-latest
-          - name: linux-x64
-            runner: ubuntu-24.04
-          - name: linux-arm64
-            runner: ubuntu-24.04-arm
-          - name: macos-x64
-            runner: macos-13
-          - name: macos-arm64
-            runner: macos-14
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Setup Task
-        uses: go-task/setup-task@v2
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5
-        with:
-          global-json-file: backend/global.json
 
       - name: Build
-        run: task backend:build
+        id: build
+        working-directory: backend
+        run: dotnet build SlideGenerator.slnx --no-restore
+
+      # ── Foundation: Utilities, Cryptography, Cloud, Settings ───────────────
+      - name: "Test [Foundation] / Utilities"
+        if: always() && steps.build.outcome == 'success'
+        working-directory: backend
+        run: >-
+          dotnet test
+          tests/SlideGenerator.Utilities.Tests/SlideGenerator.Utilities.Tests.csproj
+          --no-restore
+          --logger "trx;LogFilePrefix=SlideGenerator.Utilities.Tests"
+          --results-directory TestResults
+
+      - name: "Test [Foundation] / Cryptography"
+        if: always() && steps.build.outcome == 'success'
+        working-directory: backend
+        run: >-
+          dotnet test
+          tests/SlideGenerator.Cryptography.Tests/SlideGenerator.Cryptography.Tests.csproj
+          --no-restore
+          --logger "trx;LogFilePrefix=SlideGenerator.Cryptography.Tests"
+          --results-directory TestResults
+
+      - name: "Test [Foundation] / Cloud"
+        if: always() && steps.build.outcome == 'success'
+        working-directory: backend
+        run: >-
+          dotnet test
+          tests/SlideGenerator.Cloud.Tests/SlideGenerator.Cloud.Tests.csproj
+          --no-restore
+          --logger "trx;LogFilePrefix=SlideGenerator.Cloud.Tests"
+          --results-directory TestResults
+
+      - name: "Test [Foundation] / Settings"
+        if: always() && steps.build.outcome == 'success'
+        working-directory: backend
+        run: >-
+          dotnet test
+          tests/SlideGenerator.Settings.Tests/SlideGenerator.Settings.Tests.csproj
+          --no-restore
+          --logger "trx;LogFilePrefix=SlideGenerator.Settings.Tests"
+          --results-directory TestResults
+
+      # ── Domain: Coordinator, Document ──────────────────────────────────────
+      - name: "Test [Domain] / Coordinator"
+        if: always() && steps.build.outcome == 'success'
+        working-directory: backend
+        run: >-
+          dotnet test
+          tests/SlideGenerator.Coordinator.Tests/SlideGenerator.Coordinator.Tests.csproj
+          --no-restore
+          --logger "trx;LogFilePrefix=SlideGenerator.Coordinator.Tests"
+          --results-directory TestResults
+
+      - name: "Test [Domain] / Document"
+        if: always() && steps.build.outcome == 'success'
+        working-directory: backend
+        run: >-
+          dotnet test
+          tests/SlideGenerator.Document.Tests/SlideGenerator.Document.Tests.csproj
+          --no-restore
+          --logger "trx;LogFilePrefix=SlideGenerator.Document.Tests"
+          --results-directory TestResults
+
+      # ── Application: Image, Recipe, Generator, Stdio ───────────────────────
+      - name: "Test [Application] / Image"
+        if: always() && steps.build.outcome == 'success'
+        working-directory: backend
+        run: >-
+          dotnet test
+          tests/SlideGenerator.Image.Tests/SlideGenerator.Image.Tests.csproj
+          --no-restore
+          --logger "trx;LogFilePrefix=SlideGenerator.Image.Tests"
+          --results-directory TestResults
+
+      - name: "Test [Application] / Recipe"
+        if: always() && steps.build.outcome == 'success'
+        working-directory: backend
+        run: >-
+          dotnet test
+          tests/SlideGenerator.Recipe.Tests/SlideGenerator.Recipe.Tests.csproj
+          --no-restore
+          --logger "trx;LogFilePrefix=SlideGenerator.Recipe.Tests"
+          --results-directory TestResults
+
+      - name: "Test [Application] / Generator"
+        if: always() && steps.build.outcome == 'success'
+        working-directory: backend
+        run: >-
+          dotnet test
+          tests/SlideGenerator.Generator.Tests/SlideGenerator.Generator.Tests.csproj
+          --no-restore
+          --logger "trx;LogFilePrefix=SlideGenerator.Generator.Tests"
+          --results-directory TestResults
+
+      - name: "Test [Application] / Stdio"
+        if: always() && steps.build.outcome == 'success'
+        working-directory: backend
+        run: >-
+          dotnet test
+          tests/SlideGenerator.Stdio.Tests/SlideGenerator.Stdio.Tests.csproj
+          --no-restore
+          --logger "trx;LogFilePrefix=SlideGenerator.Stdio.Tests"
+          --results-directory TestResults
+
+      # ── Upload ─────────────────────────────────────────────────────────────
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results-${{ matrix.os.name }}-${{ github.run_attempt }}
+          path: backend/TestResults/**/*.trx
+          if-no-files-found: warn
+          retention-days: 14

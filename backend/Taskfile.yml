@@ -2,7 +2,6 @@ version: "3"
 
 vars:
   BACKEND_SOLUTION: SlideGenerator.slnx
-  BACKEND_CONFIGURATION: '{{.BACKEND_CONFIGURATION | default "Release"}}'
   BACKEND_RESULTS_DIR: '{{.BACKEND_RESULTS_DIR | default "TestResults"}}'
   BACKEND_TEST_LOG_PREFIX: '{{.BACKEND_TEST_LOG_PREFIX | default "backend-tests"}}'
   BACKEND_RUN_PROJECT: src/SlideGenerator.Stdio/SlideGenerator.Stdio.csproj
@@ -20,31 +19,30 @@ tasks:
       - dotnet restore {{.BACKEND_SOLUTION}}
 
   build:
-    desc: Build backend solution.
+    desc: Build backend solution (Debug).
     dir: "{{.TASKFILE_DIR}}"
     deps:
       - restore
     cmds:
-      - dotnet build {{.BACKEND_SOLUTION}} --configuration {{.BACKEND_CONFIGURATION}} --no-restore
-
-  test:
-    desc: Run backend tests and write TRX results.
-    dir: "{{.TASKFILE_DIR}}"
-    deps:
-      - restore
-    cmds:
-      - dotnet test {{.BACKEND_SOLUTION}} --configuration {{.BACKEND_CONFIGURATION}} --no-restore --logger "trx;LogFilePrefix={{.BACKEND_TEST_LOG_PREFIX}}" --results-directory {{.BACKEND_RESULTS_DIR}}
+      - dotnet build {{.BACKEND_SOLUTION}} --no-restore
 
   run:
-    desc: Run backend stdio sidecar.
+    desc: Run backend stdio sidecar (Debug).
     dir: "{{.TASKFILE_DIR}}"
     deps:
       - restore
     cmds:
-      - dotnet run --project {{.BACKEND_RUN_PROJECT}} --configuration {{.BACKEND_CONFIGURATION}}
+      - dotnet run --project {{.BACKEND_RUN_PROJECT}}
+  test:
+    desc: Run backend tests (Debug) and write TRX results.
+    dir: "{{.TASKFILE_DIR}}"
+    deps:
+      - restore
+    cmds:
+      - dotnet test {{.BACKEND_SOLUTION}} --no-restore --logger "trx;LogFilePrefix={{.BACKEND_TEST_LOG_PREFIX}}" --results-directory {{.BACKEND_RESULTS_DIR}}
 
   apply-copyright:
     desc: Apply backend copyright headers.
     dir: "{{.TASKFILE_DIR}}"
     cmds:
-      - dotnet run --project scripts/ApplyCopyright/ApplyCopyright.csproj --configuration {{.BACKEND_CONFIGURATION}} --
+      - dotnet run --project scripts/ApplyCopyright/ApplyCopyright.csproj

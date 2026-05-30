@@ -39,7 +39,7 @@ public sealed class DownloadImageIntegrationTests
         Skip = "TODO: provide real image at tests/fixtures/bug-16/large-image.jpg")]
     public Task RunPrimary_ExistingValidImage_SkipsDownload_NoMemoryBloat()
     {
-        Skip.Always(
+        Assert.Skip(
             "TODO: provide real image at tests/fixtures/bug-16/large-image.jpg; see plan h-ng-x-l-keen-pelican.md");
         return Task.CompletedTask;
     }
@@ -54,7 +54,7 @@ public sealed class DownloadImageIntegrationTests
         Skip = "TODO: wire up mock IDownloadService + saturated gate")]
     public Task RunPrimary_CancellationToken_AbortsAcquireAndDownload()
     {
-        Skip.Always(
+        Assert.Skip(
             "TODO: wire up mock IDownloadService + saturated gate, then cancel CTS; see plan h-ng-x-l-keen-pelican.md");
         return Task.CompletedTask;
     }

@@ -46,7 +46,7 @@ public sealed class CloudResolverIntegrationTests
     public static TheoryData<TestCase> LoadCases()
     {
         var data = new TheoryData<TestCase>();
-        foreach (var tc in TestCsvLoader.Load(@"Integration\Testcases.csv"))
+        foreach (var tc in TestCsvLoader.Load(Path.Combine("Integration", "Testcases.csv")))
             data.Add(tc);
         return data;
     }

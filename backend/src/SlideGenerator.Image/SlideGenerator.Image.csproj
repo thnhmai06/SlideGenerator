@@ -11,40 +11,47 @@
         <PackageReference Include="Magick.NET-Q8-AnyCPU" Version="14.13.1"/>
         <PackageReference Remove="StyleCop.Analyzers"/>
     </ItemGroup>
-    <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+
+    <ItemGroup Condition="'$(RuntimeIdentifier)' == 'win-x64'
+    or ('$(RuntimeIdentifier)' == '' and $([MSBuild]::IsOSPlatform('Windows')))">
         <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.13.0.20260528"/>
     </ItemGroup>
-
-    <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Linux')) AND '$(PROCESSOR_ARCHITECTURE)' != 'ARM64'">
+    <ItemGroup Condition="'$(RuntimeIdentifier)' == 'linux-x64'
+    or ('$(RuntimeIdentifier)' == ''
+        and $([MSBuild]::IsOSPlatform('Linux'))
+        and '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'X64')">
         <PackageReference Include="OpenCvSharp4.official.runtime.linux-x64" Version="4.13.0.20260528"/>
     </ItemGroup>
-
-    <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Linux')) AND '$(PROCESSOR_ARCHITECTURE)' == 'ARM64'">
-        <PackageReference Include="OpenCvSharp4.runtime.linux-arm" Version="4.13.0.20260528"/>
+    <ItemGroup Condition="'$(RuntimeIdentifier)' == 'linux-arm64'
+    or ('$(RuntimeIdentifier)' == ''
+        and $([MSBuild]::IsOSPlatform('Linux'))
+        and '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64')">
+        <PackageReference Include="OpenCvSharp4.runtime.linux-arm64" Version="4.13.0.20260528"/>
     </ItemGroup>
-
-    <ItemGroup Condition="$([MSBuild]::IsOSPlatform('OSX')) AND '$(PROCESSOR_ARCHITECTURE)' == 'ARM64'">
-        <PackageReference Include="OpenCvSharp4.runtime.osx_arm64" Version="4.8.1-rc"/>
-    </ItemGroup>
-
-    <ItemGroup Condition="$([MSBuild]::IsOSPlatform('OSX')) AND '$(PROCESSOR_ARCHITECTURE)' != 'ARM64'">
+    <ItemGroup Condition="'$(RuntimeIdentifier)' == 'osx-x64'
+    or ('$(RuntimeIdentifier)' == ''
+        and $([MSBuild]::IsOSPlatform('OSX'))
+        and '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'X64')">
         <PackageReference Include="OpenCvSharp4.runtime.osx.10.15-x64" Version="4.6.0.20230105"/>
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\SlideGenerator.Coordinator\SlideGenerator.Coordinator.csproj"/>
         <ProjectReference Include="..\SlideGenerator.Settings\SlideGenerator.Settings.csproj"/>
     </ItemGroup>
-    <ItemGroup>
-        <None Update="Infrastructure\Binary\Credits.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="Infrastructure\Binary\YuNet.onnx">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-    </ItemGroup>
 
     <ItemGroup>
         <InternalsVisibleTo Include="SlideGenerator.Image.Tests"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Remove="Infrastructure\Binary\Credits.json"/>
+        <EmbeddedResource Include="Infrastructure\Binary\Credits.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </EmbeddedResource>
+        <None Remove="Infrastructure\Binary\YuNet.onnx"/>
+        <EmbeddedResource Include="Infrastructure\Binary\YuNet.onnx">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </EmbeddedResource>
     </ItemGroup>
 
 </Project>

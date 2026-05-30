@@ -130,10 +130,16 @@ public sealed class SingleInstanceLockTests : IDisposable
         act.Should().Throw<IOException>();
     }
 
-    /// <summary>File.WriteAllText is blocked while the lock is held.</summary>
+    /// <summary>
+    ///     File.WriteAllText is blocked while the lock is held.
+    ///     Windows only: Linux uses advisory locking, so File.WriteAllText does not throw.
+    /// </summary>
     [Fact]
     public void WriteAllText_WhileLocked_ThrowsIOException()
     {
+        if (!OperatingSystem.IsWindows())
+            Assert.Skip("File write-lock exclusion via FileShare is mandatory on Windows only.");
+
         NewLock().TryAcquire();
 
         var act = () => File.WriteAllText(_pidFilePath, "overwrite");
@@ -171,11 +177,15 @@ public sealed class SingleInstanceLockTests : IDisposable
 
     /// <summary>
     ///     The PID file lock blocks <see cref="File.ReadAllText(string)"/> because its default share mode is incompatible
-    ///     with the owner handle's write access. Use ReadPid instead.
+    ///     with the owner handle's write access on Windows. Use ReadPid instead.
+    ///     Windows only: Linux uses advisory locking, so File.ReadAllText does not throw.
     /// </summary>
     [Fact]
     public void ReadAllText_WhileLocked_ThrowsIOException()
     {
+        if (!OperatingSystem.IsWindows())
+            Assert.Skip("File read-lock exclusion via FileShare is mandatory on Windows only.");
+
         NewLock().TryAcquire();
 
         var act = () => File.ReadAllText(_pidFilePath);

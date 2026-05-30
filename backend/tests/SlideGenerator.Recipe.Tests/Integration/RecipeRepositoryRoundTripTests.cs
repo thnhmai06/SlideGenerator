@@ -22,7 +22,7 @@ using Xunit;
 namespace SlideGenerator.Recipe.Tests.Integration;
 
 /// <summary>
-///     Integration tests for full export/import round-trip of
+///     Integration tests for full export/import round-trips of
 ///     <see cref="SlideGenerator.Recipe.Infrastructure.Services.RecipeRepository" />
 ///     using real workbook and presentation files bundled into the archive.
 /// </summary>
@@ -40,7 +40,7 @@ public sealed class RecipeRepositoryRoundTripTests
         Skip = "TODO: provide fixtures at tests/fixtures/recipe-roundtrip/")]
     public Task Export_WithWorkbooksAndPresentations_BundlesAllFiles_AndImportRestores()
     {
-        Skip.Always(
+        Assert.Skip(
             "TODO: provide real .xlsx + .pptx at tests/fixtures/recipe-roundtrip/; see plan h-ng-x-l-keen-pelican.md");
         return Task.CompletedTask;
     }
