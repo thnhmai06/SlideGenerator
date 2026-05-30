@@ -40,7 +40,7 @@ public sealed class RecipeRepositoryRoundTripTests
         Skip = "TODO: provide fixtures at tests/fixtures/recipe-roundtrip/")]
     public Task Export_WithWorkbooksAndPresentations_BundlesAllFiles_AndImportRestores()
     {
-        Assert.Fail(
+        Skip.Always(
             "TODO: provide real .xlsx + .pptx at tests/fixtures/recipe-roundtrip/; see plan h-ng-x-l-keen-pelican.md");
         return Task.CompletedTask;
     }

@@ -48,6 +48,7 @@ public sealed class SettingManagerTests : IDisposable
         var testExt = $".test{Guid.NewGuid():N}";
         _serializer.FileExtension.Returns(testExt);
         _testFilePath = NameAndPaths.SettingsFile.GetFilePath(testExt);
+        Directory.CreateDirectory(Path.GetDirectoryName(_testFilePath)!);
         _manager = new SettingManager(_encrypter, _serializer, _logger);
     }
 

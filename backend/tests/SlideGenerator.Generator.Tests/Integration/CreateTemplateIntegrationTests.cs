@@ -40,7 +40,7 @@ public sealed class CreateTemplateIntegrationTests
         Skip = "TODO: provide fixture under tests/fixtures/bug-7/")]
     public Task CreateTemplate_TwoSheetsSameWorkbook_BothOutputsPreserved()
     {
-        Assert.Fail(
+        Skip.Always(
             "TODO: provide real .xlsx + .pptx fixture at tests/fixtures/bug-7/; see plan h-ng-x-l-keen-pelican.md");
         return Task.CompletedTask;
     }
@@ -55,7 +55,7 @@ public sealed class CreateTemplateIntegrationTests
         Skip = "TODO: provide fixture under tests/fixtures/bug-7/")]
     public Task PreflightCleanup_RunBeforePhaseA_WipesOnlyTargetOutputDirs()
     {
-        Assert.Fail(
+        Skip.Always(
             "TODO: provide real .xlsx + .pptx fixture at tests/fixtures/bug-7/; see plan h-ng-x-l-keen-pelican.md");
         return Task.CompletedTask;
     }
