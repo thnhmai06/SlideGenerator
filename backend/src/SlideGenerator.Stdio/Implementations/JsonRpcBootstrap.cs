@@ -2,7 +2,7 @@
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Ipc
+ * Project: SlideGenerator.Stdio
  * File: JsonRpcBootstrap.cs
  *
  * This file is part of this solution. You can find the full source code here: https://github.com/thnhmai06/SlideGenerator
@@ -21,11 +21,11 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.DependencyInjection;
-using SlideGenerator.Ipc.Handlers;
-using SlideGenerator.Ipc.Infrastructure.Adapters;
+using SlideGenerator.Stdio.Handlers;
+using SlideGenerator.Stdio.Implementations.Adapters;
 using StreamJsonRpc;
 
-namespace SlideGenerator.Ipc.Infrastructure;
+namespace SlideGenerator.Stdio.Implementations;
 
 /// <summary>
 ///     Configures and wires the <see cref="JsonRpc" /> connection for the IPC sidecar.

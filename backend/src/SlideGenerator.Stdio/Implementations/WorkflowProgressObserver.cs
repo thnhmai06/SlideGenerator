@@ -2,7 +2,7 @@
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Ipc
+ * Project: SlideGenerator.Stdio
  * File: WorkflowProgressObserver.cs
  *
  * This file is part of this solution. You can find the full source code here: https://github.com/thnhmai06/SlideGenerator
@@ -21,7 +21,7 @@ using Microsoft.Extensions.Logging;
 using SlideGenerator.Generator.Domain.Models;
 using StreamJsonRpc;
 
-namespace SlideGenerator.Ipc.Infrastructure;
+namespace SlideGenerator.Stdio.Implementations;
 
 /// <summary>
 ///     Subscribes to <see cref="GeneratingEventBus.OnProgress" /> and forwards each event

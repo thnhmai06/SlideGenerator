@@ -39,6 +39,7 @@
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AStdString_002Ecs_002Fl_003AC_0021_003FUsers_003Fhaith_003FAppData_003FLocal_003FJetBrains_003FShared_003FvAny_003FSourcesCache_003Ff4b0cca5e36c1555fc43a68f532e181c67388e3895ab1c89f36ebca93569143_003FStdString_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AStepBodyAsync_002Ecs_002Fl_003AC_0021_003FUsers_003Fhaith_003FAppData_003FLocal_003FJetBrains_003FShared_003FvAny_003FDecompilerCache_003Fdecompiler_003F0137b071addb424d88025a5baca0fe4f2ce00_003F5c_003Fc8fc0b11_003FStepBodyAsync_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AStreamWriter_002Ecs_002Fl_003AC_0021_003FUsers_003Fhaith_003FAppData_003FLocal_003FJetBrains_003FShared_003FvAny_003FDecompilerCache_003Fdecompiler_003F66e86cb8e85148a9a531567a2fb8c0eef45728_003F56_003F1be7e210_003FStreamWriter_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
+	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AStreamWriter_002Ecs_002Fl_003AC_0021_003FUsers_003Fhaith_003FAppData_003FLocal_003FJetBrains_003FShared_003FvAny_003FSourcesCache_003F942423349f7cb455bb645bbef0c7f0b13149be8f0b5fb18564477ff5c999_003FStreamWriter_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003ASyncfusionLicenseProvider_002Ecs_002Fl_003AC_0021_003FUsers_003Fhaith_003FAppData_003FLocal_003FJetBrains_003FShared_003FvAny_003FDecompilerCache_003Fdecompiler_003F7db04a06c59049ea9fe88e587c4fbb6714000_003F44_003F84abaf83_003FSyncfusionLicenseProvider_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AVector2_002Ecs_002Fl_003AC_0021_003FUsers_003Fhaith_003FAppData_003FRoaming_003FJetBrains_003FRider2025_002E3_003Fresharper_002Dhost_003FDecompilerCache_003Fdecompiler_003F5a6236cfdac448ffada1671fabc4404ef49908_003F1e_003F355bc02c_003FVector2_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeStyle/FileHeader/FileHeaderText/@EntryValue">Copyright (C) ${CurrentDate.Year} {AUTHOR}
@@ -68,10 +69,13 @@ GNU Affero General Public License for more details.</s:String>
 	
 	
 	
+	
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=ca52beda_002D6b33_002D42f0_002D83cf_002Db92d6c5faa7a/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="All tests from &amp;lt;SlideGenerator.Cloud.Tests&amp;gt;" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
   &lt;Or&gt;&#xD;
-    &lt;Project Location="V:\Code\.multi\SlideGenerator\backend\tests\SlideGenerator.Cloud.Tests" Presentation="&amp;lt;SlideGenerator.Cloud.Tests&amp;gt;" /&gt;&#xD;
-    &lt;Project Location="V:\Code\.multi\SlideGenerator\backend\tests\SlideGenerator.Coordinator.Tests" Presentation="&amp;lt;SlideGenerator.Coordinator.Tests&amp;gt;" /&gt;&#xD;
+    &lt;TestAncestor&gt;&#xD;
+      &lt;TestId&gt;xUnit::B182286D-43B7-92E7-7070-FD2250E8DECF::net10.0::SlideGenerator.Logging.Tests.Unit.SerilogFileLoggerFactoryTests&lt;/TestId&gt;&#xD;
+    &lt;/TestAncestor&gt;&#xD;
+    &lt;Project Location="V:\Code\.multi\SlideGenerator\backend\tests\SlideGenerator.Stdio.Tests" Presentation="&amp;lt;Tests&amp;gt;\&amp;lt;Application&amp;gt;\&amp;lt;SlideGenerator.Stdio.Tests&amp;gt;" /&gt;&#xD;
   &lt;/Or&gt;&#xD;
 &lt;/SessionState&gt;</s:String>
 	

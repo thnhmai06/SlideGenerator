@@ -40,14 +40,14 @@ public enum GeneratingEvent
 /// <remarks>
 ///     <para>
 ///         This interface is owned by the <c>Pipeline</c> module (the publisher).
-///         The concrete implementation — <c>WorkflowEventBus</c> — lives in <c>SlideGenerator.Ipc</c>
+///         The concrete implementation — <c>WorkflowEventBus</c> — lives in <c>SlideGenerator.Stdio</c>
 ///         and forwards events as <c>workflow/progress</c> JSON-RPC notifications.
 ///     </para>
 ///     <para>
 ///         This decoupling satisfies <c>dep-interface-ownership</c>: the interface belongs to
 ///         the module that uses it, not the module that implements it.
-///         <c>SlideGenerator.Ipc</c> depends inward on <c>SlideGenerator.Pipeline</c>;
-///         <c>SlideGenerator.Pipeline</c> never references <c>SlideGenerator.Ipc</c>.
+///         <c>SlideGenerator.Stdio</c> depends inward on <c>SlideGenerator.Pipeline</c>;
+///         <c>SlideGenerator.Pipeline</c> never references <c>SlideGenerator.Stdio</c>.
 ///     </para>
 /// </remarks>
 public interface IGeneratingEventBus

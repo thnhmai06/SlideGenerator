@@ -50,7 +50,8 @@ internal static class StepHelper
     ///     Like <see cref="CreateContextPair" /> but also returns the underlying <see cref="ILogger" />
     ///     substitute so tests can assert on logged calls.
     /// </summary>
-    internal static (IStepExecutionContext Ctx, GeneratingContext Data, ILogger MockLogger) CreateContextPairWithLogger()
+    internal static (IStepExecutionContext Ctx, GeneratingContext Data, ILogger MockLogger)
+        CreateContextPairWithLogger()
     {
         var mockLogger = Substitute.For<ILogger>();
         var mockLoggerFactory = Substitute.For<ILoggerFactory>();

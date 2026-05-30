@@ -2,7 +2,7 @@
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Ipc
+ * Project: SlideGenerator.Stdio
  * File: RecipeHandler.cs
  *
  * This file is part of this solution. You can find the full source code here: https://github.com/thnhmai06/SlideGenerator
@@ -21,7 +21,7 @@ using SlideGenerator.Generator.Application.Abstractions;
 using SlideGenerator.Recipe.Application.Abstractions;
 using SlideGenerator.Recipe.Domain.Models;
 
-namespace SlideGenerator.Ipc.Handlers;
+namespace SlideGenerator.Stdio.Handlers;
 
 /// <summary>
 ///     Handles all <c>recipe.*</c> JSON-RPC methods.

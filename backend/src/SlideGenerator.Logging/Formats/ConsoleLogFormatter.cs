@@ -34,6 +34,14 @@ namespace SlideGenerator.Logging.Formats;
 /// </remarks>
 public sealed class ConsoleLogFormatter : ITextFormatter
 {
+    private const string Reset = "\e[0m";
+    private const string Gray = "\e[37m";
+    private const string DarkGray = "\e[90m";
+    private const string Blue = "\e[34m";
+    private const string Yellow = "\e[33m";
+    private const string Red = "\e[31m";
+    private const string Magenta = "\e[35m";
+
     /// <inheritdoc />
     public void Format(LogEvent logEvent, TextWriter output)
     {
@@ -48,6 +56,16 @@ public sealed class ConsoleLogFormatter : ITextFormatter
             LogEventLevel.Fatal => "FTL",
             _ => "???"
         };
+        var levelColor = logEvent.Level switch
+        {
+            LogEventLevel.Verbose => DarkGray,
+            LogEventLevel.Debug => Gray,
+            LogEventLevel.Information => Blue,
+            LogEventLevel.Warning => Yellow,
+            LogEventLevel.Error => Red,
+            LogEventLevel.Fatal => Magenta,
+            _ => Reset
+        };
 
         var loggerName = logEvent.GetScalarValue("LoggerName")
                          ?? logEvent.GetScalarValue("SourceContext")
@@ -55,14 +73,14 @@ public sealed class ConsoleLogFormatter : ITextFormatter
         var scope = logEvent.GetScalarValue("Scope") ?? "Global";
         var message = logEvent.RenderMessage(CultureInfo.InvariantCulture);
 
-        output.WriteLine($"[{timestamp}] [{loggerName}/{scope}] {levelAbbr}: {message}");
+        output.WriteLine($"[{timestamp}] [{loggerName}/{scope}] {levelColor}{levelAbbr}: {message}{Reset}");
 
         if (logEvent.Exception is null || logEvent.Level < LogEventLevel.Warning) return;
 
         var ex = logEvent.Exception;
         while (ex is not null)
         {
-            output.WriteLine($"  ! {ex.GetType().Name}: {ex.Message}");
+            output.WriteLine($"  {levelColor}!{Reset} {ex.GetType().Name}: {ex.Message}");
             ex = ex.InnerException;
         }
     }

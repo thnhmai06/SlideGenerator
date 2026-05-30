@@ -108,7 +108,7 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
         using (var zos = new ZipOutputStream(fs))
         {
             zos.SetLevel(0);
-            zos.PutNextEntry(new ZipEntry("Workbooks/data.xlsx") { DateTime = DateTime.UtcNow });
+            await zos.PutNextEntryAsync(new ZipEntry("Workbooks/data.xlsx") { DateTime = DateTime.UtcNow });
             var data = Encoding.UTF8.GetBytes("placeholder");
             zos.Write(data, 0, data.Length);
             zos.CloseEntry();
@@ -164,12 +164,12 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
         using (var zos = new ZipOutputStream(fs))
         {
             zos.SetLevel(0);
-            zos.PutNextEntry(new ZipEntry("recipe.json") { DateTime = DateTime.UtcNow });
+            await zos.PutNextEntryAsync(new ZipEntry("recipe.json") { DateTime = DateTime.UtcNow });
             var recipeBytes = "{}"u8.ToArray();
             zos.Write(recipeBytes, 0, recipeBytes.Length);
             zos.CloseEntry();
 
-            zos.PutNextEntry(new ZipEntry(maliciousEntryName) { DateTime = DateTime.UtcNow });
+            await zos.PutNextEntryAsync(new ZipEntry(maliciousEntryName) { DateTime = DateTime.UtcNow });
             zos.Write(maliciousPayload, 0, maliciousPayload.Length);
             zos.CloseEntry();
             zos.Finish();
@@ -227,12 +227,12 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
         using (var zos = new ZipOutputStream(fs))
         {
             zos.SetLevel(0);
-            zos.PutNextEntry(new ZipEntry("recipe.json") { DateTime = DateTime.UtcNow });
+            await zos.PutNextEntryAsync(new ZipEntry("recipe.json") { DateTime = DateTime.UtcNow });
             var recipeBytes = "{}"u8.ToArray();
             zos.Write(recipeBytes, 0, recipeBytes.Length);
             zos.CloseEntry();
 
-            zos.PutNextEntry(new ZipEntry(maliciousEntryName) { DateTime = DateTime.UtcNow });
+            await zos.PutNextEntryAsync(new ZipEntry(maliciousEntryName) { DateTime = DateTime.UtcNow });
             zos.Write("payload"u8.ToArray(), 0, 7);
             zos.CloseEntry();
             zos.Finish();

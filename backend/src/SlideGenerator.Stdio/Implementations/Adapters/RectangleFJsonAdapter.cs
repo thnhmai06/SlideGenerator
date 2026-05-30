@@ -2,7 +2,7 @@
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Ipc
+ * Project: SlideGenerator.Stdio
  * File: RectangleFJsonAdapter.cs
  *
  * This file is part of this solution. You can find the full source code here: https://github.com/thnhmai06/SlideGenerator
@@ -21,7 +21,7 @@ using System.Drawing;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace SlideGenerator.Ipc.Infrastructure.Adapters;
+namespace SlideGenerator.Stdio.Implementations.Adapters;
 
 /// <summary>
 ///     A <see cref="JsonConverter{T}" /> for <see cref="RectangleF" /> that serializes to and

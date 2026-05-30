@@ -2,7 +2,7 @@
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Ipc
+ * Project: SlideGenerator.Stdio
  * File: Program.Services.cs
  *
  * This file is part of this solution. You can find the full source code here: https://github.com/thnhmai06/SlideGenerator
@@ -20,7 +20,6 @@
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Events;
 using Serilog.Exceptions;
@@ -30,16 +29,14 @@ using SlideGenerator.Cryptography.Injection;
 using SlideGenerator.Document.Injection;
 using SlideGenerator.Generator.Injection;
 using SlideGenerator.Image.Injection;
-using SlideGenerator.Ipc.Injection;
 using SlideGenerator.Logging;
 using SlideGenerator.Recipe.Injection;
 using SlideGenerator.Settings.Application.Abstractions;
 using SlideGenerator.Settings.Domain.Rules;
 using SlideGenerator.Settings.Injection;
 using SlideGenerator.Summarization.Injection;
-using ILogger = Microsoft.Extensions.Logging.ILogger;
 
-namespace SlideGenerator.Ipc;
+namespace SlideGenerator.Stdio;
 
 internal static partial class Program
 {
@@ -61,9 +58,9 @@ internal static partial class Program
     ///     <see cref="StreamJsonRpc.JsonRpc" /> is not registered — it requires stream access available only after host
     ///     construction.
     /// </summary>
-    private static void ConfigureServices(IServiceCollection services, ILogger? systemLogger)
+    private static void ConfigureServices(IServiceCollection services)
     {
-        systemLogger?.LogInformation("Registering core services...");
+        Log.Information("Registering Foundation services...");
         services.AddTransient(sp =>
         {
             var cfg = sp.GetRequiredService<IConfiguration>();
@@ -75,18 +72,18 @@ internal static partial class Program
         });
         services.AddLoggingServices();
         services.AddCryptographyServices();
-
-        systemLogger?.LogInformation("Registering domain modules...");
         services.AddSettingsServices();
-        services.AddDocumentServices();
         services.AddCoordinatorServices();
         services.AddCloudServices();
-        services.AddImageServices();
-        services.AddGeneratorServices();
-        services.AddSummarizationServices();
-        services.AddRecipeServices();
 
-        systemLogger?.LogInformation("Registering workflow and IPC infrastructure...");
+        Log.Information("Registering Domain services...");
+        services.AddDocumentServices();
+        services.AddImageServices();
+        services.AddRecipeServices();
+        services.AddSummarizationServices();
+
+        Log.Information("Registering Application services...");
+        services.AddGeneratorServices();
         services.AddWorkflow(x => x.UseSqlite(NameAndPaths.WorkflowsFile.ConnectionString, true));
         services.AddIpcServices();
     }

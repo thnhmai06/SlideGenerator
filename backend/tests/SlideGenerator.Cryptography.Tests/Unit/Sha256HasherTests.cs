@@ -19,7 +19,6 @@
 
 using System.Text;
 using FluentAssertions;
-using SlideGenerator.Cryptography.Application.Services;
 using SlideGenerator.Cryptography.Infrastructure;
 using Xunit;
 

@@ -28,14 +28,14 @@ namespace SlideGenerator.Settings.Domain.Rules;
 public static class NameAndPaths
 {
     /// <summary>The official application name.</summary>
-    private const string AppName = "SlideGenerator";
+    public const string AppName = "SlideGenerator";
 
     /// <summary>
     ///     Gets the base path for user-specific application data.
     /// </summary>
-    public static string UserPath =>
+    private static string UserPath =>
         Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), // AppData/Local
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), // %LOCALAPPDATA%
             AppName);
 
     /// <summary>
@@ -49,8 +49,21 @@ public static class NameAndPaths
     public static void InitializeDirectories()
     {
         Directory.CreateDirectory(UserPath);
-        Directory.CreateDirectory(LogsFolder.System);
-        Directory.CreateDirectory(LogsFolder.Workflows);
+        Directory.CreateDirectory(LogsFolder.SystemPath);
+        Directory.CreateDirectory(LogsFolder.WorkflowPath);
+    }
+
+    public static class AppLocker
+    {
+        /// <summary>
+        ///     Gets the name of the system-wide mutex used for single-instance detection.
+        /// </summary>
+        public static string MutexName => $"{AppName}-SingleInstance";
+        
+        /// <summary>
+        ///     Gets the path to the single-instance PID lock file.
+        /// </summary>
+        public static string PidPath => Path.Combine(UserPath, $"{AppName}.pid");
     }
 
     /// <summary>
@@ -61,12 +74,12 @@ public static class NameAndPaths
         /// <summary>
         ///     Represents the path to the folder designated for storing system logs.
         /// </summary>
-        public static string System => Path.Combine(UserPath, "Logs", "System");
+        public static string SystemPath => Path.Combine(UserPath, "Logs", "System");
 
         /// <summary>
         ///     Represents the predefined folder path for storing workflow logs.
         /// </summary>
-        public static string Workflows => Path.Combine(UserPath, "Logs", "Workflows");
+        public static string WorkflowPath => Path.Combine(UserPath, "Logs", "Workflows");
     }
 
     /// <summary>
@@ -74,12 +87,12 @@ public static class NameAndPaths
     /// </summary>
     public static class AssetsFolder
     {
-        private static string DefaultAssetsPath => Path.Combine(UserPath, "Assets");
+        private static string DefaultPath => Path.Combine(UserPath, "Assets");
 
         public static string GetDownloadDir(string? assetsPath, string bookPath, string sheetName, string colName,
             IHashPathRegistry registry)
         {
-            assetsPath ??= DefaultAssetsPath;
+            assetsPath ??= DefaultPath;
             var bookName = Path.GetFileNameWithoutExtension(bookPath);
             var hash = registry.GetShortHash(bookPath);
             var bookFolder = $"{Naming.SanitizeFileName(bookName)}_{hash}";
@@ -91,7 +104,7 @@ public static class NameAndPaths
         public static string GetEditDir(string? assetsPath, string bookPath, string sheetName, string colName,
             IHashPathRegistry registry)
         {
-            assetsPath ??= DefaultAssetsPath;
+            assetsPath ??= DefaultPath;
             var bookName = Path.GetFileNameWithoutExtension(bookPath);
             var hash = registry.GetShortHash(bookPath);
             var bookFolder = $"{Naming.SanitizeFileName(bookName)}_{hash}";
@@ -132,7 +145,7 @@ public static class NameAndPaths
         /// <summary>
         ///     Gets the full path to the SQLite database used for workflow persistence.
         /// </summary>
-        private static string FilePath => Path.Combine(UserPath, $"{FileName}.db");
+        public static string FilePath => Path.Combine(UserPath, $"{FileName}.db");
 
         /// <summary>
         ///     Gets the SQLite connection string for the workflow persistence database.
@@ -150,7 +163,7 @@ public static class NameAndPaths
         /// <summary>
         ///     Gets the full path to the SQLite database used for recipe storage.
         /// </summary>
-        private static string FilePath => Path.Combine(UserPath, $"{FileName}.db");
+        public static string FilePath => Path.Combine(UserPath, $"{FileName}.db");
 
         /// <summary>
         ///     Gets the SQLite connection string for the recipe database.

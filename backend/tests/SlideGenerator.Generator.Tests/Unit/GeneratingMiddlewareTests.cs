@@ -19,16 +19,16 @@
 
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
-using Xunit;
 using NSubstitute;
 using SlideGenerator.Coordinator.Application.Abstractions;
 using SlideGenerator.Document.Domain.Models.Slide;
 using SlideGenerator.Generator.Domain.Models;
 using SlideGenerator.Generator.Domain.Models.Contexts;
 using SlideGenerator.Generator.Infrastructure.Middleware;
-using SlideGenerator.Logging.Domain.Abstractions;
+using SlideGenerator.Logging.Abstractions;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
+using Xunit;
 
 namespace SlideGenerator.Generator.Tests.Unit;
 
@@ -37,15 +37,17 @@ namespace SlideGenerator.Generator.Tests.Unit;
 /// </summary>
 public sealed class GeneratingMiddlewareTests
 {
-    private readonly IFileLoggerFactory _fileLoggerFactory = Substitute.For<IFileLoggerFactory>();
-    private readonly ICoordinatorFactory _coordinatorFactory = Substitute.For<ICoordinatorFactory>();
-    private readonly IStepBody _body = Substitute.For<IStepBody>();
-
     private static readonly WorkflowStepDelegate NextResult =
         () => Task.FromResult(ExecutionResult.Next());
 
+    private readonly IStepBody _body = Substitute.For<IStepBody>();
+    private readonly ICoordinatorFactory _coordinatorFactory = Substitute.For<ICoordinatorFactory>();
+    private readonly IFileLoggerFactory _fileLoggerFactory = Substitute.For<IFileLoggerFactory>();
+
     private GeneratingMiddleware CreateMiddleware()
-        => new(_fileLoggerFactory, _coordinatorFactory);
+    {
+        return new GeneratingMiddleware(_fileLoggerFactory, _coordinatorFactory);
+    }
 
     private static (IStepExecutionContext Context, GeneratingContext Data) CreateGeneratingContext()
     {

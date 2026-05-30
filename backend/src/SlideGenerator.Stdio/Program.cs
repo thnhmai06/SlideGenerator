@@ -2,7 +2,7 @@
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Ipc
+ * Project: SlideGenerator.Stdio
  * File: Program.cs
  *
  * This file is part of this solution. You can find the full source code here: https://github.com/thnhmai06/SlideGenerator
@@ -19,17 +19,14 @@
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Events;
 using Serilog.Exceptions;
-using Serilog.Extensions.Logging;
-using SlideGenerator.Ipc.Infrastructure;
 using SlideGenerator.Logging.Formats;
 using SlideGenerator.Settings.Domain.Rules;
-using ILogger = Microsoft.Extensions.Logging.ILogger;
+using SlideGenerator.Stdio.Implementations;
 
-namespace SlideGenerator.Ipc;
+namespace SlideGenerator.Stdio;
 
 /// <summary>
 ///     Application entry point for the JSON-RPC 2.0 IPC sidecar.
@@ -39,8 +36,10 @@ namespace SlideGenerator.Ipc;
 internal static partial class Program
 {
     public static readonly DateTime StartupTime = DateTime.UtcNow;
-    private static ILogger? _systemLogger;
     private static string? _logFilePath;
+
+    private static readonly Lazy<SingleInstanceLock> InstanceLock = new(() =>
+        new SingleInstanceLock(NameAndPaths.AppLocker.MutexName, NameAndPaths.AppLocker.PidPath));
 
     /// <summary>Application entry point.</summary>
     /// <param name="args">Command-line arguments passed by the Tauri sidecar launcher.</param>
@@ -55,16 +54,17 @@ internal static partial class Program
             .AddCommandLine(args)
             .Build();
 
+        EnsureSingleInstance();
         BootstrapSystemLogger(bootstrapConfiguration);
         PrintWelcomeMessage();
 
         try
         {
-            _systemLogger!.LogInformation("Application starting...");
+            Log.Information("Application starting... (PID: {ProcessId})", Environment.ProcessId);
             RegisterExceptionHandlers();
 
             var builder = Host.CreateApplicationBuilder(args);
-            ConfigureServices(builder.Services, _systemLogger);
+            ConfigureServices(builder.Services);
             using var host = builder.Build();
 
             RegisterCtrlCHandler(host);
@@ -75,7 +75,7 @@ internal static partial class Program
         }
         catch (Exception ex)
         {
-            _systemLogger!.LogCritical(ex, "Fatal exception in Main");
+            Log.Fatal(ex, "Fatal exception in Main");
 #if DEBUG
             throw;
 #else
@@ -84,6 +84,8 @@ internal static partial class Program
         }
         finally
         {
+            if (InstanceLock.IsValueCreated) InstanceLock.Value.Dispose();
+            Log.Information("Goodbye!");
             await Log.CloseAndFlushAsync().ConfigureAwait(false);
         }
 
@@ -91,12 +93,27 @@ internal static partial class Program
     }
 
     /// <summary>
-    ///     Configures the global Serilog logger (file + stderr sinks) and sets <see cref="_systemLogger" />
-    ///     for pre-DI logging. Must be called before <see cref="ConfigureServices" />.
+    ///     Ensures only one instance of the application runs at a time.
+    ///     A named <see cref="Mutex" /> is the authoritative lock; a PID file records the owner's process ID
+    ///     so a second instance can display it before exiting.
+    ///     Exits immediately without creating a log file if another instance is detected.
+    /// </summary>
+    private static void EnsureSingleInstance()
+    {
+        if (InstanceLock.Value.TryAcquire()) return;
+
+        var pid = InstanceLock.Value.ReadPid();
+        Console.Error.WriteLine($"{NameAndPaths.AppName} is already running with PID: {pid}. Exiting.");
+        Environment.Exit(1);
+    }
+
+    /// <summary>
+    ///     Configures the global Serilog logger (file + stderr sinks) for pre-DI logging.
+    ///     Must be called before <see cref="ConfigureServices" />.
     /// </summary>
     private static void BootstrapSystemLogger(IConfiguration configuration)
     {
-        var systemLogDirectory = NameAndPaths.LogsFolder.System;
+        var systemLogDirectory = NameAndPaths.LogsFolder.SystemPath;
         Directory.CreateDirectory(systemLogDirectory);
         _logFilePath = Path.Combine(systemLogDirectory, $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.log");
 
@@ -112,6 +129,5 @@ internal static partial class Program
             .CreateLogger();
 
         Log.Logger = serilogLogger;
-        _systemLogger = new SerilogLoggerFactory(serilogLogger).CreateLogger("System");
     }
 }

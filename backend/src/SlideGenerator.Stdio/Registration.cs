@@ -2,7 +2,7 @@
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Ipc
+ * Project: SlideGenerator.Stdio
  * File: Registration.cs
  *
  * This file is part of this solution. You can find the full source code here: https://github.com/thnhmai06/SlideGenerator
@@ -19,10 +19,10 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using SlideGenerator.Generator.Application.Abstractions;
-using SlideGenerator.Ipc.Handlers;
-using SlideGenerator.Ipc.Infrastructure;
+using SlideGenerator.Stdio.Handlers;
+using SlideGenerator.Stdio.Implementations;
 
-namespace SlideGenerator.Ipc.Injection;
+namespace SlideGenerator.Stdio;
 
 /// <summary>
 ///     Provides extension methods to register all IPC infrastructure and handler services

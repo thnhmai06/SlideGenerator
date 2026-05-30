@@ -2,8 +2,8 @@
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Ipc
- * File: WelcomeMessages.cs
+ * Project: SlideGenerator.Stdio
+ * File: Metadata.cs
  *
  * This file is part of this solution. You can find the full source code here: https://github.com/thnhmai06/SlideGenerator
  *
@@ -19,10 +19,10 @@
 
 using System.Reflection;
 
-namespace SlideGenerator.Ipc;
+namespace SlideGenerator.Stdio;
 
 // Don't ask why.
-internal static class WelcomeMessages
+internal static class Metadata
 {
     public const string Name =
         """

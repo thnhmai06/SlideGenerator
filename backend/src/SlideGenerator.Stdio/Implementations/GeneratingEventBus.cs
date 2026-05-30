@@ -2,7 +2,7 @@
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Ipc
+ * Project: SlideGenerator.Stdio
  * File: GeneratingEventBus.cs
  *
  * This file is part of this solution. You can find the full source code here: https://github.com/thnhmai06/SlideGenerator
@@ -20,7 +20,7 @@
 using SlideGenerator.Generator.Application.Abstractions;
 using SlideGenerator.Generator.Domain.Models;
 
-namespace SlideGenerator.Ipc.Infrastructure;
+namespace SlideGenerator.Stdio.Implementations;
 
 /// <summary>
 ///     A lightweight, in-process event bus for workflow progress notifications.

@@ -5,13 +5,16 @@
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <RootNamespace>SlideGenerator.Ipc</RootNamespace>
-        <AssemblyName>SlideGenerator.Ipc</AssemblyName>
         <IsPackable>false</IsPackable>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <WarningsAsErrors>CS1591</WarningsAsErrors>
         <ApplicationIcon>Assets\appicon.ico</ApplicationIcon>
+        <PackageId>SlideGenerator.Stdio</PackageId>
     </PropertyGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="SlideGenerator.Stdio.Tests"/>
+    </ItemGroup>
 
     <ItemGroup>
         <EmbeddedResource Include="Assets\appicon.ico">

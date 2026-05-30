@@ -2,7 +2,7 @@
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Ipc
+ * Project: SlideGenerator.Stdio
  * File: SummarizationHandler.cs
  *
  * This file is part of this solution. You can find the full source code here: https://github.com/thnhmai06/SlideGenerator
@@ -25,7 +25,7 @@ using SlideGenerator.Summarization.Domain.Models.Recipes;
 using SlideGenerator.Summarization.Domain.Models.Sheet;
 using SlideGenerator.Summarization.Domain.Models.Slide;
 
-namespace SlideGenerator.Ipc.Handlers;
+namespace SlideGenerator.Stdio.Handlers;
 
 /// <summary>
 ///     Handles all <c>summarization.*</c> JSON-RPC methods for inspecting Excel workbooks,

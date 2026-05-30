@@ -48,13 +48,10 @@ public sealed class CreateTemplate(
         var logger = data.LoggerFactory!.CreateLogger(nameof(CreateTemplate));
 
         if (!data.ValidWorksheets.TryGetValue(Item.Sheet, out var worksheet))
-        {
             logger.LogError(
                 new KeyNotFoundException($"Worksheet '{Item.Sheet.SheetName}' was not found in validated results."),
                 "CreateTemplate validation failed for sheet {SheetName}", Item.Sheet.SheetName);
-        }
         else
-        {
             try
             {
                 logger.LogInformation("Initializing output template for sheet {SheetName}",
@@ -71,7 +68,6 @@ public sealed class CreateTemplate(
                 logger.LogError(ex, "CreateTemplate execution failed for sheet {SheetName}",
                     worksheet.Identifier.SheetName);
             }
-        }
 
         return ExecutionResult.Next();
     }

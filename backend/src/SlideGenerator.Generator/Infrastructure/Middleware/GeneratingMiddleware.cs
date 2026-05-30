@@ -19,7 +19,7 @@
 
 using SlideGenerator.Coordinator.Application.Abstractions;
 using SlideGenerator.Generator.Domain.Models.Contexts;
-using SlideGenerator.Logging.Domain.Abstractions;
+using SlideGenerator.Logging.Abstractions;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
 
@@ -41,7 +41,7 @@ internal sealed class GeneratingMiddleware(
 
         data.LoggerFactory ??= fileLoggerFactory.CreateFile(
             data.WorkflowLogPath,
-            scope: $"Workflow/{data.WorkflowScope}");
+            $"Workflow/{data.WorkflowScope}");
         data.AssetCoordinator ??= coordinatorFactory.Create();
 
         return await next();

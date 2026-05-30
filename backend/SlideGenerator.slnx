@@ -16,7 +16,7 @@
     <Folder Name="/Sources/" />
     <Folder Name="/Sources/Application/">
         <Project Path="src/SlideGenerator.Generator/SlideGenerator.Generator.csproj" />
-        <Project Path="src/SlideGenerator.Ipc/SlideGenerator.Ipc.csproj" />
+        <Project Path="src/SlideGenerator.Stdio/SlideGenerator.Stdio.csproj" />
     </Folder>
     <Folder Name="/Tests/Foundation/">
         <Project Path="tests/SlideGenerator.Utilities.Tests/SlideGenerator.Utilities.Tests.csproj" />
@@ -34,5 +34,6 @@
     <Folder Name="/Tests/" />
     <Folder Name="/Tests/Application/">
         <Project Path="tests/SlideGenerator.Generator.Tests/SlideGenerator.Generator.Tests.csproj" />
+        <Project Path="tests/SlideGenerator.Stdio.Tests/SlideGenerator.Stdio.Tests.csproj" />
     </Folder>
 </Solution>
