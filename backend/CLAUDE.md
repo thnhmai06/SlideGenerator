@@ -419,6 +419,37 @@ Injection/
 - Class names: max three words.
 - Use `#region`/`#endregion` to delimit logical sections within a file — never plain `//` comments for section separation.
 
+## Security Patterns (CodeQL)
+
+CodeQL config lives at `.github/codeql/codeql-config.yml` and excludes `backend/tests/**` — test fixtures use deliberate hardcoded paths and are not production code.
+
+### Path injection (`cs/path-injection`)
+
+`Path.GetFullPath()` is CodeQL's recognized sanitizer. Apply it at every entry point that receives a user-supplied path:
+
+```csharp
+// method entry — breaks taint chain
+filePath = Path.GetFullPath(filePath);
+```
+
+`NameAndPaths.UserPath` (the `%LOCALAPPDATA%\SlideGenerator` root) is already wrapped with `Path.GetFullPath` so all derived paths inherit the sanitization. **Do not remove that wrapper.**
+
+### Resource injection (`cs/resource-injection`)
+
+SQLite connection strings must use `SqliteConnectionStringBuilder`, not string interpolation — the interpolation is what CodeQL tracks:
+
+```csharp
+// ✅
+new SqliteConnectionStringBuilder { DataSource = filePath }.ConnectionString
+
+// ❌ — trips cs/resource-injection even with sanitized filePath
+$"Data Source={filePath}"
+```
+
+### Log forging (`cs/log-forging`)
+
+Strip line endings from path values before logging. `SettingManager` has a `private static string L(string? s)` helper for this; replicate the pattern in any new service that logs file paths from external input.
+
 ## Invariants Checklist
 
 - [ ] Each module has `Injection/Registration.cs` with DI setup
@@ -432,3 +463,5 @@ Injection/
 - [ ] All public APIs have XML documentation comments
 - [ ] IPC methods with a DTO param use `UseSingleObjectParameterDeserialization = true` (via the `Attr()` helper in `Program.cs`)
 - [ ] Serilog never writes to stdout — stderr only
+- [ ] User-supplied file paths go through `Path.GetFullPath()` at method entry
+- [ ] SQLite connection strings use `SqliteConnectionStringBuilder`, not string interpolation
