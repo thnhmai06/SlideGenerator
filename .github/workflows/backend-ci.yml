@@ -168,7 +168,7 @@ jobs:
         working-directory: backend
         run: dotnet build SlideGenerator.slnx --no-restore
 
-      # ── Foundation: Utilities, Cryptography, Cloud, Settings ───────────────
+      # ── Foundation: Utilities, Cryptography, Cloud, Coordinator, Logging, Document, Image ──
       - name: "Test [Foundation] / Utilities"
         if: >-
           always() && steps.build.outcome == 'success' &&
@@ -208,21 +208,7 @@ jobs:
           --logger "trx;LogFilePrefix=SlideGenerator.Cloud.Tests"
           --results-directory TestResults
 
-      - name: "Test [Foundation] / Settings"
-        if: >-
-          always() && steps.build.outcome == 'success' &&
-          (needs.ci-gate.outputs.full-ci == 'true' ||
-           contains(fromJson(needs.ci-gate.outputs.affected || '[]'), 'SlideGenerator.Settings.Tests'))
-        working-directory: backend
-        run: >-
-          dotnet test
-          tests/SlideGenerator.Settings.Tests/SlideGenerator.Settings.Tests.csproj
-          --no-build
-          --logger "trx;LogFilePrefix=SlideGenerator.Settings.Tests"
-          --results-directory TestResults
-
-      # ── Domain: Coordinator, Document ──────────────────────────────────────
-      - name: "Test [Domain] / Coordinator"
+      - name: "Test [Foundation] / Coordinator"
         if: >-
           always() && steps.build.outcome == 'success' &&
           (needs.ci-gate.outputs.full-ci == 'true' ||
@@ -235,7 +221,7 @@ jobs:
           --logger "trx;LogFilePrefix=SlideGenerator.Coordinator.Tests"
           --results-directory TestResults
 
-      - name: "Test [Domain] / Document"
+      - name: "Test [Foundation] / Document"
         if: >-
           always() && steps.build.outcome == 'success' &&
           (needs.ci-gate.outputs.full-ci == 'true' ||
@@ -248,8 +234,7 @@ jobs:
           --logger "trx;LogFilePrefix=SlideGenerator.Document.Tests"
           --results-directory TestResults
 
-      # ── Application: Image, Recipe, Generator, Stdio ───────────────────────
-      - name: "Test [Application] / Image"
+      - name: "Test [Foundation] / Image"
         if: >-
           always() && steps.build.outcome == 'success' &&
           (needs.ci-gate.outputs.full-ci == 'true' ||
@@ -262,7 +247,22 @@ jobs:
           --logger "trx;LogFilePrefix=SlideGenerator.Image.Tests"
           --results-directory TestResults
 
-      - name: "Test [Application] / Recipe"
+      # ── Domain: Settings, Recipe ──────────────────────────────────────────────
+
+      - name: "Test [Domain] / Settings"
+        if: >-
+          always() && steps.build.outcome == 'success' &&
+          (needs.ci-gate.outputs.full-ci == 'true' ||
+           contains(fromJson(needs.ci-gate.outputs.affected || '[]'), 'SlideGenerator.Settings.Tests'))
+        working-directory: backend
+        run: >-
+          dotnet test
+          tests/SlideGenerator.Settings.Tests/SlideGenerator.Settings.Tests.csproj
+          --no-build
+          --logger "trx;LogFilePrefix=SlideGenerator.Settings.Tests"
+          --results-directory TestResults
+
+      - name: "Test [Domain] / Recipe"
         if: >-
           always() && steps.build.outcome == 'success' &&
           (needs.ci-gate.outputs.full-ci == 'true' ||
@@ -274,6 +274,8 @@ jobs:
           --no-build
           --logger "trx;LogFilePrefix=SlideGenerator.Recipe.Tests"
           --results-directory TestResults
+          
+      # ── Application: Generator, Stdio ───────────────────────
 
       - name: "Test [Application] / Generator"
         if: >-

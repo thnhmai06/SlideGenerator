@@ -130,24 +130,20 @@ SlideGenerator automates PowerPoint generation from Excel data and templates. It
 ```
 Foundation Modules
 ├── SlideGenerator.Utilities     - Shared utilities (string normalization, helpers)
-├── SlideGenerator.Settings      - YAML-based configuration; ISettingProvider
-└── SlideGenerator.Cloud         - Multi-cloud URI resolver (Google Drive, OneDrive, SharePoint)
-
-Core Services
+├── SlideGenerator.Cloud         - Multi-cloud URI resolver (Google Drive, OneDrive, SharePoint)
 ├── SlideGenerator.Cryptography  - AES-256 encryption + file hash registry
 ├── SlideGenerator.Coordinator   - Concurrency throttling; IGateLocker<TGate> + GateLocker<TGate>
+├── SlideGenerator.Logging       - Serilog: IAppLogger, IFileLoggerFactory, ISystemLogger
 ├── SlideGenerator.Document      - Syncfusion Excel/PowerPoint abstractions + Mustache template engine
-└── SlideGenerator.Logging       - Serilog: IAppLogger, IFileLoggerFactory, ISystemLogger
-
-Feature Modules
 └── SlideGenerator.Image         - MagickImage processing; ROI + face detection (OpenCV YuNet)
 
-Orchestration
+Domain Modules
+├── SlideGenerator.Settings      - YAML-based configuration; ISettingProvider
 ├── SlideGenerator.Summarization - Workbook/presentation/recipe metadata scanner
-├── SlideGenerator.Recipe        - Recipe CRUD (SQLite) + export/import (*.recipe zip packages)
-└── SlideGenerator.Generator     - WorkflowCore generating pipeline (3-phase workflow)
+└── SlideGenerator.Recipe        - Recipe CRUD (SQLite) + export/import (*.recipe zip packages)
 
-Entry Point
+Application
+├── SlideGenerator.Generator     - WorkflowCore generating pipeline (3-phase workflow)
 └── SlideGenerator.Stdio         - JSON-RPC 2.0 IPC sidecar (StreamJsonRpc over stdin/stdout)
 ```
 
