@@ -100,10 +100,10 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
         _cleanupFiles.Add(zipPath);
 
         await using (var fs = File.Create(zipPath))
-        using (var zos = new ZipOutputStream(fs))
+        await using (var zos = new ZipOutputStream(fs))
         {
             zos.SetLevel(0);
-            await zos.PutNextEntryAsync(new ZipEntry("Workbooks/data.xlsx") { DateTime = DateTime.UtcNow });
+            await zos.PutNextEntryAsync(new ZipEntry("Workbooks/data.xlsx") { DateTime = DateTime.UtcNow }, TestContext.Current.CancellationToken);
             var data = Encoding.UTF8.GetBytes("placeholder");
             zos.Write(data, 0, data.Length);
             zos.CloseEntry();
@@ -124,9 +124,9 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
     ///     SECURITY BUG (CRITICAL, CWE-22): <see cref="RecipeRepository.ImportAsync" /> blindly
     ///     trusts the entry names inside the archive. An attacker who controls the recipe file
     ///     can place entries such as <c>Workbooks/../../escape.txt</c>; the code strips the
-    ///     <c>Workbooks/</c> prefix, then calls <see cref="Path.Combine" /> with the remaining
+    ///     <c>Workbooks/</c> prefix, then calls <see cref="Path.Combine(string, string)" /> with the remaining
     ///     <c>../../escape.txt</c>, producing a path <b>outside</b> <c>workbooksDirectory</c>.
-    ///     The file is then written there with <see cref="File.Create" />.
+    ///     The file is then written there with <see cref="File.Create(string)" />.
     ///     <para>
     ///         This test crafts such an archive and verifies that no file is created outside the
     ///         sandbox. It <b>fails on the current implementation</b> because the file escapes.
@@ -156,34 +156,30 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
         _cleanupFiles.Add(zipPath);
 
         await using (var fs = File.Create(zipPath))
-        using (var zos = new ZipOutputStream(fs))
+        await using (var zos = new ZipOutputStream(fs))
         {
             zos.SetLevel(0);
-            await zos.PutNextEntryAsync(new ZipEntry("recipe.json") { DateTime = DateTime.UtcNow });
+            await zos.PutNextEntryAsync(new ZipEntry("recipe.json") { DateTime = DateTime.UtcNow }, TestContext.Current.CancellationToken);
             var recipeBytes = "{}"u8.ToArray();
             zos.Write(recipeBytes, 0, recipeBytes.Length);
             zos.CloseEntry();
 
-            await zos.PutNextEntryAsync(new ZipEntry(maliciousEntryName) { DateTime = DateTime.UtcNow });
+            await zos.PutNextEntryAsync(new ZipEntry(maliciousEntryName) { DateTime = DateTime.UtcNow }, TestContext.Current.CancellationToken);
             zos.Write(maliciousPayload, 0, maliciousPayload.Length);
             zos.CloseEntry();
             zos.Finish();
         }
 
-        // Act — ImportAsync must reject the malicious entry. Either throws, or silently skips —
-        // in either case nothing may escape the sandbox.
-        var act = async () => await _repo.ImportAsync(zipPath, null, workbooksDir, presentationsDir,
-            TestContext.Current.CancellationToken);
         try
         {
-            await act();
+            await Act();
         }
         catch (InvalidDataException)
         {
             /* expected after fix */
         }
 
-        // Assert — the victim file must NOT exist; nothing must escape the workbooks sandbox.
+        // Assert — the victim file must NOT exist; nothing must escape the workbook sandbox.
         var escapedFile = Path.Combine(victimDir, "pwned.txt");
         File.Exists(escapedFile).Should().BeFalse(
             "ImportAsync must reject or sanitize entries whose resolved path escapes the workbooks directory");
@@ -194,6 +190,11 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
             : [];
         foreach (var w in writtenUnderWorkbooks)
             Path.GetFullPath(w).Should().StartWith(Path.GetFullPath(workbooksDir));
+        return;
+
+        // Act — ImportAsync must reject the malicious entry. Either throws or silently skips —
+        // in either case nothing may escape the sandbox.
+        async Task Act() => await _repo.ImportAsync(zipPath, null, workbooksDir, presentationsDir, TestContext.Current.CancellationToken);
     }
 
     /// <summary>
@@ -219,25 +220,23 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
         _cleanupFiles.Add(zipPath);
 
         await using (var fs = File.Create(zipPath))
-        using (var zos = new ZipOutputStream(fs))
+        await using (var zos = new ZipOutputStream(fs))
         {
             zos.SetLevel(0);
-            await zos.PutNextEntryAsync(new ZipEntry("recipe.json") { DateTime = DateTime.UtcNow });
+            await zos.PutNextEntryAsync(new ZipEntry("recipe.json") { DateTime = DateTime.UtcNow }, TestContext.Current.CancellationToken);
             var recipeBytes = "{}"u8.ToArray();
             zos.Write(recipeBytes, 0, recipeBytes.Length);
             zos.CloseEntry();
 
-            await zos.PutNextEntryAsync(new ZipEntry(maliciousEntryName) { DateTime = DateTime.UtcNow });
+            await zos.PutNextEntryAsync(new ZipEntry(maliciousEntryName) { DateTime = DateTime.UtcNow }, TestContext.Current.CancellationToken);
             zos.Write("payload"u8.ToArray(), 0, 7);
             zos.CloseEntry();
             zos.Finish();
         }
 
-        var act = async () => await _repo.ImportAsync(zipPath, null, workbooksDir, presentationsDir,
-            TestContext.Current.CancellationToken);
         try
         {
-            await act();
+            await Act();
         }
         catch (InvalidDataException)
         {
@@ -246,6 +245,9 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
 
         File.Exists(Path.Combine(victimDir, "pwned.txt")).Should().BeFalse(
             "ImportAsync must sanitize Presentations entries the same way as Workbooks entries");
+        return;
+
+        async Task Act() => await _repo.ImportAsync(zipPath, null, workbooksDir, presentationsDir, TestContext.Current.CancellationToken);
     }
 
     #endregion

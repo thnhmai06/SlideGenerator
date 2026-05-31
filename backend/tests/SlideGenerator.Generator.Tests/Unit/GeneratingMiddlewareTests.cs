@@ -67,13 +67,13 @@ public sealed class GeneratingMiddlewareTests
         context.Workflow.Returns(workflow);
 
         var middleware = CreateMiddleware();
-        await middleware.HandleAsync(context, _body, NextResult).ConfigureAwait(false);
+        await middleware.HandleAsync(context, _body, NextResult);
 
         _fileLoggerFactory.DidNotReceive().CreateFile(Arg.Any<string>(), Arg.Any<string?>());
         _coordinatorFactory.DidNotReceive().Create();
     }
 
-    /// <summary>When LoggerFactory is null, CreateFile is called with WorkflowLogPath and correct scope.</summary>
+    /// <summary>When LoggerFactory is null, CreateFile is called with WorkflowLogPath and the correct scope.</summary>
     [Fact]
     public async Task HandleAsync_LoggerFactoryNull_CreatesFromFactory()
     {
@@ -84,7 +84,7 @@ public sealed class GeneratingMiddlewareTests
             .Returns(Substitute.For<ILoggerFactory>());
 
         var middleware = CreateMiddleware();
-        await middleware.HandleAsync(context, _body, NextResult).ConfigureAwait(false);
+        await middleware.HandleAsync(context, _body, NextResult);
 
         _fileLoggerFactory.Received(1).CreateFile(
             data.WorkflowLogPath,
@@ -101,7 +101,7 @@ public sealed class GeneratingMiddlewareTests
         data.LoggerFactory = existingFactory;
 
         var middleware = CreateMiddleware();
-        await middleware.HandleAsync(context, _body, NextResult).ConfigureAwait(false);
+        await middleware.HandleAsync(context, _body, NextResult);
 
         _fileLoggerFactory.DidNotReceive().CreateFile(Arg.Any<string>(), Arg.Any<string?>());
         data.LoggerFactory.Should().BeSameAs(existingFactory);
@@ -118,7 +118,7 @@ public sealed class GeneratingMiddlewareTests
         _coordinatorFactory.Create().Returns(coordinator);
 
         var middleware = CreateMiddleware();
-        await middleware.HandleAsync(context, _body, NextResult).ConfigureAwait(false);
+        await middleware.HandleAsync(context, _body, NextResult);
 
         _coordinatorFactory.Received(1).Create();
         data.AssetCoordinator.Should().BeSameAs(coordinator);
@@ -133,7 +133,7 @@ public sealed class GeneratingMiddlewareTests
         data.AssetCoordinator = Substitute.For<ICoordinator>();
 
         var middleware = CreateMiddleware();
-        var result = await middleware.HandleAsync(context, _body, NextResult).ConfigureAwait(false);
+        var result = await middleware.HandleAsync(context, _body, NextResult);
 
         result.Proceed.Should().BeTrue();
     }
