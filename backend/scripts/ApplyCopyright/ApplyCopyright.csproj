@@ -8,4 +8,7 @@
         <RootNamespace>ApplyCopyright</RootNamespace>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
+    <ItemGroup>
+        <EmbeddedResource Include="Copyright.txt" />
+    </ItemGroup>
 </Project>

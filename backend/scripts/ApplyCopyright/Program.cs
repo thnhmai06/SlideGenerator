@@ -5,16 +5,11 @@
  * Project: ApplyCopyright
  * File: Program.cs
  *
- * This file is part of this solution. You can find the full source code here: https://github.com/thnhmai06/SlideGenerator
+ * This file is part of this solution. 
+ * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, version 3.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
+ * Licensed under the Apache License 2.0.
+ * See the LICENSE file in the project root for full license information.
  */
 
 using System.Text;
@@ -32,6 +27,7 @@ var files = Directory.EnumerateFiles(root, "*.cs", SearchOption.AllDirectories)
     .Order(StringComparer.OrdinalIgnoreCase)
     .ToArray();
 
+var template = LoadTemplate();
 var changedCount = 0;
 
 foreach (var file in files)
@@ -39,7 +35,7 @@ foreach (var file in files)
     var projectName = GetProjectName(file) ?? solutionName;
     var fileName = Path.GetFileName(file);
     var content = await File.ReadAllTextAsync(file, Encoding.UTF8).ConfigureAwait(false);
-    var header = CreateHeader(projectName, fileName, DetectNewLine(content));
+    var header = CreateHeader(template, projectName, fileName, DetectNewLine(content));
     var nextContent = header + RemoveExistingCopyrightHeaders(content);
     var changed = content != nextContent;
 
@@ -61,32 +57,27 @@ Console.WriteLine(options.Check
 
 return options.Check && changedCount > 0 ? 1 : 0;
 
-static string CreateHeader(string projectName, string fileName, string newLine)
+static string LoadTemplate()
 {
-    var lines = new[]
-    {
-        "/*",
-        $" * Copyright (C) {year} {author}",
-        " *",
-        $" * Solution: {solutionName}",
-        $" * Project: {projectName}",
-        $" * File: {fileName}",
-        " *",
-        $" * This file is part of this solution. You can find the full source code here: {repoUrl}",
-        " *",
-        " * This program is free software: you can redistribute it and/or modify",
-        " * it under the terms of the GNU Affero General Public License as published by",
-        " * the Free Software Foundation, version 3.",
-        " *",
-        " * This program is distributed in the hope that it will be useful,",
-        " * but WITHOUT ANY WARRANTY; without even the implied warranty of",
-        " * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the",
-        " * GNU Affero General Public License for more details.",
-        " */",
-        string.Empty
-    };
+    using var stream = typeof(Program).Assembly
+        .GetManifestResourceStream("ApplyCopyright.Copyright.txt")!;
+    using var reader = new StreamReader(stream, Encoding.UTF8);
+    return reader.ReadToEnd().TrimEnd('\r', '\n');
+}
 
-    return string.Join(newLine, lines) + newLine;
+static string CreateHeader(string template, string projectName, string fileName, string newLine)
+{
+    var body = template
+        .Replace("{year}", year)
+        .Replace("{author}", author)
+        .Replace("{solution}", solutionName)
+        .Replace("{project}", projectName)
+        .Replace("{file}", fileName)
+        .Replace("{repoUrl}", repoUrl);
+
+    var lines = body.ReplaceLineEndings("\n").Split('\n');
+    var commented = lines.Select(l => string.IsNullOrEmpty(l) ? " *" : $" * {l}");
+    return "/*" + newLine + string.Join(newLine, commented) + newLine + " */" + newLine + newLine;
 }
 
 static string? GetProjectName(string filePath)

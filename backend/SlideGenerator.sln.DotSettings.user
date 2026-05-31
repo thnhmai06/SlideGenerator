@@ -48,16 +48,11 @@ Solution: ${File.SolutionName}
 Project: ${File.ProjectName}
 File: ${File.FileName}
 
-This file is part of this project. You can find the full source code here: {REPOSITORY_URL}
+This file is part of this project. 
+You can find the full source code here: {REPOSITORY_URL}.
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as published by
-the Free Software Foundation, version 3.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU Affero General Public License for more details.</s:String>
+Licensed under the Apache License 2.0.
+See the LICENSE file in the project root for full license information.</s:String>
 	
 	<s:Boolean x:Key="/Default/CodeStyle/FileHeader/FileHeaderVariables/=AUTHOR/@EntryIndexRemoved">True</s:Boolean>
 	<s:String x:Key="/Default/dotCover/Editor/HighlightingSourceSnapshotLocation/@EntryValue">C:\Users\haith\AppData\Local\Temp\JetBrains\Rider\vAny\CoverageData\_SlideGenerator.1251670100\Snapshot\snapshot.utdcvr</s:String>
