@@ -3,10 +3,13 @@ name: Backend CI
 on:
   push:
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
     paths:
       - "backend/**/*"
       - "Taskfile.yml"
       - ".github/workflows/backend-ci.yml"
+  release:
+    types: [published]
 
 permissions:
   contents: read
@@ -18,54 +21,97 @@ env:
   SYNCFUSION_LICENSE_KEY: ${{ secrets.SYNCFUSION_LICENSE_KEY || 'empty' }}
   GITHUB_USERNAME: ${{ github.actor }}
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
 
 concurrency:
   group: backend-ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  # ── Gate: determine skip / full-CI mode / affected projects / runner matrix ──
   ci-gate:
-    name: Check CI gate
+    name: CI gate
     runs-on: ubuntu-latest
     outputs:
-      should-run: ${{ steps.skip.outputs.should-run }}
+      should-run: ${{ steps.gate.outputs.should-run }}
+      full-ci:    ${{ steps.gate.outputs.full-ci }}
+      affected:   ${{ steps.gate.outputs.affected }}
+      runners:    ${{ steps.gate.outputs.runners }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          fetch-depth: 1
+          fetch-depth: 0
 
-      - name: Check skip prefix
-        id: skip
+      - name: Compute gate
+        id: gate
+        env:
+          EVENT:              ${{ github.event_name }}
+          BASE_SHA:           ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA:           ${{ github.event.pull_request.head.sha || github.sha }}
+          HAS_FULL_CI_LABEL:  ${{ contains(github.event.pull_request.labels.*.name, 'full-ci') }}
         shell: bash
         run: |
+          # ── Runner sets ────────────────────────────────────────────────────
+          FAST_RUNNERS='[{"name":"windows-x64","runner":"windows-latest"},{"name":"linux-x64","runner":"ubuntu-24.04"},{"name":"macos-arm64","runner":"macos-26"}]'
+          FULL_RUNNERS='[{"name":"windows-x64","runner":"windows-latest"},{"name":"windows-arm64","runner":"windows-11-arm"},{"name":"linux-x64","runner":"ubuntu-24.04"},{"name":"linux-arm64","runner":"ubuntu-24.04-arm"},{"name":"macos-x64","runner":"macos-26-intel"},{"name":"macos-arm64","runner":"macos-26"}]'
+          ZERO_SHA="0000000000000000000000000000000000000000"
+
           message="$(git log -1 --pretty=%B)"
+
+          # ── Skip CI ────────────────────────────────────────────────────────
           if [[ "$message" == "[skip ci]"* ]]; then
             echo "should-run=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "should-run=true" >> "$GITHUB_OUTPUT"
+            echo "full-ci=false"    >> "$GITHUB_OUTPUT"
+            echo "affected=[]"      >> "$GITHUB_OUTPUT"
+            echo "runners=$FAST_RUNNERS" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "should-run=true" >> "$GITHUB_OUTPUT"
+
+          # ── Full CI detection ──────────────────────────────────────────────
+          if [[ "$message" == "[full ci]"* ]] || \
+             [[ "$message" == "[full]"* ]] || \
+             [[ "$EVENT" == "release" ]] || \
+             [[ "$HAS_FULL_CI_LABEL" == "true" ]] || \
+             [[ "$BASE_SHA" == "$ZERO_SHA" || -z "$BASE_SHA" ]]; then
+            echo "full-ci=true"          >> "$GITHUB_OUTPUT"
+            echo "affected=[]"           >> "$GITHUB_OUTPUT"
+            echo "runners=$FULL_RUNNERS" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
 
-  # ── Per-OS pipeline ──────────────────────────────────────────────────────────
-  # Each OS runs independently: build → Foundation → Domain → Application.
+          # ── Check if CI config changed → full CI ───────────────────────────
+          CHANGED=$(git diff --name-only "${BASE_SHA}...${HEAD_SHA}" 2>/dev/null || \
+                    git diff --name-only HEAD~1)
+          if echo "$CHANGED" | grep -qE "^\.github/"; then
+            echo "full-ci=true"          >> "$GITHUB_OUTPUT"
+            echo "affected=[]"           >> "$GITHUB_OUTPUT"
+            echo "runners=$FULL_RUNNERS" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # ── Compute affected test projects ─────────────────────────────────
+          PROJECTS=$(BASE_SHA="$BASE_SHA" HEAD_SHA="$HEAD_SHA" \
+                     python3 .github/scripts/compute-affected.py)
+          echo "full-ci=false"            >> "$GITHUB_OUTPUT"
+          echo "affected=$PROJECTS"       >> "$GITHUB_OUTPUT"
+          echo "runners=$FAST_RUNNERS"    >> "$GITHUB_OUTPUT"
+
+  # ── Per-OS pipeline ───────────────────────────────────────────────────────────
+  # Matrix driven by the gate: 3-OS fast or 6-OS full depending on trigger.
   # Tests start as soon as that OS's build finishes — no cross-OS waiting.
   pipeline:
     name: ${{ matrix.os.name }}
     needs: ci-gate
-    if: ${{ needs.ci-gate.outputs.should-run == 'true' }}
+    if: needs.ci-gate.outputs.should-run == 'true'
     runs-on: ${{ matrix.os.runner }}
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - { name: windows-x64,    runner: windows-latest      }
-          - { name: windows-arm64,  runner: windows-11-arm      }
-          - { name: linux-x64,      runner: ubuntu-24.04        }
-          - { name: linux-arm64,    runner: ubuntu-24.04-arm    }
-          - { name: macos-x64,      runner: macos-26-intel      }
-          - { name: macos-arm64,    runner: macos-26            }
+        os: ${{ fromJson(needs.ci-gate.outputs.runners) }}
 
     steps:
       - name: Checkout
@@ -76,7 +122,14 @@ jobs:
         with:
           global-json-file: backend/global.json
 
-      # ── Native dependencies (linux-arm64 only) ──────────────────────────────────
+      - name: Cache NuGet packages
+        uses: actions/cache@v5
+        with:
+          path: ${{ github.workspace }}/.nuget/packages
+          key: nuget-${{ matrix.os.name }}-${{ hashFiles('backend/**/*.csproj', 'backend/global.json', 'backend/nuget.config') }}
+          restore-keys: nuget-${{ matrix.os.name }}-
+
+      # ── Native dependencies (linux-arm64 only) ──────────────────────────────
       - name: Install native dependencies
         if: matrix.os.name == 'linux-arm64'
         run: |
@@ -87,7 +140,7 @@ jobs:
             tesseract-ocr \
             ffmpeg
 
-      # ── Build ─────────────────────────────────────────────────────────────
+      # ── Build ──────────────────────────────────────────────────────────────
       - name: Restore
         working-directory: backend
         run: dotnet restore SlideGenerator.slnx
@@ -99,104 +152,134 @@ jobs:
 
       # ── Foundation: Utilities, Cryptography, Cloud, Settings ───────────────
       - name: "Test [Foundation] / Utilities"
-        if: always() && steps.build.outcome == 'success'
+        if: >-
+          always() && steps.build.outcome == 'success' &&
+          (needs.ci-gate.outputs.full-ci == 'true' ||
+           contains(fromJson(needs.ci-gate.outputs.affected || '[]'), 'SlideGenerator.Utilities.Tests'))
         working-directory: backend
         run: >-
           dotnet test
           tests/SlideGenerator.Utilities.Tests/SlideGenerator.Utilities.Tests.csproj
-          --no-restore
+          --no-build
           --logger "trx;LogFilePrefix=SlideGenerator.Utilities.Tests"
           --results-directory TestResults
 
       - name: "Test [Foundation] / Cryptography"
-        if: always() && steps.build.outcome == 'success'
+        if: >-
+          always() && steps.build.outcome == 'success' &&
+          (needs.ci-gate.outputs.full-ci == 'true' ||
+           contains(fromJson(needs.ci-gate.outputs.affected || '[]'), 'SlideGenerator.Cryptography.Tests'))
         working-directory: backend
         run: >-
           dotnet test
           tests/SlideGenerator.Cryptography.Tests/SlideGenerator.Cryptography.Tests.csproj
-          --no-restore
+          --no-build
           --logger "trx;LogFilePrefix=SlideGenerator.Cryptography.Tests"
           --results-directory TestResults
 
       - name: "Test [Foundation] / Cloud"
-        if: always() && steps.build.outcome == 'success'
+        if: >-
+          always() && steps.build.outcome == 'success' &&
+          (needs.ci-gate.outputs.full-ci == 'true' ||
+           contains(fromJson(needs.ci-gate.outputs.affected || '[]'), 'SlideGenerator.Cloud.Tests'))
         working-directory: backend
         run: >-
           dotnet test
           tests/SlideGenerator.Cloud.Tests/SlideGenerator.Cloud.Tests.csproj
-          --no-restore
+          --no-build
           --logger "trx;LogFilePrefix=SlideGenerator.Cloud.Tests"
           --results-directory TestResults
 
       - name: "Test [Foundation] / Settings"
-        if: always() && steps.build.outcome == 'success'
+        if: >-
+          always() && steps.build.outcome == 'success' &&
+          (needs.ci-gate.outputs.full-ci == 'true' ||
+           contains(fromJson(needs.ci-gate.outputs.affected || '[]'), 'SlideGenerator.Settings.Tests'))
         working-directory: backend
         run: >-
           dotnet test
           tests/SlideGenerator.Settings.Tests/SlideGenerator.Settings.Tests.csproj
-          --no-restore
+          --no-build
           --logger "trx;LogFilePrefix=SlideGenerator.Settings.Tests"
           --results-directory TestResults
 
       # ── Domain: Coordinator, Document ──────────────────────────────────────
       - name: "Test [Domain] / Coordinator"
-        if: always() && steps.build.outcome == 'success'
+        if: >-
+          always() && steps.build.outcome == 'success' &&
+          (needs.ci-gate.outputs.full-ci == 'true' ||
+           contains(fromJson(needs.ci-gate.outputs.affected || '[]'), 'SlideGenerator.Coordinator.Tests'))
         working-directory: backend
         run: >-
           dotnet test
           tests/SlideGenerator.Coordinator.Tests/SlideGenerator.Coordinator.Tests.csproj
-          --no-restore
+          --no-build
           --logger "trx;LogFilePrefix=SlideGenerator.Coordinator.Tests"
           --results-directory TestResults
 
       - name: "Test [Domain] / Document"
-        if: always() && steps.build.outcome == 'success'
+        if: >-
+          always() && steps.build.outcome == 'success' &&
+          (needs.ci-gate.outputs.full-ci == 'true' ||
+           contains(fromJson(needs.ci-gate.outputs.affected || '[]'), 'SlideGenerator.Document.Tests'))
         working-directory: backend
         run: >-
           dotnet test
           tests/SlideGenerator.Document.Tests/SlideGenerator.Document.Tests.csproj
-          --no-restore
+          --no-build
           --logger "trx;LogFilePrefix=SlideGenerator.Document.Tests"
           --results-directory TestResults
 
       # ── Application: Image, Recipe, Generator, Stdio ───────────────────────
       - name: "Test [Application] / Image"
-        if: always() && steps.build.outcome == 'success'
+        if: >-
+          always() && steps.build.outcome == 'success' &&
+          (needs.ci-gate.outputs.full-ci == 'true' ||
+           contains(fromJson(needs.ci-gate.outputs.affected || '[]'), 'SlideGenerator.Image.Tests'))
         working-directory: backend
         run: >-
           dotnet test
           tests/SlideGenerator.Image.Tests/SlideGenerator.Image.Tests.csproj
-          --no-restore
+          --no-build
           --logger "trx;LogFilePrefix=SlideGenerator.Image.Tests"
           --results-directory TestResults
 
       - name: "Test [Application] / Recipe"
-        if: always() && steps.build.outcome == 'success'
+        if: >-
+          always() && steps.build.outcome == 'success' &&
+          (needs.ci-gate.outputs.full-ci == 'true' ||
+           contains(fromJson(needs.ci-gate.outputs.affected || '[]'), 'SlideGenerator.Recipe.Tests'))
         working-directory: backend
         run: >-
           dotnet test
           tests/SlideGenerator.Recipe.Tests/SlideGenerator.Recipe.Tests.csproj
-          --no-restore
+          --no-build
           --logger "trx;LogFilePrefix=SlideGenerator.Recipe.Tests"
           --results-directory TestResults
 
       - name: "Test [Application] / Generator"
-        if: always() && steps.build.outcome == 'success'
+        if: >-
+          always() && steps.build.outcome == 'success' &&
+          (needs.ci-gate.outputs.full-ci == 'true' ||
+           contains(fromJson(needs.ci-gate.outputs.affected || '[]'), 'SlideGenerator.Generator.Tests'))
         working-directory: backend
         run: >-
           dotnet test
           tests/SlideGenerator.Generator.Tests/SlideGenerator.Generator.Tests.csproj
-          --no-restore
+          --no-build
           --logger "trx;LogFilePrefix=SlideGenerator.Generator.Tests"
           --results-directory TestResults
 
       - name: "Test [Application] / Stdio"
-        if: always() && steps.build.outcome == 'success'
+        if: >-
+          always() && steps.build.outcome == 'success' &&
+          (needs.ci-gate.outputs.full-ci == 'true' ||
+           contains(fromJson(needs.ci-gate.outputs.affected || '[]'), 'SlideGenerator.Stdio.Tests'))
         working-directory: backend
         run: >-
           dotnet test
           tests/SlideGenerator.Stdio.Tests/SlideGenerator.Stdio.Tests.csproj
-          --no-restore
+          --no-build
           --logger "trx;LogFilePrefix=SlideGenerator.Stdio.Tests"
           --results-directory TestResults
 

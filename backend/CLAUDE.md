@@ -82,7 +82,9 @@ dotnet test tests/SlideGenerator.Settings.Tests/SlideGenerator.Settings.Tests.cs
 dotnet test --filter "FullyQualifiedName~Load_SettingsFileNotFound_ReturnsFalse"
 ```
 
-SDK: .NET 10.0 (`global.json` pins to `latestMajor`, allows prerelease). The solution uses the XML-based `SlideGenerator.slnx` (no `.sln`). A Syncfusion license is required at runtime: copy `.env.example` to `.env` and fill `SYNCFUSION_LICENSE_KEY` before running the Ipc sidecar.
+SDK: .NET 10.0 (`global.json` pins to `latestMajor`, allows prerelease). The solution uses the XML-based `SlideGenerator.slnx` (no `.sln`). A Syncfusion license is required at runtime: copy `.env.example` to `.env` and fill `SYNCFUSION_LICENSE_KEY` before running the Stdio sidecar.
+
+**GitHub Packages**: `SlideGenerator.Image` depends on per-platform `SlideGenerator.OpenCvSharp4.runtime.*` packages hosted at `nuget.pkg.github.com/thnhmai06`. `backend/nuget.config` reads credentials from `%GITHUB_USERNAME%` and `%GITHUB_TOKEN%` env vars — set these before restoring.
 
 ## Solution Layout
 
@@ -100,22 +102,24 @@ backend/
 │   ├── SlideGenerator.Summarization/
 │   ├── SlideGenerator.Recipe/
 │   ├── SlideGenerator.Generator/
-│   └── SlideGenerator.Ipc/
-└── tests/                              — 9 test projects (mirrors src, standalone)
+│   └── SlideGenerator.Stdio/
+└── tests/                              — 11 test projects (mirrors src, standalone)
     ├── SlideGenerator.Utilities.Tests/
     ├── SlideGenerator.Cryptography.Tests/
     ├── SlideGenerator.Cloud.Tests/
     ├── SlideGenerator.Coordinator.Tests/
     ├── SlideGenerator.Settings.Tests/
     ├── SlideGenerator.Document.Tests/
+    ├── SlideGenerator.Logging.Tests/
     ├── SlideGenerator.Image.Tests/
     ├── SlideGenerator.Recipe.Tests/
-    └── SlideGenerator.Generator.Tests/
+    ├── SlideGenerator.Generator.Tests/
+    └── SlideGenerator.Stdio.Tests/
 ```
 
 `src/SlideGenerator.Acquisition/` and `src/SlideGenerator.Collector/` exist on disk but are **not in `SlideGenerator.slnx`** — treat them as orphan/in-progress folders unless re-added to the solution.
 
-`Logging`, `Summarization`, and `Ipc` have no dedicated test project.
+`Summarization` has no dedicated test project.
 
 ## Architecture: Modular Monolith + IPC Sidecar
 
@@ -144,14 +148,14 @@ Orchestration
 └── SlideGenerator.Generator     - WorkflowCore generating pipeline (3-phase workflow)
 
 Entry Point
-└── SlideGenerator.Ipc           - JSON-RPC 2.0 IPC sidecar (StreamJsonRpc over stdin/stdout)
+└── SlideGenerator.Stdio         - JSON-RPC 2.0 IPC sidecar (StreamJsonRpc over stdin/stdout)
 ```
 
 ### Dependency Rules
 
 - Dependencies flow downward only — no circular references.
 - Each module has `Injection/Registration.cs` (or root `Registration.cs`) as DI entry point.
-- `SlideGenerator.Ipc` is the executable that wires all modules.
+- `SlideGenerator.Stdio` is the executable that wires all modules.
 - Exception: `SlideGenerator.Generator` permits `Application/` and `Domain/` layers to depend on WorkflowCore directly.
 
 ## DI Registration Methods
@@ -168,7 +172,7 @@ Entry Point
 | Summarization         | `AddSummarizationServices()`                                                                |
 | Recipe                | `AddRecipeServices()`                                                                       |
 | Generator             | `AddGeneratorServices()`                                                                    |
-| Ipc                   | `AddIpcServices()`                                                                          |
+| Stdio                 | `AddIpcServices()`                                                                          |
 | WorkflowCore + SQLite | `services.AddWorkflow(x => x.UseSqlite(NameAndPaths.WorkflowsFile.ConnectionString, true))` |
 
 The system logger is created up-front in `Program.cs` via `SystemLoggerBootstrapper.Initialize(...)` (file Serilog sink → `stderr` only) and passed into `AddDocumentServices`. It is **not** added to DI through an `AddSystemLogging` helper.
@@ -181,7 +185,7 @@ extension(IServiceCollection services)
 }
 ```
 
-## IPC Layer (SlideGenerator.Ipc)
+## IPC Layer (SlideGenerator.Stdio)
 
 JSON-RPC 2.0 over stdin/stdout using **StreamJsonRpc** with NDJSON framing (`NewLineDelimitedMessageHandler`) and STJ serialization (`SystemTextJsonFormatter`).
 
@@ -209,7 +213,7 @@ jsonRpc.AddLocalRpcMethod(method, handler, new JsonRpcMethodAttribute("settings.
 
 `WorkflowProgressObserver` (in `Infrastructure/`) subscribes to `GeneratingEventBus.OnProgress` and forwards events as `workflow/progress` notifications via `JsonRpc.NotifyWithParameterObjectAsync`. Bound at runtime via `observer.Attach(bus, jsonRpc)` — not DI injected.
 
-`GeneratingEventBus` is registered as both `GeneratingEventBus` (concrete) and `IGeneratingEventBus` (interface) in the Ipc `Registration.cs` so that `WorkflowProgressObserver.Attach` can receive the concrete type.
+`GeneratingEventBus` is registered as both `GeneratingEventBus` (concrete) and `IGeneratingEventBus` (interface) in the Stdio `Registration.cs` so that `WorkflowProgressObserver.Attach` can receive the concrete type.
 
 ### STJ adapters
 
