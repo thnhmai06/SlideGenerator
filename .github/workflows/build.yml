@@ -1,4 +1,4 @@
-name: Backend CI
+name: "[Backend] Build & Validation"
 
 on:
   push:
@@ -302,6 +302,28 @@ jobs:
           --no-build
           --logger "trx;LogFilePrefix=SlideGenerator.Stdio.Tests"
           --results-directory TestResults
+
+      # ── Coverage: dotCover (linux-x64 only) ───────────────────────────────
+      - name: Install dotCover
+        if: always() && matrix.os.name == 'linux-x64' && steps.build.outcome == 'success'
+        run: dotnet tool install --global JetBrains.dotCover.CommandLineTools
+
+      - name: "Test coverage [dotCover]"
+        if: always() && matrix.os.name == 'linux-x64' && steps.build.outcome == 'success'
+        working-directory: backend
+        run: >-
+          dotCover cover
+          --xml-report-output=TestResults/coverage.xml
+          -- test SlideGenerator.slnx --no-build
+
+      - name: Upload coverage report
+        if: always() && matrix.os.name == 'linux-x64'
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-linux-x64-${{ github.run_attempt }}
+          path: backend/TestResults/coverage.xml
+          if-no-files-found: warn
+          retention-days: 14
 
       # ── Upload ─────────────────────────────────────────────────────────────
       - name: Upload test results

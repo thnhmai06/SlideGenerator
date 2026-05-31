@@ -1,0 +1,52 @@
+name: "[Backend] Qodana"
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+    paths:
+      - "backend/src/**"
+      - "backend/Directory.Build.props"
+      - "backend/Directory.Packages.props"
+      - "backend/global.json"
+      - "backend/*.slnx"
+      - ".github/workflows/qodana.yml"
+
+permissions:
+  contents: write
+  pull-requests: write
+  checks: write
+
+jobs:
+  qodana:
+    name: Qodana Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+
+      - name: Qodana Scan
+        uses: JetBrains/qodana-action@v2026.1
+        with:
+          linter: jetbrains/qodana-cdnet
+          args: |
+            --project-dir backend
+        env:
+          QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
+          GITHUB_USERNAME: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Qodana results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: qodana-results-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/qodana/results/
+          if-no-files-found: warn
+          retention-days: 14
