@@ -43,7 +43,7 @@ public interface IImage : IDisposable, ICloneable
     /// </summary>
     /// <param name="path">The target file path.</param>
     /// <returns>A task representing the asynchronous write operation.</returns>
-    Task WriteAsync(string path);
+    Task ToFileAsync(string path);
 
     /// <summary>
     ///     Converts the image to a byte array in PNG format.

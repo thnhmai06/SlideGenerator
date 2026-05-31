@@ -15,6 +15,7 @@
 using System.Drawing;
 using ImageMagick;
 using SlideGenerator.Image.Domain.Entities;
+using Size = System.Drawing.Size;
 
 namespace SlideGenerator.Image.Infrastructure.Adapters;
 
@@ -35,7 +36,7 @@ internal sealed class MagickImage(ImageMagick.MagickImage image) : IImage
         image.Resize(new MagickGeometry((uint)size.Width, (uint)size.Height));
     }
 
-    public Task WriteAsync(string path)
+    public Task ToFileAsync(string path)
     {
         return image.WriteAsync(path);
     }

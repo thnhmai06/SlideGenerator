@@ -41,7 +41,7 @@ public sealed class CollectImageTests
     private readonly ICloudResolver _cloudResolver = Substitute.For<ICloudResolver>();
     private readonly IGateLocker<GateType> _gateLocker = Substitute.For<IGateLocker<GateType>>();
     private readonly IHttpClientFactory _httpClientFactory = Substitute.For<IHttpClientFactory>();
-    private readonly IImageFactory _imageFactory = Substitute.For<IImageFactory>();
+    private readonly IImageLoader _imageLoader = Substitute.For<IImageLoader>();
 
     /// <summary>Configures stubs shared across all tests.</summary>
     public CollectImageTests()
@@ -104,7 +104,7 @@ public sealed class CollectImageTests
 
     private CollectImage BuildStep(ImageContext imageCtx)
     {
-        return new CollectImage(_cloudClient, _cloudResolver, _imageFactory, _gateLocker, _httpClientFactory)
+        return new CollectImage(_cloudClient, _cloudResolver, _imageLoader, _gateLocker, _httpClientFactory)
         {
             Task = imageCtx
         };

@@ -21,6 +21,8 @@ using SlideGenerator.Generator.Application.Steps;
 using SlideGenerator.Generator.Domain.Models;
 using SlideGenerator.Generator.Infrastructure.Middleware;
 using SlideGenerator.Generator.Infrastructure.Services;
+using SlideGenerator.Image.Application.Abstractions;
+using SlideGenerator.Image.Infrastructure.Services;
 using SlideGenerator.Settings.Application.Abstractions;
 
 namespace SlideGenerator.Generator.Injection;
@@ -59,6 +61,14 @@ public static class Registration
                 };
             },
             sp.GetService<ILogger<GateLocker<GateType>>>()));
+
+        // Face-detection pool — limit mirrors EditImage concurrency
+        services.AddSingleton<IFaceDetector>(sp =>
+        {
+            var factory = sp.GetRequiredService<Func<IFaceDetector>>();
+            var settings = sp.GetRequiredService<ISettingProvider>();
+            return new FaceDetectorPool(factory, () => settings.Current.Performance.MaxParallelEditImage);
+        });
 
         // WorkflowCore Step registrations (Transient — WorkflowCore resolves per-execution via IServiceScope)
         services.AddTransient<LoadRecipeSummary>();

@@ -17,17 +17,16 @@
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.8"/>
         <PackageReference Include="NSubstitute" Version="5.*"/>
         <PackageReference Include="FluentAssertions" Version="8.10.0"/>
-        <PackageReference Include="OpenCvSharp4" Version="4.13.0.20260528"/>
+        <PackageReference Include="OpenCvSharp4" Version="4.13.0.20260531" />
         <PackageReference Include="Magick.NET-Q8-AnyCPU" Version="14.13.1"/>
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="../../src/SlideGenerator.Image/SlideGenerator.Image.csproj"/>
+        <ProjectReference Include="../../src/SlideGenerator.Coordinator/SlideGenerator.Coordinator.csproj"/>
     </ItemGroup>
     <ItemGroup>
-        <!-- YuNet.onnx is declared as <None> in SlideGenerator.Image, which does not propagate
-             transitively through ProjectReference. Copy it explicitly. -->
         <Content Include="../../src/SlideGenerator.Image/Infrastructure/Binary/YuNet.onnx">
-            <Link>Infrastructure\Binary\YuNet.onnx</Link>
+            <Link>Infrastructure/Binary/YuNet.onnx</Link>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
     </ItemGroup>

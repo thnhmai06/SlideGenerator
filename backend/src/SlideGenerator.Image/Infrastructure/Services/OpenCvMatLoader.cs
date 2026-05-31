@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Image
- * File: OpenCvMatFactory.cs
+ * File: OpenCvMatLoader.cs
  *
  * This file is part of this solution. 
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -19,7 +19,7 @@ using SlideGenerator.Image.Infrastructure.Adapters;
 
 namespace SlideGenerator.Image.Infrastructure.Services;
 
-internal sealed class OpenCvMatFactory : IMatFactory
+internal sealed class OpenCvMatLoader : IMatLoader
 {
     public IMat Create(byte[] data)
     {

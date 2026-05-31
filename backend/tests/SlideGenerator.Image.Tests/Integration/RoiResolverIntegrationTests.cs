@@ -43,7 +43,7 @@ public sealed class RoiResolverIntegrationTests(FaceDatasetFixture dataset, Imag
         if (images.Length == 0) Assert.Skip("No single images cached — run with network access to download.");
 
         var path = images[Random.Shared.Next(images.Length)];
-        using var image = services.ImageFactory.Open(path);
+        using var image = services.ImageLoader.Open(path);
 
         var targetSize = new Size(512, 384);
         var option = new RuleOfThirdsOption();
@@ -77,7 +77,7 @@ public sealed class RoiResolverIntegrationTests(FaceDatasetFixture dataset, Imag
 
         foreach (var path in sample)
         {
-            using var image = services.ImageFactory.Open(path);
+            using var image = services.ImageLoader.Open(path);
             var roi = await services.RoiResolver.CalculateRoiAsync(image, targetSize, option);
             AssertRoiWithinBounds(roi, image.Info.Width, image.Info.Height, targetSize);
         }
@@ -113,7 +113,7 @@ public sealed class RoiResolverIntegrationTests(FaceDatasetFixture dataset, Imag
         if (images.Length == 0) Assert.Skip("No single images cached — run with network access to download.");
 
         var path = images[Random.Shared.Next(images.Length)];
-        using var image = services.ImageFactory.Open(path);
+        using var image = services.ImageLoader.Open(path);
 
         var targetSize = new Size(400, 400);
         var option = new CenterOption { UseFaceAlignment = true };
@@ -134,7 +134,7 @@ public sealed class RoiResolverIntegrationTests(FaceDatasetFixture dataset, Imag
         if (images.Length == 0) Assert.Skip("No single images cached — run with network access to download.");
 
         var path = images[Random.Shared.Next(images.Length)];
-        using var image = services.ImageFactory.Open(path);
+        using var image = services.ImageLoader.Open(path);
 
         var targetSize = new Size(300, 300);
         var option = new CenterOption { UseFaceAlignment = false };

@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Image
- * File: IMatFactory.cs
+ * File: IMatLoader.cs
  *
  * This file is part of this solution. 
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -19,7 +19,7 @@ namespace SlideGenerator.Image.Application.Abstractions;
 /// <summary>
 ///     Defines a factory for creating <see cref="IMat" /> instances.
 /// </summary>
-public interface IMatFactory
+public interface IMatLoader
 {
     /// <summary>
     ///     Decodes the specified byte array into an <see cref="IMat" />.

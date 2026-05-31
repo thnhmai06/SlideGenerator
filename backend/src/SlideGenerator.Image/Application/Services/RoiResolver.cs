@@ -29,14 +29,14 @@ namespace SlideGenerator.Image.Application.Services;
 ///     This service routes ROI calculation requests to appropriate calculator implementations
 ///     (Center or Rule of Thirds) and supports intelligent feature detection via face detection.
 /// </remarks>
-public sealed class RoiResolver(IFaceDetector faceDetector, IMatFactory matFactory, ILogger<RoiResolver>? logger = null)
+public sealed class RoiResolver(IFaceDetector faceDetector, IMatLoader matLoader, ILogger<RoiResolver>? logger = null)
     : IRoiResolver
 {
     private readonly ReadOnlyDictionary<RoiType, RoiCalculator> _calculators =
         new Dictionary<RoiType, RoiCalculator>
         {
-            { RoiType.Center, new CenterRoi(faceDetector, matFactory) },
-            { RoiType.RuleOfThirds, new RuleOfThirdsRoi(faceDetector, matFactory) }
+            { RoiType.Center, new CenterRoi(faceDetector, matLoader) },
+            { RoiType.RuleOfThirds, new RuleOfThirdsRoi(faceDetector, matLoader) }
         }.AsReadOnly();
 
     public async ValueTask<Rectangle> CalculateRoiAsync(IImage image, Size targetSize,

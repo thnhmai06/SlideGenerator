@@ -41,7 +41,7 @@ public readonly record struct Face(
     public Point FaceCenter => new(Rect.X + (Rect.Width / 2), Rect.Y + (Rect.Height / 2));
 
     /// <summary>
-    ///     Gets the center point between the left and right eyes, if both landmarks are available.
+    ///     Gets the center point between the left and right eyes if both landmarks are available.
     /// </summary>
     /// <returns>A <see cref="Point" /> if both eyes are present; otherwise, <see langword="null" />.</returns>
     public Point? EyesCenter => RightEye.HasValue && LeftEye.HasValue
@@ -49,7 +49,7 @@ public readonly record struct Face(
         : null;
 
     /// <summary>
-    ///     Gets the center point between the left and right mouth corners, if both landmarks are available.
+    ///     Gets the center point between the left and right mouth corners if both landmarks are available.
     /// </summary>
     /// <returns>A <see cref="Point" /> if both mouth corners are present; otherwise, <see langword="null" />.</returns>
     public Point? MouthCenter => RightMouth.HasValue && LeftMouth.HasValue

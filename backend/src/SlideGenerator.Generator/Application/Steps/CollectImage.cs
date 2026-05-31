@@ -35,7 +35,7 @@ namespace SlideGenerator.Generator.Application.Steps;
 public sealed class CollectImage(
     ICloudClient cloudClient,
     ICloudResolver cloudResolver,
-    IImageFactory imageFactory,
+    IImageLoader imageLoader,
     IGateLocker<GateType> gateLocker,
     IHttpClientFactory httpClientFactory) : StepBodyAsync
 {
@@ -122,7 +122,7 @@ public sealed class CollectImage(
         if (File.Exists(Task.DownloadPath))
             try
             {
-                using var testImage = imageFactory.Open(Task.DownloadPath);
+                using var testImage = imageLoader.Open(Task.DownloadPath);
                 logger.LogDebug("Image for row {RowIndex} already exists and is valid, skipping acquisition",
                     Task.RowIndex);
                 owner.SubmitResult(Task.DownloadPath);

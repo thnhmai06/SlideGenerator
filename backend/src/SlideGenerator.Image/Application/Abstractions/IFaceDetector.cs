@@ -17,6 +17,9 @@ using SlideGenerator.Image.Domain.Models;
 
 namespace SlideGenerator.Image.Application.Abstractions;
 
+/// <summary>
+///     Defines a mechanism for detecting faces within image data.
+/// </summary>
 public interface IFaceDetector : IDisposable
 {
     /// <summary>

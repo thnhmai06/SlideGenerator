@@ -33,13 +33,13 @@ namespace SlideGenerator.Image.Tests.Unit;
 public sealed class RoiResolverTests
 {
     private readonly IFaceDetector _faceDetector = Substitute.For<IFaceDetector>();
-    private readonly IMatFactory _matFactory = Substitute.For<IMatFactory>();
+    private readonly IMatLoader _matLoader = Substitute.For<IMatLoader>();
     private readonly RoiResolver _resolver;
 
     public RoiResolverTests()
     {
-        _matFactory.Create(Arg.Any<IImage>()).Returns(Substitute.For<IMat>());
-        _resolver = new RoiResolver(_faceDetector, _matFactory, NullLogger<RoiResolver>.Instance);
+        _matLoader.Create(Arg.Any<IImage>()).Returns(Substitute.For<IMat>());
+        _resolver = new RoiResolver(_faceDetector, _matLoader, NullLogger<RoiResolver>.Instance);
     }
 
     #region ROI bounds invariant

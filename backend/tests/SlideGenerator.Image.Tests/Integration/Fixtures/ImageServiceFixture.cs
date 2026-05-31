@@ -13,11 +13,8 @@
  */
 
 using Microsoft.Extensions.Logging.Abstractions;
-using OpenCvSharp;
 using SlideGenerator.Image.Application.Abstractions;
 using SlideGenerator.Image.Application.Services;
-using SlideGenerator.Image.Domain;
-using SlideGenerator.Image.Infrastructure;
 using SlideGenerator.Image.Infrastructure.Adapters;
 using SlideGenerator.Image.Infrastructure.Services;
 
@@ -25,12 +22,12 @@ namespace SlideGenerator.Image.Tests.Integration.Fixtures;
 
 /// <summary>
 ///     xUnit v3 collection fixture providing fully-wired, real implementations of
-///     <see cref="IFaceDetector" />, <see cref="IMatFactory" />, <see cref="IImageFactory" />,
+///     <see cref="IFaceDetector" />, <see cref="IMatLoader" />, <see cref="IImageLoader" />,
 ///     and <see cref="IRoiResolver" />.
 /// </summary>
 /// <remarks>
-///     Internal types (<see cref="YuNet" />, <see cref="OpenCvMatFactory" />,
-///     <see cref="MagickImageFactory" />) are accessible via the
+///     Internal types (<see cref="YuNet" />, <see cref="OpenCvMatLoader" />,
+///     <see cref="MagickImageLoader" />) are accessible via the
 ///     <c>[InternalsVisibleTo("SlideGenerator.Image.Tests")]</c> declaration in
 ///     <c>SlideGenerator.Image.csproj</c>.
 ///     The model is loaded from <c>AppContext.BaseDirectory/Infrastructure/Binary/YuNet.onnx</c>,
@@ -47,26 +44,24 @@ public sealed class ImageServiceFixture : IDisposable
     /// </summary>
     public ImageServiceFixture()
     {
-        MatFactory = new OpenCvMatFactory();
-        ImageFactory = new MagickImageFactory();
+        MatLoader = new OpenCvMatLoader();
+        ImageLoader = new MagickImageLoader();
 
-        var inputSize = Rules.FaceInputSize.ToOpenCv();
-        var core = FaceDetectorYN.Create(ModelPath, string.Empty, inputSize, Rules.FaceConfidence);
-        FaceDetector = new YuNet(core, inputSize);
+        FaceDetector = new YuNet();
 
-        RoiResolver = new RoiResolver(FaceDetector, MatFactory, NullLogger<RoiResolver>.Instance);
+        RoiResolver = new RoiResolver(FaceDetector, MatLoader, NullLogger<RoiResolver>.Instance);
     }
 
     /// <summary>Real YuNet face detector backed by YuNet.onnx.</summary>
     public IFaceDetector FaceDetector { get; }
 
     /// <summary>Real OpenCV Mat factory.</summary>
-    public IMatFactory MatFactory { get; }
+    public IMatLoader MatLoader { get; }
 
     /// <summary>Real Magick.NET image factory.</summary>
-    public IImageFactory ImageFactory { get; }
+    public IImageLoader ImageLoader { get; }
 
-    /// <summary>Real ROI resolver wired to <see cref="FaceDetector" /> and <see cref="MatFactory" />.</summary>
+    /// <summary>Real ROI resolver wired to <see cref="FaceDetector" /> and <see cref="MatLoader" />.</summary>
     public IRoiResolver RoiResolver { get; }
 
     /// <inheritdoc />

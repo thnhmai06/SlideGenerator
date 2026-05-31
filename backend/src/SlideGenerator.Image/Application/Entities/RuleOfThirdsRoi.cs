@@ -22,7 +22,7 @@ namespace SlideGenerator.Image.Application.Entities;
 /// <summary>
 ///     Calculates rule-of-thirds ROI with face and eye landmark fallbacks.
 /// </summary>
-internal sealed class RuleOfThirdsRoi(IFaceDetector faceDetector, IMatFactory matFactory) : RoiCalculator
+internal sealed class RuleOfThirdsRoi(IFaceDetector faceDetector, IMatLoader matLoader) : RoiCalculator
 {
     public override async ValueTask<Rectangle> CalculateRoiAsync(IImage image, Size targetSize, RoiOption option)
     {
@@ -34,7 +34,7 @@ internal sealed class RuleOfThirdsRoi(IFaceDetector faceDetector, IMatFactory ma
         var pivot = ruleOption?.Pivot;
         var sourceSize = new Size((int)image.Info.Width, (int)image.Info.Height);
 
-        using var mat = matFactory.Create(image);
+        using var mat = matLoader.Create(image);
         var faces = await faceDetector.DetectAsync(mat).ConfigureAwait(false);
         if (faces.Count <= 0) return Utilities.CalculateAnchoredRectangle(sourceSize, targetSize);
 

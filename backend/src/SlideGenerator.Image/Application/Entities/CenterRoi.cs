@@ -23,7 +23,7 @@ namespace SlideGenerator.Image.Application.Entities;
 /// <summary>
 ///     Calculates the center Region of Interest (ROI).
 /// </summary>
-internal sealed class CenterRoi(IFaceDetector faceDetector, IMatFactory matFactory) : RoiCalculator
+internal sealed class CenterRoi(IFaceDetector faceDetector, IMatLoader matLoader) : RoiCalculator
 {
     public override async ValueTask<Rectangle> CalculateRoiAsync(IImage image, Size targetSize, RoiOption option)
     {
@@ -43,7 +43,7 @@ internal sealed class CenterRoi(IFaceDetector faceDetector, IMatFactory matFacto
     private async ValueTask<Rectangle> CalculateRoiByFaceAsync(IImage image, Size targetSize, Vector2 pivot)
     {
         var sourceSize = new Size((int)image.Info.Width, (int)image.Info.Height);
-        using var mat = matFactory.Create(image);
+        using var mat = matLoader.Create(image);
         var faces = await faceDetector.DetectAsync(mat).ConfigureAwait(false);
         var faceCenter = faces.Centroid(face => face.FaceCenter);
 

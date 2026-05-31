@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Image
- * File: MagickImageFactory.cs
+ * File: MagickImageLoader.cs
  *
  * This file is part of this solution. 
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -20,7 +20,7 @@ using MagickImageInfo = SlideGenerator.Image.Infrastructure.Adapters.MagickImage
 
 namespace SlideGenerator.Image.Infrastructure.Services;
 
-internal sealed class MagickImageFactory : IImageFactory
+internal sealed class MagickImageLoader : IImageLoader
 {
     public IImage Open(string path)
     {

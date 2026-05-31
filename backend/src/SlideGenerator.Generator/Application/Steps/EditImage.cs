@@ -34,7 +34,7 @@ namespace SlideGenerator.Generator.Application.Steps;
 /// </summary>
 public sealed class EditImage(
     IRoiResolver roiResolver,
-    IImageFactory imageFactory,
+    IImageLoader imageLoader,
     IGateLocker<GateType> gateLocker) : StepBodyAsync
 {
     /// <summary>
@@ -160,7 +160,7 @@ public sealed class EditImage(
         logger.LogDebug("Editing image '{Source}' for shape '{ShapeName}' (Row {RowIndex})", sourceFile,
             Task.ShapeName, Task.RowIndex);
 
-        using var image = imageFactory.Open(sourceFile);
+        using var image = imageLoader.Open(sourceFile);
         var targetSize = new Size((int)Math.Round(Task.Width), (int)Math.Round(Task.Height));
 
         logger.LogDebug("Calculating ROI for row {RowIndex} using {Algorithm}", Task.RowIndex,
@@ -178,7 +178,7 @@ public sealed class EditImage(
         logger.LogDebug("Resizing image for row {RowIndex} to {Size}", Task.RowIndex, maxAspectSize);
         image.Resize(maxAspectSize);
 
-        await image.WriteAsync(finalEditPath).ConfigureAwait(false);
+        await image.ToFileAsync(finalEditPath).ConfigureAwait(false);
 
         logger.LogDebug("Image edited | Row: {RowIndex}, Shape: {ShapeName}", Task.RowIndex, Task.ShapeName);
 

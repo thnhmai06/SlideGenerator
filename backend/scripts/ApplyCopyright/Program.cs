@@ -14,6 +14,7 @@
 
 using System.Text;
 using System.Text.RegularExpressions;
+using ApplyCopyright;
 
 const string year = "2026";
 const string author = "Thành Mai (thnhmai06)";
@@ -148,30 +149,33 @@ static bool IsIgnored(string root, string filePath)
            || segments.Contains("obj", StringComparer.OrdinalIgnoreCase);
 }
 
-internal sealed record Options(string Root, bool Check)
+namespace ApplyCopyright
 {
-    public static Options Parse(string[] args)
+    internal sealed record Options(string Root, bool Check)
     {
-        var root = Directory.GetCurrentDirectory();
-        var check = false;
-
-        for (var i = 0; i < args.Length; i++)
+        public static Options Parse(string[] args)
         {
-            switch (args[i])
-            {
-                case "--check":
-                    check = true;
-                    break;
-                case "--root":
-                    if (i + 1 >= args.Length)
-                        throw new ArgumentException($"Unknown or incomplete argument: {args[i]}");
-                    root = args[++i];
-                    break;
-                default:
-                    throw new ArgumentException($"Unknown or incomplete argument: {args[i]}");
-            }
-        }
+            var root = Directory.GetCurrentDirectory();
+            var check = false;
 
-        return new Options(root, check);
+            for (var i = 0; i < args.Length; i++)
+            {
+                switch (args[i])
+                {
+                    case "--check":
+                        check = true;
+                        break;
+                    case "--root":
+                        if (i + 1 >= args.Length)
+                            throw new ArgumentException($"Unknown or incomplete argument: {args[i]}");
+                        root = args[++i];
+                        break;
+                    default:
+                        throw new ArgumentException($"Unknown or incomplete argument: {args[i]}");
+                }
+            }
+
+            return new Options(root, check);
+        }
     }
 }

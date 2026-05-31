@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Image
- * File: IImageFactory.cs
+ * File: IImageLoader.cs
  *
  * This file is part of this solution. 
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -20,7 +20,7 @@ namespace SlideGenerator.Image.Application.Abstractions;
 /// <summary>
 ///     Defines a factory for creating <see cref="IImage" /> instances.
 /// </summary>
-public interface IImageFactory
+public interface IImageLoader
 {
     /// <summary>
     ///     Loads an <see cref="IImage" /> from the specified file path.

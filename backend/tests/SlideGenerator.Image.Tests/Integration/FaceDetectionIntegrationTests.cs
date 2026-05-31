@@ -45,8 +45,8 @@ public sealed class FaceDetectionIntegrationTests(FaceDatasetFixture dataset, Im
         var fileName = Path.GetFileNameWithoutExtension(path);
         var groundTruth = ParseFaceCount(fileName);
 
-        using var image = services.ImageFactory.Open(path);
-        using var mat = services.MatFactory.Create(image);
+        using var image = services.ImageLoader.Open(path);
+        using var mat = services.MatLoader.Create(image);
         var faces = await services.FaceDetector.DetectAsync(mat);
 
         faces.Count.Should().BeLessThanOrEqualTo(groundTruth * 3,
@@ -80,8 +80,8 @@ public sealed class FaceDetectionIntegrationTests(FaceDatasetFixture dataset, Im
         if (images.Length == 0) Assert.Skip("No single images cached — run with network access to download.");
 
         var path = images[Random.Shared.Next(images.Length)];
-        using var image = services.ImageFactory.Open(path);
-        using var mat = services.MatFactory.Create(image);
+        using var image = services.ImageLoader.Open(path);
+        using var mat = services.MatLoader.Create(image);
 
         var faces = await services.FaceDetector.DetectAsync(mat);
 
@@ -99,8 +99,8 @@ public sealed class FaceDetectionIntegrationTests(FaceDatasetFixture dataset, Im
         if (images.Length == 0) Assert.Skip("No group images cached — run with network access to download.");
 
         var path = images[Random.Shared.Next(images.Length)];
-        using var image = services.ImageFactory.Open(path);
-        using var mat = services.MatFactory.Create(image);
+        using var image = services.ImageLoader.Open(path);
+        using var mat = services.MatLoader.Create(image);
 
         var faces = await services.FaceDetector.DetectAsync(mat);
 
@@ -118,8 +118,8 @@ public sealed class FaceDetectionIntegrationTests(FaceDatasetFixture dataset, Im
         if (images.Length == 0) Assert.Skip("No crowd images cached — run with network access to download.");
 
         var path = images[Random.Shared.Next(images.Length)];
-        using var image = services.ImageFactory.Open(path);
-        using var mat = services.MatFactory.Create(image);
+        using var image = services.ImageLoader.Open(path);
+        using var mat = services.MatLoader.Create(image);
 
         var faces = await services.FaceDetector.DetectAsync(mat);
 
@@ -149,8 +149,8 @@ public sealed class FaceDetectionIntegrationTests(FaceDatasetFixture dataset, Im
         var detectedAny = 0;
         foreach (var path in sample)
         {
-            using var image = services.ImageFactory.Open(path);
-            using var mat = services.MatFactory.Create(image);
+            using var image = services.ImageLoader.Open(path);
+            using var mat = services.MatLoader.Create(image);
             var faces = await services.FaceDetector.DetectAsync(mat);
             if (faces.Count > 0) detectedAny++;
         }
@@ -170,8 +170,8 @@ public sealed class FaceDetectionIntegrationTests(FaceDatasetFixture dataset, Im
         if (images.Length == 0) Assert.Skip("No single images cached — run with network access to download.");
 
         var path = images[Random.Shared.Next(images.Length)];
-        using var image = services.ImageFactory.Open(path);
-        using var mat = services.MatFactory.Create(image);
+        using var image = services.ImageLoader.Open(path);
+        using var mat = services.MatLoader.Create(image);
 
         var faces = await services.FaceDetector.DetectAsync(mat);
 
@@ -194,8 +194,8 @@ public sealed class FaceDetectionIntegrationTests(FaceDatasetFixture dataset, Im
         if (images.Length == 0) Assert.Skip("No single images cached — run with network access to download.");
 
         var path = images[Random.Shared.Next(images.Length)];
-        using var image = services.ImageFactory.Open(path);
-        using var mat = services.MatFactory.Create(image);
+        using var image = services.ImageLoader.Open(path);
+        using var mat = services.MatLoader.Create(image);
 
         var faces = await services.FaceDetector.DetectAsync(mat);
 

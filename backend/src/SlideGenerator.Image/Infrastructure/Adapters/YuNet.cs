@@ -5,7 +5,7 @@
  * Project: SlideGenerator.Image
  * File: YuNet.cs
  *
- * This file is part of this solution. 
+ * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
  *
  * Licensed under the Apache License 2.0.
@@ -15,6 +15,7 @@
 using System.Drawing;
 using OpenCvSharp;
 using SlideGenerator.Image.Application.Abstractions;
+using SlideGenerator.Image.Domain;
 using SlideGenerator.Image.Domain.Entities;
 using SlideGenerator.Image.Domain.Models;
 using Point = System.Drawing.Point;
@@ -25,14 +26,28 @@ namespace SlideGenerator.Image.Infrastructure.Adapters;
 /// <summary>
 ///     Asynchronous wrapper for <see cref="FaceDetectorYN" />.
 /// </summary>
-internal sealed class YuNet(FaceDetectorYN core, Size inputSize) : IFaceDetector
+internal sealed class YuNet : IFaceDetector
 {
-    private readonly SemaphoreSlim _detectLock = new(1, 1);
+    private static readonly string ModelPath =
+        Path.Combine(AppContext.BaseDirectory, "Infrastructure", "Binary", "YuNet.onnx");
 
-    public async Task<IReadOnlyList<Face>> DetectAsync(IMat imat)
+    private readonly FaceDetectorYN _core;
+    private readonly Size _inputSize;
+    private readonly Lock _detectLock = new();
+
+    /// <summary>
+    ///     Initializes a new <see cref="YuNet" /> instance, loading the ONNX model from disk.
+    /// </summary>
+    public YuNet()
+    {
+        _inputSize = Rules.FaceInputSize.ToOpenCv();
+        _core = FaceDetectorYN.Create(ModelPath, string.Empty, _inputSize, Rules.FaceConfidence);
+    }
+
+    public Task<IReadOnlyList<Face>> DetectAsync(IMat imat)
     {
         var faces = new List<Face>();
-        if (imat.Empty) return faces;
+        if (imat.Empty) return Task.FromResult<IReadOnlyList<Face>>(faces);
 
         if (imat is not OpenCvMat adapter)
             throw new ArgumentException($"IMat must be an instance of {nameof(OpenCvMat)}.", nameof(imat));
@@ -43,18 +58,13 @@ internal sealed class YuNet(FaceDetectorYN core, Size inputSize) : IFaceDetector
         using var processedMat = padInfo.ProcessedMat;
         using var result = new Mat();
 
-        await _detectLock.WaitAsync().ConfigureAwait(false);
-        try
+        lock (_detectLock)
         {
-            core.Detect(processedMat, result);
-        }
-        finally
-        {
-            _detectLock.Release();
+            _core.Detect(processedMat, result);
         }
 
         if (result.Empty() || result.Rows == 0 || result.Cols < 15)
-            return faces;
+            return Task.FromResult<IReadOnlyList<Face>>(faces);
 
         var matBorder = new Rectangle(0, 0, mat.Width, mat.Height);
 
@@ -80,43 +90,31 @@ internal sealed class YuNet(FaceDetectorYN core, Size inputSize) : IFaceDetector
             ));
             continue;
 
-            float GetFloat(int col)
-            {
-                return result.At<float>(i, col);
-            }
-
-            int GetInt(int col)
-            {
-                return RoundToIntAwayFromZero(GetFloat(col));
-            }
-
-            Point GetPoint(int colX, int colY)
-            {
-                return new Point(GetInt(colX), GetInt(colY));
-            }
+            float GetFloat(int col) => result.At<float>(i, col);
+            int GetInt(int col) => RoundToIntAwayFromZero(GetFloat(col));
+            Point GetPoint(int colX, int colY) => new(GetInt(colX), GetInt(colY));
         }
 
-        return faces;
+        return Task.FromResult<IReadOnlyList<Face>>(faces);
     }
 
     public void Dispose()
     {
-        core.Dispose();
-        _detectLock.Dispose();
+        _core.Dispose();
     }
 
     private PaddingInfo ResizeAndPadMat(Mat mat)
     {
-        var scaleX = (float)inputSize.Width / mat.Width;
-        var scaleY = (float)inputSize.Height / mat.Height;
+        var scaleX = (float)_inputSize.Width / mat.Width;
+        var scaleY = (float)_inputSize.Height / mat.Height;
         var scale = Math.Min(1.0f, Math.Min(scaleX, scaleY));
 
         var newWidth = RoundToIntAwayFromZero(mat.Width * scale);
         var newHeight = RoundToIntAwayFromZero(mat.Height * scale);
-        var padLeft = (inputSize.Width - newWidth) / 2;
-        var padTop = (inputSize.Height - newHeight) / 2;
+        var padLeft = (_inputSize.Width - newWidth) / 2;
+        var padTop = (_inputSize.Height - newHeight) / 2;
 
-        var processedMat = new Mat(inputSize, mat.Type(), Scalar.Black);
+        var processedMat = new Mat(_inputSize, mat.Type(), Scalar.Black);
         var roi = new Rect(padLeft, padTop, newWidth, newHeight);
 
         using var subMat = processedMat[roi];
