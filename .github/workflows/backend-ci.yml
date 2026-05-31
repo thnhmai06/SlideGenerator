@@ -10,11 +10,14 @@ on:
 
 permissions:
   contents: read
+  packages: read
 
 env:
   DOTNET_NOLOGO: "true"
   DOTNET_CLI_TELEMETRY_OPTOUT: "1"
   SYNCFUSION_LICENSE_KEY: ${{ secrets.SYNCFUSION_LICENSE_KEY || 'empty' }}
+  GITHUB_USERNAME: ${{ github.actor }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 concurrency:
   group: backend-ci-${{ github.ref }}
@@ -57,12 +60,12 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - { name: windows-x64,  runner: windows-latest     }
-          - { name: windows-arm64, runner: windows-11-arm     }
-          - { name: linux-x64,    runner: ubuntu-24.04        }
-          - { name: linux-arm64,  runner: ubuntu-24.04-arm    }
-          - { name: macos-x64,    runner: macos-13            }
-          - { name: macos-arm64,  runner: macos-latest        }
+          - { name: windows-x64,    runner: windows-latest      }
+          - { name: windows-arm64,  runner: windows-11-arm      }
+          - { name: linux-x64,      runner: ubuntu-24.04        }
+          - { name: linux-arm64,    runner: ubuntu-24.04-arm    }
+          - { name: macos-x64,      runner: macos-26-intel      }
+          - { name: macos-arm64,    runner: macos-26            }
 
     steps:
       - name: Checkout

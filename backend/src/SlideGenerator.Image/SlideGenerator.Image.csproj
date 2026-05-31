@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
@@ -13,38 +13,40 @@
     </ItemGroup>
 
     <ItemGroup Condition="'$(RuntimeIdentifier)' == 'win-x64'
-    or ('$(RuntimeIdentifier)' == '' and $([MSBuild]::IsOSPlatform('Windows')))">
-        <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.13.0.20260528"/>
-    </ItemGroup>
-    <ItemGroup Condition="'$(RuntimeIdentifier)' == 'linux-x64'
     or ('$(RuntimeIdentifier)' == ''
-        and $([MSBuild]::IsOSPlatform('Linux'))
+        and $([MSBuild]::IsOSPlatform('Windows'))
         and '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'X64')">
-        <PackageReference Include="OpenCvSharp4.official.runtime.linux-x64" Version="4.13.0.20260528"/>
-    </ItemGroup>
-    <ItemGroup Condition="'$(RuntimeIdentifier)' == 'linux-arm64'
-    or ('$(RuntimeIdentifier)' == ''
-        and $([MSBuild]::IsOSPlatform('Linux'))
-        and '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64')">
-        <PackageReference Include="OpenCvSharp4.runtime.linux-arm64" Version="4.13.0.20260528"/>
-    </ItemGroup>
-    <ItemGroup Condition="'$(RuntimeIdentifier)' == 'osx-x64'
-    or ('$(RuntimeIdentifier)' == ''
-        and $([MSBuild]::IsOSPlatform('OSX'))
-        and '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'X64')">
-        <PackageReference Include="OneWare.OpenCvSharp4.runtime.osx-x64" Version="4.13.0.18"/>
-    </ItemGroup>
-    <ItemGroup Condition="'$(RuntimeIdentifier)' == 'osx-arm64'
-    or ('$(RuntimeIdentifier)' == ''
-        and $([MSBuild]::IsOSPlatform('OSX'))
-        and '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64')">
-        <PackageReference Include="OneWare.OpenCvSharp4.runtime.osx-arm64" Version="4.13.0.18"/>
+        <PackageReference Include="SlideGenerator.OpenCvSharp4.runtime.win-x64" Version="4.13.0.20260529-e6d3ad9"/>
     </ItemGroup>
     <ItemGroup Condition="'$(RuntimeIdentifier)' == 'win-arm64'
     or ('$(RuntimeIdentifier)' == ''
         and $([MSBuild]::IsOSPlatform('Windows'))
         and '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64')">
-        <PackageReference Include="OneWare.OpenCvSharp4.runtime.win-arm64" Version="4.13.0.18"/>
+        <PackageReference Include="SlideGenerator.OpenCvSharp4.runtime.win-arm64" Version="4.13.0.20260529-e6d3ad9"/>
+    </ItemGroup>
+    <ItemGroup Condition="'$(RuntimeIdentifier)' == 'linux-x64'
+    or ('$(RuntimeIdentifier)' == ''
+        and $([MSBuild]::IsOSPlatform('Linux'))
+        and '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'X64')">
+        <PackageReference Include="SlideGenerator.OpenCvSharp4.runtime.linux-x64" Version="4.13.0.20260529-e6d3ad9"/>
+    </ItemGroup>
+    <ItemGroup Condition="'$(RuntimeIdentifier)' == 'linux-arm64'
+    or ('$(RuntimeIdentifier)' == ''
+        and $([MSBuild]::IsOSPlatform('Linux'))
+        and '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64')">
+        <PackageReference Include="SlideGenerator.OpenCvSharp4.runtime.linux-arm64" Version="4.13.0.20260529-e6d3ad9"/>
+    </ItemGroup>
+    <ItemGroup Condition="'$(RuntimeIdentifier)' == 'osx-x64'
+    or ('$(RuntimeIdentifier)' == ''
+        and $([MSBuild]::IsOSPlatform('OSX'))
+        and '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'X64')">
+        <PackageReference Include="SlideGenerator.OpenCvSharp4.runtime.osx-x64" Version="4.13.0.20260529-e6d3ad9"/>
+    </ItemGroup>
+    <ItemGroup Condition="'$(RuntimeIdentifier)' == 'osx-arm64'
+    or ('$(RuntimeIdentifier)' == ''
+        and $([MSBuild]::IsOSPlatform('OSX'))
+        and '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64')">
+        <PackageReference Include="SlideGenerator.OpenCvSharp4.runtime.osx-arm64" Version="4.13.0.20260529-e6d3ad9"/>
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\SlideGenerator.Coordinator\SlideGenerator.Coordinator.csproj"/>
