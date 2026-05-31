@@ -2,12 +2,30 @@ name: Backend CI
 
 on:
   push:
+    paths:
+      - "backend/src/**"
+      - "backend/tests/**"
+      - "backend/Directory.Build.props"
+      - "backend/Directory.Packages.props"
+      - "backend/global.json"
+      - "backend/nuget.config"
+      - "backend/*.slnx"
+      - "Taskfile.yml"
+      - ".github/workflows/backend-ci.yml"
+      - ".github/scripts/**"
   pull_request:
     types: [opened, synchronize, reopened, labeled]
     paths:
-      - "backend/**/*"
+      - "backend/src/**"
+      - "backend/tests/**"
+      - "backend/Directory.Build.props"
+      - "backend/Directory.Packages.props"
+      - "backend/global.json"
+      - "backend/nuget.config"
+      - "backend/*.slnx"
       - "Taskfile.yml"
       - ".github/workflows/backend-ci.yml"
+      - ".github/scripts/**"
   release:
     types: [published]
 
