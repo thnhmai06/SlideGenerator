@@ -1,0 +1,3 @@
+name: "SlideGenerator CodeQL Config"
+paths-ignore:
+  - "backend/tests/**"

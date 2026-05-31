@@ -93,6 +93,7 @@ internal sealed class CloudClient(ILogger<CloudClient>? logger = null) : ICloudC
         HttpClient? httpClient = null,
         CancellationToken cancellationToken = default)
     {
+        savePath = Path.GetFullPath(savePath);
         httpClient ??= CreateClient();
         logger?.LogDebug("Download start | Uri: {Uri}, Path: {Path}", uri, savePath);
 

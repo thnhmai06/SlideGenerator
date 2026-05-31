@@ -30,6 +30,7 @@ public sealed class Sha256Hasher : IHasher
     /// <exception cref="FileNotFoundException">Thrown when the specified file does not exist.</exception>
     public string ComputeHashFile(string filePath, int? length = null)
     {
+        filePath = Path.GetFullPath(filePath);
         if (!File.Exists(filePath))
             throw new FileNotFoundException("File not found", filePath);
 

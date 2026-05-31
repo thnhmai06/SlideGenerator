@@ -25,6 +25,7 @@ namespace SlideGenerator.Stdio.Implementations;
 /// <param name="pidFilePath">Path where the owning process ID is written.</param>
 internal sealed class SingleInstanceLock(string mutexName, string pidFilePath) : IDisposable
 {
+    private readonly string _pidFilePath = Path.GetFullPath(pidFilePath);
     private Mutex? _mutex;
     private FileStream? _pidStream;
 
@@ -53,10 +54,10 @@ internal sealed class SingleInstanceLock(string mutexName, string pidFilePath) :
             // Previous owner crashed without releasing — we now own it.
         }
 
-        var directory = Path.GetDirectoryName(Path.GetFullPath(pidFilePath));
+        var directory = Path.GetDirectoryName(_pidFilePath);
         if (!string.IsNullOrWhiteSpace(directory)) Directory.CreateDirectory(directory);
 
-        _pidStream = new FileStream(pidFilePath, FileMode.Create, FileAccess.ReadWrite, FileShare.Read);
+        _pidStream = new FileStream(_pidFilePath, FileMode.Create, FileAccess.ReadWrite, FileShare.Read);
         using var writer = new StreamWriter(_pidStream, leaveOpen: true);
         writer.Write(Environment.ProcessId);
         writer.Flush();
@@ -73,7 +74,7 @@ internal sealed class SingleInstanceLock(string mutexName, string pidFilePath) :
     {
         try
         {
-            var stream = _pidStream ?? new FileStream(pidFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            var stream = _pidStream ?? new FileStream(_pidFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             stream.Flush();
             stream.Seek(0, SeekOrigin.Begin);
             using var reader = new StreamReader(stream, leaveOpen: _pidStream is not null);

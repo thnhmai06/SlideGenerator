@@ -118,6 +118,7 @@ internal sealed class RecipeRepository : IRecipeRepository
     /// <inheritdoc />
     public async Task ExportAsync(int recipeId, string outputFilePath, string? password, CancellationToken ct = default)
     {
+        outputFilePath = Path.GetFullPath(outputFilePath);
         var entry = await GetByIdAsync(recipeId, ct).ConfigureAwait(false)
                     ?? throw new InvalidOperationException($"Recipe {recipeId} not found.");
 
@@ -157,6 +158,7 @@ internal sealed class RecipeRepository : IRecipeRepository
     public async Task<int> ImportAsync(string filePath, string? password, string workbooksDirectory,
         string presentationsDirectory, CancellationToken ct = default)
     {
+        filePath = Path.GetFullPath(filePath);
         var displayName = Path.GetFileNameWithoutExtension(filePath);
         string? recipeJson = null;
 
@@ -246,7 +248,8 @@ internal sealed class RecipeRepository : IRecipeRepository
             throw new InvalidDataException(
                 $"Archive rejected: entry '{entryName}' escapes the target directory.");
 
-        Directory.CreateDirectory(Path.GetDirectoryName(targetFull)!);
+        var safeDirPath = Path.GetFullPath(Path.GetDirectoryName(targetFull)!);
+        Directory.CreateDirectory(safeDirPath);
         using var entryStream = zipFile.GetInputStream(zipEntry);
         using var targetStream = File.Create(targetFull);
         StreamUtils.Copy(entryStream, targetStream, new byte[4096]);

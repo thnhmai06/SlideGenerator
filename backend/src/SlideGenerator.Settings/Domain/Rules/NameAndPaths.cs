@@ -12,6 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using Microsoft.Data.Sqlite;
 using SlideGenerator.Cryptography.Application.Abstractions;
 using SlideGenerator.Utilities;
 
@@ -29,9 +30,9 @@ public static class NameAndPaths
     ///     Gets the base path for user-specific application data.
     /// </summary>
     private static string UserPath =>
-        Path.Combine(
+        Path.GetFullPath(Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), // %LOCALAPPDATA%
-            AppName);
+            AppName));
 
     /// <summary>
     ///     Gets the base path for application-local data (executable directory).
@@ -93,7 +94,7 @@ public static class NameAndPaths
             var bookFolder = $"{Naming.SanitizeFileName(bookName)}_{hash}";
             sheetName = Naming.SanitizeFileName(sheetName);
             colName = Naming.SanitizeFileName(colName);
-            return Path.Combine(assetsPath, bookFolder, sheetName, colName, "Download");
+            return Path.GetFullPath(Path.Combine(assetsPath, bookFolder, sheetName, colName, "Download"));
         }
 
         public static string GetEditDir(string? assetsPath, string bookPath, string sheetName, string colName,
@@ -105,7 +106,7 @@ public static class NameAndPaths
             var bookFolder = $"{Naming.SanitizeFileName(bookName)}_{hash}";
             sheetName = Naming.SanitizeFileName(sheetName);
             colName = Naming.SanitizeFileName(colName);
-            return Path.Combine(assetsPath, bookFolder, sheetName, colName, "Edit");
+            return Path.GetFullPath(Path.Combine(assetsPath, bookFolder, sheetName, colName, "Edit"));
         }
     }
 
@@ -145,7 +146,8 @@ public static class NameAndPaths
         /// <summary>
         ///     Gets the SQLite connection string for the workflow persistence database.
         /// </summary>
-        public static string ConnectionString => $"Data Source={FilePath}";
+        public static string ConnectionString =>
+            new SqliteConnectionStringBuilder { DataSource = FilePath }.ConnectionString;
     }
 
     /// <summary>
@@ -163,6 +165,7 @@ public static class NameAndPaths
         /// <summary>
         ///     Gets the SQLite connection string for the recipe database.
         /// </summary>
-        public static string ConnectionString => $"Data Source={FilePath}";
+        public static string ConnectionString =>
+            new SqliteConnectionStringBuilder { DataSource = FilePath }.ConnectionString;
     }
 }

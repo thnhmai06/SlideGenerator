@@ -37,6 +37,8 @@ internal sealed class SettingManager(
     /// </summary>
     private string FilePath => NameAndPaths.SettingsFile.GetFilePath(serializer.FileExtension);
 
+    private static string L(string? s) => s?.ReplaceLineEndings(" ") ?? "";
+
     /// <inheritdoc />
     public Setting Current { get; private set; } = new();
 
@@ -51,7 +53,7 @@ internal sealed class SettingManager(
     {
         if (!File.Exists(FilePath))
         {
-            logger?.LogInformation("Setting file not found at {Path}. Using default settings.", FilePath);
+            logger?.LogInformation("Setting file not found at {Path}. Using default settings.", L(FilePath));
             return false;
         }
 
@@ -59,7 +61,7 @@ internal sealed class SettingManager(
 
         try
         {
-            logger?.LogDebug("Loading settings from {Path}", FilePath);
+            logger?.LogDebug("Loading settings from {Path}", L(FilePath));
             var source = await File.ReadAllTextAsync(FilePath).ConfigureAwait(false);
             var loaded = serializer.Deserialize<Setting>(source);
 
@@ -95,11 +97,11 @@ internal sealed class SettingManager(
                 }
 
             Current = loaded;
-            logger?.LogInformation("Successfully loaded settings from {Path}", FilePath);
+            logger?.LogInformation("Successfully loaded settings from {Path}", L(FilePath));
         }
         catch (Exception e)
         {
-            logger?.LogError(e, "Error loading settings from {Path}. Resetting to defaults.", FilePath);
+            logger?.LogError(e, "Error loading settings from {Path}. Resetting to defaults.", L(FilePath));
             await ResetToDefaults().ConfigureAwait(false);
             return false;
         }
@@ -115,7 +117,7 @@ internal sealed class SettingManager(
     {
         try
         {
-            logger?.LogDebug("Saving settings to {Path}", FilePath);
+            logger?.LogDebug("Saving settings to {Path}", L(FilePath));
             var folderName = Path.GetDirectoryName(FilePath);
             if (!string.IsNullOrEmpty(folderName)) Directory.CreateDirectory(folderName);
 
@@ -136,11 +138,11 @@ internal sealed class SettingManager(
 
             var content = serializer.Serialize(toSave);
             await File.WriteAllTextAsync(FilePath, content).ConfigureAwait(false);
-            logger?.LogInformation("Successfully saved settings to {Path}", FilePath);
+            logger?.LogInformation("Successfully saved settings to {Path}", L(FilePath));
         }
         catch (Exception e)
         {
-            logger?.LogError(e, "Error saving settings to {Path}", FilePath);
+            logger?.LogError(e, "Error saving settings to {Path}", L(FilePath));
             throw;
         }
     }
