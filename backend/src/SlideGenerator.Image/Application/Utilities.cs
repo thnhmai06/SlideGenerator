@@ -75,8 +75,8 @@ public static class Utilities
             Math.Min(cropSize.Width, imageBounds.Width),
             Math.Min(cropSize.Height, imageBounds.Height));
 
-        var x = (int)MathF.Round(anchorPoint.Value.X - boundedSize.Width * pivot.Value.X);
-        var y = (int)MathF.Round(anchorPoint.Value.Y - boundedSize.Height * pivot.Value.Y);
+        var x = (int)MathF.Round(anchorPoint.Value.X - (boundedSize.Width * pivot.Value.X));
+        var y = (int)MathF.Round(anchorPoint.Value.Y - (boundedSize.Height * pivot.Value.Y));
 
         return new Rectangle(x, y, boundedSize.Width, boundedSize.Height).ClampIn(imageBounds);
     }
