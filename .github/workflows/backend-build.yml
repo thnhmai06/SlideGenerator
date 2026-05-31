@@ -1,6 +1,7 @@
 name: "[Backend] Build & Validation"
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - "backend/src/**"
