@@ -303,30 +303,25 @@ jobs:
           --logger "trx;LogFilePrefix=SlideGenerator.Stdio.Tests"
           --results-directory TestResults
 
-      # ── Coverage: dotCover (linux-x64 only) ───────────────────────────────
-      - name: Install dotCover
-        if: matrix.os.name == 'linux-x64' && steps.build.outcome == 'success'
-        run: dotnet tool install --global JetBrains.dotCover.CommandLineTools
-        
-      - name: Debug paths
-        run: |
-          pwd
-          ls -la
-          ls -la backend
-          find . -name "*.slnx" -o -name "*.sln"
-
+      # ── Coverage: coverlet + ReportGenerator (linux-x64 only) ──────────────
       - name: Coverage
         if: matrix.os.name == 'linux-x64' && steps.build.outcome == 'success'
         working-directory: backend
+        run: >-
+          dotnet test SlideGenerator.slnx
+          --no-build
+          --collect:"XPlat Code Coverage"
+          --results-directory TestResults/Coverage
+
+      - name: Merge coverage
+        if: matrix.os.name == 'linux-x64' && steps.build.outcome == 'success'
         run: |
-          dotCover cover \
-            --snapshot-output="$GITHUB_WORKSPACE/backend/TestResults/coverage.dcvr" \
-            --xml-report-output="$GITHUB_WORKSPACE/backend/TestResults/coverage.xml" \
-            --exclude-assemblies=SlideGenerator.*.Tests \
-            -- \
-            dotnet test "$GITHUB_WORKSPACE/backend/SlideGenerator.slnx" \
-              --no-build \
-              --results-directory "$GITHUB_WORKSPACE/backend/TestResults"
+          dotnet tool install --global dotnet-reportgenerator-globaltool
+          reportgenerator \
+            -reports:"backend/TestResults/Coverage/**/coverage.cobertura.xml" \
+            -targetdir:"backend/TestResults/Report" \
+            -reporttypes:"Cobertura;HtmlSummary;MarkdownSummaryGithub" \
+            -assemblyfilters:"-*.Tests"
 
       - name: Upload coverage report
         if: always() && matrix.os.name == 'linux-x64'
@@ -334,8 +329,8 @@ jobs:
         with:
           name: coverage-linux-x64-${{ github.run_attempt }}
           path: |
-            backend/TestResults/coverage.xml
-            backend/TestResults/coverage.dcvr
+            backend/TestResults/Report/Cobertura.xml
+            backend/TestResults/Report/summary.htm
           if-no-files-found: warn
           retention-days: 14
 
