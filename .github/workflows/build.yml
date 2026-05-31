@@ -11,7 +11,7 @@ on:
       - "backend/nuget.config"
       - "backend/*.slnx"
       - "Taskfile.yml"
-      - ".github/workflows/backend-ci.yml"
+      - ".github/workflows/build.yml"
       - ".github/scripts/**"
   pull_request:
     types: [opened, synchronize, reopened, labeled]
@@ -24,7 +24,7 @@ on:
       - "backend/nuget.config"
       - "backend/*.slnx"
       - "Taskfile.yml"
-      - ".github/workflows/backend-ci.yml"
+      - ".github/workflows/build.yml"
       - ".github/scripts/**"
   release:
     types: [published]
@@ -305,23 +305,37 @@ jobs:
 
       # ── Coverage: dotCover (linux-x64 only) ───────────────────────────────
       - name: Install dotCover
-        if: always() && matrix.os.name == 'linux-x64' && steps.build.outcome == 'success'
+        if: matrix.os.name == 'linux-x64' && steps.build.outcome == 'success'
         run: dotnet tool install --global JetBrains.dotCover.CommandLineTools
+        
+      - name: Debug paths
+        run: |
+          pwd
+          ls -la
+          ls -la backend
+          find . -name "*.slnx" -o -name "*.sln"
 
-      - name: "Test coverage [dotCover]"
-        if: always() && matrix.os.name == 'linux-x64' && steps.build.outcome == 'success'
+      - name: Coverage
+        if: matrix.os.name == 'linux-x64' && steps.build.outcome == 'success'
         working-directory: backend
-        run: >-
-          dotCover cover
-          --xml-report-output=TestResults/coverage.xml
-          -- test SlideGenerator.slnx --no-build
+        run: |
+          dotCover cover \
+            --snapshot-output="$GITHUB_WORKSPACE/backend/TestResults/coverage.dcvr" \
+            --xml-report-output="$GITHUB_WORKSPACE/backend/TestResults/coverage.xml" \
+            --exclude-assemblies=SlideGenerator.*.Tests \
+            -- \
+            dotnet test "$GITHUB_WORKSPACE/backend/SlideGenerator.slnx" \
+              --no-build \
+              --results-directory "$GITHUB_WORKSPACE/backend/TestResults"
 
       - name: Upload coverage report
         if: always() && matrix.os.name == 'linux-x64'
         uses: actions/upload-artifact@v7
         with:
           name: coverage-linux-x64-${{ github.run_attempt }}
-          path: backend/TestResults/coverage.xml
+          path: |
+            backend/TestResults/coverage.xml
+            backend/TestResults/coverage.dcvr
           if-no-files-found: warn
           retention-days: 14
 
