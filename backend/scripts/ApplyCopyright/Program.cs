@@ -113,33 +113,34 @@ static string? GetProjectName(string filePath)
 static string RemoveExistingCopyrightHeaders(string content)
 {
     content = content.TrimStart('\uFEFF');
+    while (TryStripCopyrightBlock(ref content) || TryStripCopyrightLine(ref content)) { }
+    return content.TrimStart();
+}
 
-    while (true)
-    {
-        var next = Regex.Replace(
-            content,
-            @"^\s*/\*[\s\S]*?\*/\s*",
-            match => match.Value.Contains("Copyright", StringComparison.OrdinalIgnoreCase) ? string.Empty : match.Value,
-            RegexOptions.None,
-            TimeSpan.FromSeconds(1));
+static bool TryStripCopyrightBlock(ref string content)
+{
+    var next = Regex.Replace(
+        content,
+        @"^\s*/\*[\s\S]*?\*/\s*",
+        match => match.Value.Contains("Copyright", StringComparison.OrdinalIgnoreCase) ? string.Empty : match.Value,
+        RegexOptions.None,
+        TimeSpan.FromSeconds(1));
+    if (next == content) return false;
+    content = next;
+    return true;
+}
 
-        if (next != content)
-        {
-            content = next;
-            continue;
-        }
-
-        next = Regex.Replace(
-            content,
-            @"^\s*(?://[^\r\n]*(?:\r?\n|$))+",
-            match => match.Value.Contains("Copyright", StringComparison.OrdinalIgnoreCase) ? string.Empty : match.Value,
-            RegexOptions.None,
-            TimeSpan.FromSeconds(1));
-
-        if (next == content) return content.TrimStart();
-
-        content = next;
-    }
+static bool TryStripCopyrightLine(ref string content)
+{
+    var next = Regex.Replace(
+        content,
+        @"^\s*(?://[^\r\n]*(?:\r?\n|$))+",
+        match => match.Value.Contains("Copyright", StringComparison.OrdinalIgnoreCase) ? string.Empty : match.Value,
+        RegexOptions.None,
+        TimeSpan.FromSeconds(1));
+    if (next == content) return false;
+    content = next;
+    return true;
 }
 
 static string DetectNewLine(string content)
@@ -170,7 +171,9 @@ internal sealed record Options(string Root, bool Check)
                 case "--check":
                     check = true;
                     break;
-                case "--root" when i + 1 < args.Length:
+                case "--root":
+                    if (i + 1 >= args.Length)
+                        throw new ArgumentException($"Unknown or incomplete argument: {args[i]}");
                     root = args[++i];
                     break;
                 default:

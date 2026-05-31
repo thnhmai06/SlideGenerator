@@ -146,45 +146,11 @@ public sealed class CollectImage(
         try
         {
             logger.LogDebug("Acquiring image for row {RowIndex} from '{Url}'", Task.RowIndex, Task.SourceUrl);
-
-            if (File.Exists(Task.SourceUrl!))
-            {
-                // Local file path
-                if (!data.Request.AllowLocalImagePaths)
-                {
-                    logger.LogWarning(
-                        "Source '{Url}' is a local file but local paths are not allowed. Skipping.",
-                        Task.SourceUrl);
-                    owner.SubmitResult(null);
-                    notified = true;
-                    return ExecutionResult.Next();
-                }
-
-                File.Copy(Task.SourceUrl!, Task.DownloadPath, true);
-            }
-            else
-            {
-                // URL path — 3-step pipeline: inspect → cloud-resolve → inspect → download
-                using var httpClient = httpClientFactory.CreateClient();
-                var resolvedUri = await ResolveSourceAsync(httpClient, ct).ConfigureAwait(false);
-
-                if (resolvedUri == null)
-                {
-                    logger.LogWarning(
-                        "URL '{Url}' did not resolve to a downloadable image. Skipping.", Task.SourceUrl);
-                    owner.SubmitResult(null);
-                    notified = true;
-                    return ExecutionResult.Next();
-                }
-
-                await cloudClient
-                    .DownloadAsync(resolvedUri, Task.DownloadPath, httpClient, ct)
-                    .ConfigureAwait(false);
-            }
-
-            logger.LogDebug("Image acquired | Row: {RowIndex}, Column: {ColumnName}",
-                Task.RowIndex, Task.ColumnName);
-            owner.SubmitResult(Task.DownloadPath);
+            var result = await FetchToPathAsync(data, logger, ct).ConfigureAwait(false);
+            if (result != null)
+                logger.LogDebug("Image acquired | Row: {RowIndex}, Column: {ColumnName}",
+                    Task.RowIndex, Task.ColumnName);
+            owner.SubmitResult(result);
             notified = true;
         }
         catch (Exception ex) when (ex is not NullReferenceException
@@ -205,6 +171,35 @@ public sealed class CollectImage(
         }
 
         return ExecutionResult.Next();
+    }
+
+    private async Task<string?> FetchToPathAsync(GeneratingContext data, ILogger logger, CancellationToken ct)
+    {
+        if (File.Exists(Task.SourceUrl!))
+        {
+            if (!data.Request.AllowLocalImagePaths)
+            {
+                logger.LogWarning("Source '{Url}' is a local file but local paths are not allowed. Skipping.",
+                    Task.SourceUrl);
+                return null;
+            }
+
+            File.Copy(Task.SourceUrl!, Task.DownloadPath, true);
+            return Task.DownloadPath;
+        }
+
+        // URL path — 3-step pipeline: inspect → cloud-resolve → inspect → download
+        using var httpClient = httpClientFactory.CreateClient();
+        var resolvedUri = await ResolveSourceAsync(httpClient, ct).ConfigureAwait(false);
+
+        if (resolvedUri == null)
+        {
+            logger.LogWarning("URL '{Url}' did not resolve to a downloadable image. Skipping.", Task.SourceUrl);
+            return null;
+        }
+
+        await cloudClient.DownloadAsync(resolvedUri, Task.DownloadPath, httpClient, ct).ConfigureAwait(false);
+        return Task.DownloadPath;
     }
 
     private async Task<ExecutionResult> RunWaiterAsync(

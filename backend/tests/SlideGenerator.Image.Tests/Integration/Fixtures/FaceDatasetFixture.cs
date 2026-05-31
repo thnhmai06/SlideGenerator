@@ -189,25 +189,8 @@ public sealed class FaceDatasetFixture : IAsyncLifetime
             using var doc = JsonDocument.Parse(json);
             foreach (var entry in doc.RootElement.GetProperty("rows").EnumerateArray())
             {
-                var rowIdx = entry.GetProperty("row_idx").GetInt32();
-                var row = entry.GetProperty("row");
-                var src = row.GetProperty("image").GetProperty("src").GetString()!;
-                var attrs = row.GetProperty("attributes");
-                var isMale = attrs[MaleAttributeIndex].GetInt32() == 1;
-
-                if (isMale && neededMale > 0)
-                {
-                    var dest = Path.Combine(SingleDir, $"m_{rowIdx}.jpg");
-                    if (!File.Exists(dest) && await TryDownloadAsync(http, src, dest).ConfigureAwait(false))
-                        neededMale--;
-                }
-                else if (!isMale && neededFemale > 0)
-                {
-                    var dest = Path.Combine(SingleDir, $"f_{rowIdx}.jpg");
-                    if (!File.Exists(dest) && await TryDownloadAsync(http, src, dest).ConfigureAwait(false))
-                        neededFemale--;
-                }
-
+                (neededMale, neededFemale) = await ProcessCelebaRowAsync(http, entry, neededMale, neededFemale)
+                    .ConfigureAwait(false);
                 if (neededMale <= 0 && neededFemale <= 0) break;
             }
         }
@@ -235,27 +218,60 @@ public sealed class FaceDatasetFixture : IAsyncLifetime
             using var doc = JsonDocument.Parse(json);
             foreach (var entry in doc.RootElement.GetProperty("rows").EnumerateArray())
             {
-                var rowIdx = entry.GetProperty("row_idx").GetInt32();
-                var row = entry.GetProperty("row");
-                var src = row.GetProperty("image").GetProperty("src").GetString()!;
-                var faceCount = row.GetProperty("valid_length").GetInt32();
-
-                if (faceCount >= GroupMinFaces && faceCount <= GroupMaxFaces && neededGroup > 0)
-                {
-                    var dest = Path.Combine(GroupDir, $"g{faceCount:D3}f_{rowIdx}.jpg");
-                    if (!File.Exists(dest) && await TryDownloadAsync(http, src, dest).ConfigureAwait(false))
-                        neededGroup--;
-                }
-                else if (faceCount > GroupMaxFaces && neededCrowd > 0)
-                {
-                    var dest = Path.Combine(CrowdDir, $"c{faceCount:D3}f_{rowIdx}.jpg");
-                    if (!File.Exists(dest) && await TryDownloadAsync(http, src, dest).ConfigureAwait(false))
-                        neededCrowd--;
-                }
-
+                (neededGroup, neededCrowd) = await ProcessWiderFaceRowAsync(http, entry, neededGroup, neededCrowd)
+                    .ConfigureAwait(false);
                 if (neededGroup <= 0 && neededCrowd <= 0) break;
             }
         }
+    }
+
+    private async Task<(int neededMale, int neededFemale)> ProcessCelebaRowAsync(
+        HttpClient http, JsonElement entry, int neededMale, int neededFemale)
+    {
+        var rowIdx = entry.GetProperty("row_idx").GetInt32();
+        var row = entry.GetProperty("row");
+        var src = row.GetProperty("image").GetProperty("src").GetString()!;
+        var attrs = row.GetProperty("attributes");
+        var isMale = attrs[MaleAttributeIndex].GetInt32() == 1;
+
+        if (isMale && neededMale > 0)
+        {
+            var dest = Path.Combine(SingleDir, $"m_{rowIdx}.jpg");
+            if (!File.Exists(dest) && await TryDownloadAsync(http, src, dest).ConfigureAwait(false))
+                neededMale--;
+        }
+        else if (!isMale && neededFemale > 0)
+        {
+            var dest = Path.Combine(SingleDir, $"f_{rowIdx}.jpg");
+            if (!File.Exists(dest) && await TryDownloadAsync(http, src, dest).ConfigureAwait(false))
+                neededFemale--;
+        }
+
+        return (neededMale, neededFemale);
+    }
+
+    private async Task<(int neededGroup, int neededCrowd)> ProcessWiderFaceRowAsync(
+        HttpClient http, JsonElement entry, int neededGroup, int neededCrowd)
+    {
+        var rowIdx = entry.GetProperty("row_idx").GetInt32();
+        var row = entry.GetProperty("row");
+        var src = row.GetProperty("image").GetProperty("src").GetString()!;
+        var faceCount = row.GetProperty("valid_length").GetInt32();
+
+        if (faceCount >= GroupMinFaces && faceCount <= GroupMaxFaces && neededGroup > 0)
+        {
+            var dest = Path.Combine(GroupDir, $"g{faceCount:D3}f_{rowIdx}.jpg");
+            if (!File.Exists(dest) && await TryDownloadAsync(http, src, dest).ConfigureAwait(false))
+                neededGroup--;
+        }
+        else if (faceCount > GroupMaxFaces && neededCrowd > 0)
+        {
+            var dest = Path.Combine(CrowdDir, $"c{faceCount:D3}f_{rowIdx}.jpg");
+            if (!File.Exists(dest) && await TryDownloadAsync(http, src, dest).ConfigureAwait(false))
+                neededCrowd--;
+        }
+
+        return (neededGroup, neededCrowd);
     }
 
     private static string BuildRowsUrl(string dataset, string split, int offset, int length)

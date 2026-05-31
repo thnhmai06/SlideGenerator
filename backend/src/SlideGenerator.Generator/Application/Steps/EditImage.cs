@@ -91,34 +91,11 @@ public sealed class EditImage(
     {
         var ct = context.CancellationToken;
 
-        // Discover the source file
-        string? sourceFile = null;
-        var downloadDir = Path.GetDirectoryName(Task.DownloadPath);
-        var downloadPrefix = Path.GetFileName(Task.DownloadPath);
-
-        if (downloadDir != null && Directory.Exists(downloadDir))
-            sourceFile = Directory.GetFiles(downloadDir, $"{downloadPrefix}.*").FirstOrDefault();
-
-        // Use fallback if primary source is missing
-        if (sourceFile == null || !File.Exists(sourceFile))
+        var sourceFile = FindSourceFile(logger);
+        if (sourceFile == null)
         {
-            if (!string.IsNullOrWhiteSpace(Task.FallbackImagePath) && File.Exists(Task.FallbackImagePath))
-            {
-                sourceFile = Task.FallbackImagePath;
-                logger.LogDebug("Primary source missing for row {RowIndex}, using fallback: '{Fallback}'",
-                    Task.RowIndex, sourceFile);
-            }
-            else
-            {
-                if (Task.SourceUrl != null)
-                    logger.LogError(
-                        new FileNotFoundException("Source image and fallback not found for editing.",
-                            Task.DownloadPath),
-                        "Missing source for row {RowIndex} prefix '{Prefix}'", Task.RowIndex, downloadPrefix);
-
-                owner.SubmitResult(null);
-                return ExecutionResult.Next();
-            }
+            owner.SubmitResult(null);
+            return ExecutionResult.Next();
         }
 
         var editDir = Path.GetDirectoryName(finalEditPath);
@@ -130,46 +107,9 @@ public sealed class EditImage(
         {
             try
             {
-                logger.LogDebug("Editing image '{Source}' for shape '{ShapeName}' (Row {RowIndex})", sourceFile,
-                    Task.ShapeName, Task.RowIndex);
-
-                using var image = imageFactory.Open(sourceFile);
-                var targetSize = new Size((int)Math.Round(Task.Width), (int)Math.Round(Task.Height));
-
-                logger.LogDebug("Calculating ROI for row {RowIndex} using {Algorithm}", Task.RowIndex,
-                    Task.EditOptions.RoiOption);
-
-                var roi = await roiResolver.CalculateRoiAsync(
-                    image,
-                    targetSize,
-                    Task.EditOptions.RoiOption).ConfigureAwait(false);
-
-                logger.LogDebug("Applying crop {ROI} to image for row {RowIndex}", roi, Task.RowIndex);
-                image.Crop(roi);
-
-                var currentSize = new Size((int)image.Info.Width, (int)image.Info.Height);
-                var maxAspectSize = currentSize.GetMaxAspectSize(targetSize);
-
-                logger.LogDebug("Resizing image for row {RowIndex} to {Size}", Task.RowIndex, maxAspectSize);
-                image.Resize(maxAspectSize);
-
-                await image.WriteAsync(finalEditPath).ConfigureAwait(false);
-
-                logger.LogDebug("Image edited | Row: {RowIndex}, Shape: {ShapeName}",
-                    Task.RowIndex, Task.ShapeName);
-
+                await ProcessAndSaveImageAsync(sourceFile, finalEditPath, data, logger, ct).ConfigureAwait(false);
                 owner.SubmitResult(finalEditPath);
                 notified = true;
-
-                if (data.Request.DownloadAssetsPath == null && sourceFile != Task.FallbackImagePath)
-                    try
-                    {
-                        File.Delete(sourceFile);
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.LogTrace(ex, "Temp file cleanup skipped | Path: {Path}", sourceFile);
-                    }
             }
             catch (Exception ex) when (ex is not NullReferenceException and not InvalidCastException
                                            and not IndexOutOfRangeException)
@@ -190,6 +130,72 @@ public sealed class EditImage(
         }
 
         return ExecutionResult.Next();
+    }
+
+    private string? FindSourceFile(ILogger logger)
+    {
+        var downloadDir = Path.GetDirectoryName(Task.DownloadPath);
+        var downloadPrefix = Path.GetFileName(Task.DownloadPath);
+        string? sourceFile = null;
+
+        if (downloadDir != null && Directory.Exists(downloadDir))
+            sourceFile = Directory.GetFiles(downloadDir, $"{downloadPrefix}.*").FirstOrDefault();
+
+        if (sourceFile != null && File.Exists(sourceFile))
+            return sourceFile;
+
+        if (!string.IsNullOrWhiteSpace(Task.FallbackImagePath) && File.Exists(Task.FallbackImagePath))
+        {
+            logger.LogDebug("Primary source missing for row {RowIndex}, using fallback: '{Fallback}'",
+                Task.RowIndex, Task.FallbackImagePath);
+            return Task.FallbackImagePath;
+        }
+
+        if (Task.SourceUrl != null)
+            logger.LogError(
+                new FileNotFoundException("Source image and fallback not found for editing.", Task.DownloadPath),
+                "Missing source for row {RowIndex} prefix '{Prefix}'", Task.RowIndex, downloadPrefix);
+
+        return null;
+    }
+
+    private async Task ProcessAndSaveImageAsync(
+        string sourceFile, string finalEditPath, GeneratingContext data, ILogger logger, CancellationToken ct)
+    {
+        logger.LogDebug("Editing image '{Source}' for shape '{ShapeName}' (Row {RowIndex})", sourceFile,
+            Task.ShapeName, Task.RowIndex);
+
+        using var image = imageFactory.Open(sourceFile);
+        var targetSize = new Size((int)Math.Round(Task.Width), (int)Math.Round(Task.Height));
+
+        logger.LogDebug("Calculating ROI for row {RowIndex} using {Algorithm}", Task.RowIndex,
+            Task.EditOptions.RoiOption);
+
+        var roi = await roiResolver.CalculateRoiAsync(image, targetSize, Task.EditOptions.RoiOption)
+            .ConfigureAwait(false);
+
+        logger.LogDebug("Applying crop {ROI} to image for row {RowIndex}", roi, Task.RowIndex);
+        image.Crop(roi);
+
+        var currentSize = new Size((int)image.Info.Width, (int)image.Info.Height);
+        var maxAspectSize = currentSize.GetMaxAspectSize(targetSize);
+
+        logger.LogDebug("Resizing image for row {RowIndex} to {Size}", Task.RowIndex, maxAspectSize);
+        image.Resize(maxAspectSize);
+
+        await image.WriteAsync(finalEditPath).ConfigureAwait(false);
+
+        logger.LogDebug("Image edited | Row: {RowIndex}, Shape: {ShapeName}", Task.RowIndex, Task.ShapeName);
+
+        if (data.Request.DownloadAssetsPath == null && sourceFile != Task.FallbackImagePath)
+            try
+            {
+                File.Delete(sourceFile);
+            }
+            catch (Exception ex)
+            {
+                logger.LogTrace(ex, "Temp file cleanup skipped | Path: {Path}", sourceFile);
+            }
     }
 
     private async Task<ExecutionResult> RunWaiterAsync(

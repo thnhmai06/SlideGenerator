@@ -192,68 +192,69 @@ internal sealed class RecipeRepository : IRecipeRepository
             var manifest = _manifestExtractor.ExtractReferencedFiles(recipeJson);
 
             // Pass 2: extract whitelisted entries with zip-bomb + path-traversal guards.
-            var totalUncompressed = 0L;
             var workbooksFull = Path.GetFullPath(workbooksDirectory) + Path.DirectorySeparatorChar;
             var presentationsFull = Path.GetFullPath(presentationsDirectory) + Path.DirectorySeparatorChar;
-
-            foreach (ZipEntry zipEntry in zipFile)
-            {
-                if (!zipEntry.IsFile) continue;
-                var entryName = zipEntry.Name;
-                if (string.Equals(entryName, RecipeJsonEntryName, StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                EnforceEntrySizeLimits(zipEntry, ref totalUncompressed);
-
-                string targetDirFull;
-                string relativeName;
-                IReadOnlySet<string> allowedExtensions;
-
-                if (entryName.StartsWith(WorkbooksPrefix, StringComparison.OrdinalIgnoreCase))
-                {
-                    relativeName = entryName[WorkbooksPrefix.Length..];
-                    targetDirFull = workbooksFull;
-                    allowedExtensions = ZipImportRules.AllowedWorkbookExtensions;
-                }
-                else if (entryName.StartsWith(PresentationsPrefix, StringComparison.OrdinalIgnoreCase))
-                {
-                    relativeName = entryName[PresentationsPrefix.Length..];
-                    targetDirFull = presentationsFull;
-                    allowedExtensions = ZipImportRules.AllowedPresentationExtensions;
-                }
-                else
-                {
-                    // Silently skip entries outside the two whitelisted roots.
-                    continue;
-                }
-
-                if (string.IsNullOrEmpty(relativeName)) continue;
-
-                // Extension whitelist.
-                var ext = Path.GetExtension(relativeName);
-                if (!allowedExtensions.Contains(ext)) continue;
-
-                // Manifest whitelist (null = parser stubbed, accept).
-                if (manifest != null && !manifest.Contains(NormalizeManifestPath(entryName))) continue;
-
-                // Path-traversal guard.
-                var targetPath = Path.Combine(targetDirFull, relativeName);
-                var targetFull = Path.GetFullPath(targetPath);
-                if (!targetFull.StartsWith(targetDirFull, StringComparison.OrdinalIgnoreCase))
-                    throw new InvalidDataException(
-                        $"Archive rejected: entry '{entryName}' escapes the target directory.");
-
-                Directory.CreateDirectory(Path.GetDirectoryName(targetFull)!);
-                using var entryStream = zipFile.GetInputStream(zipEntry);
-                using var targetStream = File.Create(targetFull);
-                StreamUtils.Copy(entryStream, targetStream, new byte[4096]);
-            }
+            ExtractZipEntries(zipFile, manifest, workbooksFull, presentationsFull);
 
             // TODO: Rewrite zip-relative file paths in recipeJson to absolute paths.
             // Blocked on: IRecipeSummarizer implementation + ReactFlow JSON schema.
         }, ct).ConfigureAwait(false);
 
         return await AddAsync(displayName, recipeJson, ct).ConfigureAwait(false);
+    }
+
+    private static void ExtractZipEntries(
+        ZipFile zipFile, IReadOnlySet<string>? manifest,
+        string workbooksFull, string presentationsFull)
+    {
+        var totalUncompressed = 0L;
+        foreach (ZipEntry zipEntry in zipFile)
+        {
+            if (!zipEntry.IsFile) continue;
+            var entryName = zipEntry.Name;
+            if (string.Equals(entryName, RecipeJsonEntryName, StringComparison.OrdinalIgnoreCase)) continue;
+            EnforceEntrySizeLimits(zipEntry, ref totalUncompressed);
+            ExtractSingleEntry(zipFile, zipEntry, entryName, manifest, workbooksFull, presentationsFull);
+        }
+    }
+
+    private static void ExtractSingleEntry(
+        ZipFile zipFile, ZipEntry zipEntry, string entryName,
+        IReadOnlySet<string>? manifest, string workbooksFull, string presentationsFull)
+    {
+        string targetDirFull;
+        string relativeName;
+        IReadOnlySet<string> allowedExtensions;
+
+        if (entryName.StartsWith(WorkbooksPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            relativeName = entryName[WorkbooksPrefix.Length..];
+            targetDirFull = workbooksFull;
+            allowedExtensions = ZipImportRules.AllowedWorkbookExtensions;
+        }
+        else if (entryName.StartsWith(PresentationsPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            relativeName = entryName[PresentationsPrefix.Length..];
+            targetDirFull = presentationsFull;
+            allowedExtensions = ZipImportRules.AllowedPresentationExtensions;
+        }
+        else return;
+
+        if (string.IsNullOrEmpty(relativeName)) return;
+        var ext = Path.GetExtension(relativeName);
+        if (!allowedExtensions.Contains(ext)) return;
+        if (manifest != null && !manifest.Contains(NormalizeManifestPath(entryName))) return;
+
+        var targetPath = Path.Combine(targetDirFull, relativeName);
+        var targetFull = Path.GetFullPath(targetPath);
+        if (!targetFull.StartsWith(targetDirFull, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidDataException(
+                $"Archive rejected: entry '{entryName}' escapes the target directory.");
+
+        Directory.CreateDirectory(Path.GetDirectoryName(targetFull)!);
+        using var entryStream = zipFile.GetInputStream(zipEntry);
+        using var targetStream = File.Create(targetFull);
+        StreamUtils.Copy(entryStream, targetStream, new byte[4096]);
     }
 
     private static string? ReadRecipeJson(ZipFile zipFile)
