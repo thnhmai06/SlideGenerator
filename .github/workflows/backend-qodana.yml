@@ -12,7 +12,7 @@ on:
       - "backend/Directory.Packages.props"
       - "backend/global.json"
       - "backend/*.slnx"
-      - ".github/workflows/qodana.yml"
+      - ".github/workflows/backend-qodana.yml"
 
 permissions:
   contents: write
@@ -49,15 +49,12 @@ jobs:
         uses: JetBrains/qodana-action@v2026.1
         with:
           args: --project-dir backend
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          results-dir: ${{ runner.temp }}/qodana/results
+          cache-dir: ${{ runner.temp }}/qodana/cache
+          upload-result: true
+          artifact-name: qodana-report
+          pr-mode: ${{ github.event_name == 'pull_request' }}
+          post-pr-comment: true
+          github-token: ${{ github.token }}
         env:
           QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
-
-      - name: Upload Qodana results
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: qodana-results-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/qodana/results/
-          if-no-files-found: warn
-          retention-days: 14

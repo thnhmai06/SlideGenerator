@@ -11,7 +11,7 @@ on:
       - "backend/nuget.config"
       - "backend/*.slnx"
       - "Taskfile.yml"
-      - ".github/workflows/build.yml"
+      - ".github/workflows/backend-build.yml"
       - ".github/scripts/**"
   pull_request:
     types: [opened, synchronize, reopened, labeled]
@@ -24,7 +24,7 @@ on:
       - "backend/nuget.config"
       - "backend/*.slnx"
       - "Taskfile.yml"
-      - ".github/workflows/build.yml"
+      - ".github/workflows/backend-build.yml"
       - ".github/scripts/**"
   release:
     types: [published]
@@ -322,6 +322,7 @@ jobs:
             -targetdir:"backend/TestResults/Report" \
             -reporttypes:"Cobertura;HtmlSummary;MarkdownSummaryGithub" \
             -assemblyfilters:"-*.Tests"
+          cat backend/TestResults/Report/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
 
       - name: Upload coverage report
         if: always() && matrix.os.name == 'linux-x64'
@@ -331,6 +332,7 @@ jobs:
           path: |
             backend/TestResults/Report/Cobertura.xml
             backend/TestResults/Report/summary.htm
+            backend/TestResults/Report/SummaryGithub.md
           if-no-files-found: warn
           retention-days: 14
 
