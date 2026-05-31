@@ -26,4 +26,4 @@ Welcome to the SlideGenerator backend documentation. This project is a **Modular
   - [Summarization](Reference/Modules/Summarization.md)
   - [Recipe](Reference/Modules/Recipe.md)
   - [Generator](Reference/Modules/Generator.md)
-  - [Ipc](Reference/Modules/Ipc.md)
+  - [Stdio](Reference/Modules/Stdio.md)

@@ -1,6 +1,6 @@
-# Ipc Module
+# Stdio Module
 
-The **SlideGenerator.Ipc** module is the executable entry point. It hosts the JSON-RPC 2.0 sidecar consumed by the Tauri frontend and wires every other module through DI.
+The **SlideGenerator.Stdio** module is the executable entry point. It hosts the JSON-RPC 2.0 sidecar consumed by the Tauri frontend and wires every other module through DI.
 
 ## Responsibility
 - Bootstrap the .NET host, configuration, and system logger.
@@ -10,7 +10,7 @@ The **SlideGenerator.Ipc** module is the executable entry point. It hosts the JS
 
 ## Layout
 ```
-SlideGenerator.Ipc/
+SlideGenerator.Stdio/
 ├── Program.cs                          - Entry point (Main)
 ├── WelcomeMessages.cs                  - Startup banner
 ├── Handlers/

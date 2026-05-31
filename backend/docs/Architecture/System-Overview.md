@@ -16,7 +16,7 @@ SlideGenerator is built as a **Modular Monolith**. While it is deployed as a sin
 2. **Core Services** (`Cryptography`, `Coordinator`, `Document`, `Logging`): Depend on Foundation. Provide shared capabilities such as concurrency throttling and Syncfusion abstractions.
 3. **Feature Modules** (`Image`): Domain-specific logic for MagickImage processing and ROI/face detection.
 4. **Orchestration** (`Summarization`, `Recipe`, `Generator`): The glue that scans inputs, persists user recipes, and runs the WorkflowCore pipeline.
-5. **Entry Point** (`Ipc`): Executable that wires every module and exposes them through JSON-RPC 2.0.
+5. **Entry Point** (`Stdio`): Executable that wires every module and exposes them through JSON-RPC 2.0.
 
 ---
 

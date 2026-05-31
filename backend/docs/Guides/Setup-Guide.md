@@ -7,6 +7,7 @@ Follow this guide to set up your environment and build the SlideGenerator backen
 1. **.NET 10.0 SDK**: The project is pinned to .NET 10.
 2. **IDE**: JetBrains Rider (recommended) or Visual Studio 2022 with C# 12/14 support.
 3. **Syncfusion License**: A valid license key is required for PowerPoint and Excel processing.
+4. **GitHub account**: Required to pull `SlideGenerator.OpenCvSharp4.runtime.*` packages from GitHub Packages.
 
 ---
 
@@ -19,12 +20,28 @@ Copy the `.env.example` file to `.env` in the project root:
 cp .env.example .env
 ```
 
-Open `.env` and fill in your Syncfusion license key:
+Open `.env` and fill in your keys:
 ```env
 SYNCFUSION_LICENSE_KEY=YOUR_KEY_HERE
 ```
 
-### 2. App Settings
+### 2. GitHub Packages credentials
+`SlideGenerator.Image` pulls per-platform OpenCvSharp4 native binaries from GitHub Packages (`nuget.pkg.github.com/thnhmai06`). Set these environment variables before restoring:
+
+```bash
+export GITHUB_USERNAME=your-github-username
+export GITHUB_TOKEN=your-github-pat   # needs read:packages scope
+```
+
+On Windows:
+```powershell
+$env:GITHUB_USERNAME = "your-github-username"
+$env:GITHUB_TOKEN    = "your-github-pat"
+```
+
+`backend/nuget.config` reads these variables automatically — no manual credential file needed.
+
+### 3. App Settings
 Review `appsettings.json`. By default, the application stores data in `%LOCALAPPDATA%/SlideGenerator`. You can modify paths here if necessary for development.
 
 ---
@@ -52,7 +69,7 @@ Open `SlideGenerator.slnx` in your IDE. It will automatically detect the project
 The backend is an executable intended to be launched by a frontend. However, you can run it manually for testing:
 
 ```bash
-dotnet run --project src/SlideGenerator.Ipc/SlideGenerator.Ipc.csproj
+dotnet run --project src/SlideGenerator.Stdio/SlideGenerator.Stdio.csproj
 ```
 
 The application will print a welcome message and wait for JSON-RPC commands on `stdin`. You can pipe commands into it or use a tool like `StreamJsonRpc` tester.
@@ -60,4 +77,4 @@ The application will print a welcome message and wait for JSON-RPC commands on `
 ## Troubleshooting
 
 - **License Errors**: Ensure the `.env` file is in the root and the key is correct. The license is registered at startup in `SlideGenerator.Document/Injection/Registration.cs`.
-- **Dependency Issues**: If you add a new module, ensure it is added to the `SlideGenerator.slnx` and referenced by `SlideGenerator.Ipc`.
+- **Dependency Issues**: If you add a new module, ensure it is added to the `SlideGenerator.slnx` and referenced by `SlideGenerator.Stdio`.
