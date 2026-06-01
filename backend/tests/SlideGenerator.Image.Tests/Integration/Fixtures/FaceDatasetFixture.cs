@@ -5,7 +5,7 @@
  * Project: SlideGenerator.Image.Tests
  * File: FaceDatasetFixture.cs
  *
- * This file is part of this solution. 
+ * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
  *
  * Licensed under the Apache License 2.0.
@@ -15,7 +15,7 @@
 using System.Text.Json;
 using Xunit;
 
-namespace SlideGenerator.Image.Tests.Integration.Fixtures;
+namespace SlideGenerator.Image.Tests.Fixtures;
 
 /// <summary>
 ///     xUnit v3 collection fixture that downloads face test images from HuggingFace datasets-server
@@ -80,22 +80,16 @@ public sealed class FaceDatasetFixture : IAsyncLifetime
     #region Directories
 
     private static readonly string FixturesRoot =
-        Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "fixtures", "faces"));
+        Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "fixtures", "faces"));
 
     /// <summary>Local directory for single-portrait images.</summary>
-    public string SingleDir { get; } = Path.Combine(
-        Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "fixtures", "faces")),
-        "single");
+    public string SingleDir { get; } = Path.Combine(FixturesRoot, "single");
 
     /// <summary>Local directory for group images (2–15 faces).</summary>
-    public string GroupDir { get; } = Path.Combine(
-        Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "fixtures", "faces")),
-        "group");
+    public string GroupDir { get; } = Path.Combine(FixturesRoot, "group");
 
     /// <summary>Local directory for crowd images (16+ faces).</summary>
-    public string CrowdDir { get; } = Path.Combine(
-        Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "fixtures", "faces")),
-        "crowd");
+    public string CrowdDir { get; } = Path.Combine(FixturesRoot, "crowd");
 
     #endregion
 
@@ -253,7 +247,7 @@ public sealed class FaceDatasetFixture : IAsyncLifetime
         var src = row.GetProperty("image").GetProperty("src").GetString()!;
         var faceCount = row.GetProperty("valid_length").GetInt32();
 
-        if (faceCount >= GroupMinFaces && faceCount <= GroupMaxFaces && neededGroup > 0)
+        if (faceCount is >= GroupMinFaces and <= GroupMaxFaces && neededGroup > 0)
         {
             var dest = Path.Combine(GroupDir, $"g{faceCount:D3}f_{rowIdx}.jpg");
             if (!File.Exists(dest) && await TryDownloadAsync(http, src, dest).ConfigureAwait(false))

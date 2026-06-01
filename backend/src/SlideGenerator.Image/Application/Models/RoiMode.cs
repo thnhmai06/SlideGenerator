@@ -3,9 +3,9 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Image
- * File: RoiType.cs
+ * File: RoiMode.cs
  *
- * This file is part of this solution. 
+ * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
  *
  * Licensed under the Apache License 2.0.
@@ -14,12 +14,14 @@
 
 namespace SlideGenerator.Image.Application.Models;
 
-/// <summary>Identifies the algorithm used to calculate the Region of Interest (ROI).</summary>
-public enum RoiType
+/// <summary>
+///     Discriminates between the two top-level ROI strategies.
+/// </summary>
+public enum RoiMode
 {
-    /// <summary>Aligns the ROI based on the image center or detected faces.</summary>
-    Center,
+    /// <summary>Anchor-point-based crop using geometry and optional face detection.</summary>
+    Anchor,
 
-    /// <summary>Aligns the ROI based on the Rule of Thirds grid points.</summary>
-    RuleOfThirds
+    /// <summary>Content-aware crop using a library-specific interest strategy.</summary>
+    Interest
 }

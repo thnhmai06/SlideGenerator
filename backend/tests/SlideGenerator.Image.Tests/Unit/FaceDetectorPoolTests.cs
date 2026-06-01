@@ -21,6 +21,8 @@ using SlideGenerator.Image.Domain.Models;
 using SlideGenerator.Image.Infrastructure.Services;
 using Xunit;
 
+// ReSharper disable AccessToDisposedClosure
+
 namespace SlideGenerator.Image.Tests.Unit;
 
 /// <summary>
@@ -29,55 +31,6 @@ namespace SlideGenerator.Image.Tests.Unit;
 /// </summary>
 public sealed class FaceDetectorPoolTests
 {
-    #region Helpers
-
-    /// <summary>
-    ///     Tracks peak concurrent detection calls across a pool run.
-    /// </summary>
-    private sealed class ConcurrencyTracker
-    {
-        public int Current;
-        public int Max;
-    }
-
-    /// <summary>
-    ///     Creates a mock <see cref="IMat" /> that is non-empty.
-    /// </summary>
-    private static IMat CreateMat()
-    {
-        var mat = Substitute.For<IMat>();
-        mat.Empty.Returns(false);
-        return mat;
-    }
-
-    /// <summary>
-    ///     Creates a mock <see cref="IFaceDetector" /> that tracks concurrent calls and simulates
-    ///     detection work by delaying for <paramref name="workMs" /> milliseconds.
-    /// </summary>
-    /// <param name="tracker">Shared tracker updated while detection is in progress.</param>
-    /// <param name="workMs">How long each simulated detection takes.</param>
-    private static IFaceDetector CreateTrackingDetector(ConcurrencyTracker tracker, int workMs = 80)
-    {
-        var detector = Substitute.For<IFaceDetector>();
-        detector.DetectAsync(Arg.Any<IMat>()).Returns(_ => Task.Run(async () =>
-        {
-            var snapshot = Interlocked.Increment(ref tracker.Current);
-            int prev;
-            do
-            {
-                prev = tracker.Max;
-                if (snapshot <= prev) break;
-            } while (Interlocked.CompareExchange(ref tracker.Max, snapshot, prev) != prev);
-
-            await Task.Delay(workMs, TestContext.Current.CancellationToken);
-            Interlocked.Decrement(ref tracker.Current);
-            return (IReadOnlyList<Face>)Array.Empty<Face>();
-        }));
-        return detector;
-    }
-
-    #endregion
-
     #region DetectAsync — result forwarding
 
     /// <summary>
@@ -89,11 +42,11 @@ public sealed class FaceDetectorPoolTests
     {
         IReadOnlyList<Face> expected = [new(new Rectangle(10, 10, 50, 50), 0.9f)];
         var detector = Substitute.For<IFaceDetector>();
-        detector.DetectAsync(Arg.Any<IMat>()).Returns(Task.FromResult(expected));
+        detector.DetectAsync(Arg.Any<IImage>()).Returns(Task.FromResult(expected));
 
         using var pool = new FaceDetectorPool(() => detector, () => 5);
 
-        var result = await pool.DetectAsync(CreateMat());
+        var result = await pool.DetectAsync(CreateImage());
 
         result.Should().BeEquivalentTo(expected);
     }
@@ -111,21 +64,70 @@ public sealed class FaceDetectorPoolTests
     {
         var calls = 0;
         var detector = Substitute.For<IFaceDetector>();
-        detector.DetectAsync(Arg.Any<IMat>()).Returns(_ =>
+        detector.DetectAsync(Arg.Any<IImage>()).Returns(_ =>
             Interlocked.Increment(ref calls) == 1
                 ? Task.FromException<IReadOnlyList<Face>>(new InvalidOperationException("simulated"))
                 : Task.FromResult<IReadOnlyList<Face>>(Array.Empty<Face>()));
 
         using var pool = new FaceDetectorPool(() => detector, () => 1);
-        var mat = CreateMat();
+        var image = CreateImage();
 
-        await FluentActions.Awaiting(() => pool.DetectAsync(mat))
+        await FluentActions.Awaiting(() => pool.DetectAsync(image))
             .Should().ThrowAsync<InvalidOperationException>();
 
         // Slot was released — second call must complete, not deadlock
-        var result = await pool.DetectAsync(mat)
+        var result = await pool.DetectAsync(image)
             .WaitAsync(TimeSpan.FromSeconds(1), TestContext.Current.CancellationToken);
         result.Should().NotBeNull();
+    }
+
+    #endregion
+
+    #region Helpers
+
+    /// <summary>
+    ///     Tracks peak concurrent detection calls across a pool run.
+    /// </summary>
+    private sealed class ConcurrencyTracker
+    {
+        public int Current;
+        public int Max;
+    }
+
+    /// <summary>
+    ///     Creates a mock <see cref="IImage" /> for use as detector input.
+    /// </summary>
+    private static IImage CreateImage()
+    {
+        var image = Substitute.For<IImage>();
+        image.ToPng().Returns([]);
+        return image;
+    }
+
+    /// <summary>
+    ///     Creates a mock <see cref="IFaceDetector" /> that tracks concurrent calls and simulates
+    ///     detection work by delaying for <paramref name="workMs" /> milliseconds.
+    /// </summary>
+    /// <param name="tracker">Shared tracker updated while detection is in progress.</param>
+    /// <param name="workMs">How long each simulated detection takes.</param>
+    private static IFaceDetector CreateTrackingDetector(ConcurrencyTracker tracker, int workMs = 80)
+    {
+        var detector = Substitute.For<IFaceDetector>();
+        detector.DetectAsync(Arg.Any<IImage>()).Returns(_ => Task.Run(async () =>
+        {
+            var snapshot = Interlocked.Increment(ref tracker.Current);
+            int prev;
+            do
+            {
+                prev = tracker.Max;
+                if (snapshot <= prev) break;
+            } while (Interlocked.CompareExchange(ref tracker.Max, snapshot, prev) != prev);
+
+            await Task.Delay(workMs, TestContext.Current.CancellationToken);
+            Interlocked.Decrement(ref tracker.Current);
+            return (IReadOnlyList<Face>)Array.Empty<Face>();
+        }));
+        return detector;
     }
 
     #endregion
@@ -147,8 +149,8 @@ public sealed class FaceDetectorPoolTests
             () => CreateTrackingDetector(tracker),
             () => limit);
 
-        var mat = CreateMat();
-        await Task.WhenAll(Enumerable.Range(0, totalCalls).Select(_ => pool.DetectAsync(mat)));
+        var image = CreateImage();
+        await Task.WhenAll(Enumerable.Range(0, totalCalls).Select(_ => pool.DetectAsync(image)));
 
         tracker.Max.Should().BeLessThanOrEqualTo(limit);
     }
@@ -165,12 +167,12 @@ public sealed class FaceDetectorPoolTests
         var tracker = new ConcurrencyTracker();
 
         using var pool = new FaceDetectorPool(
-            () => CreateTrackingDetector(tracker, workMs: 50),
+            () => CreateTrackingDetector(tracker, 50),
             () => limit);
 
-        var mat = CreateMat();
+        var image = CreateImage();
         var results = await Task.WhenAll(
-            Enumerable.Range(0, totalCalls).Select(_ => pool.DetectAsync(mat)));
+            Enumerable.Range(0, totalCalls).Select(_ => pool.DetectAsync(image)));
 
         results.Should().HaveCount(totalCalls);
         tracker.Max.Should().BeLessThanOrEqualTo(limit);

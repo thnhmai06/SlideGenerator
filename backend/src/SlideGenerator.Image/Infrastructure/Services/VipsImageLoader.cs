@@ -3,9 +3,9 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Image
- * File: MagickImageLoader.cs
+ * File: VipsImageLoader.cs
  *
- * This file is part of this solution. 
+ * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
  *
  * Licensed under the Apache License 2.0.
@@ -15,21 +15,22 @@
 using System.Diagnostics.CodeAnalysis;
 using SlideGenerator.Image.Application.Abstractions;
 using SlideGenerator.Image.Domain.Entities;
-using MagickImage = SlideGenerator.Image.Infrastructure.Adapters.MagickImage;
-using MagickImageInfo = SlideGenerator.Image.Infrastructure.Adapters.MagickImageInfo;
+using SlideGenerator.Image.Infrastructure.Adapters;
+using NetVipsImage = NetVips.Image;
 
 namespace SlideGenerator.Image.Infrastructure.Services;
 
-internal sealed class MagickImageLoader : IImageLoader
+internal sealed class VipsImageLoader : IImageLoader
 {
     public IImage Open(string path)
     {
-        return new MagickImage(new ImageMagick.MagickImage(path));
+        return new VipsImage(NetVipsImage.NewFromFile(path));
     }
 
     public IImageInfo GetInfo(string path)
     {
-        return new MagickImageInfo(new ImageMagick.MagickImageInfo(path));
+        using var img = NetVipsImage.NewFromFile(path);
+        return new SizeInfo((uint)img.Width, (uint)img.Height);
     }
 
     public bool TryGetInfo(string path, [MaybeNullWhen(false)] out IImageInfo info)
@@ -45,4 +46,6 @@ internal sealed class MagickImageLoader : IImageLoader
             return false;
         }
     }
+
+    private sealed record SizeInfo(uint Width, uint Height) : IImageInfo;
 }

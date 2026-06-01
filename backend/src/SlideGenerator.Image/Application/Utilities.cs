@@ -5,7 +5,7 @@
  * Project: SlideGenerator.Image
  * File: Utilities.cs
  *
- * This file is part of this solution. 
+ * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
  *
  * Licensed under the Apache License 2.0.
@@ -70,8 +70,8 @@ public static class Utilities
             Math.Min(cropSize.Width, imageBounds.Width),
             Math.Min(cropSize.Height, imageBounds.Height));
 
-        var x = (int)MathF.Round(anchorPoint.Value.X - (boundedSize.Width * pivot.Value.X));
-        var y = (int)MathF.Round(anchorPoint.Value.Y - (boundedSize.Height * pivot.Value.Y));
+        var x = (int)MathF.Round(anchorPoint.Value.X - boundedSize.Width * pivot.Value.X);
+        var y = (int)MathF.Round(anchorPoint.Value.Y - boundedSize.Height * pivot.Value.Y);
 
         return new Rectangle(x, y, boundedSize.Width, boundedSize.Height).ClampIn(imageBounds);
     }
@@ -83,6 +83,9 @@ public static class Utilities
         /// </summary>
         public Point ClampIn(Rectangle border)
         {
+            if (border.Width <= 0 || border.Height <= 0)
+                return new Point(border.X, border.Y);
+
             var x = Math.Clamp(point.X, border.Left, border.Right - 1);
             var y = Math.Clamp(point.Y, border.Top, border.Bottom - 1);
 
@@ -95,6 +98,16 @@ public static class Utilities
         public Vector2 ToVector2()
         {
             return new Vector2(point.X, point.Y);
+        }
+
+        /// <summary>
+        ///     Calculates the Euclidean distance between this point and another point.
+        /// </summary>
+        public float Distance(Point other)
+        {
+            var dx = point.X - other.X;
+            var dy = point.Y - other.Y;
+            return MathF.Sqrt(dx * dx + dy * dy);
         }
     }
 

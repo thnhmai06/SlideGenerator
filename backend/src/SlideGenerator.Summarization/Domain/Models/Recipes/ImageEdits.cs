@@ -3,9 +3,9 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Summarization
- * File: EditOptions.cs
+ * File: ImageEdits.cs
  *
- * This file is part of this solution. 
+ * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
  *
  * Licensed under the Apache License 2.0.
@@ -19,5 +19,8 @@ namespace SlideGenerator.Summarization.Domain.Models.Recipes;
 /// <summary>
 ///     Defines the processing rules for image transformations.
 /// </summary>
-/// <param name="RoiOption">The algorithm to use for Region of Interest (ROI) detection and cropping.</param>
-public sealed record EditOptions(RoiOption RoiOption);
+/// <param name="RoiOptions">
+///     Ordered fallback chain of ROI options. The resolver tries each in order and uses the
+///     first that succeeds. If all anchor options fail, image-center crop is used.
+/// </param>
+public sealed record ImageEdits(IReadOnlyList<RoiOption> RoiOptions);

@@ -5,7 +5,7 @@
  * Project: SlideGenerator.Generator
  * File: ExtractData.cs
  *
- * This file is part of this solution. 
+ * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
  *
  * Licensed under the Apache License 2.0.
@@ -247,7 +247,7 @@ public sealed class ExtractData(
                     Worksheet.Identifier, rowIndex, column.ColumnName,
                     sData.ShapeName, sourceUrl, downloadPath, editPath,
                     sData.Bounds.Width, sData.Bounds.Height,
-                    imgInst.EditOptions, imgInst.FallbackImagePath);
+                    imgInst.ImageEdits, imgInst.FallbackImagePath);
 
                 data.ImageContexts.Add(imageTask);
                 slideTask.ImageReplacements[shapeId] = imageTask;

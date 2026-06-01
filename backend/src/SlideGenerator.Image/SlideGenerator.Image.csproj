@@ -7,11 +7,12 @@
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.8"/>
-        <PackageReference Include="OpenCvSharp4" Version="4.13.0.20260531" />
-        <PackageReference Include="Magick.NET-Q8-AnyCPU" Version="14.13.1"/>
+        <PackageReference Include="OpenCvSharp4" Version="4.13.0.20260531"/>
+        <PackageReference Include="NetVips" Version="3.2.0" />
         <PackageReference Remove="StyleCop.Analyzers"/>
     </ItemGroup>
 
+    <!-- OpenCvSharp4 platform natives -->
     <ItemGroup Condition="'$(RuntimeIdentifier)' == 'win-x64'
     or ('$(RuntimeIdentifier)' == ''
         and $([MSBuild]::IsOSPlatform('Windows'))
@@ -48,6 +49,45 @@
         and '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64')">
         <PackageReference Include="SlideGenerator.OpenCvSharp4.runtime.osx-arm64" Version="4.13.0.20260529-e6d3ad9"/>
     </ItemGroup>
+
+    <!-- NetVips platform natives -->
+    <ItemGroup Condition="'$(RuntimeIdentifier)' == 'win-x64'
+    or ('$(RuntimeIdentifier)' == ''
+        and $([MSBuild]::IsOSPlatform('Windows'))
+        and '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'X64')">
+        <PackageReference Include="NetVips.Native.win-x64" Version="8.18.2"/>
+    </ItemGroup>
+    <ItemGroup Condition="'$(RuntimeIdentifier)' == 'win-arm64'
+    or ('$(RuntimeIdentifier)' == ''
+        and $([MSBuild]::IsOSPlatform('Windows'))
+        and '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64')">
+        <PackageReference Include="NetVips.Native.win-arm64" Version="8.18.2"/>
+    </ItemGroup>
+    <ItemGroup Condition="'$(RuntimeIdentifier)' == 'linux-x64'
+    or ('$(RuntimeIdentifier)' == ''
+        and $([MSBuild]::IsOSPlatform('Linux'))
+        and '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'X64')">
+        <PackageReference Include="NetVips.Native.linux-x64" Version="8.18.2"/>
+    </ItemGroup>
+    <ItemGroup Condition="'$(RuntimeIdentifier)' == 'linux-arm64'
+    or ('$(RuntimeIdentifier)' == ''
+        and $([MSBuild]::IsOSPlatform('Linux'))
+        and '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64')">
+        <PackageReference Include="NetVips.Native.linux-arm64" Version="8.18.2"/>
+    </ItemGroup>
+    <ItemGroup Condition="'$(RuntimeIdentifier)' == 'osx-x64'
+    or ('$(RuntimeIdentifier)' == ''
+        and $([MSBuild]::IsOSPlatform('OSX'))
+        and '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'X64')">
+        <PackageReference Include="NetVips.Native.osx-x64" Version="8.18.2"/>
+    </ItemGroup>
+    <ItemGroup Condition="'$(RuntimeIdentifier)' == 'osx-arm64'
+    or ('$(RuntimeIdentifier)' == ''
+        and $([MSBuild]::IsOSPlatform('OSX'))
+        and '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64')">
+        <PackageReference Include="NetVips.Native.osx-arm64" Version="8.18.2"/>
+    </ItemGroup>
+
     <ItemGroup>
         <ProjectReference Include="..\SlideGenerator.Coordinator\SlideGenerator.Coordinator.csproj"/>
     </ItemGroup>

@@ -5,7 +5,7 @@
  * Project: SlideGenerator.Stdio.Tests
  * File: SingleInstanceLockTests.cs
  *
- * This file is part of this solution. 
+ * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
  *
  * Licensed under the Apache License 2.0.
@@ -23,9 +23,9 @@ namespace SlideGenerator.Stdio.Tests.Unit;
 /// </summary>
 public sealed class SingleInstanceLockTests : IDisposable
 {
+    private readonly List<SingleInstanceLock> _locks = [];
     private readonly string _mutexName = $"SingleInstanceLock.Test.{Guid.NewGuid()}";
     private readonly string _pidFilePath = Path.GetTempFileName();
-    private readonly List<SingleInstanceLock> _locks = [];
 
     /// <inheritdoc />
     public void Dispose()
@@ -171,7 +171,7 @@ public sealed class SingleInstanceLockTests : IDisposable
     }
 
     /// <summary>
-    ///     The PID file lock blocks <see cref="File.ReadAllText(string)"/> because its default share mode is incompatible
+    ///     The PID file lock blocks <see cref="File.ReadAllText(string)" /> because its default share mode is incompatible
     ///     with the owner handle's write access on Windows. Use ReadPid instead.
     ///     Windows only: Linux uses advisory locking, so File.ReadAllText does not throw.
     /// </summary>

@@ -5,7 +5,7 @@
  * Project: SlideGenerator.Image
  * File: IFaceDetector.cs
  *
- * This file is part of this solution. 
+ * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
  *
  * Licensed under the Apache License 2.0.
@@ -23,7 +23,7 @@ namespace SlideGenerator.Image.Application.Abstractions;
 public interface IFaceDetector : IDisposable
 {
     /// <summary>
-    ///     Detects faces in the specified image matrix.
+    ///     Detects faces in the specified image.
     /// </summary>
-    public Task<IReadOnlyList<Face>> DetectAsync(IMat mat);
+    public Task<IReadOnlyList<Face>> DetectAsync(IImage image);
 }

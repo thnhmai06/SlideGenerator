@@ -20,7 +20,7 @@ using SlideGenerator.Image.Domain.Models;
 namespace SlideGenerator.Image.Infrastructure.Services;
 
 /// <summary>
-///     An <see cref="IFaceDetector" /> backed by a pool of <see cref="IFaceDetector"/> instances.
+///     An <see cref="IFaceDetector" /> backed by a pool of <see cref="IFaceDetector" /> instances.
 ///     Acquires one detector per <see cref="DetectAsync" /> call and releases it on completion,
 ///     allowing concurrent face-detection up to the pool limit.
 /// </summary>
@@ -28,12 +28,12 @@ public sealed class FaceDetectorPool(Func<IFaceDetector> factory, Func<uint> lim
     : Pool<IFaceDetector>(factory, limitResolver), IFaceDetector
 {
     /// <inheritdoc />
-    public async Task<IReadOnlyList<Face>> DetectAsync(IMat mat)
+    public async Task<IReadOnlyList<Face>> DetectAsync(IImage image)
     {
         var detector = await AcquireAsync().ConfigureAwait(false);
         try
         {
-            return await detector.DetectAsync(mat).ConfigureAwait(false);
+            return await detector.DetectAsync(image).ConfigureAwait(false);
         }
         finally
         {

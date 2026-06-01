@@ -5,7 +5,7 @@
  * Project: SlideGenerator.Generator.Tests
  * File: CollectImageTests.cs
  *
- * This file is part of this solution. 
+ * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
  *
  * Licensed under the Apache License 2.0.
@@ -99,7 +99,7 @@ public sealed class CollectImageTests
             Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.jpg"),
             100,
             100,
-            new EditOptions(new CenterOption { UseFaceAlignment = false }));
+            new ImageEdits([new AnchorOption { Type = AnchorType.Image }]));
     }
 
     private CollectImage BuildStep(ImageContext imageCtx)

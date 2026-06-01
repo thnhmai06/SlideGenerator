@@ -5,7 +5,7 @@
  * Project: SlideGenerator.Generator
  * File: ImageContext.cs
  *
- * This file is part of this solution. 
+ * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
  *
  * Licensed under the Apache License 2.0.
@@ -30,7 +30,7 @@ public sealed class ImageContext(
     string editPath,
     double width,
     double height,
-    EditOptions editOptions,
+    ImageEdits editOptions,
     string? fallbackImagePath = null)
 {
     /// <summary>Gets the source sheet identifier.</summary>
@@ -65,7 +65,7 @@ public sealed class ImageContext(
     public double Height { get; } = height;
 
     /// <summary>Gets the processing options for the image.</summary>
-    public EditOptions EditOptions { get; } = editOptions;
+    public ImageEdits ImageEdits { get; } = editOptions;
 
     /// <summary>Gets the path to the fallback image to use if the primary source fails.</summary>
     public string? FallbackImagePath { get; } = fallbackImagePath;

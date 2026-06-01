@@ -5,7 +5,7 @@
  * Project: SlideGenerator.Recipe
  * File: RecipeRepository.cs
  *
- * This file is part of this solution. 
+ * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
  *
  * Licensed under the Apache License 2.0.
@@ -235,7 +235,10 @@ internal sealed class RecipeRepository : IRecipeRepository
             targetDirFull = presentationsFull;
             allowedExtensions = ZipImportRules.AllowedPresentationExtensions;
         }
-        else return;
+        else
+        {
+            return;
+        }
 
         if (string.IsNullOrEmpty(relativeName)) return;
         var ext = Path.GetExtension(relativeName);

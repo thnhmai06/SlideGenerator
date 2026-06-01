@@ -5,7 +5,7 @@
  * Project: SlideGenerator.Generator
  * File: EditImage.cs
  *
- * This file is part of this solution. 
+ * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
  *
  * Licensed under the Apache License 2.0.
@@ -18,7 +18,6 @@ using SlideGenerator.Coordinator.Application.Abstractions;
 using SlideGenerator.Coordinator.Domain.Models;
 using SlideGenerator.Generator.Domain.Models;
 using SlideGenerator.Generator.Domain.Models.Contexts;
-using SlideGenerator.Image.Application;
 using SlideGenerator.Image.Application.Abstractions;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
@@ -33,7 +32,7 @@ namespace SlideGenerator.Generator.Application.Steps;
 ///     others hard-link the result.
 /// </summary>
 public sealed class EditImage(
-    IRoiResolver roiResolver,
+    ISmartCropper cropper,
     IImageLoader imageLoader,
     IGateLocker<GateType> gateLocker) : StepBodyAsync
 {
@@ -163,22 +162,18 @@ public sealed class EditImage(
         using var image = imageLoader.Open(sourceFile);
         var targetSize = new Size((int)Math.Round(Task.Width), (int)Math.Round(Task.Height));
 
-        logger.LogDebug("Calculating ROI for row {RowIndex} using {Algorithm}", Task.RowIndex,
-            Task.EditOptions.RoiOption);
+        logger.LogDebug("Cropping image for row {RowIndex}", Task.RowIndex);
 
-        var roi = await roiResolver.CalculateRoiAsync(image, targetSize, Task.EditOptions.RoiOption)
+        using var cropped = await cropper.CropAsync(image, targetSize, [..Task.ImageEdits.RoiOptions])
             .ConfigureAwait(false);
 
-        logger.LogDebug("Applying crop {ROI} to image for row {RowIndex}", roi, Task.RowIndex);
-        image.Crop(roi);
+        if (cropped == null)
+        {
+            logger.LogWarning("No crop option succeeded for row {RowIndex}, skipping", Task.RowIndex);
+            return;
+        }
 
-        var currentSize = new Size((int)image.Info.Width, (int)image.Info.Height);
-        var maxAspectSize = currentSize.GetMaxAspectSize(targetSize);
-
-        logger.LogDebug("Resizing image for row {RowIndex} to {Size}", Task.RowIndex, maxAspectSize);
-        image.Resize(maxAspectSize);
-
-        await image.ToFileAsync(finalEditPath).ConfigureAwait(false);
+        cropped.ToPng(finalEditPath);
 
         logger.LogDebug("Image edited | Row: {RowIndex}, Shape: {ShapeName}", Task.RowIndex, Task.ShapeName);
 
@@ -254,6 +249,6 @@ public sealed class EditImage(
     private string BuildEditKey()
     {
         return
-            $"{Task.SourceUrl}|{Task.FallbackImagePath}|{Task.EditOptions}|{(int)Math.Round(Task.Width)}x{(int)Math.Round(Task.Height)}";
+            $"{Task.SourceUrl}|{Task.FallbackImagePath}|{Task.ImageEdits}|{(int)Math.Round(Task.Width)}x{(int)Math.Round(Task.Height)}";
     }
 }

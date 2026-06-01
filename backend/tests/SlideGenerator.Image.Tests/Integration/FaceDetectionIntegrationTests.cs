@@ -5,7 +5,7 @@
  * Project: SlideGenerator.Image.Tests
  * File: FaceDetectionIntegrationTests.cs
  *
- * This file is part of this solution. 
+ * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
  *
  * Licensed under the Apache License 2.0.
@@ -13,8 +13,10 @@
  */
 
 using FluentAssertions;
+using NSubstitute;
 using SlideGenerator.Image.Application.Abstractions;
-using SlideGenerator.Image.Tests.Integration.Fixtures;
+using SlideGenerator.Image.Domain.Entities;
+using SlideGenerator.Image.Tests.Fixtures;
 using Xunit;
 
 namespace SlideGenerator.Image.Tests.Integration;
@@ -46,8 +48,7 @@ public sealed class FaceDetectionIntegrationTests(FaceDatasetFixture dataset, Im
         var groundTruth = ParseFaceCount(fileName);
 
         using var image = services.ImageLoader.Open(path);
-        using var mat = services.MatLoader.Create(image);
-        var faces = await services.FaceDetector.DetectAsync(mat);
+        var faces = await services.FaceDetector.DetectAsync(image);
 
         faces.Count.Should().BeLessThanOrEqualTo(groundTruth * 3,
             "detected count should not massively exceed ground truth");
@@ -81,9 +82,8 @@ public sealed class FaceDetectionIntegrationTests(FaceDatasetFixture dataset, Im
 
         var path = images[Random.Shared.Next(images.Length)];
         using var image = services.ImageLoader.Open(path);
-        using var mat = services.MatLoader.Create(image);
 
-        var faces = await services.FaceDetector.DetectAsync(mat);
+        var faces = await services.FaceDetector.DetectAsync(image);
 
         faces.Should().NotBeNull();
     }
@@ -100,9 +100,8 @@ public sealed class FaceDetectionIntegrationTests(FaceDatasetFixture dataset, Im
 
         var path = images[Random.Shared.Next(images.Length)];
         using var image = services.ImageLoader.Open(path);
-        using var mat = services.MatLoader.Create(image);
 
-        var faces = await services.FaceDetector.DetectAsync(mat);
+        var faces = await services.FaceDetector.DetectAsync(image);
 
         faces.Should().NotBeNull();
     }
@@ -119,11 +118,50 @@ public sealed class FaceDetectionIntegrationTests(FaceDatasetFixture dataset, Im
 
         var path = images[Random.Shared.Next(images.Length)];
         using var image = services.ImageLoader.Open(path);
-        using var mat = services.MatLoader.Create(image);
 
-        var faces = await services.FaceDetector.DetectAsync(mat);
+        var faces = await services.FaceDetector.DetectAsync(image);
 
         faces.Should().NotBeNull();
+    }
+
+    #endregion
+
+    #region Robustness — degenerate inputs
+
+    /// <summary>
+    ///     Verifies that <see cref="IFaceDetector.DetectAsync" /> returns an empty list without
+    ///     throwing when the image's <see cref="SlideGenerator.Image.Domain.Entities.IImage.ToPng()" />
+    ///     returns an empty byte array.
+    /// </summary>
+    [Fact]
+    public async Task DetectAsync_EmptyPngBytes_ReturnsEmptyListWithoutThrowing()
+    {
+        var image = Substitute.For<IImage>();
+        image.ToPng().Returns([]);
+
+        var act = () => services.FaceDetector.DetectAsync(image);
+
+        await act.Should().NotThrowAsync();
+        var result = await services.FaceDetector.DetectAsync(image);
+        result.Should().BeEmpty();
+    }
+
+    /// <summary>
+    ///     Verifies that <see cref="IFaceDetector.DetectAsync" /> returns an empty list without
+    ///     throwing when the image bytes are corrupt (not a valid PNG), exercising the fallback
+    ///     path where OpenCV cannot decode the Mat.
+    /// </summary>
+    [Fact]
+    public async Task DetectAsync_CorruptPngBytes_ReturnsEmptyListWithoutThrowing()
+    {
+        var image = Substitute.For<IImage>();
+        image.ToPng().Returns([0x00, 0x01, 0x02, 0x03]);
+
+        var act = () => services.FaceDetector.DetectAsync(image);
+
+        await act.Should().NotThrowAsync();
+        var result = await services.FaceDetector.DetectAsync(image);
+        result.Should().BeEmpty();
     }
 
     #endregion
@@ -150,8 +188,7 @@ public sealed class FaceDetectionIntegrationTests(FaceDatasetFixture dataset, Im
         foreach (var path in sample)
         {
             using var image = services.ImageLoader.Open(path);
-            using var mat = services.MatLoader.Create(image);
-            var faces = await services.FaceDetector.DetectAsync(mat);
+            var faces = await services.FaceDetector.DetectAsync(image);
             if (faces.Count > 0) detectedAny++;
         }
 
@@ -171,9 +208,8 @@ public sealed class FaceDetectionIntegrationTests(FaceDatasetFixture dataset, Im
 
         var path = images[Random.Shared.Next(images.Length)];
         using var image = services.ImageLoader.Open(path);
-        using var mat = services.MatLoader.Create(image);
 
-        var faces = await services.FaceDetector.DetectAsync(mat);
+        var faces = await services.FaceDetector.DetectAsync(image);
 
         foreach (var face in faces)
         {
@@ -195,9 +231,8 @@ public sealed class FaceDetectionIntegrationTests(FaceDatasetFixture dataset, Im
 
         var path = images[Random.Shared.Next(images.Length)];
         using var image = services.ImageLoader.Open(path);
-        using var mat = services.MatLoader.Create(image);
 
-        var faces = await services.FaceDetector.DetectAsync(mat);
+        var faces = await services.FaceDetector.DetectAsync(image);
 
         foreach (var face in faces)
             face.Score.Should().BeInRange(0f, 1f);

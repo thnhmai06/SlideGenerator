@@ -5,7 +5,7 @@
  * Project: SlideGenerator.Generator.Tests
  * File: DownloadImageIntegrationTests.cs
  *
- * This file is part of this solution. 
+ * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
  *
  * Licensed under the Apache License 2.0.
@@ -30,7 +30,8 @@ public sealed class DownloadImageIntegrationTests
     ///     TODO: provide a real image file at <c>tests/fixtures/bug-16/large-image.jpg</c> (≥ 50 MB).
     /// </summary>
     [Fact(
-        DisplayName = "INTEGRATION (BUG-16): existing valid image skips download without loading to heap — TODO fixture",
+        DisplayName =
+            "INTEGRATION (BUG-16): existing valid image skips download without loading to heap — TODO fixture",
         Skip = "TODO: provide real image at tests/fixtures/bug-16/large-image.jpg")]
     public Task RunPrimary_ExistingValidImage_SkipsDownload_NoMemoryBloat()
     {
@@ -45,7 +46,8 @@ public sealed class DownloadImageIntegrationTests
     ///     <see cref="OperationCanceledException" /> and not block indefinitely.
     /// </summary>
     [Fact(
-        DisplayName = "INTEGRATION (BUG-12): cancellation during gate acquire propagates OperationCanceledException — TODO mock",
+        DisplayName =
+            "INTEGRATION (BUG-12): cancellation during gate acquire propagates OperationCanceledException — TODO mock",
         Skip = "TODO: wire up mock IDownloadService + saturated gate")]
     public Task RunPrimary_CancellationToken_AbortsAcquireAndDownload()
     {

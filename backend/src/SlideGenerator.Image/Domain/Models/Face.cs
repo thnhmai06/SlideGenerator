@@ -5,7 +5,7 @@
  * Project: SlideGenerator.Image
  * File: Face.cs
  *
- * This file is part of this solution. 
+ * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
  *
  * Licensed under the Apache License 2.0.
@@ -38,7 +38,7 @@ public readonly record struct Face(
     /// <summary>
     ///     Gets the center point of the face-bounding box.
     /// </summary>
-    public Point FaceCenter => new(Rect.X + (Rect.Width / 2), Rect.Y + (Rect.Height / 2));
+    public Point FaceCenter => new(Rect.X + Rect.Width / 2, Rect.Y + Rect.Height / 2);
 
     /// <summary>
     ///     Gets the center point between the left and right eyes if both landmarks are available.

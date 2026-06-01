@@ -5,7 +5,7 @@
  * Project: SlideGenerator.Stdio
  * File: SingleInstanceLock.cs
  *
- * This file is part of this solution. 
+ * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
  *
  * Licensed under the Apache License 2.0.
@@ -28,6 +28,25 @@ internal sealed class SingleInstanceLock(string mutexName, string pidFilePath) :
     private readonly string _pidFilePath = Path.GetFullPath(pidFilePath);
     private Mutex? _mutex;
     private FileStream? _pidStream;
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        _pidStream?.Dispose();
+        _pidStream = null;
+
+        if (_mutex is null) return;
+        try
+        {
+            _mutex.ReleaseMutex();
+        }
+        catch (ApplicationException)
+        {
+        }
+
+        _mutex.Dispose();
+        _mutex = null;
+    }
 
     /// <summary>
     ///     Tries to acquire the named mutex. On success, writes the current process ID to
@@ -74,7 +93,8 @@ internal sealed class SingleInstanceLock(string mutexName, string pidFilePath) :
     {
         try
         {
-            var stream = _pidStream ?? new FileStream(_pidFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            var stream = _pidStream ??
+                         new FileStream(_pidFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             stream.Flush();
             stream.Seek(0, SeekOrigin.Begin);
             using var reader = new StreamReader(stream, leaveOpen: _pidStream is not null);
@@ -83,18 +103,9 @@ internal sealed class SingleInstanceLock(string mutexName, string pidFilePath) :
             if (_pidStream is null) stream.Dispose();
             return pid;
         }
-        catch { return null; }
-    }
-
-    /// <inheritdoc />
-    public void Dispose()
-    {
-        _pidStream?.Dispose();
-        _pidStream = null;
-
-        if (_mutex is null) return;
-        try { _mutex.ReleaseMutex(); } catch (ApplicationException) { }
-        _mutex.Dispose();
-        _mutex = null;
+        catch
+        {
+            return null;
+        }
     }
 }

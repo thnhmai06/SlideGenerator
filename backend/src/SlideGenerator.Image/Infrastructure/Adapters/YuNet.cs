@@ -32,8 +32,8 @@ internal sealed class YuNet : IFaceDetector
         Path.Combine(AppContext.BaseDirectory, "Infrastructure", "Binary", "YuNet.onnx");
 
     private readonly FaceDetectorYN _core;
-    private readonly Size _inputSize;
     private readonly Lock _detectLock = new();
+    private readonly Size _inputSize;
 
     /// <summary>
     ///     Initializes a new <see cref="YuNet" /> instance, loading the ONNX model from disk.
@@ -44,15 +44,13 @@ internal sealed class YuNet : IFaceDetector
         _core = FaceDetectorYN.Create(ModelPath, string.Empty, _inputSize, Rules.FaceConfidence);
     }
 
-    public Task<IReadOnlyList<Face>> DetectAsync(IMat imat)
+    public Task<IReadOnlyList<Face>> DetectAsync(IImage image)
     {
         var faces = new List<Face>();
-        if (imat.Empty) return Task.FromResult<IReadOnlyList<Face>>(faces);
-
-        if (imat is not OpenCvMat adapter)
-            throw new ArgumentException($"IMat must be an instance of {nameof(OpenCvMat)}.", nameof(imat));
-
-        var mat = adapter.Mat;
+        var bytes = image.ToPng();
+        if (bytes.Length == 0) return Task.FromResult<IReadOnlyList<Face>>(faces);
+        using var mat = Mat.FromImageData(bytes);
+        if (mat.Empty()) return Task.FromResult<IReadOnlyList<Face>>(faces);
 
         var padInfo = ResizeAndPadMat(mat);
         using var processedMat = padInfo.ProcessedMat;
@@ -90,9 +88,20 @@ internal sealed class YuNet : IFaceDetector
             ));
             continue;
 
-            float GetFloat(int col) => result.At<float>(i, col);
-            int GetInt(int col) => RoundToIntAwayFromZero(GetFloat(col));
-            Point GetPoint(int colX, int colY) => new(GetInt(colX), GetInt(colY));
+            float GetFloat(int col)
+            {
+                return result.At<float>(i, col);
+            }
+
+            int GetInt(int col)
+            {
+                return RoundToIntAwayFromZero(GetFloat(col));
+            }
+
+            Point GetPoint(int colX, int colY)
+            {
+                return new Point(GetInt(colX), GetInt(colY));
+            }
         }
 
         return Task.FromResult<IReadOnlyList<Face>>(faces);

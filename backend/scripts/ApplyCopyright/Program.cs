@@ -5,7 +5,7 @@
  * Project: ApplyCopyright
  * File: Program.cs
  *
- * This file is part of this solution. 
+ * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
  *
  * Licensed under the Apache License 2.0.
@@ -46,10 +46,7 @@ foreach (var file in files)
 
     changedCount++;
 
-    if (!options.Check)
-    {
-        await File.WriteAllTextAsync(file, nextContent, new UTF8Encoding(false)).ConfigureAwait(false);
-    }
+    if (!options.Check) await File.WriteAllTextAsync(file, nextContent, new UTF8Encoding(false)).ConfigureAwait(false);
 }
 
 Console.WriteLine(options.Check
@@ -105,7 +102,10 @@ static string? GetProjectName(string filePath)
 static string RemoveExistingCopyrightHeaders(string content)
 {
     content = content.TrimStart('\uFEFF');
-    while (TryStripCopyrightBlock(ref content) || TryStripCopyrightLine(ref content)) { }
+    while (TryStripCopyrightBlock(ref content) || TryStripCopyrightLine(ref content))
+    {
+    }
+
     return content.TrimStart();
 }
 
@@ -159,7 +159,6 @@ namespace ApplyCopyright
             var check = false;
 
             for (var i = 0; i < args.Length; i++)
-            {
                 switch (args[i])
                 {
                     case "--check":
@@ -173,7 +172,6 @@ namespace ApplyCopyright
                     default:
                         throw new ArgumentException($"Unknown or incomplete argument: {args[i]}");
                 }
-            }
 
             return new Options(root, check);
         }

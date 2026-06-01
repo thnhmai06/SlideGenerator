@@ -5,7 +5,7 @@
  * Project: SlideGenerator.Cryptography.Tests
  * File: Aes256EncrypterTests.cs
  *
- * This file is part of this solution. 
+ * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
  *
  * Licensed under the Apache License 2.0.

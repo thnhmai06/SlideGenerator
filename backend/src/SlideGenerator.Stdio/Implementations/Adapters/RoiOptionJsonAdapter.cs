@@ -5,7 +5,7 @@
  * Project: SlideGenerator.Stdio
  * File: RoiOptionJsonAdapter.cs
  *
- * This file is part of this solution. 
+ * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
  *
  * Licensed under the Apache License 2.0.
@@ -22,12 +22,12 @@ namespace SlideGenerator.Stdio.Implementations.Adapters;
 /// <summary>
 ///     A <see cref="JsonConverter{T}" /> for the polymorphic <see cref="RoiOption" /> hierarchy.
 ///     Uses the <c>"type"</c> discriminator field to select between
-///     <see cref="CenterOption" /> and <see cref="RuleOfThirdsOption" /> during deserialization.
+///     <see cref="AnchorOption" /> and <see cref="InterestOption" /> during deserialization.
 /// </summary>
 /// <example>
 ///     <code>
-///     {"type":"Center","pivot":{"x":0.5,"y":0.5},"useFaceAlignment":true}
-///     {"type":"RuleOfThirds","pivot":{"x":0.5,"y":0.333}}
+///     {"type":"Anchor","anchorType":"Eyes","anchorRatio":{"x":0,"y":0},"pivot":{"x":0.5,"y":0.333}}
+///     {"type":"Interest","interestType":"Attention"}
 ///     </code>
 /// </example>
 internal sealed class RoiOptionJsonAdapter : JsonConverter<RoiOption>
@@ -45,8 +45,8 @@ internal sealed class RoiOptionJsonAdapter : JsonConverter<RoiOption>
 
         return typeName switch
         {
-            "Center" => ReadCenter(root),
-            "RuleOfThirds" => ReadRuleOfThirds(root),
+            "Anchor" => ReadAnchor(root),
+            "Interest" => ReadInterest(root),
             _ => throw new JsonException($"Unknown RoiOption type: '{typeName}'.")
         };
     }
@@ -55,16 +55,18 @@ internal sealed class RoiOptionJsonAdapter : JsonConverter<RoiOption>
     public override void Write(Utf8JsonWriter writer, RoiOption value, JsonSerializerOptions options)
     {
         writer.WriteStartObject();
-        writer.WriteString("type", value.Type.ToString());
 
         switch (value)
         {
-            case CenterOption center:
-                WritePivot(writer, center.Pivot);
-                writer.WriteBoolean("useFaceAlignment", center.UseFaceAlignment);
+            case AnchorOption anchor:
+                writer.WriteString("type", "Anchor");
+                writer.WriteString("anchorType", anchor.Type.ToString());
+                WriteVector2(writer, "anchorRatio", anchor.Ratio);
+                WriteVector2(writer, "pivot", anchor.Pivot);
                 break;
-            case RuleOfThirdsOption thirds:
-                WritePivot(writer, thirds.Pivot);
+            case InterestOption interest:
+                writer.WriteString("type", "Interest");
+                writer.WriteString("interestType", interest.Type.ToString());
                 break;
             default:
                 throw new JsonException($"Unsupported RoiOption subtype: {value.GetType().Name}.");
@@ -73,34 +75,41 @@ internal sealed class RoiOptionJsonAdapter : JsonConverter<RoiOption>
         writer.WriteEndObject();
     }
 
-    private static CenterOption ReadCenter(JsonElement root)
+    private static AnchorOption ReadAnchor(JsonElement root)
     {
-        var pivot = ReadPivot(root);
-        var useFaceAlignment = root.TryGetProperty("useFaceAlignment", out var fa) && fa.GetBoolean();
-        return new CenterOption { Pivot = pivot, UseFaceAlignment = useFaceAlignment };
+        var anchorType = root.TryGetProperty("anchorType", out var anchorEl)
+            ? Enum.Parse<AnchorType>(anchorEl.GetString()!, true)
+            : AnchorType.Image;
+
+        var anchorRatio = ReadVector2(root, "anchorRatio", Vector2.Zero);
+        var pivot = ReadVector2(root, "pivot", new Vector2(0.5f, 0.5f));
+        return new AnchorOption { Type = anchorType, Ratio = anchorRatio, Pivot = pivot };
     }
 
-    private static RuleOfThirdsOption ReadRuleOfThirds(JsonElement root)
+    private static InterestOption ReadInterest(JsonElement root)
     {
-        var pivot = ReadPivot(root);
-        return new RuleOfThirdsOption { Pivot = pivot };
+        var interestType = root.TryGetProperty("interestType", out var modeEl)
+            ? Enum.Parse<InterestType>(modeEl.GetString()!, true)
+            : InterestType.Attention;
+
+        return new InterestOption { Type = interestType };
     }
 
-    private static Vector2 ReadPivot(JsonElement root)
+    private static Vector2 ReadVector2(JsonElement root, string propertyName, Vector2 defaultValue)
     {
-        if (!root.TryGetProperty("pivot", out var pivotEl))
-            return new Vector2(0.5f, 0.5f);
+        if (!root.TryGetProperty(propertyName, out var el))
+            return defaultValue;
 
-        var x = pivotEl.TryGetProperty("x", out var xEl) ? xEl.GetSingle() : 0.5f;
-        var y = pivotEl.TryGetProperty("y", out var yEl) ? yEl.GetSingle() : 0.5f;
+        var x = el.TryGetProperty("x", out var xEl) ? xEl.GetSingle() : defaultValue.X;
+        var y = el.TryGetProperty("y", out var yEl) ? yEl.GetSingle() : defaultValue.Y;
         return new Vector2(x, y);
     }
 
-    private static void WritePivot(Utf8JsonWriter writer, Vector2 pivot)
+    private static void WriteVector2(Utf8JsonWriter writer, string propertyName, Vector2 v)
     {
-        writer.WriteStartObject("pivot");
-        writer.WriteNumber("x", pivot.X);
-        writer.WriteNumber("y", pivot.Y);
+        writer.WriteStartObject(propertyName);
+        writer.WriteNumber("x", v.X);
+        writer.WriteNumber("y", v.Y);
         writer.WriteEndObject();
     }
 }

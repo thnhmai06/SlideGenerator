@@ -30,8 +30,24 @@ public abstract class Pool<T>(Func<T> factory, Func<uint> limitResolver) : IDisp
     private readonly Stack<T> _free = new();
     private readonly SemaphoreSlim _signal = new(0);
     private readonly Lock _sync = new();
-    private int _total;
     private bool _disposed;
+    private int _total;
+
+    /// <summary>
+    ///     Disposes all idle instances currently held in the free list.
+    ///     Instances that are checked out remain alive until their callers release them.
+    /// </summary>
+    public void Dispose()
+    {
+        lock (_sync)
+        {
+            if (_disposed) return;
+            _disposed = true;
+            while (_free.Count > 0) _free.Pop().Dispose();
+        }
+
+        _signal.Dispose();
+    }
 
     /// <summary>
     ///     Acquires an instance from the pool. Returns a free instance immediately if available;
@@ -51,22 +67,28 @@ public abstract class Pool<T>(Func<T> factory, Func<uint> limitResolver) : IDisp
                 var limit = (int)limitResolver();
 
                 if (_free.Count > 0) return _free.Pop();
-                if (limit == 0 || _total < limit) { _total++; shouldCreate = true; }
+                if (limit == 0 || _total < limit)
+                {
+                    _total++;
+                    shouldCreate = true;
+                }
             }
 
             if (shouldCreate)
-            {
                 try
                 {
                     return factory();
                 }
                 catch
                 {
-                    lock (_sync) { _total--; }
+                    lock (_sync)
+                    {
+                        _total--;
+                    }
+
                     _signal.Release();
                     throw;
                 }
-            }
 
             await _signal.WaitAsync(ct).ConfigureAwait(false);
         }
@@ -131,21 +153,5 @@ public abstract class Pool<T>(Func<T> factory, Func<uint> limitResolver) : IDisp
 
         for (var i = 0; i < trimmed; i++) _signal.Release();
         return Task.CompletedTask;
-    }
-
-    /// <summary>
-    ///     Disposes all idle instances currently held in the free list.
-    ///     Instances that are checked out remain alive until their callers release them.
-    /// </summary>
-    public void Dispose()
-    {
-        lock (_sync)
-        {
-            if (_disposed) return;
-            _disposed = true;
-            while (_free.Count > 0) _free.Pop().Dispose();
-        }
-
-        _signal.Dispose();
     }
 }

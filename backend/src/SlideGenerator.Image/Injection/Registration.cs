@@ -18,21 +18,31 @@ using SlideGenerator.Image.Application.Abstractions;
 using SlideGenerator.Image.Application.Services;
 using SlideGenerator.Image.Infrastructure.Adapters;
 using SlideGenerator.Image.Infrastructure.Services;
+using SmartCropper = SlideGenerator.Image.Application.Services.SmartCropper;
 
 namespace SlideGenerator.Image.Injection;
 
+/// <summary>
+///     DI registration for the Image module.
+/// </summary>
 public static class Registration
 {
-    public static IServiceCollection AddImageServices(this IServiceCollection services)
+    extension(IServiceCollection services)
     {
-        services.AddSingleton<Func<IFaceDetector>>(_ => () => new YuNet());
-        
-        services.AddSingleton<IImageLoader, MagickImageLoader>();
-        services.AddSingleton<IMatLoader, OpenCvMatLoader>();
-        services.AddSingleton<IRoiResolver>(sp => new RoiResolver(
-            sp.GetRequiredService<IFaceDetector>(),
-            sp.GetRequiredService<IMatLoader>(),
-            sp.GetService<ILogger<RoiResolver>>()));
-        return services;
+        /// <summary>Registers all Image module services.</summary>
+        public IServiceCollection AddImageServices()
+        {
+            services.AddSingleton<Func<IFaceDetector>>(_ => () => new YuNet());
+
+            services.AddSingleton<IImageLoader, VipsImageLoader>();
+            services.AddSingleton<IInterestCropper, LibvipsInterestCropper>();
+            services.AddSingleton<IAnchorCropper>(sp => new AnchorCropper(
+                sp.GetRequiredService<IFaceDetector>()));
+            services.AddSingleton<ISmartCropper>(sp => new SmartCropper(
+                sp.GetRequiredService<IAnchorCropper>(),
+                sp.GetRequiredService<IInterestCropper>(),
+                sp.GetService<ILogger<SmartCropper>>()));
+            return services;
+        }
     }
 }

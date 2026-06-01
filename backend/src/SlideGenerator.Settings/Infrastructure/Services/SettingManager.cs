@@ -5,7 +5,7 @@
  * Project: SlideGenerator.Settings
  * File: SettingManager.cs
  *
- * This file is part of this solution. 
+ * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
  *
  * Licensed under the Apache License 2.0.
@@ -36,8 +36,6 @@ internal sealed class SettingManager(
     ///     Gets the full file path where settings are stored.
     /// </summary>
     private string FilePath => NameAndPaths.SettingsFile.GetFilePath(serializer.FileExtension);
-
-    private static string L(string? s) => s?.ReplaceLineEndings(" ") ?? "";
 
     /// <inheritdoc />
     public Setting Current { get; private set; } = new();
@@ -166,5 +164,10 @@ internal sealed class SettingManager(
     {
         Current = newSetting;
         await Save().ConfigureAwait(false);
+    }
+
+    private static string L(string? s)
+    {
+        return s?.ReplaceLineEndings(" ") ?? "";
     }
 }

@@ -27,6 +27,30 @@ namespace SlideGenerator.Coordinator.Tests.Unit;
 /// </summary>
 public sealed class PoolTests
 {
+    #region AdjustAsync
+
+    /// <summary>
+    ///     Verifies that <see cref="Pool{T}.AdjustAsync" /> disposes free instances that exceed
+    ///     the current limit immediately, without waiting for a release.
+    /// </summary>
+    [Fact]
+    public async Task AdjustAsync_ExcessFreeInstances_DisposesThem()
+    {
+        var limit = 3u;
+        using var pool = new StubPool(() => new Resource(), () => limit);
+
+        var instances = await Task.WhenAll(
+            Enumerable.Range(0, 3).Select(_ => pool.AcquireAsync(TestContext.Current.CancellationToken).AsTask()));
+        foreach (var i in instances) pool.Release(i);
+
+        limit = 1u;
+        await pool.AdjustAsync();
+
+        instances.Count(i => i.IsDisposed).Should().Be(2);
+    }
+
+    #endregion
+
     #region Test doubles
 
     /// <summary>
@@ -35,7 +59,11 @@ public sealed class PoolTests
     private sealed class Resource : IDisposable
     {
         public bool IsDisposed { get; private set; }
-        public void Dispose() => IsDisposed = true;
+
+        public void Dispose()
+        {
+            IsDisposed = true;
+        }
     }
 
     /// <summary>
@@ -46,10 +74,15 @@ public sealed class PoolTests
     {
         /// <inheritdoc cref="Pool{T}.AcquireAsync" />
         public new ValueTask<Resource> AcquireAsync(CancellationToken ct = default)
-            => base.AcquireAsync(ct);
+        {
+            return base.AcquireAsync(ct);
+        }
 
         /// <inheritdoc cref="Pool{T}.Release" />
-        public new void Release(Resource instance) => base.Release(instance);
+        public new void Release(Resource instance)
+        {
+            base.Release(instance);
+        }
     }
 
     #endregion
@@ -230,30 +263,6 @@ public sealed class PoolTests
         pool.Release(instance);
 
         instance.IsDisposed.Should().BeTrue();
-    }
-
-    #endregion
-
-    #region AdjustAsync
-
-    /// <summary>
-    ///     Verifies that <see cref="Pool{T}.AdjustAsync" /> disposes free instances that exceed
-    ///     the current limit immediately, without waiting for a release.
-    /// </summary>
-    [Fact]
-    public async Task AdjustAsync_ExcessFreeInstances_DisposesThem()
-    {
-        var limit = 3u;
-        using var pool = new StubPool(() => new Resource(), () => limit);
-
-        var instances = await Task.WhenAll(
-            Enumerable.Range(0, 3).Select(_ => pool.AcquireAsync(TestContext.Current.CancellationToken).AsTask()));
-        foreach (var i in instances) pool.Release(i);
-
-        limit = 1u;
-        await pool.AdjustAsync();
-
-        instances.Count(i => i.IsDisposed).Should().Be(2);
     }
 
     #endregion

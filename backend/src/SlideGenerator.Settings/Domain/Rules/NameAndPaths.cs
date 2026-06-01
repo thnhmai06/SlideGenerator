@@ -5,7 +5,7 @@
  * Project: SlideGenerator.Settings
  * File: NameAndPaths.cs
  *
- * This file is part of this solution. 
+ * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
  *
  * Licensed under the Apache License 2.0.
@@ -55,7 +55,7 @@ public static class NameAndPaths
         ///     Gets the name of the system-wide mutex used for single-instance detection.
         /// </summary>
         public static string MutexName => $"{AppName}-SingleInstance";
-        
+
         /// <summary>
         ///     Gets the path to the single-instance PID lock file.
         /// </summary>

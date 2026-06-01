@@ -9,6 +9,6 @@
         <IsPackable>false</IsPackable>
     </PropertyGroup>
     <ItemGroup>
-        <EmbeddedResource Include="Copyright.txt" />
+        <EmbeddedResource Include="Copyright.txt"/>
     </ItemGroup>
 </Project>

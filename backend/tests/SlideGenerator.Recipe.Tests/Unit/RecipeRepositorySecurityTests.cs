@@ -5,7 +5,7 @@
  * Project: SlideGenerator.Recipe.Tests
  * File: RecipeRepositorySecurityTests.cs
  *
- * This file is part of this solution. 
+ * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
  *
  * Licensed under the Apache License 2.0.
@@ -103,7 +103,8 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
         await using (var zos = new ZipOutputStream(fs))
         {
             zos.SetLevel(0);
-            await zos.PutNextEntryAsync(new ZipEntry("Workbooks/data.xlsx") { DateTime = DateTime.UtcNow }, TestContext.Current.CancellationToken);
+            await zos.PutNextEntryAsync(new ZipEntry("Workbooks/data.xlsx") { DateTime = DateTime.UtcNow },
+                TestContext.Current.CancellationToken);
             var data = Encoding.UTF8.GetBytes("placeholder");
             zos.Write(data, 0, data.Length);
             zos.CloseEntry();
@@ -159,12 +160,14 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
         await using (var zos = new ZipOutputStream(fs))
         {
             zos.SetLevel(0);
-            await zos.PutNextEntryAsync(new ZipEntry("recipe.json") { DateTime = DateTime.UtcNow }, TestContext.Current.CancellationToken);
+            await zos.PutNextEntryAsync(new ZipEntry("recipe.json") { DateTime = DateTime.UtcNow },
+                TestContext.Current.CancellationToken);
             var recipeBytes = "{}"u8.ToArray();
             zos.Write(recipeBytes, 0, recipeBytes.Length);
             zos.CloseEntry();
 
-            await zos.PutNextEntryAsync(new ZipEntry(maliciousEntryName) { DateTime = DateTime.UtcNow }, TestContext.Current.CancellationToken);
+            await zos.PutNextEntryAsync(new ZipEntry(maliciousEntryName) { DateTime = DateTime.UtcNow },
+                TestContext.Current.CancellationToken);
             zos.Write(maliciousPayload, 0, maliciousPayload.Length);
             zos.CloseEntry();
             zos.Finish();
@@ -194,7 +197,11 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
 
         // Act — ImportAsync must reject the malicious entry. Either throws or silently skips —
         // in either case nothing may escape the sandbox.
-        async Task Act() => await _repo.ImportAsync(zipPath, null, workbooksDir, presentationsDir, TestContext.Current.CancellationToken);
+        async Task Act()
+        {
+            await _repo.ImportAsync(zipPath, null, workbooksDir, presentationsDir,
+                TestContext.Current.CancellationToken);
+        }
     }
 
     /// <summary>
@@ -223,12 +230,14 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
         await using (var zos = new ZipOutputStream(fs))
         {
             zos.SetLevel(0);
-            await zos.PutNextEntryAsync(new ZipEntry("recipe.json") { DateTime = DateTime.UtcNow }, TestContext.Current.CancellationToken);
+            await zos.PutNextEntryAsync(new ZipEntry("recipe.json") { DateTime = DateTime.UtcNow },
+                TestContext.Current.CancellationToken);
             var recipeBytes = "{}"u8.ToArray();
             zos.Write(recipeBytes, 0, recipeBytes.Length);
             zos.CloseEntry();
 
-            await zos.PutNextEntryAsync(new ZipEntry(maliciousEntryName) { DateTime = DateTime.UtcNow }, TestContext.Current.CancellationToken);
+            await zos.PutNextEntryAsync(new ZipEntry(maliciousEntryName) { DateTime = DateTime.UtcNow },
+                TestContext.Current.CancellationToken);
             zos.Write("payload"u8.ToArray(), 0, 7);
             zos.CloseEntry();
             zos.Finish();
@@ -247,7 +256,11 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
             "ImportAsync must sanitize Presentations entries the same way as Workbooks entries");
         return;
 
-        async Task Act() => await _repo.ImportAsync(zipPath, null, workbooksDir, presentationsDir, TestContext.Current.CancellationToken);
+        async Task Act()
+        {
+            await _repo.ImportAsync(zipPath, null, workbooksDir, presentationsDir,
+                TestContext.Current.CancellationToken);
+        }
     }
 
     #endregion

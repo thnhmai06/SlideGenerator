@@ -5,7 +5,7 @@
  * Project: SlideGenerator.Summarization
  * File: ImageInstruction.cs
  *
- * This file is part of this solution. 
+ * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
  *
  * Licensed under the Apache License 2.0.
@@ -23,12 +23,12 @@ namespace SlideGenerator.Summarization.Domain.Models.Recipes;
 /// </summary>
 /// <param name="Shapes">The set of target PowerPoint shapes to be filled with images.</param>
 /// <param name="Columns">The list of Excel columns providing image URIs or paths.</param>
-/// <param name="EditOptions">The processing rules (ROI, crop, resize) for the images.</param>
+/// <param name="ImageEdits">The processing rules (ROI, crop, resize) for the images.</param>
 /// <param name="FallbackImagePath">Optional path to a default image if the source is missing or invalid.</param>
 public record ImageInstruction(
     IReadOnlySet<ShapeIdentifier> Shapes,
     IReadOnlyList<ColumnIdentifier> Columns,
-    EditOptions EditOptions,
+    ImageEdits ImageEdits,
     string? FallbackImagePath = null)
 {
     /// <summary>
