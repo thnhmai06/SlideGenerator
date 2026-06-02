@@ -169,7 +169,7 @@ Application
 | Recipe                | `AddRecipeServices()`                                                                       |
 | Generator             | `AddGeneratorServices()`                                                                    |
 | Stdio                 | `AddIpcServices()`                                                                          |
-| WorkflowCore + SQLite | `services.AddWorkflow(x => x.UseSqlite(NameAndPaths.WorkflowsFile.ConnectionString, true))` |
+| WorkflowCore + SQLite | `services.AddWorkflow(x => x.UseSqlite(NameAndPaths.DataFolder.WorkflowsFile.ConnectionString, true))` |
 
 The system logger is created up-front in `Program.cs` via `SystemLoggerBootstrapper.Initialize(...)` (file Serilog sink → `stderr` only) and passed into `AddDocumentServices`. It is **not** added to DI through an `AddSystemLogging` helper.
 
@@ -432,7 +432,23 @@ CodeQL config lives at `.github/codeql/codeql-config.yml` and excludes `backend/
 filePath = Path.GetFullPath(filePath);
 ```
 
-`NameAndPaths.UserPath` (the `%LOCALAPPDATA%\SlideGenerator` root) is already wrapped with `Path.GetFullPath` so all derived paths inherit the sanitization. **Do not remove that wrapper.**
+`NameAndPaths.UserPath` resolves to `%LOCALAPPDATA%\SlideGenerator` normally, or to `BasePath` (executable directory) when the `--portable` flag is passed. Both branches are wrapped with `Path.GetFullPath` so all derived paths inherit the sanitization. **Do not remove those wrappers.**
+
+`NameAndPaths.IsPortable` (private) is checked at each property access — no caching — so the flag is respected even if checked early at startup.
+
+Sub-path layout under `UserPath`:
+
+```
+UserPath/
+├── Settings.yaml          — SettingsFile
+├── Instance.pid           — AppLocker
+├── Logs/System/           — LogsFolder.SystemPath
+├── Logs/Workflows/        — LogsFolder.WorkflowPath
+├── Assets/                — AssetsFolder.DefaultFolder
+└── Data/
+    ├── Workflows.db       — DataFolder.WorkflowsFile
+    └── Recipes.db         — DataFolder.RecipesFile
+```
 
 ### Resource injection (`cs/resource-injection`)
 

@@ -182,7 +182,7 @@ internal sealed class GeneratingService(
     /// <inheritdoc />
     public async Task<bool> DeleteAsync(string instanceId, CancellationToken ct = default)
     {
-        await using var conn = new SqliteConnection(NameAndPaths.WorkflowsFile.ConnectionString);
+        await using var conn = new SqliteConnection(NameAndPaths.DataFolder.WorkflowsFile.ConnectionString);
         await conn.OpenAsync(ct).ConfigureAwait(false);
         await using var tx = conn.BeginTransaction();
         try
@@ -216,7 +216,7 @@ internal sealed class GeneratingService(
     /// <inheritdoc />
     public async Task<int> DeleteAllCompletedAsync(CancellationToken ct = default)
     {
-        await using var conn = new SqliteConnection(NameAndPaths.WorkflowsFile.ConnectionString);
+        await using var conn = new SqliteConnection(NameAndPaths.DataFolder.WorkflowsFile.ConnectionString);
         await conn.OpenAsync(ct).ConfigureAwait(false);
         await using var tx = conn.BeginTransaction();
         try

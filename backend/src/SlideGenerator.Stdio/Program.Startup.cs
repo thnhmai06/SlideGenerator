@@ -55,8 +55,8 @@ internal static partial class Program
 
             Log.Information("Initializing application directories...");
             NameAndPaths.InitializeDirectories();
-            Log.Information("Workflows DB: {Path}", NameAndPaths.WorkflowsFile.FilePath);
-            Log.Information("Recipes DB:   {Path}", NameAndPaths.RecipesFile.FilePath);
+            Log.Information("Workflows DB: {Path}", NameAndPaths.DataFolder.WorkflowsFile.FilePath);
+            Log.Information("Recipes DB:   {Path}", NameAndPaths.DataFolder.RecipesFile.FilePath);
 
             Log.Information("Loading settings...");
             await LoadSettingsAsync(services).ConfigureAwait(false);

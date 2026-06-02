@@ -27,17 +27,27 @@ public static class NameAndPaths
     public const string AppName = "SlideGenerator";
 
     /// <summary>
-    ///     Gets the base path for user-specific application data.
+    ///     Gets whether the application is running in portable mode (<c>--portable</c> flag).
+    ///     When <see langword="true" />, all user data is stored relative to the executable directory.
     /// </summary>
-    private static string UserPath =>
-        Path.GetFullPath(Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), // %LOCALAPPDATA%
-            AppName));
+    private static bool IsPortable() =>
+        Environment.GetCommandLineArgs().Contains("--portable", StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
     ///     Gets the base path for application-local data (executable directory).
     /// </summary>
-    public static string BasePath => AppDomain.CurrentDomain.BaseDirectory;
+    public static string BasePath => Path.GetFullPath(AppDomain.CurrentDomain.BaseDirectory);
+
+    /// <summary>
+    ///     Gets the base path for user-specific application data.
+    ///     Returns <see cref="BasePath" /> when running in portable mode.
+    /// </summary>
+    private static string UserPath =>
+        IsPortable()
+            ? BasePath
+            : Path.GetFullPath(Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), // %LOCALAPPDATA%
+                AppName));
 
     /// <summary>
     ///     Ensures that all required application directories (data, logs, assets) exist on the disk.
@@ -45,8 +55,16 @@ public static class NameAndPaths
     public static void InitializeDirectories()
     {
         Directory.CreateDirectory(UserPath);
+        
+        // Logs
         Directory.CreateDirectory(LogsFolder.SystemPath);
         Directory.CreateDirectory(LogsFolder.WorkflowPath);
+        
+        // Assets
+        Directory.CreateDirectory(AssetsFolder.DefaultFolder);
+            
+        // Data
+        Directory.CreateDirectory(DataFolder.FolderPath);
     }
 
     public static class AppLocker
@@ -59,7 +77,7 @@ public static class NameAndPaths
         /// <summary>
         ///     Gets the path to the single-instance PID lock file.
         /// </summary>
-        public static string PidPath => Path.Combine(UserPath, $"{AppName}.pid");
+        public static string PidPath => Path.Combine(UserPath, "Instance.pid");
     }
 
     /// <summary>
@@ -83,12 +101,12 @@ public static class NameAndPaths
     /// </summary>
     public static class AssetsFolder
     {
-        private static string DefaultPath => Path.Combine(UserPath, "Assets");
+        public static string DefaultFolder => Path.Combine(UserPath, "Assets");
 
         public static string GetDownloadDir(string? assetsPath, string bookPath, string sheetName, string colName,
             IHashPathRegistry registry)
         {
-            assetsPath ??= DefaultPath;
+            assetsPath ??= DefaultFolder;
             var bookName = Path.GetFileNameWithoutExtension(bookPath);
             var hash = registry.GetShortHash(bookPath);
             var bookFolder = $"{Naming.SanitizeFileName(bookName)}_{hash}";
@@ -100,7 +118,7 @@ public static class NameAndPaths
         public static string GetEditDir(string? assetsPath, string bookPath, string sheetName, string colName,
             IHashPathRegistry registry)
         {
-            assetsPath ??= DefaultPath;
+            assetsPath ??= DefaultFolder;
             var bookName = Path.GetFileNameWithoutExtension(bookPath);
             var hash = registry.GetShortHash(bookPath);
             var bookFolder = $"{Naming.SanitizeFileName(bookName)}_{hash}";
@@ -110,6 +128,49 @@ public static class NameAndPaths
         }
     }
 
+    public static class DataFolder
+    {
+        public static string FolderPath => Path.Combine(UserPath, "Data");
+        
+        /// <summary>
+        ///     Contains naming rules for the WorkflowCore SQLite persistence database.
+        /// </summary>
+        public static class WorkflowsFile
+        {
+            private const string FileName = "Workflows";
+
+            /// <summary>
+            ///     Gets the full path to the SQLite database used for workflow persistence.
+            /// </summary>
+            public static string FilePath => Path.Combine(FolderPath, $"{FileName}.db");
+
+            /// <summary>
+            ///     Gets the SQLite connection string for the workflow persistence database.
+            /// </summary>
+            public static string ConnectionString =>
+                new SqliteConnectionStringBuilder { DataSource = FilePath }.ConnectionString;
+        }
+
+        /// <summary>
+        ///     Contains naming rules for the recipe SQLite database.
+        /// </summary>
+        public static class RecipesFile
+        {
+            private const string FileName = "Recipes";
+
+            /// <summary>
+            ///     Gets the full path to the SQLite database used for recipe storage.
+            /// </summary>
+            public static string FilePath => Path.Combine(FolderPath, $"{FileName}.db");
+
+            /// <summary>
+            ///     Gets the SQLite connection string for the recipe database.
+            /// </summary>
+            public static string ConnectionString =>
+                new SqliteConnectionStringBuilder { DataSource = FilePath }.ConnectionString;
+        }   
+    }
+    
     /// <summary>
     ///     Contains naming rules for general application settings.
     /// </summary>
@@ -129,43 +190,5 @@ public static class NameAndPaths
         {
             return Path.Combine(UserPath, $"{FileName}{ext}");
         }
-    }
-
-    /// <summary>
-    ///     Contains naming rules for the WorkflowCore SQLite persistence database.
-    /// </summary>
-    public static class WorkflowsFile
-    {
-        private const string FileName = "Workflows";
-
-        /// <summary>
-        ///     Gets the full path to the SQLite database used for workflow persistence.
-        /// </summary>
-        public static string FilePath => Path.Combine(UserPath, $"{FileName}.db");
-
-        /// <summary>
-        ///     Gets the SQLite connection string for the workflow persistence database.
-        /// </summary>
-        public static string ConnectionString =>
-            new SqliteConnectionStringBuilder { DataSource = FilePath }.ConnectionString;
-    }
-
-    /// <summary>
-    ///     Contains naming rules for the recipe SQLite database.
-    /// </summary>
-    public static class RecipesFile
-    {
-        private const string FileName = "Recipes";
-
-        /// <summary>
-        ///     Gets the full path to the SQLite database used for recipe storage.
-        /// </summary>
-        public static string FilePath => Path.Combine(UserPath, $"{FileName}.db");
-
-        /// <summary>
-        ///     Gets the SQLite connection string for the recipe database.
-        /// </summary>
-        public static string ConnectionString =>
-            new SqliteConnectionStringBuilder { DataSource = FilePath }.ConnectionString;
     }
 }
