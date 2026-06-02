@@ -49,7 +49,7 @@ public static class BookTypeExtensions
     /// <param name="type">The workbook type.</param>
     /// <returns>The file extension (e.g., ".xlsx").</returns>
     /// <exception cref="ArgumentOutOfRangeException">Thrown if the type is not recognized.</exception>
-    public static string GetExtension(this BookType type)
+    public static string ToExtension(this BookType type)
     {
         return type switch
         {

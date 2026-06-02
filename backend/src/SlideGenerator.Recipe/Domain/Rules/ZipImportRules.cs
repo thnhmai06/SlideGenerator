@@ -12,6 +12,9 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using SlideGenerator.Document.Domain.Models.Sheet;
+using SlideGenerator.Document.Domain.Models.Slide;
+
 namespace SlideGenerator.Recipe.Domain.Rules;
 
 /// <summary>
@@ -40,19 +43,17 @@ public static class ZipImportRules
 
     /// <summary>
     ///     Allowed extensions for entries under <c>Workbooks/</c> (case-insensitive, with dot).
+    ///     Derived from all <see cref="BookType" /> values.
     /// </summary>
     public static readonly IReadOnlySet<string> AllowedWorkbookExtensions =
-        new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            ".xls", ".xlsx", ".xltx", ".ods", ".csv", ".tsv"
-        };
+        new HashSet<string>(Enum.GetValues<BookType>().Select(t => t.ToExtension()), 
+            StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
     ///     Allowed extensions for entries under <c>Presentations/</c> (case-insensitive, with dot).
+    ///     Derived from all <see cref="PresentationType" /> values.
     /// </summary>
     public static readonly IReadOnlySet<string> AllowedPresentationExtensions =
-        new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            ".potx", ".pptx", ".ppsx"
-        };
+        new HashSet<string>(Enum.GetValues<PresentationType>().Select(t => t.ToExtension()),
+            StringComparer.OrdinalIgnoreCase);
 }
