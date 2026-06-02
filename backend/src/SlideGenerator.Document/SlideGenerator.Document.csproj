@@ -4,45 +4,41 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <IsPackable>false</IsPackable>
-        <ConfuserProject>Confuser.crproj</ConfuserProject>
-        <Obfuscate Condition="'$(Configuration)' == 'Release' AND Exists('$(MSBuildProjectDirectory)\$(ConfuserProject)')">true</Obfuscate>
-        <Obfuscate Condition="'$(Obfuscate)' == ''">false</Obfuscate>
-        <ConfuserReplaceOutput>true</ConfuserReplaceOutput>
         <AssemblyName>SlideGenerator.Document</AssemblyName>
         <RootNamespace>SlideGenerator.Document</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Confuser.MSBuild" Version="1.6.0">
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        <PackageReference Include="Obfuscar" Version="2.2.50">
             <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <GeneratePathProperty>true</GeneratePathProperty>
         </PackageReference>
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.8"/>
-        <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.8"/>
-        <PackageReference Include="Syncfusion.XlsIO.NET" Version="*"/>
-        <PackageReference Include="Syncfusion.Presentation.NET" Version="*"/>
-        <PackageReference Include="Stubble.Core" Version="1.10.8"/>
-        <PackageReference Remove="StyleCop.Analyzers"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.8" />
+        <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.8" />
+        <PackageReference Include="Syncfusion.XlsIO.NET" Version="*" />
+        <PackageReference Include="Syncfusion.Presentation.NET" Version="*" />
+        <PackageReference Include="Stubble.Core" Version="1.10.8" />
+        <PackageReference Remove="StyleCop.Analyzers" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\SlideGenerator.Coordinator\SlideGenerator.Coordinator.csproj"/>
-        <ProjectReference Include="..\SlideGenerator.Image\SlideGenerator.Image.csproj"/>
+        <ProjectReference Include="..\SlideGenerator.Coordinator\SlideGenerator.Coordinator.csproj" />
+        <ProjectReference Include="..\SlideGenerator.Image\SlideGenerator.Image.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-        <InternalsVisibleTo Include="SlideGenerator.Document.Tests"/>
+        <InternalsVisibleTo Include="SlideGenerator.Document.Tests" />
     </ItemGroup>
 
-    <UsingTask TaskName="ReadDotEnvKey" TaskFactory="RoslynCodeTaskFactory"
-               AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <UsingTask TaskName="ReadDotEnvKey" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
         <ParameterGroup>
-            <EnvFile ParameterType="System.String" Required="true"/>
-            <Key ParameterType="System.String" Required="true"/>
-            <Value ParameterType="System.String" Output="true"/>
+            <EnvFile ParameterType="System.String" Required="true" />
+            <Key ParameterType="System.String" Required="true" />
+            <Value ParameterType="System.String" Output="true" />
         </ParameterGroup>
         <Task>
-            <Using Namespace="System.IO"/>
+            <Using Namespace="System.IO" />
             <Code Type="Fragment" Language="cs"><![CDATA[
                 Value = string.Empty;
                 if (!File.Exists(EnvFile)) return true;
@@ -68,33 +64,63 @@
         </Task>
     </UsingTask>
 
-    <UsingTask TaskName="GenerateXorLicense" TaskFactory="RoslynCodeTaskFactory"
-               AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <UsingTask TaskName="GenerateXorLicense" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
         <ParameterGroup>
-            <LicenseKey ParameterType="System.String" Required="true"/>
-            <OutputFile ParameterType="System.String" Required="true"/>
+            <LicenseKey ParameterType="System.String" Required="true" />
+            <OutputFile ParameterType="System.String" Required="true" />
         </ParameterGroup>
         <Task>
-            <Using Namespace="System.IO"/>
-            <Using Namespace="System.Text"/>
-            <Using Namespace="System.Linq"/>
+            <Using Namespace="System.IO" />
+            <Using Namespace="System.Text" />
+            <Using Namespace="System.Linq" />
+            <Using Namespace="System.Security.Cryptography" />
             <Code Type="Fragment" Language="cs"><![CDATA[
-                const byte seed = 0x5A;
+                byte[] seedBytes =
+                [
+                    0x59, 0x6F, 0x75, 0x20, 0x73, 0x65, 0x65, 0x6D, 0x20, 0x74, 0x6F, 0x20, 0x62, 0x65, 0x20, 0x70,
+                    0x72, 0x65, 0x70, 0x61, 0x72, 0x69, 0x6E, 0x67, 0x20, 0x74, 0x6F, 0x20, 0x69, 0x6E, 0x73, 0x70,
+                    0x65, 0x63, 0x74, 0x20, 0x61, 0x6E, 0x20, 0x69, 0x6E, 0x74, 0x65, 0x72, 0x6E, 0x61, 0x6C, 0x20,
+                    0x6C, 0x69, 0x63, 0x65, 0x6E, 0x73, 0x65, 0x20, 0x6B, 0x65, 0x79, 0x2E, 0x0A, 0x0A, 0x50, 0x6C,
+                    0x65, 0x61, 0x73, 0x65, 0x20, 0x6E, 0x6F, 0x74, 0x65, 0x20, 0x74, 0x68, 0x61, 0x74, 0x20, 0x74,
+                    0x68, 0x69, 0x73, 0x20, 0x73, 0x6F, 0x66, 0x74, 0x77, 0x61, 0x72, 0x65, 0x20, 0x69, 0x73, 0x20,
+                    0x66, 0x72, 0x65, 0x65, 0x20, 0x61, 0x6E, 0x64, 0x20, 0x6F, 0x70, 0x65, 0x6E, 0x2D, 0x73, 0x6F,
+                    0x75, 0x72, 0x63, 0x65, 0x20, 0x66, 0x6F, 0x72, 0x20, 0x65, 0x76, 0x65, 0x72, 0x79, 0x6F, 0x6E,
+                    0x65, 0x2E, 0x0A, 0x0A, 0x49, 0x66, 0x20, 0x79, 0x6F, 0x75, 0x20, 0x65, 0x6E, 0x6A, 0x6F, 0x79,
+                    0x20, 0x74, 0x68, 0x65, 0x20, 0x70, 0x72, 0x6F, 0x6A, 0x65, 0x63, 0x74, 0x2C, 0x20, 0x63, 0x6F,
+                    0x6E, 0x73, 0x69, 0x64, 0x65, 0x72, 0x20, 0x63, 0x6F, 0x6E, 0x74, 0x72, 0x69, 0x62, 0x75, 0x74,
+                    0x69, 0x6E, 0x67, 0x2C, 0x20, 0x72, 0x65, 0x70, 0x6F, 0x72, 0x74, 0x69, 0x6E, 0x67, 0x20, 0x69,
+                    0x73, 0x73, 0x75, 0x65, 0x73, 0x2C, 0x20, 0x6F, 0x72, 0x20, 0x73, 0x68, 0x61, 0x72, 0x69, 0x6E,
+                    0x67, 0x20, 0x66, 0x65, 0x65, 0x64, 0x62, 0x61, 0x63, 0x6B, 0x20, 0x69, 0x6E, 0x73, 0x74, 0x65,
+                    0x61, 0x64, 0x20, 0x6F, 0x66, 0x20, 0x62, 0x79, 0x70, 0x61, 0x73, 0x73, 0x69, 0x6E, 0x67, 0x20,
+                    0x69, 0x74, 0x73, 0x20, 0x70, 0x72, 0x6F, 0x74, 0x65, 0x63, 0x74, 0x69, 0x6F, 0x6E, 0x73, 0x2E,
+                    0x0A, 0x0A, 0x54, 0x68, 0x61, 0x6E, 0x6B, 0x20, 0x79, 0x6F, 0x75, 0x20, 0x66, 0x6F, 0x72, 0x20,
+                    0x73, 0x75, 0x70, 0x70, 0x6F, 0x72, 0x74, 0x69, 0x6E, 0x67, 0x20, 0x6F, 0x70, 0x65, 0x6E, 0x2D,
+                    0x73, 0x6F, 0x75, 0x72, 0x63, 0x65, 0x20, 0x73, 0x6F, 0x66, 0x74, 0x77, 0x61, 0x72, 0x65, 0x2E,
+                    0x0A, 0x0A, 0x2D, 0x20, 0x40, 0x74, 0x68, 0x6E, 0x68, 0x6D, 0x61, 0x69, 0x30, 0x36
+                ];
                 byte[] raw = Encoding.UTF8.GetBytes(LicenseKey);
+                byte[] hash;
+                using (var sha = SHA256.Create()) hash = sha.ComputeHash(raw);
                 string byteList = string.Join(", ",
-                    raw.Select((b, i) => $"0x{(byte)(b ^ (seed + i)):X2}"));
+                    raw.Select((b, i) => $"0x{(byte)(b ^ seedBytes[i % seedBytes.Length]):X2}"));
+                string seedByteList = string.Join(", ", seedBytes.Select(b => $"0x{b:X2}"));
+                string hashByteList = string.Join(", ", hash.Select(b => $"0x{b:X2}"));
                 string code = $@"namespace SlideGenerator.Document;
 internal static class SyncfusionLicense
 {{
     private static readonly byte[] _k = {{ {byteList} }};
-    private const byte _s = 0x5A;
+    private static readonly byte[] _s = {{ {seedByteList} }};
+    private static readonly byte[] _h = {{ {hashByteList} }};
     internal static string Key
     {{
         get
         {{
             var r = new byte[_k.Length];
             for (var i = 0; i < _k.Length; i++)
-                r[i] = (byte)(_k[i] ^ (_s + i));
+                r[i] = (byte)(_k[i] ^ _s[i % _s.Length]);
+            var v = System.Security.Cryptography.SHA256.HashData(r);
+            for (var i = 0; i < v.Length; i++)
+                if (v[i] != _h[i]) return string.Empty;
             return System.Text.Encoding.UTF8.GetString(r);
         }}
     }}
@@ -105,10 +131,40 @@ internal static class SyncfusionLicense
         </Task>
     </UsingTask>
 
+    <UsingTask TaskName="WriteObfuscarConfig" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+        <ParameterGroup>
+            <InPath ParameterType="System.String" Required="true" />
+            <OutPath ParameterType="System.String" Required="true" />
+            <AssemblyFileName ParameterType="System.String" Required="true" />
+            <OutputFile ParameterType="System.String" Required="true" />
+        </ParameterGroup>
+        <Task>
+            <Using Namespace="System.IO" />
+            <Using Namespace="System.Text" />
+            <Code Type="Fragment" Language="cs"><![CDATA[
+                string assemblyPath = Path.Combine(InPath, AssemblyFileName);
+                string xml = string.Format(
+                    "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+                    "<Obfuscator>\n" +
+                    "    <Var name=\"InPath\" value=\"{0}\" />\n" +
+                    "    <Var name=\"OutPath\" value=\"{1}\" />\n" +
+                    "    <Var name=\"HideStrings\" value=\"true\" />\n" +
+                    "    <Var name=\"KeepPublicApi\" value=\"true\" />\n" +
+                    "    <Var name=\"HidePrivateApi\" value=\"true\" />\n" +
+                    "    <Var name=\"UseUnicodeNames\" value=\"true\" />\n" +
+                    "    <Module file=\"{2}\" />\n" +
+                    "</Obfuscator>",
+                    InPath, OutPath, assemblyPath);
+                File.WriteAllText(OutputFile, xml, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+                return true;
+            ]]></Code>
+        </Task>
+    </UsingTask>
+
     <Target Name="GenerateLicenseKey" BeforeTargets="BeforeBuild;CoreCompile">
         <!-- Try loading from .env file first (overrides system env var) -->
         <ReadDotEnvKey EnvFile="$(MSBuildProjectDirectory)\..\..\.env" Key="SYNCFUSION_LICENSE_KEY">
-            <Output TaskParameter="Value" PropertyName="DotEnvSyncfusionKey"/>
+            <Output TaskParameter="Value" PropertyName="DotEnvSyncfusionKey" />
         </ReadDotEnvKey>
         <PropertyGroup>
             <SyncfusionKey Condition="'$(DotEnvSyncfusionKey)' != ''">$(DotEnvSyncfusionKey)</SyncfusionKey>
@@ -116,11 +172,30 @@ internal static class SyncfusionLicense
             <SyncfusionKey Condition="'$(SyncfusionKey)' == ''">empty</SyncfusionKey>
             <LicenseGenOutput>$(IntermediateOutputPath)SyncfusionLicense.g.cs</LicenseGenOutput>
         </PropertyGroup>
-        <MakeDir Directories="$(IntermediateOutputPath)"/>
-        <GenerateXorLicense LicenseKey="$(SyncfusionKey)" OutputFile="$(LicenseGenOutput)"/>
+        <MakeDir Directories="$(IntermediateOutputPath)" />
+        <GenerateXorLicense LicenseKey="$(SyncfusionKey)" OutputFile="$(LicenseGenOutput)" />
         <ItemGroup>
-            <Compile Include="$(LicenseGenOutput)"/>
+            <Compile Include="$(LicenseGenOutput)" />
         </ItemGroup>
-        <Message Importance="high" Text="SyncfusionLicense.g.cs (XOR-encoded) generated."/>
+        <Message Importance="high" Text="SyncfusionLicense.g.cs (XOR-encoded) generated." />
+    </Target>
+
+    <Target Name="ObfuscateAssembly" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
+        <PropertyGroup>
+            <_ObfuscarExe>$(PkgObfuscar)\tools\Obfuscar.Console.exe</_ObfuscarExe>
+            <_ObfuscarIn>$(MSBuildProjectDirectory)\bin\$(Configuration)\$(TargetFramework)\</_ObfuscarIn>
+            <_ObfuscarOut>$(MSBuildProjectDirectory)\bin\$(Configuration)\$(TargetFramework)\obfuscated\</_ObfuscarOut>
+            <_ObfuscarConfig>$(IntermediateOutputPath)obfuscar.xml</_ObfuscarConfig>
+        </PropertyGroup>
+        <WriteObfuscarConfig
+            InPath="$(_ObfuscarIn)"
+            OutPath="$(_ObfuscarOut)"
+            AssemblyFileName="$(AssemblyName).dll"
+            OutputFile="$(_ObfuscarConfig)" />
+        <MakeDir Directories="$(_ObfuscarOut)" />
+        <Exec Command="&quot;$(_ObfuscarExe)&quot; &quot;$(_ObfuscarConfig)&quot;" />
+        <Copy SourceFiles="$(_ObfuscarOut)$(AssemblyName).dll"
+              DestinationFiles="$(_ObfuscarIn)$(AssemblyName).dll" />
+        <Message Importance="high" Text="Obfuscation complete: $(AssemblyName).dll replaced." />
     </Target>
 </Project>
