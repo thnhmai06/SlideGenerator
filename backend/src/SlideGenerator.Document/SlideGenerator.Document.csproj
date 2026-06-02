@@ -14,31 +14,31 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <GeneratePathProperty>true</GeneratePathProperty>
         </PackageReference>
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.8" />
-        <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.8" />
-        <PackageReference Include="Syncfusion.XlsIO.NET" Version="*" />
-        <PackageReference Include="Syncfusion.Presentation.NET" Version="*" />
-        <PackageReference Include="Stubble.Core" Version="1.10.8" />
-        <PackageReference Remove="StyleCop.Analyzers" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.8"/>
+        <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.8"/>
+        <PackageReference Include="Syncfusion.XlsIO.NET" Version="*"/>
+        <PackageReference Include="Syncfusion.Presentation.NET" Version="*"/>
+        <PackageReference Include="Stubble.Core" Version="1.10.8"/>
+        <PackageReference Remove="StyleCop.Analyzers"/>
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\SlideGenerator.Coordinator\SlideGenerator.Coordinator.csproj" />
-        <ProjectReference Include="..\SlideGenerator.Image\SlideGenerator.Image.csproj" />
+        <ProjectReference Include="..\SlideGenerator.Coordinator\SlideGenerator.Coordinator.csproj"/>
+        <ProjectReference Include="..\SlideGenerator.Image\SlideGenerator.Image.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-        <InternalsVisibleTo Include="SlideGenerator.Document.Tests" />
+        <InternalsVisibleTo Include="SlideGenerator.Document.Tests"/>
     </ItemGroup>
 
     <UsingTask TaskName="ReadDotEnvKey" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
         <ParameterGroup>
-            <EnvFile ParameterType="System.String" Required="true" />
-            <Key ParameterType="System.String" Required="true" />
-            <Value ParameterType="System.String" Output="true" />
+            <EnvFile ParameterType="System.String" Required="true"/>
+            <Key ParameterType="System.String" Required="true"/>
+            <Value ParameterType="System.String" Output="true"/>
         </ParameterGroup>
         <Task>
-            <Using Namespace="System.IO" />
+            <Using Namespace="System.IO"/>
             <Code Type="Fragment" Language="cs"><![CDATA[
                 Value = string.Empty;
                 if (!File.Exists(EnvFile)) return true;
@@ -66,14 +66,14 @@
 
     <UsingTask TaskName="GenerateXorLicense" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
         <ParameterGroup>
-            <LicenseKey ParameterType="System.String" Required="true" />
-            <OutputFile ParameterType="System.String" Required="true" />
+            <LicenseKey ParameterType="System.String" Required="true"/>
+            <OutputFile ParameterType="System.String" Required="true"/>
         </ParameterGroup>
         <Task>
-            <Using Namespace="System.IO" />
-            <Using Namespace="System.Text" />
-            <Using Namespace="System.Linq" />
-            <Using Namespace="System.Security.Cryptography" />
+            <Using Namespace="System.IO"/>
+            <Using Namespace="System.Text"/>
+            <Using Namespace="System.Linq"/>
+            <Using Namespace="System.Security.Cryptography"/>
             <Code Type="Fragment" Language="cs"><![CDATA[
                 byte[] seedBytes =
                 [
@@ -133,14 +133,14 @@ internal static class SyncfusionLicense
 
     <UsingTask TaskName="WriteObfuscarConfig" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
         <ParameterGroup>
-            <InPath ParameterType="System.String" Required="true" />
-            <OutPath ParameterType="System.String" Required="true" />
-            <AssemblyFileName ParameterType="System.String" Required="true" />
-            <OutputFile ParameterType="System.String" Required="true" />
+            <InPath ParameterType="System.String" Required="true"/>
+            <OutPath ParameterType="System.String" Required="true"/>
+            <AssemblyFileName ParameterType="System.String" Required="true"/>
+            <OutputFile ParameterType="System.String" Required="true"/>
         </ParameterGroup>
         <Task>
-            <Using Namespace="System.IO" />
-            <Using Namespace="System.Text" />
+            <Using Namespace="System.IO"/>
+            <Using Namespace="System.Text"/>
             <Code Type="Fragment" Language="cs"><![CDATA[
                 string assemblyPath = Path.Combine(InPath, AssemblyFileName);
                 string xml = string.Format(
@@ -164,7 +164,7 @@ internal static class SyncfusionLicense
     <Target Name="GenerateLicenseKey" BeforeTargets="BeforeBuild;CoreCompile">
         <!-- Try loading from .env file first (overrides system env var) -->
         <ReadDotEnvKey EnvFile="$(MSBuildProjectDirectory)\..\..\.env" Key="SYNCFUSION_LICENSE_KEY">
-            <Output TaskParameter="Value" PropertyName="DotEnvSyncfusionKey" />
+            <Output TaskParameter="Value" PropertyName="DotEnvSyncfusionKey"/>
         </ReadDotEnvKey>
         <PropertyGroup>
             <SyncfusionKey Condition="'$(DotEnvSyncfusionKey)' != ''">$(DotEnvSyncfusionKey)</SyncfusionKey>
@@ -172,12 +172,12 @@ internal static class SyncfusionLicense
             <SyncfusionKey Condition="'$(SyncfusionKey)' == ''">empty</SyncfusionKey>
             <LicenseGenOutput>$(IntermediateOutputPath)SyncfusionLicense.g.cs</LicenseGenOutput>
         </PropertyGroup>
-        <MakeDir Directories="$(IntermediateOutputPath)" />
-        <GenerateXorLicense LicenseKey="$(SyncfusionKey)" OutputFile="$(LicenseGenOutput)" />
+        <MakeDir Directories="$(IntermediateOutputPath)"/>
+        <GenerateXorLicense LicenseKey="$(SyncfusionKey)" OutputFile="$(LicenseGenOutput)"/>
         <ItemGroup>
-            <Compile Include="$(LicenseGenOutput)" />
+            <Compile Include="$(LicenseGenOutput)"/>
         </ItemGroup>
-        <Message Importance="high" Text="SyncfusionLicense.g.cs (XOR-encoded) generated." />
+        <Message Importance="high" Text="SyncfusionLicense.g.cs (XOR-encoded) generated."/>
     </Target>
 
     <Target Name="ObfuscateAssembly" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
@@ -188,14 +188,14 @@ internal static class SyncfusionLicense
             <_ObfuscarConfig>$(IntermediateOutputPath)obfuscar.xml</_ObfuscarConfig>
         </PropertyGroup>
         <WriteObfuscarConfig
-            InPath="$(_ObfuscarIn)"
-            OutPath="$(_ObfuscarOut)"
-            AssemblyFileName="$(AssemblyName).dll"
-            OutputFile="$(_ObfuscarConfig)" />
-        <MakeDir Directories="$(_ObfuscarOut)" />
-        <Exec Command="&quot;$(_ObfuscarExe)&quot; &quot;$(_ObfuscarConfig)&quot;" />
+                InPath="$(_ObfuscarIn)"
+                OutPath="$(_ObfuscarOut)"
+                AssemblyFileName="$(AssemblyName).dll"
+                OutputFile="$(_ObfuscarConfig)"/>
+        <MakeDir Directories="$(_ObfuscarOut)"/>
+        <Exec Command="&quot;$(_ObfuscarExe)&quot; &quot;$(_ObfuscarConfig)&quot;"/>
         <Copy SourceFiles="$(_ObfuscarOut)$(AssemblyName).dll"
-              DestinationFiles="$(_ObfuscarIn)$(AssemblyName).dll" />
-        <Message Importance="high" Text="Obfuscation complete: $(AssemblyName).dll replaced." />
+              DestinationFiles="$(_ObfuscarIn)$(AssemblyName).dll"/>
+        <Message Importance="high" Text="Obfuscation complete: $(AssemblyName).dll replaced."/>
     </Target>
 </Project>

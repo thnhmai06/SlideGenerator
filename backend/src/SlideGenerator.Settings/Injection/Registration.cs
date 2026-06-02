@@ -39,6 +39,7 @@ public static class Registration
             sp.GetRequiredService<ISerializer>(),
             sp.GetService<ILogger<SettingManager>>()));
         services.AddSingleton<ISettingProvider>(sp => sp.GetRequiredService<ISettingManager>());
+        services.AddTransient<ISettingCalibrator, SettingCalibrator>();
         return services;
     }
 }

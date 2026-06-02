@@ -24,6 +24,9 @@ public sealed partial record Setting
 
         /// <summary>Gets the settings for retry logic and timeouts.</summary>
         public RetrySetting Retry { get; init; } = new();
+
+        /// <summary>Gets the maximum number of bytes allowed per downloaded file. 0 means unlimited.</summary>
+        public uint MaxDownloadBytes { get; init; } = 50 * 1024 * 1024; // 50MB
     }
 
     /// <summary>

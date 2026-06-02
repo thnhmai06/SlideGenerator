@@ -24,7 +24,7 @@ public interface ISettingManager : ISettingProvider
 {
     /// <summary>
     ///     Indicates that the most recent <see cref="Load" /> could not decrypt one or more
-    ///     encrypted fields (e.g. proxy password) — typically because the settings file was
+    ///     encrypted fields (e.g., proxy password) — typically because the settings file was
     ///     created under a different machine/user identity. The affected fields have been
     ///     cleared on the in-memory <see cref="ISettingProvider.Current" /> and the client
     ///     should prompt the user to re-enter them.
