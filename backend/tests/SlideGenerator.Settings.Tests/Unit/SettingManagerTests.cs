@@ -16,7 +16,6 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
-using SlideGenerator.Cryptography.Application.Abstractions;
 using SlideGenerator.Settings.Application.Abstractions;
 using SlideGenerator.Settings.Domain.Entities;
 using SlideGenerator.Settings.Domain.Rules;
@@ -26,13 +25,12 @@ using Xunit;
 namespace SlideGenerator.Settings.Tests.Unit;
 
 /// <summary>
-///     Unit tests for <see cref="SettingManager" />, verifying load/save lifecycle, encryption integration,
+///     Unit tests for <see cref="SettingManager" />, verifying load/save lifecycle,
 ///     defaults reset, and state propagation. Each test runs in isolation using a unique temporary file path.
 /// </summary>
 public sealed class SettingManagerTests : IDisposable
 {
     private static readonly Setting DefaultSetting = new();
-    private readonly IEncrypter _encrypter = Substitute.For<IEncrypter>();
     private readonly ILogger<SettingManager> _logger = NullLogger<SettingManager>.Instance;
     private readonly SettingManager _manager;
     private readonly ISerializer _serializer = Substitute.For<ISerializer>();
@@ -44,7 +42,7 @@ public sealed class SettingManagerTests : IDisposable
         _serializer.FileExtension.Returns(testExt);
         _testFilePath = NameAndPaths.SettingsFile.GetFilePath(testExt);
         Directory.CreateDirectory(Path.GetDirectoryName(_testFilePath)!);
-        _manager = new SettingManager(_encrypter, _serializer, _logger);
+        _manager = new SettingManager(_serializer, _logger);
     }
 
     public void Dispose()
@@ -136,87 +134,30 @@ public sealed class SettingManagerTests : IDisposable
         _manager.Current.Performance.MaxParallelDownloadImage.Should().Be(99u);
     }
 
-    /// <summary>
-    ///     Verifies that <see cref="SettingManager.Load" /> calls <see cref="IEncrypter.Decrypt" /> on the
-    ///     proxy password when a non-empty password is present in the deserialized settings, and that the
-    ///     decrypted plain-text value is stored in <see cref="SettingManager.Current" />.
-    /// </summary>
-    [Fact]
-    public async Task Load_ProxyPasswordPresent_CallsDecryptAndStoresPlainText()
-    {
-        var encryptedSetting = new Setting
-        {
-            Network = new Setting.NetworkSetting
-            {
-                Proxy = new Setting.Proxy { Password = "cipher-text" }
-            }
-        };
-        await File.WriteAllTextAsync(_testFilePath, "serialized-content", TestContext.Current.CancellationToken);
-        _serializer.Deserialize<Setting>("serialized-content").Returns(encryptedSetting);
-        _encrypter.Decrypt("cipher-text").Returns("plain-text");
-
-        await _manager.Load();
-
-        _encrypter.Received(1).Decrypt("cipher-text");
-        _manager.Current.Network.Proxy.Password.Should().Be("plain-text");
-    }
-
-    /// <summary>
-    ///     Verifies that <see cref="SettingManager.Load" /> does NOT call <see cref="IEncrypter.Decrypt" />
-    ///     when the proxy password field is empty in the deserialized settings.
-    /// </summary>
-    [Fact]
-    public async Task Load_ProxyPasswordEmpty_DoesNotCallDecrypt()
-    {
-        var noPasswordSetting = DefaultSetting;
-        await File.WriteAllTextAsync(_testFilePath, "serialized-content", TestContext.Current.CancellationToken);
-        _serializer.Deserialize<Setting>("serialized-content").Returns(noPasswordSetting);
-
-        await _manager.Load();
-
-        _encrypter.DidNotReceive().Decrypt(Arg.Any<string>());
-    }
-
     #endregion
 
     #region Save
 
     /// <summary>
-    ///     Verifies that <see cref="SettingManager.Save" /> calls <see cref="IEncrypter.Encrypt" /> on the
-    ///     plain-text proxy password before passing the setting object to the serializer.
+    ///     Verifies that <see cref="SettingManager.Save" /> passes <see cref="SettingManager.Current" /> directly
+    ///     to the serializer without any transformation.
     /// </summary>
     [Fact]
-    public async Task Save_ProxyPasswordPresent_CallsEncryptBeforeSerializing()
+    public async Task Save_CurrentSetting_SerializesDirectly()
     {
-        var settingWithPassword = new Setting
+        var setting = new Setting
         {
             Network = new Setting.NetworkSetting
             {
                 Proxy = new Setting.Proxy { Password = "plain-text" }
             }
         };
-        _encrypter.Encrypt("plain-text").Returns("cipher-text");
         _serializer.Serialize(Arg.Any<Setting>()).Returns("serialized-content");
 
-        await _manager.Update(settingWithPassword);
+        await _manager.Update(setting);
 
-        _encrypter.Received(1).Encrypt("plain-text");
         _serializer.Received(1).Serialize(Arg.Is<Setting>(s =>
-            s.Network.Proxy.Password == "cipher-text"));
-    }
-
-    /// <summary>
-    ///     Verifies that <see cref="SettingManager.Save" /> does NOT call <see cref="IEncrypter.Encrypt" />
-    ///     when the proxy password is empty, preventing unnecessary encryption overhead.
-    /// </summary>
-    [Fact]
-    public async Task Save_NoProxyPassword_DoesNotCallEncrypt()
-    {
-        _serializer.Serialize(Arg.Any<Setting>()).Returns("serialized-content");
-
-        await _manager.Update(DefaultSetting);
-
-        _encrypter.DidNotReceive().Encrypt(Arg.Any<string>());
+            s.Network.Proxy.Password == "plain-text"));
     }
 
     #endregion

@@ -15,7 +15,6 @@
 using System.Drawing;
 using Microsoft.Extensions.Logging;
 using SlideGenerator.Coordinator.Application.Abstractions;
-using SlideGenerator.Cryptography.Application.Abstractions;
 using SlideGenerator.Document.Application.Abstractions;
 using SlideGenerator.Document.Domain.Abstractions.Sheet;
 using SlideGenerator.Document.Domain.Models.Slide;
@@ -35,8 +34,7 @@ namespace SlideGenerator.Generator.Application.Steps;
 public sealed class ExtractData(
     IGateLocker<GateType> gateLocker,
     IWorkbookProvider workbookProvider,
-    ITemplateEngine templateEngine,
-    IHashPathRegistry hashPathRegistry)
+    ITemplateEngine templateEngine)
     : StepBodyAsync
 {
     public SheetContext Worksheet { get; init; } = null!;
@@ -230,7 +228,7 @@ public sealed class ExtractData(
             var rawUrl = rowData[colIndex];
             var sourceUrl = string.IsNullOrWhiteSpace(rawUrl) ? null : rawUrl.Trim();
             var downloadDir = NameAndPaths.AssetsFolder.GetDownloadDir(data.Request.DownloadAssetsPath,
-                Worksheet.Identifier.BookPath, sheet.Name, column.ColumnName, hashPathRegistry);
+                Worksheet.Identifier.BookPath, sheet.Name, column.ColumnName);
             var downloadPath = Path.Combine(downloadDir, rowIndex.ToString());
 
             foreach (var shapeId in imgInst.Shapes)
@@ -240,7 +238,7 @@ public sealed class ExtractData(
                 if (!shapeData.TryGetValue(shapeId, out var sData)) continue;
 
                 var editDir = NameAndPaths.AssetsFolder.GetEditDir(data.Request.EditAssetsPath,
-                    Worksheet.Identifier.BookPath, sheet.Name, column.ColumnName, hashPathRegistry);
+                    Worksheet.Identifier.BookPath, sheet.Name, column.ColumnName);
                 var editPath = Path.Combine(editDir, $"{rowIndex}_{sData.ShapeName}");
 
                 var imageTask = new ImageContext(

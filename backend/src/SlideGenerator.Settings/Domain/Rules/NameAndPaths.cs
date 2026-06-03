@@ -13,7 +13,6 @@
  */
 
 using Microsoft.Data.Sqlite;
-using SlideGenerator.Cryptography.Application.Abstractions;
 using SlideGenerator.Utilities;
 
 namespace SlideGenerator.Settings.Domain.Rules;
@@ -25,6 +24,8 @@ public static class NameAndPaths
 {
     /// <summary>The official application name.</summary>
     public const string AppName = "SlideGenerator";
+
+    private const int PathHashLength = 7;
 
     /// <summary>
     ///     Gets whether the application is running in portable mode (<c>--portable</c> flag).
@@ -55,14 +56,14 @@ public static class NameAndPaths
     public static void InitializeDirectories()
     {
         Directory.CreateDirectory(UserPath);
-        
+
         // Logs
         Directory.CreateDirectory(LogsFolder.SystemPath);
         Directory.CreateDirectory(LogsFolder.WorkflowPath);
-        
+
         // Assets
         Directory.CreateDirectory(AssetsFolder.DefaultFolder);
-            
+
         // Data
         Directory.CreateDirectory(DataFolder.FolderPath);
     }
@@ -103,24 +104,28 @@ public static class NameAndPaths
     {
         public static string DefaultFolder => Path.Combine(UserPath, "Assets");
 
-        public static string GetDownloadDir(string? assetsPath, string bookPath, string sheetName, string colName,
-            IHashPathRegistry registry)
+        /// <summary>
+        ///     Returns the download directory for a specific book/sheet/column combination.
+        /// </summary>
+        public static string GetDownloadDir(string? assetsPath, string bookPath, string sheetName, string colName)
         {
             assetsPath ??= DefaultFolder;
             var bookName = Path.GetFileNameWithoutExtension(bookPath);
-            var hash = registry.GetShortHash(bookPath);
+            var hash = bookPath.HashText(PathHashLength);
             var bookFolder = $"{Naming.SanitizeFileName(bookName)}_{hash}";
             sheetName = Naming.SanitizeFileName(sheetName);
             colName = Naming.SanitizeFileName(colName);
             return Path.GetFullPath(Path.Combine(assetsPath, bookFolder, sheetName, colName, "Download"));
         }
 
-        public static string GetEditDir(string? assetsPath, string bookPath, string sheetName, string colName,
-            IHashPathRegistry registry)
+        /// <summary>
+        ///     Returns the edit directory for a specific book/sheet/column combination.
+        /// </summary>
+        public static string GetEditDir(string? assetsPath, string bookPath, string sheetName, string colName)
         {
             assetsPath ??= DefaultFolder;
             var bookName = Path.GetFileNameWithoutExtension(bookPath);
-            var hash = registry.GetShortHash(bookPath);
+            var hash = bookPath.HashText(PathHashLength);
             var bookFolder = $"{Naming.SanitizeFileName(bookName)}_{hash}";
             sheetName = Naming.SanitizeFileName(sheetName);
             colName = Naming.SanitizeFileName(colName);
@@ -131,7 +136,7 @@ public static class NameAndPaths
     public static class DataFolder
     {
         public static string FolderPath => Path.Combine(UserPath, "Data");
-        
+
         /// <summary>
         ///     Contains naming rules for the WorkflowCore SQLite persistence database.
         /// </summary>
@@ -168,9 +173,9 @@ public static class NameAndPaths
             /// </summary>
             public static string ConnectionString =>
                 new SqliteConnectionStringBuilder { DataSource = FilePath }.ConnectionString;
-        }   
+        }
     }
-    
+
     /// <summary>
     ///     Contains naming rules for general application settings.
     /// </summary>

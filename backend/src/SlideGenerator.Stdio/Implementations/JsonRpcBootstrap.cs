@@ -143,8 +143,32 @@ internal static class JsonRpcBootstrap
             settingsHandler, new JsonRpcMethodAttribute("settings.get"));
         jsonRpc.AddLocalRpcMethod(GetMethod<SettingsHandler>(nameof(SettingsHandler.UpdateAsync)),
             settingsHandler, Attr("settings.update"));
-        jsonRpc.AddLocalRpcMethod(GetMethod<SettingsHandler>(nameof(SettingsHandler.ResetToDefaultsAsync)),
-            settingsHandler, new JsonRpcMethodAttribute("settings.resetToDefaults"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<SettingsHandler>(nameof(SettingsHandler.ResetAsync)),
+            settingsHandler, new JsonRpcMethodAttribute("settings.reset"));
+
+        #endregion
+
+        #region settings.performance
+
+        jsonRpc.AddLocalRpcMethod(GetMethod<SettingsHandler>(nameof(SettingsHandler.GetPerformanceAsync)),
+            settingsHandler, new JsonRpcMethodAttribute("settings.performance.get"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<SettingsHandler>(nameof(SettingsHandler.UpdatePerformanceAsync)),
+            settingsHandler, Attr("settings.performance.update"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<SettingsHandler>(nameof(SettingsHandler.ResetPerformanceAsync)),
+            settingsHandler, new JsonRpcMethodAttribute("settings.performance.reset"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<SettingsHandler>(nameof(SettingsHandler.CalibratePerformanceAsync)),
+            settingsHandler, new JsonRpcMethodAttribute("settings.performance.calibrate"));
+
+        #endregion
+
+        #region settings.network
+
+        jsonRpc.AddLocalRpcMethod(GetMethod<SettingsHandler>(nameof(SettingsHandler.GetNetworkAsync)),
+            settingsHandler, new JsonRpcMethodAttribute("settings.network.get"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<SettingsHandler>(nameof(SettingsHandler.UpdateNetworkAsync)),
+            settingsHandler, Attr("settings.network.update"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<SettingsHandler>(nameof(SettingsHandler.ResetNetworkAsync)),
+            settingsHandler, new JsonRpcMethodAttribute("settings.network.reset"));
 
         #endregion
 

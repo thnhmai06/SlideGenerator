@@ -3,7 +3,6 @@
         <Project Path="src/SlideGenerator.Utilities/SlideGenerator.Utilities.csproj" />
         <Project Path="src/SlideGenerator.Coordinator/SlideGenerator.Coordinator.csproj" />
         <Project Path="src/SlideGenerator.Cloud/SlideGenerator.Cloud.csproj" />
-        <Project Path="src/SlideGenerator.Cryptography/SlideGenerator.Cryptography.csproj" />
         <Project Path="src/SlideGenerator.Logging/SlideGenerator.Logging.csproj" />
         <Project Path="src/SlideGenerator.Document/SlideGenerator.Document.csproj" />
         <Project Path="src/SlideGenerator.Image/SlideGenerator.Image.csproj" />
@@ -25,7 +24,6 @@
         <Project Path="tests/SlideGenerator.Utilities.Tests/SlideGenerator.Utilities.Tests.csproj" />
         <Project Path="tests/SlideGenerator.Coordinator.Tests/SlideGenerator.Coordinator.Tests.csproj" />
         <Project Path="tests/SlideGenerator.Cloud.Tests/SlideGenerator.Cloud.Tests.csproj" />
-        <Project Path="tests/SlideGenerator.Cryptography.Tests/SlideGenerator.Cryptography.Tests.csproj" />
         <Project Path="tests/SlideGenerator.Logging.Tests/SlideGenerator.Logging.Tests.csproj" />
         <Project Path="tests/SlideGenerator.Document.Tests/SlideGenerator.Document.Tests.csproj" />
         <Project Path="tests/SlideGenerator.Image.Tests/SlideGenerator.Image.Tests.csproj" />

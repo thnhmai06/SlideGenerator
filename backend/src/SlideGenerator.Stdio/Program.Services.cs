@@ -20,7 +20,6 @@ using Serilog.Events;
 using Serilog.Exceptions;
 using SlideGenerator.Cloud.Injection;
 using SlideGenerator.Coordinator.Injection;
-using SlideGenerator.Cryptography.Injection;
 using SlideGenerator.Document.Injection;
 using SlideGenerator.Generator.Injection;
 using SlideGenerator.Image.Injection;
@@ -66,7 +65,6 @@ internal static partial class Program
                 .Enrich.WithExceptionDetails();
         });
         services.AddLoggingServices();
-        services.AddCryptographyServices();
         services.AddSettingsServices();
         services.AddCoordinatorServices();
         services.AddCloudServices();

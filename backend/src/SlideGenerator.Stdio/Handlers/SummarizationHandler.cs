@@ -36,10 +36,8 @@ public sealed class SummarizationHandler(
     /// </summary>
     /// <param name="identifier">The workbook identifier containing path and optional password.</param>
     /// <param name="getPreview">Whether to include data row previews in the result.</param>
-    /// <param name="ct">A cancellation token.</param>
     /// <returns>A <see cref="WorkbookSummary" /> describing the workbook structure.</returns>
-    public Task<WorkbookSummary> SummarizeWorkbookAsync(BookIdentifier identifier, bool getPreview,
-        CancellationToken ct)
+    public Task<WorkbookSummary> SummarizeWorkbookAsync(BookIdentifier identifier, bool getPreview)
     {
         return summarizationService.SummarizeWorkbookAsync(identifier, getPreview);
     }
@@ -50,10 +48,8 @@ public sealed class SummarizationHandler(
     /// </summary>
     /// <param name="identifier">The presentation identifier containing path and optional password.</param>
     /// <param name="getPreview">Whether to include slide thumbnail previews in the result.</param>
-    /// <param name="ct">A cancellation token.</param>
     /// <returns>A <see cref="PresentationSummary" /> describing the presentation structure.</returns>
-    public Task<PresentationSummary> SummarizePresentationAsync(PresentationIdentifier identifier, bool getPreview,
-        CancellationToken ct)
+    public Task<PresentationSummary> SummarizePresentationAsync(PresentationIdentifier identifier, bool getPreview)
     {
         return summarizationService.SummarizePresentationAsync(identifier, getPreview);
     }
@@ -62,10 +58,9 @@ public sealed class SummarizationHandler(
     ///     Parses a ReactFlow recipe JSON string into a <see cref="RecipeSummary" />.
     /// </summary>
     /// <param name="recipe">The ReactFlow graph JSON string representing the recipe.</param>
-    /// <param name="ct">A cancellation token.</param>
     /// <returns>The summarized recipe configuration.</returns>
     /// <remarks>Not yet implemented — blocked on ReactFlow JSON schema definition.</remarks>
-    public Task<RecipeSummary> SummarizeRecipeAsync(string recipe, CancellationToken ct)
+    public Task<RecipeSummary> SummarizeRecipeAsync(string recipe)
     {
         return Task.FromResult(summarizationService.SummarizeRecipe(recipe));
     }

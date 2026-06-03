@@ -45,7 +45,7 @@ internal static class SettingTuner
     /// <param name="probe">Raw measurements from <see cref="Infrastructure.Services.SettingProbe.ProbePerformanceAsync" />.</param>
     /// <param name="current">
     ///     The active setting used as a fallback for any gate whose probe inputs are
-    ///     <see langword="null" /> (e.g. when the network or disk probe failed).
+    ///     <see langword="null" /> (e.g., when the network or disk probe failed).
     /// </param>
     /// <remarks>
     ///     <para>
@@ -143,7 +143,7 @@ internal static class SettingTuner
         var cpu = Math.Max(1, probe.CpuCount);
         var ramFactor = Math.Clamp(probe.RamGiB / 16.0, 0.6, 1.5);
 
-        var diskFactor = probe.DiskMBps is double disk
+        var diskFactor = probe.DiskMBps is { } disk
             ? Math.Clamp(Math.Log2(1.0 + disk / 250.0), 0.5, 2.5)
             : (double?)null;
 
@@ -152,12 +152,11 @@ internal static class SettingTuner
         // r: per-connection cap (measured or assumed Drive throttle — not current, Drive cap is reliable)
         var r = probe.SingleStreamMbps ?? RAssumedMbps;
 
-        uint downloadImage;
-        if (probe.NetworkMbps is double b && probe.LatencyMs is double latencyMs)
+        var downloadImage =
             // N = base + B/r + B×L/S
-            downloadImage = Clamp(2.0 + b / r + b * (latencyMs / 1000.0) / SMbit, 2, 32);
-        else
-            downloadImage = current.MaxParallelDownloadImage;
+            probe is { NetworkMbps: { } b, LatencyMs: { } latencyMs } 
+            ? Clamp(2.0 + b / r + b * (latencyMs / 1000.0) / SMbit, 2, 32) 
+            : current.MaxParallelDownloadImage;
 
         #endregion
 
@@ -171,9 +170,9 @@ internal static class SettingTuner
 
         uint readWorkbook;
         uint readPresentation;
-        if (diskFactor is double d)
+        if (diskFactor is { } d)
         {
-            // ZIP/XML/object-allocation-heavy; disk helps but RAM and GC pressure dominates past a point.
+            // ZIP/XML/object-allocation-heavy; disk helps, but RAM and GC pressure dominates past a point.
             readWorkbook = Clamp((1.2 + d * 0.45) * Math.Sqrt(cpu) * ramFactor, 1, 6);
             // Heavier than workbook due to images/media/layout graph.
             readPresentation = Clamp((1.0 + d * 0.35) * Math.Sqrt(cpu) * ramFactor, 1, 5);

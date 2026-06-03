@@ -38,7 +38,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\SlideGenerator.Cryptography\SlideGenerator.Cryptography.csproj"/>
         <ProjectReference Include="..\SlideGenerator.Generator\SlideGenerator.Generator.csproj"/>
         <ProjectReference Include="..\SlideGenerator.Summarization\SlideGenerator.Summarization.csproj"/>
         <ProjectReference Include="..\SlideGenerator.Recipe\SlideGenerator.Recipe.csproj"/>

@@ -246,9 +246,16 @@ jsonRpc.AddLocalRpcMethod(method, handler, new JsonRpcMethodAttribute("settings.
 | `summarization.presentation`    | `SummarizationHandler.SummarizePresentationAsync` |
 | `summarization.recipe`          | `SummarizationHandler.SummarizeRecipeAsync`       |
 | `summarization.recipeById`      | `SummarizationHandler.SummarizeRecipeByIdAsync`   |
-| `settings.get`                  | `SettingsHandler.GetAsync`                        |
-| `settings.update`               | `SettingsHandler.UpdateAsync`                     |
-| `settings.resetToDefaults`      | `SettingsHandler.ResetToDefaultsAsync`            |
+| `settings.get`                       | `SettingsHandler.GetAsync`                        |
+| `settings.update`                    | `SettingsHandler.UpdateAsync`                     |
+| `settings.reset`                     | `SettingsHandler.ResetAsync`                      |
+| `settings.performance.get`           | `SettingsHandler.GetPerformanceAsync`             |
+| `settings.performance.update`        | `SettingsHandler.UpdatePerformanceAsync`          |
+| `settings.performance.reset`         | `SettingsHandler.ResetPerformanceAsync`           |
+| `settings.performance.calibrate`     | `SettingsHandler.CalibratePerformanceAsync`       |
+| `settings.network.get`               | `SettingsHandler.GetNetworkAsync`                 |
+| `settings.network.update`            | `SettingsHandler.UpdateNetworkAsync`              |
+| `settings.network.reset`             | `SettingsHandler.ResetNetworkAsync`               |
 
 Notifications emitted by the sidecar: `workflow/progress`.
 

@@ -12,9 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using System.Security.Cryptography;
 using Microsoft.Extensions.Logging;
-using SlideGenerator.Cryptography.Application.Abstractions;
 using SlideGenerator.Settings.Application.Abstractions;
 using SlideGenerator.Settings.Domain.Entities;
 using SlideGenerator.Settings.Domain.Rules;
@@ -27,7 +25,6 @@ namespace SlideGenerator.Settings.Infrastructure.Services;
 /// <param name="serializer">The serializer used to persist settings to disk.</param>
 /// <param name="logger">The logger instance.</param>
 internal sealed class SettingManager(
-    IEncrypter encrypter,
     ISerializer serializer,
     ILogger<SettingManager>? logger = null)
     : ISettingManager
@@ -39,9 +36,6 @@ internal sealed class SettingManager(
 
     /// <inheritdoc />
     public Setting Current { get; private set; } = new();
-
-    /// <inheritdoc />
-    public bool RequiresCredentialReentry { get; private set; }
 
     /// <summary>
     ///     Asynchronously loads settings from the disk.
@@ -55,46 +49,11 @@ internal sealed class SettingManager(
             return false;
         }
 
-        RequiresCredentialReentry = false;
-
         try
         {
             logger?.LogDebug("Loading settings from {Path}", L(FilePath));
             var source = await File.ReadAllTextAsync(FilePath).ConfigureAwait(false);
-            var loaded = serializer.Deserialize<Setting>(source);
-
-            // Decrypt sensitive data. A decryption failure (typically because the file was
-            // written on a different machine/user identity, or was tampered with) is not a
-            // load-level error — surface it as a credential-reentry signal, clear the field,
-            // and continue with the rest of the settings intact.
-            if (!string.IsNullOrEmpty(loaded.Network.Proxy.Password))
-                try
-                {
-                    var decrypted = encrypter.Decrypt(loaded.Network.Proxy.Password);
-                    loaded = loaded with
-                    {
-                        Network = loaded.Network with
-                        {
-                            Proxy = loaded.Network.Proxy with { Password = decrypted }
-                        }
-                    };
-                }
-                catch (Exception ex) when (ex is CryptographicException or FormatException)
-                {
-                    logger?.LogWarning(ex,
-                        "Failed to decrypt proxy password; the settings file likely originated " +
-                        "on a different machine or user. Clearing the field and asking the client to re-enter it.");
-                    loaded = loaded with
-                    {
-                        Network = loaded.Network with
-                        {
-                            Proxy = loaded.Network.Proxy with { Password = string.Empty }
-                        }
-                    };
-                    RequiresCredentialReentry = true;
-                }
-
-            Current = loaded;
+            Current = serializer.Deserialize<Setting>(source);
             logger?.LogInformation("Successfully loaded settings from {Path}", L(FilePath));
         }
         catch (Exception e)
@@ -119,22 +78,7 @@ internal sealed class SettingManager(
             var folderName = Path.GetDirectoryName(FilePath);
             if (!string.IsNullOrEmpty(folderName)) Directory.CreateDirectory(folderName);
 
-            // Encrypt sensitive data before serialization. Empty stays empty (no point
-            // calling AesGcm on zero-length input to serialize then strip on load).
-            var toSave = Current;
-            if (!string.IsNullOrEmpty(toSave.Network.Proxy.Password))
-                toSave = toSave with
-                {
-                    Network = toSave.Network with
-                    {
-                        Proxy = toSave.Network.Proxy with
-                        {
-                            Password = encrypter.Encrypt(toSave.Network.Proxy.Password)
-                        }
-                    }
-                };
-
-            var content = serializer.Serialize(toSave);
+            var content = serializer.Serialize(Current);
             await File.WriteAllTextAsync(FilePath, content).ConfigureAwait(false);
             logger?.LogInformation("Successfully saved settings to {Path}", L(FilePath));
         }
