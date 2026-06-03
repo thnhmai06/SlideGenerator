@@ -326,6 +326,8 @@ internal sealed class RecipeRepository : IRecipeRepository
     {
         using var conn = _builder.OpenConnection();
         using var cmd = conn.CreateCommand();
+        cmd.CommandText = "PRAGMA journal_mode=WAL;";
+        cmd.ExecuteNonQuery();
         cmd.CommandText = """
                           CREATE TABLE IF NOT EXISTS Recipes (
                               Id               INTEGER PRIMARY KEY AUTOINCREMENT,
