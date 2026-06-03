@@ -37,7 +37,7 @@ internal sealed class SingleInstanceLock(string mutexName, string pidFilePath) :
         _pidStream = null;
         try
         {
-            if (File.Exists(_pidFilePath)) 
+            if (File.Exists(_pidFilePath))
                 File.Delete(_pidFilePath);
         }
         catch (IOException)
@@ -53,6 +53,7 @@ internal sealed class SingleInstanceLock(string mutexName, string pidFilePath) :
         catch (ApplicationException)
         {
         }
+
         _mutex.Dispose();
         _mutex = null;
     }

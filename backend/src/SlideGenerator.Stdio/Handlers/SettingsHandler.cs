@@ -91,7 +91,8 @@ public sealed class SettingsHandler(
     /// <returns>A <see cref="bool" /> indicating success.</returns>
     public async Task<bool> ResetPerformanceAsync()
     {
-        await settingManager.Update(settingProvider.Current with { Performance = new Setting.PerformanceSetting() }).ConfigureAwait(false);
+        await settingManager.Update(settingProvider.Current with { Performance = new Setting.PerformanceSetting() })
+            .ConfigureAwait(false);
         return true;
     }
 
@@ -137,7 +138,8 @@ public sealed class SettingsHandler(
     /// <returns>A <see cref="bool" /> indicating success.</returns>
     public async Task<bool> ResetNetworkAsync()
     {
-        await settingManager.Update(settingProvider.Current with { Network = new Setting.NetworkSetting() }).ConfigureAwait(false);
+        await settingManager.Update(settingProvider.Current with { Network = new Setting.NetworkSetting() })
+            .ConfigureAwait(false);
         return true;
     }
 

@@ -51,7 +51,7 @@ internal static partial class Program
 
         EnsureSingleInstance();
         BootstrapSystemLogger(bootstrapConfiguration);
-        PrintWelcomeMessage();
+        PrintMetadata();
 
         try
         {
@@ -98,7 +98,7 @@ internal static partial class Program
         if (InstanceLock.Value.TryAcquire()) return;
 
         var pid = InstanceLock.Value.ReadPid();
-        Console.Error.WriteLine($"{NameAndPaths.AppName} is already running with PID: {pid}. Exiting.");
+        Console.Error.WriteLine($"{NameAndPaths.Application.Name} is already running with PID: {pid}. Exiting.");
         Environment.Exit(1);
     }
 

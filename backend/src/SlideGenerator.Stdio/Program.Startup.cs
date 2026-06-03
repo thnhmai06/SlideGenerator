@@ -113,15 +113,15 @@ internal static partial class Program
     }
 
     /// <summary>Prints the ASCII art banner and build metadata to the system log.</summary>
-    private static void PrintWelcomeMessage()
+    private static void PrintMetadata()
     {
-        Log.Information("\n{AsciiArt}", Metadata.Name);
+        Log.Information('\n' + NameAndPaths.Application.NameArt);
         Log.Information(Metadata.Line);
         Log.Information(Metadata.Version);
         Log.Information(Metadata.Description);
         Log.Information(Metadata.Line);
         Log.Information(Metadata.License);
-        Log.Information(Metadata.RepositoryUrl);
+        Log.Information(Metadata.Repository);
         Log.Information(Metadata.Line);
     }
 

@@ -39,7 +39,10 @@ public sealed class Sha256Tests : IDisposable
         return path;
     }
 
-    private static string RandomString() => Guid.NewGuid().ToString("N");
+    private static string RandomString()
+    {
+        return Guid.NewGuid().ToString("N");
+    }
 
     #region HashFile
 

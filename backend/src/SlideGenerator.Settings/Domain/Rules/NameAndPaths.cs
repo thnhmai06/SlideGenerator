@@ -22,17 +22,7 @@ namespace SlideGenerator.Settings.Domain.Rules;
 /// </summary>
 public static class NameAndPaths
 {
-    /// <summary>The official application name.</summary>
-    public const string AppName = "SlideGenerator";
-
     private const int PathHashLength = 7;
-
-    /// <summary>
-    ///     Gets whether the application is running in portable mode (<c>--portable</c> flag).
-    ///     When <see langword="true" />, all user data is stored relative to the executable directory.
-    /// </summary>
-    private static bool IsPortable() =>
-        Environment.GetCommandLineArgs().Contains("--portable", StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
     ///     Gets the base path for application-local data (executable directory).
@@ -48,7 +38,16 @@ public static class NameAndPaths
             ? BasePath
             : Path.GetFullPath(Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), // %LOCALAPPDATA%
-                AppName));
+                Application.Name));
+
+    /// <summary>
+    ///     Gets whether the application is running in portable mode (<c>--portable</c> flag).
+    ///     When <see langword="true" />, all user data is stored relative to the executable directory.
+    /// </summary>
+    private static bool IsPortable()
+    {
+        return Environment.GetCommandLineArgs().Contains("--portable", StringComparer.OrdinalIgnoreCase);
+    }
 
     /// <summary>
     ///     Ensures that all required application directories (data, logs, assets) exist on the disk.
@@ -68,12 +67,49 @@ public static class NameAndPaths
         Directory.CreateDirectory(DataFolder.FolderPath);
     }
 
+    /// <summary>
+    ///     Provides metadata and identification constants for the application.
+    /// </summary>
+    public static class Application
+    {
+        /// <summary>The official application name.</summary>
+        public const string Name = "SlideGenerator";
+
+        /// <summary>The ASCII art representation of the application name.</summary>
+        public const string NameArt =
+            """
+              /$$$$$$  /$$ /$$       /$$            /$$$$$$                                                     /$$                        
+             /$$__  $$| $$|__/      | $$           /$$__  $$                                                   | $$                        
+            | $$  \__/| $$ /$$  /$$$$$$$  /$$$$$$ | $$  \__/  /$$$$$$  /$$$$$$$   /$$$$$$   /$$$$$$  /$$$$$$  /$$$$$$    /$$$$$$   /$$$$$$ 
+            |  $$$$$$ | $$| $$ /$$__  $$ /$$__  $$| $$ /$$$$ /$$__  $$| $$__  $$ /$$__  $$ /$$__  $$|____  $$|_  $$_/   /$$__  $$ /$$__  $$
+             \____  $$| $$| $$| $$  | $$| $$$$$$$$| $$|_  $$| $$$$$$$$| $$  \ $$| $$$$$$$$| $$  \__/ /$$$$$$$  | $$    | $$  \ $$| $$  \__/
+             /$$  \ $$| $$| $$| $$  | $$| $$_____/| $$  \ $$| $$_____/| $$  | $$| $$_____/| $$      /$$__  $$  | $$ /$$| $$  | $$| $$      
+            |  $$$$$$/| $$| $$|  $$$$$$$|  $$$$$$$|  $$$$$$/|  $$$$$$$| $$  | $$|  $$$$$$$| $$     |  $$$$$$$  |  $$$$/|  $$$$$$/| $$      
+             \______/ |__/|__/ \_______/ \_______/ \______/  \_______/|__/  |__/ \_______/|__/      \_______/   \___/   \______/ |__/      
+            """;
+
+        /// <summary>The application deployment type.</summary>
+        public const string Type = "Backend sidecar";
+
+        /// <summary>The official application repository URL.</summary>
+        public const string Repository = "https://github.com/thnhmai06/SlideGenerator";
+
+        /// <summary>The official application author.</summary>
+        public const string Author = "Thành Mai (thnhmai06)";
+
+        /// <summary>The license under which the application is distributed.</summary>
+        public const string License = "Apache-2.0";
+    }
+
+    /// <summary>
+    ///     Provides naming conventions for application instance locking mechanisms.
+    /// </summary>
     public static class AppLocker
     {
         /// <summary>
         ///     Gets the name of the system-wide mutex used for single-instance detection.
         /// </summary>
-        public static string MutexName => $"{AppName}-SingleInstance";
+        public static string MutexName => $"{Application.Name}-Instance";
 
         /// <summary>
         ///     Gets the path to the single-instance PID lock file.
@@ -100,8 +136,14 @@ public static class NameAndPaths
     /// <summary>
     ///     Gets the default assets directory path for the application.
     /// </summary>
+    /// <summary>
+    ///     Provides predefined folder paths and utilities for managing application assets.
+    /// </summary>
     public static class AssetsFolder
     {
+        /// <summary>
+        ///     Gets the default directory path where application assets are stored.
+        /// </summary>
         public static string DefaultFolder => Path.Combine(UserPath, "Assets");
 
         /// <summary>
@@ -133,8 +175,14 @@ public static class NameAndPaths
         }
     }
 
+    /// <summary>
+    ///     Provides predefined folder paths and connection settings for application data storage.
+    /// </summary>
     public static class DataFolder
     {
+        /// <summary>
+        ///     Gets the root directory path for application data files.
+        /// </summary>
         public static string FolderPath => Path.Combine(UserPath, "Data");
 
         /// <summary>

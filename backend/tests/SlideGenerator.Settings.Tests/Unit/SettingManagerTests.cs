@@ -97,6 +97,32 @@ public sealed class SettingManagerTests : IDisposable
 
     #endregion
 
+    #region Save
+
+    /// <summary>
+    ///     Verifies that <see cref="SettingManager.Save" /> passes <see cref="SettingManager.Current" /> directly
+    ///     to the serializer without any transformation.
+    /// </summary>
+    [Fact]
+    public async Task Save_CurrentSetting_SerializesDirectly()
+    {
+        var setting = new Setting
+        {
+            Network = new Setting.NetworkSetting
+            {
+                Proxy = new Setting.Proxy { Password = "plain-text" }
+            }
+        };
+        _serializer.Serialize(Arg.Any<Setting>()).Returns("serialized-content");
+
+        await _manager.Update(setting);
+
+        _serializer.Received(1).Serialize(Arg.Is<Setting>(s =>
+            s.Network.Proxy.Password == "plain-text"));
+    }
+
+    #endregion
+
     #region Load
 
     /// <summary>
@@ -132,32 +158,6 @@ public sealed class SettingManagerTests : IDisposable
 
         result.Should().BeTrue();
         _manager.Current.Performance.MaxParallelDownloadImage.Should().Be(99u);
-    }
-
-    #endregion
-
-    #region Save
-
-    /// <summary>
-    ///     Verifies that <see cref="SettingManager.Save" /> passes <see cref="SettingManager.Current" /> directly
-    ///     to the serializer without any transformation.
-    /// </summary>
-    [Fact]
-    public async Task Save_CurrentSetting_SerializesDirectly()
-    {
-        var setting = new Setting
-        {
-            Network = new Setting.NetworkSetting
-            {
-                Proxy = new Setting.Proxy { Password = "plain-text" }
-            }
-        };
-        _serializer.Serialize(Arg.Any<Setting>()).Returns("serialized-content");
-
-        await _manager.Update(setting);
-
-        _serializer.Received(1).Serialize(Arg.Is<Setting>(s =>
-            s.Network.Proxy.Password == "plain-text"));
     }
 
     #endregion

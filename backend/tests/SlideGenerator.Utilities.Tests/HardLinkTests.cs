@@ -31,7 +31,10 @@ public sealed class HardLinkTests : IDisposable
         foreach (var f in _tempFiles.Where(File.Exists)) File.Delete(f);
     }
 
-    private static string RandomString() => Guid.NewGuid().ToString("N");
+    private static string RandomString()
+    {
+        return Guid.NewGuid().ToString("N");
+    }
 
     private string NewTempFile(string? content = null)
     {
@@ -97,7 +100,7 @@ public sealed class HardLinkTests : IDisposable
         var target = NewTempFile(targetContent);
         var link = NewTempFile(RandomString());
 
-        var act = () => HardLink.Create(link, target, force: true);
+        var act = () => HardLink.Create(link, target);
 
         act.Should().NotThrow();
         File.ReadAllText(link, Encoding.UTF8).Should().Be(targetContent);
@@ -113,7 +116,7 @@ public sealed class HardLinkTests : IDisposable
         var target = NewTempFile(RandomString());
         var link = NewTempFile(RandomString());
 
-        var act = () => HardLink.Create(link, target, force: false);
+        var act = () => HardLink.Create(link, target, false);
 
         act.Should().Throw<IOException>();
     }

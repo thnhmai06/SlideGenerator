@@ -154,9 +154,9 @@ internal static class SettingTuner
 
         var downloadImage =
             // N = base + B/r + B×L/S
-            probe is { NetworkMbps: { } b, LatencyMs: { } latencyMs } 
-            ? Clamp(2.0 + b / r + b * (latencyMs / 1000.0) / SMbit, 2, 32) 
-            : current.MaxParallelDownloadImage;
+            probe is { NetworkMbps: { } b, LatencyMs: { } latencyMs }
+                ? Clamp(2.0 + b / r + b * (latencyMs / 1000.0) / SMbit, 2, 32)
+                : current.MaxParallelDownloadImage;
 
         #endregion
 

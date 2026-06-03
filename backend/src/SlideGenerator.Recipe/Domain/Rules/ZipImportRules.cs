@@ -46,7 +46,7 @@ public static class ZipImportRules
     ///     Derived from all <see cref="BookType" /> values.
     /// </summary>
     public static readonly IReadOnlySet<string> AllowedWorkbookExtensions =
-        new HashSet<string>(Enum.GetValues<BookType>().Select(t => t.ToExtension()), 
+        new HashSet<string>(Enum.GetValues<BookType>().Select(t => t.ToExtension()),
             StringComparer.OrdinalIgnoreCase);
 
     /// <summary>

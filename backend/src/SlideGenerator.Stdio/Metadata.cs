@@ -13,31 +13,23 @@
  */
 
 using System.Reflection;
+using SlideGenerator.Settings.Domain.Rules;
 
 namespace SlideGenerator.Stdio;
 
 // Don't ask why.
 internal static class Metadata
 {
-    public const string Name =
-        """
-          /$$$$$$  /$$ /$$       /$$            /$$$$$$                                                     /$$                        
-         /$$__  $$| $$|__/      | $$           /$$__  $$                                                   | $$                        
-        | $$  \__/| $$ /$$  /$$$$$$$  /$$$$$$ | $$  \__/  /$$$$$$  /$$$$$$$   /$$$$$$   /$$$$$$  /$$$$$$  /$$$$$$    /$$$$$$   /$$$$$$ 
-        |  $$$$$$ | $$| $$ /$$__  $$ /$$__  $$| $$ /$$$$ /$$__  $$| $$__  $$ /$$__  $$ /$$__  $$|____  $$|_  $$_/   /$$__  $$ /$$__  $$
-         \____  $$| $$| $$| $$  | $$| $$$$$$$$| $$|_  $$| $$$$$$$$| $$  \ $$| $$$$$$$$| $$  \__/ /$$$$$$$  | $$    | $$  \ $$| $$  \__/
-         /$$  \ $$| $$| $$| $$  | $$| $$_____/| $$  \ $$| $$_____/| $$  | $$| $$_____/| $$      /$$__  $$  | $$ /$$| $$  | $$| $$      
-        |  $$$$$$/| $$| $$|  $$$$$$$|  $$$$$$$|  $$$$$$/|  $$$$$$$| $$  | $$|  $$$$$$$| $$     |  $$$$$$$  |  $$$$/|  $$$$$$/| $$      
-         \______/ |__/|__/ \_______/ \_______/ \______/  \_______/|__/  |__/ \_______/|__/      \_______/   \___/   \______/ |__/      
-        """;
-
-    public const string Description = "This is the Backend sidecar of SlideGenerator.";
+    public const string Description =
+        $"This is the {NameAndPaths.Application.Type} of {NameAndPaths.Application.Name}.";
 
     public const string Line = "────────────────────────────────────────────────────────────";
-    public const string License = "Copyright (c) 2026 Thành Mai (thnhmai06). Licensed under the GNU AGPLv3.";
 
-    public const string RepositoryUrl =
-        "This software is FREE and OPEN-SOURCE. The source code is available here: https://github.com/thnhmai06/SlideGenerator";
+    public const string Repository =
+        $"This software is FREE and OPEN-SOURCE. The source code is available here: {NameAndPaths.Application.Repository}";
+
+    public static readonly string License =
+        $"Copyright (c) {DateTime.Now.Year} {NameAndPaths.Application.Author}. Licensed under the {NameAndPaths.Application.License}.";
 
     public static readonly string Version =
         $"Version: v{Assembly.GetExecutingAssembly().GetName().Version?.ToString(3)}";
