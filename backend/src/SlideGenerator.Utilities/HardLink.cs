@@ -60,7 +60,7 @@ public static partial class HardLink
 
     #region Unix
 
-    [LibraryImport("libc", EntryPoint = "Link", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+    [LibraryImport("libc", EntryPoint = "link", SetLastError = true, StringMarshalling = StringMarshalling.Utf8)]
     private static partial int Link(string oldPath, string newPath);
 
     private static void CreateUnix(string linkPath, string targetPath)
