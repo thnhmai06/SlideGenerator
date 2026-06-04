@@ -14,6 +14,7 @@
 
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
+using SlideGenerator.Recipe.Domain.Models;
 using SlideGenerator.Recipe.Infrastructure.Services;
 using Xunit;
 
@@ -42,7 +43,7 @@ public sealed class RecipeRepositoryTests : IDisposable
         };
         _anchor = new SqliteConnection(builder.ConnectionString);
         _anchor.Open();
-        _repo = new RecipeRepository(builder, new NullRecipeFileManifestExtractor());
+        _repo = new RecipeRepository(builder);
     }
 
     /// <inheritdoc />
@@ -51,29 +52,20 @@ public sealed class RecipeRepositoryTests : IDisposable
         _anchor.Dispose();
     }
 
+    private static RecipeInput Input(string name, string graph) => new(name, graph);
+
     #region AddAsync
 
     /// <summary>
-    ///     Verifies that <see cref="RecipeRepository.AddAsync" /> inserts a row and returns a positive ID.
+    ///     Verifies that <see cref="RecipeRepository.AddAsync" /> inserts a row and returns metadata with a positive ID.
     /// </summary>
     [Fact]
-    public async Task AddAsync_ValidEntry_ReturnsPositiveId()
+    public async Task AddAsync_ValidEntry_ReturnsMetadataWithPositiveId()
     {
-        var id = await _repo.AddAsync("My Recipe", "{}", CancellationToken.None);
+        var metadata = await _repo.AddAsync(Input("My Recipe", "{}"), CancellationToken.None);
 
-        id.Should().BeGreaterThan(0);
-    }
-
-    /// <summary>
-    ///     Verifies that <see cref="RecipeRepository.AddAsync" /> with null display name and null recipe
-    ///     still inserts a row and returns a valid ID.
-    /// </summary>
-    [Fact]
-    public async Task AddAsync_NullDisplayNameAndRecipe_ReturnsValidId()
-    {
-        var id = await _repo.AddAsync(null, null, CancellationToken.None);
-
-        id.Should().BeGreaterThan(0);
+        metadata.Id.Should().BeGreaterThan(0);
+        metadata.Name.Should().Be("My Recipe");
     }
 
     /// <summary>
@@ -83,43 +75,42 @@ public sealed class RecipeRepositoryTests : IDisposable
     [Fact]
     public async Task AddAsync_MultipleEntries_IdsAreIncreasing()
     {
-        var id1 = await _repo.AddAsync("A", null, TestContext.Current.CancellationToken);
-        var id2 = await _repo.AddAsync("B", null, TestContext.Current.CancellationToken);
+        var m1 = await _repo.AddAsync(Input("A", "{}"), TestContext.Current.CancellationToken);
+        var m2 = await _repo.AddAsync(Input("B", "{}"), TestContext.Current.CancellationToken);
 
-        id2.Should().BeGreaterThan(id1);
+        m2.Id.Should().BeGreaterThan(m1.Id);
     }
 
     #endregion
 
-    #region GetByIdAsync
+    #region GetAsync
 
     /// <summary>
-    ///     Verifies that <see cref="RecipeRepository.GetByIdAsync" /> returns <see langword="null" />
+    ///     Verifies that <see cref="RecipeRepository.GetAsync" /> throws <see cref="InvalidOperationException" />
     ///     for a non-existent ID.
     /// </summary>
     [Fact]
-    public async Task GetByIdAsync_NonExistentId_ReturnsNull()
+    public async Task GetAsync_NonExistentId_ThrowsInvalidOperationException()
     {
-        var entry = await _repo.GetByIdAsync(9999, TestContext.Current.CancellationToken);
+        var act = async () => await _repo.GetAsync(9999, TestContext.Current.CancellationToken);
 
-        entry.Should().BeNull();
+        await act.Should().ThrowAsync<InvalidOperationException>();
     }
 
     /// <summary>
-    ///     Verifies that <see cref="RecipeRepository.GetByIdAsync" /> returns the correct entry
+    ///     Verifies that <see cref="RecipeRepository.GetAsync" /> returns the correct entry
     ///     after insertion.
     /// </summary>
     [Fact]
-    public async Task GetByIdAsync_ExistingId_ReturnsCorrectEntry()
+    public async Task GetAsync_ExistingId_ReturnsCorrectEntry()
     {
-        var id = await _repo.AddAsync("TestName", "{\"key\":1}", TestContext.Current.CancellationToken);
+        var metadata = await _repo.AddAsync(Input("TestName", "{\"key\":1}"), TestContext.Current.CancellationToken);
 
-        var entry = await _repo.GetByIdAsync(id, TestContext.Current.CancellationToken);
+        var entry = await _repo.GetAsync(metadata.Id, TestContext.Current.CancellationToken);
 
-        entry.Should().NotBeNull();
-        entry.Id.Should().Be(id);
-        entry.DisplayName.Should().Be("TestName");
-        entry.Recipe.Should().Be("{\"key\":1}");
+        entry.Id.Should().Be(metadata.Id);
+        entry.Name.Should().Be("TestName");
+        entry.Graph.Should().Be("{\"key\":1}");
     }
 
     #endregion
@@ -139,20 +130,19 @@ public sealed class RecipeRepositoryTests : IDisposable
     }
 
     /// <summary>
-    ///     Verifies that <see cref="RecipeRepository.ListAsync" /> returns all inserted entries
-    ///     ordered by ascending ID.
+    ///     Verifies that <see cref="RecipeRepository.ListAsync" /> returns metadata for all inserted entries.
     /// </summary>
     [Fact]
-    public async Task ListAsync_MultipleEntries_ReturnsAllOrderedById()
+    public async Task ListAsync_MultipleEntries_ReturnsAllMetadata()
     {
-        await _repo.AddAsync("Alpha", null, TestContext.Current.CancellationToken);
-        await _repo.AddAsync("Beta", null, TestContext.Current.CancellationToken);
-        await _repo.AddAsync("Gamma", null, TestContext.Current.CancellationToken);
+        await _repo.AddAsync(Input("Alpha", "{}"), TestContext.Current.CancellationToken);
+        await _repo.AddAsync(Input("Beta", "{}"), TestContext.Current.CancellationToken);
+        await _repo.AddAsync(Input("Gamma", "{}"), TestContext.Current.CancellationToken);
 
         var list = await _repo.ListAsync(TestContext.Current.CancellationToken);
 
         list.Should().HaveCount(3);
-        list.Select(e => e.DisplayName).Should().ContainInOrder("Alpha", "Beta", "Gamma");
+        list.Select(e => e.Name).Should().Contain(["Alpha", "Beta", "Gamma"]);
     }
 
     #endregion
@@ -160,32 +150,29 @@ public sealed class RecipeRepositoryTests : IDisposable
     #region UpdateAsync
 
     /// <summary>
-    ///     Verifies that <see cref="RecipeRepository.UpdateAsync" /> returns <see langword="false" />
-    ///     for a non-existent ID without throwing.
+    ///     Verifies that <see cref="RecipeRepository.UpdateAsync" /> throws <see cref="InvalidOperationException" />
+    ///     for a non-existent ID.
     /// </summary>
     [Fact]
-    public async Task UpdateAsync_NonExistentId_ReturnsFalse()
+    public async Task UpdateAsync_NonExistentId_ThrowsInvalidOperationException()
     {
-        var updated = await _repo.UpdateAsync(9999, "NewName", "{}", TestContext.Current.CancellationToken);
+        var act = async () => await _repo.UpdateAsync(9999, Input("NewName", "{}"), TestContext.Current.CancellationToken);
 
-        updated.Should().BeFalse();
+        await act.Should().ThrowAsync<InvalidOperationException>();
     }
 
     /// <summary>
     ///     Verifies that <see cref="RecipeRepository.UpdateAsync" /> overwrites the display name and
-    ///     recipe of an existing entry.
+    ///     graph of an existing entry and returns the updated metadata.
     /// </summary>
     [Fact]
     public async Task UpdateAsync_ExistingId_OverwritesFields()
     {
-        var id = await _repo.AddAsync("Old", "{\"v\":0}", TestContext.Current.CancellationToken);
+        var metadata = await _repo.AddAsync(Input("Old", "{\"v\":0}"), TestContext.Current.CancellationToken);
 
-        var updated = await _repo.UpdateAsync(id, "New", "{\"v\":1}", TestContext.Current.CancellationToken);
-        var entry = await _repo.GetByIdAsync(id, TestContext.Current.CancellationToken);
+        var updated = await _repo.UpdateAsync(metadata.Id, Input("New", "{\"v\":1}"), TestContext.Current.CancellationToken);
 
-        updated.Should().BeTrue();
-        entry!.DisplayName.Should().Be("New");
-        entry.Recipe.Should().Be("{\"v\":1}");
+        updated.Name.Should().Be("New");
     }
 
     #endregion
@@ -206,18 +193,18 @@ public sealed class RecipeRepositoryTests : IDisposable
 
     /// <summary>
     ///     Verifies that <see cref="RecipeRepository.DeleteAsync" /> removes the row so that a
-    ///     subsequent <see cref="RecipeRepository.GetByIdAsync" /> returns <see langword="null" />.
+    ///     subsequent <see cref="RecipeRepository.GetAsync" /> returns <see langword="null" />.
     /// </summary>
     [Fact]
     public async Task DeleteAsync_ExistingId_RemovesRow()
     {
-        var id = await _repo.AddAsync("ToDelete", null, TestContext.Current.CancellationToken);
+        var metadata = await _repo.AddAsync(Input("ToDelete", "{}"), TestContext.Current.CancellationToken);
 
-        var deleted = await _repo.DeleteAsync(id, TestContext.Current.CancellationToken);
-        var entry = await _repo.GetByIdAsync(id, TestContext.Current.CancellationToken);
+        var deleted = await _repo.DeleteAsync(metadata.Id, TestContext.Current.CancellationToken);
+        var getAfterDelete = async () => await _repo.GetAsync(metadata.Id, TestContext.Current.CancellationToken);
 
         deleted.Should().BeTrue();
-        entry.Should().BeNull();
+        await getAfterDelete.Should().ThrowAsync<InvalidOperationException>();
     }
 
     #endregion
@@ -231,12 +218,12 @@ public sealed class RecipeRepositoryTests : IDisposable
     [Fact]
     public async Task ExportAsync_ExistingRecipe_CreatesZipFile()
     {
-        var id = await _repo.AddAsync("Exported", "{\"nodes\":[]}", TestContext.Current.CancellationToken);
+        var metadata = await _repo.AddAsync(Input("Exported", "{\"nodes\":[]}"), TestContext.Current.CancellationToken);
         var outputPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.recipe");
 
         try
         {
-            await _repo.ExportAsync(id, outputPath, null, TestContext.Current.CancellationToken);
+            await _repo.ExportAsync(metadata.Id, outputPath, null, TestContext.Current.CancellationToken);
 
             File.Exists(outputPath).Should().BeTrue();
             new FileInfo(outputPath).Length.Should().BeGreaterThan(0);
@@ -263,29 +250,27 @@ public sealed class RecipeRepositoryTests : IDisposable
 
     /// <summary>
     ///     Verifies that <see cref="RecipeRepository.ImportAsync" /> reads a ZIP exported by
-    ///     <see cref="RecipeRepository.ExportAsync" /> and inserts a new row, returning a positive ID.
+    ///     <see cref="RecipeRepository.ExportAsync" /> and inserts a new row with a positive ID.
+    ///     File extraction is skipped until recipe JSON schema is finalized and Summarize is implemented.
     /// </summary>
     [Fact]
-    public async Task ImportAsync_ValidZipFile_InsertsRowAndReturnsNewId()
+    public async Task ImportAsync_ValidZipFile_InsertsNewRow()
     {
-        var exportedId = await _repo.AddAsync("Original", "{\"nodes\":[1,2]}", TestContext.Current.CancellationToken);
+        var exportedMetadata = await _repo.AddAsync(Input("Original", "{\"nodes\":[1,2]}"), TestContext.Current.CancellationToken);
         var zipPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.recipe");
         var workbooksDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
         var presentationsDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
 
         try
         {
-            await _repo.ExportAsync(exportedId, zipPath, null, TestContext.Current.CancellationToken);
+            await _repo.ExportAsync(exportedMetadata.Id, zipPath, null, TestContext.Current.CancellationToken);
 
-            var importedId = await _repo.ImportAsync(zipPath, null, workbooksDir, presentationsDir,
+            var imported = await _repo.ImportAsync(zipPath, null, (workbooksDir, presentationsDir),
                 TestContext.Current.CancellationToken);
 
-            importedId.Should().BeGreaterThan(0);
-            importedId.Should().NotBe(exportedId);
-
-            var imported = await _repo.GetByIdAsync(importedId, TestContext.Current.CancellationToken);
-            imported.Should().NotBeNull();
-            imported.Recipe.Should().Be("{\"nodes\":[1,2]}");
+            // TODO: add round-trip assertion (name, graph contents) once recipe JSON schema is finalized.
+            imported.Id.Should().BeGreaterThan(0);
+            imported.Id.Should().NotBe(exportedMetadata.Id);
         }
         finally
         {

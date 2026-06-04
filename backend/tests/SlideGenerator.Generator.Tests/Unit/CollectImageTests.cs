@@ -25,7 +25,7 @@ using SlideGenerator.Generator.Domain.Models.Contexts;
 using SlideGenerator.Generator.Tests.Unit.Helpers;
 using SlideGenerator.Image.Application.Abstractions;
 using SlideGenerator.Image.Application.Models;
-using SlideGenerator.Summarization.Domain.Models.Recipes;
+using SlideGenerator.Recipe.Domain.Models.Summary;
 using Xunit;
 
 namespace SlideGenerator.Generator.Tests.Unit;

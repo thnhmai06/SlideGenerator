@@ -15,16 +15,42 @@
 namespace SlideGenerator.Recipe.Domain.Models;
 
 /// <summary>
-///     Represents a persisted recipe entry containing its storage metadata and ReactFlow JSON.
+///     The mutable user-visible properties of a recipe, used for create/update operations.
+/// </summary>
+/// <param name="Name">Human-readable display name of the recipe.</param>
+/// <param name="Graph">The recipe graph data.</param>
+public record RecipeInput(string Name, string Graph);
+
+/// <summary>
+///     Lightweight projection containing the identity and metadata of a recipe entry (no graph payload).
+/// </summary>
+public interface IRecipeMetadata
+{
+    /// <summary>The database-generated identifier.</summary>
+    int Id { get; }
+
+    /// <summary>Human-readable display name of the recipe.</summary>
+    string Name { get; }
+
+    /// <summary>UTC timestamp when the entry was first created.</summary>
+    DateTimeOffset CreatedTimestamp { get; }
+
+    /// <summary>UTC timestamp when the entry was last updated.</summary>
+    DateTimeOffset UpdatedTimestamp { get; }
+}
+
+/// <summary>
+///     Represents a persisted recipe entry containing its storage metadata and graph data.
+///     Implements <see cref="IRecipeMetadata" />.
 /// </summary>
 /// <param name="Id">The database-generated identifier.</param>
-/// <param name="DisplayName">Optional human-readable display name of the recipe.</param>
-/// <param name="Recipe">Optional ReactFlow graph JSON string.</param>
+/// <param name="Name">Human-readable display name of the recipe.</param>
+/// <param name="Graph">The recipe graph data.</param>
 /// <param name="CreatedTimestamp">UTC timestamp when the entry was first created.</param>
 /// <param name="UpdatedTimestamp">UTC timestamp when the entry was last updated.</param>
 public record RecipeEntry(
     int Id,
-    string? DisplayName,
-    string? Recipe,
+    string Name,
+    string Graph,
     DateTimeOffset CreatedTimestamp,
-    DateTimeOffset UpdatedTimestamp);
+    DateTimeOffset UpdatedTimestamp) : IRecipeMetadata;

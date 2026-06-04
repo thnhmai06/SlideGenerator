@@ -14,7 +14,6 @@
 
 using SlideGenerator.Document.Domain.Models.Sheet;
 using SlideGenerator.Document.Domain.Models.Slide;
-using SlideGenerator.Summarization.Domain.Models.Recipes;
 using SlideGenerator.Summarization.Domain.Models.Sheet;
 using SlideGenerator.Summarization.Domain.Models.Slide;
 
@@ -43,11 +42,4 @@ public interface ISummarizationService
     /// <exception cref="FileNotFoundException">Thrown if the presentation path is invalid.</exception>
     Task<PresentationSummary> SummarizePresentationAsync(PresentationIdentifier identifier, bool getPreview = true);
 
-    /// <summary>
-    ///     Parses a ReactFlow recipe JSON string into a <see cref="RecipeSummary" />.
-    /// </summary>
-    /// <param name="recipe">The ReactFlow graph JSON string representing the recipe.</param>
-    /// <returns>The summarized recipe configuration.</returns>
-    /// <remarks>TODO: Not yet implemented. Requires ReactFlow JSON schema definition.</remarks>
-    RecipeSummary SummarizeRecipe(string recipe);
 }

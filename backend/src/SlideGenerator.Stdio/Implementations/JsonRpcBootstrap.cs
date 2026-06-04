@@ -128,12 +128,6 @@ internal static class JsonRpcBootstrap
         jsonRpc.AddLocalRpcMethod(
             GetMethod<SummarizationHandler>(nameof(SummarizationHandler.SummarizePresentationAsync)),
             summarizationHandler, Attr("summarization.presentation"));
-        jsonRpc.AddLocalRpcMethod(
-            GetMethod<SummarizationHandler>(nameof(SummarizationHandler.SummarizeRecipeAsync)),
-            summarizationHandler, Attr("summarization.recipe"));
-        jsonRpc.AddLocalRpcMethod(
-            GetMethod<SummarizationHandler>(nameof(SummarizationHandler.SummarizeRecipeByIdAsync)),
-            summarizationHandler, Attr("summarization.recipeById"));
 
         #endregion
 

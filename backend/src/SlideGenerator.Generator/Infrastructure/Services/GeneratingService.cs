@@ -79,7 +79,7 @@ internal sealed class GeneratingService(
     {
         using var scope = logger.BeginScope("Start/{RecipeId}/{RequestName}", request.RecipeId, request.Name);
 
-        _ = await recipeRepository.GetByIdAsync(request.RecipeId, ct).ConfigureAwait(false)
+        _ = await recipeRepository.GetAsync(request.RecipeId, ct).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"Recipe {request.RecipeId} not found.");
 
         var context = new GeneratingContext

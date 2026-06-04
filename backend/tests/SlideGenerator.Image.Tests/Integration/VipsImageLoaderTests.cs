@@ -141,7 +141,7 @@ public sealed class VipsImageLoaderTests : IDisposable
 
         success.Should().BeTrue();
         info.Should().NotBeNull();
-        info!.Width.Should().Be(64u);
+        info.Width.Should().Be(64u);
         info.Height.Should().Be(48u);
     }
 

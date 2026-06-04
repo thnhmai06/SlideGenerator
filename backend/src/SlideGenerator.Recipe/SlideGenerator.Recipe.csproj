@@ -13,6 +13,7 @@
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\SlideGenerator.Document\SlideGenerator.Document.csproj"/>
+        <ProjectReference Include="..\SlideGenerator.Image\SlideGenerator.Image.csproj"/>
         <ProjectReference Include="..\SlideGenerator.Settings\SlideGenerator.Settings.csproj"/>
         <ProjectReference Include="..\SlideGenerator.Utilities\SlideGenerator.Utilities.csproj"/>
     </ItemGroup>

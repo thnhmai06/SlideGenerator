@@ -2,7 +2,7 @@
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Recipe
+ * Project: SlideGenerator.Graph
  * File: Registration.cs
  *
  * This file is part of this solution.
@@ -33,10 +33,8 @@ public static class Registration
     public static IServiceCollection AddRecipeServices(this IServiceCollection services)
     {
         services.AddSingleton(new SqliteConnectionStringBuilder(NameAndPaths.DataFolder.RecipesFile.ConnectionString));
-        services.AddSingleton<IRecipeFileManifestExtractor, NullRecipeFileManifestExtractor>();
-        services.AddSingleton<IRecipeRepository>(sp => new RecipeRepository(
-            sp.GetRequiredService<SqliteConnectionStringBuilder>(),
-            sp.GetRequiredService<IRecipeFileManifestExtractor>()));
+        services.AddSingleton(typeof(IRecipeRepository),
+            sp => new RecipeRepository(sp.GetRequiredService<SqliteConnectionStringBuilder>()));
         return services;
     }
 }

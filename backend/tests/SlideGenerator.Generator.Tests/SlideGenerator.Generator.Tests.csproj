@@ -28,5 +28,6 @@
         <ProjectReference Include="../../src/SlideGenerator.Settings/SlideGenerator.Settings.csproj"/>
         <ProjectReference Include="../../src/SlideGenerator.Image/SlideGenerator.Image.csproj"/>
         <ProjectReference Include="../../src/SlideGenerator.Summarization/SlideGenerator.Summarization.csproj"/>
+        <ProjectReference Include="../../src/SlideGenerator.Recipe/SlideGenerator.Recipe.csproj"/>
     </ItemGroup>
 </Project>

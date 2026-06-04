@@ -2,7 +2,7 @@
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Recipe.Tests
+ * Project: SlideGenerator.Graph.Tests
  * File: RecipeRepositorySecurityTests.cs
  *
  * This file is part of this solution.
@@ -50,7 +50,7 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
         };
         _anchor = new SqliteConnection(builder.ConnectionString);
         _anchor.Open();
-        _repo = new RecipeRepository(builder, new NullRecipeFileManifestExtractor());
+        _repo = new RecipeRepository(builder);
     }
 
     /// <inheritdoc />
@@ -111,7 +111,7 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
             zos.Finish();
         }
 
-        var act = async () => await _repo.ImportAsync(zipPath, null, workbooksDir, presentationsDir,
+        var act = async () => await _repo.ImportAsync(zipPath, null, (workbooksDir, presentationsDir),
             TestContext.Current.CancellationToken);
 
         await act.Should().ThrowAsync<InvalidDataException>();
@@ -199,7 +199,7 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
         // in either case nothing may escape the sandbox.
         async Task Act()
         {
-            await _repo.ImportAsync(zipPath, null, workbooksDir, presentationsDir,
+            await _repo.ImportAsync(zipPath, null, (workbooksDir, presentationsDir),
                 TestContext.Current.CancellationToken);
         }
     }
@@ -258,7 +258,7 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
 
         async Task Act()
         {
-            await _repo.ImportAsync(zipPath, null, workbooksDir, presentationsDir,
+            await _repo.ImportAsync(zipPath, null, (workbooksDir, presentationsDir),
                 TestContext.Current.CancellationToken);
         }
     }

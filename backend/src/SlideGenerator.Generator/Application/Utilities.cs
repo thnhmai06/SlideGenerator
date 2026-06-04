@@ -43,7 +43,7 @@ public static class Utilities
                 return workbook;
 
             if (!File.Exists(identifier.BookPath))
-                throw new FileNotFoundException("Workbook not found.", identifier.BookPath);
+                throw new FileNotFoundException("Workbooks not found.", identifier.BookPath);
 
             var lazy = data.WorkbookFactories.GetOrAdd(identifier, id => new Lazy<IReadOnlyWorkbook>(() =>
             {
@@ -77,7 +77,7 @@ public static class Utilities
                 return template;
 
             if (!File.Exists(identifier.PresentationPath))
-                throw new FileNotFoundException("Presentation template not found.", identifier.PresentationPath);
+                throw new FileNotFoundException("Presentations template not found.", identifier.PresentationPath);
 
             var lazy = data.TemplateFactories.GetOrAdd(identifier, id => new Lazy<IReadOnlyPresentation>(() =>
             {

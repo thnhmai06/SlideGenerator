@@ -16,7 +16,6 @@ using SlideGenerator.Document.Application.Abstractions;
 using SlideGenerator.Document.Domain.Models.Sheet;
 using SlideGenerator.Document.Domain.Models.Slide;
 using SlideGenerator.Summarization.Application.Abstractions;
-using SlideGenerator.Summarization.Domain.Models.Recipes;
 using SlideGenerator.Summarization.Domain.Models.Sheet;
 using SlideGenerator.Summarization.Domain.Models.Slide;
 using SlideGenerator.Summarization.Domain.Rules;
@@ -103,9 +102,4 @@ internal sealed class SummarizationService(
         return Task.FromResult(new PresentationSummary(identifier.PresentationPath, slides));
     }
 
-    /// <inheritdoc />
-    public RecipeSummary SummarizeRecipe(string recipe)
-    {
-        throw new NotImplementedException("Recipe JSON → RecipeSummary not yet implemented.");
-    }
 }

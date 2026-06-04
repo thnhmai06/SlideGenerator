@@ -15,7 +15,6 @@
 using Microsoft.Extensions.Logging;
 using SlideGenerator.Generator.Domain.Models.Contexts;
 using SlideGenerator.Recipe.Application.Abstractions;
-using SlideGenerator.Summarization.Application.Abstractions;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
 
@@ -27,9 +26,7 @@ namespace SlideGenerator.Generator.Application.Steps;
 ///     Running this as the first workflow step ensures both first-run and resume scenarios have a fresh recipe,
 ///     while the guard on <c>IRecipeRepository</c> prevents the recipe from changing mid-workflow.
 /// </summary>
-public sealed class LoadRecipeSummary(
-    IRecipeRepository recipeRepository,
-    ISummarizationService summarizationService) : StepBodyAsync
+public sealed class LoadRecipeSummary(IRecipeRepository recipeRepository) : StepBodyAsync
 {
     /// <inheritdoc />
     public override async Task<ExecutionResult> RunAsync(IStepExecutionContext context)
@@ -38,11 +35,7 @@ public sealed class LoadRecipeSummary(
         var ct = context.CancellationToken;
         var logger = data.LoggerFactory!.CreateLogger(nameof(LoadRecipeSummary));
 
-        var entry = await recipeRepository.GetByIdAsync(data.Request.RecipeId, ct).ConfigureAwait(false)
-                    ?? throw new InvalidOperationException(
-                        $"Recipe {data.Request.RecipeId} not found — it may have been deleted.");
-
-        data.RecipeSummary = summarizationService.SummarizeRecipe(entry.Recipe ?? string.Empty);
+        data.RecipeSummary = await recipeRepository.SummarizeAsync(data.Request.RecipeId, ct).ConfigureAwait(false);
 
         data.ValidationItems = data.RecipeSummary.Nodes
             .SelectMany(node => node.Sheets.Select(sheet => new ValidationItem(sheet, node)))

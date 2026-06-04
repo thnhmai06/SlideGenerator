@@ -13,6 +13,7 @@
  */
 
 using SlideGenerator.Recipe.Domain.Models;
+using SlideGenerator.Recipe.Domain.Models.Summary;
 
 namespace SlideGenerator.Recipe.Application.Abstractions;
 
@@ -22,37 +23,37 @@ namespace SlideGenerator.Recipe.Application.Abstractions;
 public interface IRecipeRepository
 {
     /// <summary>
-    ///     Inserts a new recipe row and returns its generated id.
+    ///     Inserts a new recipe row and returns its metadata.
     /// </summary>
-    /// <param name="displayName">Optional human-readable display name.</param>
-    /// <param name="recipe">Optional ReactFlow graph JSON string.</param>
+    /// <param name="input">The recipe input containing the name and graph data.</param>
     /// <param name="ct">Cancellation token.</param>
-    /// <returns>The database-generated id of the new row.</returns>
-    Task<int> AddAsync(string? displayName, string? recipe, CancellationToken ct = default);
+    /// <returns>The <see cref="IRecipeMetadata" /> of the newly inserted row.</returns>
+    Task<IRecipeMetadata> AddAsync(RecipeInput input, CancellationToken ct = default);
 
     /// <summary>
     ///     Retrieves a recipe entry by its id.
     /// </summary>
     /// <param name="id">The database-generated id.</param>
     /// <param name="ct">Cancellation token.</param>
-    /// <returns>The <see cref="RecipeEntry" />, or <see langword="null" /> if not found.</returns>
-    Task<RecipeEntry?> GetByIdAsync(int id, CancellationToken ct = default);
+    /// <returns>The <see cref="RecipeEntry" />.</returns>
+    /// <exception cref="InvalidOperationException">Thrown if no recipe with the given id exists.</exception>
+    Task<RecipeEntry> GetAsync(int id, CancellationToken ct = default);
 
     /// <summary>
-    ///     Returns all stored recipe entries ordered by id.
+    ///     Returns metadata for all stored recipe entries ordered by the most recently updated.
     /// </summary>
     /// <param name="ct">Cancellation token.</param>
-    Task<IReadOnlyList<RecipeEntry>> ListAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<IRecipeMetadata>> ListAsync(CancellationToken ct = default);
 
     /// <summary>
     ///     Updates an existing recipe entry.
     /// </summary>
     /// <param name="id">The database-generated id of the recipe to update.</param>
-    /// <param name="displayName">New display name.</param>
-    /// <param name="recipe">New ReactFlow JSON, or <see langword="null" /> to clear it.</param>
+    /// <param name="input">The new name and graph data.</param>
     /// <param name="ct">Cancellation token.</param>
-    /// <returns><see langword="true" /> if a row was updated; <see langword="false" /> if the id was not found.</returns>
-    Task<bool> UpdateAsync(int id, string? displayName, string? recipe, CancellationToken ct = default);
+    /// <returns>The updated <see cref="IRecipeMetadata" />.</returns>
+    /// <exception cref="InvalidOperationException">Thrown if no recipe with the given id exists.</exception>
+    Task<IRecipeMetadata> UpdateAsync(int id, RecipeInput input, CancellationToken ct = default);
 
     /// <summary>
     ///     Permanently deletes a recipe entry by its id.
@@ -65,21 +66,40 @@ public interface IRecipeRepository
     /// <summary>
     ///     Exports a stored recipe as a <c>*.recipe</c> package file.
     /// </summary>
-    /// <param name="recipeId">The id of the recipe to export.</param>
-    /// <param name="outputFilePath">The full path to write the output file.</param>
-    /// <param name="password">Optional AES-256 password. Pass <see langword="null" /> for no encryption.</param>
+    /// <param name="id">The id of the recipe to export.</param>
+    /// <param name="outputPath">The full path to write the output file.</param>
+    /// <param name="password">Optional password. Pass <see langword="null" /> for no encryption.</param>
     /// <param name="ct">Cancellation token.</param>
-    Task ExportAsync(int recipeId, string outputFilePath, string? password, CancellationToken ct = default);
+    Task ExportAsync(int id, string outputPath, string? password, CancellationToken ct = default);
 
     /// <summary>
     ///     Imports a <c>*.recipe</c> package file, extracts its resources, and stores the recipe in the database.
     /// </summary>
     /// <param name="filePath">The full path to the <c>*.recipe</c> file.</param>
-    /// <param name="password">Optional AES-256 password. Pass <see langword="null" /> if the archive is not encrypted.</param>
+    /// <param name="password">Optional password. Pass <see langword="null" /> if the archive is not encrypted.</param>
     /// <param name="workbooksDirectory">The directory into which workbook files will be extracted.</param>
     /// <param name="presentationsDirectory">The directory into which presentation files will be extracted.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>The database-generated id of the newly imported recipe.</returns>
-    Task<int> ImportAsync(string filePath, string? password, string workbooksDirectory,
-        string presentationsDirectory, CancellationToken ct = default);
+    Task<IRecipeMetadata> ImportAsync(
+        string filePath, string? password,
+        (string Workbooks, string Presentations) saveFolders,
+        CancellationToken ct = default);
+
+    /// <summary>
+    ///     Fetches a recipe from the database by id and parses its graph into a <see cref="RecipeSummary" />.
+    /// </summary>
+    /// <param name="id">The database-generated id of the recipe.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The parsed <see cref="RecipeSummary" />.</returns>
+    /// <exception cref="InvalidOperationException">Thrown if no recipe with the given id exists.</exception>
+    Task<RecipeSummary> SummarizeAsync(int id, CancellationToken ct = default);
+
+    /// <summary>
+    ///     Parses recipe graph into a <see cref="RecipeSummary" />.
+    /// </summary>
+    /// <param name="graph">The recipe graph data.</param>
+    /// <returns>The parsed <see cref="RecipeSummary" />.</returns>
+    /// <exception cref="InvalidOperationException">Thrown if no recipe with the given id exists.</exception>
+    static abstract RecipeSummary Summarize(string graph);
 }

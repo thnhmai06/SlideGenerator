@@ -28,7 +28,7 @@ namespace SlideGenerator.Generator.Application.Steps;
 
 /// <summary>
 ///     Consolidates data extraction into a single phase per worksheet.
-///     Opens Excel and Presentation once, clones template slides,
+///     Opens Excel and Presentations once, clones template slides,
 ///     and generates all SlideContexts and ImageContexts required for the worksheet.
 /// </summary>
 public sealed class ExtractData(

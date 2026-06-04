@@ -2,7 +2,7 @@
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Summarization
+ * Project: SlideGenerator.Recipe
  * File: TextInstruction.cs
  *
  * This file is part of this solution.
@@ -14,7 +14,7 @@
 
 using SlideGenerator.Document.Domain.Models.Sheet;
 
-namespace SlideGenerator.Summarization.Domain.Models.Recipes;
+namespace SlideGenerator.Recipe.Domain.Models.Summary;
 
 /// <summary>
 ///     Defines a mapping between one or more Excel columns and one or more text placeholders in a slide.

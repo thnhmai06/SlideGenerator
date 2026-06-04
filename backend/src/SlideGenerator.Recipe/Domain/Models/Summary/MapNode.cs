@@ -2,7 +2,7 @@
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Summarization
+ * Project: SlideGenerator.Recipe
  * File: MapNode.cs
  *
  * This file is part of this solution.
@@ -15,7 +15,7 @@
 using SlideGenerator.Document.Domain.Models.Sheet;
 using SlideGenerator.Document.Domain.Models.Slide;
 
-namespace SlideGenerator.Summarization.Domain.Models.Recipes;
+namespace SlideGenerator.Recipe.Domain.Models.Summary;
 
 /// <summary>
 ///     Represents a single mapping node that links multiple source sheets to a target slide template.

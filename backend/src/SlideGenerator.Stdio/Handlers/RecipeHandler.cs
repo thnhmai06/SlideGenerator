@@ -25,9 +25,9 @@ namespace SlideGenerator.Stdio.Handlers;
 public sealed class RecipeHandler(IRecipeRepository recipeRepository, IGeneratingService generatingService)
 {
     /// <summary>
-    ///     Returns all stored recipe entries ordered by id.
+    ///     Returns metadata for all stored recipe entries, ordered by the most recently updated.
     /// </summary>
-    public Task<IReadOnlyList<RecipeEntry>> ListAsync(CancellationToken ct)
+    public Task<IReadOnlyList<IRecipeMetadata>> ListAsync(CancellationToken ct)
     {
         return recipeRepository.ListAsync(ct);
     }
@@ -37,28 +37,35 @@ public sealed class RecipeHandler(IRecipeRepository recipeRepository, IGeneratin
     /// </summary>
     public Task<RecipeEntry?> QueryAsync(int id, CancellationToken ct)
     {
-        return recipeRepository.GetByIdAsync(id, ct);
+        return recipeRepository.GetAsync(id, ct);
     }
 
     /// <summary>
-    ///     Inserts a new recipe row and returns its generated id.
+    ///     Inserts a new recipe row and returns its metadata.
     /// </summary>
-    public Task<int> AddAsync(string? displayName, string? recipe, CancellationToken ct)
+    /// <param name="displayName">Human-readable name.</param>
+    /// <param name="graph">The recipe JSON string.</param>
+    /// <param name="ct">Cancellation token.</param>
+    public Task<IRecipeMetadata> AddAsync(string displayName, string graph, CancellationToken ct)
     {
-        return recipeRepository.AddAsync(displayName, recipe, ct);
+        return recipeRepository.AddAsync(new RecipeInput(displayName, graph), ct);
     }
 
     /// <summary>
     ///     Updates an existing recipe entry.
     /// </summary>
-    /// <returns><see langword="true" /> if updated; <see langword="false" /> if the id was not found.</returns>
-    /// <exception cref="InvalidOperationException">Thrown when the recipe is currently in use by an active workflow.</exception>
-    public async Task<bool> UpdateAsync(int id, string? displayName, string? recipe, CancellationToken ct)
+    /// <param name="id">The recipe id.</param>
+    /// <param name="displayName">New name.</param>
+    /// <param name="graph">New recipe JSON string.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The updated <see cref="IRecipeMetadata" />.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when the recipe is not found or is currently in use by an active workflow.</exception>
+    public async Task<IRecipeMetadata> UpdateAsync(int id, string displayName, string graph, CancellationToken ct)
     {
         if (await generatingService.IsRecipeInUseAsync(id, ct).ConfigureAwait(false))
             throw new InvalidOperationException(
                 $"Recipe {id} is currently in use by an active workflow and cannot be modified.");
-        return await recipeRepository.UpdateAsync(id, displayName, recipe, ct).ConfigureAwait(false);
+        return await recipeRepository.UpdateAsync(id, new RecipeInput(displayName, graph), ct).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -85,9 +92,9 @@ public sealed class RecipeHandler(IRecipeRepository recipeRepository, IGeneratin
     /// <summary>
     ///     Imports a <c>*.recipe</c> package file and returns the id of the newly stored recipe.
     /// </summary>
-    public Task<int> ImportAsync(string filePath, string? password, string workbooksDirectory,
+    public Task<IRecipeMetadata> ImportAsync(string filePath, string? password, string workbooksDirectory,
         string presentationsDirectory, CancellationToken ct)
     {
-        return recipeRepository.ImportAsync(filePath, password, workbooksDirectory, presentationsDirectory, ct);
+        return recipeRepository.ImportAsync(filePath, password, (workbooksDirectory, presentationsDirectory), ct);
     }
 }

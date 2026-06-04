@@ -14,7 +14,7 @@
 
 using SlideGenerator.Document.Domain.Models.Sheet;
 using SlideGenerator.Document.Domain.Models.Slide;
-using SlideGenerator.Summarization.Domain.Models.Recipes;
+using SlideGenerator.Recipe.Domain.Models.Summary;
 
 namespace SlideGenerator.Generator.Domain.Models.Contexts;
 

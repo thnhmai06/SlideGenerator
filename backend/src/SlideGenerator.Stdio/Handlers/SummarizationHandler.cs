@@ -14,21 +14,17 @@
 
 using SlideGenerator.Document.Domain.Models.Sheet;
 using SlideGenerator.Document.Domain.Models.Slide;
-using SlideGenerator.Recipe.Application.Abstractions;
 using SlideGenerator.Summarization.Application.Abstractions;
-using SlideGenerator.Summarization.Domain.Models.Recipes;
 using SlideGenerator.Summarization.Domain.Models.Sheet;
 using SlideGenerator.Summarization.Domain.Models.Slide;
 
 namespace SlideGenerator.Stdio.Handlers;
 
 /// <summary>
-///     Handles all <c>summarization.*</c> JSON-RPC methods for inspecting Excel workbooks,
-///     PowerPoint presentations, and recipe graphs before a generation job is started.
+///     Handles all <c>summarization.*</c> JSON-RPC methods for inspecting Excel workbooks
+///     and PowerPoint presentations before a generation job is started.
 /// </summary>
-public sealed class SummarizationHandler(
-    ISummarizationService summarizationService,
-    IRecipeRepository recipeRepository)
+public sealed class SummarizationHandler(ISummarizationService summarizationService)
 {
     /// <summary>
     ///     Summarizes an Excel workbook and returns its structure, including worksheet names,
@@ -52,31 +48,5 @@ public sealed class SummarizationHandler(
     public Task<PresentationSummary> SummarizePresentationAsync(PresentationIdentifier identifier, bool getPreview)
     {
         return summarizationService.SummarizePresentationAsync(identifier, getPreview);
-    }
-
-    /// <summary>
-    ///     Parses a ReactFlow recipe JSON string into a <see cref="RecipeSummary" />.
-    /// </summary>
-    /// <param name="recipe">The ReactFlow graph JSON string representing the recipe.</param>
-    /// <returns>The summarized recipe configuration.</returns>
-    /// <remarks>Not yet implemented — blocked on ReactFlow JSON schema definition.</remarks>
-    public Task<RecipeSummary> SummarizeRecipeAsync(string recipe)
-    {
-        return Task.FromResult(summarizationService.SummarizeRecipe(recipe));
-    }
-
-    /// <summary>
-    ///     Fetches a recipe from the database by ID, then parses its JSON into a <see cref="RecipeSummary" />.
-    /// </summary>
-    /// <param name="id">The recipe database identifier.</param>
-    /// <param name="ct">A cancellation token.</param>
-    /// <returns>The summarized recipe configuration.</returns>
-    /// <exception cref="InvalidOperationException">Thrown if no recipe with the given ID exists.</exception>
-    /// <remarks>Not yet implemented — blocked on ReactFlow JSON schema definition.</remarks>
-    public async Task<RecipeSummary> SummarizeRecipeByIdAsync(int id, CancellationToken ct)
-    {
-        var entry = await recipeRepository.GetByIdAsync(id, ct).ConfigureAwait(false)
-                    ?? throw new InvalidOperationException($"Recipe {id} not found.");
-        return summarizationService.SummarizeRecipe(entry.Recipe ?? string.Empty);
     }
 }

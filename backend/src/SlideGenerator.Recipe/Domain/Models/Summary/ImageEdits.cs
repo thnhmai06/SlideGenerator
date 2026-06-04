@@ -2,7 +2,7 @@
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Summarization
+ * Project: SlideGenerator.Recipe
  * File: ImageEdits.cs
  *
  * This file is part of this solution.
@@ -14,7 +14,7 @@
 
 using SlideGenerator.Image.Application.Models;
 
-namespace SlideGenerator.Summarization.Domain.Models.Recipes;
+namespace SlideGenerator.Recipe.Domain.Models.Summary;
 
 /// <summary>
 ///     Defines the processing rules for image transformations.
