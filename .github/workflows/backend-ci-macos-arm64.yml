@@ -1,0 +1,160 @@
+name: "[Backend] CI (macos-arm64)"
+
+on:
+  workflow_call:
+    inputs:
+      full-ci:
+        description: "Run full suite regardless of affected set ('true'/'false')"
+        type: string
+        required: true
+      base-run-id:
+        description: "backend-ci run id for base commit artifact reuse; empty for full CI"
+        type: string
+        required: true
+      affected-projects:
+        description: "JSON array [{name,path}] of affected production projects, topologically sorted"
+        type: string
+        required: true
+      affected-tests:
+        description: "JSON array [{name,path}] of affected test projects, topologically sorted"
+        type: string
+        required: true
+
+permissions:
+  contents: read
+  actions: read
+  packages: read
+
+env:
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  SYNCFUSION_LICENSE_KEY: ${{ secrets.SYNCFUSION_LICENSE_KEY || 'empty' }}
+  GITHUB_USERNAME: ${{ github.actor }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
+
+jobs:
+  build:
+    name: Build
+    runs-on: macos-26
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: backend/global.json
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v5
+        with:
+          path: ${{ github.workspace }}/.nuget/packages
+          key: nuget-macos-arm64-${{ hashFiles('backend/**/*.csproj', 'backend/global.json', 'backend/nuget.config') }}
+          restore-keys: nuget-macos-arm64-
+
+      - name: Restore
+        working-directory: backend
+        run: dotnet restore SlideGenerator.slnx
+
+      - name: Build
+        shell: bash
+        working-directory: backend
+        run: |
+          set -eo pipefail
+          if [[ "${{ inputs.full-ci }}" == "true" ]]; then
+            dotnet build SlideGenerator.slnx --no-restore
+          else
+            while IFS= read -r proj_path; do
+              dotnet build "$proj_path" --no-restore
+            done < <(echo '${{ inputs.affected-projects }}' | jq -r '.[].path')
+          fi
+
+  test:
+    name: Test
+    needs: build
+    if: inputs.full-ci == 'true' || inputs.affected-tests != '[]'
+    runs-on: macos-26
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: backend/global.json
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v5
+        with:
+          path: ${{ github.workspace }}/.nuget/packages
+          key: nuget-macos-arm64-${{ hashFiles('backend/**/*.csproj', 'backend/global.json', 'backend/nuget.config') }}
+          restore-keys: nuget-macos-arm64-
+
+      - name: Restore
+        working-directory: backend
+        run: dotnet restore SlideGenerator.slnx
+
+      - name: Download base test results
+        if: inputs.full-ci != 'true'
+        uses: actions/download-artifact@v8
+        with:
+          name: test-results-macos-arm64
+          path: backend/.previous-test-results
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.base-run-id }}
+
+      - name: Run tests
+        shell: bash
+        working-directory: backend
+        run: |
+          if [[ "${{ inputs.full-ci }}" == "true" ]]; then
+            rc=0
+            while IFS= read -r proj_path; do
+              name=$(basename "$proj_path" .csproj)
+              echo "::group::$name"
+              dotnet test "$proj_path" \
+                --logger "trx;LogFilePrefix=$name" \
+                --results-directory "TestResults/$name" || rc=$?
+              echo "::endgroup::"
+            done < <(find tests -name "*.csproj" | sort)
+            exit $rc
+          else
+            rc=0
+            while IFS= read -r item; do
+              name=$(echo "$item" | jq -r '.name')
+              proj_path=$(echo "$item" | jq -r '.path')
+              echo "::group::$name"
+              dotnet test "$proj_path" \
+                --logger "trx;LogFilePrefix=$name" \
+                --results-directory "TestResults/$name" || rc=$?
+              echo "::endgroup::"
+            done < <(echo '${{ inputs.affected-tests }}' | jq -c '.[]')
+            exit $rc
+          fi
+
+      - name: Merge base test results
+        if: always() && inputs.full-ci != 'true'
+        shell: bash
+        run: |
+          [ -d backend/.previous-test-results ] || exit 0
+          mkdir -p backend/TestResults
+          for proj_dir in backend/.previous-test-results/*/; do
+            [ -d "$proj_dir" ] || continue
+            proj_name=$(basename "$proj_dir")
+            is_affected=$(echo '${{ inputs.affected-tests }}' | jq -r --arg n "$proj_name" 'any(.[]; .name == $n)')
+            [[ "$is_affected" == "false" ]] && cp -R "$proj_dir" backend/TestResults/
+          done
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results-macos-arm64
+          path: backend/TestResults
+          if-no-files-found: warn
+          overwrite: true
+          retention-days: 14

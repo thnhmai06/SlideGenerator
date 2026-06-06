@@ -1,0 +1,155 @@
+name: "[Backend] CI"
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "backend/src/**"
+      - "backend/tests/**"
+      - "backend/Directory.Build.props"
+      - "backend/Directory.Packages.props"
+      - "backend/global.json"
+      - "backend/nuget.config"
+      - "backend/*.slnx"
+      - "Taskfile.yml"
+      - ".github/workflows/backend-ci.yml"
+      - ".github/workflows/backend-ci-*.yml"
+      - ".github/scripts/backend/**"
+  pull_request:
+    types: [ opened, synchronize, reopened, labeled ]
+    paths:
+      - "backend/src/**"
+      - "backend/tests/**"
+      - "backend/Directory.Build.props"
+      - "backend/Directory.Packages.props"
+      - "backend/global.json"
+      - "backend/nuget.config"
+      - "backend/*.slnx"
+      - "Taskfile.yml"
+      - ".github/workflows/backend-ci.yml"
+      - ".github/workflows/backend-ci-*.yml"
+      - ".github/scripts/backend/**"
+  release:
+    types: [ published ]
+
+permissions:
+  contents: read
+  actions: read
+  packages: read
+
+env:
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  SYNCFUSION_LICENSE_KEY: ${{ secrets.SYNCFUSION_LICENSE_KEY || 'empty' }}
+  GITHUB_USERNAME: ${{ github.actor }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
+
+concurrency:
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ── Discover: read solution, build dep graph, compute affected projects ────
+  discover:
+    name: Discover projects
+    runs-on: ubuntu-latest
+    outputs:
+      should-run: ${{ steps.compute.outputs.should-run }}
+      full-ci: ${{ steps.compute.outputs.full-ci }}
+      base-run-id: ${{ steps.compute.outputs.base-run-id }}
+      affected-projects: ${{ steps.compute.outputs.affected-projects }}
+      affected-tests: ${{ steps.compute.outputs.affected-tests }}
+      runners: ${{ steps.compute.outputs.runners }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+
+      - name: Compute
+        id: compute
+        uses: actions/github-script@v9
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          HAS_FULL_CI_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'full-ci') }}
+        with:
+          script: |
+            const compute = require(`${process.env.GITHUB_WORKSPACE}/.github/scripts/backend/compute`);
+            await compute.run({ core, github, context });
+
+  windows-x64:
+    name: windows-x64
+    needs: discover
+    if: needs.discover.outputs.should-run == 'true' && contains(needs.discover.outputs.runners, '"windows-x64"')
+    uses: ./.github/workflows/backend-ci-windows-x64.yml
+    with:
+      full-ci: ${{ needs.discover.outputs.full-ci }}
+      base-run-id: ${{ needs.discover.outputs.base-run-id }}
+      affected-projects: ${{ needs.discover.outputs.affected-projects }}
+      affected-tests: ${{ needs.discover.outputs.affected-tests }}
+    secrets: inherit
+
+  windows-arm64:
+    name: windows-arm64
+    needs: discover
+    if: needs.discover.outputs.should-run == 'true' && contains(needs.discover.outputs.runners, '"windows-arm64"')
+    uses: ./.github/workflows/backend-ci-windows-arm64.yml
+    with:
+      full-ci: ${{ needs.discover.outputs.full-ci }}
+      base-run-id: ${{ needs.discover.outputs.base-run-id }}
+      affected-projects: ${{ needs.discover.outputs.affected-projects }}
+      affected-tests: ${{ needs.discover.outputs.affected-tests }}
+    secrets: inherit
+
+  linux-x64:
+    name: linux-x64
+    needs: discover
+    if: needs.discover.outputs.should-run == 'true' && contains(needs.discover.outputs.runners, '"linux-x64"')
+    uses: ./.github/workflows/backend-ci-linux-x64.yml
+    with:
+      full-ci: ${{ needs.discover.outputs.full-ci }}
+      base-run-id: ${{ needs.discover.outputs.base-run-id }}
+      affected-projects: ${{ needs.discover.outputs.affected-projects }}
+      affected-tests: ${{ needs.discover.outputs.affected-tests }}
+    secrets: inherit
+
+  linux-arm64:
+    name: linux-arm64
+    needs: discover
+    if: needs.discover.outputs.should-run == 'true' && contains(needs.discover.outputs.runners, '"linux-arm64"')
+    uses: ./.github/workflows/backend-ci-linux-arm64.yml
+    with:
+      full-ci: ${{ needs.discover.outputs.full-ci }}
+      base-run-id: ${{ needs.discover.outputs.base-run-id }}
+      affected-projects: ${{ needs.discover.outputs.affected-projects }}
+      affected-tests: ${{ needs.discover.outputs.affected-tests }}
+    secrets: inherit
+
+  macos-x64:
+    name: macos-x64
+    needs: discover
+    if: needs.discover.outputs.should-run == 'true' && contains(needs.discover.outputs.runners, '"macos-x64"')
+    uses: ./.github/workflows/backend-ci-macos-x64.yml
+    with:
+      full-ci: ${{ needs.discover.outputs.full-ci }}
+      base-run-id: ${{ needs.discover.outputs.base-run-id }}
+      affected-projects: ${{ needs.discover.outputs.affected-projects }}
+      affected-tests: ${{ needs.discover.outputs.affected-tests }}
+    secrets: inherit
+
+  macos-arm64:
+    name: macos-arm64
+    needs: discover
+    if: needs.discover.outputs.should-run == 'true' && contains(needs.discover.outputs.runners, '"macos-arm64"')
+    uses: ./.github/workflows/backend-ci-macos-arm64.yml
+    with:
+      full-ci: ${{ needs.discover.outputs.full-ci }}
+      base-run-id: ${{ needs.discover.outputs.base-run-id }}
+      affected-projects: ${{ needs.discover.outputs.affected-projects }}
+      affected-tests: ${{ needs.discover.outputs.affected-tests }}
+    secrets: inherit
