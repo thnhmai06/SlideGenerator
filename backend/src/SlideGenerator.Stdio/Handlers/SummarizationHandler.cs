@@ -33,7 +33,7 @@ public sealed class SummarizationHandler(ISummarizationService summarizationServ
     /// <param name="identifier">The workbook identifier containing path and optional password.</param>
     /// <param name="getPreview">Whether to include data row previews in the result.</param>
     /// <returns>A <see cref="WorkbookSummary" /> describing the workbook structure.</returns>
-    public Task<WorkbookSummary> SummarizeWorkbookAsync(BookIdentifier identifier, bool getPreview)
+    public Task<WorkbookSummary> SummarizeWorkbookAsync(WorkbookIdentifier identifier, bool getPreview)
     {
         return summarizationService.SummarizeWorkbookAsync(identifier, getPreview);
     }

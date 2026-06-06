@@ -25,7 +25,7 @@ using SlideGenerator.Generator.Domain.Models.Contexts;
 using SlideGenerator.Generator.Tests.Unit.Helpers;
 using SlideGenerator.Image.Application.Abstractions;
 using SlideGenerator.Image.Application.Models;
-using SlideGenerator.Recipe.Domain.Models.Summary;
+using SlideGenerator.Recipe.Domain.Models.Components;
 using Xunit;
 
 namespace SlideGenerator.Generator.Tests.Unit;
@@ -87,8 +87,7 @@ public sealed class CollectImageTests
 
     private static ImageContext BuildImageContext(string? sourceUrl)
     {
-        var sheetId = new SheetIdentifier(
-            Path.Combine(Path.GetTempPath(), "workbook.xlsx"), "Sheet1");
+        var sheetId = new WorksheetIdentifier("Sheet1");
         return new ImageContext(
             sheetId,
             1,

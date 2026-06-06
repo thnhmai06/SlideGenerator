@@ -17,4 +17,4 @@ using SlideGenerator.Document.Domain.Models.Slide;
 
 namespace SlideGenerator.Summarization.Domain.Models.Slide;
 
-public record ShapeSummary(ShapeIdentifier Identifier, RectangleF Bounds);
+public record ShapeSummary(SlideIdentifier Slide, ShapeIdentifier Shape, RectangleF Bounds);

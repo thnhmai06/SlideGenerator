@@ -14,6 +14,7 @@
 
 using Microsoft.Extensions.Logging;
 using SlideGenerator.Generator.Domain.Models.Contexts;
+using SlideGenerator.Recipe.Domain.Models.Graphs;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
 
@@ -21,8 +22,8 @@ namespace SlideGenerator.Generator.Application.Steps;
 
 /// <summary>
 ///     Runs once at the start of the workflow to wipe every output directory associated with the
-///     current recipe. Replaces the per-sheet <c>Directory.Delete</c> previously embedded in
-///     <c>CreateTemplate</c>, which caused multi-sheet workbooks to destroy each other's output.
+///     current recipe. Replaces the per-worksheet <c>Directory.Delete</c> previously embedded in
+///     <c>CreateTemplate</c>, which caused multi-worksheet workbooks to destroy each other's output.
 /// </summary>
 public sealed class PreflightCleanup : StepBody
 {
@@ -32,18 +33,17 @@ public sealed class PreflightCleanup : StepBody
         var data = (GeneratingContext)context.Workflow.Data;
         var logger = data.LoggerFactory!.CreateLogger(nameof(PreflightCleanup));
 
-        if (data.RecipeSummary == null)
+        if (data.RecipeGraph == null)
         {
-            logger.LogDebug("No recipe summary present; nothing to clean.");
+            logger.LogDebug("No recipe graph present; nothing to clean.");
             return ExecutionResult.Next();
         }
 
         // Collect distinct workbook-bound output roots: SaveFolder/<bookName>/
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var node in data.RecipeSummary.Nodes)
-        foreach (var sheet in node.Sheets)
+        foreach (var workbookNode in data.RecipeGraph.Nodes.OfType<WorkbookNode>())
         {
-            var bookName = Path.GetFileNameWithoutExtension(sheet.BookPath);
+            var bookName = Path.GetFileNameWithoutExtension(workbookNode.Workbook.BookPath);
             if (string.IsNullOrEmpty(bookName)) continue;
             var dir = Path.Combine(data.Request.SaveFolder, bookName);
             if (!seen.Add(dir)) continue;

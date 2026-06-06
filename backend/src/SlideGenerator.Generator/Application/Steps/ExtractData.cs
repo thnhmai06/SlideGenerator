@@ -45,15 +45,15 @@ public sealed class ExtractData(
         var ct = context.CancellationToken;
         var logger = data.LoggerFactory!.CreateLogger(nameof(ExtractData));
 
-        if (data.SlideContexts.Any(s => s.SheetContext.Identifier == Worksheet.Identifier))
+        if (data.SlideContexts.Any(s => s.SheetContext.WorksheetNode.Id == Worksheet.WorksheetNode.Id))
         {
-            logger.LogDebug("ExtractData already processed sheet {SheetName} — skipping (resume idempotency).",
-                Worksheet.Identifier.SheetName);
+            logger.LogDebug("ExtractData already processed worksheet {SheetName} — skipping (resume idempotency).",
+                Worksheet.WorksheetNode.Worksheet.SheetName);
             return ExecutionResult.Next();
         }
 
-        logger.LogInformation("Starting data extraction for sheet {SheetName} in {BookPath}",
-            Worksheet.Identifier.SheetName, Worksheet.Identifier.BookPath);
+        logger.LogInformation("Starting data extraction for worksheet {SheetName} in {BookPath}",
+            Worksheet.WorksheetNode.Worksheet.SheetName, Worksheet.Workbook.BookPath);
 
         try
         {
@@ -62,13 +62,14 @@ public sealed class ExtractData(
 
             ConstructTasks(data, logger, rowCount, headerMap, sheet, shapeData);
 
-            logger.LogInformation("Successfully extracted data and constructed tasks for sheet {SheetName}",
-                Worksheet.Identifier.SheetName);
+            logger.LogInformation("Successfully extracted data and constructed tasks for worksheet {SheetName}",
+                Worksheet.WorksheetNode.Worksheet.SheetName);
         }
         catch (Exception ex) when (ex is not NullReferenceException and not InvalidCastException
                                        and not IndexOutOfRangeException)
         {
-            logger.LogError(ex, "ExtractData failed for sheet {SheetName}", Worksheet.Identifier.SheetName);
+            logger.LogError(ex, "ExtractData failed for worksheet {SheetName}",
+                Worksheet.WorksheetNode.Worksheet.SheetName);
         }
 
         return ExecutionResult.Next();
@@ -80,11 +81,12 @@ public sealed class ExtractData(
         await gateLocker.AcquireAsync(GateType.ReadWorkbook, ct).ConfigureAwait(false);
         try
         {
-            var workbook = data.GetOrOpenWorkbook(workbookProvider, Worksheet.Identifier);
+            var workbook = data.GetOrOpenWorkbook(workbookProvider, Worksheet.Workbook);
 
-            var sheet = workbook.GetWorksheet(Worksheet.Identifier.SheetName)
+            var sheetName = Worksheet.WorksheetNode.Worksheet.SheetName;
+            var sheet = workbook.GetWorksheet(sheetName)
                         ?? throw new KeyNotFoundException(
-                            $"Sheet '{Worksheet.Identifier.SheetName}' not found in workbook '{Path.GetFileName(Worksheet.Identifier.BookPath)}'.");
+                            $"Worksheet '{sheetName}' not found in workbook '{Path.GetFileName(Worksheet.Workbook.BookPath)}'.");
 
             var rowCount = sheet.RowCount;
             var headers = sheet.GetRow(0);
@@ -93,8 +95,7 @@ public sealed class ExtractData(
                 if (!headerMap.ContainsKey(headers[i]))
                     headerMap[headers[i]] = i;
 
-            logger.LogDebug("Found {RowCount} rows in sheet {SheetName}", rowCount,
-                Worksheet.Identifier.SheetName);
+            logger.LogDebug("Found {RowCount} rows in worksheet {SheetName}", rowCount, sheetName);
 
             return (rowCount, headerMap, sheet);
         }
@@ -121,12 +122,7 @@ public sealed class ExtractData(
                 {
                     if (string.IsNullOrEmpty(shape.Name)) continue;
 
-                    var shapeId = new ShapeIdentifier(
-                        Worksheet.TemplateSlide.PresentationPath,
-                        Worksheet.TemplateSlide.SlideIndex,
-                        shape.Name,
-                        Worksheet.TemplateSlide.PresentationPassword);
-
+                    var shapeId = new ShapeIdentifier(shape.Name);
                     var tags = templateEngine.ScanPlaceholders(shape.DisplayText);
                     var bounds = shape.Bounds;
                     shapeData[shapeId] = (shape.Name, tags, bounds);
@@ -191,10 +187,6 @@ public sealed class ExtractData(
         foreach (var textInst in Worksheet.MapNode.TextInstructions)
         foreach (var column in textInst.Columns)
         {
-            if (!column.SheetName.Equals(sheet.Name, StringComparison.OrdinalIgnoreCase) ||
-                !column.BookPath.Equals(Worksheet.Identifier.BookPath, StringComparison.OrdinalIgnoreCase))
-                continue;
-
             if (!headerMap.TryGetValue(column.ColumnName, out var colIndex) || colIndex >= rowData.Count) continue;
 
             var val = rowData[colIndex];
@@ -219,30 +211,24 @@ public sealed class ExtractData(
         foreach (var imgInst in Worksheet.MapNode.ImageInstructions)
         foreach (var column in imgInst.Columns)
         {
-            if (!column.SheetName.Equals(sheet.Name, StringComparison.OrdinalIgnoreCase) ||
-                !column.BookPath.Equals(Worksheet.Identifier.BookPath, StringComparison.OrdinalIgnoreCase))
-                continue;
-
             if (!headerMap.TryGetValue(column.ColumnName, out var colIndex) || colIndex >= rowData.Count) continue;
 
             var rawUrl = rowData[colIndex];
             var sourceUrl = string.IsNullOrWhiteSpace(rawUrl) ? null : rawUrl.Trim();
             var downloadDir = NameAndPaths.AssetsFolder.GetDownloadDir(data.Request.DownloadAssetsPath,
-                Worksheet.Identifier.BookPath, sheet.Name, column.ColumnName);
+                Worksheet.Workbook.BookPath, sheet.Name, column.ColumnName);
             var downloadPath = Path.Combine(downloadDir, rowIndex.ToString());
 
             foreach (var shapeId in imgInst.Shapes)
             {
-                if (shapeId.PresentationPath != Worksheet.TemplateSlide.PresentationPath ||
-                    shapeId.SlideIndex != Worksheet.TemplateSlide.SlideIndex) continue;
                 if (!shapeData.TryGetValue(shapeId, out var sData)) continue;
 
                 var editDir = NameAndPaths.AssetsFolder.GetEditDir(data.Request.EditAssetsPath,
-                    Worksheet.Identifier.BookPath, sheet.Name, column.ColumnName);
+                    Worksheet.Workbook.BookPath, sheet.Name, column.ColumnName);
                 var editPath = Path.Combine(editDir, $"{rowIndex}_{sData.ShapeName}");
 
                 var imageTask = new ImageContext(
-                    Worksheet.Identifier, rowIndex, column.ColumnName,
+                    Worksheet.WorksheetNode.Worksheet, rowIndex, column.ColumnName,
                     sData.ShapeName, sourceUrl, downloadPath, editPath,
                     sData.Bounds.Width, sData.Bounds.Height,
                     imgInst.ImageEdits, imgInst.FallbackImagePath);

@@ -2,7 +2,7 @@
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Graph.Tests
+ * Project: SlideGenerator.Recipe.Tests
  * File: RecipeRepositorySecurityTests.cs
  *
  * This file is part of this solution.
@@ -16,6 +16,7 @@ using System.Text;
 using FluentAssertions;
 using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.Data.Sqlite;
+using SlideGenerator.Recipe.Domain.Rules;
 using SlideGenerator.Recipe.Infrastructure.Services;
 using Xunit;
 
@@ -96,7 +97,7 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
         Directory.CreateDirectory(workbooksDir);
         Directory.CreateDirectory(presentationsDir);
 
-        var zipPath = Path.Combine(sandboxRoot, "no-recipe.recipe");
+        var zipPath = Path.Combine(sandboxRoot, "no-recipe" + RecipePackageRules.PackageExtension);
         _cleanupFiles.Add(zipPath);
 
         await using (var fs = File.Create(zipPath))
@@ -153,7 +154,7 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
         const string maliciousEntryName = "Workbooks/../victim/pwned.txt";
         var maliciousPayload = "attacker-controlled-content"u8.ToArray();
 
-        var zipPath = Path.Combine(sandboxRoot, "evil.recipe");
+        var zipPath = Path.Combine(sandboxRoot, "evil" + RecipePackageRules.PackageExtension);
         _cleanupFiles.Add(zipPath);
 
         await using (var fs = File.Create(zipPath))
@@ -223,7 +224,7 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
         Directory.CreateDirectory(victimDir);
 
         const string maliciousEntryName = "Presentations/../victim/pwned.txt";
-        var zipPath = Path.Combine(sandboxRoot, "evil2.recipe");
+        var zipPath = Path.Combine(sandboxRoot, "evil2" + RecipePackageRules.PackageExtension);
         _cleanupFiles.Add(zipPath);
 
         await using (var fs = File.Create(zipPath))

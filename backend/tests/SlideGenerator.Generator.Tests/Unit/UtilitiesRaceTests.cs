@@ -49,7 +49,7 @@ public sealed class UtilitiesRaceTests
         try
         {
             var (_, data) = StepHelper.CreateContextPair();
-            var identifier = new BookIdentifier(bookPath);
+            var identifier = new WorkbookIdentifier(bookPath);
 
             // Each call to OpenWorkbookReadOnly returns a fresh mock so we can count
             // disposals per opened instance independently.
@@ -57,7 +57,7 @@ public sealed class UtilitiesRaceTests
             var sync = new object();
 
             var provider = Substitute.For<IWorkbookProvider>();
-            provider.OpenWorkbookReadOnly(Arg.Any<BookIdentifier>()).Returns(_ =>
+            provider.OpenWorkbookReadOnly(Arg.Any<WorkbookIdentifier>()).Returns(_ =>
             {
                 var w = Substitute.For<IReadOnlyWorkbook>();
                 lock (sync)
@@ -125,11 +125,11 @@ public sealed class UtilitiesRaceTests
         try
         {
             var (_, data) = StepHelper.CreateContextPair();
-            var identifier = new BookIdentifier(bookPath);
+            var identifier = new WorkbookIdentifier(bookPath);
 
             var openCount = 0;
             var provider = Substitute.For<IWorkbookProvider>();
-            provider.OpenWorkbookReadOnly(Arg.Any<BookIdentifier>()).Returns(_ =>
+            provider.OpenWorkbookReadOnly(Arg.Any<WorkbookIdentifier>()).Returns(_ =>
             {
                 Interlocked.Increment(ref openCount);
                 Thread.SpinWait(2_000);
@@ -179,7 +179,7 @@ public sealed class UtilitiesRaceTests
     {
         var (_, data) = StepHelper.CreateContextPair();
         var provider = Substitute.For<IWorkbookProvider>();
-        var identifier = new BookIdentifier(Path.Combine(Path.GetTempPath(),
+        var identifier = new WorkbookIdentifier(Path.Combine(Path.GetTempPath(),
             $"definitely-missing-{Guid.NewGuid():N}.xlsx"));
 
         var act = () => data.GetOrOpenWorkbook(provider, identifier);
@@ -197,7 +197,7 @@ public sealed class UtilitiesRaceTests
     {
         var (_, data) = StepHelper.CreateContextPair();
         var provider = Substitute.For<IWorkbookProvider>();
-        var identifier = new BookIdentifier(Path.Combine(Path.GetTempPath(),
+        var identifier = new WorkbookIdentifier(Path.Combine(Path.GetTempPath(),
             $"definitely-missing-{Guid.NewGuid():N}.xlsx"));
         var cached = Substitute.For<IReadOnlyWorkbook>();
         data.WorkbookHandles.TryAdd(identifier, cached);
@@ -205,7 +205,7 @@ public sealed class UtilitiesRaceTests
         var result = data.GetOrOpenWorkbook(provider, identifier);
 
         result.Should().BeSameAs(cached);
-        provider.DidNotReceive().OpenWorkbookReadOnly(Arg.Any<BookIdentifier>());
+        provider.DidNotReceive().OpenWorkbookReadOnly(Arg.Any<WorkbookIdentifier>());
     }
 
     #endregion

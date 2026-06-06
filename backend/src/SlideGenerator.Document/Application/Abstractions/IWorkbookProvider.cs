@@ -29,7 +29,7 @@ public interface IWorkbookProvider
     /// <param name="identifier">The workbook to open.</param>
     /// <returns>A handle wrapping the opened workbook.</returns>
     /// <exception cref="System.IO.FileNotFoundException">If the workbook file does not exist.</exception>
-    IWorkbook OpenWorkbook(BookIdentifier identifier);
+    IWorkbook OpenWorkbook(WorkbookIdentifier identifier);
 
     /// <summary>
     ///     Opens a workbook identified by <paramref name="identifier" /> in <b>read</b> mode.
@@ -37,5 +37,5 @@ public interface IWorkbookProvider
     /// <param name="identifier">The workbook to open.</param>
     /// <returns>A handle wrapping the opened workbook.</returns>
     /// <exception cref="System.IO.FileNotFoundException">If the workbook file does not exist.</exception>
-    IReadOnlyWorkbook OpenWorkbookReadOnly(BookIdentifier identifier);
+    IReadOnlyWorkbook OpenWorkbookReadOnly(WorkbookIdentifier identifier);
 }

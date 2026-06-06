@@ -13,10 +13,13 @@
  */
 
 using System.Globalization;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Data.Sqlite;
 using SlideGenerator.Recipe.Application.Abstractions;
 using SlideGenerator.Recipe.Domain.Models;
-using SlideGenerator.Recipe.Domain.Models.Summary;
+using SlideGenerator.Recipe.Domain.Models.Graphs;
+using SlideGenerator.Recipe.Infrastructure.Adapters;
 
 namespace SlideGenerator.Recipe.Infrastructure.Services;
 
@@ -45,7 +48,7 @@ internal sealed partial class RecipeRepository : IRecipeRepository
             "INSERT INTO Recipes (Name, Graph, CreatedTimestamp, UpdatedTimestamp) " +
             "VALUES (@name, @graph, @now, @now); SELECT last_insert_rowid();";
         cmd.Parameters.AddWithValue("@name", input.Name);
-        cmd.Parameters.AddWithValue("@graph", input.Graph);
+        cmd.Parameters.AddWithValue("@graph", JsonSerializer.Serialize(input.Graph, GraphSerializerOptions));
         cmd.Parameters.AddWithValue("@now", now);
         var id = Convert.ToInt32(await cmd.ExecuteScalarAsync(ct).ConfigureAwait(false));
         var ts = DateTimeOffset.Parse(now, CultureInfo.InvariantCulture,
@@ -94,7 +97,7 @@ internal sealed partial class RecipeRepository : IRecipeRepository
         cmd.CommandText =
             "UPDATE Recipes SET Name = @name, Graph = @graph, UpdatedTimestamp = @now WHERE Id = @id";
         cmd.Parameters.AddWithValue("@name", input.Name);
-        cmd.Parameters.AddWithValue("@graph", input.Graph);
+        cmd.Parameters.AddWithValue("@graph", JsonSerializer.Serialize(input.Graph, GraphSerializerOptions));
         cmd.Parameters.AddWithValue("@now", now);
         cmd.Parameters.AddWithValue("@id", id);
         var affected = await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -112,12 +115,6 @@ internal sealed partial class RecipeRepository : IRecipeRepository
         return await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false) > 0;
     }
 
-    /// <inheritdoc />
-    public async Task<RecipeSummary> SummarizeAsync(int id, CancellationToken ct = default)
-    {
-        var entry = await GetAsync(id, ct).ConfigureAwait(false);
-        return Summarize(entry.Graph);
-    }
 
     #region Helpers
 
@@ -129,10 +126,22 @@ internal sealed partial class RecipeRepository : IRecipeRepository
 
     private static RecipeEntry DbReadEntry(SqliteDataReader reader)
     {
+        var graphJson = reader.GetString(2);
+        RecipeGraph graph;
+        try
+        {
+            graph = JsonSerializer.Deserialize<RecipeGraph>(graphJson, GraphSerializerOptions) ??
+                    new RecipeGraph([], []);
+        }
+        catch (JsonException)
+        {
+            graph = new RecipeGraph([], []);
+        }
+
         return new RecipeEntry(
             reader.GetInt32(0),
             reader.GetString(1),
-            reader.GetString(2),
+            graph,
             DateTimeOffset.Parse(reader.GetString(3),
                 CultureInfo.InvariantCulture,
                 DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal),
@@ -157,6 +166,20 @@ internal sealed partial class RecipeRepository : IRecipeRepository
                           );
                           """;
         cmd.ExecuteNonQuery();
+    }
+
+    private static readonly JsonSerializerOptions GraphSerializerOptions = BuildGraphSerializerOptions();
+
+    private static JsonSerializerOptions BuildGraphSerializerOptions()
+    {
+        var options = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        };
+        options.Converters.Add(new JsonStringEnumConverter());
+        options.Converters.Add(new NodeJsonConverter());
+        return options;
     }
 
     #endregion

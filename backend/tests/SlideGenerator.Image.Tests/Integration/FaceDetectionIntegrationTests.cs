@@ -16,7 +16,7 @@ using FluentAssertions;
 using NSubstitute;
 using SlideGenerator.Image.Application.Abstractions;
 using SlideGenerator.Image.Domain.Entities;
-using SlideGenerator.Image.Tests.Fixtures;
+using SlideGenerator.Image.Tests.Integration.Fixtures;
 using Xunit;
 
 namespace SlideGenerator.Image.Tests.Integration;

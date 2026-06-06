@@ -32,7 +32,7 @@ internal sealed class SummarizationService(
     ITemplateEngine templateEngine) : ISummarizationService
 {
     /// <inheritdoc />
-    public Task<WorkbookSummary> SummarizeWorkbookAsync(BookIdentifier identifier, bool getPreview = true)
+    public Task<WorkbookSummary> SummarizeWorkbookAsync(WorkbookIdentifier identifier, bool getPreview = true)
     {
         if (!File.Exists(identifier.BookPath))
             throw new FileNotFoundException("Workbook not found.", identifier.BookPath);
@@ -55,7 +55,8 @@ internal sealed class SummarizationService(
             }
 
             worksheets.Add(new WorksheetSummary(
-                new SheetIdentifier(identifier.BookPath, worksheet.Name, identifier.BookPassword),
+                identifier,
+                new WorksheetIdentifier(worksheet.Name),
                 count, preview));
         }
 
@@ -86,20 +87,15 @@ internal sealed class SummarizationService(
                 .Distinct(StringComparer.Ordinal)
                 .ToList();
 
+            var slideId = new SlideIdentifier(slide.Number);
             var imageShapes = shapes
                 .Where(shape => shape.ImageData != null)
-                .Select(shape => new ShapeSummary(
-                    new ShapeIdentifier(identifier.PresentationPath, slide.Number, shape.Name,
-                        identifier.PresentationPassword),
-                    shape.Bounds))
+                .Select(shape => new ShapeSummary(slideId, new ShapeIdentifier(shape.Name), shape.Bounds))
                 .ToList();
 
-            slides.Add(new SlideSummary(
-                new SlideIdentifier(identifier.PresentationPath, slide.Number, identifier.PresentationPassword),
-                placeholders, imageShapes, slidePreviewBytes));
+            slides.Add(new SlideSummary(identifier, slideId, placeholders, imageShapes, slidePreviewBytes));
         }
 
         return Task.FromResult(new PresentationSummary(identifier.PresentationPath, slides));
     }
-
 }

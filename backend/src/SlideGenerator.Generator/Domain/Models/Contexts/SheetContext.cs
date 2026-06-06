@@ -14,7 +14,7 @@
 
 using SlideGenerator.Document.Domain.Models.Sheet;
 using SlideGenerator.Document.Domain.Models.Slide;
-using SlideGenerator.Recipe.Domain.Models.Summary;
+using SlideGenerator.Recipe.Domain.Models.Graphs;
 
 namespace SlideGenerator.Generator.Domain.Models.Contexts;
 
@@ -22,20 +22,28 @@ namespace SlideGenerator.Generator.Domain.Models.Contexts;
 ///     Represents a worksheet that has been validated and assigned an output path.
 /// </summary>
 public sealed class SheetContext(
-    SheetIdentifier identifier,
-    SlideIdentifier templateSlide,
+    WorkbookIdentifier workbook,
+    WorksheetNode worksheetNode,
+    SlideNode slideNode,
     MapNode mapNode,
+    PresentationIdentifier templatePresentation,
     PresentationIdentifier outputIdentifier)
 {
-    /// <summary>Gets the unique identifier for the source worksheet.</summary>
-    public SheetIdentifier Identifier { get; } = identifier;
+    /// <summary>Gets the workbook that owns the source worksheet.</summary>
+    public WorkbookIdentifier Workbook { get; } = workbook;
 
-    /// <summary>Gets the identifier for the slide to be used as a template for this sheet.</summary>
-    public SlideIdentifier TemplateSlide { get; } = templateSlide;
+    /// <summary>Gets the source worksheet node.</summary>
+    public WorksheetNode WorksheetNode { get; } = worksheetNode;
 
-    /// <summary>Gets the mapping configuration node associated with this sheet.</summary>
+    /// <summary>Gets the target slide node.</summary>
+    public SlideNode SlideNode { get; } = slideNode;
+
+    /// <summary>Gets the mapping configuration node associated with this worksheet.</summary>
     public MapNode MapNode { get; } = mapNode;
 
-    /// <summary>Gets the final output identifier for the generated presentation corresponding to this sheet.</summary>
+    /// <summary>Gets the source presentation template to copy slides from.</summary>
+    public PresentationIdentifier TemplatePresentation { get; } = templatePresentation;
+
+    /// <summary>Gets the final output identifier for the generated presentation corresponding to this worksheet.</summary>
     public PresentationIdentifier OutputIdentifier { get; } = outputIdentifier;
 }

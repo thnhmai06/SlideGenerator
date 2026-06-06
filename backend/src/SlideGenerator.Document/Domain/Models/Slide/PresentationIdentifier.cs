@@ -27,7 +27,7 @@ public record PresentationIdentifier(string PresentationPath, string? Presentati
     public string PresentationPath
     {
         get;
-        init => field = Path.GetFullPath(value);
+        init => field = Path.IsPathRooted(value) ? Path.GetFullPath(value) : value;
     } = PresentationPath;
 
     /// <summary>

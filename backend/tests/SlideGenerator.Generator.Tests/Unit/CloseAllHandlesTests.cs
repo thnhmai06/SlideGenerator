@@ -48,7 +48,7 @@ public sealed class CloseAllHandlesTests
         var template = Substitute.For<IReadOnlyPresentation>();
         var output = Substitute.For<IPresentation>();
 
-        var bookId = new BookIdentifier(Path.Combine(Path.GetTempPath(), "workbook.xlsx"));
+        var bookId = new WorkbookIdentifier(Path.Combine(Path.GetTempPath(), "workbook.xlsx"));
         var templateId = new PresentationIdentifier(Path.Combine(Path.GetTempPath(), "template.pptx"));
         var outputId = new PresentationIdentifier(Path.Combine(Path.GetTempPath(), "output.pptx"));
 
@@ -73,7 +73,7 @@ public sealed class CloseAllHandlesTests
         var (ctx, data) = StepHelper.CreateContextPair();
 
         var workbook = Substitute.For<IReadOnlyWorkbook>();
-        var bookId = new BookIdentifier(Path.Combine(Path.GetTempPath(), "workbook.xlsx"));
+        var bookId = new WorkbookIdentifier(Path.Combine(Path.GetTempPath(), "workbook.xlsx"));
         data.WorkbookHandles.TryAdd(bookId, workbook);
 
         _step.Run(ctx);

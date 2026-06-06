@@ -15,7 +15,7 @@
 using SlideGenerator.Document.Domain.Models.Sheet;
 using SlideGenerator.Document.Domain.Models.Slide;
 
-namespace SlideGenerator.Recipe.Domain.Models.Summary;
+namespace SlideGenerator.Recipe.Domain.Models.Components;
 
 /// <summary>
 ///     Defines a mapping between one or more Excel columns and one or more image shapes in a slide.

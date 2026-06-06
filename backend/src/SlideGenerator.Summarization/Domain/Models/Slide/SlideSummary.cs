@@ -17,7 +17,8 @@ using SlideGenerator.Document.Domain.Models.Slide;
 namespace SlideGenerator.Summarization.Domain.Models.Slide;
 
 public sealed record SlideSummary(
-    SlideIdentifier Identifier,
+    PresentationIdentifier Presentation,
+    SlideIdentifier Slide,
     IReadOnlyList<string> Placeholders,
     IReadOnlyList<ShapeSummary> ImageShapes,
     byte[]? Preview);

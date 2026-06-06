@@ -30,7 +30,7 @@ internal sealed class SfWorkbookProvider : IWorkbookProvider
     private readonly ExcelEngine _engine = new();
 
     /// <inheritdoc />
-    public IWorkbook OpenWorkbook(BookIdentifier identifier)
+    public IWorkbook OpenWorkbook(WorkbookIdentifier identifier)
     {
         Syncfusion.XlsIO.IWorkbook workbook;
 
@@ -55,7 +55,7 @@ internal sealed class SfWorkbookProvider : IWorkbookProvider
         return new SfWorkbook(workbook, identifier);
     }
 
-    public IReadOnlyWorkbook OpenWorkbookReadOnly(BookIdentifier identifier)
+    public IReadOnlyWorkbook OpenWorkbookReadOnly(WorkbookIdentifier identifier)
     {
         Syncfusion.XlsIO.IWorkbook workbook;
         FileStream? fileStream = null;

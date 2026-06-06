@@ -12,14 +12,16 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using SlideGenerator.Recipe.Domain.Models.Graphs;
+
 namespace SlideGenerator.Recipe.Domain.Models;
 
 /// <summary>
 ///     The mutable user-visible properties of a recipe, used for create/update operations.
 /// </summary>
 /// <param name="Name">Human-readable display name of the recipe.</param>
-/// <param name="Graph">The recipe graph data.</param>
-public record RecipeInput(string Name, string Graph);
+/// <param name="Graph">The recipe graph.</param>
+public record RecipeInput(string Name, RecipeGraph Graph);
 
 /// <summary>
 ///     Lightweight projection containing the identity and metadata of a recipe entry (no graph payload).
@@ -45,12 +47,13 @@ public interface IRecipeMetadata
 /// </summary>
 /// <param name="Id">The database-generated identifier.</param>
 /// <param name="Name">Human-readable display name of the recipe.</param>
-/// <param name="Graph">The recipe graph data.</param>
+/// <param name="Graph">The deserialized recipe graph.</param>
 /// <param name="CreatedTimestamp">UTC timestamp when the entry was first created.</param>
 /// <param name="UpdatedTimestamp">UTC timestamp when the entry was last updated.</param>
 public record RecipeEntry(
     int Id,
     string Name,
-    string Graph,
+    RecipeGraph Graph,
     DateTimeOffset CreatedTimestamp,
-    DateTimeOffset UpdatedTimestamp) : IRecipeMetadata;
+    DateTimeOffset UpdatedTimestamp)
+    : RecipeInput(Name, Graph), IRecipeMetadata;

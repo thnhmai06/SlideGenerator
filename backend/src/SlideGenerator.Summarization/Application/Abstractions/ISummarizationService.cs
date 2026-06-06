@@ -31,7 +31,7 @@ public interface ISummarizationService
     /// <param name="getPreview">Whether to include data row previews in the result.</param>
     /// <returns>A summary of the workbook structure.</returns>
     /// <exception cref="FileNotFoundException">Thrown if the workbook path is invalid.</exception>
-    Task<WorkbookSummary> SummarizeWorkbookAsync(BookIdentifier identifier, bool getPreview = true);
+    Task<WorkbookSummary> SummarizeWorkbookAsync(WorkbookIdentifier identifier, bool getPreview = true);
 
     /// <summary>
     ///     Analyzes a PowerPoint presentation to identify slides, text placeholders, and image-compatible shapes.
@@ -41,5 +41,4 @@ public interface ISummarizationService
     /// <returns>A summary of the presentation structure.</returns>
     /// <exception cref="FileNotFoundException">Thrown if the presentation path is invalid.</exception>
     Task<PresentationSummary> SummarizePresentationAsync(PresentationIdentifier identifier, bool getPreview = true);
-
 }

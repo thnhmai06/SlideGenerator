@@ -15,13 +15,11 @@
 namespace SlideGenerator.Document.Domain.Models.Slide;
 
 /// <summary>
-///     Uniquely identifies a specific slide within a PowerPoint presentation.
+///     Identifies a slide by its 1-based index within an already-known presentation context.
+///     Use alongside <see cref="PresentationIdentifier" /> when presentation context is supplied separately.
 /// </summary>
-/// <param name="PresentationPath">The path to the presentation.</param>
-/// <param name="SlideIndex">The 1-based index of the slide.</param>
-/// <param name="PresentationPassword">Optional password for the presentation.</param>
-public record SlideIdentifier(string PresentationPath, int SlideIndex, string? PresentationPassword = null)
-    : PresentationIdentifier(PresentationPath, PresentationPassword)
+/// <param name="SlideIndex">The 1-based index of the slide. Guaranteed to be at least 1.</param>
+public record SlideIdentifier(int SlideIndex)
 {
     /// <summary>
     ///     Gets the 1-based index of the slide. Guaranteed to be at least 1.

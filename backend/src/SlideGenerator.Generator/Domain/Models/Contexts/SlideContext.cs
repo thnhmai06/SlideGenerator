@@ -17,7 +17,7 @@ using SlideGenerator.Document.Domain.Models.Slide;
 namespace SlideGenerator.Generator.Domain.Models.Contexts;
 
 /// <summary>
-///     Represents the data required to fill a specific slide corresponding to a row in a sheet.
+///     Represents the data required to fill a specific slide corresponding to a row in a worksheet.
 ///     Uses composition to hold both text and image replacement instructions.
 /// </summary>
 public sealed class SlideContext(SheetContext sheetContext, int rowIndex)
@@ -25,7 +25,7 @@ public sealed class SlideContext(SheetContext sheetContext, int rowIndex)
     /// <summary>Gets the parent worksheet context.</summary>
     public SheetContext SheetContext { get; } = sheetContext;
 
-    /// <summary>Gets the 1-based row index in the sheet that this slide represents.</summary>
+    /// <summary>Gets the 1-based row index in the worksheet that this slide represents.</summary>
     public int RowIndex { get; } = rowIndex;
 
     /// <summary>

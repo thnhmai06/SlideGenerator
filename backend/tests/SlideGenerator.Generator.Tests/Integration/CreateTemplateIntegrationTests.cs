@@ -18,7 +18,7 @@ namespace SlideGenerator.Generator.Tests.Integration;
 
 /// <summary>
 ///     Integration tests for <see cref="SlideGenerator.Generator.Application.Steps.CreateTemplate" />
-///     verifying multi-sheet output preservation (BUG-7) and PreflightCleanup behavior (BUG-7).
+///     verifying multi-worksheet output preservation (BUG-7) and PreflightCleanup behavior (BUG-7).
 /// </summary>
 public sealed class CreateTemplateIntegrationTests
 {
@@ -31,7 +31,7 @@ public sealed class CreateTemplateIntegrationTests
     ///     <c>tests/fixtures/bug-7/template.pptx</c>.
     /// </summary>
     [Fact(
-        DisplayName = "INTEGRATION (BUG-7): two-sheet workbook preserves both outputs — TODO fixture",
+        DisplayName = "INTEGRATION (BUG-7): two-worksheet workbook preserves both outputs — TODO fixture",
         Skip = "TODO: provide fixture under tests/fixtures/bug-7/")]
     public Task CreateTemplate_TwoSheetsSameWorkbook_BothOutputsPreserved()
     {

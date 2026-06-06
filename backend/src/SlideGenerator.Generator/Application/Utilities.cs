@@ -37,7 +37,7 @@ public static class Utilities
         /// <param name="identifier">The identifier of the workbook to open.</param>
         /// <returns>A read-only handle to the opened workbook.</returns>
         /// <exception cref="System.IO.FileNotFoundException">Thrown if the workbook file does not exist.</exception>
-        public IReadOnlyWorkbook GetOrOpenWorkbook(IWorkbookProvider workbookProvider, BookIdentifier identifier)
+        public IReadOnlyWorkbook GetOrOpenWorkbook(IWorkbookProvider workbookProvider, WorkbookIdentifier identifier)
         {
             if (data.WorkbookHandles.TryGetValue(identifier, out var workbook))
                 return workbook;

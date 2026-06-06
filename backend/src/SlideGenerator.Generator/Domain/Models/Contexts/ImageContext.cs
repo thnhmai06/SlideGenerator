@@ -13,7 +13,7 @@
  */
 
 using SlideGenerator.Document.Domain.Models.Sheet;
-using SlideGenerator.Recipe.Domain.Models.Summary;
+using SlideGenerator.Recipe.Domain.Models.Components;
 
 namespace SlideGenerator.Generator.Domain.Models.Contexts;
 
@@ -21,7 +21,7 @@ namespace SlideGenerator.Generator.Domain.Models.Contexts;
 ///     Represents a comprehensive context for downloading and editing a single image.
 /// </summary>
 public sealed class ImageContext(
-    SheetIdentifier sheet,
+    WorksheetIdentifier worksheet,
     int rowIndex,
     string columnName,
     string shapeName,
@@ -33,10 +33,10 @@ public sealed class ImageContext(
     ImageEdits editOptions,
     string? fallbackImagePath = null)
 {
-    /// <summary>Gets the source sheet identifier.</summary>
-    public SheetIdentifier Sheet { get; } = sheet;
+    /// <summary>Gets the source worksheet identifier.</summary>
+    public WorksheetIdentifier Worksheet { get; } = worksheet;
 
-    /// <summary>Gets the 1-based row index in the sheet.</summary>
+    /// <summary>Gets the 1-based row index in the worksheet.</summary>
     public int RowIndex { get; } = rowIndex;
 
     /// <summary>Gets the name of the column providing the image.</summary>

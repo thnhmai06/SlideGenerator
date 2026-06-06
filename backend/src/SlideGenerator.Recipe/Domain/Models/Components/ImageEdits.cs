@@ -14,13 +14,13 @@
 
 using SlideGenerator.Image.Application.Models;
 
-namespace SlideGenerator.Recipe.Domain.Models.Summary;
+namespace SlideGenerator.Recipe.Domain.Models.Components;
 
 /// <summary>
 ///     Defines the processing rules for image transformations.
 /// </summary>
 /// <param name="RoiOptions">
 ///     Ordered fallback chain of ROI options. The resolver tries each in order and uses the
-///     first that succeeds. If all anchor options fail, image-center crop is used.
+///     first that succeeds. If all anchor options fail, the image-center crop is used.
 /// </param>
 public sealed record ImageEdits(IReadOnlyList<RoiOption> RoiOptions);

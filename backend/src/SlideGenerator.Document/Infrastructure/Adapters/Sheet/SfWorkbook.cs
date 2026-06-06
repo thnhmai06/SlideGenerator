@@ -24,7 +24,7 @@ namespace SlideGenerator.Document.Infrastructure.Adapters.Sheet;
 /// </summary>
 internal sealed class SfWorkbook(
     IWorkbook value,
-    BookIdentifier identifier,
+    WorkbookIdentifier identifier,
     FileStream? fileStream = null) : Domain.Abstractions.Sheet.IWorkbook
 {
     public IEnumerable<IWorksheet> Worksheets

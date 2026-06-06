@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Document
- * File: ColumnIdentifier.cs
+ * File: WorksheetIdentifier.cs
  *
  * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -15,9 +15,8 @@
 namespace SlideGenerator.Document.Domain.Models.Sheet;
 
 /// <summary>
-///     Identifies a column by its header name within an already-known worksheet context.
-///     Use alongside <see cref="WorksheetIdentifier" /> and <see cref="WorkbookIdentifier" />
-///     when parent context is supplied separately.
+///     Identifies a worksheet by name within an already-known workbook context.
+///     Use alongside <see cref="WorkbookIdentifier" /> when workbook context is supplied separately.
 /// </summary>
-/// <param name="ColumnName">The header name of the column.</param>
-public record ColumnIdentifier(string ColumnName);
+/// <param name="SheetName">The name of the worksheet.</param>
+public record WorksheetIdentifier(string SheetName);

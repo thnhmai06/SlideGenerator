@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Document
- * File: BookIdentifier.cs
+ * File: WorkbookIdentifier.cs
  *
  * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -20,7 +20,7 @@ namespace SlideGenerator.Document.Domain.Models.Sheet;
 /// <param name="BookPath">The absolute or relative path to the workbook.</param>
 /// <param name="BookPassword">Optional password if the workbook is encrypted.</param>
 /// <param name="Separator">Optional separator for text-based formats like CSV or TSV.</param>
-public record BookIdentifier(string BookPath, string? BookPassword = null, string? Separator = null)
+public record WorkbookIdentifier(string BookPath, string? BookPassword = null, string? Separator = null)
 {
     /// <summary>
     ///     Gets the normalized absolute path to the workbook.
@@ -28,7 +28,7 @@ public record BookIdentifier(string BookPath, string? BookPassword = null, strin
     public string BookPath
     {
         get;
-        init => field = Path.GetFullPath(value);
+        init => field = Path.IsPathRooted(value) ? Path.GetFullPath(value) : value;
     } = BookPath;
 
     /// <summary>

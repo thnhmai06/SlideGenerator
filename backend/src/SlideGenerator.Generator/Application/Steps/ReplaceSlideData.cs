@@ -42,14 +42,14 @@ public sealed class ReplaceSlideData(
 
         if (Task.TextReplacements.Count == 0 && Task.ImageReplacements.Count == 0)
         {
-            logger.LogDebug("No replacements found for row {RowIndex} in sheet {SheetName}. Skipping.",
+            logger.LogDebug("No replacements found for row {RowIndex} in worksheet {SheetName}. Skipping.",
                 Task.RowIndex,
-                Task.SheetContext.Identifier.SheetName);
+                Task.SheetContext.WorksheetNode.Worksheet.SheetName);
             return ExecutionResult.Next();
         }
 
-        logger.LogDebug("Data replacement start | Row: {RowIndex}, Sheet: {SheetName}", Task.RowIndex,
-            Task.SheetContext.Identifier.SheetName);
+        logger.LogDebug("Data replacement start | Row: {RowIndex}, Worksheet: {SheetName}", Task.RowIndex,
+            Task.SheetContext.WorksheetNode.Worksheet.SheetName);
 
         await gateLocker.AcquireAsync(GateType.EditPresentation, ct).ConfigureAwait(false);
         try
@@ -71,14 +71,14 @@ public sealed class ReplaceSlideData(
 
             wrapper.Save();
 
-            logger.LogDebug("Data replacement completed | Row: {RowIndex}, Sheet: {SheetName}",
-                Task.RowIndex, Task.SheetContext.Identifier.SheetName);
+            logger.LogDebug("Data replacement completed | Row: {RowIndex}, Worksheet: {SheetName}",
+                Task.RowIndex, Task.SheetContext.WorksheetNode.Worksheet.SheetName);
         }
         catch (Exception ex) when (ex is not NullReferenceException and not InvalidCastException
                                        and not IndexOutOfRangeException)
         {
             logger.LogError(ex, "FillSlideData failed for {SheetName} row {RowIndex}",
-                Task.SheetContext.Identifier.SheetName, Task.RowIndex);
+                Task.SheetContext.WorksheetNode.Worksheet.SheetName, Task.RowIndex);
         }
         finally
         {

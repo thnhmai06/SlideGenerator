@@ -12,13 +12,14 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using System.Drawing;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using SlideGenerator.Document.Domain.Models.Sheet;
 using SlideGenerator.Document.Domain.Models.Slide;
 using SlideGenerator.Generator.Domain.Models;
 using SlideGenerator.Generator.Domain.Models.Contexts;
-using SlideGenerator.Recipe.Domain.Models.Summary;
+using SlideGenerator.Recipe.Domain.Models.Graphs;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
 
@@ -77,17 +78,13 @@ internal static class StepHelper
     /// </summary>
     internal static SheetContext BuildSheetContext(string? outputPath = null)
     {
-        var sheetId = new SheetIdentifier(
-            Path.Combine(Path.GetTempPath(), "workbook.xlsx"), "Sheet1");
-        var slideId = new SlideIdentifier(
-            Path.Combine(Path.GetTempPath(), "template.pptx"), 1);
+        var workbook = new WorkbookIdentifier(Path.Combine(Path.GetTempPath(), "workbook.xlsx"));
+        var templatePresentation = new PresentationIdentifier(Path.Combine(Path.GetTempPath(), "template.pptx"));
         var outputId = new PresentationIdentifier(
             outputPath ?? Path.Combine(Path.GetTempPath(), "output.pptx"));
-        var node = new MapNode(
-            new HashSet<SheetIdentifier> { sheetId },
-            slideId,
-            [],
-            []);
-        return new SheetContext(sheetId, slideId, node, outputId);
+        var worksheetNode = new WorksheetNode("ws-1", Point.Empty, "wb-1", new WorksheetIdentifier("Sheet1"));
+        var slideNode = new SlideNode("slide-1", Point.Empty, "pres-1", new SlideIdentifier(1));
+        var mapNode = new MapNode("map-1", Point.Empty, [], []);
+        return new SheetContext(workbook, worksheetNode, slideNode, mapNode, templatePresentation, outputId);
     }
 }

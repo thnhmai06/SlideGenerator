@@ -31,7 +31,7 @@ public sealed class CreateTemplate(
     IPresentationProvider presentationProvider) : StepBodyAsync
 {
     /// <summary>
-    ///     The validation item containing sheet and node info.
+    ///     The validation item containing worksheet and node info.
     /// </summary>
     public ValidationItem Item { get; init; } = null!;
 
@@ -42,15 +42,16 @@ public sealed class CreateTemplate(
         var data = (GeneratingContext)context.Workflow.Data;
         var logger = data.LoggerFactory!.CreateLogger(nameof(CreateTemplate));
 
-        if (!data.ValidWorksheets.TryGetValue(Item.Sheet, out var worksheet))
+        if (!data.ValidWorksheets.TryGetValue(Item.Worksheet.Id, out var worksheet))
             logger.LogError(
-                new KeyNotFoundException($"Worksheet '{Item.Sheet.SheetName}' was not found in validated results."),
-                "CreateTemplate validation failed for sheet {SheetName}", Item.Sheet.SheetName);
+                new KeyNotFoundException(
+                    $"Worksheet '{Item.Worksheet.Worksheet.SheetName}' was not found in validated results."),
+                "CreateTemplate validation failed for worksheet {SheetName}", Item.Worksheet.Worksheet.SheetName);
         else
             try
             {
-                logger.LogInformation("Initializing output template for sheet {SheetName}",
-                    worksheet.Identifier.SheetName);
+                logger.LogInformation("Initializing output template for worksheet {SheetName}",
+                    worksheet.WorksheetNode.Worksheet.SheetName);
 
                 await CreateTemplateFileAsync(data, logger, worksheet, ct).ConfigureAwait(false);
 
@@ -60,8 +61,8 @@ public sealed class CreateTemplate(
             catch (Exception ex) when (ex is not NullReferenceException and not InvalidCastException
                                            and not IndexOutOfRangeException)
             {
-                logger.LogError(ex, "CreateTemplate execution failed for sheet {SheetName}",
-                    worksheet.Identifier.SheetName);
+                logger.LogError(ex, "CreateTemplate execution failed for worksheet {SheetName}",
+                    worksheet.WorksheetNode.Worksheet.SheetName);
             }
 
         return ExecutionResult.Next();
@@ -81,8 +82,9 @@ public sealed class CreateTemplate(
 
         // 2. Copy the template to the output path (overwrite if it exists)
         logger.LogDebug("Copying template from '{Source}' to '{Destination}'",
-            validatedSheet.TemplateSlide.PresentationPath, validatedSheet.OutputIdentifier.PresentationPath);
-        File.Copy(validatedSheet.TemplateSlide.PresentationPath, validatedSheet.OutputIdentifier.PresentationPath,
+            validatedSheet.TemplatePresentation.PresentationPath, validatedSheet.OutputIdentifier.PresentationPath);
+        File.Copy(validatedSheet.TemplatePresentation.PresentationPath,
+            validatedSheet.OutputIdentifier.PresentationPath,
             true);
 
         // 3. Isolate a template slide (Delete all other slides)
@@ -90,14 +92,14 @@ public sealed class CreateTemplate(
         try
         {
             logger.LogDebug("Isolating slide at index {Index} in output presentation",
-                validatedSheet.TemplateSlide.SlideIndex);
+                validatedSheet.SlideNode.Slide.SlideIndex);
 
             var presentation = presentationProvider.OpenPresentation(validatedSheet.OutputIdentifier);
             data.OutputHandles.TryAdd(validatedSheet.OutputIdentifier, presentation);
 
             // Remove all slides except the one at targetIndex.
             // Iterate backwards to safely remove by index.
-            var templateIndex = validatedSheet.TemplateSlide.SlideIndex - 1;
+            var templateIndex = validatedSheet.SlideNode.Slide.SlideIndex - 1;
             var originalCount = presentation.SlidesCount;
             for (var i = originalCount - 1; i >= 0; i--)
                 if (i != templateIndex)

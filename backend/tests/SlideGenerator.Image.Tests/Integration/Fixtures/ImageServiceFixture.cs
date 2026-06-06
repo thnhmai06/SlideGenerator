@@ -18,7 +18,7 @@ using SlideGenerator.Image.Application.Services;
 using SlideGenerator.Image.Infrastructure.Adapters;
 using SlideGenerator.Image.Infrastructure.Services;
 
-namespace SlideGenerator.Image.Tests.Fixtures;
+namespace SlideGenerator.Image.Tests.Integration.Fixtures;
 
 /// <summary>
 ///     xUnit v3 collection fixture providing fully-wired, real implementations of

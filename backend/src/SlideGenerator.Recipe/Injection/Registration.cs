@@ -2,7 +2,7 @@
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Graph
+ * Project: SlideGenerator.Recipe
  * File: Registration.cs
  *
  * This file is part of this solution.

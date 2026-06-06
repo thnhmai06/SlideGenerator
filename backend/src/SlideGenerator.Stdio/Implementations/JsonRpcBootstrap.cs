@@ -16,6 +16,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.DependencyInjection;
+using SlideGenerator.Recipe.Infrastructure.Adapters;
 using SlideGenerator.Stdio.Handlers;
 using SlideGenerator.Stdio.Implementations.Adapters;
 using StreamJsonRpc;
@@ -41,7 +42,8 @@ internal static class JsonRpcBootstrap
                 new Vector2JsonConverter(),
                 new RoiOptionJsonAdapter(),
                 new RectangleFJsonAdapter(),
-                new JsonStringEnumConverter()
+                new JsonStringEnumConverter(),
+                new NodeJsonConverter()
             }
         };
     }

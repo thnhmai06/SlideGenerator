@@ -14,7 +14,7 @@
 
 using SlideGenerator.Document.Domain.Models.Sheet;
 
-namespace SlideGenerator.Recipe.Domain.Models.Summary;
+namespace SlideGenerator.Recipe.Domain.Models.Components;
 
 /// <summary>
 ///     Defines a mapping between one or more Excel columns and one or more text placeholders in a slide.

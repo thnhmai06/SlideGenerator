@@ -15,7 +15,7 @@
 using System.Text.Json;
 using Xunit;
 
-namespace SlideGenerator.Image.Tests.Fixtures;
+namespace SlideGenerator.Image.Tests.Integration.Fixtures;
 
 /// <summary>
 ///     xUnit v3 collection fixture that downloads face test images from HuggingFace datasets-server

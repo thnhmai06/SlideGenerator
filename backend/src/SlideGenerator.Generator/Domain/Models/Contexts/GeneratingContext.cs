@@ -21,7 +21,7 @@ using SlideGenerator.Document.Domain.Abstractions.Slide;
 using SlideGenerator.Document.Domain.Models.Sheet;
 using SlideGenerator.Document.Domain.Models.Slide;
 using SlideGenerator.Generator.Application.Steps;
-using SlideGenerator.Recipe.Domain.Models.Summary;
+using SlideGenerator.Recipe.Domain.Models.Graphs;
 
 namespace SlideGenerator.Generator.Domain.Models.Contexts;
 
@@ -37,10 +37,10 @@ public sealed class GeneratingContext : IDisposable
     public GeneratingRequest Request { get; init; } = null!;
 
     /// <summary>
-    ///     The resolved recipe summary. Not persisted — reloaded by <c>LoadRecipeSummary</c> on each run.
+    ///     The resolved recipe graph. Not persisted — reloaded by <c>LoadRecipeSummary</c> on each run.
     /// </summary>
     [JsonIgnore]
-    public RecipeSummary? RecipeSummary { get; set; }
+    public RecipeGraph? RecipeGraph { get; set; }
 
     /// <summary>
     ///     Persisted snapshot of validation items built by <c>LoadRecipeSummary</c>.
@@ -77,7 +77,7 @@ public sealed class GeneratingContext : IDisposable
     ///     The collection of validated worksheets and their target output configurations.
     ///     Populated during Phase A.
     /// </summary>
-    public ConcurrentDictionary<SheetIdentifier, SheetContext> ValidWorksheets { get; set; } = new();
+    public ConcurrentDictionary<string, SheetContext> ValidWorksheets { get; set; } = new();
 
     /// <summary>
     ///     The collection of slide generation contexts containing data replacements.
@@ -97,7 +97,7 @@ public sealed class GeneratingContext : IDisposable
     ///     Gets the collection of workbook handles used for reading data.
     /// </summary>
     [JsonIgnore]
-    public ConcurrentDictionary<BookIdentifier, IReadOnlyWorkbook> WorkbookHandles { get; } = new();
+    public ConcurrentDictionary<WorkbookIdentifier, IReadOnlyWorkbook> WorkbookHandles { get; } = new();
 
     /// <summary>
     ///     Gets the collection of presentation handles used as templates.
@@ -117,7 +117,7 @@ public sealed class GeneratingContext : IDisposable
     ///     racing threads share the same handle and the loser does not leak an open file.
     /// </summary>
     [JsonIgnore]
-    public ConcurrentDictionary<BookIdentifier, Lazy<IReadOnlyWorkbook>> WorkbookFactories { get; } = new();
+    public ConcurrentDictionary<WorkbookIdentifier, Lazy<IReadOnlyWorkbook>> WorkbookFactories { get; } = new();
 
     /// <summary>Lazy factories for template presentations; see <see cref="WorkbookFactories" />.</summary>
     [JsonIgnore]

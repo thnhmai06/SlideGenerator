@@ -14,7 +14,7 @@
 
 using Xunit;
 
-namespace SlideGenerator.Image.Tests.Fixtures;
+namespace SlideGenerator.Image.Tests.Integration.Fixtures;
 
 /// <summary>
 ///     xUnit v3 collection definition that groups integration tests requiring a downloaded face

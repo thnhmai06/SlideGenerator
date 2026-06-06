@@ -16,7 +16,7 @@ using System.Drawing;
 using System.Numerics;
 using FluentAssertions;
 using SlideGenerator.Image.Application.Models;
-using SlideGenerator.Image.Tests.Fixtures;
+using SlideGenerator.Image.Tests.Integration.Fixtures;
 using Xunit;
 
 namespace SlideGenerator.Image.Tests.Integration;
