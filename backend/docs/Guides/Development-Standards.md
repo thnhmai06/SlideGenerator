@@ -1,10 +1,12 @@
 # Development Standards
 
-This guide outlines the mandatory coding standards and conventions for the SlideGenerator backend. Consistency across modules is critical for the Modular Monolith architecture.
+This guide outlines the mandatory coding standards and conventions for the SlideGenerator backend. Consistency across
+modules is critical for the Modular Monolith architecture.
 
 ## 1. C# Language Features
 
 We use **.NET 10.0** and take advantage of modern C# features:
+
 - **C# 12 Primary Constructors**: Use for dependency injection in services.
 - **C# 14 Extension Members**: Use for DI registration (`Registration.cs`) and utility classes.
 - **File-Scoped Namespaces**: Required for all files.
@@ -13,6 +15,7 @@ We use **.NET 10.0** and take advantage of modern C# features:
 ## 2. Folder Structure
 
 Every module MUST follow this consistent layout:
+
 - `Domain/`: Models, Enums, and Abstractions (interfaces) owned by the business logic.
 - `Application/`: Services and Step bodies.
 - `Infrastructure/`: Concrete implementations (Adapters, SQL, HTTP).
@@ -20,9 +23,12 @@ Every module MUST follow this consistent layout:
 
 ## 3. Dependency Injection Rules
 
-- **Registration**: Each module provides an extension method `Add[ModuleName]Services(this IServiceCollection services)` declared inside `extension(IServiceCollection services)` (C# 14 extension member syntax) where applicable. Examples: `AddSettingsServices()`, `AddCloudServices()`, `AddLoggingServices(IConfiguration?)`, `AddGeneratorServices()`, `AddIpcServices()`.
+- **Registration**: Each module provides an extension method `Add[ModuleName]Services(this IServiceCollection services)`
+  declared inside `extension(IServiceCollection services)` (C# 14 extension member syntax) where applicable. Examples:
+  `AddSettingsServices()`, `AddCloudServices()`, `AddLoggingServices(IConfiguration?)`, `AddGeneratorServices()`,
+  `AddIpcServices()`.
 - **Constructor Injection**: Always favor constructor injection over property injection.
-- **Lifetimes**: 
+- **Lifetimes**:
     - Stateless services: `Singleton` or `Transient`.
     - Workflow Steps: `Transient`.
     - Resource Handles: Managed manually or via scoped DI if appropriate.
@@ -42,6 +48,7 @@ Every module MUST follow this consistent layout:
 ## 6. XML Documentation
 
 All **public** members must have XML documentation tags:
+
 - `<summary>`: Single sentence description.
 - `<param>`: Description for each parameter.
 - `<returns>`: Description of return value and its lifecycle (e.g., if it needs disposal).

@@ -15,7 +15,7 @@ on:
       - ".github/workflows/backend-build.yml"
       - ".github/scripts/**"
   pull_request:
-    types: [opened, synchronize, reopened, labeled]
+    types: [ opened, synchronize, reopened, labeled ]
     paths:
       - "backend/src/**"
       - "backend/tests/**"
@@ -28,7 +28,7 @@ on:
       - ".github/workflows/backend-build.yml"
       - ".github/scripts/**"
   release:
-    types: [published]
+    types: [ published ]
 
 permissions:
   contents: read
@@ -53,9 +53,9 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       should-run: ${{ steps.gate.outputs.should-run }}
-      full-ci:    ${{ steps.gate.outputs.full-ci }}
-      affected:   ${{ steps.gate.outputs.affected }}
-      runners:    ${{ steps.gate.outputs.runners }}
+      full-ci: ${{ steps.gate.outputs.full-ci }}
+      affected: ${{ steps.gate.outputs.affected }}
+      runners: ${{ steps.gate.outputs.runners }}
 
     steps:
       - name: Checkout
@@ -67,10 +67,10 @@ jobs:
       - name: Compute gate
         id: gate
         env:
-          EVENT:              ${{ github.event_name }}
-          BASE_SHA:           ${{ github.event.pull_request.base.sha || github.event.before }}
-          HEAD_SHA:           ${{ github.event.pull_request.head.sha || github.sha }}
-          HAS_FULL_CI_LABEL:  ${{ contains(github.event.pull_request.labels.*.name, 'full-ci') }}
+          EVENT: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          HAS_FULL_CI_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'full-ci') }}
         shell: bash
         run: |
           # ── Runner sets ────────────────────────────────────────────────────
@@ -275,7 +275,7 @@ jobs:
           --no-build
           --logger "trx;LogFilePrefix=SlideGenerator.Recipe.Tests"
           --results-directory TestResults
-          
+      
       # ── Application: Generator, Stdio ───────────────────────
 
       - name: "Test [Application] / Generator"

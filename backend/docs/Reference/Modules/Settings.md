@@ -16,12 +16,12 @@ The **SlideGenerator.Settings** module handles application-wide configuration.
 
 ## Configuration Categories
 
-| Category | Description |
-|----------|-------------|
-| **Performance** | Gate parallelism limits for pipeline stages. |
-| **Network** | Proxy settings and retry/timeout policy. Proxy passwords are AES-256 encrypted via the Cryptography module. |
-| **Logging** | Minimum log levels and retention policies. |
-| **App** | Visual preferences and default export paths. |
+| Category        | Description                                                                                                 |
+|-----------------|-------------------------------------------------------------------------------------------------------------|
+| **Performance** | Gate parallelism limits for pipeline stages.                                                                |
+| **Network**     | Proxy settings and retry/timeout policy. Proxy passwords are AES-256 encrypted via the Cryptography module. |
+| **Logging**     | Minimum log levels and retention policies.                                                                  |
+| **App**         | Visual preferences and default export paths.                                                                |
 
 ## Performance Calibration
 
@@ -31,14 +31,14 @@ The result is a `PerformanceCalibration` record; the caller applies it via `ISet
 
 ### Probe (`SettingProbe.ProbePerformanceAsync`)
 
-| Measurement | Method | Fallback |
-|-------------|--------|----------|
-| CPU logical cores | `Environment.ProcessorCount` | — |
-| Available RAM (GiB) | `GC.GetGCMemoryInfo().TotalAvailableMemoryBytes` | — |
-| Disk write speed (MB/s) | Sequential 10 MB temp-file write | 100 MB/s |
-| Single-stream bandwidth $r$ (Mbps) | Single HTTP GET from Cloudflare speed endpoint (post warm-up) | 12 Mbps |
-| Aggregate bandwidth $B$ (Mbps) | 8 parallel HTTP GETs from the same endpoint | $= r$ |
-| Latency $L$ (ms) | Median of 5 RTT samples per endpoint (googleapis, graph.microsoft.com) | 200 ms |
+| Measurement                        | Method                                                                 | Fallback |
+|------------------------------------|------------------------------------------------------------------------|----------|
+| CPU logical cores                  | `Environment.ProcessorCount`                                           | —        |
+| Available RAM (GiB)                | `GC.GetGCMemoryInfo().TotalAvailableMemoryBytes`                       | —        |
+| Disk write speed (MB/s)            | Sequential 10 MB temp-file write                                       | 100 MB/s |
+| Single-stream bandwidth $r$ (Mbps) | Single HTTP GET from Cloudflare speed endpoint (post warm-up)          | 12 Mbps  |
+| Aggregate bandwidth $B$ (Mbps)     | 8 parallel HTTP GETs from the same endpoint                            | $= r$    |
+| Latency $L$ (ms)                   | Median of 5 RTT samples per endpoint (googleapis, graph.microsoft.com) | 200 ms   |
 
 A **warm-up GET** is issued before timing to absorb TLS handshake and TCP slow-start distortion.
 
@@ -57,17 +57,17 @@ $$d = \text{clamp}\!\left(\log_2\!\!\left(1 + \frac{D_{\text{MB/s}}}{250}\right)
 #### Download gate — network-bound
 
 Derived from the **bandwidth-delay model** for fetching many small files over an independently
-throttled cloud storage link.  Google Drive caps each TCP stream at $r \approx 12\ \text{Mbps}$, so
+throttled cloud storage link. Google Drive caps each TCP stream at $r \approx 12\ \text{Mbps}$, so
 saturating a faster pipe requires opening $B/r$ concurrent connections:
 
 $$N_{\text{download}} = \text{clamp}\!\left(2 + \frac{B}{r} + \frac{B \cdot L}{S},\; 2,\; 32\right)$$
 
-| Symbol | Value / Source | Description |
-|--------|----------------|-------------|
-| $B$ | `ProbeResult.NetworkMbps` | Aggregate pipe bandwidth, from 8-stream parallel probe |
-| $r$ | `ProbeResult.SingleStreamMbps` or $r_{\text{assumed}} = 12\ \text{Mbps}$ | Per-connection throughput cap; fallback assumes Drive throttle |
-| $L$ | `ProbeResult.LatencyMs` / 1000 | Round-trip latency (seconds) |
-| $S$ | $S_{\text{Mbit}} = 8\ \text{Mbit}$ (~1 MB) | Assumed average image file size |
+| Symbol | Value / Source                                                           | Description                                                    |
+|--------|--------------------------------------------------------------------------|----------------------------------------------------------------|
+| $B$    | `ProbeResult.NetworkMbps`                                                | Aggregate pipe bandwidth, from 8-stream parallel probe         |
+| $r$    | `ProbeResult.SingleStreamMbps` or $r_{\text{assumed}} = 12\ \text{Mbps}$ | Per-connection throughput cap; fallback assumes Drive throttle |
+| $L$    | `ProbeResult.LatencyMs` / 1000                                           | Round-trip latency (seconds)                                   |
+| $S$    | $S_{\text{Mbit}} = 8\ \text{Mbit}$ (~1 MB)                               | Assumed average image file size                                |
 
 The $B/r$ term is the **primary lever** for Drive: each stream is independently throttled, so
 parallelism directly trades connection count for throughput.
@@ -95,9 +95,9 @@ $$N_{\text{editPresentation}} = \text{clamp}\!\left(0.9\sqrt{cpu}\cdot r_{\text{
 
 ### Reference values
 
-| Link scenario | $B$ | $r$ | $L$ | $N_{\text{download}}$ |
-|---|---|---|---|---|
-| Corporate 20 Mbps / 200 ms | 20 Mbps | 12 Mbps | 200 ms | 4 |
-| Home 100 Mbps / 80 ms | 100 Mbps | 12 Mbps | 80 ms | 10 |
-| Gigabit / 10 ms | 1000 Mbps | 12 Mbps | 10 ms | 32 (capped) |
-| Offline / probe failed | 0 Mbps | — | — | 2 (baseline) |
+| Link scenario              | $B$       | $r$     | $L$    | $N_{\text{download}}$ |
+|----------------------------|-----------|---------|--------|-----------------------|
+| Corporate 20 Mbps / 200 ms | 20 Mbps   | 12 Mbps | 200 ms | 4                     |
+| Home 100 Mbps / 80 ms      | 100 Mbps  | 12 Mbps | 80 ms  | 10                    |
+| Gigabit / 10 ms            | 1000 Mbps | 12 Mbps | 10 ms  | 32 (capped)           |
+| Offline / probe failed     | 0 Mbps    | —       | —      | 2 (baseline)          |

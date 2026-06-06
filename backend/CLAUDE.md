@@ -9,6 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Don't assume it. Don't hide confusion. Surface tradeoffs.**
 
 Before implementing:
+
 - State your assumptions explicitly. If uncertain, ask.
 - If multiple interpretations exist, present them – don't pick silently.
 - If a simpler approach exists, say so. Push back when warranted.
@@ -31,12 +32,14 @@ Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, sim
 **Touch only what you must. Clean up only your own mess.**
 
 When editing existing code:
+
 - Don't "improve" adjacent code, comments, or formatting.
 - Don't refactor things that aren't broken.
 - Match existing style, even if you'd do it differently.
 - If you notice unrelated dead code, mention it – don't delete it.
 
 When your changes create orphans:
+
 - Remove imports/variables/functions that YOUR changes made unused.
 - Don't remove pre-existing dead code unless asked.
 
@@ -47,11 +50,13 @@ The test: Every changed line should be traced directly to the user's request.
 **Define success criteria. Loop until verified.**
 
 Transform tasks into verifiable goals:
+
 - "Add validation" → "Write tests for invalid inputs, then make them pass"
 - "Fix the bug" → "Write a test that reproduces it, then make it pass"
 - "Refactor X" → "Ensure tests pass before and after"
 
 For multistep tasks, state a brief plan:
+
 ```
 1. [Step] → verify: [check]
 2. [Step] → verify: [check]
@@ -82,9 +87,13 @@ dotnet test tests/SlideGenerator.Settings.Tests/SlideGenerator.Settings.Tests.cs
 dotnet test --filter "FullyQualifiedName~Load_SettingsFileNotFound_ReturnsFalse"
 ```
 
-SDK: .NET 10.0 (`global.json` pins to `latestMajor`, allows prerelease). The solution uses the XML-based `SlideGenerator.slnx` (no `.sln`). A Syncfusion license is required at runtime: copy `.env.example` to `.env` and fill `SYNCFUSION_LICENSE_KEY` before running the Stdio sidecar.
+SDK: .NET 10.0 (`global.json` pins to `latestMajor`, allows prerelease). The solution uses the XML-based
+`SlideGenerator.slnx` (no `.sln`). A Syncfusion license is required at runtime: copy `.env.example` to `.env` and fill
+`SYNCFUSION_LICENSE_KEY` before running the Stdio sidecar.
 
-**GitHub Packages**: `SlideGenerator.Image` depends on per-platform `SlideGenerator.OpenCvSharp4.runtime.*` packages hosted at `nuget.pkg.github.com/thnhmai06`. `backend/nuget.config` reads credentials from `%GITHUB_USERNAME%` and `%GITHUB_TOKEN%` env vars — set these before restoring.
+**GitHub Packages**: `SlideGenerator.Image` depends on per-platform `SlideGenerator.OpenCvSharp4.runtime.*` packages
+hosted at `nuget.pkg.github.com/thnhmai06`. `backend/nuget.config` reads credentials from `%GITHUB_USERNAME%` and
+`%GITHUB_TOKEN%` env vars — set these before restoring.
 
 ## Solution Layout
 
@@ -117,13 +126,15 @@ backend/
     └── SlideGenerator.Stdio.Tests/
 ```
 
-`src/SlideGenerator.Acquisition/` and `src/SlideGenerator.Collector/` exist on disk but are **not in `SlideGenerator.slnx`** — treat them as orphan/in-progress folders unless re-added to the solution.
+`src/SlideGenerator.Acquisition/` and `src/SlideGenerator.Collector/` exist on disk but are **not
+in `SlideGenerator.slnx`** — treat them as orphan/in-progress folders unless re-added to the solution.
 
 `Summarization` has no dedicated test project.
 
 ## Architecture: Modular Monolith + IPC Sidecar
 
-SlideGenerator automates PowerPoint generation from Excel data and templates. It is a **Modular Monolith** with independent modules coordinated by WorkflowCore, exposed to a Tauri frontend through a JSON-RPC 2.0 IPC sidecar.
+SlideGenerator automates PowerPoint generation from Excel data and templates. It is a **Modular Monolith** with
+independent modules coordinated by WorkflowCore, exposed to a Tauri frontend through a JSON-RPC 2.0 IPC sidecar.
 
 ### Module Map
 
@@ -156,24 +167,27 @@ Application
 
 ## DI Registration Methods
 
-| Module                | Extension Method                                                                            |
-|-----------------------|---------------------------------------------------------------------------------------------|
-| Settings              | `AddSettingsServices()`                                                                     |
-| Cloud                 | `AddCloudServices()`                                                                        |
-| Cryptography          | `AddCryptographyServices()`                                                                 |
-| Coordinator           | `AddCoordinatorServices()`                                                                  |
-| Document              | `AddDocumentServices(ILogger systemLogger)`                                                 |
-| Image                 | `AddImageServices()`                                                                        |
-| Logging               | `AddLoggingServices(IConfiguration? configuration = null)`                                  |
-| Summarization         | `AddSummarizationServices()`                                                                |
-| Recipe                | `AddRecipeServices()`                                                                       |
-| Generator             | `AddGeneratorServices()`                                                                    |
-| Stdio                 | `AddIpcServices()`                                                                          |
+| Module                | Extension Method                                                                                       |
+|-----------------------|--------------------------------------------------------------------------------------------------------|
+| Settings              | `AddSettingsServices()`                                                                                |
+| Cloud                 | `AddCloudServices()`                                                                                   |
+| Cryptography          | `AddCryptographyServices()`                                                                            |
+| Coordinator           | `AddCoordinatorServices()`                                                                             |
+| Document              | `AddDocumentServices(ILogger systemLogger)`                                                            |
+| Image                 | `AddImageServices()`                                                                                   |
+| Logging               | `AddLoggingServices(IConfiguration? configuration = null)`                                             |
+| Summarization         | `AddSummarizationServices()`                                                                           |
+| Recipe                | `AddRecipeServices()`                                                                                  |
+| Generator             | `AddGeneratorServices()`                                                                               |
+| Stdio                 | `AddIpcServices()`                                                                                     |
 | WorkflowCore + SQLite | `services.AddWorkflow(x => x.UseSqlite(NameAndPaths.DataFolder.WorkflowsFile.ConnectionString, true))` |
 
-The system logger is created up-front in `Program.cs` via `SystemLoggerBootstrapper.Initialize(...)` (file Serilog sink → `stderr` only) and passed into `AddDocumentServices`. It is **not** added to DI through an `AddSystemLogging` helper.
+The system logger is created up-front in `Program.cs` via `SystemLoggerBootstrapper.Initialize(...)` (file Serilog
+sink → `stderr` only) and passed into `AddDocumentServices`. It is **not** added to DI through an `AddSystemLogging`
+helper.
 
 `Registration.cs` files use C# 14 **extension member syntax**:
+
 ```csharp
 extension(IServiceCollection services)
 {
@@ -183,7 +197,8 @@ extension(IServiceCollection services)
 
 ## IPC Layer (SlideGenerator.Stdio)
 
-JSON-RPC 2.0 over stdin/stdout using **StreamJsonRpc** with NDJSON framing (`NewLineDelimitedMessageHandler`) and STJ serialization (`SystemTextJsonFormatter`).
+JSON-RPC 2.0 over stdin/stdout using **StreamJsonRpc** with NDJSON framing (`NewLineDelimitedMessageHandler`) and STJ
+serialization (`SystemTextJsonFormatter`).
 
 ### Stream ownership
 
@@ -195,7 +210,8 @@ JSON-RPC 2.0 over stdin/stdout using **StreamJsonRpc** with NDJSON framing (`New
 
 ### JsonRpc setup
 
-`JsonRpc` is created **after** the DI container is built (raw stream access). Not registered in DI. Methods wired via `AddLocalRpcMethod`:
+`JsonRpc` is created **after** the DI container is built (raw stream access). Not registered in DI. Methods wired via
+`AddLocalRpcMethod`:
 
 ```csharp
 // DTO param → UseSingleObjectParameterDeserialization = true (via local Attr() helper)
@@ -207,13 +223,17 @@ jsonRpc.AddLocalRpcMethod(method, handler, new JsonRpcMethodAttribute("settings.
 
 ### Progress notifications
 
-`WorkflowProgressObserver` (in `Infrastructure/`) subscribes to `GeneratingEventBus.OnProgress` and forwards events as `workflow/progress` notifications via `JsonRpc.NotifyWithParameterObjectAsync`. Bound at runtime via `observer.Attach(bus, jsonRpc)` — not DI injected.
+`WorkflowProgressObserver` (in `Infrastructure/`) subscribes to `GeneratingEventBus.OnProgress` and forwards events as
+`workflow/progress` notifications via `JsonRpc.NotifyWithParameterObjectAsync`. Bound at runtime via
+`observer.Attach(bus, jsonRpc)` — not DI injected.
 
-`GeneratingEventBus` is registered as both `GeneratingEventBus` (concrete) and `IGeneratingEventBus` (interface) in the Stdio `Registration.cs` so that `WorkflowProgressObserver.Attach` can receive the concrete type.
+`GeneratingEventBus` is registered as both `GeneratingEventBus` (concrete) and `IGeneratingEventBus` (interface) in the
+Stdio `Registration.cs` so that `WorkflowProgressObserver.Attach` can receive the concrete type.
 
 ### STJ adapters
 
 `Infrastructure/Adapters/` contains custom STJ converters registered in `BuildJsonSerializerOptions()`:
+
 - `RoiOptionJsonAdapter` — polymorphic `RoiOption` discriminated by `"type"` (`"Center"` | `"RuleOfThirds"`)
 - `RectangleFJsonAdapter` — `RectangleF` as `{"x", "y", "width", "height"}`
 
@@ -221,47 +241,50 @@ jsonRpc.AddLocalRpcMethod(method, handler, new JsonRpcMethodAttribute("settings.
 
 ### Registered methods
 
-| Method                          | Handler                                           |
-|---------------------------------|---------------------------------------------------|
-| `generator.active.start`        | `GeneratingActiveHandler.StartAsync`              |
-| `generator.active.cancel`       | `GeneratingActiveHandler.CancelAsync`             |
-| `generator.active.pause`        | `GeneratingActiveHandler.PauseAsync`              |
-| `generator.active.resume`       | `GeneratingActiveHandler.ResumeAsync`             |
-| `generator.active.cancelAll`    | `GeneratingActiveHandler.CancelAllAsync`          |
-| `generator.active.pauseAll`     | `GeneratingActiveHandler.PauseAllAsync`           |
-| `generator.active.list`         | `GeneratingActiveHandler.ListAsync`               |
-| `generator.active.query`        | `GeneratingActiveHandler.QueryAsync`              |
-| `generator.completed.list`      | `GeneratingCompletedHandler.ListAsync`            |
-| `generator.completed.query`     | `GeneratingCompletedHandler.QueryAsync`           |
-| `generator.completed.delete`    | `GeneratingCompletedHandler.DeleteAsync`          |
-| `generator.completed.deleteAll` | `GeneratingCompletedHandler.DeleteAllAsync`       |
-| `recipe.list`                   | `RecipeHandler.ListAsync`                         |
-| `recipe.query`                  | `RecipeHandler.QueryAsync`                        |
-| `recipe.add`                    | `RecipeHandler.AddAsync`                          |
-| `recipe.update`                 | `RecipeHandler.UpdateAsync`                       |
-| `recipe.delete`                 | `RecipeHandler.DeleteAsync`                       |
-| `recipe.export`                 | `RecipeHandler.ExportAsync`                       |
-| `recipe.import`                 | `RecipeHandler.ImportAsync`                       |
-| `summarization.workbook`        | `SummarizationHandler.SummarizeWorkbookAsync`     |
-| `summarization.presentation`    | `SummarizationHandler.SummarizePresentationAsync` |
-| `summarization.recipe`          | `SummarizationHandler.SummarizeRecipeAsync`       |
-| `summarization.recipeById`      | `SummarizationHandler.SummarizeRecipeByIdAsync`   |
-| `settings.get`                       | `SettingsHandler.GetAsync`                        |
-| `settings.update`                    | `SettingsHandler.UpdateAsync`                     |
-| `settings.reset`                     | `SettingsHandler.ResetAsync`                      |
-| `settings.performance.get`           | `SettingsHandler.GetPerformanceAsync`             |
-| `settings.performance.update`        | `SettingsHandler.UpdatePerformanceAsync`          |
-| `settings.performance.reset`         | `SettingsHandler.ResetPerformanceAsync`           |
-| `settings.performance.calibrate`     | `SettingsHandler.CalibratePerformanceAsync`       |
-| `settings.network.get`               | `SettingsHandler.GetNetworkAsync`                 |
-| `settings.network.update`            | `SettingsHandler.UpdateNetworkAsync`              |
-| `settings.network.reset`             | `SettingsHandler.ResetNetworkAsync`               |
+| Method                           | Handler                                           |
+|----------------------------------|---------------------------------------------------|
+| `generator.active.start`         | `GeneratingActiveHandler.StartAsync`              |
+| `generator.active.cancel`        | `GeneratingActiveHandler.CancelAsync`             |
+| `generator.active.pause`         | `GeneratingActiveHandler.PauseAsync`              |
+| `generator.active.resume`        | `GeneratingActiveHandler.ResumeAsync`             |
+| `generator.active.cancelAll`     | `GeneratingActiveHandler.CancelAllAsync`          |
+| `generator.active.pauseAll`      | `GeneratingActiveHandler.PauseAllAsync`           |
+| `generator.active.list`          | `GeneratingActiveHandler.ListAsync`               |
+| `generator.active.query`         | `GeneratingActiveHandler.QueryAsync`              |
+| `generator.completed.list`       | `GeneratingCompletedHandler.ListAsync`            |
+| `generator.completed.query`      | `GeneratingCompletedHandler.QueryAsync`           |
+| `generator.completed.delete`     | `GeneratingCompletedHandler.DeleteAsync`          |
+| `generator.completed.deleteAll`  | `GeneratingCompletedHandler.DeleteAllAsync`       |
+| `recipe.list`                    | `RecipeHandler.ListAsync`                         |
+| `recipe.query`                   | `RecipeHandler.QueryAsync`                        |
+| `recipe.add`                     | `RecipeHandler.AddAsync`                          |
+| `recipe.update`                  | `RecipeHandler.UpdateAsync`                       |
+| `recipe.delete`                  | `RecipeHandler.DeleteAsync`                       |
+| `recipe.export`                  | `RecipeHandler.ExportAsync`                       |
+| `recipe.import`                  | `RecipeHandler.ImportAsync`                       |
+| `summarization.workbook`         | `SummarizationHandler.SummarizeWorkbookAsync`     |
+| `summarization.presentation`     | `SummarizationHandler.SummarizePresentationAsync` |
+| `summarization.recipe`           | `SummarizationHandler.SummarizeRecipeAsync`       |
+| `summarization.recipeById`       | `SummarizationHandler.SummarizeRecipeByIdAsync`   |
+| `settings.get`                   | `SettingsHandler.GetAsync`                        |
+| `settings.update`                | `SettingsHandler.UpdateAsync`                     |
+| `settings.reset`                 | `SettingsHandler.ResetAsync`                      |
+| `settings.performance.get`       | `SettingsHandler.GetPerformanceAsync`             |
+| `settings.performance.update`    | `SettingsHandler.UpdatePerformanceAsync`          |
+| `settings.performance.reset`     | `SettingsHandler.ResetPerformanceAsync`           |
+| `settings.performance.calibrate` | `SettingsHandler.CalibratePerformanceAsync`       |
+| `settings.network.get`           | `SettingsHandler.GetNetworkAsync`                 |
+| `settings.network.update`        | `SettingsHandler.UpdateNetworkAsync`              |
+| `settings.network.reset`         | `SettingsHandler.ResetNetworkAsync`               |
 
 Notifications emitted by the sidecar: `workflow/progress`.
 
 ## Concurrency: GateLocker
 
-`GateLocker<TGate>` (in `SlideGenerator.Coordinator`) provides per-gate semaphores parameterized over any enum. The concrete `GateType` enum lives in `SlideGenerator.Generator.Domain.Models` and is Generator-specific. `IGateLocker<GateType>` is registered in **Generator's** `Registration.cs` — not in Coordinator — with a lambda that reads limits from `ISettingProvider.Current.Performance` at runtime.
+`GateLocker<TGate>` (in `SlideGenerator.Coordinator`) provides per-gate semaphores parameterized over any enum. The
+concrete `GateType` enum lives in `SlideGenerator.Generator.Domain.Models` and is Generator-specific.
+`IGateLocker<GateType>` is registered in **Generator's** `Registration.cs` — not in Coordinator — with a lambda that
+reads limits from `ISettingProvider.Current.Performance` at runtime.
 
 ```csharp
 await gateLocker.AcquireAsync(GateType.DownloadImage, ct);
@@ -269,11 +292,13 @@ try { /* ... */ }
 finally { gateLocker.Release(GateType.DownloadImage); }
 ```
 
-Gate types (`SlideGenerator.Generator.Domain.Models.GateType`): `DownloadImage`, `EditImage`, `EditPresentation`, `ReadWorkbook`, `ReadPresentation`.
+Gate types (`SlideGenerator.Generator.Domain.Models.GateType`): `DownloadImage`, `EditImage`, `EditPresentation`,
+`ReadWorkbook`, `ReadPresentation`.
 
 ## Image Processing
 
-Both `SlideGenerator.Image` and `SlideGenerator.Document` use **MagickImage** as primary type. Convert to/from `byte[]` only at system boundaries (file I/O, Syncfusion API).
+Both `SlideGenerator.Image` and `SlideGenerator.Document` use **MagickImage** as primary type. Convert to/from `byte[]`
+only at system boundaries (file I/O, Syncfusion API).
 
 - `Utilities.Decode(byte[])` → `MagickImage`
 - `Utilities.Crop(MagickImage, Rectangle)` → `MagickImage`
@@ -283,7 +308,8 @@ Both `SlideGenerator.Image` and `SlideGenerator.Document` use **MagickImage** as
 
 ## Workflow System (WorkflowCore)
 
-`GeneratingWorkflow` orchestrates the full slide generation pipeline. It begins with two preparation steps before the phased pipeline:
+`GeneratingWorkflow` orchestrates the full slide generation pipeline. It begins with two preparation steps before the
+phased pipeline:
 
 | Stage                        | Steps                                                                                                  |
 |------------------------------|--------------------------------------------------------------------------------------------------------|
@@ -292,30 +318,47 @@ Both `SlideGenerator.Image` and `SlideGenerator.Document` use **MagickImage** as
 | Phase B – Resource Prep      | `ExtractData` (`.ForEach(ValidWorksheets)`) → `CollectImage` → `EditImage` (`.ForEach(ImageContexts)`) |
 | Phase C – Assembly & Cleanup | `ReplaceSlideData` (`.ForEach(SlideContexts)`) → `CloseAllHandles`                                     |
 
-Phase boundaries are enforced with `ExecutionResult.Next()` barriers — all items in a phase must complete before the next phase begins.
+Phase boundaries are enforced with `ExecutionResult.Next()` barriers — all items in a phase must complete before the
+next phase begins.
 
-**Strict iteration rule**: Use WorkflowCore `.ForEach()` for all collection iteration. **Never** use C# `foreach`, `Parallel.ForEach`, or `Task.WhenAll` inside a Step.
+**Strict iteration rule**: Use WorkflowCore `.ForEach()` for all collection iteration. **Never** use C# `foreach`,
+`Parallel.ForEach`, or `Task.WhenAll` inside a Step.
 
-**Data model**: `GeneratingContext` is the workflow's state class. Intermediate contexts (`SheetContext`, `ImageContext`, `SlideContext`, `ValidationItem`) are populated per phase and fed into `.ForEach()` loops. All live in `Domain/Models/Contexts/`.
+**Data model**: `GeneratingContext` is the workflow's state class. Intermediate contexts (`SheetContext`,
+`ImageContext`, `SlideContext`, `ValidationItem`) are populated per phase and fed into `.ForEach()` loops. All live in
+`Domain/Models/Contexts/`.
 
-**Persistence**: WorkflowCore persists `GeneratingContext` to SQLite (`%LOCALAPPDATA%\SlideGenerator\Workflows.db`) via Newtonsoft.Json. Fields that cannot serialize (file handles, `ILoggerFactory`) carry `[Newtonsoft.Json.JsonIgnore]`. Handles are lazily reopened after resume via `GetOrOpenWorkbook`/`GetOrOpenPresentation`/`GetOrOpenOutput` extension methods in `Application/Utilities.cs`.
+**Persistence**: WorkflowCore persists `GeneratingContext` to SQLite (`%LOCALAPPDATA%\SlideGenerator\Workflows.db`) via
+Newtonsoft.Json. Fields that cannot serialize (file handles, `ILoggerFactory`) carry `[Newtonsoft.Json.JsonIgnore]`.
+Handles are lazily reopened after resume via `GetOrOpenWorkbook`/`GetOrOpenPresentation`/`GetOrOpenOutput` extension
+methods in `Application/Utilities.cs`.
 
 **Step middleware** (registered in `AddGeneratorServices`):
-- `GeneratingMiddleware` — lazily initializes `GeneratingContext.LoggerFactory` (via `IFileLoggerFactory.CreateForFile`) before each step using `WorkflowLogPath`/`WorkflowScope` stored in context (survives persistence resume). Each step calls `data.LoggerFactory.CreateLogger(nameof(Step))` to get a named `ILogger`.
-- `GeneratingProgressMiddleware` — publishes `GeneratingEvent.StepCompleted` + resolved `GeneratingPhase` after each step
 
-**Lifecycle events**: `GeneratingService` subscribes to `IWorkflowHost.OnLifeCycleEvent` to publish `WorkflowCompleted`/`WorkflowError` via `IGeneratingEventBus`. Event types are in `WorkflowCore.Models.LifeCycleEvents`: `WorkflowCompleted`, `WorkflowError`, `WorkflowStarted`, `WorkflowSuspended`, `WorkflowResumed`, `WorkflowTerminated`.
+- `GeneratingMiddleware` — lazily initializes `GeneratingContext.LoggerFactory` (via `IFileLoggerFactory.CreateForFile`)
+  before each step using `WorkflowLogPath`/`WorkflowScope` stored in context (survives persistence resume). Each step
+  calls `data.LoggerFactory.CreateLogger(nameof(Step))` to get a named `ILogger`.
+- `GeneratingProgressMiddleware` — publishes `GeneratingEvent.StepCompleted` + resolved `GeneratingPhase` after each
+  step
+
+**Lifecycle events**: `GeneratingService` subscribes to `IWorkflowHost.OnLifeCycleEvent` to publish `WorkflowCompleted`/
+`WorkflowError` via `IGeneratingEventBus`. Event types are in `WorkflowCore.Models.LifeCycleEvents`:
+`WorkflowCompleted`, `WorkflowError`, `WorkflowStarted`, `WorkflowSuspended`, `WorkflowResumed`, `WorkflowTerminated`.
 
 **Progress enums** — each defined in the file where its concept lives:
+
 - `GeneratingPhase` — in `Application/Workflows/GeneratingWorkflow.cs`
 - `GeneratingEvent` — in `Application/Abstractions/IGeneratingEventBus.cs`
 - `GeneratingStatus` — in `Domain/Models/GeneratingStatus.cs`
 
-**Input mapping**: `Recipe.Nodes` defines the graph — each node maps a set of `Sheets` (Excel) to a presentation template. `TextInstruction` and `ImageInstruction` on each node drive placeholder replacement and image composition.
+**Input mapping**: `Recipe.Nodes` defines the graph — each node maps a set of `Sheets` (Excel) to a presentation
+template. `TextInstruction` and `ImageInstruction` on each node drive placeholder replacement and image composition.
 
-**Error resilience**: Each context class has a `ConcurrentDictionary<string, Exception> Errors`. Steps catch exceptions and record them, allowing partial success.
+**Error resilience**: Each context class has a `ConcurrentDictionary<string, Exception> Errors`. Steps catch exceptions
+and record them, allowing partial success.
 
-`ScanningService` (synchronous) provides workbook and presentation metadata (`WorkbookSummary`, `PresentationSummary`) used to validate instructions before running generation.
+`ScanningService` (synchronous) provides workbook and presentation metadata (`WorkbookSummary`, `PresentationSummary`)
+used to validate instructions before running generation.
 
 ## Testing
 
@@ -333,7 +376,8 @@ Phase boundaries are enforced with `ExecutionResult.Next()` barriers — all ite
 ```
 
 - **xUnit v3** — use `xunit.v3` package, NOT `xunit` v2.
-- `PackageReference Remove="StyleCop.Analyzers"` at top of every test `.csproj` (inherited from `Directory.Build.props` but not wanted in tests).
+- `PackageReference Remove="StyleCop.Analyzers"` at top of every test `.csproj` (inherited from `Directory.Build.props`
+  but not wanted in tests).
 
 ### Test naming
 
@@ -355,13 +399,17 @@ When a test needs access to `internal` types, add to the **source** project's `.
 
 ### NuGet transitivity pitfall
 
-`Directory.Build.props` sets `PrivateAssets="all"` on **all** `ProjectReference` items globally. NuGet packages from referenced projects do **not** flow transitively into test projects. Always add an explicit `PackageReference` for any NuGet package the test project uses directly — even if the source project already references it.
+`Directory.Build.props` sets `PrivateAssets="all"` on **all** `ProjectReference` items globally. NuGet packages from
+referenced projects do **not** flow transitively into test projects. Always add an explicit `PackageReference` for any
+NuGet package the test project uses directly — even if the source project already references it.
 
-Example: `SlideGenerator.Generator.Tests` must explicitly reference `WorkflowCore` even though `SlideGenerator.Generator` already does.
+Example: `SlideGenerator.Generator.Tests` must explicitly reference `WorkflowCore` even though
+`SlideGenerator.Generator` already does.
 
 ### WorkflowCore unit testing
 
-`WorkflowInstance` is a **concrete class** (`WorkflowCore.Models`), not an interface. Use object initializer, not `Substitute.For<>()`:
+`WorkflowInstance` is a **concrete class** (`WorkflowCore.Models`), not an interface. Use object initializer, not
+`Substitute.For<>()`:
 
 ```csharp
 var workflow = new WorkflowInstance { Data = data };
@@ -371,7 +419,8 @@ ctx.Workflow.Returns(workflow);
 
 ### What NOT to unit test
 
-Generator steps that require a Syncfusion license + real `.xlsx`/`.pptx` files belong to integration tests, not unit tests:
+Generator steps that require a Syncfusion license + real `.xlsx`/`.pptx` files belong to integration tests, not unit
+tests:
 
 - `ValidateRequest` — opens workbook via Syncfusion
 - `CreateTemplate` — copies and opens real .pptx
@@ -424,11 +473,13 @@ Injection/
 - Primary constructors (C# 12) for services: `public sealed class Foo(IBar bar) : IFoo`.
 - Extension members (C# 14) for `Registration.cs` and `Utilities.cs`.
 - Class names: max three words.
-- Use `#region`/`#endregion` to delimit logical sections within a file — never plain `//` comments for section separation.
+- Use `#region`/`#endregion` to delimit logical sections within a file — never plain `//` comments for section
+  separation.
 
 ## Security Patterns (CodeQL)
 
-CodeQL config lives at `.github/codeql/codeql-config.yml` and excludes `backend/tests/**` — test fixtures use deliberate hardcoded paths and are not production code.
+CodeQL config lives at `.github/codeql/codeql-config.yml` and excludes `backend/tests/**` — test fixtures use deliberate
+hardcoded paths and are not production code.
 
 ### Path injection (`cs/path-injection`)
 
@@ -439,9 +490,12 @@ CodeQL config lives at `.github/codeql/codeql-config.yml` and excludes `backend/
 filePath = Path.GetFullPath(filePath);
 ```
 
-`NameAndPaths.UserPath` resolves to `%LOCALAPPDATA%\SlideGenerator` normally, or to `BasePath` (executable directory) when the `--portable` flag is passed. Both branches are wrapped with `Path.GetFullPath` so all derived paths inherit the sanitization. **Do not remove those wrappers.**
+`NameAndPaths.UserPath` resolves to `%LOCALAPPDATA%\SlideGenerator` normally, or to `BasePath` (executable directory)
+when the `--portable` flag is passed. Both branches are wrapped with `Path.GetFullPath` so all derived paths inherit the
+sanitization. **Do not remove those wrappers.**
 
-`NameAndPaths.IsPortable` (private) is checked at each property access — no caching — so the flag is respected even if checked early at startup.
+`NameAndPaths.IsPortable` (private) is checked at each property access — no caching — so the flag is respected even if
+checked early at startup.
 
 Sub-path layout under `UserPath`:
 
@@ -459,7 +513,8 @@ UserPath/
 
 ### Resource injection (`cs/resource-injection`)
 
-SQLite connection strings must use `SqliteConnectionStringBuilder`, not string interpolation — the interpolation is what CodeQL tracks:
+SQLite connection strings must use `SqliteConnectionStringBuilder`, not string interpolation — the interpolation is what
+CodeQL tracks:
 
 ```csharp
 // ✅
@@ -471,7 +526,8 @@ $"Data Source={filePath}"
 
 ### Log forging (`cs/log-forging`)
 
-Strip line endings from path values before logging. `SettingManager` has a `private static string L(string? s)` helper for this; replicate the pattern in any new service that logs file paths from external input.
+Strip line endings from path values before logging. `SettingManager` has a `private static string L(string? s)` helper
+for this; replicate the pattern in any new service that logs file paths from external input.
 
 ## Invariants Checklist
 
@@ -484,7 +540,8 @@ Strip line endings from path values before logging. `SettingManager` has a `priv
 - [ ] `[Newtonsoft.Json.JsonIgnore]` on any non-serializable field in WorkflowCore data classes
 - [ ] Image handling uses MagickImage; byte arrays only at boundaries
 - [ ] All public APIs have XML documentation comments
-- [ ] IPC methods with a DTO param use `UseSingleObjectParameterDeserialization = true` (via the `Attr()` helper in `Program.cs`)
+- [ ] IPC methods with a DTO param use `UseSingleObjectParameterDeserialization = true` (via the `Attr()` helper in
+  `Program.cs`)
 - [ ] Serilog never writes to stdout — stderr only
 - [ ] User-supplied file paths go through `Path.GetFullPath()` at method entry
 - [ ] SQLite connection strings use `SqliteConnectionStringBuilder`, not string interpolation

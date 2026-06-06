@@ -3,9 +3,9 @@ name: "[Backend] Qodana"
 on:
   workflow_dispatch:
   pull_request:
-    branches: [main, develop]
+    branches: [ main, develop ]
   push:
-    branches: [main, develop]
+    branches: [ main, develop ]
     paths:
       - "backend/src/**"
       - "backend/Directory.Build.props"
