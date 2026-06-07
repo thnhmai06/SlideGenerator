@@ -1,40 +1,44 @@
 <Solution>
     <Folder Name="/Sources/Foundation/">
-        <Project Path="src/SlideGenerator.Utilities/SlideGenerator.Utilities.csproj"/>
-        <Project Path="src/SlideGenerator.Coordinator/SlideGenerator.Coordinator.csproj"/>
-        <Project Path="src/SlideGenerator.Cloud/SlideGenerator.Cloud.csproj"/>
-        <Project Path="src/SlideGenerator.Logging/SlideGenerator.Logging.csproj"/>
-        <Project Path="src/SlideGenerator.Document/SlideGenerator.Document.csproj"/>
-        <Project Path="src/SlideGenerator.Image/SlideGenerator.Image.csproj"/>
+        <Project Path="src/SlideGenerator.Utilities/SlideGenerator.Utilities.csproj" />
+        <Project Path="src/SlideGenerator.Coordinator/SlideGenerator.Coordinator.csproj" />
+        <Project Path="src/SlideGenerator.Cloud/SlideGenerator.Cloud.csproj" />
+        <Project Path="src/SlideGenerator.Logging/SlideGenerator.Logging.csproj" />
+        <Project Path="src/SlideGenerator.Document/SlideGenerator.Document.csproj" />
+        <Project Path="src/SlideGenerator.Image/SlideGenerator.Image.csproj" />
     </Folder>
     <Folder Name="/Sources/Domain/">
-        <Project Path="src/SlideGenerator.Settings/SlideGenerator.Settings.csproj"/>
-        <Project Path="src/SlideGenerator.Recipe/SlideGenerator.Recipe.csproj"/>
-        <Project Path="src/SlideGenerator.Summarization/SlideGenerator.Summarization.csproj"/>
+        <Project Path="src/SlideGenerator.Settings/SlideGenerator.Settings.csproj" />
+        <Project Path="src/SlideGenerator.Recipe/SlideGenerator.Recipe.csproj" />
+        <Project Path="src/SlideGenerator.Summarization/SlideGenerator.Summarization.csproj" />
     </Folder>
     <Folder Name="/Scripts/">
-        <Project Path="scripts/ApplyCopyright/ApplyCopyright.csproj"/>
+        <Project Path="scripts/ApplyCopyright/ApplyCopyright.csproj" />
     </Folder>
-    <Folder Name="/Sources/"/>
+    <Folder Name="/Sources/" />
     <Folder Name="/Sources/Application/">
-        <Project Path="src/SlideGenerator.Generator/SlideGenerator.Generator.csproj"/>
-        <Project Path="src/SlideGenerator.Stdio/SlideGenerator.Stdio.csproj"/>
+        <Project Path="src/SlideGenerator.Generator/SlideGenerator.Generator.csproj" />
     </Folder>
     <Folder Name="/Tests/Foundation/">
-        <Project Path="tests/SlideGenerator.Utilities.Tests/SlideGenerator.Utilities.Tests.csproj"/>
-        <Project Path="tests/SlideGenerator.Coordinator.Tests/SlideGenerator.Coordinator.Tests.csproj"/>
-        <Project Path="tests/SlideGenerator.Cloud.Tests/SlideGenerator.Cloud.Tests.csproj"/>
-        <Project Path="tests/SlideGenerator.Logging.Tests/SlideGenerator.Logging.Tests.csproj"/>
-        <Project Path="tests/SlideGenerator.Document.Tests/SlideGenerator.Document.Tests.csproj"/>
-        <Project Path="tests/SlideGenerator.Image.Tests/SlideGenerator.Image.Tests.csproj"/>
+        <Project Path="tests/SlideGenerator.Utilities.Tests/SlideGenerator.Utilities.Tests.csproj" />
+        <Project Path="tests/SlideGenerator.Coordinator.Tests/SlideGenerator.Coordinator.Tests.csproj" />
+        <Project Path="tests/SlideGenerator.Cloud.Tests/SlideGenerator.Cloud.Tests.csproj" />
+        <Project Path="tests/SlideGenerator.Logging.Tests/SlideGenerator.Logging.Tests.csproj" />
+        <Project Path="tests/SlideGenerator.Document.Tests/SlideGenerator.Document.Tests.csproj" />
+        <Project Path="tests/SlideGenerator.Image.Tests/SlideGenerator.Image.Tests.csproj" />
     </Folder>
     <Folder Name="/Tests/Domain/">
-        <Project Path="tests/SlideGenerator.Settings.Tests/SlideGenerator.Settings.Tests.csproj"/>
-        <Project Path="tests/SlideGenerator.Recipe.Tests/SlideGenerator.Recipe.Tests.csproj"/>
+        <Project Path="tests/SlideGenerator.Settings.Tests/SlideGenerator.Settings.Tests.csproj" />
+        <Project Path="tests/SlideGenerator.Recipe.Tests/SlideGenerator.Recipe.Tests.csproj" />
     </Folder>
-    <Folder Name="/Tests/"/>
+    <Folder Name="/Sources/Host/">
+        <Project Path="src/SlideGenerator.Stdio/SlideGenerator.Stdio.csproj" />
+    </Folder>
+    <Folder Name="/Tests/" />
     <Folder Name="/Tests/Application/">
-        <Project Path="tests/SlideGenerator.Generator.Tests/SlideGenerator.Generator.Tests.csproj"/>
-        <Project Path="tests/SlideGenerator.Stdio.Tests/SlideGenerator.Stdio.Tests.csproj"/>
+        <Project Path="tests/SlideGenerator.Generator.Tests/SlideGenerator.Generator.Tests.csproj" />
+    </Folder>
+    <Folder Name="/Tests/Host/">
+        <Project Path="tests/SlideGenerator.Stdio.Tests/SlideGenerator.Stdio.Tests.csproj" />
     </Folder>
 </Solution>

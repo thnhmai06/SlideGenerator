@@ -14,7 +14,7 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using SlideGenerator.Summarization.Application.Abstractions;
-using SlideGenerator.Summarization.Infrastructure.Services;
+using SlideGenerator.Summarization.Application.Services;
 
 namespace SlideGenerator.Summarization.Injection;
 

@@ -37,7 +37,8 @@ public interface IPresentation : IReadOnlyPresentation
     ///     Clones the slide at the specified index and appends the clone to the end of the presentation.
     /// </summary>
     /// <param name="slideIndex">The 0-based index of the slide to clone.</param>
-    void CloneSlide(int slideIndex);
+    /// <returns>Returns the zero-based index of the specified slide in the slide collection if found otherwise -1</returns>
+    int CloneSlide(int slideIndex);
 
     /// <summary>
     ///     Removes encryption from the presentation.

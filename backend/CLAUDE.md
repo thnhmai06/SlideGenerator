@@ -154,7 +154,9 @@ Domain Modules
 └── SlideGenerator.Recipe        - Recipe CRUD (SQLite) + export/import (*.recipe zip packages)
 
 Application
-├── SlideGenerator.Generator     - WorkflowCore generating pipeline (3-phase workflow)
+└── SlideGenerator.Generator     - WorkflowCore generating pipeline (3-phase workflow)
+
+Host
 └── SlideGenerator.Stdio         - JSON-RPC 2.0 IPC sidecar (StreamJsonRpc over stdin/stdout)
 ```
 
@@ -264,8 +266,6 @@ Stdio `Registration.cs` so that `WorkflowProgressObserver.Attach` can receive th
 | `recipe.import`                  | `RecipeHandler.ImportAsync`                       |
 | `summarization.workbook`         | `SummarizationHandler.SummarizeWorkbookAsync`     |
 | `summarization.presentation`     | `SummarizationHandler.SummarizePresentationAsync` |
-| `summarization.recipe`           | `SummarizationHandler.SummarizeRecipeAsync`       |
-| `summarization.recipeById`       | `SummarizationHandler.SummarizeRecipeByIdAsync`   |
 | `settings.get`                   | `SettingsHandler.GetAsync`                        |
 | `settings.update`                | `SettingsHandler.UpdateAsync`                     |
 | `settings.reset`                 | `SettingsHandler.ResetAsync`                      |

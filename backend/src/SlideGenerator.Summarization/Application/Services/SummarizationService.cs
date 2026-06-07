@@ -20,7 +20,7 @@ using SlideGenerator.Summarization.Domain.Models.Sheet;
 using SlideGenerator.Summarization.Domain.Models.Slide;
 using SlideGenerator.Summarization.Domain.Rules;
 
-namespace SlideGenerator.Summarization.Infrastructure.Services;
+namespace SlideGenerator.Summarization.Application.Services;
 
 /// <summary>
 ///     Provides discovery services for Excel workbooks and PowerPoint presentations.

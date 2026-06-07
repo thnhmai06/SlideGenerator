@@ -47,9 +47,9 @@ internal sealed class SfPresentation(
         core.Slides.RemoveAt(index);
     }
 
-    public void CloneSlide(int slideIndex)
+    public int CloneSlide(int slideIndex)
     {
-        core.Slides.Add(core.Slides[slideIndex].Clone());
+        return core.Slides.Add(core.Slides[slideIndex].Clone());
     }
 
     public void RemoveEncryption()

@@ -19,23 +19,23 @@ using IShape = SlideGenerator.Document.Domain.Abstractions.Slide.IShape;
 
 namespace SlideGenerator.Document.Infrastructure.Adapters.Slide;
 
-internal sealed class SfShape(Syncfusion.Presentation.IShape shape) : IShape
+internal sealed class SfShape(Syncfusion.Presentation.IShape core) : IShape
 {
     private const float EmuPerPixel = 9525.0f;
 
-    public string Name => shape.ShapeName;
-    public string DisplayText => shape.TextBody?.Text ?? string.Empty;
+    public string Name => core.ShapeName;
+    public string DisplayText => core.TextBody?.Text ?? string.Empty;
 
     public RectangleF Bounds => new(
-        (float)shape.Left / EmuPerPixel,
-        (float)shape.Top / EmuPerPixel,
-        (float)shape.Width / EmuPerPixel,
-        (float)shape.Height / EmuPerPixel);
+        (float)core.Left / EmuPerPixel,
+        (float)core.Top / EmuPerPixel,
+        (float)core.Width / EmuPerPixel,
+        (float)core.Height / EmuPerPixel);
 
     public IEnumerable<IParagraph> Paragraph =>
-        shape.TextBody.Paragraphs.Select(paragraph => new SfParagraph(paragraph));
+        core.TextBody.Paragraphs.Select(paragraph => new SfParagraph(paragraph));
 
-    public int ParagraphsCount => shape.TextBody.Paragraphs.Count;
+    public int ParagraphsCount => core.TextBody.Paragraphs.Count;
 
     public byte[]? ImageData
     {
@@ -45,19 +45,19 @@ internal sealed class SfShape(Syncfusion.Presentation.IShape shape) : IShape
 
     public IParagraph AddParagraph()
     {
-        var coreParagraph = shape.TextBody.AddParagraph();
+        var coreParagraph = core.TextBody.AddParagraph();
         return new SfParagraph(coreParagraph);
     }
 
     public void ClearParagraph()
     {
-        shape.TextBody.Paragraphs.Clear();
+        core.TextBody.Paragraphs.Clear();
     }
 
     private byte[]? GetOrSetImageData(byte[]? imageBytes = null)
     {
         // Picture
-        if (shape is IPicture picture)
+        if (core is IPicture picture)
         {
             if (imageBytes != null)
                 picture.ImageData = imageBytes;
@@ -65,11 +65,11 @@ internal sealed class SfShape(Syncfusion.Presentation.IShape shape) : IShape
         }
 
         // BlipFill
-        if (shape.Fill.FillType == FillType.Picture)
+        if (core.Fill.FillType == FillType.Picture)
         {
             if (imageBytes != null)
-                shape.Fill.PictureFill.ImageBytes = imageBytes;
-            return shape.Fill.PictureFill.ImageBytes;
+                core.Fill.PictureFill.ImageBytes = imageBytes;
+            return core.Fill.PictureFill.ImageBytes;
         }
 
         return null;
