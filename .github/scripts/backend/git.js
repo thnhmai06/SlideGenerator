@@ -1,22 +1,22 @@
-const { execSync } = require('child_process');
+const {execSync} = require('child_process');
 
 /**
- * Run a git command in repository workspace and return trimmed stdout.
+ * Run a git command in the repository workspace and return trimmed stdout.
  * @param {string} ws GitHub workspace path.
  * @param {string} command Git command to execute.
  * @returns {string} Trimmed stdout.
  */
 function exec(ws, command) {
-  return execSync(command, { cwd: ws, encoding: 'utf8' }).trim();
+    return execSync(command, {cwd: ws, encoding: 'utf8'}).trim();
 }
 
 /**
- * Read latest commit message for skip/full CI directives.
+ * Read the latest commit message for skip/full CI directives.
  * @param {string} ws GitHub workspace path.
  * @returns {string} Commit message body.
  */
 function commitMessage(ws) {
-  return exec(ws, 'git log -1 --pretty=%B');
+    return exec(ws, 'git log -1 --pretty=%B');
 }
 
 /**
@@ -27,10 +27,10 @@ function commitMessage(ws) {
  * @returns {string} Newline-delimited changed paths.
  */
 function changedFiles(ws, baseSha, headSha) {
-  return exec(ws, `git diff --name-only ${baseSha}...${headSha}`);
+    return exec(ws, `git diff --name-only ${baseSha}...${headSha}`);
 }
 
 module.exports = {
-  changedFiles,
-  commitMessage,
+    changedFiles,
+    commitMessage,
 };

@@ -1,5 +1,5 @@
-const { ZERO_SHA } = require('./constants');
-const { changedFiles } = require('./git');
+const {ZERO_SHA} = require('./constants');
+const {changedFiles} = require('./git');
 
 /**
  * Check commit directive that disables backend CI.
@@ -7,11 +7,11 @@ const { changedFiles } = require('./git');
  * @returns {boolean} True when CI should stop before matrix creation.
  */
 function shouldSkip(message) {
-  return message.startsWith('[skip ci]');
+    return message.startsWith('[skip ci]');
 }
 
 /**
- * Decide whether partial affected CI is unsafe or unnecessary.
+ * Decide whether partially affected CI is unsafe or unnecessary.
  * @param {object} input Decision inputs.
  * @param {string} input.ws GitHub workspace path.
  * @param {string} input.message Latest commit message.
@@ -21,30 +21,30 @@ function shouldSkip(message) {
  * @param {string} input.headSha Head commit SHA.
  * @returns {boolean} True when full CI should run.
  */
-function shouldRunFullCi({ ws, message, event, hasLabel, baseSha, headSha }) {
-  if (
-    message.startsWith('[full ci]') ||
-    message.startsWith('[full]') ||
-    event === 'release' ||
-    hasLabel ||
-    !baseSha ||
-    baseSha === ZERO_SHA
-  ) {
-    return true;
-  }
+function shouldRunFullCi({ws, message, event, hasLabel, baseSha, headSha}) {
+    if (
+        message.startsWith('[full ci]') ||
+        message.startsWith('[full]') ||
+        event === 'release' ||
+        hasLabel ||
+        !baseSha ||
+        baseSha === ZERO_SHA
+    ) {
+        return true;
+    }
 
-  let diff = '';
-  try {
-    diff = changedFiles(ws, baseSha, headSha);
-  } catch {
-    return true;
-  }
+    let diff = '';
+    try {
+        diff = changedFiles(ws, baseSha, headSha);
+    } catch {
+        return true;
+    }
 
-  return /^\.github\//m.test(diff) ||
-    /^backend\/(Directory\.(Build|Packages)\.props|global\.json|nuget\.config|[^/]+\.slnx)$/m.test(diff);
+    return /^\.github\//m.test(diff) ||
+        /^backend\/(Directory\.(Build|Packages)\.props|global\.json|nuget\.config|[^/]+\.slnx)$/m.test(diff);
 }
 
 module.exports = {
-  shouldRunFullCi,
-  shouldSkip,
+    shouldRunFullCi,
+    shouldSkip,
 };

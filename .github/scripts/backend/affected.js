@@ -1,4 +1,4 @@
-const { owningProject } = require('./project-graph');
+const {owningProject} = require('./project-graph');
 
 /**
  * Expand changed projects through transitive dependents.
@@ -9,23 +9,23 @@ const { owningProject } = require('./project-graph');
  * @param {Map<string, Set<string>>} input.dependents Dependency project name to dependents.
  * @returns {Set<string>} Changed projects plus all dependent projects.
  */
-function transitiveAffectedProjects({ ws, changedRaw, nameToDir, dependents }) {
-  const changedProjs = new Set(
-    changedRaw.split('\n').filter(Boolean).map(file => owningProject(ws, nameToDir, file)).filter(Boolean)
-  );
+function transitiveAffectedProjects({ws, changedRaw, nameToDir, dependents}) {
+    const changedProjects = new Set(
+        changedRaw.split('\n').filter(Boolean).map(file => owningProject(ws, nameToDir, file)).filter(Boolean)
+    );
 
-  const visited = new Set(changedProjs);
-  const queue = [...changedProjs];
-  while (queue.length) {
-    const p = queue.shift();
-    for (const dep of (dependents.get(p) || [])) {
-      if (!visited.has(dep)) {
-        visited.add(dep);
-        queue.push(dep);
-      }
+    const visited = new Set(changedProjects);
+    const queue = [...changedProjects];
+    while (queue.length) {
+        const p = queue.shift();
+        for (const dep of (dependents.get(p) || [])) {
+            if (!visited.has(dep)) {
+                visited.add(dep);
+                queue.push(dep);
+            }
+        }
     }
-  }
-  return visited;
+    return visited;
 }
 
 /**
@@ -38,25 +38,25 @@ function transitiveAffectedProjects({ ws, changedRaw, nameToDir, dependents }) {
  * @returns {{affectedProjects: {name: string, path: string}[], affectedTests: {name: string, path: string}[]}}
  * Production projects build when directly affected; test projects run when directly affected or referencing affected code.
  */
-function affectedProjectLists({ topo, visited, nameToDeps, nameToCsprojRel }) {
-  const affectedProjects = topo.filter(n =>
-    !n.endsWith('.Tests') && visited.has(n)
-  ).map(n => ({ name: n, path: nameToCsprojRel.get(n) }));
+function affectedProjectLists({topo, visited, nameToDeps, nameToCsprojRel}) {
+    const affectedProjects = topo.filter(n =>
+        !n.endsWith('.Tests') && visited.has(n)
+    ).map(n => ({name: n, path: nameToCsprojRel.get(n)}));
 
-  const affectedTests = topo.filter(n =>
-    n.endsWith('.Tests') && (
-      visited.has(n) ||
-      (nameToDeps.get(n) || []).some(d => visited.has(d))
-    )
-  ).map(n => ({ name: n, path: nameToCsprojRel.get(n) }));
+    const affectedTests = topo.filter(n =>
+            n.endsWith('.Tests') && (
+                visited.has(n) ||
+                (nameToDeps.get(n) || []).some(d => visited.has(d))
+            )
+    ).map(n => ({name: n, path: nameToCsprojRel.get(n)}));
 
-  return {
-    affectedProjects,
-    affectedTests,
-  };
+    return {
+        affectedProjects,
+        affectedTests,
+    };
 }
 
 module.exports = {
-  affectedProjectLists,
-  transitiveAffectedProjects,
+    affectedProjectLists,
+    transitiveAffectedProjects,
 };
