@@ -14,10 +14,14 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.8"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.9" />
         <PackageReference Include="NSubstitute" Version="5.*"/>
         <PackageReference Include="FluentAssertions" Version="8.10.0"/>
         <PackageReference Include="WorkflowCore" Version="3.18.0"/>
+        <PackageReference Update="coverlet.collector" Version="10.0.1">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="../../src/SlideGenerator.Generator/SlideGenerator.Generator.csproj"/>
