@@ -37,13 +37,14 @@ internal class SfParagraph(IParagraph core) : Domain.Abstractions.Slide.IParagra
             targetFont.Bold = sourceFont.Bold;
             targetFont.Italic = sourceFont.Italic;
             targetFont.Subscript = sourceFont.Subscript;
-            targetFont.Subscript = sourceFont.Subscript;
+            targetFont.Superscript = sourceFont.Superscript;
             targetFont.FontName = sourceFont.FontName;
             targetFont.FontSize = sourceFont.FontSize;
             targetFont.StrikeType = sourceFont.StrikeType;
             targetFont.Underline = sourceFont.Underline;
             targetFont.LanguageID = sourceFont.LanguageID;
-            targetFont.HighlightColor = sourceFont.HighlightColor;
+            if (sourceFont.HighlightColor.A != 0)
+                targetFont.HighlightColor = sourceFont.HighlightColor;
         }
 
         return new SfTextPart(coreTextPart);

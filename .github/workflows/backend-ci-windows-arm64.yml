@@ -149,6 +149,16 @@ jobs:
             [[ "$is_affected" == "false" ]] && cp -R "$proj_dir" backend/TestResults/
           done
 
+      - name: Collect test outputs
+        if: always()
+        shell: bash
+        run: |
+          find backend/tests -path "*/fixtures/output/*.pptx" -type f | while IFS= read -r f; do
+            proj=$(echo "$f" | sed 's|backend/tests/\([^/]*\)/.*|\1|')
+            mkdir -p "backend/TestResults/$proj/output"
+            cp "$f" "backend/TestResults/$proj/output/$(basename "$f")"
+          done
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v7

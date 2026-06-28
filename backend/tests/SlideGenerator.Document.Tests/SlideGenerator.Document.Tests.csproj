@@ -25,4 +25,20 @@
     <ItemGroup>
         <ProjectReference Include="../../src/SlideGenerator.Document/SlideGenerator.Document.csproj"/>
     </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Syncfusion.Presentation.NET" Version="*"/>
+        <PackageReference Include="CsvHelper" Version="33.*"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="..\fixtures\data\Template.pptx">
+            <Link>fixtures\data\Template.pptx</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Include="..\fixtures\data\Data.csv">
+            <Link>fixtures\data\Data.csv</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
 </Project>
