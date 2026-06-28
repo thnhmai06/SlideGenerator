@@ -19,40 +19,59 @@ using SlideGenerator.Recipe.Domain.Models.Components;
 
 namespace SlideGenerator.Recipe.Domain.Models.Graphs;
 
+#region Base
+
 /// <summary>
-///     Base record for all nodes in a recipe graph.
+///     Base record for any entity in the recipe graph that carries a unique identity and
+///     can serve as an endpoint of a directed <see cref="Edge" />.
 /// </summary>
-/// <param name="Id">Unique identifier of the node within the graph.</param>
+/// <param name="Id">Unique identifier within the graph.</param>
+/// <param name="Type">Discriminator indicating the concrete node type.</param>
+public abstract record Node(string Id, NodeType Type);
+
+/// <summary>
+///     A node that exists independently on the canvas and has its own position.
+///     Only <see cref="CanvasNode" /> instances appear in <see cref="RecipeGraph.Nodes" />.
+/// </summary>
+/// <param name="Id">Unique identifier within the graph.</param>
 /// <param name="Type">Discriminator indicating the concrete node type.</param>
 /// <param name="Position">Canvas position of the node.</param>
-public abstract record Node(
-    string Id,
-    NodeType Type,
-    Point Position);
+public abstract record CanvasNode(string Id, NodeType Type, Point Position) : Node(Id, Type);
+
+/// <summary>
+///     A node embedded inside a <see cref="CanvasNode" /> container — it does not appear
+///     at the top level of <see cref="RecipeGraph.Nodes" /> and has no canvas position.
+///     It can still be an edge endpoint via its <see cref="Node.Id" />.
+/// </summary>
+/// <param name="Id">Unique identifier within the graph.</param>
+/// <param name="Type">Discriminator indicating the concrete node type.</param>
+public abstract record ChildNode(string Id, NodeType Type) : Node(Id, Type);
+
+#endregion
+
+#region Workbooks
 
 /// <summary>
 ///     A node that references an Excel workbook file.
-///     Acts as a container — its child <see cref="WorksheetNode" /> instances are found by matching
-///     their <see cref="WorksheetNode.ParentId" /> to this node's <see cref="Node.Id" />.
+///     Child <see cref="WorksheetNode" /> instances that participate in the recipe
+///     are stored directly in <see cref="Sheets" />.
 /// </summary>
-/// <param name="Id">Unique identifier of the node within the graph.</param>
+/// <param name="Id">Unique identifier within the graph.</param>
 /// <param name="Position">Canvas position of the node.</param>
 /// <param name="Workbook">Identifies the workbook file.</param>
+/// <param name="Sheets">Worksheet nodes that participate in this recipe.</param>
 public record WorkbookNode(
     string Id,
     Point Position,
-    WorkbookIdentifier Workbook) //! DON'T STORE WORKSHEETS HERE
-    : Node(Id, NodeType.Workbook, Position);
+    WorkbookIdentifier Workbook,
+    IReadOnlyList<WorksheetNode> Sheets)
+    : CanvasNode(Id, NodeType.Workbook, Position);
 
 /// <summary>
 ///     A node that represents one worksheet within a parent <see cref="WorkbookNode" />.
 ///     Configures which columns and rows are exposed to connected <see cref="MapNode" /> instances.
 /// </summary>
-/// <param name="Id">Unique identifier of the node within the graph.</param>
-/// <param name="Position">Canvas position of the node.</param>
-/// <param name="ParentId">
-///     <see cref="Node.Id" /> of the <see cref="WorkbookNode" /> that owns this worksheet.
-/// </param>
+/// <param name="Id">Unique identifier within the graph.</param>
 /// <param name="Worksheet">Identifies the worksheet by name within the parent workbook.</param>
 /// <param name="AllowedColumns">
 ///     Column headers visible to downstream nodes. <see langword="null" /> means all columns are allowed.
@@ -62,49 +81,49 @@ public record WorkbookNode(
 /// </param>
 public record WorksheetNode(
     string Id,
-    Point Position,
-    string ParentId,
     WorksheetIdentifier Worksheet,
     IReadOnlySet<ColumnIdentifier>? AllowedColumns = null,
     RowFilter? RowFilter = null)
-    : Node(Id, NodeType.Worksheet, Position);
+    : ChildNode(Id, NodeType.Worksheet);
+
+#endregion
+
+#region Presentations
 
 /// <summary>
 ///     A node that references a PowerPoint presentation file.
-///     Acts as a container — its child <see cref="SlideNode" /> instances are found by matching
-///     their <see cref="SlideNode.ParentId" /> to this node's <see cref="Node.Id" />.
+///     Child <see cref="SlideNode" /> instances that participate in the recipe
+///     are stored directly in <see cref="Slides" />.
 /// </summary>
-/// <param name="Id">Unique identifier of the node within the graph.</param>
+/// <param name="Id">Unique identifier within the graph.</param>
 /// <param name="Position">Canvas position of the node.</param>
 /// <param name="Presentation">Identifies the presentation file.</param>
+/// <param name="Slides">Slide nodes that participate in this recipe.</param>
 public record PresentationNode(
     string Id,
     Point Position,
-    PresentationIdentifier Presentation) //! DON'T STORE SLIDES HERE
-    : Node(Id, NodeType.Presentation, Position);
+    PresentationIdentifier Presentation,
+    IReadOnlyList<SlideNode> Slides)
+    : CanvasNode(Id, NodeType.Presentation, Position);
 
 /// <summary>
 ///     A node that represents one slide within a parent <see cref="PresentationNode" />.
 /// </summary>
-/// <param name="Id">Unique identifier of the node within the graph.</param>
-/// <param name="Position">Canvas position of the node.</param>
-/// <param name="ParentId">
-///     <see cref="Node.Id" /> of the <see cref="PresentationNode" /> that owns this slide.
-/// </param>
+/// <param name="Id">Unique identifier within the graph.</param>
 /// <param name="Slide">Identifies the slide by 1-based index within the parent presentation.</param>
-public record SlideNode(
-    string Id,
-    Point Position,
-    string ParentId,
-    SlideIdentifier Slide)
-    : Node(Id, NodeType.Slide, Position);
+public record SlideNode(string Id, SlideIdentifier Slide)
+    : ChildNode(Id, NodeType.Slide);
+
+#endregion
+
+#region Domain
 
 /// <summary>
 ///     A node that defines how data flows from one or more <see cref="WorksheetNode" /> sources
 ///     to a <see cref="SlideNode" /> target. Connections are expressed as directed <see cref="Edge" /> records
 ///     in the containing <see cref="RecipeGraph" />.
 /// </summary>
-/// <param name="Id">Unique identifier of the node within the graph.</param>
+/// <param name="Id">Unique identifier within the graph.</param>
 /// <param name="Position">Canvas position of the node.</param>
 /// <param name="TextInstructions">Rules for mapping worksheet columns to slide text placeholders.</param>
 /// <param name="ImageInstructions">Rules for mapping worksheet columns to slide image shapes.</param>
@@ -113,12 +132,12 @@ public record MapNode(
     Point Position,
     IReadOnlyList<TextInstruction> TextInstructions,
     IReadOnlyList<ImageInstruction> ImageInstructions)
-    : Node(Id, NodeType.Map, Position);
+    : CanvasNode(Id, NodeType.Map, Position);
 
 /// <summary>
 ///     A free-floating annotation node on the canvas.
 /// </summary>
-/// <param name="Id">Unique identifier of the node within the graph.</param>
+/// <param name="Id">Unique identifier within the graph.</param>
 /// <param name="Position">Canvas position of the node.</param>
 /// <param name="Color">Background color of the comment card.</param>
 /// <param name="Opacity">Opacity of the comment card, in the range [0, 1].</param>
@@ -129,4 +148,6 @@ public record CommentNode(
     Color Color,
     float Opacity,
     string MarkdownText)
-    : Node(Id, NodeType.Comment, Position);
+    : CanvasNode(Id, NodeType.Comment, Position);
+
+#endregion

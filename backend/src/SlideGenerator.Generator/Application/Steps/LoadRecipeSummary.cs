@@ -46,7 +46,8 @@ public sealed class LoadRecipeSummary(IRecipeRepository recipeRepository) : Step
                         .Where(e => e.ToId == mapNode.Id)
                         .Select(e => e.FromId)
                         .ToHashSet();
-                    return graph.Nodes.OfType<WorksheetNode>()
+                    return graph.Nodes.OfType<WorkbookNode>()
+                        .SelectMany(wb => wb.Sheets)
                         .Where(ws => incomingIds.Contains(ws.Id))
                         .Select(ws => new ValidationItem(ws, mapNode));
                 })

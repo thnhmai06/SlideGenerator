@@ -82,8 +82,8 @@ internal static class StepHelper
         var templatePresentation = new PresentationIdentifier(Path.Combine(Path.GetTempPath(), "template.pptx"));
         var outputId = new PresentationIdentifier(
             outputPath ?? Path.Combine(Path.GetTempPath(), "output.pptx"));
-        var worksheetNode = new WorksheetNode("ws-1", Point.Empty, "wb-1", new WorksheetIdentifier("Sheet1"));
-        var slideNode = new SlideNode("slide-1", Point.Empty, "pres-1", new SlideIdentifier(1));
+        var worksheetNode = new WorksheetNode("ws-1", new WorksheetIdentifier("Sheet1"));
+        var slideNode = new SlideNode("slide-1", new SlideIdentifier(1));
         var mapNode = new MapNode("map-1", Point.Empty, [], []);
         return new SheetContext(workbook, worksheetNode, slideNode, mapNode, templatePresentation, outputId);
     }

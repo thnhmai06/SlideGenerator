@@ -15,25 +15,33 @@
 namespace SlideGenerator.Recipe.Domain.Models.Graphs;
 
 /// <summary>
-///     Discriminates the concrete type of a <see cref="Node" /> within a recipe graph.
+///     Discriminates the concrete type of <see cref="Node" /> within a recipe graph.
 /// </summary>
 public enum NodeType
 {
+    #region Canvas Nodes
+
     /// <summary>Represents an Excel workbook file.</summary>
     Workbook,
 
-    /// <summary>Represents a worksheet that belongs to a <see cref="Workbook" /> node.</summary>
-    Worksheet,
-
     /// <summary>Represents a PowerPoint presentation file.</summary>
     Presentation,
-
-    /// <summary>Represents a slide that belongs to a <see cref="Presentation" /> node.</summary>
-    Slide,
 
     /// <summary>Represents a mapping that connects worksheet sources to a slide target.</summary>
     Map,
 
     /// <summary>Represents a free-floating annotation on the canvas.</summary>
-    Comment
+    Comment,
+
+    #endregion
+
+    #region Child Nodes
+
+    /// <summary>Represents a worksheet that belongs to a <see cref="Workbook" /> node.</summary>
+    Worksheet,
+
+    /// <summary>Represents a slide that belongs to a <see cref="Presentation" /> node.</summary>
+    Slide
+
+    #endregion
 }

@@ -40,7 +40,8 @@ public enum RowFilterMode
 [JsonDerivedType(typeof(PartitionBlockFilter), nameof(RowFilterMode.PartitionBlock))]
 public abstract record RowFilter
 {
-    /// <summary>Gets the strategy discriminator.</summary>
+    /// <summary>Gets the strategy discriminator — ignored by STJ since the <c>mode</c> discriminator already encodes this value.</summary>
+    [JsonIgnore]
     public abstract RowFilterMode Mode { get; }
 }
 
@@ -50,6 +51,7 @@ public abstract record RowFilter
 public sealed record AllRowFilter : RowFilter
 {
     /// <inheritdoc />
+    [JsonIgnore]
     public override RowFilterMode Mode => RowFilterMode.All;
 }
 
@@ -61,6 +63,7 @@ public sealed record AllRowFilter : RowFilter
 public sealed record IndexRangeFilter(int From, int To) : RowFilter
 {
     /// <inheritdoc />
+    [JsonIgnore]
     public override RowFilterMode Mode => RowFilterMode.IndexRange;
 }
 
@@ -80,16 +83,17 @@ public sealed record IndexRangeFilter(int From, int To) : RowFilter
 public sealed record PartitionBlockFilter(int PartitionIndex, int PartitionCount) : RowFilter
 {
     /// <inheritdoc />
+    [JsonIgnore]
     public override RowFilterMode Mode => RowFilterMode.PartitionBlock;
 
     /// <summary>Resolves the inclusive start row (0-based) for the given total row count.</summary>
-    public int ResolveStart(int totalRows)
+    public int GetStart(int totalRows)
     {
         return totalRows * PartitionIndex / PartitionCount;
     }
 
     /// <summary>Resolves the exclusive end row (0-based) for the given total row count.</summary>
-    public int ResolveEnd(int totalRows)
+    public int GetEnd(int totalRows)
     {
         return totalRows * (PartitionIndex + 1) / PartitionCount;
     }

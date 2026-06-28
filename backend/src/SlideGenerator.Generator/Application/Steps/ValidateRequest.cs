@@ -51,11 +51,11 @@ public sealed class ValidateRequest(
 
         // Resolve the parent WorkbookNode to get the full file path.
         var workbookNode = data.RecipeGraph?.Nodes.OfType<WorkbookNode>()
-            .FirstOrDefault(n => n.Id == worksheetNode.ParentId);
+            .FirstOrDefault(n => n.Sheets.Any(s => s.Id == worksheetNode.Id));
         if (workbookNode == null)
         {
-            logger.LogError("Parent WorkbookNode '{ParentId}' not found for worksheet '{SheetName}'.",
-                worksheetNode.ParentId, worksheetNode.Worksheet.SheetName);
+            logger.LogError("Parent WorkbookNode not found for worksheet '{SheetName}'.",
+                worksheetNode.Worksheet.SheetName);
             return ExecutionResult.Next();
         }
 
@@ -65,10 +65,10 @@ public sealed class ValidateRequest(
             .Select(e => e.ToId)
             .FirstOrDefault();
         var slideNode = slideNodeId != null
-            ? data.RecipeGraph.Nodes.OfType<SlideNode>().FirstOrDefault(n => n.Id == slideNodeId)
+            ? data.RecipeGraph.Nodes.OfType<PresentationNode>().SelectMany(p => p.Slides).FirstOrDefault(n => n.Id == slideNodeId)
             : null;
         var presentationNode = slideNode != null
-            ? data.RecipeGraph.Nodes.OfType<PresentationNode>().FirstOrDefault(n => n.Id == slideNode.ParentId)
+            ? data.RecipeGraph.Nodes.OfType<PresentationNode>().FirstOrDefault(n => n.Slides.Any(s => s.Id == slideNode.Id))
             : null;
 
         if (slideNode == null || presentationNode == null)

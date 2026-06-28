@@ -93,7 +93,7 @@ public sealed class RecipeRepositoryPackageTests : IDisposable
         var dir = NewTempDir();
         var wbPath = CreateDummyFile(dir, "sales.xlsx");
         var graph = new RecipeGraph(
-            [new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath))], []);
+            [new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath), [])], []);
         var metadata = await _repo.AddAsync(new RecipeInput("Test", graph), TestContext.Current.CancellationToken);
         var zipPath = NewZipPath(dir);
 
@@ -115,7 +115,7 @@ public sealed class RecipeRepositoryPackageTests : IDisposable
         var dir = NewTempDir();
         var presPath = CreateDummyFile(dir, "template.pptx");
         var graph = new RecipeGraph(
-            [new PresentationNode("pres1", new Point(0, 0), new PresentationIdentifier(presPath))], []);
+            [new PresentationNode("pres1", new Point(0, 0), new PresentationIdentifier(presPath), [])], []);
         var metadata = await _repo.AddAsync(new RecipeInput("Test", graph), TestContext.Current.CancellationToken);
         var zipPath = NewZipPath(dir);
 
@@ -141,8 +141,8 @@ public sealed class RecipeRepositoryPackageTests : IDisposable
         var wbPath2 = CreateDummyFile(dirB, "data.xlsx");
         var graph = new RecipeGraph(
         [
-            new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath1)),
-            new WorkbookNode("wb2", new Point(100, 0), new WorkbookIdentifier(wbPath2))
+            new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath1), []),
+            new WorkbookNode("wb2", new Point(100, 0), new WorkbookIdentifier(wbPath2), [])
         ], []);
         var metadata = await _repo.AddAsync(new RecipeInput("Test", graph), TestContext.Current.CancellationToken);
         var zipPath = NewZipPath(dirA);
@@ -166,7 +166,7 @@ public sealed class RecipeRepositoryPackageTests : IDisposable
         var dir = NewTempDir();
         var wbPath = CreateDummyFile(dir, "my file.xlsx");
         var graph = new RecipeGraph(
-            [new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath))], []);
+            [new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath), [])], []);
         var metadata = await _repo.AddAsync(new RecipeInput("Test", graph), TestContext.Current.CancellationToken);
         var zipPath = NewZipPath(dir);
 
@@ -276,7 +276,7 @@ public sealed class RecipeRepositoryPackageTests : IDisposable
         var srcDir = NewTempDir();
         var wbPath = CreateDummyFile(srcDir, "report.xlsx");
         var graph = new RecipeGraph(
-            [new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath))], []);
+            [new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath), [])], []);
         var exported = await _repo.AddAsync(new RecipeInput("Round-trip", graph),
             TestContext.Current.CancellationToken);
         var zipPath = NewZipPath(srcDir);

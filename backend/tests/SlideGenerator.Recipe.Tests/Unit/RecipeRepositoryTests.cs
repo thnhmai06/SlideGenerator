@@ -67,7 +67,7 @@ public sealed class RecipeRepositoryTests : IDisposable
     }
 
     /// <summary>Returns an input whose graph contains the given nodes.</summary>
-    private static RecipeInput Input(string name, params Node[] nodes)
+    private static RecipeInput Input(string name, params CanvasNode[] nodes)
     {
         return new RecipeInput(name, new RecipeGraph(nodes, []));
     }
@@ -108,7 +108,7 @@ public sealed class RecipeRepositoryTests : IDisposable
     public async Task AddAsync_WithWorkbookNode_GraphRoundTripsNodeCount()
     {
         var wbPath = Path.GetFullPath("dummy.xlsx");
-        var node = new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath));
+        var node = new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath), []);
         var metadata = await _repo.AddAsync(Input("WithNode", node), TestContext.Current.CancellationToken);
 
         var entry = await _repo.GetAsync(metadata.Id, TestContext.Current.CancellationToken);
@@ -125,7 +125,7 @@ public sealed class RecipeRepositoryTests : IDisposable
     public async Task AddAsync_WithPresentationNode_GraphRoundTripsPresentationPath()
     {
         var presPath = Path.GetFullPath("template.pptx");
-        var node = new PresentationNode("pres1", new Point(0, 0), new PresentationIdentifier(presPath));
+        var node = new PresentationNode("pres1", new Point(0, 0), new PresentationIdentifier(presPath), []);
         var metadata = await _repo.AddAsync(Input("WithPres", node), TestContext.Current.CancellationToken);
 
         var entry = await _repo.GetAsync(metadata.Id, TestContext.Current.CancellationToken);
@@ -187,8 +187,8 @@ public sealed class RecipeRepositoryTests : IDisposable
     public async Task GetAsync_ExistingId_ReturnsGraphWithCorrectNodeCount()
     {
         var wbPath = Path.GetFullPath("a.xlsx");
-        var n1 = new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath));
-        var n2 = new WorkbookNode("wb2", new Point(100, 0), new WorkbookIdentifier(wbPath));
+        var n1 = new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath), []);
+        var n2 = new WorkbookNode("wb2", new Point(100, 0), new WorkbookIdentifier(wbPath), []);
         var metadata = await _repo.AddAsync(Input("TwoNodes", n1, n2), TestContext.Current.CancellationToken);
 
         var entry = await _repo.GetAsync(metadata.Id, TestContext.Current.CancellationToken);
@@ -236,7 +236,7 @@ public sealed class RecipeRepositoryTests : IDisposable
     public async Task ListAsync_EntryWithNodes_ReturnsGraphWithNodeCount()
     {
         var wbPath = Path.GetFullPath("wb.xlsx");
-        var node = new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath));
+        var node = new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath), []);
         var metadata = await _repo.AddAsync(Input("WithNode", node), TestContext.Current.CancellationToken);
 
         var list = await _repo.ListAsync(TestContext.Current.CancellationToken);
@@ -283,7 +283,7 @@ public sealed class RecipeRepositoryTests : IDisposable
     {
         var metadata = await _repo.AddAsync(Input("Recipe"), TestContext.Current.CancellationToken);
         var wbPath = Path.GetFullPath("new.xlsx");
-        var node = new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath));
+        var node = new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath), []);
 
         await _repo.UpdateAsync(metadata.Id, Input("Recipe", node), TestContext.Current.CancellationToken);
         var entry = await _repo.GetAsync(metadata.Id, TestContext.Current.CancellationToken);
@@ -452,8 +452,8 @@ public sealed class RecipeRepositoryTests : IDisposable
 
             var graph = new RecipeGraph(
                 [
-                    new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath)),
-                    new PresentationNode("ppt1", new Point(0, 0), new PresentationIdentifier(pptPath))
+                    new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath), []),
+                    new PresentationNode("ppt1", new Point(0, 0), new PresentationIdentifier(pptPath), [])
                 ],
                 []);
             var exported = await _repo.AddAsync(new RecipeInput("OrigName", graph),
@@ -537,7 +537,7 @@ public sealed class RecipeRepositoryTests : IDisposable
             await File.WriteAllBytesAsync(wbPath, [], TestContext.Current.CancellationToken);
 
             var graph = new RecipeGraph(
-                [new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath))], []);
+                [new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath), [])], []);
             var exported = await _repo.AddAsync(new RecipeInput("SlipTest", graph),
                 TestContext.Current.CancellationToken);
             await _repo.ExportAsync(exported.Id, zipPath, null, TestContext.Current.CancellationToken);
@@ -653,7 +653,7 @@ public sealed class RecipeRepositoryTests : IDisposable
             await File.WriteAllBytesAsync(wbPath, [0x01], TestContext.Current.CancellationToken);
 
             var graph = new RecipeGraph(
-                [new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath))], []);
+                [new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath), [])], []);
             var exported = await _repo.AddAsync(new RecipeInput("DupImport", graph),
                 TestContext.Current.CancellationToken);
             await _repo.ExportAsync(exported.Id, zipPath, null, TestContext.Current.CancellationToken);
@@ -714,8 +714,8 @@ public sealed class RecipeRepositoryTests : IDisposable
 
             var graph = new RecipeGraph(
                 [
-                    new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wb1)),
-                    new WorkbookNode("wb2", new Point(1, 0), new WorkbookIdentifier(wb2))
+                    new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wb1), []),
+                    new WorkbookNode("wb2", new Point(1, 0), new WorkbookIdentifier(wb2), [])
                 ],
                 []);
             var exported = await _repo.AddAsync(new RecipeInput("DupStem", graph),
@@ -823,7 +823,7 @@ public sealed class RecipeRepositoryTests : IDisposable
             await File.WriteAllBytesAsync(pptPath, [0x01], TestContext.Current.CancellationToken);
 
             var graph = new RecipeGraph(
-                [new PresentationNode("ppt1", new Point(0, 0), new PresentationIdentifier(pptPath))], []);
+                [new PresentationNode("ppt1", new Point(0, 0), new PresentationIdentifier(pptPath), [])], []);
             var exported = await _repo.AddAsync(new RecipeInput("PptDedup", graph),
                 TestContext.Current.CancellationToken);
             await _repo.ExportAsync(exported.Id, zipPath, null, TestContext.Current.CancellationToken);
@@ -873,7 +873,7 @@ public sealed class RecipeRepositoryTests : IDisposable
             await File.WriteAllBytesAsync(wbPath, [0x01], TestContext.Current.CancellationToken);
 
             var graph = new RecipeGraph(
-                [new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath))], []);
+                [new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath), [])], []);
             var exported = await _repo.AddAsync(new RecipeInput("MultiConflict", graph),
                 TestContext.Current.CancellationToken);
             await _repo.ExportAsync(exported.Id, zipPath, null, TestContext.Current.CancellationToken);
@@ -934,8 +934,8 @@ public sealed class RecipeRepositoryTests : IDisposable
 
             var graph = new RecipeGraph(
             [
-                new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wb1)),
-                new WorkbookNode("wb2", new Point(1, 0), new WorkbookIdentifier(wb2))
+                new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wb1), []),
+                new WorkbookNode("wb2", new Point(1, 0), new WorkbookIdentifier(wb2), [])
             ], []);
             var exported = await _repo.AddAsync(new RecipeInput("DupConflict", graph),
                 TestContext.Current.CancellationToken);
@@ -1211,8 +1211,8 @@ public sealed class RecipeRepositoryTests : IDisposable
 
             var graph = new RecipeGraph(
             [
-                new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath)),
-                new PresentationNode("ppt1", new Point(1, 0), new PresentationIdentifier(pptPath))
+                new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath), []),
+                new PresentationNode("ppt1", new Point(1, 0), new PresentationIdentifier(pptPath), [])
             ], []);
             var exported = await _repo.AddAsync(new RecipeInput("EncryptedWithFiles", graph),
                 TestContext.Current.CancellationToken);
@@ -1275,9 +1275,9 @@ public sealed class RecipeRepositoryTests : IDisposable
 
             var graph = new RecipeGraph(
             [
-                new WorkbookNode("a", new Point(0, 0), new WorkbookIdentifier(wbA)),
-                new WorkbookNode("b", new Point(1, 0), new WorkbookIdentifier(wbB)),
-                new WorkbookNode("c", new Point(2, 0), new WorkbookIdentifier(wbC))
+                new WorkbookNode("a", new Point(0, 0), new WorkbookIdentifier(wbA), []),
+                new WorkbookNode("b", new Point(1, 0), new WorkbookIdentifier(wbB), []),
+                new WorkbookNode("c", new Point(2, 0), new WorkbookIdentifier(wbC), [])
             ], []);
             var exported = await _repo.AddAsync(new RecipeInput("StemCollision", graph),
                 TestContext.Current.CancellationToken);

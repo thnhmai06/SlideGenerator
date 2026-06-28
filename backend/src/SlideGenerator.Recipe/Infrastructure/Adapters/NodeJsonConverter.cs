@@ -19,13 +19,14 @@ using SlideGenerator.Recipe.Domain.Models.Graphs;
 namespace SlideGenerator.Recipe.Infrastructure.Adapters;
 
 /// <summary>
-///     Polymorphic STJ converter for <see cref="Node" /> — discriminates on the <c>type</c> field
-///     mapped to <see cref="NodeType" />.
+///     Polymorphic STJ converter for <see cref="CanvasNode" /> — discriminates on the <c>type</c> field
+///     mapped to <see cref="NodeType" />. Only handles top-level canvas node types;
+///     <see cref="ChildNode" /> subtypes are serialized inline by their parent and do not require this converter.
 /// </summary>
-public sealed class NodeJsonConverter : JsonConverter<Node>
+public sealed class NodeJsonConverter : JsonConverter<CanvasNode>
 {
     /// <inheritdoc />
-    public override Node? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    public override CanvasNode? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         using var doc = JsonDocument.ParseValue(ref reader);
         var root = doc.RootElement;
@@ -37,9 +38,7 @@ public sealed class NodeJsonConverter : JsonConverter<Node>
         return nodeType switch
         {
             NodeType.Workbook => JsonSerializer.Deserialize<WorkbookNode>(raw, options),
-            NodeType.Worksheet => JsonSerializer.Deserialize<WorksheetNode>(raw, options),
             NodeType.Presentation => JsonSerializer.Deserialize<PresentationNode>(raw, options),
-            NodeType.Slide => JsonSerializer.Deserialize<SlideNode>(raw, options),
             NodeType.Map => JsonSerializer.Deserialize<MapNode>(raw, options),
             NodeType.Comment => JsonSerializer.Deserialize<CommentNode>(raw, options),
             _ => null
@@ -47,7 +46,7 @@ public sealed class NodeJsonConverter : JsonConverter<Node>
     }
 
     /// <inheritdoc />
-    public override void Write(Utf8JsonWriter writer, Node value, JsonSerializerOptions options)
+    public override void Write(Utf8JsonWriter writer, CanvasNode value, JsonSerializerOptions options)
     {
         JsonSerializer.Serialize(writer, value, value.GetType(), options);
     }
