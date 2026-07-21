@@ -5,7 +5,8 @@
       "PowerShell(Get-ChildItem *)",
       "Skill(unit-testing-test-generate)",
       "Skill(clean-architecture)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "mcp__codegraph__codegraph_files"
     ]
   }
 }

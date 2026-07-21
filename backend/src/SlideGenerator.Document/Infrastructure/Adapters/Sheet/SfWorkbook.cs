@@ -20,13 +20,14 @@ namespace SlideGenerator.Document.Infrastructure.Adapters.Sheet;
 
 /// <summary>
 ///     Wraps a Syncfusion IWorkbook and its FileStream for proper disposal and saving.
-///     Uses lazy initialization to defer file access until the <see cref="Value" /> is accessed.
 /// </summary>
 internal sealed class SfWorkbook(
     IWorkbook value,
     WorkbookIdentifier identifier,
     FileStream? fileStream = null) : Domain.Abstractions.Sheet.IWorkbook
 {
+    public WorkbookIdentifier Identifier { get; } = identifier;
+
     public IEnumerable<IWorksheet> Worksheets
     {
         get { return value.Worksheets.Select(worksheet => new SfWorksheet(worksheet)); }
@@ -43,14 +44,14 @@ internal sealed class SfWorkbook(
     /// </summary>
     public void Save()
     {
-        switch (identifier.GetBookType())
+        switch (Identifier.GetBookType())
         {
             case BookType.Csv:
             case BookType.Tsv:
                 if (fileStream == null)
-                    value.SaveAs(identifier.BookPath, identifier.Separator);
+                    value.SaveAs(Identifier.BookPath, Identifier.Separator);
                 else
-                    value.SaveAs(fileStream, identifier.Separator);
+                    value.SaveAs(fileStream, Identifier.Separator);
                 break;
 
             case BookType.Xls:
@@ -59,7 +60,7 @@ internal sealed class SfWorkbook(
             case BookType.Ods:
             default:
                 if (fileStream == null)
-                    value.SaveAs(identifier.BookPath);
+                    value.SaveAs(Identifier.BookPath);
                 else
                     value.SaveAs(fileStream);
                 break;

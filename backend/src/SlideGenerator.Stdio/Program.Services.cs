@@ -19,7 +19,6 @@ using Serilog;
 using Serilog.Events;
 using Serilog.Exceptions;
 using SlideGenerator.Cloud.Injection;
-using SlideGenerator.Coordinator.Injection;
 using SlideGenerator.Document.Injection;
 using SlideGenerator.Generator.Injection;
 using SlideGenerator.Image.Injection;
@@ -66,7 +65,6 @@ internal static partial class Program
         });
         services.AddLoggingServices();
         services.AddSettingsServices();
-        services.AddCoordinatorServices();
         services.AddCloudServices();
 
         Log.Information("Registering Domain services...");

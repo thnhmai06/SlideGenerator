@@ -12,6 +12,8 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using SlideGenerator.Document.Domain.Models.Sheet;
+
 namespace SlideGenerator.Document.Domain.Abstractions.Sheet;
 
 /// <summary>
@@ -19,6 +21,11 @@ namespace SlideGenerator.Document.Domain.Abstractions.Sheet;
 /// </summary>
 public interface IReadOnlyWorksheet
 {
+    /// <summary>
+    ///     Gets the identifier of the worksheet.
+    /// </summary>
+    WorksheetIdentifier Identifier { get; }
+    
     /// <summary>
     ///     Gets the name of the worksheet.
     /// </summary>
@@ -40,7 +47,7 @@ public interface IReadOnlyWorksheet
     /// <param name="row">The 1-based row index.</param>
     /// <param name="col">The 1-based column index.</param>
     /// <returns>The string value of the cell.</returns>
-    string GetCellValue(int row, int col);
+    string GetCell(int row, int col);
 
     /// <summary>
     ///     Gets all cell values in a specified row.

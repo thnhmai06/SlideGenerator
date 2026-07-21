@@ -18,7 +18,6 @@ using System.Text.Json;
 using ICSharpCode.SharpZipLib.Core;
 using ICSharpCode.SharpZipLib.Zip;
 using SlideGenerator.Recipe.Domain.Models;
-using SlideGenerator.Recipe.Domain.Models.Graphs;
 using SlideGenerator.Recipe.Domain.Rules;
 
 namespace SlideGenerator.Recipe.Infrastructure.Services;
@@ -30,7 +29,7 @@ internal sealed partial class RecipeRepository
     {
         outputPath = Path.GetFullPath(outputPath);
         var entry = await GetAsync(id, ct).ConfigureAwait(false);
-        var manifest = entry.Graph.GetReferencedFiles();
+        var manifest = entry.Recipe.GetReferencedFiles();
 
         var dir = Path.GetDirectoryName(outputPath);
         if (!string.IsNullOrEmpty(dir))
@@ -44,7 +43,7 @@ internal sealed partial class RecipeRepository
             var presentationMapping =
                 Export_BuildEntryMapping(manifest.Presentations, RecipePackageRules.Data.Presentations.FolderPrefix,
                     ct);
-            var exportGraph = Export_BuildGraph(entry.Graph, workbookMapping, presentationMapping);
+            var exportGraph = Export_BuildGraph(entry.Recipe, workbookMapping, presentationMapping);
 
             using var outputStream = File.Create(outputPath);
             using var zipStream = new ZipOutputStream(outputStream);
@@ -52,7 +51,7 @@ internal sealed partial class RecipeRepository
             if (!string.IsNullOrEmpty(password))
                 zipStream.Password = password;
 
-            // Graph file
+            // Recipe file
             var graphBytes = Encoding.UTF8.GetBytes(
                 JsonSerializer.Serialize(exportGraph, GraphSerializerOptions));
             var graphEntry = new ZipEntry(RecipePackageRules.Data.RecipeFileName)
@@ -82,7 +81,7 @@ internal sealed partial class RecipeRepository
     {
         filePath = Path.GetFullPath(filePath);
         var name = Path.GetFileNameWithoutExtension(filePath);
-        RecipeGraph importedGraph = new([], []);
+        Domain.Models.Recipe imported = new(new Dictionary<string, Node>(), []);
 
         var workbooksDirectory = Path.GetFullPath(saveFolders.Workbooks);
         var presentationsDirectory = Path.GetFullPath(saveFolders.Presentations);
@@ -106,13 +105,13 @@ internal sealed partial class RecipeRepository
                     $"Archive rejected: entry count {zipFile.Count} exceeds limit " +
                     $"{RecipePackageRules.MaxEntryCount}.");
 
-            // Graph file
+            // Recipe file
             var graphJson = Import_ReadGraphFile(zipFile)
                             ?? throw new InvalidDataException(
                                 $"Archive rejected: required entry '{RecipePackageRules.Data.RecipeFileName}' is missing.");
             try
             {
-                importedGraph = JsonSerializer.Deserialize<RecipeGraph>(graphJson, GraphSerializerOptions)
+                imported = JsonSerializer.Deserialize<Domain.Models.Recipe>(graphJson, GraphSerializerOptions)
                                 ?? throw new InvalidDataException(
                                     $"Archive rejected: '{RecipePackageRules.Data.RecipeFileName}' deserialize as null.");
             }
@@ -124,15 +123,15 @@ internal sealed partial class RecipeRepository
 
             // Data files
             var (wbMapping, pptMapping) = Import_BuildPathMappings(
-                importedGraph, workbooksDirectory, presentationsDirectory);
-            importedGraph = Import_ApplyPathMappings(importedGraph, wbMapping, pptMapping);
+                imported, workbooksDirectory, presentationsDirectory);
+            imported = Import_ApplyPathMappings(imported, wbMapping, pptMapping);
             Import_ExtractWithMappings(zipFile, wbMapping, pptMapping,
                 workbooksDirectory + Path.DirectorySeparatorChar,
                 presentationsDirectory + Path.DirectorySeparatorChar,
                 ct);
         }, ct).ConfigureAwait(false);
 
-        var metadata = await AddAsync(new RecipeInput(name, importedGraph), ct).ConfigureAwait(false);
+        var metadata = await AddAsync(new RecipeInput(name, imported), ct).ConfigureAwait(false);
         return metadata;
     }
 
@@ -149,14 +148,14 @@ internal sealed partial class RecipeRepository
     ///     mapping to the deduplicated absolute path where the file will be extracted.
     /// </returns>
     private static (Dictionary<string, string> Workbooks, Dictionary<string, string> Presentations)
-        Import_BuildPathMappings(RecipeGraph graph, string workbooksDir, string presentationsDir)
+        Import_BuildPathMappings(Domain.Models.Recipe graph, string workbooksDir, string presentationsDir)
     {
         var wbUsed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var pptUsed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var wbMapping = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var pptMapping = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var node in graph.Nodes)
+        foreach (var node in graph.Nodes.Values)
             switch (node)
             {
                 case WorkbookNode wn:
@@ -206,28 +205,30 @@ internal sealed partial class RecipeRepository
     ///     path from the corresponding mapping. Nodes whose filename is absent from the mapping are
     ///     left unchanged.
     /// </summary>
-    private static RecipeGraph Import_ApplyPathMappings(
-        RecipeGraph graph,
+    private static Domain.Models.Recipe Import_ApplyPathMappings(
+        Domain.Models.Recipe graph,
         Dictionary<string, string> workbookMapping,
         Dictionary<string, string> presentationMapping)
     {
-        var fixedNodes = graph.Nodes.Select(node => node switch
-        {
-            WorkbookNode wn when workbookMapping.TryGetValue(
-                    Path.GetFileName(wn.Workbook.BookPath), out var dest) =>
-                wn with { Workbook = wn.Workbook with { BookPath = dest } },
-            PresentationNode pn when presentationMapping.TryGetValue(
-                    Path.GetFileName(pn.Presentation.PresentationPath), out var dest) =>
-                pn with { Presentation = pn.Presentation with { PresentationPath = dest } },
-            _ => node
-        }).ToList();
+        var fixedNodes = graph.Nodes.ToDictionary(
+            kvp => kvp.Key,
+            kvp => kvp.Value switch
+            {
+                WorkbookNode wn when workbookMapping.TryGetValue(
+                        Path.GetFileName(wn.Workbook.BookPath), out var dest) =>
+                    wn with { Workbook = wn.Workbook with { BookPath = dest } },
+                PresentationNode pn when presentationMapping.TryGetValue(
+                        Path.GetFileName(pn.Presentation.PresentationPath), out var dest) =>
+                    pn with { Presentation = pn.Presentation with { PresentationPath = dest } },
+                _ => kvp.Value
+            });
         return graph with { Nodes = fixedNodes };
     }
 
     /// <summary>
     ///     Iterates all file entries in <paramref name="zipFile" />, enforces per-entry size limits,
     ///     and delegates each entry to <see cref="Import_ExtractSingleEntry" />.
-    ///     Skips <c>Graph.json</c> and directory entries.
+    ///     Skips <c>Recipe.json</c> and directory entries.
     /// </summary>
     private static void Import_ExtractWithMappings(
         ZipFile zipFile,
@@ -410,20 +411,22 @@ internal sealed partial class RecipeRepository
     ///     its path replaced by the plain filename (e.g. <c>data.xlsx</c>) suitable for storage
     ///     inside the zip archive. Nodes whose paths are not in the mapping are left unchanged.
     /// </summary>
-    private static RecipeGraph Export_BuildGraph(
-        RecipeGraph graph,
+    private static Domain.Models.Recipe Export_BuildGraph(
+        Domain.Models.Recipe graph,
         ReadOnlyDictionary<string, string> workbookEntryMapping,
         ReadOnlyDictionary<string, string> presentationEntryMapping)
     {
-        var exportNodes = graph.Nodes.Select(node => node switch
-        {
-            WorkbookNode wn when workbookEntryMapping.TryGetValue(wn.Workbook.BookPath, out var entry) =>
-                wn with { Workbook = wn.Workbook with { BookPath = Path.GetFileName(entry) } },
-            PresentationNode pn when presentationEntryMapping.TryGetValue(pn.Presentation.PresentationPath,
-                    out var entry) =>
-                pn with { Presentation = pn.Presentation with { PresentationPath = Path.GetFileName(entry) } },
-            _ => node
-        }).ToList();
+        var exportNodes = graph.Nodes.ToDictionary(
+            kvp => kvp.Key,
+            kvp => kvp.Value switch
+            {
+                WorkbookNode wn when workbookEntryMapping.TryGetValue(wn.Workbook.BookPath, out var entry) =>
+                    wn with { Workbook = wn.Workbook with { BookPath = Path.GetFileName(entry) } },
+                PresentationNode pn when presentationEntryMapping.TryGetValue(pn.Presentation.PresentationPath,
+                        out var entry) =>
+                    pn with { Presentation = pn.Presentation with { PresentationPath = Path.GetFileName(entry) } },
+                _ => kvp.Value
+            });
         return graph with { Nodes = exportNodes };
     }
 

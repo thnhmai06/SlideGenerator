@@ -13,38 +13,30 @@
  */
 
 using SlideGenerator.Generator.Application.Abstractions;
-using SlideGenerator.Generator.Domain.Models;
+using SlideGenerator.Generator.Domain.Models.Data;
 
 namespace SlideGenerator.Stdio.Handlers;
 
 /// <summary>
-///     Handles all <c>generating.completed.*</c> JSON-RPC methods: list and query.
+///     Handles all <c>generating.completed.*</c> JSON-RPC methods: list, delete, and deleteAll.
 ///     Provides read-only access to workflow instances that have finished execution
 ///     (completed successfully, cancelled, or errored).
 /// </summary>
-public sealed class GeneratingCompletedHandler(IGeneratingService generatingService)
+public sealed class GeneratingCompletedHandler(IService generatingService)
 {
     /// <summary>
-    ///     Returns summaries of all completed, cancelled, or errored workflow instances.
+    ///     Returns summaries of all completed, cancelled, or errored workflow instances, keyed by request id.
     /// </summary>
-    public Task<IReadOnlyList<GeneratingSummary>> ListAsync(CancellationToken ct)
+    public Task<IReadOnlyDictionary<string, Summary>> ListAsync(CancellationToken ct)
     {
         return generatingService.ListCompletedAsync(ct);
     }
 
     /// <summary>
-    ///     Returns the summary of a specific completed workflow instance,
-    ///     or <see langword="null" /> if not found.
+    ///     Permanently deletes a request and all its associated data. If the request is still active
+    ///     (running or paused), it is stopped first.
     /// </summary>
-    public Task<GeneratingSummary?> QueryAsync(string workflowInstanceId, CancellationToken ct)
-    {
-        return generatingService.QueryAsync(workflowInstanceId, ct);
-    }
-
-    /// <summary>
-    ///     Permanently deletes a single completed or cancelled workflow instance and all its associated data.
-    /// </summary>
-    /// <returns><see langword="true" /> if deleted; <see langword="false" /> if not found or still active.</returns>
+    /// <returns><see langword="true" /> if deleted; <see langword="false" /> if not found.</returns>
     public Task<bool> DeleteAsync(string workflowInstanceId, CancellationToken ct)
     {
         return generatingService.DeleteAsync(workflowInstanceId, ct);

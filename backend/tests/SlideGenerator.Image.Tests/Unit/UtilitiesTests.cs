@@ -136,7 +136,7 @@ public sealed class UtilitiesTests
     {
         // 300×200 image, 100×100 crop
         // anchor = (150,100), pivot=(0.5,0.5): x=150-50=100, y=100-50=50
-        var result = Utilities.CalculateAnchoredRectangle(new Size(300, 200), new Size(100, 100));
+        var result = global::SlideGenerator.Image.Application.Utilities.CalculateAnchoredRectangle(new Size(300, 200), new Size(100, 100));
 
         result.Should().Be(new Rectangle(100, 50, 100, 100));
     }
@@ -148,7 +148,7 @@ public sealed class UtilitiesTests
     public void CalculateAnchoredRectangle_CropLargerThanSource_ClampedToSourceBounds()
     {
         // 50×50 image, 200×200 crop → bounded to 50×50
-        var result = Utilities.CalculateAnchoredRectangle(new Size(50, 50), new Size(200, 200));
+        var result = global::SlideGenerator.Image.Application.Utilities.CalculateAnchoredRectangle(new Size(50, 50), new Size(200, 200));
 
         result.Width.Should().Be(50);
         result.Height.Should().Be(50);
@@ -164,7 +164,7 @@ public sealed class UtilitiesTests
     public void CalculateAnchoredRectangle_AnchorNearTopLeft_ClampedIntoImage()
     {
         // anchor=(10,10), pivot=(0.5,0.5), crop=100×100: raw x=10-50=-40 → clamped to 0
-        var result = Utilities.CalculateAnchoredRectangle(
+        var result = global::SlideGenerator.Image.Application.Utilities.CalculateAnchoredRectangle(
             new Size(300, 200), new Size(100, 100),
             new Point(10, 10));
 
@@ -181,7 +181,7 @@ public sealed class UtilitiesTests
     public void CalculateAnchoredRectangle_ZeroPivot_TopLeftAtAnchor()
     {
         // anchor=(50,40), pivot=(0,0): x=50, y=40 (no offset)
-        var result = Utilities.CalculateAnchoredRectangle(
+        var result = global::SlideGenerator.Image.Application.Utilities.CalculateAnchoredRectangle(
             new Size(300, 200), new Size(80, 60),
             new Point(50, 40),
             Vector2.Zero);
@@ -197,7 +197,7 @@ public sealed class UtilitiesTests
     public void CalculateAnchoredRectangle_UnitPivot_BottomRightAtAnchor()
     {
         // anchor=(180,140), pivot=(1,1), crop=80×60: x=round(180-80)=100, y=round(140-60)=80
-        var result = Utilities.CalculateAnchoredRectangle(
+        var result = global::SlideGenerator.Image.Application.Utilities.CalculateAnchoredRectangle(
             new Size(300, 200), new Size(80, 60),
             new Point(180, 140),
             Vector2.One);
@@ -216,7 +216,7 @@ public sealed class UtilitiesTests
     public void CalculateAnchoredRectangle_ZeroCropSize_ReturnsZeroSizeRectWithoutThrowing()
     {
         // No guard on zero crop — returns zero-sized rect; libvips will throw downstream // BUG?
-        var act = () => Utilities.CalculateAnchoredRectangle(new Size(300, 200), new Size(0, 0));
+        var act = () => global::SlideGenerator.Image.Application.Utilities.CalculateAnchoredRectangle(new Size(300, 200), new Size(0, 0));
 
         act.Should().NotThrow();
         act().Width.Should().Be(0);

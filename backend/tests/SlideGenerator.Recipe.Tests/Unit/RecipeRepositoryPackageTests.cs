@@ -21,7 +21,6 @@ using Microsoft.Data.Sqlite;
 using SlideGenerator.Document.Domain.Models.Sheet;
 using SlideGenerator.Document.Domain.Models.Slide;
 using SlideGenerator.Recipe.Domain.Models;
-using SlideGenerator.Recipe.Domain.Models.Graphs;
 using SlideGenerator.Recipe.Domain.Rules;
 using SlideGenerator.Recipe.Infrastructure.Services;
 using Xunit;
@@ -30,7 +29,7 @@ namespace SlideGenerator.Recipe.Tests.Unit;
 
 /// <summary>
 ///     Tests for <see cref="RecipeRepository" /> Export and Import path-rewriting behaviour:
-///     exported zip archives must store relative filenames in <c>Graph.json</c>, and imported
+///     exported zip archives must store relative filenames in <c>Recipe.json</c>, and imported
 ///     graphs must reconstruct absolute paths pointing to the save folder.
 /// </summary>
 public sealed class RecipeRepositoryPackageTests : IDisposable
@@ -84,7 +83,7 @@ public sealed class RecipeRepositoryPackageTests : IDisposable
     #region Export
 
     /// <summary>
-    ///     Verifies that <see cref="RecipeRepository.ExportAsync" /> writes <c>Graph.json</c> with a
+    ///     Verifies that <see cref="RecipeRepository.ExportAsync" /> writes <c>Recipe.json</c> with a
     ///     relative filename for a <see cref="WorkbookNode" />, not the original absolute path.
     /// </summary>
     [Fact]
@@ -92,8 +91,8 @@ public sealed class RecipeRepositoryPackageTests : IDisposable
     {
         var dir = NewTempDir();
         var wbPath = CreateDummyFile(dir, "sales.xlsx");
-        var graph = new RecipeGraph(
-            [new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath), [])], []);
+        var graph = new Domain.Models.Recipe(
+            new Dictionary<string, Node> { ["wb1"] = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wbPath), new HashSet<string>()) }, []);
         var metadata = await _repo.AddAsync(new RecipeInput("Test", graph), TestContext.Current.CancellationToken);
         var zipPath = NewZipPath(dir);
 
@@ -102,11 +101,11 @@ public sealed class RecipeRepositoryPackageTests : IDisposable
         var graphJson = ReadGraphJsonFromZip(zipPath);
         graphJson.Should().Contain("\"sales.xlsx\"");
         graphJson.Should().NotContain(wbPath.Replace("\\", "\\\\"),
-            "absolute path must not appear JSON-escaped in Graph.json");
+            "absolute path must not appear JSON-escaped in Recipe.json");
     }
 
     /// <summary>
-    ///     Verifies that <see cref="RecipeRepository.ExportAsync" /> writes <c>Graph.json</c> with a
+    ///     Verifies that <see cref="RecipeRepository.ExportAsync" /> writes <c>Recipe.json</c> with a
     ///     relative filename for a <see cref="PresentationNode" />, not the original absolute path.
     /// </summary>
     [Fact]
@@ -114,8 +113,8 @@ public sealed class RecipeRepositoryPackageTests : IDisposable
     {
         var dir = NewTempDir();
         var presPath = CreateDummyFile(dir, "template.pptx");
-        var graph = new RecipeGraph(
-            [new PresentationNode("pres1", new Point(0, 0), new PresentationIdentifier(presPath), [])], []);
+        var graph = new Domain.Models.Recipe(
+            new Dictionary<string, Node> { ["pres1"] = new PresentationNode(new Point(0, 0), new PresentationIdentifier(presPath), new HashSet<string>()) }, []);
         var metadata = await _repo.AddAsync(new RecipeInput("Test", graph), TestContext.Current.CancellationToken);
         var zipPath = NewZipPath(dir);
 
@@ -124,11 +123,11 @@ public sealed class RecipeRepositoryPackageTests : IDisposable
         var graphJson = ReadGraphJsonFromZip(zipPath);
         graphJson.Should().Contain("\"template.pptx\"");
         graphJson.Should().NotContain(presPath.Replace("\\", "\\\\"),
-            "absolute path must not appear JSON-escaped in Graph.json");
+            "absolute path must not appear JSON-escaped in Recipe.json");
     }
 
     /// <summary>
-    ///     Verifies that when two workbooks share the same filename stem, the zip <c>Graph.json</c>
+    ///     Verifies that when two workbooks share the same filename stem, the zip <c>Recipe.json</c>
     ///     records deduplicated relative names using the stem-based scheme (e.g. <c>data.xlsx</c>,
     ///     <c>data_1.xlsx</c>) and contains no absolute paths.
     /// </summary>
@@ -139,11 +138,12 @@ public sealed class RecipeRepositoryPackageTests : IDisposable
         var dirB = NewTempDir();
         var wbPath1 = CreateDummyFile(dirA, "data.xlsx");
         var wbPath2 = CreateDummyFile(dirB, "data.xlsx");
-        var graph = new RecipeGraph(
-        [
-            new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath1), []),
-            new WorkbookNode("wb2", new Point(100, 0), new WorkbookIdentifier(wbPath2), [])
-        ], []);
+        var graph = new Domain.Models.Recipe(
+            new Dictionary<string, Node>
+            {
+                ["wb1"] = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wbPath1), new HashSet<string>()),
+                ["wb2"] = new WorkbookNode(new Point(100, 0), new WorkbookIdentifier(wbPath2), new HashSet<string>())
+            }, []);
         var metadata = await _repo.AddAsync(new RecipeInput("Test", graph), TestContext.Current.CancellationToken);
         var zipPath = NewZipPath(dirA);
 
@@ -158,15 +158,15 @@ public sealed class RecipeRepositoryPackageTests : IDisposable
 
     /// <summary>
     ///     Verifies that a workbook filename containing spaces is serialised as valid JSON in
-    ///     <c>Graph.json</c>.
+    ///     <c>Recipe.json</c>.
     /// </summary>
     [Fact]
     public async Task ExportAsync_FilenameWithSpaces_ZipGraphJsonContainsValidJson()
     {
         var dir = NewTempDir();
         var wbPath = CreateDummyFile(dir, "my file.xlsx");
-        var graph = new RecipeGraph(
-            [new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath), [])], []);
+        var graph = new Domain.Models.Recipe(
+            new Dictionary<string, Node> { ["wb1"] = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wbPath), new HashSet<string>()) }, []);
         var metadata = await _repo.AddAsync(new RecipeInput("Test", graph), TestContext.Current.CancellationToken);
         var zipPath = NewZipPath(dir);
 
@@ -175,7 +175,7 @@ public sealed class RecipeRepositoryPackageTests : IDisposable
         var graphJson = ReadGraphJsonFromZip(zipPath);
         graphJson.Should().Contain("\"my file.xlsx\"");
         var act = () => JsonDocument.Parse(graphJson);
-        act.Should().NotThrow("Graph.json must remain valid JSON");
+        act.Should().NotThrow("Recipe.json must remain valid JSON");
     }
 
     #endregion
@@ -184,7 +184,7 @@ public sealed class RecipeRepositoryPackageTests : IDisposable
 
     /// <summary>
     ///     Verifies that <see cref="RecipeRepository.ImportAsync" /> reconstructs an absolute path in
-    ///     the workbooks save folder when the zip <c>Graph.json</c> used a relative filename, and that
+    ///     the workbooks save folder when the zip <c>Recipe.json</c> used a relative filename, and that
     ///     the file is physically extracted there.
     /// </summary>
     [Fact]
@@ -197,7 +197,7 @@ public sealed class RecipeRepositoryPackageTests : IDisposable
         Directory.CreateDirectory(presentationsDir);
 
         const string graphJson =
-            """{"nodes":[{"id":"wb1","type":"Workbook","position":{"x":0,"y":0},"workbook":{"bookPath":"data.xlsx"}}],"edges":[]}""";
+            """{"nodes":{"wb1":{"type":"Workbook","position":{"x":0,"y":0},"workbook":{"bookPath":"data.xlsx"}}},"edges":[]}""";
         var zipPath = NewZipPath(sandbox);
         await BuildZipAsync(zipPath, graphJson, ("Workbooks/data.xlsx", new byte[64]));
 
@@ -205,7 +205,7 @@ public sealed class RecipeRepositoryPackageTests : IDisposable
             TestContext.Current.CancellationToken);
         var entry = await _repo.GetAsync(metadata.Id, TestContext.Current.CancellationToken);
 
-        var node = entry.Graph.Nodes.OfType<WorkbookNode>().Single();
+        var node = entry.Recipe.Nodes.Values.OfType<WorkbookNode>().Single();
         var expectedPath = Path.GetFullPath(Path.Combine(workbooksDir, "data.xlsx"));
         node.Workbook.BookPath.Should().Be(expectedPath);
         File.Exists(node.Workbook.BookPath).Should().BeTrue("workbook file must be physically extracted");
@@ -213,7 +213,7 @@ public sealed class RecipeRepositoryPackageTests : IDisposable
 
     /// <summary>
     ///     Verifies that <see cref="RecipeRepository.ImportAsync" /> reconstructs an absolute path in
-    ///     the presentations save folder when the zip <c>Graph.json</c> used a relative filename, and
+    ///     the presentations save folder when the zip <c>Recipe.json</c> used a relative filename, and
     ///     that the file is physically extracted there.
     /// </summary>
     [Fact]
@@ -226,7 +226,7 @@ public sealed class RecipeRepositoryPackageTests : IDisposable
         Directory.CreateDirectory(presentationsDir);
 
         const string graphJson =
-            """{"nodes":[{"id":"pres1","type":"Presentation","position":{"x":0,"y":0},"presentation":{"presentationPath":"template.pptx"}}],"edges":[]}""";
+            """{"nodes":{"pres1":{"type":"Presentation","position":{"x":0,"y":0},"presentation":{"presentationPath":"template.pptx"}}},"edges":[]}""";
         var zipPath = NewZipPath(sandbox);
         await BuildZipAsync(zipPath, graphJson, ("Presentations/template.pptx", new byte[64]));
 
@@ -234,7 +234,7 @@ public sealed class RecipeRepositoryPackageTests : IDisposable
             TestContext.Current.CancellationToken);
         var entry = await _repo.GetAsync(metadata.Id, TestContext.Current.CancellationToken);
 
-        var node = entry.Graph.Nodes.OfType<PresentationNode>().Single();
+        var node = entry.Recipe.Nodes.Values.OfType<PresentationNode>().Single();
         var expectedPath = Path.GetFullPath(Path.Combine(presentationsDir, "template.pptx"));
         node.Presentation.PresentationPath.Should().Be(expectedPath);
         File.Exists(node.Presentation.PresentationPath).Should()
@@ -242,7 +242,7 @@ public sealed class RecipeRepositoryPackageTests : IDisposable
     }
 
     /// <summary>
-    ///     Verifies that a zip entry not referenced by any node in <c>Graph.json</c> is silently
+    ///     Verifies that a zip entry not referenced by any node in <c>Recipe.json</c> is silently
     ///     skipped and is not written to the save folder (allowlist enforced).
     /// </summary>
     [Fact]
@@ -254,7 +254,7 @@ public sealed class RecipeRepositoryPackageTests : IDisposable
         Directory.CreateDirectory(workbooksDir);
         Directory.CreateDirectory(presentationsDir);
 
-        const string graphJson = """{"nodes":[],"edges":[]}""";
+        const string graphJson = """{"nodes":{},"edges":[]}""";
         var zipPath = NewZipPath(sandbox);
         await BuildZipAsync(zipPath, graphJson, ("Workbooks/extra.xlsx", new byte[32]));
 
@@ -275,8 +275,8 @@ public sealed class RecipeRepositoryPackageTests : IDisposable
     {
         var srcDir = NewTempDir();
         var wbPath = CreateDummyFile(srcDir, "report.xlsx");
-        var graph = new RecipeGraph(
-            [new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath), [])], []);
+        var graph = new Domain.Models.Recipe(
+            new Dictionary<string, Node> { ["wb1"] = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wbPath), new HashSet<string>()) }, []);
         var exported = await _repo.AddAsync(new RecipeInput("Round-trip", graph),
             TestContext.Current.CancellationToken);
         var zipPath = NewZipPath(srcDir);
@@ -289,7 +289,7 @@ public sealed class RecipeRepositoryPackageTests : IDisposable
             TestContext.Current.CancellationToken);
         var entry = await _repo.GetAsync(imported.Id, TestContext.Current.CancellationToken);
 
-        var node = entry.Graph.Nodes.OfType<WorkbookNode>().Single();
+        var node = entry.Recipe.Nodes.Values.OfType<WorkbookNode>().Single();
         var expectedPath = Path.GetFullPath(Path.Combine(workbooksDir, "report.xlsx"));
         node.Workbook.BookPath.Should().Be(expectedPath);
         File.Exists(node.Workbook.BookPath).Should()
@@ -326,7 +326,7 @@ public sealed class RecipeRepositoryPackageTests : IDisposable
         return path;
     }
 
-    /// <summary>Reads and returns the content of <c>Graph.json</c> from the given zip file.</summary>
+    /// <summary>Reads and returns the content of <c>Recipe.json</c> from the given zip file.</summary>
     private static string ReadGraphJsonFromZip(string zipPath)
     {
         using var fs = File.OpenRead(zipPath);
@@ -334,17 +334,17 @@ public sealed class RecipeRepositoryPackageTests : IDisposable
         foreach (ZipEntry entry in zipFile)
         {
             if (!entry.IsFile) continue;
-            if (!string.Equals(entry.Name, "Graph.json", StringComparison.OrdinalIgnoreCase)) continue;
+            if (!string.Equals(entry.Name, "Recipe.json", StringComparison.OrdinalIgnoreCase)) continue;
             using var stream = zipFile.GetInputStream(entry);
             using var reader = new StreamReader(stream, Encoding.UTF8);
             return reader.ReadToEnd();
         }
 
-        throw new InvalidOperationException("Graph.json not found in zip.");
+        throw new InvalidOperationException("Recipe.json not found in zip.");
     }
 
     /// <summary>
-    ///     Builds a <c>.recipe</c> zip at <paramref name="zipPath" /> containing <c>Graph.json</c>
+    ///     Builds a <c>.recipe</c> zip at <paramref name="zipPath" /> containing <c>Recipe.json</c>
     ///     and any additional entries supplied via <paramref name="extraEntries" />.
     /// </summary>
     private static async Task BuildZipAsync(string zipPath, string graphJson,
@@ -356,7 +356,7 @@ public sealed class RecipeRepositoryPackageTests : IDisposable
 
         var graphBytes = Encoding.UTF8.GetBytes(graphJson);
         await zos.PutNextEntryAsync(
-            new ZipEntry("Graph.json") { DateTime = DateTime.UtcNow, Size = graphBytes.Length },
+            new ZipEntry("Recipe.json") { DateTime = DateTime.UtcNow, Size = graphBytes.Length },
             CancellationToken.None);
         zos.Write(graphBytes, 0, graphBytes.Length);
         zos.CloseEntry();

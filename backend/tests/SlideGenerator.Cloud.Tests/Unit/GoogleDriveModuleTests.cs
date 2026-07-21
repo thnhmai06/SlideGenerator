@@ -14,7 +14,6 @@
 
 using System.Net;
 using FluentAssertions;
-using SlideGenerator.Cloud.Domain.Models;
 using SlideGenerator.Cloud.Infrastructure.Module;
 using SlideGenerator.Cloud.Tests.Helpers;
 using Xunit;
@@ -55,18 +54,16 @@ public sealed class GoogleDriveModuleTests
 
     /// <summary>
     ///     Verifies that <see cref="GoogleDriveModule.IsResolvable" /> returns <see langword="true" />
-    ///     and sets key to <see cref="CloudHost.GoogleDrive" /> for any URI
-    ///     whose host ends with <c>drive.google.com</c>.
+    ///     for any URI whose host ends with <c>drive.google.com</c>.
     /// </summary>
     [Fact]
-    public void IsResolvable_DriveGoogleComUrl_ReturnsTrueWithGoogleDriveKey()
+    public void IsResolvable_DriveGoogleComUrl_ReturnsTrue()
     {
         var uri = new Uri("https://drive.google.com/file/d/ABC123/view");
 
-        var result = _sut.IsResolvable(uri, out var key);
+        var result = _sut.IsResolvable(uri);
 
         result.Should().BeTrue();
-        key.Should().Be(CloudHost.GoogleDrive);
     }
 
     /// <summary>
@@ -78,7 +75,7 @@ public sealed class GoogleDriveModuleTests
     {
         var uri = new Uri("https://photos.google.com/album/ABC");
 
-        var result = _sut.IsResolvable(uri, out _);
+        var result = _sut.IsResolvable(uri);
 
         result.Should().BeFalse();
     }

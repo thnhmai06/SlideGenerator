@@ -16,6 +16,7 @@ using SlideGenerator.Document.Application.Abstractions;
 using SlideGenerator.Document.Domain.Abstractions.Slide;
 using SlideGenerator.Document.Domain.Models.Slide;
 using SlideGenerator.Document.Infrastructure.Adapters.Slide;
+using SlideGenerator.Utilities;
 using Syncfusion.Presentation;
 using IPresentation = SlideGenerator.Document.Domain.Abstractions.Slide.IPresentation;
 
@@ -26,20 +27,58 @@ namespace SlideGenerator.Document.Infrastructure.Services;
 /// </summary>
 internal sealed class SfPresentationProvider : IPresentationProvider
 {
-    /// <inheritdoc />
-    public IPresentation OpenPresentation(PresentationIdentifier identifier)
+    private static SfPresentation CreatePresentationInstance(PresentationIdentifier identifier)
     {
         var presentation = Presentation.Open(identifier.PresentationPath, identifier.PresentationPassword);
         return new SfPresentation(presentation, identifier);
     }
 
-    /// <inheritdoc />
-    public IReadOnlyPresentation OpenPresentationReadOnly(PresentationIdentifier identifier)
+    private static SfPresentation CreatePresentationReadOnlyInstance(PresentationIdentifier identifier)
     {
         var fileStream =
             new FileStream(identifier.PresentationPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
         var presentation = Presentation.Open(fileStream, identifier.PresentationPassword);
 
         return new SfPresentation(presentation, identifier, fileStream);
+    }
+
+    /// <inheritdoc />
+    public async Task<IPresentation> OpenPresentationAsync(PresentationIdentifier identifier,
+        CancellationToken ct = default)
+    {
+        while (true)
+        {
+            ct.ThrowIfCancellationRequested();
+            try
+            {
+                return CreatePresentationInstance(identifier);
+            }
+            catch (IOException ex) when (FileAccessHelper.IsFileLockedException(ex))
+            {
+                _ = ex;
+            }
+
+            await FileAccessHelper.WaitForFileChangeAsync(identifier.PresentationPath, ct).ConfigureAwait(false);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyPresentation> OpenPresentationReadOnlyAsync(PresentationIdentifier identifier,
+        CancellationToken ct = default)
+    {
+        while (true)
+        {
+            ct.ThrowIfCancellationRequested();
+            try
+            {
+                return CreatePresentationReadOnlyInstance(identifier);
+            }
+            catch (IOException ex) when (FileAccessHelper.IsFileLockedException(ex))
+            {
+                _ = ex;
+            }
+
+            await FileAccessHelper.WaitForFileChangeAsync(identifier.PresentationPath, ct).ConfigureAwait(false);
+        }
     }
 }

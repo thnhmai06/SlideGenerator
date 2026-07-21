@@ -35,7 +35,7 @@ public static class RecipePackageRules
     /// <summary>Maximum uncompressed size of a single archive entry.</summary>
     public const long MaxEntryUncompressedBytes = 512L * 1024 * 1024; // 512 MB
 
-    /// <summary>Maximum uncompressed size of the <c>Graph.json</c> entry.</summary>
+    /// <summary>Maximum uncompressed size of the <c>Recipe.json</c> entry.</summary>
     public const long MaxGraphUncompressedBytes = 16L * 1024 * 1024; // 16 MB
 
     /// <summary>Maximum number of entries allowed inside the archive.</summary>
@@ -49,7 +49,7 @@ public static class RecipePackageRules
 
     public static class Data
     {
-        public static readonly string RecipeFileName = "Graph.json";
+        public const string RecipeFileName = "Recipe.json";
 
         public static class Workbooks
         {

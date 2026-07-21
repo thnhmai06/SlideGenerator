@@ -12,6 +12,8 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using SlideGenerator.Document.Domain.Models.Sheet;
+
 namespace SlideGenerator.Document.Domain.Abstractions.Sheet;
 
 /// <summary>
@@ -19,6 +21,11 @@ namespace SlideGenerator.Document.Domain.Abstractions.Sheet;
 /// </summary>
 public interface IReadOnlyWorkbook : IDisposable
 {
+    /// <summary>
+    ///     Gets the identifier of the workbook.
+    /// </summary>
+    WorkbookIdentifier Identifier { get; }
+    
     /// <summary>
     ///     Gets the collection of worksheets in the workbook.
     /// </summary>

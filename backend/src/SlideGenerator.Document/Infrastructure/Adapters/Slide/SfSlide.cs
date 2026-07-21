@@ -12,7 +12,12 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using System.Security.Cryptography;
+using System.Text;
+using SlideGenerator.Document.Domain.Models.Slide;
 using Syncfusion.Presentation;
+using Syncfusion.PresentationRenderer;
+using IReadOnlySlide = SlideGenerator.Document.Domain.Abstractions.Slide.IReadOnlySlide;
 using IShape = SlideGenerator.Document.Domain.Abstractions.Slide.IShape;
 using ISlide = SlideGenerator.Document.Domain.Abstractions.Slide.ISlide;
 
@@ -20,25 +25,58 @@ namespace SlideGenerator.Document.Infrastructure.Adapters.Slide;
 
 internal sealed class SfSlide(Syncfusion.Presentation.ISlide core) : ISlide
 {
-    public int Number => core.SlideNumber;
+    internal Syncfusion.Presentation.ISlide Core { get; } = core;
 
     public IEnumerable<IShape> Shapes
-    {
-        get
-        {
-            return core.Shapes
-                .OfType<Syncfusion.Presentation.IShape>()
-                .Select(shape => new SfShape(shape));
-        }
-    }
+        => Core.Shapes
+            .OfType<Syncfusion.Presentation.IShape>()
+            .Select(shape => new SfShape(shape));
 
-    public int ShapesCount => core.Shapes.Count;
+    public SlideIdentifier Identifier => new(Core.SlideNumber);
 
     public byte[] GetPreview()
     {
-        using var stream = core.ConvertToImage(ExportImageFormat.Png);
+        var renderer = new PresentationRenderer();
+        using var stream = renderer.ConvertToImage(Core, ExportImageFormat.Png);
         using var ms = new MemoryStream();
         stream.CopyTo(ms);
         return ms.ToArray();
+    }
+
+    public ISlide Clone() => new SfSlide(Core.Clone());
+
+    public bool Equals(IReadOnlySlide? other)
+    {
+        if (other is null) return false;
+        if (other is not SfSlide sfOther) 
+            return GetPreview().SequenceEqual(other.GetPreview());
+        if (Shapes.Count() != other.Shapes.Count()) return false;
+
+        var sb = new StringBuilder();
+
+        // this Hash
+        sb.Append(Core.SlideNumber);
+        foreach (var s in Core.Shapes.OfType<Syncfusion.Presentation.IShape>())
+        {
+            sb.Append($"|{s.Left:F2},{s.Top:F2},{s.Width:F2},{s.Height:F2}");
+            if (s.TextBody?.Paragraphs == null) continue;
+            foreach (var p in s.TextBody.Paragraphs)
+                sb.Append(p.Text ?? "");
+        }
+        var thisHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(sb.ToString())));
+
+        // other Hash
+        sb.Clear();
+        sb.Append(sfOther.Core.SlideNumber);
+        foreach (var s in sfOther.Core.Shapes.OfType<Syncfusion.Presentation.IShape>())
+        {
+            sb.Append($"|{s.Left:F2},{s.Top:F2},{s.Width:F2},{s.Height:F2}");
+            if (s.TextBody?.Paragraphs == null) continue;
+            foreach (var p in s.TextBody.Paragraphs)
+                sb.Append(p.Text ?? "");
+        }
+        var otherHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(sb.ToString())));
+
+        return thisHash == otherHash;
     }
 }

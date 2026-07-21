@@ -15,6 +15,8 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Serilog;
+using Serilog.Context;
+using SlideGenerator.Logging.Models;
 using SlideGenerator.Logging.Services;
 using Xunit;
 
@@ -25,7 +27,9 @@ namespace SlideGenerator.Logging.Tests.Unit;
 /// </summary>
 public sealed class SerilogFileLoggerFactoryTests : IDisposable
 {
-    private readonly SerilogFileLoggerFactory _factory = new(new LoggerConfiguration());
+    // Enrich.FromLogContext() mirrors the real DI-registered LoggerConfiguration (Program.Services.cs) —
+    // without it, properties pushed via LogContext.PushProperty never reach the formatter/sink.
+    private readonly SerilogFileLoggerFactory _factory = new(new LoggerConfiguration().Enrich.FromLogContext());
     private readonly List<string> _tempFiles = [];
 
     /// <inheritdoc />
@@ -69,17 +73,17 @@ public sealed class SerilogFileLoggerFactoryTests : IDisposable
         logger.Should().NotBeNull();
     }
 
-    /// <summary>Scope parameter is accepted; the returned factory creates loggers without error.</summary>
+    /// <summary><c>onLogEvent</c> callback parameter is accepted; the returned factory creates loggers without error.</summary>
     [Fact]
-    public void CreateFile_WithScope_LoggerFactoryCreatesNamedLogger()
+    public void CreateFile_WithOnLogEventCallback_LoggerFactoryCreatesNamedLogger()
     {
-        using var loggerFactory = _factory.CreateFile(NewTempFilePath(), "Workflow/test-scope");
+        using var loggerFactory = _factory.CreateFile(NewTempFilePath(), onLogEvent: _ => { });
 
         var logger = loggerFactory.CreateLogger(nameof(SerilogFileLoggerFactoryTests));
         logger.Should().NotBeNull();
     }
 
-    #region Inner logger behaviour — mirrors real step usage (data.LoggerFactory.CreateLogger(nameof(Step)))
+    #region Inner logger behaviour — mirrors real step usage (data.Transient.LoggerFactory.CreateLogger(nameof(Step)))
 
     /// <summary>Information log level is enabled by default — matches the minimum level of LoggerConfiguration.</summary>
     [Fact]
@@ -107,7 +111,7 @@ public sealed class SerilogFileLoggerFactoryTests : IDisposable
 
     /// <summary>
     ///     Logged message text appears in the file after dispose flushes the sink.
-    ///     Mirrors the real step pattern: <c>data.LoggerFactory.CreateLogger(nameof(Step)).LogInformation(...)</c>.
+    ///     Mirrors the real step pattern: <c>data.Transient.LoggerFactory.CreateLogger(nameof(Step)).LogInformation(...)</c>.
     /// </summary>
     [Fact]
     public void CreateFile_ValidPath_LoggedMessageAppearsInFile()
@@ -142,26 +146,49 @@ public sealed class SerilogFileLoggerFactoryTests : IDisposable
     }
 
     /// <summary>
-    ///     When a scope label is provided, it appears in every log line written by loggers from that factory.
-    ///     Real usage: <code>CreateFile(path, scope: $"Workflow/{workflowId}")</code>.
+    ///     When Request/Job scope properties are pushed onto <see cref="LogContext" /> around a log call,
+    ///     the resulting scope path appears in the log line. Real usage: each Step pushes
+    ///     <c>LogContext.PushProperty("RequestId", ...)</c>/<c>PushProperty("JobId", ...)</c> around its
+    ///     <c>Run</c>/<c>RunAsync</c> body.
     /// </summary>
     [Fact]
-    public void CreateFile_WithScope_ScopeAppearsInFile()
+    public void CreateFile_WithLogContextScope_ScopePathAppearsInFile()
     {
         var filePath = NewTempFilePath();
-        const string scope = "Workflow/abc-123";
 
-        using (var loggerFactory = _factory.CreateFile(filePath, scope))
+        using (var loggerFactory = _factory.CreateFile(filePath, ["RequestId", "JobId"]))
+        using (LogContext.PushProperty("RequestId", "req-1"))
+        using (LogContext.PushProperty("JobId", "job-1"))
         {
             loggerFactory.CreateLogger("AnyStep").LogInformation("step message");
         }
 
-        File.ReadAllText(filePath).Should().Contain("AnyStep").And.Contain("abc-123");
+        File.ReadAllText(filePath).Should().Contain("AnyStep").And.Contain("req-1/job-1");
+    }
+
+    /// <summary>
+    ///     The <c>onLogEvent</c> callback is invoked once per log line written through the factory, carrying
+    ///     the rendered message and scope path — the mechanism <c>Middleware</c> uses to forward log lines
+    ///     to the frontend in real time.
+    /// </summary>
+    [Fact]
+    public void CreateFile_WithOnLogEventCallback_InvokedForEachLogLine()
+    {
+        var filePath = NewTempFilePath();
+        var notifications = new List<LogNotification>();
+
+        using (var loggerFactory = _factory.CreateFile(filePath, ["RequestId"], notifications.Add))
+        using (LogContext.PushProperty("RequestId", "req-1"))
+        {
+            loggerFactory.CreateLogger("AnyStep").LogInformation("step message");
+        }
+
+        notifications.Should().ContainSingle(n => n.Message == "step message" && n.Location == "req-1");
     }
 
     /// <summary>
     ///     Multiple named loggers from the same factory all write to the same file.
-    ///     Mirrors how each step calls <c>data.LoggerFactory.CreateLogger(nameof(Step))</c> independently.
+    ///     Mirrors how each step calls <c>data.Transient.LoggerFactory.CreateLogger(nameof(Step))</c> independently.
     /// </summary>
     [Fact]
     public void CreateFile_ValidPath_MultipleNamedLoggers_AllMessagesInFile()

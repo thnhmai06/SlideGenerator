@@ -34,11 +34,11 @@ public interface IPresentation : IReadOnlyPresentation
     void RemoveSlideAt(int index);
 
     /// <summary>
-    ///     Clones the slide at the specified index and appends the clone to the end of the presentation.
+    ///     Appends <paramref name="slide" /> to the end of this presentation, preserving source formatting.
+    ///     <paramref name="slide" /> must be a detached clone obtained via <see cref="IReadOnlySlide.Clone" />.
     /// </summary>
-    /// <param name="slideIndex">The 0-based index of the slide to clone.</param>
-    /// <returns>Returns the zero-based index of the specified slide in the slide collection if found otherwise -1</returns>
-    int CloneSlide(int slideIndex);
+    /// <param name="slide">Detached slide clone to insert.</param>
+    void AddSlide(IReadOnlySlide slide);
 
     /// <summary>
     ///     Removes encryption from the presentation.

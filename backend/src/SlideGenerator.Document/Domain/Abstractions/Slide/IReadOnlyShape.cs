@@ -13,6 +13,7 @@
  */
 
 using System.Drawing;
+using SlideGenerator.Document.Domain.Models.Slide;
 
 namespace SlideGenerator.Document.Domain.Abstractions.Slide;
 
@@ -25,6 +26,11 @@ public interface IReadOnlyShape
     ///     Gets the name of the shape.
     /// </summary>
     string Name { get; }
+    
+    /// <summary>
+    ///     Gets the identifier of the shape.
+    /// </summary>
+    ShapeIdentifier Identifier { get; }
 
     /// <summary>
     ///     Gets the text displayed within the shape, if any.
@@ -32,7 +38,7 @@ public interface IReadOnlyShape
     string DisplayText { get; }
 
     /// <summary>
-    ///     Gets the bounding box of the shape.
+    ///     Gets the bounding box in pixels of the shape.
     /// </summary>
     RectangleF Bounds { get; }
 

@@ -63,6 +63,26 @@ public sealed class CloudClientTests : IDisposable
         writtenBytes.Should().Equal(expectedBytes);
     }
 
+    /// <summary>
+    ///     Verifies that the byte-array overload of <see cref="CloudClient.DownloadAsync" /> returns
+    ///     the response body directly in memory, without touching disk.
+    /// </summary>
+    [Fact]
+    public async Task DownloadAsync_ByteArrayOverload_ReturnsContentBytes()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var expectedBytes = "fake binary content"u8.ToArray();
+        var handler = new FakeHttpHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new ByteArrayContent(expectedBytes)
+        });
+        using var client = new HttpClient(handler);
+
+        var result = await _sut.DownloadAsync(TestUri, client, ct);
+
+        result.Should().Equal(expectedBytes);
+    }
+
     #endregion
 
     #region InspectAsync
@@ -87,7 +107,7 @@ public sealed class CloudClientTests : IDisposable
 
         result.Should().NotBeNull();
         result.IsImage().Should().BeTrue();
-        result.Type.Should().Be("image/jpeg");
+        result.MimeType.Should().Be("image/jpeg");
     }
 
     /// <summary>
@@ -188,6 +208,168 @@ public sealed class CloudClientTests : IDisposable
         var result = await _sut.InspectAsync(new Uri("https://this-host-does-not-exist.invalid"), null, ct);
 
         result.Should().BeNull();
+    }
+
+    #endregion
+
+    #region InspectAsync — Extension
+
+    /// <summary>
+    ///     Verifies that <see cref="CloudClient.InspectAsync" /> takes <c>Extension</c> from the
+    ///     <c>Content-Disposition</c> file name when present, in preference to the URL path.
+    /// </summary>
+    [Fact]
+    public async Task InspectAsync_ContentDispositionFileName_ReturnsExtensionFromFileName()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var handler = new FakeHttpHandler(_ =>
+        {
+            var r = new HttpResponseMessage(HttpStatusCode.OK);
+            r.Content.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
+            r.Content.Headers.ContentDisposition =
+                new ContentDispositionHeaderValue("attachment") { FileName = "photo.png" };
+            return r;
+        });
+        using var client = new HttpClient(handler);
+
+        var result = await _sut.InspectAsync(new Uri("https://example.com/download?id=1"), client, ct);
+
+        result.Should().NotBeNull();
+        result.Extension.Should().Be(".png");
+    }
+
+    /// <summary>
+    ///     Verifies that <see cref="CloudClient.InspectAsync" /> falls back to the URL path's extension
+    ///     when no <c>Content-Disposition</c> file name is present.
+    /// </summary>
+    [Fact]
+    public async Task InspectAsync_NoContentDisposition_ReturnsExtensionFromUrlPath()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var uri = new Uri("https://example.com/images/photo.jpg");
+        var handler = new FakeHttpHandler(_ => new HttpResponseMessage(HttpStatusCode.OK));
+        using var client = new HttpClient(handler);
+
+        var result = await _sut.InspectAsync(uri, client, ct);
+
+        result.Should().NotBeNull();
+        result.Extension.Should().Be(".jpg");
+    }
+
+    /// <summary>
+    ///     Verifies that <see cref="CloudClient.InspectAsync" /> returns a <see langword="null" />
+    ///     <c>Extension</c> when neither the <c>Content-Disposition</c> file name nor the URL path
+    ///     carries one.
+    /// </summary>
+    [Fact]
+    public async Task InspectAsync_NoFileNameOrUrlExtension_ReturnsNullExtension()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var handler = new FakeHttpHandler(_ => new HttpResponseMessage(HttpStatusCode.OK));
+        using var client = new HttpClient(handler);
+
+        var result = await _sut.InspectAsync(TestUri, client, ct);
+
+        result.Should().NotBeNull();
+        result.Extension.Should().BeNull();
+    }
+
+    #endregion
+
+    #region InspectAsync — Cloud resolution
+
+    /// <summary>
+    ///     Verifies that <see cref="CloudClient.InspectAsync" /> resolves a Google Drive file sharing
+    ///     link to a <c>uc?export=download</c> download URI and stores it in <c>ContentInfo.Uri</c>.
+    /// </summary>
+    [Fact]
+    public async Task InspectAsync_GoogleDriveFileUrl_ContentInfoUriIsDownloadUri()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        const string fileId = "TESTFILE123";
+        var driveUri = new Uri($"https://drive.google.com/file/d/{fileId}/view");
+        var handler = new FakeHttpHandler(req =>
+        {
+            var r = new HttpResponseMessage(HttpStatusCode.OK);
+            if (req.RequestUri?.AbsoluteUri.Contains("export=download") == true)
+                r.Content.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
+            return r;
+        });
+        using var client = new HttpClient(handler);
+
+        var result = await _sut.InspectAsync(driveUri, client, ct);
+
+        result.Should().NotBeNull();
+        result.Uri.AbsoluteUri.Should().Be($"https://drive.google.com/uc?export=download&id={fileId}");
+    }
+
+    /// <summary>
+    ///     Verifies that <see cref="CloudClient.InspectAsync" /> re-inspects the resolved download URI
+    ///     so that <c>IsImage()</c> returns <see langword="true" /> for a Google Drive image file.
+    /// </summary>
+    [Fact]
+    public async Task InspectAsync_GoogleDriveFileUrl_IsImageTrueAfterReInspect()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        const string fileId = "TESTFILE123";
+        var driveUri = new Uri($"https://drive.google.com/file/d/{fileId}/view");
+        var handler = new FakeHttpHandler(req =>
+        {
+            var r = new HttpResponseMessage(HttpStatusCode.OK);
+            if (req.RequestUri?.AbsoluteUri.Contains("export=download") == true)
+                r.Content.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
+            return r;
+        });
+        using var client = new HttpClient(handler);
+
+        var result = await _sut.InspectAsync(driveUri, client, ct);
+
+        result.Should().NotBeNull();
+        result.IsImage().Should().BeTrue();
+    }
+
+    /// <summary>
+    ///     Verifies that <see cref="CloudClient.InspectAsync" /> returns the final redirect URI
+    ///     unchanged when no cloud provider module matches.
+    /// </summary>
+    [Fact]
+    public async Task InspectAsync_NonCloudUrl_ContentInfoUriIsUnchanged()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var uri = new Uri("https://example.com/image.jpg");
+        var handler = new FakeHttpHandler(_ => new HttpResponseMessage(HttpStatusCode.OK));
+        using var client = new HttpClient(handler);
+
+        var result = await _sut.InspectAsync(uri, client, ct);
+
+        result.Should().NotBeNull();
+        result.Uri.Should().Be(uri);
+    }
+
+    /// <summary>
+    ///     Verifies that <see cref="CloudClient.InspectAsync" /> returns <c>ContentInfo</c> with the
+    ///     folder URI when the Google Drive module cannot find a file in the folder (returns
+    ///     <see langword="null" />).
+    /// </summary>
+    [Fact]
+    public async Task InspectAsync_GoogleDriveModuleReturnsNull_ContentInfoUriIsFinalUri()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        const string folderId = "EMPTYFOLDERID";
+        var folderUri = new Uri($"https://drive.google.com/drive/folders/{folderId}");
+        var handler = new FakeHttpHandler(req =>
+        {
+            if (req.RequestUri?.AbsoluteUri.Contains("embeddedfolderview") == true)
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                    { Content = new StringContent("<html>no files here</html>") };
+            return new HttpResponseMessage(HttpStatusCode.OK);
+        });
+        using var client = new HttpClient(handler);
+
+        var result = await _sut.InspectAsync(folderUri, client, ct);
+
+        result.Should().NotBeNull();
+        result.Uri.Should().Be(folderUri);
     }
 
     #endregion

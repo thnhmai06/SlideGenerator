@@ -12,123 +12,123 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Document.Application.Abstractions;
+using SlideGenerator.Cloud.Domain.Models;
 using SlideGenerator.Document.Domain.Abstractions.Sheet;
-using SlideGenerator.Document.Domain.Abstractions.Slide;
 using SlideGenerator.Document.Domain.Models.Sheet;
-using SlideGenerator.Document.Domain.Models.Slide;
-using SlideGenerator.Generator.Domain.Models.Contexts;
+using SlideGenerator.Settings.Application.Abstractions;
+using SlideGenerator.Settings.Domain.Rules;
 
 namespace SlideGenerator.Generator.Application;
 
-/// <summary>
-///     Provides extension methods for the <see cref="GeneratingContext" /> to manage resource handles efficiently.
-/// </summary>
-public static class Utilities
+internal static class Utilities
 {
-    /// <param name="data">The workflow context state.</param>
-    extension(GeneratingContext data)
+    /// <summary>Case-insensitive equality on <see cref="ColumnIdentifier.ColumnName" />.</summary>
+    private sealed class ColumnIdentifierComparer : IEqualityComparer<ColumnIdentifier>
     {
-        /// <summary>
-        ///     Gets an existing workbook handle from the context or opens it if not already present.
-        ///     Thread-safe via ConcurrentDictionary.
-        /// </summary>
-        /// <param name="workbookProvider">The provider used to open new workbooks.</param>
-        /// <param name="identifier">The identifier of the workbook to open.</param>
-        /// <returns>A read-only handle to the opened workbook.</returns>
-        /// <exception cref="System.IO.FileNotFoundException">Thrown if the workbook file does not exist.</exception>
-        public IReadOnlyWorkbook GetOrOpenWorkbook(IWorkbookProvider workbookProvider, WorkbookIdentifier identifier)
+        public static readonly ColumnIdentifierComparer Instance = new();
+
+        public bool Equals(ColumnIdentifier? x, ColumnIdentifier? y) =>
+            string.Equals(x?.ColumnName, y?.ColumnName, StringComparison.OrdinalIgnoreCase);
+
+        public int GetHashCode(ColumnIdentifier obj) =>
+            StringComparer.OrdinalIgnoreCase.GetHashCode(obj.ColumnName);
+    }
+
+    /// <summary>
+    ///     Creates a fresh <see cref="HttpClient" /> from <paramref name="httpClientFactory" /> (cheap — the
+    ///     underlying <see cref="HttpMessageHandler" /> is pooled/reused by the factory) configured with the
+    ///     current <c>Network</c> setting's timeout. Proxy is applied on the pooled handler itself (see
+    ///     <c>AddHttpClient</c> registration in <c>Registration.cs</c>), refreshed whenever the factory
+    ///     recycles the handler. Call this at the point of use instead of caching one client for reuse.
+    /// </summary>
+    internal static HttpClient CreateHttpClientWithSetting(this IHttpClientFactory httpClientFactory,
+        ISettingProvider settingProvider)
+    {
+        var client = httpClientFactory.CreateClient(NameAndPaths.Application.Name);
+        client.Timeout = TimeSpan.FromSeconds(settingProvider.Current.Network.Retry.Timeout);
+        return client;
+    }
+
+    /// <summary>
+    ///     Runs <paramref name="action" />, retrying up to <paramref name="maxRetries" /> times on
+    ///     failure (an exception, or a null result), waiting between attempts via
+    ///     <see cref="SlideGenerator.Utilities.Math.ComputeBackoffDelay" /> (or <paramref name="delay" />
+    ///     if supplied, for tests). A genuine cancellation via <paramref name="ct" /> is never retried —
+    ///     it propagates immediately, and an exception on the final attempt also propagates (never swallowed).
+    /// </summary>
+    internal static async Task<T?> ExecuteWithBackoffAsync<T>(
+        int maxRetries,
+        TimeSpan maxRetryDelay,
+        Func<Task<T>> action,
+        CancellationToken ct,
+        Func<int, CancellationToken, Task>? delay = null) where T : class?
+    {
+        delay ??= (attempt, innerCt) =>
+            Task.Delay(SlideGenerator.Utilities.Math.ComputeBackoffDelay(attempt, maxRetryDelay), innerCt);
+
+        for (var attempt = 0; attempt <= maxRetries; attempt++)
         {
-            if (data.WorkbookHandles.TryGetValue(identifier, out var workbook))
-                return workbook;
-
-            if (!File.Exists(identifier.BookPath))
-                throw new FileNotFoundException("Workbooks not found.", identifier.BookPath);
-
-            var lazy = data.WorkbookFactories.GetOrAdd(identifier, id => new Lazy<IReadOnlyWorkbook>(() =>
+            T? result;
+            try
             {
-                try
-                {
-                    return workbookProvider.OpenWorkbookReadOnly(id);
-                }
-                catch
-                {
-                    data.WorkbookFactories.TryRemove(id, out _);
-                    throw;
-                }
-            }, LazyThreadSafetyMode.ExecutionAndPublication));
-            var opened = lazy.Value;
-            data.WorkbookHandles.TryAdd(identifier, opened);
-            return opened;
+                result = await action().ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw; // real cancellation/shutdown — never retried
+            }
+            catch (Exception) when (attempt < maxRetries)
+            {
+                result = null; // treated as a failed attempt below
+            }
+
+            if (result != null || attempt == maxRetries) return result;
+
+            await delay(attempt, ct).ConfigureAwait(false);
         }
 
-        /// <summary>
-        ///     Gets an existing template presentation handle from the context or opens it if not already present.
-        ///     Thread-safe via ConcurrentDictionary.
-        /// </summary>
-        /// <param name="presentationProvider">The provider used to open new presentations.</param>
-        /// <param name="identifier">The identifier of the presentation template to open.</param>
-        /// <returns>A read-only handle to the opened presentation template.</returns>
-        /// <exception cref="System.IO.FileNotFoundException">Thrown if the presentation file does not exist.</exception>
-        public IReadOnlyPresentation GetOrOpenPresentation(IPresentationProvider presentationProvider,
-            PresentationIdentifier identifier)
+        return null;
+    }
+
+    /// <summary>Whether <paramref name="inspected" />'s known content length exceeds <paramref name="maxDownloadBytes" /> (0 = unlimited).</summary>
+    internal static bool ExceedsMaxDownloadBytes(ContentInfo? inspected, uint maxDownloadBytes) =>
+        maxDownloadBytes > 0 && inspected?.Length is { } length && length > maxDownloadBytes;
+
+    /// <summary>
+    ///     Returns the trimmed value of the first non-empty column in <paramref name="columns" />,
+    ///     or <see cref="string.Empty" /> if none of them have a value for this row.
+    /// </summary>
+    internal static string GetSource(IReadOnlyDictionary<ColumnIdentifier, string> rowValues,
+        IReadOnlyList<ColumnIdentifier> columns)
+    {
+        foreach (var col in columns)
         {
-            if (data.TemplateHandles.TryGetValue(identifier, out var template))
-                return template;
-
-            if (!File.Exists(identifier.PresentationPath))
-                throw new FileNotFoundException("Presentations template not found.", identifier.PresentationPath);
-
-            var lazy = data.TemplateFactories.GetOrAdd(identifier, id => new Lazy<IReadOnlyPresentation>(() =>
-            {
-                try
-                {
-                    return presentationProvider.OpenPresentationReadOnly(id);
-                }
-                catch
-                {
-                    data.TemplateFactories.TryRemove(id, out _);
-                    throw;
-                }
-            }, LazyThreadSafetyMode.ExecutionAndPublication));
-            var opened = lazy.Value;
-            data.TemplateHandles.TryAdd(identifier, opened);
-            return opened;
+            var val = rowValues.GetValueOrDefault(col);
+            if (string.IsNullOrWhiteSpace(val)) continue;
+            return val.Trim();
         }
 
-        /// <summary>
-        ///     Gets an existing output presentation handle from the context or opens it if not already present.
-        ///     Supports lazy reopen after persistence resume.
-        ///     Thread-safe via ConcurrentDictionary.
-        /// </summary>
-        /// <param name="presentationProvider">The provider used to open presentations.</param>
-        /// <param name="identifier">The identifier of the output presentation to open.</param>
-        /// <returns>A writable handle to the opened output presentation.</returns>
-        /// <exception cref="System.IO.FileNotFoundException">Thrown if the output file does not exist.</exception>
-        public IPresentation GetOrOpenOutput(IPresentationProvider presentationProvider,
-            PresentationIdentifier identifier)
+        return string.Empty;
+    }
+
+    /// <summary>
+    ///     Reads the header row (row 1) and returns a case-insensitive map of the column identifier → 0-based
+    ///     list index. The index matches the position returned by <see cref="IReadOnlyWorksheet.GetRow" />, so
+    ///     callers can do <c>row[headerMap[colId]]</c> directly.
+    /// </summary>
+    /// <param name="worksheet">Worksheet to read the header from.</param>
+    /// <returns>Dictionary keyed by <see cref="ColumnIdentifier" /> (ordinal-ignore-case), value is a 0-based list index.</returns>
+    internal static IReadOnlyDictionary<ColumnIdentifier, int> BuildHeaderToIndexMap(IReadOnlyWorksheet worksheet)
+    {
+        var headerRow = worksheet.GetRow(1);
+        var result = new Dictionary<ColumnIdentifier, int>(ColumnIdentifierComparer.Instance);
+        for (var i = 0; i < headerRow.Count; i++)
         {
-            if (data.OutputHandles.TryGetValue(identifier, out var output))
-                return output;
-
-            if (!File.Exists(identifier.PresentationPath))
-                throw new FileNotFoundException("Output presentation not found.", identifier.PresentationPath);
-
-            var lazy = data.OutputFactories.GetOrAdd(identifier, id => new Lazy<IPresentation>(() =>
-            {
-                try
-                {
-                    return presentationProvider.OpenPresentation(id);
-                }
-                catch
-                {
-                    data.OutputFactories.TryRemove(id, out _);
-                    throw;
-                }
-            }, LazyThreadSafetyMode.ExecutionAndPublication));
-            var opened = lazy.Value;
-            data.OutputHandles.TryAdd(identifier, opened);
-            return opened;
+            if (string.IsNullOrWhiteSpace(headerRow[i])) continue;
+            var columnId = new ColumnIdentifier(headerRow[i]);
+            result.TryAdd(columnId, i);
         }
+
+        return result;
     }
 }

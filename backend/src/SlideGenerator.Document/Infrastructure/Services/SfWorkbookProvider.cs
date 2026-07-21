@@ -16,6 +16,7 @@ using SlideGenerator.Document.Application.Abstractions;
 using SlideGenerator.Document.Domain.Abstractions.Sheet;
 using SlideGenerator.Document.Domain.Models.Sheet;
 using SlideGenerator.Document.Infrastructure.Adapters.Sheet;
+using SlideGenerator.Utilities;
 using Syncfusion.XlsIO;
 using IWorkbook = SlideGenerator.Document.Domain.Abstractions.Sheet.IWorkbook;
 
@@ -29,8 +30,7 @@ internal sealed class SfWorkbookProvider : IWorkbookProvider
 {
     private readonly ExcelEngine _engine = new();
 
-    /// <inheritdoc />
-    public IWorkbook OpenWorkbook(WorkbookIdentifier identifier)
+    private SfWorkbook CreateWorkbookInstance(WorkbookIdentifier identifier)
     {
         Syncfusion.XlsIO.IWorkbook workbook;
 
@@ -55,7 +55,7 @@ internal sealed class SfWorkbookProvider : IWorkbookProvider
         return new SfWorkbook(workbook, identifier);
     }
 
-    public IReadOnlyWorkbook OpenWorkbookReadOnly(WorkbookIdentifier identifier)
+    private SfWorkbook CreateWorkbookReadOnlyInstance(WorkbookIdentifier identifier)
     {
         Syncfusion.XlsIO.IWorkbook workbook;
         FileStream? fileStream = null;
@@ -82,5 +82,44 @@ internal sealed class SfWorkbookProvider : IWorkbookProvider
         }
 
         return new SfWorkbook(workbook, identifier, fileStream);
+    }
+
+    /// <inheritdoc />
+    public async Task<IWorkbook> OpenWorkbookAsync(WorkbookIdentifier identifier, CancellationToken ct = default)
+    {
+        while (true)
+        {
+            ct.ThrowIfCancellationRequested();
+            try
+            {
+                return CreateWorkbookInstance(identifier);
+            }
+            catch (IOException ex) when (FileAccessHelper.IsFileLockedException(ex))
+            {
+                _ = ex;
+            }
+
+            await FileAccessHelper.WaitForFileChangeAsync(identifier.BookPath, ct).ConfigureAwait(false);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyWorkbook> OpenWorkbookReadOnlyAsync(WorkbookIdentifier identifier,
+        CancellationToken ct = default)
+    {
+        while (true)
+        {
+            ct.ThrowIfCancellationRequested();
+            try
+            {
+                return CreateWorkbookReadOnlyInstance(identifier);
+            }
+            catch (IOException ex) when (FileAccessHelper.IsFileLockedException(ex))
+            {
+                _ = ex;
+            }
+
+            await FileAccessHelper.WaitForFileChangeAsync(identifier.BookPath, ct).ConfigureAwait(false);
+        }
     }
 }

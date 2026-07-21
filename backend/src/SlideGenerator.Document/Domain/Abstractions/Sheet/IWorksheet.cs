@@ -25,5 +25,5 @@ public interface IWorksheet : IReadOnlyWorksheet
     /// <param name="row">The 1-based row index.</param>
     /// <param name="col">The 1-based column index.</param>
     /// <param name="value">The value to set.</param>
-    void SetCellValue(int row, int col, string value);
+    void SetCell(int row, int col, string value);
 }

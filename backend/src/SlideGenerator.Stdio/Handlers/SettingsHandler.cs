@@ -13,7 +13,6 @@
  */
 
 using SlideGenerator.Settings.Application.Abstractions;
-using SlideGenerator.Settings.Domain.Entities;
 using SlideGenerator.Settings.Domain.Models;
 
 namespace SlideGenerator.Stdio.Handlers;
@@ -22,11 +21,12 @@ namespace SlideGenerator.Stdio.Handlers;
 ///     Handles all <c>settings.*</c> JSON-RPC methods.
 ///     Root methods operate on the full <see cref="Setting" /> object.
 ///     Section methods (<c>settings.performance.*</c>, <c>settings.network.*</c>) operate on individual sub-settings.
+///     <c>Performance.MaxConcurrentJobs</c> is re-applied by <c>Service</c> itself (it reads
+///     <see cref="ISettingProvider" /> directly) — this handler does not need to push it anywhere.
 /// </summary>
 public sealed class SettingsHandler(
     ISettingManager settingManager,
-    ISettingProvider settingProvider,
-    ISettingCalibrator settingCalibrator)
+    ISettingProvider settingProvider)
 {
     #region Root
 
@@ -94,17 +94,6 @@ public sealed class SettingsHandler(
         await settingManager.Update(settingProvider.Current with { Performance = new Setting.PerformanceSetting() })
             .ConfigureAwait(false);
         return true;
-    }
-
-    /// <summary>
-    ///     Probes hardware and network conditions to compute recommended performance settings.
-    ///     Does not persist the result — the client applies it via <c>settings.performance.update</c>.
-    /// </summary>
-    /// <param name="ct">A cancellation token.</param>
-    /// <returns>A <see cref="PerformanceCalibration" /> containing raw probe data and the recommended configuration.</returns>
-    public Task<PerformanceCalibration> CalibratePerformanceAsync(CancellationToken ct)
-    {
-        return settingCalibrator.CalibratePerformanceAsync(ct);
     }
 
     #endregion

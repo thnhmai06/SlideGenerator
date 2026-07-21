@@ -12,31 +12,34 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using SlideGenerator.Document.Domain.Models.Slide;
+
 namespace SlideGenerator.Document.Domain.Abstractions.Slide;
 
 /// <summary>
 ///     Represents a read-only view of a single slide in a presentation.
 /// </summary>
-public interface IReadOnlySlide
+public interface IReadOnlySlide : IEquatable<IReadOnlySlide>
 {
-    /// <summary>
-    ///     Gets the 1-based slide number.
-    /// </summary>
-    int Number { get; }
-
     /// <summary>
     ///     Gets the collection of shapes on the slide.
     /// </summary>
     IEnumerable<IReadOnlyShape> Shapes { get; }
-
+    
     /// <summary>
-    ///     Gets the total number of shapes on the slide.
+    ///     Gets the identifier of the slide.
     /// </summary>
-    int ShapesCount { get; }
+    SlideIdentifier Identifier { get; }
 
     /// <summary>
     ///     Gets a preview image of the slide as a byte array.
     /// </summary>
-    /// <returns>A byte array containing the slide preview image.</returns>
+    /// <returns>A byte array containing the slide preview image in PNG format.</returns>
     byte[] GetPreview();
+
+    /// <summary>
+    ///     Creates an independent writable copy of this slide, detached from its source presentation.
+    /// </summary>
+    /// <returns>A new <see cref="ISlide" /> containing the same content as this slide.</returns>
+    ISlide Clone();
 }

@@ -17,6 +17,7 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using SlideGenerator.Document.Application.Services;
 using SlideGenerator.Document.Domain.Abstractions.Slide;
+using SlideGenerator.Document.Domain.Models.Slide;
 using SlideGenerator.Document.Infrastructure.Services;
 using Xunit;
 
@@ -506,6 +507,8 @@ internal sealed class FakeShape : IShape
 
     /// <inheritdoc />
     public string Name => "FakeShape";
+
+    public ShapeIdentifier Identifier => new(Name);
 
     /// <inheritdoc />
     public string DisplayText => string.Concat(_paragraphs.SelectMany(p => p.TextParts).Select(t => t.Text));

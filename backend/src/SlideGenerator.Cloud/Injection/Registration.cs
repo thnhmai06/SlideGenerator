@@ -17,6 +17,7 @@ using Microsoft.Extensions.Logging;
 using SlideGenerator.Cloud.Application.Abstractions;
 using SlideGenerator.Cloud.Infrastructure.Services;
 
+
 namespace SlideGenerator.Cloud.Injection;
 
 /// <summary>
@@ -35,10 +36,6 @@ public static class Registration
         {
             services.AddSingleton<ICloudClient>(sp =>
                 new CloudClient(sp.GetService<ILogger<CloudClient>>()));
-            services.AddSingleton<ICloudResolver>(sp =>
-                new CloudResolver(
-                    sp.GetRequiredService<ICloudClient>(),
-                    sp.GetService<ILogger<CloudResolver>>()));
             return services;
         }
     }

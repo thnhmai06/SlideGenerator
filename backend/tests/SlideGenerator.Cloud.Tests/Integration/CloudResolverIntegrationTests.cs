@@ -13,6 +13,7 @@
  */
 
 using FluentAssertions;
+using SlideGenerator.Cloud.Application;
 using SlideGenerator.Cloud.Infrastructure.Services;
 using SlideGenerator.Cloud.Tests.Helpers;
 using SlideGenerator.Cloud.Tests.Integration.Models;
@@ -21,9 +22,10 @@ using Xunit;
 namespace SlideGenerator.Cloud.Tests.Integration;
 
 /// <summary>
-///     Integration tests that drive the full resolve-then-inspect pipeline against live URLs
+///     Integration tests that drive the full inspect pipeline against live URLs
 ///     defined in <c>Testcases.csv</c>.  Each test row represents one real-world scenario and
-///     asserts whether the pipeline correctly identifies the resource as a downloadable image.
+///     asserts whether <see cref="CloudClient.InspectAsync" /> correctly identifies the resource
+///     as a downloadable image after cloud module resolution.
 /// </summary>
 /// <remarks>
 ///     These tests require an active internet connection and may be slow or flaky under
@@ -35,31 +37,28 @@ public sealed class CloudResolverIntegrationTests
 {
     private static readonly HttpClient SharedHttpClient = new(new HttpClientHandler { AllowAutoRedirect = true });
     private static readonly CloudClient Client = new();
-    private static readonly CloudResolver Resolver = new(Client);
 
     /// <summary>Loads all test cases from <c>Testcases.csv</c>.</summary>
     public static TheoryData<TestCase> LoadCases()
     {
         var data = new TheoryData<TestCase>();
-        foreach (var tc in TestCsvLoader.Load(Path.Combine("Integration", "Testcases.csv")))
+        foreach (var tc in TestCsvLoader.Load(Path.Combine("fixtures", "data", "Data.csv")))
             data.Add(tc);
         return data;
     }
 
     /// <summary>
-    ///     Verifies that the resolve-then-inspect pipeline produces a result that matches
+    ///     Verifies that <see cref="CloudClient.InspectAsync" /> produces a result that matches
     ///     the <c>ShouldDownload</c> expectation from the CSV for each test case.
-    ///     The pipeline: <c>ResolveAsync</c> → <c>InspectAsync</c> → <c>IsImage()</c>.
+    ///     Cloud module resolution is performed automatically inside <c>InspectAsync</c>.
     /// </summary>
     [Theory]
     [MemberData(nameof(LoadCases))]
-    public async Task ResolveAndInspect_MatchesShouldDownload(TestCase tc)
+    public async Task Inspect_MatchesShouldDownload(TestCase tc)
     {
-        var resolvedUri = await Resolver.ResolveAsync(tc.Url ?? string.Empty, SharedHttpClient,
-            TestContext.Current.CancellationToken);
-
-        var info = resolvedUri is not null
-            ? await Client.InspectAsync(resolvedUri, SharedHttpClient, TestContext.Current.CancellationToken)
+        var uri = Utilities.TryCreateUri(tc.Url);
+        var info = uri is not null
+            ? await Client.InspectAsync(uri, SharedHttpClient, TestContext.Current.CancellationToken)
             : null;
 
         var actual = info?.IsImage() ?? false;

@@ -42,7 +42,6 @@
         <ProjectReference Include="..\SlideGenerator.Summarization\SlideGenerator.Summarization.csproj"/>
         <ProjectReference Include="..\SlideGenerator.Recipe\SlideGenerator.Recipe.csproj"/>
         <ProjectReference Include="..\SlideGenerator.Settings\SlideGenerator.Settings.csproj"/>
-        <ProjectReference Include="..\SlideGenerator.Coordinator\SlideGenerator.Coordinator.csproj"/>
         <ProjectReference Include="..\SlideGenerator.Document\SlideGenerator.Document.csproj"/>
         <ProjectReference Include="..\SlideGenerator.Image\SlideGenerator.Image.csproj"/>
         <ProjectReference Include="..\SlideGenerator.Logging\SlideGenerator.Logging.csproj"/>

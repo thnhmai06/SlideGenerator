@@ -12,10 +12,10 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Coordinator.Application.Abstractions;
 using SlideGenerator.Image.Application.Abstractions;
 using SlideGenerator.Image.Domain.Entities;
 using SlideGenerator.Image.Domain.Models;
+using SlideGenerator.Utilities;
 
 namespace SlideGenerator.Image.Infrastructure.Services;
 

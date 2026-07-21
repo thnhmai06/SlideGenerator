@@ -32,7 +32,7 @@ public enum RowFilterMode
 }
 
 /// <summary>
-///     Base type for row-filter configurations on a <see cref="Graphs.WorksheetNode" />.
+///     Base type for row-filter configurations on a <see cref="WorksheetNode" />.
 /// </summary>
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "mode")]
 [JsonDerivedType(typeof(AllRowFilter), nameof(RowFilterMode.All))]
@@ -43,6 +43,15 @@ public abstract record RowFilter
     /// <summary>Gets the strategy discriminator — ignored by STJ since the <c>mode</c> discriminator already encodes this value.</summary>
     [JsonIgnore]
     public abstract RowFilterMode Mode { get; }
+
+    /// <summary>
+    ///     Returns the 1-based data row indices selected by this filter.
+    ///     Index 1 is the first data row (absolute row 2 in the worksheet because row 1 is the header).
+    ///     Callers are responsible for converting to absolute worksheet rows by adding 1.
+    /// </summary>
+    /// <param name="dataCount">Total number of data rows (= <c>RowCount − 1</c>; excludes the header).</param>
+    /// <returns>Sequence of 1-based data row indices (≥ 1) in ascending order.</returns>
+    public abstract IEnumerable<int> GetIndices(int dataCount);
 }
 
 /// <summary>
@@ -53,18 +62,24 @@ public sealed record AllRowFilter : RowFilter
     /// <inheritdoc />
     [JsonIgnore]
     public override RowFilterMode Mode => RowFilterMode.All;
+
+    /// <inheritdoc />
+    public override IEnumerable<int> GetIndices(int dataCount) => Enumerable.Range(1, dataCount);
 }
 
 /// <summary>
 ///     Selects a contiguous range of rows by 1-based index.
 /// </summary>
-/// <param name="From">Inclusive start row (1-based).</param>
-/// <param name="To">Inclusive end row (1-based).</param>
-public sealed record IndexRangeFilter(int From, int To) : RowFilter
+/// <param name="Start">Inclusive start row (1-based).</param>
+/// <param name="End">Inclusive end row (1-based).</param>
+public sealed record IndexRangeFilter(int Start, int End) : RowFilter
 {
     /// <inheritdoc />
     [JsonIgnore]
     public override RowFilterMode Mode => RowFilterMode.IndexRange;
+
+    /// <inheritdoc />
+    public override IEnumerable<int> GetIndices(int dataCount) => Enumerable.Range(Start, End - Start + 1);
 }
 
 /// <summary>
@@ -87,14 +102,12 @@ public sealed record PartitionBlockFilter(int PartitionIndex, int PartitionCount
     public override RowFilterMode Mode => RowFilterMode.PartitionBlock;
 
     /// <summary>Resolves the inclusive start row (0-based) for the given total row count.</summary>
-    public int GetStart(int totalRows)
-    {
-        return totalRows * PartitionIndex / PartitionCount;
-    }
+    public int GetStart(int totalRows) => totalRows * PartitionIndex / PartitionCount;
 
     /// <summary>Resolves the exclusive end row (0-based) for the given total row count.</summary>
-    public int GetEnd(int totalRows)
-    {
-        return totalRows * (PartitionIndex + 1) / PartitionCount;
-    }
+    public int GetEnd(int totalRows) => totalRows * (PartitionIndex + 1) / PartitionCount;
+
+    /// <inheritdoc />
+    public override IEnumerable<int> GetIndices(int dataCount)
+        => Enumerable.Range(GetStart(dataCount) + 1, GetEnd(dataCount) - GetStart(dataCount));
 }

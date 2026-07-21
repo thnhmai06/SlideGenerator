@@ -119,7 +119,7 @@ internal static partial class Program
             .Enrich.WithExceptionDetails()
             .Enrich.WithProperty("LoggerName", "System")
             .Enrich.WithProperty("Scope", "Global")
-            .WriteTo.File(new FileLogFormatter(), _logFilePath)
+            .WriteTo.File(new FileLogFormatter([]), _logFilePath)
             .WriteTo.Console(new ConsoleLogFormatter(), standardErrorFromLevel: LogEventLevel.Verbose)
             .CreateLogger();
 

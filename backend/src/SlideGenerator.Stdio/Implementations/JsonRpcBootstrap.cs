@@ -71,22 +71,20 @@ internal static class JsonRpcBootstrap
 
         #region generator.active
 
-        jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingActiveHandler>(nameof(GeneratingActiveHandler.StartAsync)),
-            generatingActiveHandler, Attr("generator.active.start"));
-        jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingActiveHandler>(nameof(GeneratingActiveHandler.CancelAsync)),
-            generatingActiveHandler, Attr("generator.active.cancel"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingActiveHandler>(nameof(GeneratingActiveHandler.CreateAsync)),
+            generatingActiveHandler, Attr("generator.active.create"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingActiveHandler>(nameof(GeneratingActiveHandler.StopAsync)),
+            generatingActiveHandler, Attr("generator.active.stop"));
         jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingActiveHandler>(nameof(GeneratingActiveHandler.PauseAsync)),
             generatingActiveHandler, Attr("generator.active.pause"));
         jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingActiveHandler>(nameof(GeneratingActiveHandler.ResumeAsync)),
             generatingActiveHandler, Attr("generator.active.resume"));
-        jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingActiveHandler>(nameof(GeneratingActiveHandler.CancelAllAsync)),
-            generatingActiveHandler, new JsonRpcMethodAttribute("generator.active.cancelAll"));
+        jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingActiveHandler>(nameof(GeneratingActiveHandler.StopAllAsync)),
+            generatingActiveHandler, new JsonRpcMethodAttribute("generator.active.stopAll"));
         jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingActiveHandler>(nameof(GeneratingActiveHandler.PauseAllAsync)),
             generatingActiveHandler, new JsonRpcMethodAttribute("generator.active.pauseAll"));
         jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingActiveHandler>(nameof(GeneratingActiveHandler.ListAsync)),
             generatingActiveHandler, new JsonRpcMethodAttribute("generator.active.list"));
-        jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingActiveHandler>(nameof(GeneratingActiveHandler.QueryAsync)),
-            generatingActiveHandler, Attr("generator.active.query"));
 
         #endregion
 
@@ -94,8 +92,6 @@ internal static class JsonRpcBootstrap
 
         jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingCompletedHandler>(nameof(GeneratingCompletedHandler.ListAsync)),
             generatingCompletedHandler, new JsonRpcMethodAttribute("generator.completed.list"));
-        jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingCompletedHandler>(nameof(GeneratingCompletedHandler.QueryAsync)),
-            generatingCompletedHandler, Attr("generator.completed.query"));
         jsonRpc.AddLocalRpcMethod(GetMethod<GeneratingCompletedHandler>(nameof(GeneratingCompletedHandler.DeleteAsync)),
             generatingCompletedHandler, Attr("generator.completed.delete"));
         jsonRpc.AddLocalRpcMethod(
@@ -152,8 +148,6 @@ internal static class JsonRpcBootstrap
             settingsHandler, Attr("settings.performance.update"));
         jsonRpc.AddLocalRpcMethod(GetMethod<SettingsHandler>(nameof(SettingsHandler.ResetPerformanceAsync)),
             settingsHandler, new JsonRpcMethodAttribute("settings.performance.reset"));
-        jsonRpc.AddLocalRpcMethod(GetMethod<SettingsHandler>(nameof(SettingsHandler.CalibratePerformanceAsync)),
-            settingsHandler, new JsonRpcMethodAttribute("settings.performance.calibrate"));
 
         #endregion
 
@@ -173,14 +167,16 @@ internal static class JsonRpcBootstrap
     }
 
     /// <summary>
-    ///     Attaches the <see cref="WorkflowProgressObserver" /> to <see cref="GeneratingEventBus" />
-    ///     so workflow events are forwarded as <c>workflow/progress</c> notifications.
+    ///     Attaches the <see cref="ProgressCoalescer" /> to <see cref="GeneratingEventBus" />/
+    ///     <see cref="LogNotifier" /> so Request/Job/Row progress and log lines are batched and forwarded
+    ///     as <c>progress/request</c>/<c>progress/jobs</c>/<c>progress/rows</c>/<c>log/entries</c> notifications.
     /// </summary>
-    internal static void AttachProgressObserver(IServiceProvider services, JsonRpc jsonRpc)
+    internal static void AttachProgressCoalescer(IServiceProvider services, JsonRpc jsonRpc)
     {
         var eventBus = services.GetRequiredService<GeneratingEventBus>();
-        var observer = services.GetRequiredService<WorkflowProgressObserver>();
-        observer.Attach(eventBus, jsonRpc);
+        var logNotifier = services.GetRequiredService<LogNotifier>();
+        var coalescer = services.GetRequiredService<ProgressCoalescer>();
+        coalescer.Attach(eventBus, logNotifier, jsonRpc);
     }
 
     private static JsonRpcMethodAttribute Attr(string name)

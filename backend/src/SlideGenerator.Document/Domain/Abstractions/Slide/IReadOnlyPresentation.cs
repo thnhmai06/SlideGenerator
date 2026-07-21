@@ -12,6 +12,8 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using SlideGenerator.Document.Domain.Models.Slide;
+
 namespace SlideGenerator.Document.Domain.Abstractions.Slide;
 
 /// <summary>
@@ -23,9 +25,19 @@ public interface IReadOnlyPresentation : IDisposable
     ///     Gets the collection of slides in the presentation.
     /// </summary>
     IEnumerable<IReadOnlySlide> Slides { get; }
+    
+    /// <summary>
+    ///     Gets the identifier of presentation.
+    /// </summary>
+    PresentationIdentifier Identifier { get; }
 
     /// <summary>
     ///     Gets the total number of slides in the presentation.
     /// </summary>
     int SlidesCount { get; }
+
+    /// <summary>
+    ///     Gets a value indicating whether the presentation has write protection enabled.
+    /// </summary>
+    bool IsWriteProtected { get; }
 }

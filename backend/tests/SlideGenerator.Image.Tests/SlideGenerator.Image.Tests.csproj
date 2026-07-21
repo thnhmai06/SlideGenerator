@@ -27,7 +27,7 @@
 
     <ItemGroup>
         <ProjectReference Include="../../src/SlideGenerator.Image/SlideGenerator.Image.csproj"/>
-        <ProjectReference Include="../../src/SlideGenerator.Coordinator/SlideGenerator.Coordinator.csproj"/>
+        <ProjectReference Include="../../src/SlideGenerator.Utilities/SlideGenerator.Utilities.csproj"/>
     </ItemGroup>
     <ItemGroup>
         <Content Include="../../src/SlideGenerator.Image/Infrastructure/Binary/YuNet.onnx">

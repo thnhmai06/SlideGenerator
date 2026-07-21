@@ -25,14 +25,12 @@ Framing is NDJSON (`NewLineDelimitedMessageHandler`); serialization uses STJ (`S
 | `generator.active.cancelAll` | `GeneratingActiveHandler.CancelAllAsync` | Cancels every running workflow.          |
 | `generator.active.pauseAll`  | `GeneratingActiveHandler.PauseAllAsync`  | Suspends every running workflow.         |
 | `generator.active.list`      | `GeneratingActiveHandler.ListAsync`      | Lists every active workflow.             |
-| `generator.active.query`     | `GeneratingActiveHandler.QueryAsync`     | Returns details for a specific workflow. |
 
 ### Generator — completed workflows
 
 | Method                          | Handler                                     |
 |---------------------------------|---------------------------------------------|
 | `generator.completed.list`      | `GeneratingCompletedHandler.ListAsync`      |
-| `generator.completed.query`     | `GeneratingCompletedHandler.QueryAsync`     |
 | `generator.completed.delete`    | `GeneratingCompletedHandler.DeleteAsync`    |
 | `generator.completed.deleteAll` | `GeneratingCompletedHandler.DeleteAllAsync` |
 

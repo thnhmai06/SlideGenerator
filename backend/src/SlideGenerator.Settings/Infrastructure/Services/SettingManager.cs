@@ -14,7 +14,7 @@
 
 using Microsoft.Extensions.Logging;
 using SlideGenerator.Settings.Application.Abstractions;
-using SlideGenerator.Settings.Domain.Entities;
+using SlideGenerator.Settings.Domain.Models;
 using SlideGenerator.Settings.Domain.Rules;
 
 namespace SlideGenerator.Settings.Infrastructure.Services;

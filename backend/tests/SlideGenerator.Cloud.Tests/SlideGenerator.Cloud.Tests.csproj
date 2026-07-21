@@ -30,7 +30,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Update="Integration\Testcases.csv">
+        <None Include="..\fixtures\data\Data.csv">
+            <Link>fixtures\data\Data.csv</Link>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
     </ItemGroup>

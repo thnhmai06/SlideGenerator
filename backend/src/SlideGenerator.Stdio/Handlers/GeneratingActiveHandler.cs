@@ -13,126 +13,80 @@
  */
 
 using SlideGenerator.Generator.Application.Abstractions;
-using SlideGenerator.Generator.Application.Workflows;
-using SlideGenerator.Generator.Domain.Models;
+using SlideGenerator.Generator.Domain.Models.Data;
 
 namespace SlideGenerator.Stdio.Handlers;
 
 /// <summary>
-///     Handles all <c>generating.active.*</c> JSON-RPC methods: start, cancel, pause, resume, list, and query.
-///     Delegates execution to <see cref="IGeneratingService" /> and publishes lifecycle events
-///     to <see cref="IGeneratingEventBus" /> for forwarding to the client as notifications.
+///     Handles all <c>generator.active.*</c> JSON-RPC methods: create, stop, pause, resume, and list.
+///     Delegates execution to <see cref="IService" />, which publishes lifecycle/progress events
+///     to <see cref="IEventBus" /> for forwarding to the client as notifications.
 /// </summary>
 /// <remarks>
-///     This handler is intentionally thin: it performs no business logic — only parameter mapping
-///     and event publishing.
+///     This handler is intentionally thin: it performs no business logic — only parameter mapping.
 /// </remarks>
-public sealed class GeneratingActiveHandler(
-    IGeneratingService generatingService,
-    IGeneratingEventBus eventBus)
+public sealed class GeneratingActiveHandler(IService generatingService)
 {
     /// <summary>
-    ///     Starts a new slide generation workflow from the provided request and returns its instance ID.
-    ///     The <c>WorkflowStarted</c> event is published by <see cref="IGeneratingService" /> via the lifecycle handler.
+    ///     Creates a new slide generation request from the provided request and returns its request ID.
+    ///     The <c>JobStarted</c> event is published by <see cref="IService" /> via the lifecycle handler.
     /// </summary>
-    public Task<string> StartAsync(GeneratingRequest request, CancellationToken ct)
+    public Task<string> CreateAsync(Request request, CancellationToken ct)
     {
-        return generatingService.StartAsync(request, ct);
+        return generatingService.CreateAsync(request, ct);
     }
 
     /// <summary>
-    ///     Terminates a running workflow instance.
+    ///     Stops every job of the request. Progress notifications per job are published by
+    ///     <see cref="IService.StopAsync" /> itself.
     /// </summary>
-    public async Task<bool> CancelAsync(string workflowInstanceId, CancellationToken ct)
+    public async Task<bool> StopAsync(string requestId, CancellationToken ct)
     {
-        var success = await generatingService.CancelAsync(workflowInstanceId, ct).ConfigureAwait(false);
-        if (success) Publish(workflowInstanceId, GeneratingEvent.WorkflowCancelled, null, GeneratingStatus.Cancelled);
-        return success;
+        var result = await generatingService.StopAsync(requestId, ct).ConfigureAwait(false);
+        return result.Succeeded > 0;
     }
 
     /// <summary>
-    ///     Suspends a running workflow instance.
+    ///     Suspends every runnable job of the request.
     /// </summary>
-    public async Task<bool> PauseAsync(string workflowInstanceId, CancellationToken ct)
+    public async Task<bool> PauseAsync(string requestId, CancellationToken ct)
     {
-        var success = await generatingService.PauseAsync(workflowInstanceId, ct).ConfigureAwait(false);
-        if (success) Publish(workflowInstanceId, GeneratingEvent.WorkflowSuspended, null, GeneratingStatus.Paused);
-        return success;
+        var result = await generatingService.PauseAsync(requestId, ct).ConfigureAwait(false);
+        return result.Succeeded > 0;
     }
 
     /// <summary>
-    ///     Resumes a previously suspended workflow instance.
+    ///     Resumes every suspended job of the request.
     /// </summary>
-    public async Task<bool> ResumeAsync(string workflowInstanceId, CancellationToken ct)
+    public async Task<bool> ResumeAsync(string requestId, CancellationToken ct)
     {
-        var success = await generatingService.ResumeAsync(workflowInstanceId, ct).ConfigureAwait(false);
-        if (success) Publish(workflowInstanceId, GeneratingEvent.WorkflowResumed, null, GeneratingStatus.Running);
-        return success;
+        var result = await generatingService.ResumeAsync(requestId, ct).ConfigureAwait(false);
+        return result.Succeeded > 0;
     }
 
     /// <summary>
-    ///     Cancels all currently active (running and paused) workflow instances.
+    ///     Stops all currently active (running and paused) requests.
     /// </summary>
-    /// <returns>The number of instances successfully cancelled.</returns>
-    public async Task<int> CancelAllAsync(CancellationToken ct)
+    /// <returns>The number of requests successfully stopped.</returns>
+    public Task<int> StopAllAsync(CancellationToken ct)
     {
-        var instances = await generatingService.ListActiveAsync(ct).ConfigureAwait(false);
-        var count = 0;
-        foreach (var instance in instances)
-        {
-            var success = await generatingService.CancelAsync(instance.InstanceId, ct).ConfigureAwait(false);
-            if (!success) continue;
-            Publish(instance.InstanceId, GeneratingEvent.WorkflowCancelled, null, GeneratingStatus.Cancelled);
-            count++;
-        }
-
-        return count;
+        return generatingService.StopAllAsync(ct);
     }
 
     /// <summary>
-    ///     Pauses all currently running (non-paused) workflow instances.
+    ///     Pauses all currently running (non-paused) requests.
     /// </summary>
-    /// <returns>The number of instances successfully paused.</returns>
-    public async Task<int> PauseAllAsync(CancellationToken ct)
+    /// <returns>The number of requests successfully paused.</returns>
+    public Task<int> PauseAllAsync(CancellationToken ct)
     {
-        var instances = await generatingService.ListActiveAsync(ct).ConfigureAwait(false);
-        var count = 0;
-        foreach (var instance in instances.Where(i => i.Status == GeneratingStatus.Running))
-        {
-            var success = await generatingService.PauseAsync(instance.InstanceId, ct).ConfigureAwait(false);
-            if (!success) continue;
-            Publish(instance.InstanceId, GeneratingEvent.WorkflowSuspended, null, GeneratingStatus.Paused);
-            count++;
-        }
-
-        return count;
+        return generatingService.PauseAllAsync(ct);
     }
 
     /// <summary>
-    ///     Returns summaries of all currently active (running or paused) workflow instances.
+    ///     Returns summaries of all currently active (running or paused) requests, keyed by request id.
     /// </summary>
-    public Task<IReadOnlyList<GeneratingSummary>> ListAsync(CancellationToken ct)
+    public Task<IReadOnlyDictionary<string, Summary>> ListAsync(CancellationToken ct)
     {
         return generatingService.ListActiveAsync(ct);
-    }
-
-    /// <summary>
-    ///     Returns the summary of a specific active workflow instance, or <see langword="null" /> if not found.
-    /// </summary>
-    public Task<GeneratingSummary?> QueryAsync(string workflowInstanceId, CancellationToken ct)
-    {
-        return generatingService.QueryAsync(workflowInstanceId, ct);
-    }
-
-    private void Publish(string instanceId, GeneratingEvent evt, GeneratingPhase? phase, GeneratingStatus status)
-    {
-        eventBus.Publish(new GeneratingProgress
-        {
-            WorkflowInstanceId = instanceId,
-            Event = evt,
-            Phase = phase,
-            Status = status,
-            Timestamp = DateTimeOffset.UtcNow
-        });
     }
 }

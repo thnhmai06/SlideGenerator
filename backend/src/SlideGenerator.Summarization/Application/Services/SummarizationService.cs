@@ -32,23 +32,23 @@ internal sealed class SummarizationService(
     ITemplateEngine templateEngine) : ISummarizationService
 {
     /// <inheritdoc />
-    public Task<WorkbookSummary> SummarizeWorkbookAsync(WorkbookIdentifier identifier, bool getPreview = true)
+    public async Task<WorkbookSummary> SummarizeWorkbookAsync(WorkbookIdentifier identifier, bool getPreview = true)
     {
         if (!File.Exists(identifier.BookPath))
             throw new FileNotFoundException("Workbook not found.", identifier.BookPath);
 
-        using var workbook = workbookProvider.OpenWorkbookReadOnly(identifier);
+        using var workbook = await workbookProvider.OpenWorkbookReadOnlyAsync(identifier).ConfigureAwait(false);
         var worksheets = new List<WorksheetSummary>();
         foreach (var worksheet in workbook.Worksheets)
         {
-            var headers = worksheet.GetRow(0);
-            var count = worksheet.RowCount;
+            var headers = worksheet.GetRow(1);
+            var count = worksheet.RowCount - 1;
 
             WorksheetPreview? preview = null;
             if (getPreview)
             {
                 var rows = new List<IReadOnlyList<string>>();
-                for (var i = 1; i <= Math.Min(PreviewRule.MaxPreviewRows, count); i++)
+                for (var i = 2; i <= Math.Min(PreviewRule.MaxPreviewRows, count) + 1; i++)
                     rows.Add(worksheet.GetRow(i));
 
                 preview = new WorksheetPreview(headers, rows);
@@ -60,23 +60,26 @@ internal sealed class SummarizationService(
                 count, preview));
         }
 
-        return Task.FromResult(
-            new WorkbookSummary(identifier.BookPath, Path.GetFileNameWithoutExtension(identifier.BookPath),
-                worksheets));
+        return new WorkbookSummary(identifier.BookPath, Path.GetFileNameWithoutExtension(identifier.BookPath),
+            worksheets);
     }
 
     /// <inheritdoc />
-    public Task<PresentationSummary> SummarizePresentationAsync(PresentationIdentifier identifier,
+    public async Task<PresentationSummary> SummarizePresentationAsync(PresentationIdentifier identifier,
         bool getPreview = true)
     {
         if (!File.Exists(identifier.PresentationPath))
             throw new FileNotFoundException("Presentation not found.", identifier.PresentationPath);
 
-        using var presentation = presentationProvider.OpenPresentationReadOnly(identifier);
+        using var presentation = await presentationProvider
+            .OpenPresentationReadOnlyAsync(identifier).ConfigureAwait(false);
 
         var slides = new List<SlideSummary>();
-        foreach (var slide in presentation.Slides)
+        foreach (var pair in presentation.Slides.Select((slide, index) => new {Item = slide, Index = index}))
         {
+            var slide = pair.Item;
+            var index = pair.Index;
+            
             var shapes = slide.Shapes.ToList();
 
             byte[]? slidePreviewBytes = null;
@@ -87,7 +90,7 @@ internal sealed class SummarizationService(
                 .Distinct(StringComparer.Ordinal)
                 .ToList();
 
-            var slideId = new SlideIdentifier(slide.Number);
+            var slideId = new SlideIdentifier(index + 1); // 1-based
             var imageShapes = shapes
                 .Where(shape => shape.ImageData != null)
                 .Select(shape => new ShapeSummary(slideId, new ShapeIdentifier(shape.Name), shape.Bounds))
@@ -96,6 +99,6 @@ internal sealed class SummarizationService(
             slides.Add(new SlideSummary(identifier, slideId, placeholders, imageShapes, slidePreviewBytes));
         }
 
-        return Task.FromResult(new PresentationSummary(identifier.PresentationPath, slides));
+        return new PresentationSummary(identifier.PresentationPath, slides);
     }
 }

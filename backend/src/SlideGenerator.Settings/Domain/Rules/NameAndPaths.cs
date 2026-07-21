@@ -13,7 +13,6 @@
  */
 
 using Microsoft.Data.Sqlite;
-using SlideGenerator.Utilities;
 
 namespace SlideGenerator.Settings.Domain.Rules;
 
@@ -22,8 +21,6 @@ namespace SlideGenerator.Settings.Domain.Rules;
 /// </summary>
 public static class NameAndPaths
 {
-    private const int PathHashLength = 7;
-
     /// <summary>
     ///     Gets the base path for application-local data (executable directory).
     /// </summary>
@@ -60,8 +57,8 @@ public static class NameAndPaths
         Directory.CreateDirectory(LogsFolder.SystemPath);
         Directory.CreateDirectory(LogsFolder.WorkflowPath);
 
-        // Assets
-        Directory.CreateDirectory(AssetsFolder.DefaultFolder);
+        // Temp (shared download cache)
+        Directory.CreateDirectory(TempFolder.RootPath);
 
         // Data
         Directory.CreateDirectory(DataFolder.FolderPath);
@@ -134,45 +131,15 @@ public static class NameAndPaths
     }
 
     /// <summary>
-    ///     Gets the default assets directory path for the application.
+    ///     Provides the shared, app-wide temp directory used to cache downloaded images that are
+    ///     reused across multiple rows/jobs before being deleted once no longer referenced.
     /// </summary>
-    /// <summary>
-    ///     Provides predefined folder paths and utilities for managing application assets.
-    /// </summary>
-    public static class AssetsFolder
+    public static class TempFolder
     {
         /// <summary>
-        ///     Gets the default directory path where application assets are stored.
+        ///     Gets the root directory (under the OS temp folder) where cached downloads are stored.
         /// </summary>
-        public static string DefaultFolder => Path.Combine(UserPath, "Assets");
-
-        /// <summary>
-        ///     Returns the download directory for a specific book/sheet/column combination.
-        /// </summary>
-        public static string GetDownloadDir(string? assetsPath, string bookPath, string sheetName, string colName)
-        {
-            assetsPath ??= DefaultFolder;
-            var bookName = Path.GetFileNameWithoutExtension(bookPath);
-            var hash = bookPath.HashText(PathHashLength);
-            var bookFolder = $"{Naming.SanitizeFileName(bookName)}_{hash}";
-            sheetName = Naming.SanitizeFileName(sheetName);
-            colName = Naming.SanitizeFileName(colName);
-            return Path.GetFullPath(Path.Combine(assetsPath, bookFolder, sheetName, colName, "Download"));
-        }
-
-        /// <summary>
-        ///     Returns the edit directory for a specific book/sheet/column combination.
-        /// </summary>
-        public static string GetEditDir(string? assetsPath, string bookPath, string sheetName, string colName)
-        {
-            assetsPath ??= DefaultFolder;
-            var bookName = Path.GetFileNameWithoutExtension(bookPath);
-            var hash = bookPath.HashText(PathHashLength);
-            var bookFolder = $"{Naming.SanitizeFileName(bookName)}_{hash}";
-            sheetName = Naming.SanitizeFileName(sheetName);
-            colName = Naming.SanitizeFileName(colName);
-            return Path.GetFullPath(Path.Combine(assetsPath, bookFolder, sheetName, colName, "Edit"));
-        }
+        public static string RootPath => Path.Combine(Path.GetTempPath(), Application.Name);
     }
 
     /// <summary>
@@ -221,6 +188,70 @@ public static class NameAndPaths
             /// </summary>
             public static string ConnectionString =>
                 new SqliteConnectionStringBuilder { DataSource = FilePath }.ConnectionString;
+        }
+
+        /// <summary>
+        ///     Contains naming rules for the shared URL-resolution/download cache SQLite database.
+        /// </summary>
+        public static class CacheFile
+        {
+            private const string FileName = "Cache";
+
+            /// <summary>
+            ///     Gets the full path to the SQLite database used for the shared cache.
+            /// </summary>
+            public static string FilePath => Path.Combine(FolderPath, $"{FileName}.db");
+
+            /// <summary>
+            ///     Gets the SQLite connection string for the shared cache database.
+            /// </summary>
+            public static string ConnectionString =>
+                new SqliteConnectionStringBuilder { DataSource = FilePath }.ConnectionString;
+
+            /// <summary>Defines table naming conventions for the shared cache SQLite database.</summary>
+            public static class TableNames
+            {
+                /// <summary>Table name for the inspected-URL cache (source string → resolved <c>ContentInfo</c>, nullable).</summary>
+                public const string InspectedUrlsTable = "InspectedUrls";
+
+                /// <summary>
+                ///     Table name for the downloaded-file registry (resolved URI → extension of its permanent
+                ///     temp-cached file, nullable). No consumer count is tracked — entries live until TTL eviction.
+                /// </summary>
+                public const string DownloadedFilesTable = "DownloadedFiles";
+            }
+        }
+
+        /// <summary>
+        ///     Contains naming rules for the Progress persistence database (Requests/Jobs/Rows).
+        /// </summary>
+        public static class StudioFile
+        {
+            private const string FileName = "Studio";
+
+            /// <summary>
+            ///     Gets the full path to the SQLite database used for progress persistence.
+            /// </summary>
+            public static string FilePath => Path.Combine(FolderPath, $"{FileName}.db");
+
+            /// <summary>
+            ///     Gets the SQLite connection string for the progress persistence database.
+            /// </summary>
+            public static string ConnectionString =>
+                new SqliteConnectionStringBuilder { DataSource = FilePath }.ConnectionString;
+
+            /// <summary>Defines table naming conventions for the progress persistence database.</summary>
+            public static class TableNames
+            {
+                /// <summary>Table name for request-scoped progress rows.</summary>
+                public const string RequestsTable = "Requests";
+
+                /// <summary>Table name for job-scoped progress rows.</summary>
+                public const string JobsTable = "Jobs";
+
+                /// <summary>Table name for row-scoped progress rows.</summary>
+                public const string RowsTable = "Rows";
+            }
         }
     }
 

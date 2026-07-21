@@ -89,7 +89,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\SlideGenerator.Coordinator\SlideGenerator.Coordinator.csproj"/>
+        <ProjectReference Include="..\SlideGenerator.Utilities\SlideGenerator.Utilities.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

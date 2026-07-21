@@ -13,57 +13,43 @@
  */
 
 using Microsoft.Extensions.Logging;
-using SlideGenerator.Generator.Domain.Models.Contexts;
-using SlideGenerator.Recipe.Domain.Models.Graphs;
+using Serilog.Context;
+using SlideGenerator.Generator.Application.Workflows;
+using SlideGenerator.Generator.Domain.Models.Data;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
 
 namespace SlideGenerator.Generator.Application.Steps;
 
 /// <summary>
-///     Runs once at the start of the workflow to wipe every output directory associated with the
-///     current recipe. Replaces the per-worksheet <c>Directory.Delete</c> previously embedded in
-///     <c>CreateTemplate</c>, which caused multi-worksheet workbooks to destroy each other's output.
+///     Runs first in <see cref="Workflows.JobWorkflow" /> to overwrite any prior output file left by an
+///     earlier run of this exact job. Only ever touches this job's own <see cref="JobSpecification.OutputPath" /> —
+///     never its parent directory or sibling files, since other jobs may share the same output folder.
 /// </summary>
 public sealed class PreflightCleanup : StepBody
 {
     /// <inheritdoc />
     public override ExecutionResult Run(IStepExecutionContext context)
     {
-        var data = (GeneratingContext)context.Workflow.Data;
-        var logger = data.LoggerFactory!.CreateLogger(nameof(PreflightCleanup));
+        var data = (JobContext)context.Workflow.Data;
+        using var requestScope = LogContext.PushProperty("RequestId", data.Persist.RequestId);
+        using var jobScope = LogContext.PushProperty("JobId", context.Workflow.Id);
+        var outputPath = data.Persist.Specification.OutputPath;
+        var logger = data.Transient.LoggerFactory!.CreateLogger(nameof(PreflightCleanup));
 
-        if (data.RecipeGraph == null)
+        try
         {
-            logger.LogDebug("No recipe graph present; nothing to clean.");
-            return ExecutionResult.Next();
+            var dir = Path.GetDirectoryName(outputPath);
+            if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+            if (File.Exists(outputPath))
+            {
+                File.Delete(outputPath);
+                logger.LogInformation("Removed prior output file '{OutputPath}'", outputPath);
+            }
         }
-
-        // Collect distinct workbook-bound output roots: SaveFolder/<bookName>/
-        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var workbookNode in data.RecipeGraph.Nodes.OfType<WorkbookNode>())
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            var bookName = Path.GetFileNameWithoutExtension(workbookNode.Workbook.BookPath);
-            if (string.IsNullOrEmpty(bookName)) continue;
-            var dir = Path.Combine(data.Request.SaveFolder, bookName);
-            if (!seen.Add(dir)) continue;
-
-            try
-            {
-                if (Directory.Exists(dir))
-                {
-                    Directory.Delete(dir, true);
-                    logger.LogDebug("Removed existing output directory '{Dir}'", dir);
-                }
-
-                Directory.CreateDirectory(dir);
-            }
-            catch (Exception ex) when (ex is not NullReferenceException
-                                           and not InvalidCastException
-                                           and not IndexOutOfRangeException)
-            {
-                logger.LogWarning(ex, "Failed to clean output directory '{Dir}'", dir);
-            }
+            logger.LogWarning(ex, "Failed to clean up prior output at '{OutputPath}'", outputPath);
         }
 
         return ExecutionResult.Next();

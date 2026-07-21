@@ -12,10 +12,8 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Generator.Application.Abstractions;
 using SlideGenerator.Recipe.Application.Abstractions;
 using SlideGenerator.Recipe.Domain.Models;
-using SlideGenerator.Recipe.Domain.Models.Graphs;
 
 namespace SlideGenerator.Stdio.Handlers;
 
@@ -23,7 +21,7 @@ namespace SlideGenerator.Stdio.Handlers;
 ///     Handles all <c>recipe.*</c> JSON-RPC methods.
 ///     Provides CRUD access and package export/import for <see cref="RecipeEntry" /> records.
 /// </summary>
-public sealed class RecipeHandler(IRecipeRepository recipeRepository, IGeneratingService generatingService)
+public sealed class RecipeHandler(IRecipeRepository recipeRepository)
 {
     /// <summary>
     ///     Returns metadata for all stored recipe entries, ordered by the most recently updated.
@@ -47,7 +45,7 @@ public sealed class RecipeHandler(IRecipeRepository recipeRepository, IGeneratin
     /// <param name="displayName">Human-readable name.</param>
     /// <param name="graph">The recipe graph.</param>
     /// <param name="ct">Cancellation token.</param>
-    public Task<IRecipeMetadata> AddAsync(string displayName, RecipeGraph graph, CancellationToken ct)
+    public Task<IRecipeMetadata> AddAsync(string displayName, Recipe.Domain.Models.Recipe graph, CancellationToken ct)
     {
         return recipeRepository.AddAsync(new RecipeInput(displayName, graph), ct);
     }
@@ -60,29 +58,20 @@ public sealed class RecipeHandler(IRecipeRepository recipeRepository, IGeneratin
     /// <param name="graph">New recipe graph.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>The updated <see cref="IRecipeMetadata" />.</returns>
-    /// <exception cref="InvalidOperationException">
-    ///     Thrown when the recipe is not found or is currently in use by an active
-    ///     workflow.
-    /// </exception>
-    public async Task<IRecipeMetadata> UpdateAsync(int id, string displayName, RecipeGraph graph, CancellationToken ct)
+    /// <exception cref="InvalidOperationException">Thrown when the recipe is not found.</exception>
+    public Task<IRecipeMetadata> UpdateAsync(int id, string displayName, Recipe.Domain.Models.Recipe graph, CancellationToken ct)
     {
-        if (await generatingService.IsRecipeInUseAsync(id, ct).ConfigureAwait(false))
-            throw new InvalidOperationException(
-                $"Recipe {id} is currently in use by an active workflow and cannot be modified.");
-        return await recipeRepository.UpdateAsync(id, new RecipeInput(displayName, graph), ct).ConfigureAwait(false);
+        return recipeRepository.UpdateAsync(id, new RecipeInput(displayName, graph), ct);
     }
 
     /// <summary>
-    ///     Permanently deletes a recipe entry by its id.
+    ///     Permanently deletes a recipe entry by its id. Any in-progress generation request already holds
+    ///     its own snapshot of the recipe graph (<c>JobPersistContext.Recipe</c>) and is unaffected.
     /// </summary>
     /// <returns><see langword="true" /> if deleted; <see langword="false" /> if the id was not found.</returns>
-    /// <exception cref="InvalidOperationException">Thrown when the recipe is currently in use by an active workflow.</exception>
-    public async Task<bool> DeleteAsync(int id, CancellationToken ct)
+    public Task<bool> DeleteAsync(int id, CancellationToken ct)
     {
-        if (await generatingService.IsRecipeInUseAsync(id, ct).ConfigureAwait(false))
-            throw new InvalidOperationException(
-                $"Recipe {id} is currently in use by an active workflow and cannot be deleted.");
-        return await recipeRepository.DeleteAsync(id, ct).ConfigureAwait(false);
+        return recipeRepository.DeleteAsync(id, ct);
     }
 
     /// <summary>

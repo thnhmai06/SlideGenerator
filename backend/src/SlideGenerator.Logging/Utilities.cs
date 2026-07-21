@@ -22,17 +22,33 @@ namespace SlideGenerator.Logging;
 /// </summary>
 internal static class Utilities
 {
-    /// <summary>
-    ///     Reads a scalar Serilog property value as text.
-    /// </summary>
     /// <param name="logEvent">The event containing structured properties.</param>
-    /// <param name="propertyName">The name of the scalar property to read.</param>
-    /// <returns>The scalar value as text, or <see langword="null" /> when it is missing or not scalar.</returns>
-    public static string? GetScalarValue(this LogEvent logEvent, string propertyName)
+    extension(LogEvent logEvent)
     {
-        return logEvent.Properties.TryGetValue(propertyName, out var value) &&
-               value is ScalarValue { Value: not null } scalar
-            ? scalar.Value.ToString()
-            : null;
+        /// <summary>
+        ///     Reads a scalar Serilog property value as text.
+        /// </summary>
+        /// <param name="propertyName">The name of the scalar property to read.</param>
+        /// <returns>The scalar value as text, or <see langword="null" /> when it is missing or not scalar.</returns>
+        public string? GetScalarValue(string propertyName)
+        {
+            return logEvent.Properties.TryGetValue(propertyName, out var value) &&
+                   value is ScalarValue { Value: not null } scalar
+                ? scalar.Value.ToString()
+                : null;
+        }
+
+        /// <summary>
+        ///     Joins whichever of <paramref name="propertyNames" /> are present as scalar properties on
+        ///     <paramref name="logEvent" /> (pushed via <c>Serilog.Context.LogContext.PushProperty</c>) into a
+        ///     single <c>/</c>-separated path, in the given order — segments whose property is absent are
+        ///     skipped. This module has no notion of what the scope means; callers supply the property names.
+        /// </summary>
+        /// <param name="propertyNames">The ordered property names to look up and join.</param>
+        public string BuildScopePath(IReadOnlyList<string> propertyNames)
+        {
+            var parts = propertyNames.Select(logEvent.GetScalarValue).Where(v => v != null);
+            return string.Join('/', parts);
+        }
     }
 }

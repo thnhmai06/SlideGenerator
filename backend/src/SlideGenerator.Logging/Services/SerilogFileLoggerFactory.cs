@@ -17,6 +17,7 @@ using Serilog;
 using Serilog.Extensions.Logging;
 using SlideGenerator.Logging.Abstractions;
 using SlideGenerator.Logging.Formats;
+using SlideGenerator.Logging.Models;
 
 namespace SlideGenerator.Logging.Services;
 
@@ -29,21 +30,19 @@ namespace SlideGenerator.Logging.Services;
 internal sealed class SerilogFileLoggerFactory(LoggerConfiguration config) : IFileLoggerFactory
 {
     /// <inheritdoc />
-    public ILoggerFactory CreateFile(string filePath, string? scope = null)
+    public ILoggerFactory CreateFile(
+        string filePath, IReadOnlyList<string>? scopePropertyNames = null, Action<LogNotification>? onLogEvent = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
 
         var directory = Path.GetDirectoryName(Path.GetFullPath(filePath));
         if (!string.IsNullOrWhiteSpace(directory)) Directory.CreateDirectory(directory);
 
-        var localConfig = config;
-        if (scope != null)
-            localConfig = localConfig.Enrich.WithProperty("Scope", scope);
+        var scope = scopePropertyNames ?? [];
+        var loggerConfig = config.WriteTo.File(new FileLogFormatter(scope), filePath);
+        if (onLogEvent != null)
+            loggerConfig = loggerConfig.WriteTo.Sink(new ScopeNotifyingSink(scope, onLogEvent));
 
-        var serilogLogger = localConfig
-            .WriteTo.File(new FileLogFormatter(), filePath)
-            .CreateLogger();
-
-        return new SerilogLoggerFactory(serilogLogger, true);
+        return new SerilogLoggerFactory(loggerConfig.CreateLogger(), true);
     }
 }

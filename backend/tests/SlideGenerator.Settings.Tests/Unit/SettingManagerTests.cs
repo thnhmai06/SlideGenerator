@@ -17,7 +17,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using SlideGenerator.Settings.Application.Abstractions;
-using SlideGenerator.Settings.Domain.Entities;
+using SlideGenerator.Settings.Domain.Models;
 using SlideGenerator.Settings.Domain.Rules;
 using SlideGenerator.Settings.Infrastructure.Services;
 using Xunit;
@@ -63,7 +63,7 @@ public sealed class SettingManagerTests : IDisposable
         _serializer.Serialize(Arg.Any<Setting>()).Returns("serialized-content");
         var custom = new Setting
         {
-            Performance = new Setting.PerformanceSetting { MaxParallelDownloadImage = 42u }
+            Performance = new Setting.PerformanceSetting { MaxConcurrentJobs = 42u }
         };
         await _manager.Update(custom);
 
@@ -86,7 +86,7 @@ public sealed class SettingManagerTests : IDisposable
         _serializer.Serialize(Arg.Any<Setting>()).Returns("serialized-content");
         var newSetting = new Setting
         {
-            Performance = new Setting.PerformanceSetting { MaxParallelEditImage = 7u }
+            Performance = new Setting.PerformanceSetting { MaxConcurrentJobs = 7u }
         };
 
         await _manager.Update(newSetting);
@@ -149,7 +149,7 @@ public sealed class SettingManagerTests : IDisposable
     {
         var expected = new Setting
         {
-            Performance = new Setting.PerformanceSetting { MaxParallelDownloadImage = 99u }
+            Performance = new Setting.PerformanceSetting { MaxConcurrentJobs = 99u }
         };
         await File.WriteAllTextAsync(_testFilePath, "serialized-content", TestContext.Current.CancellationToken);
         _serializer.Deserialize<Setting>("serialized-content").Returns(expected);
@@ -157,7 +157,7 @@ public sealed class SettingManagerTests : IDisposable
         var result = await _manager.Load();
 
         result.Should().BeTrue();
-        _manager.Current.Performance.MaxParallelDownloadImage.Should().Be(99u);
+        _manager.Current.Performance.MaxConcurrentJobs.Should().Be(99u);
     }
 
     #endregion

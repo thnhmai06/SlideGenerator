@@ -35,10 +35,15 @@ public static class Registration
     /// <returns>The updated service collection.</returns>
     public static IServiceCollection AddIpcServices(this IServiceCollection services)
     {
-        // Workflow progress event bus — registered as both interface (for Pipeline) and concrete (for Observer)
+        // Progress event bus — registered as both interface (for Generator) and concrete (for the coalescer)
         services.AddSingleton<GeneratingEventBus>();
-        services.AddSingleton<IGeneratingEventBus>(sp => sp.GetRequiredService<GeneratingEventBus>());
-        services.AddSingleton<WorkflowProgressObserver>();
+        services.AddSingleton<IEventBus>(sp => sp.GetRequiredService<GeneratingEventBus>());
+
+        // Log notification bus — same reasoning as GeneratingEventBus, for the Logging → Middleware → coalescer path
+        services.AddSingleton<LogNotifier>();
+        services.AddSingleton<ILogNotifier>(sp => sp.GetRequiredService<LogNotifier>());
+
+        services.AddSingleton<ProgressCoalescer>();
 
         // JSON-RPC method handlers
         services.AddSingleton<GeneratingActiveHandler>();

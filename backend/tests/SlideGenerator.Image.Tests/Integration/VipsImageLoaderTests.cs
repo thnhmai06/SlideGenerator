@@ -94,6 +94,34 @@ public sealed class VipsImageLoaderTests : IDisposable
         act.Should().Throw<VipsException>();
     }
 
+    /// <summary>
+    ///     Verifies that the <c>byte[]</c> overload of <see cref="VipsImageLoader.Open" /> decodes
+    ///     an in-memory PNG buffer and returns an image with the correct dimensions.
+    /// </summary>
+    [Fact]
+    public void Open_ByteArrayOverload_ValidPngBuffer_ReturnsImageWithCorrectDimensions()
+    {
+        using var native = NetVipsImage.Black(70, 50, 3);
+        var bytes = native.WriteToBuffer(".png");
+
+        using var image = _loader.Open(bytes);
+
+        image.Info.Width.Should().Be(70u);
+        image.Info.Height.Should().Be(50u);
+    }
+
+    /// <summary>
+    ///     Verifies that the <c>byte[]</c> overload of <see cref="VipsImageLoader.Open" /> throws a
+    ///     <see cref="VipsException" /> when the buffer does not contain a valid image.
+    /// </summary>
+    [Fact]
+    public void Open_ByteArrayOverload_CorruptBuffer_ThrowsVipsException()
+    {
+        var act = () => _loader.Open([0x00, 0x01, 0x02, 0x03]);
+
+        act.Should().Throw<VipsException>();
+    }
+
     #endregion
 
     #region GetInfo

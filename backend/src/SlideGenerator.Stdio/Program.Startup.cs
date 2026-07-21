@@ -33,7 +33,7 @@ internal static partial class Program
     private static async Task StartupAsync(IHost host, JsonSerializerOptions jsonOptions)
     {
         var services = host.Services;
-        var workflowService = services.GetRequiredService<IGeneratingService>();
+        var workflowService = services.GetRequiredService<IService>();
         JsonRpc? jsonRpc = null;
 
         try
@@ -66,7 +66,7 @@ internal static partial class Program
 
             Log.Information("Initializing JSON-RPC connection...");
             jsonRpc = JsonRpcBootstrap.Create(services, jsonOptions);
-            JsonRpcBootstrap.AttachProgressObserver(services, jsonRpc);
+            JsonRpcBootstrap.AttachProgressCoalescer(services, jsonRpc);
 
             Log.Information("Setup completed! Application is listening.");
 
@@ -91,13 +91,12 @@ internal static partial class Program
     private static async Task TeardownAsync(
         IHost host,
         IServiceProvider services,
-        IGeneratingService generatingService,
+        IService generatingService,
         JsonRpc? jsonRpc)
     {
         try
         {
-            var eventBus = services.GetRequiredService<GeneratingEventBus>();
-            services.GetRequiredService<WorkflowProgressObserver>().Detach(eventBus);
+            await services.GetRequiredService<ProgressCoalescer>().DetachAsync().ConfigureAwait(false);
             jsonRpc?.Dispose();
             await generatingService.ShutdownAsync(CancellationToken.None).ConfigureAwait(false);
             await SaveSettingsAsync(services).ConfigureAwait(false);

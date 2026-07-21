@@ -13,31 +13,39 @@
  */
 
 using SlideGenerator.Generator.Application.Abstractions;
-using SlideGenerator.Generator.Domain.Models;
+using SlideGenerator.Generator.Domain.Models.Data;
 
 namespace SlideGenerator.Stdio.Implementations;
 
 /// <summary>
-///     A lightweight, in-process event bus for workflow progress notifications.
-///     Decouples the <see cref="Handlers.GeneratingActiveHandler" /> (publisher) from the
-///     <see cref="WorkflowProgressObserver" /> (subscriber) without depending on
-///     WorkflowCore-internal lifecycle hooks.
+///     A lightweight, in-process event bus for Request/Job/Row progress notifications.
+///     Decouples publishers in <c>SlideGenerator.Generator</c> from <see cref="ProgressCoalescer" />
+///     (subscriber) without depending on WorkflowCore-internal lifecycle hooks.
 /// </summary>
-internal sealed class GeneratingEventBus : IGeneratingEventBus
+internal sealed class GeneratingEventBus : IEventBus
 {
-    /// <summary>
-    ///     Publishes a <see cref="GeneratingProgress" /> to all current subscribers.
-    ///     Safe to call from any thread.
-    /// </summary>
-    /// <param name="progress">The progress notification payload to deliver.</param>
-    public void Publish(GeneratingProgress progress)
-    {
-        OnProgress?.Invoke(progress);
-    }
+    /// <summary>Publishes a <see cref="RequestProgress" /> to all current subscribers. Safe to call from any thread.</summary>
+    public void Publish(RequestProgress progress) => OnRequestProgress?.Invoke(progress);
 
-    /// <summary>
-    ///     Raised whenever a workflow lifecycle event occurs (start, complete, suspend, resume,
-    ///     error). Subscribers must be registered before the first workflow is started.
-    /// </summary>
-    public event Action<GeneratingProgress>? OnProgress;
+    /// <summary>Publishes a <see cref="JobProgress" /> to all current subscribers. Safe to call from any thread.</summary>
+    public void Publish(JobProgress progress) => OnJobProgress?.Invoke(progress);
+
+    /// <summary>Publishes a <see cref="RowProgress" /> to all current subscribers. Safe to call from any thread.</summary>
+    public void Publish(RowProgress progress) => OnRowProgress?.Invoke(progress);
+
+    /// <inheritdoc />
+    public void AnnounceExpectedJobCount(string requestId, int count) =>
+        OnExpectedJobCount?.Invoke(requestId, count);
+
+    /// <summary>Raised whenever a request-scoped progress event occurs. Subscribe before the first workflow starts.</summary>
+    public event Action<RequestProgress>? OnRequestProgress;
+
+    /// <summary>Raised whenever a job-scoped progress event occurs. Subscribe before the first workflow starts.</summary>
+    public event Action<JobProgress>? OnJobProgress;
+
+    /// <summary>Raised whenever a row-scoped progress event occurs. Subscribe before the first workflow starts.</summary>
+    public event Action<RowProgress>? OnRowProgress;
+
+    /// <summary>Raised whenever <see cref="AnnounceExpectedJobCount" /> is called. Subscribe before the first workflow starts.</summary>
+    public event Action<string, int>? OnExpectedJobCount;
 }

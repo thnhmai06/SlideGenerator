@@ -13,7 +13,7 @@
  */
 
 using FluentAssertions;
-using SlideGenerator.Settings.Domain.Entities;
+using SlideGenerator.Settings.Domain.Models;
 using SlideGenerator.Settings.Infrastructure.Services;
 using Xunit;
 
@@ -65,32 +65,20 @@ public sealed class YamlSerializerTests
     public void Serialize_ThenDeserialize_CustomPerformanceSetting_PreservesValues()
     {
         var random = new Random();
-        var download = (uint)random.Next(1, 100);
-        var editImg = (uint)random.Next(1, 100);
-        var editPres = (uint)random.Next(1, 100);
-        var readWork = (uint)random.Next(1, 100);
-        var readPres = (uint)random.Next(1, 100);
+        var maxConcurrentJobs = (uint)random.Next(1, 100);
 
         var original = new Setting
         {
             Performance = new Setting.PerformanceSetting
             {
-                MaxParallelDownloadImage = download,
-                MaxParallelEditImage = editImg,
-                MaxParallelEditPresentation = editPres,
-                MaxParallelReadWorkbook = readWork,
-                MaxParallelReadPresentation = readPres
+                MaxConcurrentJobs = maxConcurrentJobs
             }
         };
 
         var yaml = _serializer.Serialize(original);
         var restored = _serializer.Deserialize<Setting>(yaml);
 
-        restored.Performance.MaxParallelDownloadImage.Should().Be(download);
-        restored.Performance.MaxParallelEditImage.Should().Be(editImg);
-        restored.Performance.MaxParallelEditPresentation.Should().Be(editPres);
-        restored.Performance.MaxParallelReadWorkbook.Should().Be(readWork);
-        restored.Performance.MaxParallelReadPresentation.Should().Be(readPres);
+        restored.Performance.MaxConcurrentJobs.Should().Be(maxConcurrentJobs);
     }
 
     /// <summary>

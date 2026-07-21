@@ -18,7 +18,6 @@ using Microsoft.Data.Sqlite;
 using SlideGenerator.Document.Domain.Models.Sheet;
 using SlideGenerator.Document.Domain.Models.Slide;
 using SlideGenerator.Recipe.Domain.Models;
-using SlideGenerator.Recipe.Domain.Models.Graphs;
 using SlideGenerator.Recipe.Infrastructure.Services;
 using Xunit;
 
@@ -63,7 +62,7 @@ public sealed class NodeHierarchyTests : IDisposable
     [Fact]
     public void WorkbookNode_IsCanvasNode()
     {
-        var node = new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier("a.xlsx"), []);
+        var node = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier("a.xlsx"), new HashSet<string>());
         node.Should().BeAssignableTo<CanvasNode>();
     }
 
@@ -73,7 +72,7 @@ public sealed class NodeHierarchyTests : IDisposable
     [Fact]
     public void PresentationNode_IsCanvasNode()
     {
-        var node = new PresentationNode("p1", new Point(0, 0), new PresentationIdentifier("t.pptx"), []);
+        var node = new PresentationNode(new Point(0, 0), new PresentationIdentifier("t.pptx"), new HashSet<string>());
         node.Should().BeAssignableTo<CanvasNode>();
     }
 
@@ -83,7 +82,7 @@ public sealed class NodeHierarchyTests : IDisposable
     [Fact]
     public void MapNode_IsCanvasNode()
     {
-        var node = new MapNode("m1", new Point(0, 0), [], []);
+        var node = new MapNode(new Point(0, 0), [], []);
         node.Should().BeAssignableTo<CanvasNode>();
     }
 
@@ -93,7 +92,7 @@ public sealed class NodeHierarchyTests : IDisposable
     [Fact]
     public void WorksheetNode_IsChildNode()
     {
-        var node = new WorksheetNode("ws1", new WorksheetIdentifier("Sheet1"));
+        var node = new WorksheetNode(new WorksheetIdentifier("Sheet1"));
         node.Should().BeAssignableTo<ChildNode>();
     }
 
@@ -103,7 +102,7 @@ public sealed class NodeHierarchyTests : IDisposable
     [Fact]
     public void SlideNode_IsChildNode()
     {
-        var node = new SlideNode("s1", new SlideIdentifier(1));
+        var node = new SlideNode(new SlideIdentifier(1));
         node.Should().BeAssignableTo<ChildNode>();
     }
 
@@ -113,7 +112,7 @@ public sealed class NodeHierarchyTests : IDisposable
     [Fact]
     public void WorksheetNode_IsNode()
     {
-        var node = new WorksheetNode("ws1", new WorksheetIdentifier("Sheet1"));
+        var node = new WorksheetNode(new WorksheetIdentifier("Sheet1"));
         node.Should().BeAssignableTo<Node>();
     }
 
@@ -123,7 +122,7 @@ public sealed class NodeHierarchyTests : IDisposable
     [Fact]
     public void WorkbookNode_IsNode()
     {
-        var node = new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier("a.xlsx"), []);
+        var node = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier("a.xlsx"), new HashSet<string>());
         node.Should().BeAssignableTo<Node>();
     }
 
@@ -132,46 +131,44 @@ public sealed class NodeHierarchyTests : IDisposable
     #region Child containment
 
     /// <summary>
-    ///     Verifies that <see cref="WorkbookNode.Sheets" /> exposes the embedded
-    ///     <see cref="WorksheetNode" /> children with the correct ID.
+    ///     Verifies that <see cref="WorkbookNode.WorksheetIds" /> exposes the ids of
+    ///     child <see cref="WorksheetNode" /> entries.
     /// </summary>
     [Fact]
     public void WorkbookNode_WithSheets_SheetsPropertyContainsChildren()
     {
-        var sheet = new WorksheetNode("ws1", new WorksheetIdentifier("Sheet1"));
-        var node = new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier("a.xlsx"), [sheet]);
+        var node = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier("a.xlsx"), new HashSet<string> { "ws1" });
 
-        node.Sheets.Should().HaveCount(1);
-        node.Sheets[0].Id.Should().Be("ws1");
+        node.WorksheetIds.Should().HaveCount(1);
+        node.WorksheetIds.Single().Should().Be("ws1");
     }
 
     /// <summary>
-    ///     Verifies that <see cref="PresentationNode.Slides" /> exposes the embedded
-    ///     <see cref="SlideNode" /> children with the correct ID.
+    ///     Verifies that <see cref="PresentationNode.SlideIds" /> exposes the ids of
+    ///     child <see cref="SlideNode" /> entries.
     /// </summary>
     [Fact]
     public void PresentationNode_WithSlides_SlidesPropertyContainsChildren()
     {
-        var slide = new SlideNode("s1", new SlideIdentifier(1));
-        var node = new PresentationNode("p1", new Point(0, 0), new PresentationIdentifier("t.pptx"), [slide]);
+        var node = new PresentationNode(new Point(0, 0), new PresentationIdentifier("t.pptx"), new HashSet<string> { "s1" });
 
-        node.Slides.Should().HaveCount(1);
-        node.Slides[0].Id.Should().Be("s1");
+        node.SlideIds.Should().HaveCount(1);
+        node.SlideIds.Single().Should().Be("s1");
     }
 
     #endregion
 
-    #region RecipeGraph type safety
+    #region Recipe type safety
 
     /// <summary>
-    ///     Verifies that <see cref="RecipeGraph.Nodes" /> is typed as
-    ///     <see cref="IReadOnlyList{T}" /> of <see cref="CanvasNode" />.
+    ///     Verifies that <see cref="Recipe.Nodes" /> is typed as
+    ///     <see cref="IReadOnlyDictionary{TKey,TValue}" /> of <see langword="string" /> → <see cref="Node" />.
     /// </summary>
     [Fact]
-    public void RecipeGraph_Nodes_IsReadOnlyListOfCanvasNode()
+    public void RecipeGraph_Nodes_IsReadOnlyDictionaryOfNode()
     {
-        var graph = new RecipeGraph([], []);
-        graph.Nodes.Should().BeAssignableTo<IReadOnlyList<CanvasNode>>();
+        var graph = new Domain.Models.Recipe(new Dictionary<string, Node>(), []);
+        graph.Nodes.Should().BeAssignableTo<IReadOnlyDictionary<string, Node>>();
     }
 
     #endregion
@@ -186,16 +183,18 @@ public sealed class NodeHierarchyTests : IDisposable
     public async Task WorkbookNode_WithSheet_RoundTripsSheetName()
     {
         var wbPath = Path.GetFullPath("dummy.xlsx");
-        var sheet = new WorksheetNode("ws1", new WorksheetIdentifier("SalesData"));
-        var node = new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath), [sheet]);
-        var graph = new RecipeGraph([node], []);
+        var sheet = new WorksheetNode(new WorksheetIdentifier("SalesData"));
+        var node = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wbPath), new HashSet<string> { "ws1" });
+        var graph = new Domain.Models.Recipe(
+            new Dictionary<string, Node> { ["wb1"] = node, ["ws1"] = sheet }, []);
 
         var metadata = await _repo.AddAsync(new RecipeInput("Test", graph), TestContext.Current.CancellationToken);
         var entry = await _repo.GetAsync(metadata.Id, TestContext.Current.CancellationToken);
 
-        var restored = entry.Graph.Nodes.OfType<WorkbookNode>().Single();
-        restored.Sheets.Should().HaveCount(1);
-        restored.Sheets[0].Worksheet.SheetName.Should().Be("SalesData");
+        var restored = entry.Recipe.Nodes.Values.OfType<WorkbookNode>().Single();
+        restored.WorksheetIds.Should().HaveCount(1);
+        var restoredSheet = (WorksheetNode)entry.Recipe.Nodes[restored.WorksheetIds.Single()];
+        restoredSheet.Worksheet.SheetName.Should().Be("SalesData");
     }
 
     /// <summary>
@@ -206,16 +205,18 @@ public sealed class NodeHierarchyTests : IDisposable
     public async Task PresentationNode_WithSlide_RoundTripsSlideIndex()
     {
         var presPath = Path.GetFullPath("template.pptx");
-        var slide = new SlideNode("s1", new SlideIdentifier(3));
-        var node = new PresentationNode("p1", new Point(0, 0), new PresentationIdentifier(presPath), [slide]);
-        var graph = new RecipeGraph([node], []);
+        var slide = new SlideNode(new SlideIdentifier(3));
+        var node = new PresentationNode(new Point(0, 0), new PresentationIdentifier(presPath), new HashSet<string> { "s1" });
+        var graph = new Domain.Models.Recipe(
+            new Dictionary<string, Node> { ["p1"] = node, ["s1"] = slide }, []);
 
         var metadata = await _repo.AddAsync(new RecipeInput("Test", graph), TestContext.Current.CancellationToken);
         var entry = await _repo.GetAsync(metadata.Id, TestContext.Current.CancellationToken);
 
-        var restored = entry.Graph.Nodes.OfType<PresentationNode>().Single();
-        restored.Slides.Should().HaveCount(1);
-        restored.Slides[0].Slide.SlideIndex.Should().Be(3);
+        var restored = entry.Recipe.Nodes.Values.OfType<PresentationNode>().Single();
+        restored.SlideIds.Should().HaveCount(1);
+        var restoredSlide = (SlideNode)entry.Recipe.Nodes[restored.SlideIds.Single()];
+        restoredSlide.Slide.SlideIndex.Should().Be(3);
     }
 
     #endregion

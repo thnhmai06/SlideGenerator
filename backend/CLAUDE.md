@@ -99,12 +99,10 @@ hosted at `nuget.pkg.github.com/thnhmai06`. `backend/nuget.config` reads credent
 
 ```
 backend/
-├── src/                                — 12 source modules (slnx-tracked)
+├── src/                                — 10 source modules (slnx-tracked)
 │   ├── SlideGenerator.Utilities/
 │   ├── SlideGenerator.Settings/
 │   ├── SlideGenerator.Cloud/
-│   ├── SlideGenerator.Cryptography/
-│   ├── SlideGenerator.Coordinator/
 │   ├── SlideGenerator.Document/
 │   ├── SlideGenerator.Logging/
 │   ├── SlideGenerator.Image/
@@ -112,11 +110,9 @@ backend/
 │   ├── SlideGenerator.Recipe/
 │   ├── SlideGenerator.Generator/
 │   └── SlideGenerator.Stdio/
-└── tests/                              — 11 test projects (mirrors src, standalone)
+└── tests/                              — 9 test projects (mirrors src, standalone)
     ├── SlideGenerator.Utilities.Tests/
-    ├── SlideGenerator.Cryptography.Tests/
     ├── SlideGenerator.Cloud.Tests/
-    ├── SlideGenerator.Coordinator.Tests/
     ├── SlideGenerator.Settings.Tests/
     ├── SlideGenerator.Document.Tests/
     ├── SlideGenerator.Logging.Tests/
@@ -126,8 +122,17 @@ backend/
     └── SlideGenerator.Stdio.Tests/
 ```
 
-`src/SlideGenerator.Acquisition/` and `src/SlideGenerator.Collector/` exist on disk but are **not
-in `SlideGenerator.slnx`** — treat them as orphan/in-progress folders unless re-added to the solution.
+`SlideGenerator.Cryptography` module has been removed (its `Sha256` helper moved into
+`SlideGenerator.Utilities/Sha256.cs`). `SlideGenerator.Coordinator` has also been removed — its 3 `GateType`
+concurrency gates (`DownloadImage`/`EditImage`/`EditPresentation`) and the whole performance-calibration system
+(`SettingProbe`/`SettingTuner`/`SettingCalibrator`) were deleted; RAM/concurrency control is now solely
+`MaxConcurrentJobs` (see **Concurrency: MaxConcurrentJobs** below). `Coordinator`'s generic `Pool<T>` (the only
+still-needed piece, backing `FaceDetectorPool`) moved to `SlideGenerator.Utilities/Pool.cs`.
+`src/SlideGenerator.Acquisition/` and `src/SlideGenerator.Collector/` are gone
+entirely (no longer even present on disk). `tests/SlideGenerator.Acquisition.Tests/` still exists on disk (only
+`bin`/`obj`, no source) but has no matching src project and is **not** in `SlideGenerator.slnx` — an orphan, leave
+alone unless asked to clean it up. `scripts/ApplyCopyright/ApplyCopyright.csproj` is also in the slnx (a build-time
+tool project, not a module).
 
 `Summarization` has no dedicated test project.
 
@@ -140,10 +145,8 @@ independent modules coordinated by WorkflowCore, exposed to a Tauri frontend thr
 
 ```
 Foundation Modules
-├── SlideGenerator.Utilities     - Shared utilities (string normalization, helpers)
+├── SlideGenerator.Utilities     - Shared utilities (string normalization, Sha256, generic Pool<T>, helpers)
 ├── SlideGenerator.Cloud         - Multi-cloud URI resolver (Google Drive, OneDrive, SharePoint)
-├── SlideGenerator.Cryptography  - AES-256 encryption + file hash registry
-├── SlideGenerator.Coordinator   - Concurrency throttling; IGateLocker<TGate> + GateLocker<TGate>
 ├── SlideGenerator.Logging       - Serilog: IAppLogger, IFileLoggerFactory, ISystemLogger
 ├── SlideGenerator.Document      - Syncfusion Excel/PowerPoint abstractions + Mustache template engine
 └── SlideGenerator.Image         - MagickImage processing; ROI + face detection (OpenCV YuNet)
@@ -154,7 +157,8 @@ Domain Modules
 └── SlideGenerator.Recipe        - Recipe CRUD (SQLite) + export/import (*.recipe zip packages)
 
 Application
-└── SlideGenerator.Generator     - WorkflowCore generating pipeline (3-phase workflow)
+└── SlideGenerator.Generator     - WorkflowCore generating pipeline (one JobWorkflow instance per job; spawn phase
+                                    is plain code, not itself a workflow)
 
 Host
 └── SlideGenerator.Stdio         - JSON-RPC 2.0 IPC sidecar (StreamJsonRpc over stdin/stdout)
@@ -173,20 +177,18 @@ Host
 |-----------------------|--------------------------------------------------------------------------------------------------------|
 | Settings              | `AddSettingsServices()`                                                                                |
 | Cloud                 | `AddCloudServices()`                                                                                   |
-| Cryptography          | `AddCryptographyServices()`                                                                            |
-| Coordinator           | `AddCoordinatorServices()`                                                                             |
-| Document              | `AddDocumentServices(ILogger systemLogger)`                                                            |
+| Document              | `AddDocumentServices()`                                                                                |
 | Image                 | `AddImageServices()`                                                                                   |
-| Logging               | `AddLoggingServices(IConfiguration? configuration = null)`                                             |
+| Logging               | `AddLoggingServices()`                                                                                 |
 | Summarization         | `AddSummarizationServices()`                                                                           |
 | Recipe                | `AddRecipeServices()`                                                                                  |
 | Generator             | `AddGeneratorServices()`                                                                               |
 | Stdio                 | `AddIpcServices()`                                                                                     |
 | WorkflowCore + SQLite | `services.AddWorkflow(x => x.UseSqlite(NameAndPaths.DataFolder.WorkflowsFile.ConnectionString, true))` |
 
-The system logger is created up-front in `Program.cs` via `SystemLoggerBootstrapper.Initialize(...)` (file Serilog
-sink → `stderr` only) and passed into `AddDocumentServices`. It is **not** added to DI through an `AddSystemLogging`
-helper.
+The system logger is bootstrapped up-front by a private `BootstrapSystemLogger(IConfiguration)` method inline in
+`src/SlideGenerator.Stdio/Program.cs` (file Serilog sink → `stderr` only), which sets the static `Log.Logger`. It is
+**not** passed through DI or into `AddDocumentServices`.
 
 `Registration.cs` files use C# 14 **extension member syntax**:
 
@@ -229,15 +231,19 @@ jsonRpc.AddLocalRpcMethod(method, handler, new JsonRpcMethodAttribute("settings.
 `workflow/progress` notifications via `JsonRpc.NotifyWithParameterObjectAsync`. Bound at runtime via
 `observer.Attach(bus, jsonRpc)` — not DI injected.
 
-`GeneratingEventBus` is registered as both `GeneratingEventBus` (concrete) and `IGeneratingEventBus` (interface) in the
-Stdio `Registration.cs` so that `WorkflowProgressObserver.Attach` can receive the concrete type.
+`GeneratingEventBus` (in `Implementations/GeneratingEventBus.cs`) is registered as both `GeneratingEventBus` (concrete)
+and `IEventBus` (interface, `SlideGenerator.Generator.Application.Abstractions.IEventBus`) in the Stdio
+`Registration.cs` so that `WorkflowProgressObserver.Attach` can receive the concrete type.
 
 ### STJ adapters
 
-`Infrastructure/Adapters/` contains custom STJ converters registered in `BuildJsonSerializerOptions()`:
+`Infrastructure/Adapters/` contains custom STJ converters registered in `BuildJsonSerializerOptions()`
+(`JsonRpcBootstrap.cs`):
 
 - `RoiOptionJsonAdapter` — polymorphic `RoiOption` discriminated by `"type"` (`"Center"` | `"RuleOfThirds"`)
 - `RectangleFJsonAdapter` — `RectangleF` as `{"x", "y", "width", "height"}`
+- `Vector2JsonConverter` (in `Implementations/Adapters/`)
+- `NodeJsonConverter` (from `SlideGenerator.Recipe.Infrastructure.Adapters`)
 
 `JsonStringEnumConverter` is registered globally — all enums serialize as strings automatically.
 
@@ -245,16 +251,14 @@ Stdio `Registration.cs` so that `WorkflowProgressObserver.Attach` can receive th
 
 | Method                           | Handler                                           |
 |----------------------------------|---------------------------------------------------|
-| `generator.active.start`         | `GeneratingActiveHandler.StartAsync`              |
-| `generator.active.cancel`        | `GeneratingActiveHandler.CancelAsync`             |
+| `generator.active.create`        | `GeneratingActiveHandler.CreateAsync`             |
+| `generator.active.stop`          | `GeneratingActiveHandler.StopAsync`               |
 | `generator.active.pause`         | `GeneratingActiveHandler.PauseAsync`              |
 | `generator.active.resume`        | `GeneratingActiveHandler.ResumeAsync`             |
-| `generator.active.cancelAll`     | `GeneratingActiveHandler.CancelAllAsync`          |
+| `generator.active.stopAll`       | `GeneratingActiveHandler.StopAllAsync`            |
 | `generator.active.pauseAll`      | `GeneratingActiveHandler.PauseAllAsync`           |
 | `generator.active.list`          | `GeneratingActiveHandler.ListAsync`               |
-| `generator.active.query`         | `GeneratingActiveHandler.QueryAsync`              |
 | `generator.completed.list`       | `GeneratingCompletedHandler.ListAsync`            |
-| `generator.completed.query`      | `GeneratingCompletedHandler.QueryAsync`           |
 | `generator.completed.delete`     | `GeneratingCompletedHandler.DeleteAsync`          |
 | `generator.completed.deleteAll`  | `GeneratingCompletedHandler.DeleteAllAsync`       |
 | `recipe.list`                    | `RecipeHandler.ListAsync`                         |
@@ -272,28 +276,45 @@ Stdio `Registration.cs` so that `WorkflowProgressObserver.Attach` can receive th
 | `settings.performance.get`       | `SettingsHandler.GetPerformanceAsync`             |
 | `settings.performance.update`    | `SettingsHandler.UpdatePerformanceAsync`          |
 | `settings.performance.reset`     | `SettingsHandler.ResetPerformanceAsync`           |
-| `settings.performance.calibrate` | `SettingsHandler.CalibratePerformanceAsync`       |
 | `settings.network.get`           | `SettingsHandler.GetNetworkAsync`                 |
 | `settings.network.update`        | `SettingsHandler.UpdateNetworkAsync`              |
 | `settings.network.reset`         | `SettingsHandler.ResetNetworkAsync`               |
 
 Notifications emitted by the sidecar: `workflow/progress`.
 
-## Concurrency: GateLocker
+## Concurrency: MaxConcurrentJobs
 
-`GateLocker<TGate>` (in `SlideGenerator.Coordinator`) provides per-gate semaphores parameterized over any enum. The
-concrete `GateType` enum lives in `SlideGenerator.Generator.Domain.Models` and is Generator-specific.
-`IGateLocker<GateType>` is registered in **Generator's** `Registration.cs` — not in Coordinator — with a lambda that
-reads limits from `ISettingProvider.Current.Performance` at runtime.
+There is no per-operation concurrency gate anywhere in the pipeline anymore (the old `GateType`
+`DownloadImage`/`EditImage`/`EditPresentation` gates, `GateLocker<TGate>`, and the `SlideGenerator.Coordinator` module
+that hosted them have all been removed — downloading, image editing, and presentation saving run uncontended within a
+job). The **sole** concurrency/RAM control is at the job level: each `Job` runs as its own `JobWorkflow` instance (see
+**Workflow System** below), so WorkflowCore's built-in `WorkflowOptions.MaxConcurrentWorkflows` directly caps the
+number of jobs — and therefore the number of concurrently open `Workbook`/`Presentation` instances — running in
+parallel across the whole app.
 
-```csharp
-await gateLocker.AcquireAsync(GateType.DownloadImage, ct);
-try { /* ... */ }
-finally { gateLocker.Release(GateType.DownloadImage); }
-```
+`WorkflowOptions.MaxConcurrentWorkflows` is an `internal` field read live every poll cycle by WorkflowCore's
+`WorkflowConsumer` (not snapshotted at `Start()`), set via the public `WorkflowOptions.UseMaxConcurrentWorkflows(int)`
+method — never assign the field directly (it isn't accessible outside the WorkflowCore assembly).
 
-Gate types (`SlideGenerator.Generator.Domain.Models.GateType`): `DownloadImage`, `EditImage`, `EditPresentation`,
-`ReadWorkbook`, `ReadPresentation`.
+`Service.ApplyMaxConcurrentJobs()` (private, `Infrastructure/Services/Service.cs`) calls
+`workflowOptions.UseMaxConcurrentWorkflows((int)settingProvider.Current.Performance.MaxConcurrentJobs)` — called once
+in `InitializeAsync` (startup) and again at the start of every `CreateAsync` call. It is **not** on `IService` and
+`SettingsHandler` does not call it — `Service` reads `ISettingProvider` itself rather than being told to re-apply
+externally, so a `settings.performance.update` takes effect the next time a request is created (no restart needed).
+`Setting.PerformanceSetting.MaxConcurrentJobs` (default 5) is the
+**only** field left on `PerformanceSetting` — the old `MaxParallelDownloadImage`/`MaxParallelEditImage`/
+`MaxParallelEditPresentation`/`MaxParallelReadWorkbook`/`MaxParallelReadPresentation` fields and the whole
+hardware/network probing system that calibrated them (`SettingProbe`, `SettingTuner`, `SettingCalibrator`,
+`ISettingCalibrator`, the `settings.performance.calibrate` IPC method) were deleted along with the gates — there is
+nothing left to calibrate.
+
+Because `JobWorkflow` is the **only** workflow type registered with WorkflowCore, this cap only throttles job
+execution — it never delays *accepting* a new generation request, since `Service.CreateAsync`'s spawn phase (recipe
+read, job-list computation) is plain C# code, not itself a WorkflowCore workflow (see below).
+
+`SlideGenerator.Image`'s `FaceDetectorPool` (a separate concern — pools actual `IFaceDetector`/OpenCV instances, not a
+throughput gate) is unrelated to `MaxConcurrentJobs`; it is bounded by a static `Environment.ProcessorCount` limit
+(CPU-bound native work) via the generic `Pool<T>` now living in `SlideGenerator.Utilities/Pool.cs`.
 
 ## Image Processing
 
@@ -308,57 +329,126 @@ only at system boundaries (file I/O, Syncfusion API).
 
 ## Workflow System (WorkflowCore)
 
-`GeneratingWorkflow` orchestrates the full slide generation pipeline. It begins with two preparation steps before the
-phased pipeline:
+**One `Job` = one WorkflowCore instance.** `JobWorkflow` (`Application/Workflows/JobWorkflow.cs`, implements
+`IWorkflow<JobContext>`) is the **only** workflow type registered with WorkflowCore:
 
-| Stage                        | Steps                                                                                                  |
-|------------------------------|--------------------------------------------------------------------------------------------------------|
-| Prep                         | `LoadRecipeSummary` → `PreflightCleanup`                                                               |
-| Phase A – Validation & Setup | `ValidateRequest` → `CreateTemplate` (`.ForEach(ValidationItems)`)                                     |
-| Phase B – Resource Prep      | `ExtractData` (`.ForEach(ValidWorksheets)`) → `CollectImage` → `EditImage` (`.ForEach(ImageContexts)`) |
-| Phase C – Assembly & Cleanup | `ReplaceSlideData` (`.ForEach(SlideContexts)`) → `CloseAllHandles`                                     |
+```
+PreflightCleanup → InspectUrlsStep → GenerateJobStep
+```
 
-Phase boundaries are enforced with `ExecutionResult.Next()` barriers — all items in a phase must complete before the
-next phase begins.
+There is no `ForEach`/barrier orchestration inside WorkflowCore anymore — each job runs to completion independently
+in its own instance. `Phase` enum (`Application/Workflows/JobWorkflow.cs`) has 2 values: `Preparation` (only
+`PreflightCleanup` maps here now), `Generation` (`GenerateJobStep`); `InspectUrlsStep` still maps to no phase (`null`,
+a pre-existing gap, out of scope).
 
-**Strict iteration rule**: Use WorkflowCore `.ForEach()` for all collection iteration. **Never** use C# `foreach`,
-`Parallel.ForEach`, or `Task.WhenAll` inside a Step.
+**Spawn phase — deliberately NOT a WorkflowCore workflow**: `Service.CreateAsync` (`Infrastructure/Services/Service.cs`)
+reads the recipe, computes the job list (`Service.BuildJobs`, internal static — a plain recipe-graph-to-`List<Job>`
+flattening), and loops `workflowHost.StartWorkflow(nameof(JobWorkflow), 1, jobContext)` once per job — all as plain
+async C# code, not itself a workflow instance. This is intentional: if spawning were itself a WorkflowCore workflow,
+it would queue behind running `JobWorkflow` instances under `MaxConcurrentWorkflows` (see **Concurrency:
+MaxConcurrentJobs** above), delaying acceptance of new requests by however long existing jobs take to finish. Because
+`Service.CreateAsync` runs synchronously to completion (build jobs → guard check → spawn all → return), there's no
+persisted "spawn in progress" state to resume if the process crashes mid-loop — any jobs already spawned before a
+crash just keep running as ordinary independent `JobWorkflow` instances; jobs not yet spawned are simply never
+started, and the client never receives a `requestId` for that failed call (call it again). Multiple active requests
+for the **same recipe** are allowed to run concurrently — there is no recipe-level guard (deleting/updating a recipe
+definition doesn't need one either, since every in-progress request already holds its own frozen `Recipe` snapshot in
+`JobPersistContext.Recipe`). Instead, `Service.CreateAsync` guards at the **output-path** level via the private
+`FindConflictingOutputPathAsync` (not exposed on `IService`): after computing the new request's job list, it checks
+every already-active (running/paused) job across all requests for an `OutputPath` collision and throws if one is
+found — this is what actually prevents the (very narrow) race where jobs orphaned by a mid-spawn crash could have
+`PreflightCleanup` from a retry (same or different recipe) delete their in-progress output file.
 
-**Data model**: `GeneratingContext` is the workflow's state class. Intermediate contexts (`SheetContext`,
-`ImageContext`, `SlideContext`, `ValidationItem`) are populated per phase and fed into `.ForEach()` loops. All live in
-`Domain/Models/Contexts/`.
+**Strict iteration rule**: Use WorkflowCore `.ForEach()` for all collection iteration **inside a Step**. **Never** use
+C# `foreach`, `Parallel.ForEach`, or `Task.WhenAll` inside a Step. (This no longer applies to the top-level job list —
+that's spawned via a plain loop in `Service.CreateAsync`, not inside a Step.)
 
-**Persistence**: WorkflowCore persists `GeneratingContext` to SQLite (`%LOCALAPPDATA%\SlideGenerator\Workflows.db`) via
-Newtonsoft.Json. Fields that cannot serialize (file handles, `ILoggerFactory`) carry `[Newtonsoft.Json.JsonIgnore]`.
-Handles are lazily reopened after resume via `GetOrOpenWorkbook`/`GetOrOpenPresentation`/`GetOrOpenOutput` extension
-methods in `Application/Utilities.cs`.
+**Data model** (`Domain/Models/Contexts/`): `JobContext` splits into `JobPersistContext` (serialized: `RequestId` —
+groups every `JobWorkflow` instance spawned for the same request, `Request`, `Recipe`, `LogPath`, `Job` — a single
+job, not a dictionary, `InspectedUrls: ConcurrentDictionary<string, ContentInfo?>` — scoped to just this one job now)
+and `TransientContext` (`LoggerFactory`, `TemplateSlides`). `Job` (`Domain/Models/Contexts/Job.cs`, unchanged) has
+nested `WorkbookRef`/`PresentationRef` records.
 
-**Step middleware** (registered in `AddGeneratorServices`):
+**Persistence**: WorkflowCore persists `JobPersistContext` to SQLite (`%LOCALAPPDATA%\SlideGenerator\Data\Workflows.db`)
+via Newtonsoft.Json, one row per job. Fields that cannot serialize (file handles, `ILoggerFactory`) live on
+`TransientContext` and/or carry `[Newtonsoft.Json.JsonIgnore]`. Handles are lazily reopened after resume via
+`GetOrOpenWorkbook`/`GetOrOpenPresentation`/`GetOrOpenOutput` extension methods in `Application/Utilities.cs`.
 
-- `GeneratingMiddleware` — lazily initializes `GeneratingContext.LoggerFactory` (via `IFileLoggerFactory.CreateForFile`)
-  before each step using `WorkflowLogPath`/`WorkflowScope` stored in context (survives persistence resume). Each step
-  calls `data.LoggerFactory.CreateLogger(nameof(Step))` to get a named `ILogger`.
-- `GeneratingProgressMiddleware` — publishes `GeneratingEvent.StepCompleted` + resolved `GeneratingPhase` after each
-  step
+**Step middleware** (registered in `AddGeneratorServices`), both in `Infrastructure/Middleware/`:
 
-**Lifecycle events**: `GeneratingService` subscribes to `IWorkflowHost.OnLifeCycleEvent` to publish `WorkflowCompleted`/
-`WorkflowError` via `IGeneratingEventBus`. Event types are in `WorkflowCore.Models.LifeCycleEvents`:
-`WorkflowCompleted`, `WorkflowError`, `WorkflowStarted`, `WorkflowSuspended`, `WorkflowResumed`, `WorkflowTerminated`.
+- `Middleware` — lazily initializes the context's `LoggerFactory` (via `IFileLoggerFactory.CreateForFile`) before each
+  step, using log path/scope stored in context (survives persistence resume). Each step calls
+  `data.LoggerFactory.CreateLogger(nameof(Step))` to get a named `ILogger`.
+- `ProgressMiddleware` — publishes `Event.StepCompleted` + resolved `Phase` after each step.
 
-**Progress enums** — each defined in the file where its concept lives:
+**Request/job aggregation**: A client-facing "request" (the key of `ListActiveAsync`/`ListCompletedAsync`'s returned
+dictionary) is a `requestId` GUID grouping N
+`JobWorkflow` instances — it is **not** a WorkflowCore instance id itself. `Service.ListGroupsAsync` (internal) builds
+an `IReadOnlyDictionary<string, IReadOnlyList<WorkflowInstance>>` on demand by listing every `JobWorkflow` instance
+and grouping by `Persist.RequestId` — no dedicated record type; the `RequestId` lives only as the dictionary key,
+mirroring how `Summary` itself carries no `RequestId` field (see below). `Service.DeriveStatus` (internal static)
+aggregates each group's N `WorkflowInstance.Status` values into one request-level `Status`: any `Runnable` →
+`Running`; else any `Suspended` → `Paused`; else all `Terminated` → `Cancelled`; else → `Complete` (covers
+all-`Complete` and mixed `Complete`+`Terminated`). `Summary` (`Domain/Models/Summary.cs`) has no `RequestId` field of
+its own — `IService.ListActiveAsync`/`ListCompletedAsync` return `IReadOnlyDictionary<string, Summary>` keyed by
+`RequestId` instead, so the id lives only as the dictionary key, never duplicated onto the value. `Summary` is
+otherwise two-level: request-level fields (the original submitted `Request` — carries `Name`/`RecipeId`/etc., no
+duplicate scalar fields for those — aggregate `Status`, `CreatedAt`/`CompletedAt`) plus `Jobs` — an
+`IReadOnlyDictionary<string, JobSummary>` keyed by job id (the WorkflowCore instance id), one entry per job workflow
+instance in the group. `JobSummary` (`Status`, `OutputPath`, `CompletedAt` — no `CreatedAt`, since a job is
+created at essentially the same time as its request, already covered by `Summary.CreatedAt`) is built by
+`Service.ToJobSummary`; per-job `Status` comes from `Service.ToJobStatus`, a direct 1:1 map off the single job's
+`WorkflowStatus` (`Runnable`→`Running`, `Suspended`→`Paused`, `Terminated`→`Cancelled`, else `Complete`) — distinct
+from `DeriveStatus`, which aggregates across *all* jobs of a group for the request-level `Status`.
+`IService.StopAsync`/`PauseAsync`/`ResumeAsync` (request-scoped — take a `requestId`, not a raw WorkflowCore instance
+id) fan out best-effort over a request's job list, returning `PartialResult(Succeeded, Skipped)` — jobs already in
+a terminal/non-eligible state count as skipped, not failed. There is no per-job (single WorkflowCore instance id)
+variant of these anymore — `IService`'s only surface is request/recipe-scoped: `CreateAsync`, `StopAsync`/`PauseAsync`/
+`ResumeAsync` (+ `StopAllAsync`/`PauseAllAsync` bulk variants), `ListActiveAsync`/`ListCompletedAsync`, `DeleteAsync`
+(stops the request first if still active), and `DeleteAllCompletedAsync`. There is no single-request query method —
+a client looks up one request by indexing the `ListActiveAsync`/`ListCompletedAsync` result dictionary by
+`requestId`.
+`IsRecipeInUseAsync` and `ApplyMaxConcurrentJobs` are **not** on the interface — the former was removed outright (see
+above), the latter is a private method `Service` calls on itself.
 
-- `GeneratingPhase` — in `Application/Workflows/GeneratingWorkflow.cs`
-- `GeneratingEvent` — in `Application/Abstractions/IGeneratingEventBus.cs`
-- `GeneratingStatus` — in `Domain/Models/GeneratingStatus.cs`
+**Lifecycle events**: `Service.HandleLifeCycleEvent` (`async void` — deliberate, since `IWorkflowHost.OnLifeCycleEvent`
+is a synchronous delegate but resolving the job's `RequestId` needs an async persistence lookup; exceptions are
+caught locally so a failed lookup can't crash the process) subscribes to `IWorkflowHost.OnLifeCycleEvent` to publish
+`WorkflowStarted`/`WorkflowCompleted`/`WorkflowError` via `IEventBus`. `GeneratingEventBus` (concrete class
+implementing `IEventBus`) lives in **`SlideGenerator.Stdio`** (`Implementations/GeneratingEventBus.cs`), not in
+Generator.
+
+**JobId identity**: there is no custom/deterministic job id anywhere in the system — WorkflowCore always
+self-generates `WorkflowInstance.Id` (a GUID) at `CreateNewWorkflow` and gives no way to override it (confirmed: no
+`StartWorkflow` overload accepts a caller-supplied instance id, only a separate free-form `reference` string, which
+is unused here). Rather than minting a second, redundant job id, **the WorkflowCore-assigned instance id IS the
+job's identity** everywhere in this codebase. `Service.CreateAsync` captures it from `StartWorkflow`'s return value
+at spawn time and logs `Job spawned | JobId: {JobId} | OutputPath: {OutputPath}` — this is the only place a job's id
+first becomes known, before it's later referenced as `JobId` in `Progress` (see below) or as `WorkflowInstance.Id`
+inside a `Summary.Jobs` entry.
+
+**Progress model** (`Domain/Models/Progress.cs`) carries two distinct ids — `RequestId` (groups every job spawned for
+one request, same value as the `ListActiveAsync`/`ListCompletedAsync` dictionary key for that request) and `JobId`
+(the WorkflowCore instance id of the one specific job
+this event is about). Every producer sets both: `ProgressMiddleware.HandleAsync` reads `RequestId` from
+`((JobContext)context.Workflow.Data).Persist.RequestId` and `JobId` from `context.Workflow.Id`;
+`Service.HandleLifeCycleEvent` gets `JobId` from the lifecycle event args directly and looks up `RequestId` via
+`persistence.GetWorkflowInstance(jobId, ct)`; `Service.FanOutAsync` (Stop/Pause/Resume) sets `RequestId` from
+`group.RequestId` and `JobId` from the specific job that just succeeded. There is no request-only (job-less) event —
+every current producer is job-scoped.
+
+**Progress enums** — both defined in `Domain/Models/Progress.cs`:
+
+- `Event`: `WorkflowStarted`, `WorkflowCompleted`, `WorkflowSuspended`, `WorkflowResumed`, `WorkflowCancelled`,
+  `WorkflowError`, `StepCompleted`
+- `Status`
 
 **Input mapping**: `Recipe.Nodes` defines the graph — each node maps a set of `Sheets` (Excel) to a presentation
 template. `TextInstruction` and `ImageInstruction` on each node drive placeholder replacement and image composition.
 
-**Error resilience**: Each context class has a `ConcurrentDictionary<string, Exception> Errors`. Steps catch exceptions
-and record them, allowing partial success.
-
-`ScanningService` (synchronous) provides workbook and presentation metadata (`WorkbookSummary`, `PresentationSummary`)
-used to validate instructions before running generation.
+`SummarizationService`/`ISummarizationService` (`SlideGenerator.Summarization`, synchronous) provides workbook and
+presentation metadata (`WorkbookSummary`, `PresentationSummary`) used to validate instructions before running
+generation.
 
 ## Testing
 
@@ -366,7 +456,7 @@ used to validate instructions before running generation.
 
 ```xml
 <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.*" />
-<PackageReference Include="xunit.v3" Version="1.*" />
+<PackageReference Include="xunit.v3" Version="3.*" />
 <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
     <PrivateAssets>all</PrivateAssets>
     <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -422,12 +512,13 @@ ctx.Workflow.Returns(workflow);
 Generator steps that require a Syncfusion license + real `.xlsx`/`.pptx` files belong to integration tests, not unit
 tests:
 
-- `ValidateRequest` — opens workbook via Syncfusion
-- `CreateTemplate` — copies and opens real .pptx
-- `ExtractData` — reads Excel cells
-- `EditImage` — face detection and MagickImage crop from a real file
+- `InspectUrlsStep` — opens workbook via Syncfusion to read image-source cells
+- `GenerateJobStep` — opens workbook + template + output presentation, face detection and MagickImage crop from a
+  real file, appends real slides
 
 These steps are covered by integration tests only. Do not create unit stubs that bypass their core behavior.
+`PreflightCleanup` is plain `File`/`Directory` I/O (no Syncfusion) — safe to unit test directly against real temp
+files (see `PreflightCleanupTests.cs`).
 
 ## Development Patterns
 
@@ -457,7 +548,6 @@ Injection/
 - Inherit `StepBody` or `StepBodyAsync`.
 - Live in `Application/Steps/`.
 - Process a single item (from `context.Item`); receive via `.Input()` mapping in `Build()`.
-- Inject `IGateLocker<GateType>` via constructor; call `AcquireAsync`/`Release` around shared resource access.
 - Register as `Transient` in `Registration.cs`.
 
 ### Workflow
@@ -505,10 +595,13 @@ UserPath/
 ├── Instance.pid           — AppLocker
 ├── Logs/System/           — LogsFolder.SystemPath
 ├── Logs/Workflows/        — LogsFolder.WorkflowPath
-├── Assets/                — AssetsFolder.DefaultFolder
 └── Data/
     ├── Workflows.db       — DataFolder.WorkflowsFile
-    └── Recipes.db         — DataFolder.RecipesFile
+    ├── Recipes.db         — DataFolder.RecipesFile
+    └── Cache.db           — DataFolder.CacheFile (shared URL-resolution/download cache; tables via
+                              DataFolder.CacheFile.TableNames.InspectedUrlsTable/DownloadedFilesTable)
+
+TempFolder.RootPath (%TEMP%\SlideGenerator) — shared download cache, outside UserPath.
 ```
 
 ### Resource injection (`cs/resource-injection`)

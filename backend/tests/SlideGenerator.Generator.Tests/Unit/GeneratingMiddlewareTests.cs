@@ -15,12 +15,13 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
-using SlideGenerator.Coordinator.Application.Abstractions;
+using Serilog.Events;
 using SlideGenerator.Document.Domain.Models.Slide;
-using SlideGenerator.Generator.Domain.Models;
-using SlideGenerator.Generator.Domain.Models.Contexts;
+using SlideGenerator.Generator.Application.Abstractions;
+using SlideGenerator.Generator.Domain.Models.Data;
 using SlideGenerator.Generator.Infrastructure.Middleware;
 using SlideGenerator.Logging.Abstractions;
+using SlideGenerator.Logging.Models;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
 using Xunit;
@@ -28,29 +29,29 @@ using Xunit;
 namespace SlideGenerator.Generator.Tests.Unit;
 
 /// <summary>
-///     Unit tests for <see cref="GeneratingMiddleware" />.
+///     Unit tests for <see cref="Middleware" />.
 /// </summary>
-public sealed class GeneratingMiddlewareTests
+public sealed class MiddlewareTests
 {
     private static readonly WorkflowStepDelegate NextResult =
         () => Task.FromResult(ExecutionResult.Next());
 
     private readonly IStepBody _body = Substitute.For<IStepBody>();
-    private readonly ICoordinatorFactory _coordinatorFactory = Substitute.For<ICoordinatorFactory>();
     private readonly IFileLoggerFactory _fileLoggerFactory = Substitute.For<IFileLoggerFactory>();
+    private readonly ILogNotifier _logNotifier = Substitute.For<ILogNotifier>();
 
-    private GeneratingMiddleware CreateMiddleware()
-    {
-        return new GeneratingMiddleware(_fileLoggerFactory, _coordinatorFactory);
-    }
+    private Middleware CreateMiddleware() => new(_fileLoggerFactory, _logNotifier);
 
-    private static (IStepExecutionContext Context, GeneratingContext Data) CreateGeneratingContext()
+    private static (IStepExecutionContext Context, JobContext Data) CreateContext()
     {
-        var data = new GeneratingContext
+        var data = new JobContext
         {
-            Request = new GeneratingRequest(1, "Test", PresentationType.Pptx, Path.GetTempPath()),
-            WorkflowLogPath = Path.Combine(Path.GetTempPath(), "test.log"),
-            WorkflowScope = "TestScope"
+            Persist = new JobPersistContext
+            {
+                RequestId = Guid.NewGuid().ToString(),
+                Request = new Request(1, "Test", PresentationType.Pptx, Path.GetTempPath()),
+                LogPath = Path.Combine(Path.GetTempPath(), "test.log")
+            }
         };
         var workflow = new WorkflowInstance { Data = data };
         var context = Substitute.For<IStepExecutionContext>();
@@ -58,9 +59,9 @@ public sealed class GeneratingMiddlewareTests
         return (context, data);
     }
 
-    /// <summary>When workflow data is not GeneratingContext, next() is called and factory is not touched.</summary>
+    /// <summary>When workflow data is not Context, next() is called and factory is not touched.</summary>
     [Fact]
-    public async Task HandleAsync_NonGeneratingContextData_CallsNextWithoutInit()
+    public async Task HandleAsync_NonContextData_CallsNextWithoutInit()
     {
         var workflow = new WorkflowInstance { Data = new object() };
         var context = Substitute.For<IStepExecutionContext>();
@@ -69,68 +70,77 @@ public sealed class GeneratingMiddlewareTests
         var middleware = CreateMiddleware();
         await middleware.HandleAsync(context, _body, NextResult);
 
-        _fileLoggerFactory.DidNotReceive().CreateFile(Arg.Any<string>(), Arg.Any<string?>());
-        _coordinatorFactory.DidNotReceive().Create();
+        _fileLoggerFactory.DidNotReceive().CreateFile(
+            Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<Action<LogNotification>?>());
     }
 
-    /// <summary>When LoggerFactory is null, CreateFile is called with WorkflowLogPath and the correct scope.</summary>
+    /// <summary>When LoggerFactory is null, CreateFile is called with the job's LogPath.</summary>
     [Fact]
     public async Task HandleAsync_LoggerFactoryNull_CreatesFromFactory()
     {
-        var (context, data) = CreateGeneratingContext();
-        data.LoggerFactory = null;
+        var (context, data) = CreateContext();
+        data.Transient.LoggerFactory = null;
         _fileLoggerFactory
-            .CreateFile(Arg.Any<string>(), Arg.Any<string?>())
+            .CreateFile(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<Action<LogNotification>?>())
             .Returns(Substitute.For<ILoggerFactory>());
 
         var middleware = CreateMiddleware();
         await middleware.HandleAsync(context, _body, NextResult);
 
         _fileLoggerFactory.Received(1).CreateFile(
-            data.WorkflowLogPath,
-            $"Workflow/{data.WorkflowScope}");
-        data.LoggerFactory.Should().NotBeNull();
+            data.Persist.LogPath, Arg.Any<IReadOnlyList<string>>(), Arg.Any<Action<LogNotification>?>());
+        data.Transient.LoggerFactory.Should().NotBeNull();
+    }
+
+    /// <summary>The callback passed to CreateFile forwards each notification to <see cref="ILogNotifier" />.</summary>
+    [Fact]
+    public async Task HandleAsync_LoggerFactoryNull_CallbackForwardsToLogNotifier()
+    {
+        var (context, data) = CreateContext();
+        data.Transient.LoggerFactory = null;
+        Action<LogNotification>? capturedCallback = null;
+        _fileLoggerFactory
+            .CreateFile(Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(),
+                Arg.Do<Action<LogNotification>?>(cb => capturedCallback = cb))
+            .Returns(Substitute.For<ILoggerFactory>());
+
+        var middleware = CreateMiddleware();
+        await middleware.HandleAsync(context, _body, NextResult);
+
+        capturedCallback.Should().NotBeNull();
+        var notification = new LogNotification
+        {
+            Timestamp = DateTimeOffset.UtcNow, Location = "req/job", Level = LogEventLevel.Information, Message = "hello"
+        };
+        capturedCallback!(notification);
+
+        _logNotifier.Received(1).Publish(Arg.Is<LogEntry>(e =>
+            e.Timestamp == notification.Timestamp && e.Path == notification.Location &&
+            e.Level == "INF" && e.Info == notification.Message));
     }
 
     /// <summary>When LoggerFactory is already set, CreateFile is not called again.</summary>
     [Fact]
     public async Task HandleAsync_LoggerFactoryAlreadySet_DoesNotReinitialize()
     {
-        var (context, data) = CreateGeneratingContext();
+        var (context, data) = CreateContext();
         var existingFactory = Substitute.For<ILoggerFactory>();
-        data.LoggerFactory = existingFactory;
+        data.Transient.LoggerFactory = existingFactory;
 
         var middleware = CreateMiddleware();
         await middleware.HandleAsync(context, _body, NextResult);
 
-        _fileLoggerFactory.DidNotReceive().CreateFile(Arg.Any<string>(), Arg.Any<string?>());
-        data.LoggerFactory.Should().BeSameAs(existingFactory);
-    }
-
-    /// <summary>When AssetCoordinator is null, coordinatorFactory.Create() is called once.</summary>
-    [Fact]
-    public async Task HandleAsync_AssetCoordinatorNull_CreatesFromFactory()
-    {
-        var (context, data) = CreateGeneratingContext();
-        data.LoggerFactory = Substitute.For<ILoggerFactory>();
-        data.AssetCoordinator = null;
-        var coordinator = Substitute.For<ICoordinator>();
-        _coordinatorFactory.Create().Returns(coordinator);
-
-        var middleware = CreateMiddleware();
-        await middleware.HandleAsync(context, _body, NextResult);
-
-        _coordinatorFactory.Received(1).Create();
-        data.AssetCoordinator.Should().BeSameAs(coordinator);
+        _fileLoggerFactory.DidNotReceive().CreateFile(
+            Arg.Any<string>(), Arg.Any<IReadOnlyList<string>>(), Arg.Any<Action<LogNotification>?>());
+        data.Transient.LoggerFactory.Should().BeSameAs(existingFactory);
     }
 
     /// <summary>HandleAsync always returns the result produced by next().</summary>
     [Fact]
     public async Task HandleAsync_AlwaysReturnsNextResult()
     {
-        var (context, data) = CreateGeneratingContext();
-        data.LoggerFactory = Substitute.For<ILoggerFactory>();
-        data.AssetCoordinator = Substitute.For<ICoordinator>();
+        var (context, data) = CreateContext();
+        data.Transient.LoggerFactory = Substitute.For<ILoggerFactory>();
 
         var middleware = CreateMiddleware();
         var result = await middleware.HandleAsync(context, _body, NextResult);

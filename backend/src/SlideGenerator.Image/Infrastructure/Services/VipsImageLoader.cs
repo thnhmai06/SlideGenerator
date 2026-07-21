@@ -27,9 +27,20 @@ internal sealed class VipsImageLoader : IImageLoader
         return new VipsImage(NetVipsImage.NewFromFile(path));
     }
 
+    public IImage Open(byte[] data)
+    {
+        return new VipsImage(NetVipsImage.NewFromBuffer(data));
+    }
+
     public IImageInfo GetInfo(string path)
     {
         using var img = NetVipsImage.NewFromFile(path);
+        return new SizeInfo((uint)img.Width, (uint)img.Height);
+    }
+
+    public IImageInfo GetInfo(byte[] data)
+    {
+        using var img = NetVipsImage.NewFromBuffer(data);
         return new SizeInfo((uint)img.Width, (uint)img.Height);
     }
 
@@ -38,6 +49,20 @@ internal sealed class VipsImageLoader : IImageLoader
         try
         {
             info = GetInfo(path);
+            return true;
+        }
+        catch
+        {
+            info = null;
+            return false;
+        }
+    }
+
+    public bool TryGetInfo(byte[] data, [MaybeNullWhen(false)] out IImageInfo info)
+    {
+        try
+        {
+            info = GetInfo(data);
             return true;
         }
         catch

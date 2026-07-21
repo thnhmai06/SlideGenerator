@@ -18,6 +18,7 @@
         <PackageReference Include="NSubstitute" Version="5.*"/>
         <PackageReference Include="FluentAssertions" Version="8.10.0"/>
         <PackageReference Include="WorkflowCore" Version="3.18.0"/>
+        <PackageReference Include="Serilog" Version="4.3.1"/>
         <PackageReference Update="coverlet.collector" Version="10.0.1">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -25,8 +26,9 @@
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="../../src/SlideGenerator.Generator/SlideGenerator.Generator.csproj"/>
+        <ProjectReference Include="../../src/SlideGenerator.Utilities/SlideGenerator.Utilities.csproj"/>
+        <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.9" />
         <ProjectReference Include="../../src/SlideGenerator.Logging/SlideGenerator.Logging.csproj"/>
-        <ProjectReference Include="../../src/SlideGenerator.Coordinator/SlideGenerator.Coordinator.csproj"/>
         <ProjectReference Include="../../src/SlideGenerator.Document/SlideGenerator.Document.csproj"/>
         <ProjectReference Include="..\..\src\SlideGenerator.Cloud\SlideGenerator.Cloud.csproj"/>
         <ProjectReference Include="../../src/SlideGenerator.Settings/SlideGenerator.Settings.csproj"/>

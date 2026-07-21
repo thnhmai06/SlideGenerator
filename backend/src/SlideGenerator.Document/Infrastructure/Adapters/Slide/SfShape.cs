@@ -13,6 +13,7 @@
  */
 
 using System.Drawing;
+using SlideGenerator.Document.Domain.Models.Slide;
 using Syncfusion.Presentation;
 using IParagraph = SlideGenerator.Document.Domain.Abstractions.Slide.IParagraph;
 using IShape = SlideGenerator.Document.Domain.Abstractions.Slide.IShape;
@@ -24,6 +25,7 @@ internal sealed class SfShape(Syncfusion.Presentation.IShape core) : IShape
     private const float EmuPerPixel = 9525.0f;
 
     public string Name => core.ShapeName;
+    public ShapeIdentifier Identifier => new(Name);
     public string DisplayText => core.TextBody?.Text ?? string.Empty;
 
     public RectangleF Bounds => new(

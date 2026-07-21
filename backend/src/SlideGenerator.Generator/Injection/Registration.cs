@@ -13,83 +13,76 @@
  */
 
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using SlideGenerator.Coordinator.Application.Abstractions;
-using SlideGenerator.Coordinator.Application.Services;
 using SlideGenerator.Generator.Application.Abstractions;
 using SlideGenerator.Generator.Application.Steps;
-using SlideGenerator.Generator.Domain.Models;
 using SlideGenerator.Generator.Infrastructure.Middleware;
 using SlideGenerator.Generator.Infrastructure.Services;
 using SlideGenerator.Image.Application.Abstractions;
 using SlideGenerator.Image.Infrastructure.Services;
 using SlideGenerator.Settings.Application.Abstractions;
+using SlideGenerator.Settings.Domain.Rules;
 
 namespace SlideGenerator.Generator.Injection;
 
-/// <summary>
-///     Provides extension methods to register the generating workflow and its steps
-///     into the dependency injection container.
-/// </summary>
+/// <summary>Registers Generator services into the dependency injection container.</summary>
 public static class Registration
+{
+extension(IServiceCollection services)
 {
     /// <summary>
     ///     Adds the generating workflow, all associated WorkflowCore steps, and the
-    ///     <see cref="IGeneratingService" /> facade to the service collection.
+    ///     <see cref="IService" /> facade to the service collection.
     /// </summary>
-    /// <param name="services">The service collection to add the services to.</param>
     /// <returns>The updated service collection.</returns>
-    public static IServiceCollection AddGeneratorServices(this IServiceCollection services)
+    public IServiceCollection AddGeneratorServices()
     {
         services.AddLogging();
 
-        // Concurrency gate limiter — limits resolved at runtime from ISettingProvider
-        services.AddSingleton<IGateLocker<GateType>>(sp => new GateLocker<GateType>(
-            gate =>
+        // Named HttpClient for inspect/download calls — proxy is applied on the pooled handler, re-read
+        // from ISettingProvider whenever the factory recycles it; per-call timeout is set by callers via
+        // Utilities.CreateHttpClientWithSetting (steps create a fresh client at the point of use, never share one).
+        services.AddHttpClient(NameAndPaths.Application.Name)
+            .ConfigurePrimaryHttpMessageHandler(sp =>
             {
-                var settingProvider = sp.GetRequiredService<ISettingProvider>();
-                var setting = settingProvider.Current;
-                var perf = setting.Performance;
-                return gate switch
+                var proxy = sp.GetRequiredService<ISettingProvider>().Current.Network.Proxy;
+                return new HttpClientHandler
                 {
-                    GateType.DownloadImage => perf.MaxParallelDownloadImage,
-                    GateType.EditImage => perf.MaxParallelEditImage,
-                    GateType.EditPresentation => perf.MaxParallelEditPresentation,
-                    GateType.ReadWorkbook => perf.MaxParallelReadWorkbook,
-                    GateType.ReadPresentation => perf.MaxParallelReadPresentation,
-                    _ => throw new ArgumentOutOfRangeException(nameof(gate), gate, null)
+                    UseProxy = proxy.UseProxy,
+                    Proxy = proxy.GetWebProxy()
                 };
-            },
-            sp.GetService<ILogger<GateLocker<GateType>>>()));
+            });
 
-        // Face-detection pool — limit mirrors EditImage concurrency
+        // Face-detection pool — bounded by logical CPU count (CPU-bound native OpenCV work)
         services.AddSingleton<IFaceDetector>(sp =>
         {
             var factory = sp.GetRequiredService<Func<IFaceDetector>>();
-            var settings = sp.GetRequiredService<ISettingProvider>();
-            return new FaceDetectorPool(factory, () => settings.Current.Performance.MaxParallelEditImage);
+            return new FaceDetectorPool(factory, () => (uint)Environment.ProcessorCount);
         });
 
+        // Shared, app-wide cache for resolved URLs and downloaded files — reads its connection string
+        // from Settings directly (no DI'd SqliteConnectionStringBuilder, avoids colliding with the one
+        // Recipe module registers for Recipes.db).
+        services.AddSingleton<ICache, SqliteCache>();
+
+        // Progress persistence (Requests/Jobs/Rows) — same reasoning, own connection string, no collision
+        // with Cache.db/Recipes.db.
+        services.AddSingleton<IStudioRepository, StudioRepository>();
+
+        // Reads the per-request workflow log file back into scoped LogEntry records for Summary.Logs.
+        services.AddSingleton<ILogFileReader, LogFileReader>();
+
         // WorkflowCore Step registrations (Transient — WorkflowCore resolves per-execution via IServiceScope)
-        services.AddTransient<LoadRecipeSummary>();
         services.AddTransient<PreflightCleanup>();
-        services.AddTransient<ValidateRequest>();
-        services.AddTransient<CreateTemplate>();
-        services.AddTransient<ExtractData>();
-        services.AddTransient<CollectImage>();
-        services.AddTransient<EditImage>();
-        services.AddTransient<ReplaceSlideData>();
-        services.AddTransient<CloseAllHandles>();
+        services.AddTransient<InspectUrlsStep>();
+        services.AddTransient<GenerateJobStep>();
 
         // Step middleware — lazily initializes the workflow logger before each step (supports persistence resume)
-        services.AddWorkflowStepMiddleware<GeneratingMiddleware>();
-
-        // Step middleware — publishes StepCompleted progress events with phase info after each step
-        services.AddWorkflowStepMiddleware<GeneratingProgressMiddleware>();
+        services.AddWorkflowStepMiddleware<Middleware>();
 
         // Workflow service facade — Ipc depends on this, not on WorkflowCore directly
-        services.AddSingleton<IGeneratingService, GeneratingService>();
+        services.AddSingleton<IService, Service>();
 
         return services;
     }
+}
 }

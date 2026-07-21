@@ -40,7 +40,7 @@ public static class Sha256
 
         using var stream = File.OpenRead(filePath);
         var hashBytes = SHA256.HashData(stream);
-        var take = Math.Min(length ?? MaxLength, MaxLength);
+        var take = System.Math.Min(length ?? MaxLength, MaxLength);
         return ToHexString(hashBytes)[..take];
     }
 
@@ -54,7 +54,7 @@ public static class Sha256
     {
         if (string.IsNullOrEmpty(text)) return string.Empty;
         var hashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(text));
-        var take = Math.Min(length ?? MaxLength, MaxLength);
+        var take = System.Math.Min(length ?? MaxLength, MaxLength);
         return ToHexString(hashBytes)[..take];
     }
 

@@ -12,12 +12,14 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using SlideGenerator.Document.Domain.Models.Sheet;
 using Syncfusion.XlsIO;
 
 namespace SlideGenerator.Document.Infrastructure.Adapters.Sheet;
 
 internal sealed class SfWorksheet(IWorksheet worksheet) : Domain.Abstractions.Sheet.IWorksheet
 {
+    public WorksheetIdentifier Identifier => new(Name);
     public string Name => worksheet.Name;
 
     public int RowCount
@@ -25,7 +27,7 @@ internal sealed class SfWorksheet(IWorksheet worksheet) : Domain.Abstractions.Sh
         get
         {
             var used = worksheet.UsedRange;
-            return used?.LastRow - 1 ?? 0;
+            return used?.LastRow ?? 0;
         }
     }
 
@@ -38,7 +40,7 @@ internal sealed class SfWorksheet(IWorksheet worksheet) : Domain.Abstractions.Sh
         }
     }
 
-    public string GetCellValue(int row, int col)
+    public string GetCell(int row, int col)
     {
         return worksheet.Range[row, col].DisplayText ?? string.Empty;
     }
@@ -46,10 +48,10 @@ internal sealed class SfWorksheet(IWorksheet worksheet) : Domain.Abstractions.Sh
     public IReadOnlyList<string> GetRow(int rowIndex)
     {
         var used = worksheet.UsedRange;
-        if (used == null || rowIndex < 0) return [];
+        if (used == null || rowIndex < 1) return [];
 
         var cols = used.LastColumn - used.Column + 1;
-        var dataRowAbsolute = used.Row + rowIndex;
+        var dataRowAbsolute = used.Row + rowIndex - 1;
         var result = new List<string>(cols);
 
         for (var col = 0; col < cols; col++)
@@ -61,7 +63,7 @@ internal sealed class SfWorksheet(IWorksheet worksheet) : Domain.Abstractions.Sh
         return result;
     }
 
-    public void SetCellValue(int row, int col, string value)
+    public void SetCell(int row, int col, string value)
     {
         worksheet.Range[row, col].Text = value;
     }

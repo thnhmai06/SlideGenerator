@@ -13,6 +13,7 @@
  */
 
 using Microsoft.Extensions.Logging;
+using SlideGenerator.Logging.Models;
 
 namespace SlideGenerator.Logging.Abstractions;
 
@@ -25,10 +26,18 @@ public interface IFileLoggerFactory
     ///     Creates an <see cref="ILoggerFactory" /> that writes all log events to a specific file.
     /// </summary>
     /// <param name="filePath">The file path to write log events to.</param>
-    /// <param name="scope">
-    ///     Optional static scope label enriched onto every log event written by this factory
-    ///     (e.g. <c>"Workflow/abc123"</c>). Appears as the <c>Scope</c> property in the formatter.
+    /// <param name="scopePropertyNames">
+    ///     Ordered ambient property names (pushed via <c>Serilog.Context.LogContext.PushProperty</c>) to join
+    ///     into each event's scope path — e.g. <c>["RequestId", "JobId", "RowIndex"]</c>. This module has no
+    ///     notion of what a scope means; the caller owns the property names. <see langword="null" /> or empty
+    ///     yields an empty scope path for every event.
+    /// </param>
+    /// <param name="onLogEvent">
+    ///     Optional callback invoked for every log event written through this factory, carrying its scope
+    ///     path. Used to forward log lines to the frontend in real time without adding a second persistence
+    ///     store.
     /// </param>
     /// <returns>A configured <see cref="ILoggerFactory" /> backed by the specified file.</returns>
-    ILoggerFactory CreateFile(string filePath, string? scope = null);
+    ILoggerFactory CreateFile(
+        string filePath, IReadOnlyList<string>? scopePropertyNames = null, Action<LogNotification>? onLogEvent = null);
 }

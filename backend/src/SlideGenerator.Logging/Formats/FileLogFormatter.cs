@@ -27,7 +27,7 @@ namespace SlideGenerator.Logging.Formats;
 ///     For <see cref="LogEventLevel.Error" /> and <see cref="LogEventLevel.Fatal" /> events, the full exception
 ///     chain with stack trace is written in a human-readable indented format.
 /// </remarks>
-public sealed class FileLogFormatter : ITextFormatter
+public sealed class FileLogFormatter(IReadOnlyList<string> scopePropertyNames) : ITextFormatter
 {
     /// <inheritdoc />
     public void Format(LogEvent logEvent, TextWriter output)
@@ -47,10 +47,10 @@ public sealed class FileLogFormatter : ITextFormatter
         var loggerName = logEvent.GetScalarValue("LoggerName")
                          ?? logEvent.GetScalarValue("SourceContext")
                          ?? "?";
-        var scope = logEvent.GetScalarValue("Scope") ?? "Global";
+        var path = logEvent.BuildScopePath(scopePropertyNames);
         var message = logEvent.RenderMessage(CultureInfo.InvariantCulture);
 
-        output.WriteLine($"[{timestamp}] [{loggerName}/{scope}] {levelAbbr}: {message}");
+        output.WriteLine($"[{timestamp}] [{loggerName}/{path}] {levelAbbr}: {message}");
 
         if (logEvent.Exception is null || logEvent.Level < LogEventLevel.Warning) return;
 

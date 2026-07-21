@@ -14,6 +14,7 @@
 
 using SlideGenerator.Document.Domain.Models.Slide;
 using Syncfusion.Presentation;
+using IReadOnlySlide = SlideGenerator.Document.Domain.Abstractions.Slide.IReadOnlySlide;
 using ISlide = SlideGenerator.Document.Domain.Abstractions.Slide.ISlide;
 
 namespace SlideGenerator.Document.Infrastructure.Adapters.Slide;
@@ -31,7 +32,11 @@ internal sealed class SfPresentation(
         get { return core.Slides.Select(slide => new SfSlide(slide)); }
     }
 
+    public PresentationIdentifier Identifier { get; } = identifier;
+
     public int SlidesCount => core.Slides.Count;
+
+    public bool IsWriteProtected => core.IsWriteProtected;
 
     /// <summary>
     ///     Disposes of the presentation and any underlying file streams.
@@ -47,9 +52,9 @@ internal sealed class SfPresentation(
         core.Slides.RemoveAt(index);
     }
 
-    public int CloneSlide(int slideIndex)
+    public void AddSlide(IReadOnlySlide slide)
     {
-        return core.Slides.Add(core.Slides[slideIndex].Clone());
+        core.Slides.Add(((SfSlide)slide).Core, PasteOptions.SourceFormatting);
     }
 
     public void RemoveEncryption()
@@ -78,7 +83,7 @@ internal sealed class SfPresentation(
     public void Save()
     {
         if (fileStream == null)
-            core.Save(identifier.PresentationPath);
+            core.Save(Identifier.PresentationPath);
         else
             core.Save(fileStream);
     }

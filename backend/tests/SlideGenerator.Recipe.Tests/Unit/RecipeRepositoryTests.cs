@@ -21,7 +21,6 @@ using Microsoft.Data.Sqlite;
 using SlideGenerator.Document.Domain.Models.Sheet;
 using SlideGenerator.Document.Domain.Models.Slide;
 using SlideGenerator.Recipe.Domain.Models;
-using SlideGenerator.Recipe.Domain.Models.Graphs;
 using SlideGenerator.Recipe.Domain.Rules;
 using SlideGenerator.Recipe.Infrastructure.Services;
 using Xunit;
@@ -63,13 +62,15 @@ public sealed class RecipeRepositoryTests : IDisposable
     /// <summary>Returns an input with an empty graph.</summary>
     private static RecipeInput Input(string name)
     {
-        return new RecipeInput(name, new RecipeGraph([], []));
+        return new RecipeInput(name, new Domain.Models.Recipe(new Dictionary<string, Node>(), []));
     }
 
-    /// <summary>Returns an input whose graph contains the given nodes.</summary>
-    private static RecipeInput Input(string name, params CanvasNode[] nodes)
+    /// <summary>Returns an input whose graph contains the given nodes (keys are auto-generated).</summary>
+    private static RecipeInput Input(string name, params Node[] nodes)
     {
-        return new RecipeInput(name, new RecipeGraph(nodes, []));
+        var dict = nodes.Select((n, i) => (Key: $"n{i}", Node: n))
+            .ToDictionary(x => x.Key, x => x.Node);
+        return new RecipeInput(name, new Domain.Models.Recipe(dict, []));
     }
 
     #region AddAsync
@@ -108,13 +109,13 @@ public sealed class RecipeRepositoryTests : IDisposable
     public async Task AddAsync_WithWorkbookNode_GraphRoundTripsNodeCount()
     {
         var wbPath = Path.GetFullPath("dummy.xlsx");
-        var node = new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath), []);
+        var node = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wbPath), new HashSet<string>());
         var metadata = await _repo.AddAsync(Input("WithNode", node), TestContext.Current.CancellationToken);
 
         var entry = await _repo.GetAsync(metadata.Id, TestContext.Current.CancellationToken);
 
-        entry.Graph.Nodes.Should().HaveCount(1);
-        entry.Graph.Nodes[0].Should().BeOfType<WorkbookNode>();
+        entry.Recipe.Nodes.Should().HaveCount(1);
+        entry.Recipe.Nodes.Values.First().Should().BeOfType<WorkbookNode>();
     }
 
     /// <summary>
@@ -125,12 +126,12 @@ public sealed class RecipeRepositoryTests : IDisposable
     public async Task AddAsync_WithPresentationNode_GraphRoundTripsPresentationPath()
     {
         var presPath = Path.GetFullPath("template.pptx");
-        var node = new PresentationNode("pres1", new Point(0, 0), new PresentationIdentifier(presPath), []);
+        var node = new PresentationNode(new Point(0, 0), new PresentationIdentifier(presPath), new HashSet<string>());
         var metadata = await _repo.AddAsync(Input("WithPres", node), TestContext.Current.CancellationToken);
 
         var entry = await _repo.GetAsync(metadata.Id, TestContext.Current.CancellationToken);
 
-        var restored = entry.Graph.Nodes.OfType<PresentationNode>().Single();
+        var restored = entry.Recipe.Nodes.Values.OfType<PresentationNode>().Single();
         restored.Presentation.PresentationPath.Should().Be(presPath);
     }
 
@@ -144,8 +145,8 @@ public sealed class RecipeRepositoryTests : IDisposable
 
         var entry = await _repo.GetAsync(metadata.Id, TestContext.Current.CancellationToken);
 
-        entry.Graph.Nodes.Should().BeEmpty();
-        entry.Graph.Edges.Should().BeEmpty();
+        entry.Recipe.Nodes.Should().BeEmpty();
+        entry.Recipe.Edges.Should().BeEmpty();
     }
 
     #endregion
@@ -180,20 +181,20 @@ public sealed class RecipeRepositoryTests : IDisposable
     }
 
     /// <summary>
-    ///     Verifies that <see cref="RecipeRepository.GetAsync" /> returns a <see cref="RecipeGraph" />
+    ///     Verifies that <see cref="RecipeRepository.GetAsync" /> returns a <see cref="Recipe" />
     ///     whose node count matches what was stored.
     /// </summary>
     [Fact]
     public async Task GetAsync_ExistingId_ReturnsGraphWithCorrectNodeCount()
     {
         var wbPath = Path.GetFullPath("a.xlsx");
-        var n1 = new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath), []);
-        var n2 = new WorkbookNode("wb2", new Point(100, 0), new WorkbookIdentifier(wbPath), []);
+        var n1 = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wbPath), new HashSet<string>());
+        var n2 = new WorkbookNode(new Point(100, 0), new WorkbookIdentifier(wbPath), new HashSet<string>());
         var metadata = await _repo.AddAsync(Input("TwoNodes", n1, n2), TestContext.Current.CancellationToken);
 
         var entry = await _repo.GetAsync(metadata.Id, TestContext.Current.CancellationToken);
 
-        entry.Graph.Nodes.Should().HaveCount(2);
+        entry.Recipe.Nodes.Should().HaveCount(2);
     }
 
     #endregion
@@ -236,13 +237,13 @@ public sealed class RecipeRepositoryTests : IDisposable
     public async Task ListAsync_EntryWithNodes_ReturnsGraphWithNodeCount()
     {
         var wbPath = Path.GetFullPath("wb.xlsx");
-        var node = new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath), []);
+        var node = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wbPath), new HashSet<string>());
         var metadata = await _repo.AddAsync(Input("WithNode", node), TestContext.Current.CancellationToken);
 
         var list = await _repo.ListAsync(TestContext.Current.CancellationToken);
         var match = list.OfType<RecipeEntry>().Single(e => e.Id == metadata.Id);
 
-        match.Graph.Nodes.Should().HaveCount(1);
+        match.Recipe.Nodes.Should().HaveCount(1);
     }
 
     #endregion
@@ -283,12 +284,12 @@ public sealed class RecipeRepositoryTests : IDisposable
     {
         var metadata = await _repo.AddAsync(Input("Recipe"), TestContext.Current.CancellationToken);
         var wbPath = Path.GetFullPath("new.xlsx");
-        var node = new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath), []);
+        var node = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wbPath), new HashSet<string>());
 
         await _repo.UpdateAsync(metadata.Id, Input("Recipe", node), TestContext.Current.CancellationToken);
         var entry = await _repo.GetAsync(metadata.Id, TestContext.Current.CancellationToken);
 
-        entry.Graph.Nodes.Should().HaveCount(1);
+        entry.Recipe.Nodes.Should().HaveCount(1);
     }
 
     #endregion
@@ -389,7 +390,7 @@ public sealed class RecipeRepositoryTests : IDisposable
             imported.Id.Should().BeGreaterThan(0);
             imported.Id.Should().NotBe(exported.Id);
             entry.Name.Should().Be("Original");
-            entry.Graph.Nodes.Should().BeEmpty();
+            entry.Recipe.Nodes.Should().BeEmpty();
         }
         finally
         {
@@ -401,7 +402,7 @@ public sealed class RecipeRepositoryTests : IDisposable
 
     /// <summary>
     ///     Verifies that <see cref="RecipeRepository.ImportAsync" /> throws
-    ///     <see cref="InvalidDataException" /> when the archive is missing <c>Graph.json</c>.
+    ///     <see cref="InvalidDataException" /> when the archive is missing <c>Recipe.json</c>.
     /// </summary>
     [Fact]
     public async Task ImportAsync_MissingGraphJson_ThrowsInvalidDataException()
@@ -423,7 +424,7 @@ public sealed class RecipeRepositoryTests : IDisposable
                 TestContext.Current.CancellationToken);
 
             await act.Should().ThrowAsync<InvalidDataException>()
-                .WithMessage("*Graph.json*");
+                .WithMessage("*Recipe.json*");
         }
         finally
         {
@@ -433,7 +434,7 @@ public sealed class RecipeRepositoryTests : IDisposable
 
     /// <summary>
     ///     Verifies that <see cref="RecipeRepository.ExportAsync" /> serializes zip-relative paths
-    ///     into <c>Graph.json</c>, and <see cref="RecipeRepository.ImportAsync" /> rewrites them to
+    ///     into <c>Recipe.json</c>, and <see cref="RecipeRepository.ImportAsync" /> rewrites them to
     ///     absolute extracted paths so that file nodes in the imported graph point to the extracted
     ///     files on disk.
     /// </summary>
@@ -450,12 +451,12 @@ public sealed class RecipeRepositoryTests : IDisposable
             await File.WriteAllBytesAsync(wbPath, [], TestContext.Current.CancellationToken);
             await File.WriteAllBytesAsync(pptPath, [], TestContext.Current.CancellationToken);
 
-            var graph = new RecipeGraph(
-                [
-                    new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath), []),
-                    new PresentationNode("ppt1", new Point(0, 0), new PresentationIdentifier(pptPath), [])
-                ],
-                []);
+            var graph = new Domain.Models.Recipe(
+                new Dictionary<string, Node>
+                {
+                    ["wb1"] = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wbPath), new HashSet<string>()),
+                    ["ppt1"] = new PresentationNode(new Point(0, 0), new PresentationIdentifier(pptPath), new HashSet<string>())
+                }, []);
             var exported = await _repo.AddAsync(new RecipeInput("OrigName", graph),
                 TestContext.Current.CancellationToken);
             await _repo.ExportAsync(exported.Id, zipPath, null, TestContext.Current.CancellationToken);
@@ -464,8 +465,8 @@ public sealed class RecipeRepositoryTests : IDisposable
                 TestContext.Current.CancellationToken);
             var entry = await _repo.GetAsync(imported.Id, TestContext.Current.CancellationToken);
 
-            var importedWb = entry.Graph.Nodes.OfType<WorkbookNode>().Single();
-            var importedPpt = entry.Graph.Nodes.OfType<PresentationNode>().Single();
+            var importedWb = entry.Recipe.Nodes.Values.OfType<WorkbookNode>().Single();
+            var importedPpt = entry.Recipe.Nodes.Values.OfType<PresentationNode>().Single();
 
             importedWb.Workbook.BookPath.Should().StartWith(workbooksDir);
             File.Exists(importedWb.Workbook.BookPath).Should().BeTrue();
@@ -484,7 +485,7 @@ public sealed class RecipeRepositoryTests : IDisposable
 
     /// <summary>
     ///     Verifies that <see cref="RecipeRepository.ImportAsync" /> throws
-    ///     <see cref="InvalidDataException" /> when <c>Graph.json</c> contains malformed JSON.
+    ///     <see cref="InvalidDataException" /> when <c>Recipe.json</c> contains malformed JSON.
     /// </summary>
     [Fact]
     public async Task ImportAsync_InvalidGraphJson_ThrowsInvalidDataException()
@@ -511,7 +512,7 @@ public sealed class RecipeRepositoryTests : IDisposable
                 TestContext.Current.CancellationToken);
 
             await act.Should().ThrowAsync<InvalidDataException>()
-                .WithMessage("*Graph.json*");
+                .WithMessage("*Recipe.json*");
         }
         finally
         {
@@ -536,8 +537,8 @@ public sealed class RecipeRepositoryTests : IDisposable
         {
             await File.WriteAllBytesAsync(wbPath, [], TestContext.Current.CancellationToken);
 
-            var graph = new RecipeGraph(
-                [new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath), [])], []);
+            var graph = new Domain.Models.Recipe(
+                new Dictionary<string, Node> { ["wb1"] = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wbPath), new HashSet<string>()) }, []);
             var exported = await _repo.AddAsync(new RecipeInput("SlipTest", graph),
                 TestContext.Current.CancellationToken);
             await _repo.ExportAsync(exported.Id, zipPath, null, TestContext.Current.CancellationToken);
@@ -603,11 +604,11 @@ public sealed class RecipeRepositoryTests : IDisposable
 
         try
         {
-            // Build a zip with a valid Graph.json (empty graph) + a disallowed entry.
+            // Build a zip with a valid Recipe.json (empty graph) + a disallowed entry.
             await using (var fs = File.Create(zipPath))
             await using (var zos = new ZipOutputStream(fs))
             {
-                var graphBytes = Encoding.UTF8.GetBytes("{\"nodes\":[],\"edges\":[]}");
+                var graphBytes = Encoding.UTF8.GetBytes("{\"nodes\":{},\"edges\":[]}");
                 var graphEntry = new ZipEntry(RecipePackageRules.Data.RecipeFileName)
                     { Size = graphBytes.Length };
                 await zos.PutNextEntryAsync(graphEntry, TestContext.Current.CancellationToken);
@@ -652,8 +653,8 @@ public sealed class RecipeRepositoryTests : IDisposable
         {
             await File.WriteAllBytesAsync(wbPath, [0x01], TestContext.Current.CancellationToken);
 
-            var graph = new RecipeGraph(
-                [new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath), [])], []);
+            var graph = new Domain.Models.Recipe(
+                new Dictionary<string, Node> { ["wb1"] = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wbPath), new HashSet<string>()) }, []);
             var exported = await _repo.AddAsync(new RecipeInput("DupImport", graph),
                 TestContext.Current.CancellationToken);
             await _repo.ExportAsync(exported.Id, zipPath, null, TestContext.Current.CancellationToken);
@@ -667,12 +668,12 @@ public sealed class RecipeRepositoryTests : IDisposable
                 TestContext.Current.CancellationToken);
             var entry = await _repo.GetAsync(imported.Id, TestContext.Current.CancellationToken);
 
-            var importedWb = entry.Graph.Nodes.OfType<WorkbookNode>().Single();
+            var importedWb = entry.Recipe.Nodes.Values.OfType<WorkbookNode>().Single();
 
             // Pre-existing file must not be overwritten.
             (await File.ReadAllBytesAsync(conflictingPath, TestContext.Current.CancellationToken))[0]
                 .Should().Be(0xFF);
-            // Graph node must point to a deduplicated path, not the conflicting one.
+            // Recipe node must point to a deduplicated path, not the conflicting one.
             importedWb.Workbook.BookPath.Should().NotBe(conflictingPath);
             importedWb.Workbook.BookPath.Should().StartWith(workbooksDir);
             // The extracted file must exist with the content from the zip (0x01).
@@ -712,12 +713,12 @@ public sealed class RecipeRepositoryTests : IDisposable
             await File.WriteAllBytesAsync(wb1, [0x01], TestContext.Current.CancellationToken);
             await File.WriteAllBytesAsync(wb2, [0x02], TestContext.Current.CancellationToken);
 
-            var graph = new RecipeGraph(
-                [
-                    new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wb1), []),
-                    new WorkbookNode("wb2", new Point(1, 0), new WorkbookIdentifier(wb2), [])
-                ],
-                []);
+            var graph = new Domain.Models.Recipe(
+                new Dictionary<string, Node>
+                {
+                    ["wb1"] = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wb1), new HashSet<string>()),
+                    ["wb2"] = new WorkbookNode(new Point(1, 0), new WorkbookIdentifier(wb2), new HashSet<string>())
+                }, []);
             var exported = await _repo.AddAsync(new RecipeInput("DupStem", graph),
                 TestContext.Current.CancellationToken);
             await _repo.ExportAsync(exported.Id, zipPath, null, TestContext.Current.CancellationToken);
@@ -726,7 +727,7 @@ public sealed class RecipeRepositoryTests : IDisposable
                 TestContext.Current.CancellationToken);
             var entry = await _repo.GetAsync(imported.Id, TestContext.Current.CancellationToken);
 
-            var importedWbs = entry.Graph.Nodes.OfType<WorkbookNode>().ToList();
+            var importedWbs = entry.Recipe.Nodes.Values.OfType<WorkbookNode>().ToList();
             importedWbs.Should().HaveCount(2);
             importedWbs.Should().AllSatisfy(n => File.Exists(n.Workbook.BookPath).Should().BeTrue());
             // Both paths must be distinct (deduplication gave them different names).
@@ -822,8 +823,8 @@ public sealed class RecipeRepositoryTests : IDisposable
         {
             await File.WriteAllBytesAsync(pptPath, [0x01], TestContext.Current.CancellationToken);
 
-            var graph = new RecipeGraph(
-                [new PresentationNode("ppt1", new Point(0, 0), new PresentationIdentifier(pptPath), [])], []);
+            var graph = new Domain.Models.Recipe(
+                new Dictionary<string, Node> { ["ppt1"] = new PresentationNode(new Point(0, 0), new PresentationIdentifier(pptPath), new HashSet<string>()) }, []);
             var exported = await _repo.AddAsync(new RecipeInput("PptDedup", graph),
                 TestContext.Current.CancellationToken);
             await _repo.ExportAsync(exported.Id, zipPath, null, TestContext.Current.CancellationToken);
@@ -836,7 +837,7 @@ public sealed class RecipeRepositoryTests : IDisposable
                 TestContext.Current.CancellationToken);
             var entry = await _repo.GetAsync(imported.Id, TestContext.Current.CancellationToken);
 
-            var importedPpt = entry.Graph.Nodes.OfType<PresentationNode>().Single();
+            var importedPpt = entry.Recipe.Nodes.Values.OfType<PresentationNode>().Single();
 
             (await File.ReadAllBytesAsync(conflictingPath, TestContext.Current.CancellationToken))[0]
                 .Should().Be(0xFF);
@@ -872,8 +873,8 @@ public sealed class RecipeRepositoryTests : IDisposable
         {
             await File.WriteAllBytesAsync(wbPath, [0x01], TestContext.Current.CancellationToken);
 
-            var graph = new RecipeGraph(
-                [new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath), [])], []);
+            var graph = new Domain.Models.Recipe(
+                new Dictionary<string, Node> { ["wb1"] = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wbPath), new HashSet<string>()) }, []);
             var exported = await _repo.AddAsync(new RecipeInput("MultiConflict", graph),
                 TestContext.Current.CancellationToken);
             await _repo.ExportAsync(exported.Id, zipPath, null, TestContext.Current.CancellationToken);
@@ -891,7 +892,7 @@ public sealed class RecipeRepositoryTests : IDisposable
                 TestContext.Current.CancellationToken);
             var entry = await _repo.GetAsync(imported.Id, TestContext.Current.CancellationToken);
 
-            var importedWb = entry.Graph.Nodes.OfType<WorkbookNode>().Single();
+            var importedWb = entry.Recipe.Nodes.Values.OfType<WorkbookNode>().Single();
             var expectedName = $"{stem}_2{ext}";
 
             Path.GetFileName(importedWb.Workbook.BookPath).Should().Be(expectedName,
@@ -932,11 +933,12 @@ public sealed class RecipeRepositoryTests : IDisposable
             await File.WriteAllBytesAsync(wb1, [0x01], TestContext.Current.CancellationToken);
             await File.WriteAllBytesAsync(wb2, [0x02], TestContext.Current.CancellationToken);
 
-            var graph = new RecipeGraph(
-            [
-                new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wb1), []),
-                new WorkbookNode("wb2", new Point(1, 0), new WorkbookIdentifier(wb2), [])
-            ], []);
+            var graph = new Domain.Models.Recipe(
+                new Dictionary<string, Node>
+                {
+                    ["wb1"] = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wb1), new HashSet<string>()),
+                    ["wb2"] = new WorkbookNode(new Point(1, 0), new WorkbookIdentifier(wb2), new HashSet<string>())
+                }, []);
             var exported = await _repo.AddAsync(new RecipeInput("DupConflict", graph),
                 TestContext.Current.CancellationToken);
             await _repo.ExportAsync(exported.Id, zipPath, null, TestContext.Current.CancellationToken);
@@ -950,7 +952,7 @@ public sealed class RecipeRepositoryTests : IDisposable
                 TestContext.Current.CancellationToken);
             var entry = await _repo.GetAsync(imported.Id, TestContext.Current.CancellationToken);
 
-            var importedWbs = entry.Graph.Nodes.OfType<WorkbookNode>().ToList();
+            var importedWbs = entry.Recipe.Nodes.Values.OfType<WorkbookNode>().ToList();
             importedWbs.Should().HaveCount(2);
             importedWbs.Should().AllSatisfy(n => File.Exists(n.Workbook.BookPath).Should().BeTrue());
             // All three paths (pre-existing + two imported) must be distinct.
@@ -991,7 +993,7 @@ public sealed class RecipeRepositoryTests : IDisposable
             using (var fs = File.Create(zipPath))
             using (var zos = new ZipOutputStream(fs))
             {
-                var graphBytes = Encoding.UTF8.GetBytes("{\"nodes\":[],\"edges\":[]}");
+                var graphBytes = Encoding.UTF8.GetBytes("{\"nodes\":{},\"edges\":[]}");
                 var graphEntry = new ZipEntry(RecipePackageRules.Data.RecipeFileName)
                     { Size = graphBytes.Length };
                 zos.PutNextEntry(graphEntry);
@@ -1063,7 +1065,7 @@ public sealed class RecipeRepositoryTests : IDisposable
 
     /// <summary>
     ///     Verifies that <see cref="RecipeRepository.ImportAsync" /> throws
-    ///     <see cref="InvalidDataException" /> when <c>Graph.json</c>'s uncompressed size exceeds
+    ///     <see cref="InvalidDataException" /> when <c>Recipe.json</c>'s uncompressed size exceeds
     ///     <see cref="RecipePackageRules.MaxGraphUncompressedBytes" />.
     /// </summary>
     [Fact]
@@ -1102,7 +1104,7 @@ public sealed class RecipeRepositoryTests : IDisposable
 
     /// <summary>
     ///     Verifies that <see cref="RecipeRepository.ImportAsync" /> throws
-    ///     <see cref="InvalidDataException" /> when <c>Graph.json</c>'s compression ratio exceeds
+    ///     <see cref="InvalidDataException" /> when <c>Recipe.json</c>'s compression ratio exceeds
     ///     <see cref="RecipePackageRules.MaxEntryCompressionRatio" />.
     /// </summary>
     [Fact]
@@ -1154,7 +1156,7 @@ public sealed class RecipeRepositoryTests : IDisposable
 
         try
         {
-            var graphBytes = Encoding.UTF8.GetBytes("{\"nodes\":[],\"edges\":[]}");
+            var graphBytes = Encoding.UTF8.GetBytes("{\"nodes\":{},\"edges\":[]}");
             var compressible = new byte[100 * 1024];
 
             using (var fs = File.Create(zipPath))
@@ -1209,11 +1211,12 @@ public sealed class RecipeRepositoryTests : IDisposable
             await File.WriteAllBytesAsync(wbPath, [0x01], TestContext.Current.CancellationToken);
             await File.WriteAllBytesAsync(pptPath, [0x02], TestContext.Current.CancellationToken);
 
-            var graph = new RecipeGraph(
-            [
-                new WorkbookNode("wb1", new Point(0, 0), new WorkbookIdentifier(wbPath), []),
-                new PresentationNode("ppt1", new Point(1, 0), new PresentationIdentifier(pptPath), [])
-            ], []);
+            var graph = new Domain.Models.Recipe(
+                new Dictionary<string, Node>
+                {
+                    ["wb1"] = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wbPath), new HashSet<string>()),
+                    ["ppt1"] = new PresentationNode(new Point(1, 0), new PresentationIdentifier(pptPath), new HashSet<string>())
+                }, []);
             var exported = await _repo.AddAsync(new RecipeInput("EncryptedWithFiles", graph),
                 TestContext.Current.CancellationToken);
             await _repo.ExportAsync(exported.Id, zipPath, password, TestContext.Current.CancellationToken);
@@ -1222,8 +1225,8 @@ public sealed class RecipeRepositoryTests : IDisposable
                 TestContext.Current.CancellationToken);
             var entry = await _repo.GetAsync(imported.Id, TestContext.Current.CancellationToken);
 
-            var importedWb = entry.Graph.Nodes.OfType<WorkbookNode>().Single();
-            var importedPpt = entry.Graph.Nodes.OfType<PresentationNode>().Single();
+            var importedWb = entry.Recipe.Nodes.Values.OfType<WorkbookNode>().Single();
+            var importedPpt = entry.Recipe.Nodes.Values.OfType<PresentationNode>().Single();
 
             File.Exists(importedWb.Workbook.BookPath).Should().BeTrue();
             (await File.ReadAllBytesAsync(importedWb.Workbook.BookPath,
@@ -1273,12 +1276,13 @@ public sealed class RecipeRepositoryTests : IDisposable
             await File.WriteAllBytesAsync(wbB, [0x02], TestContext.Current.CancellationToken);
             await File.WriteAllBytesAsync(wbC, [0x03], TestContext.Current.CancellationToken);
 
-            var graph = new RecipeGraph(
-            [
-                new WorkbookNode("a", new Point(0, 0), new WorkbookIdentifier(wbA), []),
-                new WorkbookNode("b", new Point(1, 0), new WorkbookIdentifier(wbB), []),
-                new WorkbookNode("c", new Point(2, 0), new WorkbookIdentifier(wbC), [])
-            ], []);
+            var graph = new Domain.Models.Recipe(
+                new Dictionary<string, Node>
+                {
+                    ["a"] = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wbA), new HashSet<string>()),
+                    ["b"] = new WorkbookNode(new Point(1, 0), new WorkbookIdentifier(wbB), new HashSet<string>()),
+                    ["c"] = new WorkbookNode(new Point(2, 0), new WorkbookIdentifier(wbC), new HashSet<string>())
+                }, []);
             var exported = await _repo.AddAsync(new RecipeInput("StemCollision", graph),
                 TestContext.Current.CancellationToken);
             await _repo.ExportAsync(exported.Id, zipPath, null, TestContext.Current.CancellationToken);
@@ -1287,7 +1291,7 @@ public sealed class RecipeRepositoryTests : IDisposable
                 TestContext.Current.CancellationToken);
             var entry = await _repo.GetAsync(imported.Id, TestContext.Current.CancellationToken);
 
-            var importedWbs = entry.Graph.Nodes.OfType<WorkbookNode>().ToList();
+            var importedWbs = entry.Recipe.Nodes.Values.OfType<WorkbookNode>().ToList();
             importedWbs.Should().HaveCount(3);
             importedWbs.Should().AllSatisfy(n => File.Exists(n.Workbook.BookPath).Should().BeTrue());
             importedWbs.Select(n => n.Workbook.BookPath)

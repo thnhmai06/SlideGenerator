@@ -15,7 +15,6 @@
 using System.Text.RegularExpressions;
 using System.Web;
 using SlideGenerator.Cloud.Application.Abstractions;
-using SlideGenerator.Cloud.Domain.Models;
 
 namespace SlideGenerator.Cloud.Infrastructure.Module;
 
@@ -26,7 +25,7 @@ namespace SlideGenerator.Cloud.Infrastructure.Module;
 ///     returns <see langword="null" /> when the folder is empty, contains only subfolders,
 ///     or is inaccessible.
 /// </summary>
-internal sealed partial class GoogleDriveModule : CloudResolveModule
+internal sealed partial class GoogleDriveModule : CloudResolver
 {
     private const string EmbeddedFolderViewBase = "https://drive.google.com/embeddedfolderview?id=";
     private const string DownloadBase = "https://drive.google.com/uc?export=download&id=";
@@ -35,11 +34,8 @@ internal sealed partial class GoogleDriveModule : CloudResolveModule
     /// <remarks>
     ///     Matches any URI whose host ends with <c>drive.google.com</c> (case-insensitive).
     /// </remarks>
-    public override bool IsResolvable(Uri uri, out CloudHost key)
-    {
-        key = CloudHost.GoogleDrive;
-        return uri.Host.EndsWith("drive.google.com", StringComparison.OrdinalIgnoreCase);
-    }
+    public override bool IsResolvable(Uri uri)
+        => uri.Host.EndsWith("drive.google.com", StringComparison.OrdinalIgnoreCase);
 
     /// <inheritdoc />
     /// <remarks>
@@ -66,7 +62,7 @@ internal sealed partial class GoogleDriveModule : CloudResolveModule
         HttpClient httpClient,
         CancellationToken cancellationToken = default)
     {
-        if (!IsResolvable(uri, out _))
+        if (!IsResolvable(uri))
             throw new ArgumentException(
                 $"URI '{uri}' is not supported by {nameof(GoogleDriveModule)}.", nameof(uri));
 
