@@ -8,7 +8,8 @@ Tauri frontend and wires every other module through DI.
 - Bootstrap the .NET host, configuration, and system logger.
 - Build the DI container with every `Add*Services()` extension.
 - Construct a `JsonRpc` instance over `stdin` (incoming) / `stdout` (outgoing) and register all RPC methods.
-- Attach the `WorkflowProgressObserver` so workflow lifecycle events become `workflow/progress` notifications.
+- Attach the `ProgressCoalescer` so Request/Job/Row progress and log lines are coalesced, persisted to `Studio.db`,
+  and batched into `progress/request`/`progress/jobs`/`progress/rows`/`log/entries` notifications (≥1s apart).
 
 ## Layout
 
@@ -23,11 +24,13 @@ SlideGenerator.Stdio/
 │   ├── SettingsHandler.cs
 │   ├── SummarizationHandler.cs
 │   └── Models/                         - Handler-local DTOs
-├── Infrastructure/
-│   ├── WorkflowProgressObserver.cs     - Bridges GeneratingEventBus → JsonRpc
-│   └── Adapters/                       - STJ converters (RoiOption, RectangleF)
-└── Injection/
-    └── Registration.cs                 - AddIpcServices()
+├── Implementations/
+│   ├── GeneratingEventBus.cs           - IEventBus impl: 3 Progress events + AnnounceExpectedJobCount
+│   ├── LogNotifier.cs                  - ILogNotifier impl: 1 log-line event
+│   ├── ProgressCoalescer.cs            - Coalesces + flushes Progress/Logs → Studio.db + JsonRpc (≥1s)
+│   ├── JsonRpcBootstrap.cs             - Builds JsonRpc + JSON serializer options
+│   └── Adapters/                       - STJ converters (RoiOption, RectangleF, Vector2)
+└── Registration.cs                     - AddIpcServices()
 ```
 
 ## JsonRpc Setup
@@ -54,6 +57,14 @@ See [IPC API Reference](../IPC-API-Reference.md) for the full table.
 
 ## Notifications
 
-Emitted via `JsonRpc.NotifyWithParameterObjectAsync`:
+Emitted via `JsonRpc.NotifyAsync(method, payload)` — **not** `NotifyWithParameterObjectAsync`, which marshals a
+single argument by reflecting over its public properties and would serialize a `List<T>` batch as an empty `{}`
+instead of an array. Each notification's `params` is therefore a single positional array (`params[0]`), batched by
+`ProgressCoalescer` at most once per second:
 
-- `workflow/progress` — forwarded from `IGeneratingEventBus` by `WorkflowProgressObserver`.
+- `progress/request` — array of `RequestProgress`.
+- `progress/jobs` — array of `JobProgress`.
+- `progress/rows` — array of `RowProgress`.
+- `log/entries` — array of `LogEntry`, append-only (never coalesced/dropped, unlike the 3 above).
+
+See [IPC API Reference](../IPC-API-Reference.md) for full payload shapes.

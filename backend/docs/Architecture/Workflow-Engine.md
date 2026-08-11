@@ -73,9 +73,24 @@ Not all data can be serialized (e.g., file handles, loggers, large byte arrays).
 
 ## Progress Observation
 
-The workflow host publishes lifecycle events (e.g., `WorkflowStarted`, `WorkflowCompleted`, `WorkflowError`).
+Progress is scoped to 3 levels, each its own record published through `IEventBus`:
 
-- **Step Events**: `GeneratingProgressMiddleware` publishes `GeneratingEvent.StepCompleted` after every step.
-- **Event Bus**: `GeneratingEventBus` aggregates step events plus lifecycle events forwarded by `GeneratingService`.
-- **IPC Notification**: The `WorkflowProgressObserver` in `SlideGenerator.Ipc` forwards these events as JSON-RPC
-  `workflow/progress` notifications to the frontend, providing real-time UI feedback.
+- **`RequestProgress`** (`RequestId`, `Phase`): `PreparationStarted` (published by `Service.CreateAsync` right before
+  it spawns jobs) → `ProcessingStarted` → `Completed` (both inferred by `ProgressCoalescer` once every job of the
+  request has left `Pending` / reached a terminal status).
+- **`JobProgress`** (`RequestId`, `JobId`, `Status`): published on spawn (`Pending`), on WorkflowCore lifecycle events
+  (`Running`/`Complete`/`Error`, via `Service.HandleLifeCycleEvent`), and on Pause/Stop/Resume
+  (`Service.FanOutAsync`).
+- **`RowProgress`** (`RequestId`, `JobId`, `RowIndex`, `Status`, `Stage`, `Note`): published exclusively from inside
+  `GenerateJobStep`'s per-row loop via the `StepProgress` helper — the only step-level Progress producer left; there
+  is no generic "step completed" event anymore.
+
+**Coalescing & delivery**: `ProgressCoalescer` (in `SlideGenerator.Stdio`) buffers dirty Request/Job/Row state
+(last-write-wins per key) and log lines (append-only, never dropped) separately, then every ~1s upserts the dirty
+Progress into a `Studio.db` SQLite database (so a late-attaching client — or `generator.active.list` itself — sees
+full current state, not just future events) and forwards each non-empty batch as a JSON-RPC notification:
+`progress/request`, `progress/jobs`, `progress/rows`, `log/entries`.
+
+Log lines still land in the same per-request `.log` file as before, just with a parseable Request/Job/Row scope path
+on every line (via `Serilog.Context.LogContext.PushProperty`), so `Summary` can read the file back and filter by
+scope on demand instead of needing a second log store.

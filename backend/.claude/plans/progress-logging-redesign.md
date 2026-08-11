@@ -191,12 +191,19 @@ single-argument binding → `"params": [[...]]`).
 3. Chưa test thủ công qua Stdio sidecar thật (JSON-RPC end-to-end với FE) — chỉ có E2E test nội bộ
    (`ProgressCoalescerTests.cs`) giả lập JsonRpc qua `FullDuplexStream`, chưa chạy với FE thật.
 
-## Việc còn lại (chưa làm, chưa được user xác nhận)
+## Việc còn lại (chưa làm)
 
-- **CLAUDE.md + docs/** (`docs/Reference/IPC-API-Reference.md`,
-  `docs/Reference/Modules/Generator.md`/`Logging.md`/`Stdio.md`, `docs/Architecture/System-Overview.md`,
-  `docs/Architecture/Workflow-Engine.md`) vẫn mô tả hệ thống `Progress`/`Event`/`ProgressMiddleware`/
-  `workflow/progress` cũ — **chưa cập nhật**, đã đề xuất với user nhưng chưa được yêu cầu làm.
+- ~~CLAUDE.md + docs/~~ — **đã cập nhật** (CLAUDE.md: Progress notifications/Studio.db/Logging scope sections;
+  `docs/Reference/IPC-API-Reference.md`: notifications section viết lại đầy đủ 4 notification mới;
+  `docs/Reference/Modules/Generator.md`/`Logging.md`/`Stdio.md`: phần Middleware/Progress/Enums/Notifications;
+  `docs/Architecture/System-Overview.md`/`Workflow-Engine.md`: phần Progress Observation). **Lưu ý**: phần mô tả
+  pipeline cũ (Phase A/B/C, `ValidateRequest`/`CreateTemplate`/`ExtractData`/`CollectImage`/`EditImage`/
+  `ReplaceSlideData`/`CloseAllHandles`, `GateLocker`) trong `Workflow-Engine.md`/`Modules/Generator.md` **vẫn còn
+  sai** — mô tả 1 pipeline cũ hơn hẳn, đã bị thay bằng `PreflightCleanup → InspectUrlsStep → GenerateJobStep` từ
+  trước khi phiên này bắt đầu (thuộc refactor lớn khác, ngoài phạm vi task Progress/Logging này) — chưa sửa, cần
+  1 task riêng để viết lại toàn bộ 2 file này cho khớp pipeline hiện tại.
+- **Test thủ công qua Stdio sidecar thật** — user quyết định bỏ qua (skip), không làm. Chỉ còn E2E test nội bộ
+  (`ProgressCoalescerTests.cs`, giả lập JsonRpc qua `FullDuplexStream`) làm bằng chứng cho phần notify/serialize.
 - **Xác minh wire-format với FE**: notification giờ gửi theo positional array param
   (`_jsonRpc.NotifyAsync(method, payload)` → `"params": [[...]]`) thay vì named-object cũ — FE cần đọc
   `params[0]`, chưa verify được vì không truy cập được code FE.

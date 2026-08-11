@@ -227,13 +227,24 @@ jsonRpc.AddLocalRpcMethod(method, handler, new JsonRpcMethodAttribute("settings.
 
 ### Progress notifications
 
-`WorkflowProgressObserver` (in `Infrastructure/`) subscribes to `GeneratingEventBus.OnProgress` and forwards events as
-`workflow/progress` notifications via `JsonRpc.NotifyWithParameterObjectAsync`. Bound at runtime via
-`observer.Attach(bus, jsonRpc)` — not DI injected.
+Progress is scoped to 3 levels — Request/Job/Row (see **Progress model** under **Workflow System** below) — and is
+coalesced (current-state, last-write-wins) rather than streamed as raw events, so a late-attaching client is never
+stuck without state. `ProgressCoalescer` (`Implementations/ProgressCoalescer.cs`) subscribes to `GeneratingEventBus`'s
+3 progress events plus `LogNotifier`'s log event, buffers dirty Request/Job/Row entries in `ConcurrentDictionary`s
+(coalesced) and log lines in a `ConcurrentQueue` (append-only, never coalesced), then on a 1s `PeriodicTimer` tick:
+upserts the dirty Progress into `IStudioRepository` (Studio.db) and forwards each non-empty batch as a JSON-RPC
+notification via `JsonRpc.NotifyAsync(method, payload)` — **not** `NotifyWithParameterObjectAsync`, which marshals a
+`List<T>` argument by reflecting over its public properties (named-parameter convention) and would serialize an
+empty `{}` instead of the array; `NotifyAsync` binds it positionally instead (`"params": [[...]]`). Bound at runtime
+via `JsonRpcBootstrap.AttachProgressCoalescer(services, jsonRpc)` → `coalescer.Attach(bus, logNotifier, jsonRpc)` —
+not DI injected, since `JsonRpc` doesn't exist until after the DI container is built. `DetachAsync()` (called during
+shutdown in `Program.Startup.cs`) flushes one last time before cancelling the timer, so the final <1s window of
+buffered progress/logs isn't dropped.
 
 `GeneratingEventBus` (in `Implementations/GeneratingEventBus.cs`) is registered as both `GeneratingEventBus` (concrete)
 and `IEventBus` (interface, `SlideGenerator.Generator.Application.Abstractions.IEventBus`) in the Stdio
-`Registration.cs` so that `WorkflowProgressObserver.Attach` can receive the concrete type.
+`Registration.cs` so that `ProgressCoalescer.Attach` can receive the concrete type. `LogNotifier`/`ILogNotifier`
+mirror the same pattern for log lines (see **Logging scope notifications** below).
 
 ### STJ adapters
 
@@ -280,7 +291,10 @@ and `IEventBus` (interface, `SlideGenerator.Generator.Application.Abstractions.I
 | `settings.network.update`        | `SettingsHandler.UpdateNetworkAsync`              |
 | `settings.network.reset`         | `SettingsHandler.ResetNetworkAsync`               |
 
-Notifications emitted by the sidecar: `workflow/progress`.
+Notifications emitted by the sidecar: `progress/request`, `progress/jobs`, `progress/rows`, `log/entries` — each
+batched, at most 1/s (see **Progress notifications** above). Every payload is a single positional array argument
+(`params[0]`), a list of `RequestProgress`/`JobProgress`/`RowProgress`/`LogEntry` respectively — not a named-object
+param.
 
 ## Concurrency: MaxConcurrentJobs
 
@@ -374,12 +388,15 @@ via Newtonsoft.Json, one row per job. Fields that cannot serialize (file handles
 `TransientContext` and/or carry `[Newtonsoft.Json.JsonIgnore]`. Handles are lazily reopened after resume via
 `GetOrOpenWorkbook`/`GetOrOpenPresentation`/`GetOrOpenOutput` extension methods in `Application/Utilities.cs`.
 
-**Step middleware** (registered in `AddGeneratorServices`), both in `Infrastructure/Middleware/`:
+**Step middleware** (registered in `AddGeneratorServices`), in `Infrastructure/Middleware/Middleware.cs` — the only
+step middleware left (`ProgressMiddleware` was removed; step-completion is no longer a Progress concept, see
+**Progress model** below):
 
-- `Middleware` — lazily initializes the context's `LoggerFactory` (via `IFileLoggerFactory.CreateForFile`) before each
-  step, using log path/scope stored in context (survives persistence resume). Each step calls
-  `data.LoggerFactory.CreateLogger(nameof(Step))` to get a named `ILogger`.
-- `ProgressMiddleware` — publishes `Event.StepCompleted` + resolved `Phase` after each step.
+- `Middleware` — lazily initializes the context's `LoggerFactory` (via `IFileLoggerFactory.CreateFile`) before each
+  step, using the log path stored in context (survives persistence resume). Passes a callback that converts each
+  `LogNotification` into a `LogEntry` and forwards it via the injected `ILogNotifier` — this is how log lines reach
+  the frontend in real time (see **Logging scope notifications** below). Each step calls
+  `data.Transient.LoggerFactory.CreateLogger(nameof(Step))` to get a named `ILogger`.
 
 **Request/job aggregation**: A client-facing "request" (the key of `ListActiveAsync`/`ListCompletedAsync`'s returned
 dictionary) is a `requestId` GUID grouping N
@@ -413,10 +430,10 @@ above), the latter is a private method `Service` calls on itself.
 
 **Lifecycle events**: `Service.HandleLifeCycleEvent` (`async void` — deliberate, since `IWorkflowHost.OnLifeCycleEvent`
 is a synchronous delegate but resolving the job's `RequestId` needs an async persistence lookup; exceptions are
-caught locally so a failed lookup can't crash the process) subscribes to `IWorkflowHost.OnLifeCycleEvent` to publish
-`WorkflowStarted`/`WorkflowCompleted`/`WorkflowError` via `IEventBus`. `GeneratingEventBus` (concrete class
-implementing `IEventBus`) lives in **`SlideGenerator.Stdio`** (`Implementations/GeneratingEventBus.cs`), not in
-Generator.
+caught locally so a failed lookup can't crash the process) subscribes to `IWorkflowHost.OnLifeCycleEvent` and, for
+`WorkflowStarted`/`WorkflowCompleted`/`WorkflowError`, publishes a `JobProgress` (`Status.Running`/`Complete`/`Error`
+respectively) via `IEventBus`. `GeneratingEventBus` (concrete class implementing `IEventBus`) lives in
+**`SlideGenerator.Stdio`** (`Implementations/GeneratingEventBus.cs`), not in Generator.
 
 **JobId identity**: there is no custom/deterministic job id anywhere in the system — WorkflowCore always
 self-generates `WorkflowInstance.Id` (a GUID) at `CreateNewWorkflow` and gives no way to override it (confirmed: no
@@ -427,21 +444,90 @@ at spawn time and logs `Job spawned | JobId: {JobId} | OutputPath: {OutputPath}`
 first becomes known, before it's later referenced as `JobId` in `Progress` (see below) or as `WorkflowInstance.Id`
 inside a `Summary.Jobs` entry.
 
-**Progress model** (`Domain/Models/Progress.cs`) carries two distinct ids — `RequestId` (groups every job spawned for
-one request, same value as the `ListActiveAsync`/`ListCompletedAsync` dictionary key for that request) and `JobId`
-(the WorkflowCore instance id of the one specific job
-this event is about). Every producer sets both: `ProgressMiddleware.HandleAsync` reads `RequestId` from
-`((JobContext)context.Workflow.Data).Persist.RequestId` and `JobId` from `context.Workflow.Id`;
-`Service.HandleLifeCycleEvent` gets `JobId` from the lifecycle event args directly and looks up `RequestId` via
-`persistence.GetWorkflowInstance(jobId, ct)`; `Service.FanOutAsync` (Stop/Pause/Resume) sets `RequestId` from
-`group.RequestId` and `JobId` from the specific job that just succeeded. There is no request-only (job-less) event —
-every current producer is job-scoped.
+**Progress model** (`Domain/Models/Data/Progress.cs`) is 3 separate records, one per scope, each published through a
+matching `IEventBus.Publish` overload — there is no single flat event type anymore:
 
-**Progress enums** — both defined in `Domain/Models/Progress.cs`:
+- `RequestProgress` — `RequestId`, `Phase` (`RequestPhase`: `PreparationStarted` | `ProcessingStarted` | `Completed`,
+  monotonically increasing), `Timestamp`. Published by `Service.CreateAsync` (`PreparationStarted`, right before the
+  spawn loop) and inferred by `ProgressCoalescer` (`ProcessingStarted`/`Completed`, see below) — never by a Step.
+- `JobProgress` — `RequestId`, `JobId`, `Status` (`Status` enum — `Pending`/`Running`/`Complete`/`Paused`/`Cancelled`/
+  `Error`), `Timestamp`. Published by `Service.CreateAsync` (`Pending`, right after `StartWorkflow` returns the new
+  job id), `Service.HandleLifeCycleEvent` (`Running`/`Complete`/`Error`), and `Service.FanOutAsync`
+  (`Paused`/`Cancelled`/`Running` for Pause/Stop/Resume).
+- `RowProgress` — `RequestId`, `JobId`, `RowIndex` (1-based), `Status` (`RowStatus`: `Waiting`/`Processing`/`Done`/
+  `Error`), `Stage` (`RowStage`: `None`/`Downloading`/`CroppingImage`/`SavingOutput` — only the 3 sub-actions that
+  happen inside the per-row loop; the old job-level stages `OpeningWorkbook`/`OpeningPresentation`/`LoadTemplate`/
+  `CleaningUpOutput` are now plain `ILogger` calls, not Progress, since `JobProgress` carries no `Stage`), `Note`
+  (free text — e.g. the URL being downloaded, or a row's failure message), `Timestamp`. Published exclusively via
+  `StepProgress` (`Application/StepProgress.cs`) — a per-step-execution helper constructed once via
+  `StepProgress.From(eventBus, requestId, jobId)` at the top of `GenerateJobStep.RunAsync`, then threaded through
+  partial-file helper methods as a captured field, exposing `ReportRow(rowIndex, status, stage, note)` (one call per
+  row/image, like a logger call) and `SeedRows(rowIndices)` (pre-seeds every remaining row as `Waiting` in one batch
+  before the per-row loop starts, so the frontend sees the full row set immediately instead of it growing one row at
+  a time). The per-row loop body wraps `GenerateRowSlideAsync` in try/catch: on any non-cancellation exception it
+  logs `Error`, reports `RowStatus.Error` with the exception message as `Note`, then rethrows unchanged — a row
+  failure still fails the whole job (WorkflowCore's normal retry/error handling), `RowProgress.Error` is only the
+  last-recorded state before the crash, not a "log and continue" mechanism.
 
-- `Event`: `WorkflowStarted`, `WorkflowCompleted`, `WorkflowSuspended`, `WorkflowResumed`, `WorkflowCancelled`,
-  `WorkflowError`, `StepCompleted`
-- `Status`
+**`RequestPhase` aggregation** lives entirely in `ProgressCoalescer` (Stdio), not `Service` — a per-request
+`RequestAggregateState` (`ExpectedJobCount`/`StartedJobs`/`TerminalJobs`) tracks every `JobProgress` it sees.
+`ExpectedJobCount` comes from `IEventBus.AnnounceExpectedJobCount(requestId, jobs.Count)`, called by
+`Service.CreateAsync` right before its spawn loop — using it (rather than however many jobs have been observed so
+far) as the denominator avoids a race where job 1 is already `Running` while job 2 hasn't even been spawned yet,
+since the spawn loop `await`s each `StartWorkflow` sequentially while WorkflowCore fires `WorkflowStarted` from its
+own background poller. `ProcessingStarted` fires once every announced job has left `Pending`; `Completed` fires once
+every announced job has reached a terminal `Status`. This aggregate state is in-memory only (not in Studio.db) — a
+mid-request Stdio process restart loses the real-time phase-transition inference (though Studio.db still holds the
+last successfully persisted `Phase`, so `Summary.Phase` itself isn't wrong, just possibly stale until the next
+transition).
+
+### Studio.db — Progress persistence
+
+`IStudioRepository`/`StudioRepository` (`Application/Abstractions/IStudioRepository.cs`,
+`Infrastructure/Services/StudioRepository.cs`) persist current-state Progress (UPSERT semantics) to
+`NameAndPaths.DataFolder.StudioFile` (`%LOCALAPPDATA%\SlideGenerator\Data\Studio.db`, WAL mode — same
+short-lived-connection-per-operation pattern as `SqliteCache`/`RecipeRepository`), 3 tables (`Requests`/`Jobs`/`Rows`,
+composite primary keys, `ON CONFLICT DO UPDATE`). Every upsert method is batch-shaped — `ProgressCoalescer` gathers
+every dirty item since the last flush tick and issues one transaction, not one round-trip per item. This is what lets
+`Service.ToSummaryAsync`/`ToJobSummaryAsync` answer `ListActiveAsync`/`ListCompletedAsync` with full current
+Row/Phase/Status state even for a client that only just attached — Progress is no longer purely a fire-and-forget
+event stream. `Service.DeleteAsync`/`DeleteAllCompletedAsync` call `studioRepository.DeleteRequestAsync` alongside
+the `Workflows.db` cleanup so a deleted request doesn't leave orphaned Studio.db rows.
+
+### Logging scope notifications
+
+Log lines are **not** a separate persisted store — they still go to the existing per-request `.log` file
+(`JobPersistContext.LogPath`, one file shared by every job of a request, unchanged), just with a parseable scope path
+on every line now. `SlideGenerator.Logging`'s `IFileLoggerFactory.CreateFile(filePath, scopePropertyNames, onLogEvent)`
+takes two new optional parameters: `scopePropertyNames` (an ordered list of ambient `LogContext.PushProperty` names to
+join into each event's scope path — Logging itself has **no** notion of what a scope means, so it doesn't hardcode
+`RequestId`/`JobId`/`RowIndex` anywhere; `Middleware.cs` in Generator supplies that ordered list, since Generator is
+the module that owns the Request/Job/Row concept) and `onLogEvent` (an `Action<LogNotification>` invoked once per log
+line, wired alongside the file sink via `Serilog.Core.ILogEventSink`'s `ScopeNotifyingSink`). `FileLogFormatter`
+writes the same scope path into the on-disk line (`[{loggerName}/{path}] {levelAbbr}: {message}`) so it can be parsed
+back out later. `LogNotification.Level` is `Serilog.Events.LogEventLevel` (not a string) — `ScopeNotifyingSink` just
+forwards `logEvent.Level` as-is; `Middleware.cs` converts it to the file's 3-letter abbreviation (`"INF"`/`"WRN"`/…)
+only at the Generator↔Logging boundary, when building the `LogEntry` it hands to `ILogNotifier.Publish`, since
+Generator's own `LogEntry.Level` is a plain string that has to match what `LogFileReader` parses back out of the file.
+
+`Middleware.cs` pushes each step's `RequestId`/`JobId` onto `LogContext` for the duration of the step (and
+`GenerateJobStep.Row.cs` additionally pushes `RowIndex` for the duration of `GenerateRowSlideAsync`), so every log
+line written anywhere during that scope automatically carries the right path — no log-line call site has to pass
+scope information explicitly.
+
+`ILogNotifier`/`LogNotifier` (`SlideGenerator.Stdio/Implementations/LogNotifier.cs`) mirror `IEventBus`/
+`GeneratingEventBus`'s `dep-interface-ownership` pattern exactly, for the one log-line event instead of 3 progress
+events. `ProgressCoalescer` subscribes to `LogNotifier.OnLogEntry` the same way it subscribes to the 3 progress
+events, but buffers log lines in an **append-only** `ConcurrentQueue` (never coalesced/dropped — unlike Progress,
+where only the latest state per key matters) and drains the whole queue every flush tick as a `log/entries`
+notification.
+
+`Service.ToSummaryAsync`/`ToJobSummaryAsync` populate `Summary.Logs`/`JobSummary.Logs`/`RowSummary.Logs` by reading
+the `.log` file straight off disk on every call, via `ILogFileReader`/`LogFileReader`
+(`Infrastructure/Services/LogFileReader.cs` — a regex parser matching `FileLogFormatter`'s line shape) and filtering
+by scope-path prefix. Deliberately **not** cached in RAM — accumulating every log line for a long-running, high-volume
+job risks unbounded memory growth, and `ListActiveAsync`/`ListCompletedAsync` isn't polled often enough for the
+per-call file scan to matter.
 
 **Input mapping**: `Recipe.Nodes` defines the graph — each node maps a set of `Sheets` (Excel) to a presentation
 template. `TextInstruction` and `ImageInstruction` on each node drive placeholder replacement and image composition.

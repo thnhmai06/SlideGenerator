@@ -67,23 +67,78 @@ Framing is NDJSON (`NewLineDelimitedMessageHandler`); serialization uses STJ (`S
 
 ## Notifications (Server → Client)
 
-### `workflow/progress`
+Progress is scoped to Request/Job/Row and coalesced (current-state, last-write-wins) rather than streamed as raw
+lifecycle events. `ProgressCoalescer` buffers dirty state and log lines separately, then at most once per second
+forwards each non-empty batch. **Every notification's `params` is a single positional array** — i.e. `params[0]` is
+the batch list — not a named-object parameter, since the payload is a `List<T>`, not a DTO with properties.
 
-Pushed by `WorkflowProgressObserver` whenever `IGeneratingEventBus` emits a step or lifecycle event.
+### `progress/request`
+
+Pushed when one or more requests' aggregate lifecycle phase changed since the last flush tick. Array of:
 
 ```json
 {
-  "workflowInstanceId": "...",
-  "event": "StepCompleted",
-  "phase": "PhaseB",
+  "requestId": "...",
+  "phase": "PreparationStarted",
+  "timestamp": "..."
+}
+```
+
+`phase` is `RequestPhase`: `PreparationStarted` | `ProcessingStarted` | `Completed` — monotonically increasing.
+
+### `progress/jobs`
+
+Pushed when one or more jobs' status changed. Array of:
+
+```json
+{
+  "requestId": "...",
+  "jobId": "...",
   "status": "Running",
   "timestamp": "..."
 }
 ```
 
-- `event` corresponds to `GeneratingEvent` (e.g. `StepCompleted`, `WorkflowCompleted`, `WorkflowError`).
-- `phase` corresponds to `GeneratingPhase` (`PhaseA` | `PhaseB` | `PhaseC`) when applicable.
-- `status` corresponds to `GeneratingStatus`.
+`status` is `Status`: `Pending` | `Running` | `Complete` | `Paused` | `Cancelled` | `Error`.
+
+### `progress/rows`
+
+Pushed when one or more data rows' status changed. Array of:
+
+```json
+{
+  "requestId": "...",
+  "jobId": "...",
+  "rowIndex": 1,
+  "status": "Processing",
+  "stage": "Downloading",
+  "note": "https://drive.google.com/...",
+  "timestamp": "..."
+}
+```
+
+`status` is `RowStatus`: `Waiting` | `Processing` | `Done` | `Error`. `stage` is `RowStage`: `None` | `Downloading` |
+`CroppingImage` | `SavingOutput`. `note` is free text (e.g. the URL being downloaded, or a row's failure message) and
+may be `null`.
+
+### `log/entries`
+
+Pushed for every log line written since the last flush tick — never coalesced or dropped, unlike the 3 notifications
+above. Array of:
+
+```json
+{
+  "timestamp": "...",
+  "path": "requestId/jobId/rowIndex",
+  "level": "INF",
+  "info": "Resolving URL: https://drive.google.com/..."
+}
+```
+
+`path` is the Request/Job/Row scope path this line was written under (trailing segments omitted when not
+applicable — e.g. a job-level line is just `"requestId/jobId"`), not a physical file path. `level` is a 3-letter
+abbreviation (`"VRB"`/`"DBG"`/`"INF"`/`"WRN"`/`"ERR"`/`"FTL"`) matching what's written to the on-disk log file — not
+the full Serilog level name.
 
 ---
 

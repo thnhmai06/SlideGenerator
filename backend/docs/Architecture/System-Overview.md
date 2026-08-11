@@ -55,5 +55,7 @@ The system uses **WorkflowCore** to manage long-running, stateful processes.
 1. **Request**: The frontend sends a `generator.active.start` request via IPC.
 2. **Persistence**: The workflow state is persisted to a SQLite database. If the process crashes or is paused, it can
    resume from the last successful step.
-3. **Observation**: A `WorkflowProgressObserver` listens to events and pushes notifications back to the frontend in
-   real-time.
+3. **Observation**: Request/Job/Row-scoped progress is coalesced and batched (≥1s) by `ProgressCoalescer`, which also
+   persists current state to a `Studio.db` SQLite database, then pushes `progress/request`/`progress/jobs`/
+   `progress/rows`/`log/entries` notifications back to the frontend in real time. See
+   [Workflow-Engine.md](Workflow-Engine.md) for details.

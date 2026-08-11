@@ -63,24 +63,39 @@ The workflow state is the `GeneratingContext` class.
 
 ## Middleware
 
-Registered in `AddGeneratorServices`:
+Registered in `AddGeneratorServices` — `Middleware` (`Infrastructure/Middleware/Middleware.cs`) is the only step
+middleware. It lazily initializes `JobContext.Transient.LoggerFactory` before each step, supplying the module's
+Request/Job/Row scope property names and a callback that forwards every log line to `ILogNotifier`. There is no
+separate progress-publishing middleware — step-level "progress" is no longer a concept; see **Progress** below.
 
-- **`GeneratingLoggerMiddleware`**: Lazily initializes `GeneratingContext.Logger` before each step using
-  `WorkflowLogPath`/`WorkflowScope` (survives persistence resume).
-- **`GeneratingProgressMiddleware`**: Publishes `GeneratingEvent.StepCompleted` with the resolved `GeneratingPhase`
-  after each step.
+## Progress
 
-## Events
+Progress is 3 separate scoped records (`RequestProgress`/`JobProgress`/`RowProgress`, in
+`Domain/Models/Data/Progress.cs`), each published via a matching `IEventBus.Publish` overload:
 
-`GeneratingService` subscribes to `IWorkflowHost.OnLifeCycleEvent` and republishes lifecycle events (
-`WorkflowCompleted`, `WorkflowError`, `WorkflowStarted`, `WorkflowSuspended`, `WorkflowResumed`, `WorkflowTerminated`)
-through `IGeneratingEventBus`. The Ipc sidecar's `WorkflowProgressObserver` forwards these events to the frontend as
-`workflow/progress` JSON-RPC notifications.
+- `RequestProgress` (`RequestId`, `Phase: RequestPhase`) — `PreparationStarted` published by `Service.CreateAsync`;
+  `ProcessingStarted`/`Completed` inferred by the Stdio module's `ProgressCoalescer` from the `JobProgress` stream.
+- `JobProgress` (`RequestId`, `JobId`, `Status`) — published on spawn (`Pending`), by `Service.HandleLifeCycleEvent`
+  (`Running`/`Complete`/`Error`), and by `Service.FanOutAsync` (Pause/Stop/Resume).
+- `RowProgress` (`RequestId`, `JobId`, `RowIndex`, `Status: RowStatus`, `Stage: RowStage`, `Note`) — published
+  exclusively from `GenerateJobStep`'s per-row loop via `StepProgress` (`Application/StepProgress.cs`), a
+  per-step-execution helper exposing `ReportRow(...)`/`SeedRows(...)`.
+
+`IEventBus` (`Application/Abstractions/IEventBus.cs`) is implemented by the Stdio module's `GeneratingEventBus`
+(`dep-interface-ownership`: Generator owns the interface as publisher, Stdio owns the implementation as the module
+that actually forwards to JSON-RPC). `IStudioRepository`/`StudioRepository` persist current-state Progress
+(UPSERT) to a `Studio.db` SQLite database, so `Service.ListActiveAsync`/`ListCompletedAsync` can answer with full
+current Row/Phase/Status even for a client that only just started polling. `Summary`/`JobSummary`/`RowSummary`
+(`Domain/Models/Data/Summary.cs`) also each carry a `Logs: IReadOnlyList<LogEntry>`, populated on every call by
+`ILogFileReader`/`LogFileReader` reading the job's `.log` file straight off disk and filtering by scope path
+(deliberately not RAM-cached — see the Logging module doc).
 
 ## Enums
 
-Defined in the file where each concept lives:
+Defined in `Domain/Models/Enum/`:
 
-- `GeneratingPhase` — in `Application/Workflows/GeneratingWorkflow.cs`
-- `GeneratingEvent` — in `Application/Abstractions/IGeneratingEventBus.cs`
-- `GeneratingStatus` — in `Domain/Models/GeneratingStatus.cs`
+- `Status` — job/request execution status (`Pending`/`Running`/`Complete`/`Paused`/`Cancelled`/`Error`).
+- `RowStatus` — `Waiting`/`Processing`/`Done`/`Error`.
+- `RowStage` — `None`/`Downloading`/`CroppingImage`/`SavingOutput`.
+
+`RequestPhase` is defined alongside `RequestProgress` in `Domain/Models/Data/Progress.cs`.
