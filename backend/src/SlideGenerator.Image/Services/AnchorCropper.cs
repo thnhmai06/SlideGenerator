@@ -14,12 +14,12 @@
 
 using System.Drawing;
 using System.Numerics;
-using SlideGenerator.Image.Application.Abstractions;
-using SlideGenerator.Image.Application.Models;
-using SlideGenerator.Image.Domain.Entities;
-using SlideGenerator.Image.Domain.Models;
+using SlideGenerator.Image.Abstractions;
+using SlideGenerator.Image.Models;
+using SlideGenerator.Image.Entities;
+using SlideGenerator.Image.Models;
 
-namespace SlideGenerator.Image.Application.Services;
+namespace SlideGenerator.Image.Services;
 
 /// <summary>
 ///     Implements <see cref="IAnchorCropper" /> using geometry helpers and

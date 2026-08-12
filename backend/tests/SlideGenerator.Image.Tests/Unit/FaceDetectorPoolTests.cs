@@ -15,10 +15,10 @@
 using System.Drawing;
 using FluentAssertions;
 using NSubstitute;
-using SlideGenerator.Image.Application.Abstractions;
-using SlideGenerator.Image.Domain.Entities;
-using SlideGenerator.Image.Domain.Models;
-using SlideGenerator.Image.Infrastructure.Services;
+using SlideGenerator.Image.Abstractions;
+using SlideGenerator.Image.Entities;
+using SlideGenerator.Image.Models;
+using SlideGenerator.Image.Services;
 using Xunit;
 
 // ReSharper disable AccessToDisposedClosure

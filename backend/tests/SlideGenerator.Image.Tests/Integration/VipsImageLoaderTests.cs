@@ -14,7 +14,7 @@
 
 using FluentAssertions;
 using NetVips;
-using SlideGenerator.Image.Infrastructure.Services;
+using SlideGenerator.Image.Services;
 using Xunit;
 using NetVipsImage = NetVips.Image;
 

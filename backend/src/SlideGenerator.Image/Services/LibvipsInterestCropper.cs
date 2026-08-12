@@ -13,14 +13,14 @@
  */
 
 using System.Drawing;
-using SlideGenerator.Image.Application.Abstractions;
-using SlideGenerator.Image.Application.Models;
-using SlideGenerator.Image.Domain.Entities;
-using SlideGenerator.Image.Infrastructure.Adapters;
+using SlideGenerator.Image.Abstractions;
+using SlideGenerator.Image.Models;
+using SlideGenerator.Image.Entities;
+using SlideGenerator.Image.Adapters;
 using NetVipsEnums = NetVips.Enums;
 using NetVipsImage = NetVips.Image;
 
-namespace SlideGenerator.Image.Infrastructure.Services;
+namespace SlideGenerator.Image.Services;
 
 /// <summary>
 ///     Implements <see cref="IInterestCropper" /> using libvips <c>thumbnail</c>.

@@ -97,12 +97,12 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Remove="Infrastructure/Binary/Credits.json"/>
-        <EmbeddedResource Include="Infrastructure/Binary/Credits.json">
+        <None Remove="Binary/Credits.json"/>
+        <EmbeddedResource Include="Binary/Credits.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </EmbeddedResource>
-        <None Remove="Infrastructure/Binary/YuNet.onnx"/>
-        <EmbeddedResource Include="Infrastructure/Binary/YuNet.onnx">
+        <None Remove="Binary/YuNet.onnx"/>
+        <EmbeddedResource Include="Binary/YuNet.onnx">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </EmbeddedResource>
     </ItemGroup>

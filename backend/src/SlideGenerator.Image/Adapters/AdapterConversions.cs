@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Image
- * File: Utilities.cs
+ * File: AdapterConversions.cs
  *
  * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -14,14 +14,14 @@
 
 using NetVips;
 using OpenCvSharp;
-using SlideGenerator.Image.Application.Models;
+using SlideGenerator.Image.Models;
 
-namespace SlideGenerator.Image.Infrastructure;
+namespace SlideGenerator.Image.Adapters;
 
 /// <summary>
 ///     Provides utility extension methods for converting between different image library types.
 /// </summary>
-internal static class Utilities
+internal static class AdapterConversions
 {
     /// <summary>
     ///     Converts a <see cref="System.Drawing.Size" /> to an OpenCvSharp <see cref="Size" />.

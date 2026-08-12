@@ -12,12 +12,12 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Image.Application.Abstractions;
-using SlideGenerator.Image.Domain.Entities;
-using SlideGenerator.Image.Domain.Models;
+using SlideGenerator.Image.Abstractions;
+using SlideGenerator.Image.Entities;
+using SlideGenerator.Image.Models;
 using SlideGenerator.Utilities;
 
-namespace SlideGenerator.Image.Infrastructure.Services;
+namespace SlideGenerator.Image.Services;
 
 /// <summary>
 ///     An <see cref="IFaceDetector" /> backed by a pool of <see cref="IFaceDetector" /> instances.

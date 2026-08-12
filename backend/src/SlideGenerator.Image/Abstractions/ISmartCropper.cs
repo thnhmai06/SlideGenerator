@@ -13,10 +13,10 @@
  */
 
 using System.Drawing;
-using SlideGenerator.Image.Application.Models;
-using SlideGenerator.Image.Domain.Entities;
+using SlideGenerator.Image.Models;
+using SlideGenerator.Image.Entities;
 
-namespace SlideGenerator.Image.Application.Abstractions;
+namespace SlideGenerator.Image.Abstractions;
 
 /// <summary>
 ///     Resolves and applies the optimal crop strategy to an image using an ordered fallback

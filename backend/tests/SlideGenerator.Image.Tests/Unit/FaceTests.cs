@@ -14,7 +14,7 @@
 
 using System.Drawing;
 using FluentAssertions;
-using SlideGenerator.Image.Domain.Models;
+using SlideGenerator.Image.Models;
 using Xunit;
 
 namespace SlideGenerator.Image.Tests.Unit;

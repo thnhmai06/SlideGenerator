@@ -15,10 +15,10 @@
 using System.Drawing;
 using FluentAssertions;
 using NSubstitute;
-using SlideGenerator.Image.Application.Models;
-using SlideGenerator.Image.Domain.Entities;
-using SlideGenerator.Image.Infrastructure.Adapters;
-using SlideGenerator.Image.Infrastructure.Services;
+using SlideGenerator.Image.Models;
+using SlideGenerator.Image.Entities;
+using SlideGenerator.Image.Adapters;
+using SlideGenerator.Image.Services;
 using Xunit;
 using NetVipsImage = NetVips.Image;
 

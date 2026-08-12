@@ -15,15 +15,15 @@
 using System.Drawing;
 using FluentAssertions;
 using NetVips;
-using SlideGenerator.Image.Application.Models;
-using SlideGenerator.Image.Infrastructure;
+using SlideGenerator.Image.Models;
+using SlideGenerator.Image.Adapters;
 using Xunit;
 using OpenCvSize = OpenCvSharp.Size;
 
 namespace SlideGenerator.Image.Tests.Unit;
 
 /// <summary>
-///     Unit tests for <see cref="Utilities" /> in the Infrastructure namespace, verifying
+///     Unit tests for <see cref="AdapterConversions" />, verifying
 ///     the <see cref="InterestType" />-to-libvips and <see cref="Size" />-to-OpenCV mapping methods.
 ///     These tests exercise only enum/struct conversions and require no native I/O.
 /// </summary>

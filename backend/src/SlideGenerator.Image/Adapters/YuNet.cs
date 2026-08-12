@@ -14,14 +14,14 @@
 
 using System.Drawing;
 using OpenCvSharp;
-using SlideGenerator.Image.Application.Abstractions;
-using SlideGenerator.Image.Domain;
-using SlideGenerator.Image.Domain.Entities;
-using SlideGenerator.Image.Domain.Models;
+using SlideGenerator.Image.Abstractions;
+using SlideGenerator.Image;
+using SlideGenerator.Image.Entities;
+using SlideGenerator.Image.Models;
 using Point = System.Drawing.Point;
 using Size = OpenCvSharp.Size;
 
-namespace SlideGenerator.Image.Infrastructure.Adapters;
+namespace SlideGenerator.Image.Adapters;
 
 /// <summary>
 ///     Asynchronous wrapper for <see cref="FaceDetectorYN" />.

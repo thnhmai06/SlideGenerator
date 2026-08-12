@@ -12,7 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Image.Application.Models;
+namespace SlideGenerator.Image.Models;
 
 /// <summary>
 ///     Specifies the content-aware crop strategy to use.

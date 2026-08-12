@@ -15,15 +15,15 @@
 using System.Drawing;
 using System.Numerics;
 using FluentAssertions;
-using SlideGenerator.Image.Application.Models;
+using SlideGenerator.Image.Models;
 using SlideGenerator.Image.Tests.Integration.Fixtures;
 using Xunit;
 
 namespace SlideGenerator.Image.Tests.Integration;
 
 /// <summary>
-///     Integration tests for <see cref="SlideGenerator.Image.Application.Services.AnchorCropper" />
-///     using real images and a real <see cref="SlideGenerator.Image.Infrastructure.Adapters.YuNet" />
+///     Integration tests for <see cref="SlideGenerator.Image.Services.AnchorCropper" />
+///     using real images and a real <see cref="SlideGenerator.Image.Adapters.YuNet" />
 ///     face detector. Tests are skipped when the local image cache is empty.
 /// </summary>
 [Collection("FaceIntegration")]

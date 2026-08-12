@@ -30,8 +30,8 @@
         <ProjectReference Include="../../src/SlideGenerator.Utilities/SlideGenerator.Utilities.csproj"/>
     </ItemGroup>
     <ItemGroup>
-        <Content Include="../../src/SlideGenerator.Image/Infrastructure/Binary/YuNet.onnx">
-            <Link>Infrastructure/Binary/YuNet.onnx</Link>
+        <Content Include="../../src/SlideGenerator.Image/Binary/YuNet.onnx">
+            <Link>Binary/YuNet.onnx</Link>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
     </ItemGroup>

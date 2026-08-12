@@ -21,7 +21,7 @@ using SlideGenerator.Document.Models.Slide;
 using SlideGenerator.Generator.Application.Abstractions;
 using SlideGenerator.Generator.Domain.Models.Data;
 using SlideGenerator.Generator.Domain.Models.Enum;
-using SlideGenerator.Image.Application.Abstractions;
+using SlideGenerator.Image.Abstractions;
 using SlideGenerator.Recipe.Domain.Models;
 using SlideGenerator.Settings.Abstractions;
 using WorkflowCore.Interface;

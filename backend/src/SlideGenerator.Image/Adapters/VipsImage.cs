@@ -13,12 +13,12 @@
  */
 
 using System.Drawing;
-using SlideGenerator.Image.Domain.Entities;
+using SlideGenerator.Image.Entities;
 using NetVipsEnums = NetVips.Enums;
 using NetVipsImage = NetVips.Image;
 using Size = System.Drawing.Size;
 
-namespace SlideGenerator.Image.Infrastructure.Adapters;
+namespace SlideGenerator.Image.Adapters;
 
 /// <summary>
 ///     Adapter wrapping a <see cref="NetVipsImage" /> that implements <see cref="IImage" />.

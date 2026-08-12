@@ -17,8 +17,8 @@ using SlideGenerator.Generator.Application.Abstractions;
 using SlideGenerator.Generator.Application.Steps;
 using SlideGenerator.Generator.Infrastructure.Middleware;
 using SlideGenerator.Generator.Infrastructure.Services;
-using SlideGenerator.Image.Application.Abstractions;
-using SlideGenerator.Image.Infrastructure.Services;
+using SlideGenerator.Image.Abstractions;
+using SlideGenerator.Image.Services;
 using SlideGenerator.Settings.Abstractions;
 using SlideGenerator.Settings.Rules;
 

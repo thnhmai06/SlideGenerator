@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Image
- * File: IImageInfo.cs
+ * File: RoiMode.cs
  *
  * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -12,20 +12,16 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Image.Domain.Entities;
+namespace SlideGenerator.Image.Models;
 
 /// <summary>
-///     Represents metadata of an image, including its dimensions.
+///     Discriminates between the two top-level ROI strategies.
 /// </summary>
-public interface IImageInfo
+public enum RoiMode
 {
-    /// <summary>
-    ///     Gets the width of the image.
-    /// </summary>
-    uint Width { get; }
+    /// <summary>Anchor-point-based crop using geometry and optional face detection.</summary>
+    Anchor,
 
-    /// <summary>
-    ///     Gets the height of the image.
-    /// </summary>
-    uint Height { get; }
+    /// <summary>Content-aware crop using a library-specific interest strategy.</summary>
+    Interest
 }

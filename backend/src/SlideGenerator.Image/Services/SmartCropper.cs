@@ -14,11 +14,11 @@
 
 using System.Drawing;
 using Microsoft.Extensions.Logging;
-using SlideGenerator.Image.Application.Abstractions;
-using SlideGenerator.Image.Application.Models;
-using SlideGenerator.Image.Domain.Entities;
+using SlideGenerator.Image.Abstractions;
+using SlideGenerator.Image.Models;
+using SlideGenerator.Image.Entities;
 
-namespace SlideGenerator.Image.Application.Services;
+namespace SlideGenerator.Image.Services;
 
 /// <summary>
 ///     Walks a fallback chain of <see cref="RoiOption" /> items, delegating each option to the

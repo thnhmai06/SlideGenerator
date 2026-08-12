@@ -12,10 +12,10 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Image.Domain.Entities;
-using SlideGenerator.Image.Domain.Models;
+using SlideGenerator.Image.Entities;
+using SlideGenerator.Image.Models;
 
-namespace SlideGenerator.Image.Application.Abstractions;
+namespace SlideGenerator.Image.Abstractions;
 
 /// <summary>
 ///     Defines a mechanism for detecting faces within image data.

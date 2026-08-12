@@ -14,7 +14,7 @@
 
 using System.Drawing;
 
-namespace SlideGenerator.Image.Domain.Models;
+namespace SlideGenerator.Image.Models;
 
 /// <summary>
 ///     Represents a face with its bounding box, score, and eye landmarks (if available).

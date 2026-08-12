@@ -15,7 +15,7 @@
 using System.Drawing;
 using System.Numerics;
 
-namespace SlideGenerator.Image.Application;
+namespace SlideGenerator.Image;
 
 /// <summary>
 ///     Provides utility methods for image processing, geometric calculations, and format conversions.

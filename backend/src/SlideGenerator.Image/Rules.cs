@@ -14,7 +14,7 @@
 
 using System.Drawing;
 
-namespace SlideGenerator.Image.Domain;
+namespace SlideGenerator.Image;
 
 /// <summary>
 ///     Provides domain rules and constants for the SlideGenerator Image processing.

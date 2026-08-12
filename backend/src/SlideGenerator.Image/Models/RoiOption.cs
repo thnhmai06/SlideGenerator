@@ -14,7 +14,7 @@
 
 using System.Numerics;
 
-namespace SlideGenerator.Image.Application.Models;
+namespace SlideGenerator.Image.Models;
 
 /// <summary>
 ///     Base type for ROI / crop options. Use <see cref="AnchorOption" /> for anchor-point-based

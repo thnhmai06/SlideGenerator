@@ -15,7 +15,7 @@
 using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using SlideGenerator.Image.Application.Models;
+using SlideGenerator.Image.Models;
 
 namespace SlideGenerator.Stdio.Implementations.Adapters;
 

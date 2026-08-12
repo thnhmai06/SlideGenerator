@@ -13,12 +13,12 @@
  */
 
 using System.Diagnostics.CodeAnalysis;
-using SlideGenerator.Image.Application.Abstractions;
-using SlideGenerator.Image.Domain.Entities;
-using SlideGenerator.Image.Infrastructure.Adapters;
+using SlideGenerator.Image.Abstractions;
+using SlideGenerator.Image.Entities;
+using SlideGenerator.Image.Adapters;
 using NetVipsImage = NetVips.Image;
 
-namespace SlideGenerator.Image.Infrastructure.Services;
+namespace SlideGenerator.Image.Services;
 
 internal sealed class VipsImageLoader : IImageLoader
 {

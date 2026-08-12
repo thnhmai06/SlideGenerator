@@ -13,9 +13,9 @@
  */
 
 using System.Diagnostics.CodeAnalysis;
-using SlideGenerator.Image.Domain.Entities;
+using SlideGenerator.Image.Entities;
 
-namespace SlideGenerator.Image.Application.Abstractions;
+namespace SlideGenerator.Image.Abstractions;
 
 /// <summary>
 ///     Defines a factory for creating <see cref="IImage" /> instances.

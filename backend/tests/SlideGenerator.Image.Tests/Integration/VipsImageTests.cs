@@ -14,7 +14,7 @@
 
 using System.Drawing;
 using FluentAssertions;
-using SlideGenerator.Image.Infrastructure.Adapters;
+using SlideGenerator.Image.Adapters;
 using Xunit;
 using NetVipsImage = NetVips.Image;
 

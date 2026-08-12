@@ -14,13 +14,13 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using SlideGenerator.Image.Application.Abstractions;
-using SlideGenerator.Image.Application.Services;
-using SlideGenerator.Image.Infrastructure.Adapters;
-using SlideGenerator.Image.Infrastructure.Services;
-using SmartCropper = SlideGenerator.Image.Application.Services.SmartCropper;
+using SlideGenerator.Image.Abstractions;
+using SlideGenerator.Image.Services;
+using SlideGenerator.Image.Adapters;
+using SlideGenerator.Image.Services;
+using SmartCropper = SlideGenerator.Image.Services.SmartCropper;
 
-namespace SlideGenerator.Image.Injection;
+namespace SlideGenerator.Image;
 
 /// <summary>
 ///     DI registration for the Image module.

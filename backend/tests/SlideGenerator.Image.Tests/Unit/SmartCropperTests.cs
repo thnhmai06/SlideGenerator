@@ -16,10 +16,10 @@ using System.Drawing;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
-using SlideGenerator.Image.Application.Abstractions;
-using SlideGenerator.Image.Application.Models;
-using SlideGenerator.Image.Application.Services;
-using SlideGenerator.Image.Domain.Entities;
+using SlideGenerator.Image.Abstractions;
+using SlideGenerator.Image.Models;
+using SlideGenerator.Image.Services;
+using SlideGenerator.Image.Entities;
 using Xunit;
 
 namespace SlideGenerator.Image.Tests.Unit;

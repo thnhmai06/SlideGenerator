@@ -14,15 +14,15 @@
 
 using FluentAssertions;
 using NSubstitute;
-using SlideGenerator.Image.Application.Abstractions;
-using SlideGenerator.Image.Domain.Entities;
+using SlideGenerator.Image.Abstractions;
+using SlideGenerator.Image.Entities;
 using SlideGenerator.Image.Tests.Integration.Fixtures;
 using Xunit;
 
 namespace SlideGenerator.Image.Tests.Integration;
 
 /// <summary>
-///     Integration tests for <see cref="SlideGenerator.Image.Infrastructure.Adapters.YuNet" /> face
+///     Integration tests for <see cref="SlideGenerator.Image.Adapters.YuNet" /> face
 ///     detection using real images downloaded from HuggingFace.
 ///     Tests are skipped when the local image cache is empty (no network available).
 /// </summary>
@@ -130,7 +130,7 @@ public sealed class FaceDetectionIntegrationTests(FaceDatasetFixture dataset, Im
 
     /// <summary>
     ///     Verifies that <see cref="IFaceDetector.DetectAsync" /> returns an empty list without
-    ///     throwing when the image's <see cref="SlideGenerator.Image.Domain.Entities.IImage.ToPng()" />
+    ///     throwing when the image's <see cref="SlideGenerator.Image.Entities.IImage.ToPng()" />
     ///     returns an empty byte array.
     /// </summary>
     [Fact]

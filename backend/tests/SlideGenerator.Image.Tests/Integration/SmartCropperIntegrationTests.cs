@@ -15,14 +15,14 @@
 using System.Drawing;
 using System.Numerics;
 using FluentAssertions;
-using SlideGenerator.Image.Application.Models;
+using SlideGenerator.Image.Models;
 using SlideGenerator.Image.Tests.Integration.Fixtures;
 using Xunit;
 
 namespace SlideGenerator.Image.Tests.Integration;
 
 /// <summary>
-///     Integration tests for <see cref="SlideGenerator.Image.Application.Services.SmartCropper" />
+///     Integration tests for <see cref="SlideGenerator.Image.Services.SmartCropper" />
 ///     using real images and fully wired croppers.
 ///     Tests verify the fallback chain semantics end-to-end.
 ///     Tests are skipped when the local image cache is empty.

@@ -16,11 +16,11 @@ using System.Drawing;
 using System.Numerics;
 using FluentAssertions;
 using NSubstitute;
-using SlideGenerator.Image.Application.Abstractions;
-using SlideGenerator.Image.Application.Models;
-using SlideGenerator.Image.Application.Services;
-using SlideGenerator.Image.Domain.Entities;
-using SlideGenerator.Image.Domain.Models;
+using SlideGenerator.Image.Abstractions;
+using SlideGenerator.Image.Models;
+using SlideGenerator.Image.Services;
+using SlideGenerator.Image.Entities;
+using SlideGenerator.Image.Models;
 using Xunit;
 
 namespace SlideGenerator.Image.Tests.Unit;
