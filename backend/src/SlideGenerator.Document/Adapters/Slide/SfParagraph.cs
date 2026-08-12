@@ -13,11 +13,11 @@
  */
 
 using Syncfusion.Presentation;
-using ITextPart = SlideGenerator.Document.Abstractions.Slide.ITextPart;
+using ITextPart = SlideGenerator.Document.Adapters.Slide.ITextPart;
 
 namespace SlideGenerator.Document.Adapters.Slide;
 
-internal class SfParagraph(IParagraph core) : Abstractions.Slide.IParagraph
+internal class SfParagraph(IParagraph core) : Adapters.Slide.IParagraph
 {
     internal readonly IParagraph Core = core;
     public IEnumerable<ITextPart> TextParts => Core.TextParts.Select(tp => new SfTextPart(tp));

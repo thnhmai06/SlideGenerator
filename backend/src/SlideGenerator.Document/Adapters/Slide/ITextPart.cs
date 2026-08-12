@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Document
- * File: IReadOnlyTextPart.cs
+ * File: ITextPart.cs
  *
  * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -12,15 +12,18 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Document.Abstractions.Slide;
+namespace SlideGenerator.Document.Adapters.Slide;
 
 /// <summary>
-///     Represents a read-only view of a part of text within a paragraph.
+///     Represents a part of text within a paragraph that can be modified.
 /// </summary>
-public interface IReadOnlyTextPart
+public interface ITextPart : IReadOnlyTextPart
 {
     /// <summary>
-    ///     Gets the text content of this part.
+    ///     Gets or sets the text content of this part.
     /// </summary>
-    string Text { get; }
+    new string Text { get; set; }
+
+    /// <inheritdoc />
+    string IReadOnlyTextPart.Text => Text;
 }

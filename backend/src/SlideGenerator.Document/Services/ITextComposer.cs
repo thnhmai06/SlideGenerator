@@ -12,9 +12,9 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Document.Abstractions.Slide;
+using SlideGenerator.Document.Adapters.Slide;
 
-namespace SlideGenerator.Document.Abstractions;
+namespace SlideGenerator.Document.Services;
 
 /// <summary>
 ///     Renders template placeholders across all paragraphs of a shape while preserving

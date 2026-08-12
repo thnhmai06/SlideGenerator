@@ -14,7 +14,7 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using SlideGenerator.Document.Abstractions;
+using SlideGenerator.Document.Services;
 using SlideGenerator.Document.Services;
 using SlideGenerator.Document.Services;
 using Syncfusion.Licensing;

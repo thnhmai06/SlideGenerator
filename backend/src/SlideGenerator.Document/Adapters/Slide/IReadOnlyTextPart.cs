@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Document
- * File: ISlide.cs
+ * File: IReadOnlyTextPart.cs
  *
  * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -12,18 +12,15 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Document.Abstractions.Slide;
+namespace SlideGenerator.Document.Adapters.Slide;
 
 /// <summary>
-///     Represents a slide in a PowerPoint presentation that can be modified.
+///     Represents a read-only view of a part of text within a paragraph.
 /// </summary>
-public interface ISlide : IReadOnlySlide
+public interface IReadOnlyTextPart
 {
     /// <summary>
-    ///     Gets the collection of shapes on the slide.
+    ///     Gets the text content of this part.
     /// </summary>
-    new IEnumerable<IShape> Shapes { get; }
-
-    /// <inheritdoc />
-    IEnumerable<IReadOnlyShape> IReadOnlySlide.Shapes => Shapes;
+    string Text { get; }
 }

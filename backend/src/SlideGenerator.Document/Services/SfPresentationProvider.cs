@@ -12,13 +12,12 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Document.Abstractions;
-using SlideGenerator.Document.Abstractions.Slide;
-using SlideGenerator.Document.Models.Slide;
+using SlideGenerator.Document.Services;
 using SlideGenerator.Document.Adapters.Slide;
+using SlideGenerator.Document.Models.Slide;
 using SlideGenerator.Utilities;
 using Syncfusion.Presentation;
-using IPresentation = SlideGenerator.Document.Abstractions.Slide.IPresentation;
+using IPresentation = SlideGenerator.Document.Adapters.Slide.IPresentation;
 
 namespace SlideGenerator.Document.Services;
 

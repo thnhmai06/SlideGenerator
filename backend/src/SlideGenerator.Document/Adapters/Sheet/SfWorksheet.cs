@@ -17,7 +17,7 @@ using Syncfusion.XlsIO;
 
 namespace SlideGenerator.Document.Adapters.Sheet;
 
-internal sealed class SfWorksheet(IWorksheet worksheet) : Abstractions.Sheet.IWorksheet
+internal sealed class SfWorksheet(IWorksheet worksheet) : Adapters.Sheet.IWorksheet
 {
     public WorksheetIdentifier Identifier => new(Name);
     public string Name => worksheet.Name;

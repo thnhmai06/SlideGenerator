@@ -14,9 +14,9 @@
 
 using Microsoft.Extensions.Logging;
 using Serilog.Context;
-using SlideGenerator.Document.Abstractions;
-using SlideGenerator.Document.Abstractions.Sheet;
-using SlideGenerator.Document.Abstractions.Slide;
+using SlideGenerator.Document.Services;
+using SlideGenerator.Document.Adapters.Sheet;
+using SlideGenerator.Document.Adapters.Slide;
 using SlideGenerator.Document.Models.Sheet;
 using SlideGenerator.Document.Models.Slide;
 using SlideGenerator.Generator.Models.Enum;

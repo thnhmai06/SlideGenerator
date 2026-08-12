@@ -14,8 +14,8 @@
 
 using SlideGenerator.Document.Models.Slide;
 using Syncfusion.Presentation;
-using IReadOnlySlide = SlideGenerator.Document.Abstractions.Slide.IReadOnlySlide;
-using ISlide = SlideGenerator.Document.Abstractions.Slide.ISlide;
+using IReadOnlySlide = SlideGenerator.Document.Adapters.Slide.IReadOnlySlide;
+using ISlide = SlideGenerator.Document.Adapters.Slide.ISlide;
 
 namespace SlideGenerator.Document.Adapters.Slide;
 
@@ -25,7 +25,7 @@ namespace SlideGenerator.Document.Adapters.Slide;
 internal sealed class SfPresentation(
     IPresentation core,
     PresentationIdentifier identifier,
-    FileStream? fileStream = null) : Abstractions.Slide.IPresentation
+    FileStream? fileStream = null) : Adapters.Slide.IPresentation
 {
     public IEnumerable<ISlide> Slides
     {

@@ -12,10 +12,10 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Document.Abstractions.Sheet;
+using SlideGenerator.Document.Adapters.Sheet;
 using SlideGenerator.Document.Models.Sheet;
 
-namespace SlideGenerator.Document.Abstractions;
+namespace SlideGenerator.Document.Services;
 
 /// <summary>
 ///     Defines the contract for opening Excel workbooks.

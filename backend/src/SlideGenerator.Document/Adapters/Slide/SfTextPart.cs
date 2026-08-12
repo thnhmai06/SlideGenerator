@@ -17,7 +17,7 @@ using Syncfusion.Presentation;
 namespace SlideGenerator.Document.Adapters.Slide;
 
 internal class SfTextPart(ITextPart core)
-    : Abstractions.Slide.ITextPart
+    : Adapters.Slide.ITextPart
 {
     internal readonly ITextPart Core = core;
 

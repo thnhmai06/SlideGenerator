@@ -12,7 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Document.Abstractions.Slide;
+namespace SlideGenerator.Document.Adapters.Slide;
 
 /// <summary>
 ///     Represents a PowerPoint presentation that can be modified and saved.

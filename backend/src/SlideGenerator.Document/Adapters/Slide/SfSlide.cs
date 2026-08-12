@@ -17,9 +17,9 @@ using System.Text;
 using SlideGenerator.Document.Models.Slide;
 using Syncfusion.Presentation;
 using Syncfusion.PresentationRenderer;
-using IReadOnlySlide = SlideGenerator.Document.Abstractions.Slide.IReadOnlySlide;
-using IShape = SlideGenerator.Document.Abstractions.Slide.IShape;
-using ISlide = SlideGenerator.Document.Abstractions.Slide.ISlide;
+using IReadOnlySlide = SlideGenerator.Document.Adapters.Slide.IReadOnlySlide;
+using IShape = SlideGenerator.Document.Adapters.Slide.IShape;
+using ISlide = SlideGenerator.Document.Adapters.Slide.ISlide;
 
 namespace SlideGenerator.Document.Adapters.Slide;
 

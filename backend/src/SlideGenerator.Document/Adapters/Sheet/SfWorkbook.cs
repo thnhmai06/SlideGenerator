@@ -14,7 +14,7 @@
 
 using SlideGenerator.Document.Models.Sheet;
 using Syncfusion.XlsIO;
-using IWorksheet = SlideGenerator.Document.Abstractions.Sheet.IWorksheet;
+using IWorksheet = SlideGenerator.Document.Adapters.Sheet.IWorksheet;
 
 namespace SlideGenerator.Document.Adapters.Sheet;
 
@@ -24,7 +24,7 @@ namespace SlideGenerator.Document.Adapters.Sheet;
 internal sealed class SfWorkbook(
     IWorkbook value,
     WorkbookIdentifier identifier,
-    FileStream? fileStream = null) : Abstractions.Sheet.IWorkbook
+    FileStream? fileStream = null) : Adapters.Sheet.IWorkbook
 {
     public WorkbookIdentifier Identifier { get; } = identifier;
 

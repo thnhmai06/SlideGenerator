@@ -14,8 +14,8 @@
 
 using System.Text;
 using System.Text.RegularExpressions;
-using SlideGenerator.Document.Abstractions;
-using SlideGenerator.Document.Abstractions.Slide;
+using SlideGenerator.Document.Services;
+using SlideGenerator.Document.Adapters.Slide;
 
 namespace SlideGenerator.Document.Services;
 

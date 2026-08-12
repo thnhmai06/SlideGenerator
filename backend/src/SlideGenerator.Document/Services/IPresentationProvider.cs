@@ -12,10 +12,10 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Document.Abstractions.Slide;
+using SlideGenerator.Document.Adapters.Slide;
 using SlideGenerator.Document.Models.Slide;
 
-namespace SlideGenerator.Document.Abstractions;
+namespace SlideGenerator.Document.Services;
 
 /// <summary>
 ///     Defines the contract for opening PowerPoint presentations.

@@ -12,7 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Document.Abstractions;
+namespace SlideGenerator.Document.Services;
 
 /// <summary>
 ///     Represents a service for handling operations related to template-based document generation.

@@ -14,8 +14,8 @@
 
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
-using SlideGenerator.Document.Abstractions.Sheet;
-using SlideGenerator.Document.Abstractions.Slide;
+using SlideGenerator.Document.Adapters.Sheet;
+using SlideGenerator.Document.Adapters.Slide;
 using SlideGenerator.Document.Models.Sheet;
 using SlideGenerator.Document.Models.Slide;
 using SlideGenerator.Generator.Models.Data;

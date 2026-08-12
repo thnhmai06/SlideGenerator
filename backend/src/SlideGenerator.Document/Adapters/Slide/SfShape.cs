@@ -15,8 +15,8 @@
 using System.Drawing;
 using SlideGenerator.Document.Models.Slide;
 using Syncfusion.Presentation;
-using IParagraph = SlideGenerator.Document.Abstractions.Slide.IParagraph;
-using IShape = SlideGenerator.Document.Abstractions.Slide.IShape;
+using IParagraph = SlideGenerator.Document.Adapters.Slide.IParagraph;
+using IShape = SlideGenerator.Document.Adapters.Slide.IShape;
 
 namespace SlideGenerator.Document.Adapters.Slide;
 

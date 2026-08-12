@@ -12,7 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Document.Abstractions.Sheet;
+namespace SlideGenerator.Document.Adapters.Sheet;
 
 /// <summary>
 ///     Represents an Excel worksheet that can be modified.

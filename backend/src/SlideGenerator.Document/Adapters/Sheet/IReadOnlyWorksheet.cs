@@ -14,7 +14,7 @@
 
 using SlideGenerator.Document.Models.Sheet;
 
-namespace SlideGenerator.Document.Abstractions.Sheet;
+namespace SlideGenerator.Document.Adapters.Sheet;
 
 /// <summary>
 ///     Represents a read-only view of an Excel worksheet.

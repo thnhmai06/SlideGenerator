@@ -15,7 +15,7 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
-using SlideGenerator.Document.Abstractions;
+using SlideGenerator.Document.Services;
 using Stubble.Core;
 using Stubble.Core.Builders;
 

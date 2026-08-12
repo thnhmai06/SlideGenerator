@@ -15,7 +15,7 @@
 using System.Drawing;
 using SlideGenerator.Document.Models.Slide;
 
-namespace SlideGenerator.Document.Abstractions.Slide;
+namespace SlideGenerator.Document.Adapters.Slide;
 
 /// <summary>
 ///     Represents a read-only view of a shape on a PowerPoint slide.

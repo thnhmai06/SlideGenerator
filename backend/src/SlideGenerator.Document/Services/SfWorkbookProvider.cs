@@ -12,13 +12,12 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Document.Abstractions;
-using SlideGenerator.Document.Abstractions.Sheet;
-using SlideGenerator.Document.Models.Sheet;
+using SlideGenerator.Document.Services;
 using SlideGenerator.Document.Adapters.Sheet;
+using SlideGenerator.Document.Models.Sheet;
 using SlideGenerator.Utilities;
 using Syncfusion.XlsIO;
-using IWorkbook = SlideGenerator.Document.Abstractions.Sheet.IWorkbook;
+using IWorkbook = SlideGenerator.Document.Adapters.Sheet.IWorkbook;
 
 namespace SlideGenerator.Document.Services;
 
