@@ -14,7 +14,6 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using SlideGenerator.Cloud.Abstractions;
 using SlideGenerator.Cloud.Services;
 
 namespace SlideGenerator.Cloud;

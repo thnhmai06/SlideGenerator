@@ -14,7 +14,7 @@
 
 using SlideGenerator.Cloud.Models;
 
-namespace SlideGenerator.Cloud.Abstractions;
+namespace SlideGenerator.Cloud.Services;
 
 /// <summary>
 ///     Performs HTTP-based cloud resource operations: content inspection and file download.
