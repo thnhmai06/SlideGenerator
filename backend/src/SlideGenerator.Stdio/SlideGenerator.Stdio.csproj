@@ -33,7 +33,6 @@
         <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1"/>
         <PackageReference Include="Serilog.Sinks.File" Version="7.0.0"/>
         <PackageReference Include="StreamJsonRpc" Version="2.25.29" />
-        <PackageReference Include="WorkflowCore.Persistence.Sqlite" Version="3.18.0"/>
         <PackageReference Update="StyleCop.Analyzers" Version="1.1.118"/>
     </ItemGroup>
 

@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Generator.Tests
- * File: GenerateJobStepTests.cs
+ * File: JobRunnerHelpersTests.cs
  *
  * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -15,16 +15,16 @@
 using FluentAssertions;
 using NSubstitute;
 using SlideGenerator.Document.Workbook;
-using SlideGenerator.Generator.Steps;
+using SlideGenerator.Generator.Services;
 using SlideGenerator.Recipe.Models.Components;
 using Xunit;
 
 namespace SlideGenerator.Generator.Tests.Unit;
 
 /// <summary>
-///     Unit tests for the internal helper methods of <see cref="GenerateJobStep" />.
+///     Unit tests for the internal helper methods of <see cref="JobRunner" />.
 /// </summary>
-public sealed class GenerateJobStepTests
+public sealed class JobRunnerHelpersTests
 {
     #region RowFilter.GetIndices
 
@@ -121,7 +121,7 @@ public sealed class GenerateJobStepTests
                 })
         };
 
-        var result = GenerateJobStep.BuildRowTextValues(rowValues, instructions);
+        var result = JobRunner.BuildRowTextValues(rowValues, instructions);
 
         result.Should().ContainKey("Placeholder").WhoseValue.Should().Be("X");
     }
@@ -144,7 +144,7 @@ public sealed class GenerateJobStepTests
                 })
         };
 
-        var result = GenerateJobStep.BuildRowTextValues(rowValues, instructions);
+        var result = JobRunner.BuildRowTextValues(rowValues, instructions);
 
         result.Should().ContainKey("Placeholder").WhoseValue.Should().Be("");
     }
@@ -162,7 +162,7 @@ public sealed class GenerateJobStepTests
             new(new HashSet<string> { "Role" }, new List<ColumnIdentifier> { new("Role") })
         };
 
-        var result = GenerateJobStep.BuildRowTextValues(rowValues, instructions);
+        var result = JobRunner.BuildRowTextValues(rowValues, instructions);
 
         result.Should().ContainKey("Name").WhoseValue.Should().Be("Alice");
         result.Should().ContainKey("Role").WhoseValue.Should().Be("Manager");

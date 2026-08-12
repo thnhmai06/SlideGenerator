@@ -12,30 +12,33 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using SlideGenerator.Document.Workbook;
+using SlideGenerator.Recipe.Models.Components;
+
 namespace SlideGenerator.Generator.Models.Data;
 
-/// <summary>Source workbook and worksheet node ids.</summary>
-public sealed record WorkbookRef(string WorkbookNodeId, string WorksheetNodeId);
-
-/// <summary>Template presentation and slide node ids.</summary>
-public sealed record PresentationRef(string PresentationNodeId, string SlideNodeId);
-
 /// <summary>
-///     Represents a single slide generation unit: one worksheet mapped to one slide via one map node.
-///     Persisted as <see cref="JobPersistContext.Specification" /> by WorkflowCore for the single
-///     <see cref="Workflows.JobWorkflow" /> instance spawned for this job.
+///     Represents a single slide-generation unit: one worksheet mapped to one template slide, with every
+///     value already resolved from the recipe at spawn time (see <c>Service.BuildJobs</c>) — no id needs
+///     to be looked back up against the recipe once a job has started, so a job survives independently of
+///     whether the originating recipe still exists.
 /// </summary>
-public sealed class JobSpecification
-{
-    /// <summary>Source workbook and worksheet node ids.</summary>
-    public WorkbookRef Source { get; init; } = null!;
-
-    /// <summary>Template presentation and slide node ids.</summary>
-    public PresentationRef Template { get; init; } = null!;
-
-    /// <summary>Key of the <see cref="Recipe.Models.MapNode" /> in <c>Recipe.Nodes</c>.</summary>
-    public string MapNodeId { get; init; } = null!;
-
-    /// <summary>Absolute path to the output presentation file for this job.</summary>
-    public string OutputPath { get; init; } = null!;
-}
+/// <param name="WorkbookPath">Absolute path to the source workbook.</param>
+/// <param name="WorksheetName">Name of the source worksheet within the workbook.</param>
+/// <param name="UsedColumns">Column headers visible to instructions, or <see langword="null" /> for all columns.</param>
+/// <param name="RowFilter">Row-selection strategy, or <see langword="null" /> for all rows.</param>
+/// <param name="TemplatePresentationPath">Absolute path to the presentation hosting the template slide.</param>
+/// <param name="TemplateSlideIndex">1-based index of the template slide within <see cref="TemplatePresentationPath" />.</param>
+/// <param name="TextInstructions">Rules for mapping worksheet columns to slide text placeholders.</param>
+/// <param name="ImageInstructions">Rules for mapping worksheet columns to slide image shapes.</param>
+/// <param name="OutputPath">Absolute path to the output presentation file for this job.</param>
+public sealed record JobSpecification(
+    string WorkbookPath,
+    string WorksheetName,
+    IReadOnlySet<ColumnIdentifier>? UsedColumns,
+    RowFilter? RowFilter,
+    string TemplatePresentationPath,
+    int TemplateSlideIndex,
+    IReadOnlyList<TextInstruction> TextInstructions,
+    IReadOnlyList<ImageInstruction> ImageInstructions,
+    string OutputPath);

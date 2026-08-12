@@ -45,30 +45,14 @@ public sealed record RequestProgress
     public required DateTimeOffset Timestamp { get; init; }
 }
 
-/// <summary>Job-scoped progress notification — reports the execution status of a single job.</summary>
-public sealed record JobProgress
-{
-    /// <summary>Gets the request id this job belongs to.</summary>
-    public required string RequestId { get; init; }
-
-    /// <summary>Gets the WorkflowCore instance id of this job.</summary>
-    public required string JobId { get; init; }
-
-    /// <summary>Gets the current job execution status.</summary>
-    public required Status Status { get; init; }
-
-    /// <summary>Gets the UTC timestamp when this event was emitted.</summary>
-    public required DateTimeOffset Timestamp { get; init; }
-}
-
 /// <summary>Row-scoped progress notification — reports the processing status of a single data row.</summary>
 public sealed record RowProgress
 {
     /// <summary>Gets the request id this row belongs to.</summary>
     public required string RequestId { get; init; }
 
-    /// <summary>Gets the job id this row belongs to.</summary>
-    public required string JobId { get; init; }
+    /// <summary>Gets the job id (ordinal within the request) this row belongs to.</summary>
+    public required int JobId { get; init; }
 
     /// <summary>Gets the 1-based data row index (excludes the header row).</summary>
     public required int RowIndex { get; init; }

@@ -12,11 +12,10 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.DependencyInjection;
 using SlideGenerator.Generator.Abstractions;
-using SlideGenerator.Generator.Steps;
 using SlideGenerator.Generator.Services;
-using GeneratorMiddleware = SlideGenerator.Generator.Middleware.Middleware;
 using SlideGenerator.Image.FaceDetection;
 using SlideGenerator.Settings.Config;
 using SlideGenerator.Settings.Rules;
@@ -29,8 +28,8 @@ public static class Registration
 extension(IServiceCollection services)
 {
     /// <summary>
-    ///     Adds the generating workflow, all associated WorkflowCore steps, and the
-    ///     <see cref="IService" /> facade to the service collection.
+    ///     Adds the job runner, its Requests/Jobs persistence, and the <see cref="IService" /> facade to
+    ///     the service collection.
     /// </summary>
     /// <returns>The updated service collection.</returns>
     public IServiceCollection AddGeneratorServices()
@@ -39,7 +38,7 @@ extension(IServiceCollection services)
 
         // Named HttpClient for inspect/download calls — proxy is applied on the pooled handler, re-read
         // from ISettingProvider whenever the factory recycles it; per-call timeout is set by callers via
-        // Utilities.CreateHttpClientWithSetting (steps create a fresh client at the point of use, never share one).
+        // Utilities.CreateHttpClientWithSetting (a fresh client is created at the point of use, never shared).
         services.AddHttpClient(NameAndPaths.Application.Name)
             .ConfigurePrimaryHttpMessageHandler(sp =>
             {
@@ -58,27 +57,19 @@ extension(IServiceCollection services)
             return new FaceDetectorPool(factory, () => (uint)Environment.ProcessorCount);
         });
 
-        // Shared, app-wide cache for resolved URLs and downloaded files — reads its connection string
-        // from Settings directly (no DI'd SqliteConnectionStringBuilder, avoids colliding with the one
-        // Recipe module registers for Recipes.db).
-        services.AddSingleton<ICache, SqliteCache>();
+        // Shared connection builder for the single Data.db (Recipes/Requests/Jobs tables).
+        services.AddSingleton(new SqliteConnectionStringBuilder(NameAndPaths.DataFolder.DataFile.ConnectionString));
 
-        // Progress persistence (Requests/Jobs/Rows) — same reasoning, own connection string, no collision
-        // with Cache.db/Recipes.db.
-        services.AddSingleton<IStudioRepository, StudioRepository>();
+        services.AddSingleton<IRequestsRepository, RequestsRepository>();
+        services.AddSingleton<IJobsRepository, JobsRepository>();
 
         // Reads the per-request workflow log file back into scoped LogEntry records for Summary.Logs.
         services.AddSingleton<ILogFileReader, LogFileReader>();
 
-        // WorkflowCore Step registrations (Transient — WorkflowCore resolves per-execution via IServiceScope)
-        services.AddTransient<PreflightCleanup>();
-        services.AddTransient<InspectUrlsStep>();
-        services.AddTransient<GenerateJobStep>();
+        // Job execution — replaces WorkflowCore entirely.
+        services.AddSingleton<IJobRunner, JobRunner>();
 
-        // Step middleware — lazily initializes the workflow logger before each step (supports persistence resume)
-        services.AddWorkflowStepMiddleware<GeneratorMiddleware>();
-
-        // Workflow service facade — Ipc depends on this, not on WorkflowCore directly
+        // Service facade — Ipc depends on this, not on IJobRunner directly.
         services.AddSingleton<IService, Service>();
 
         return services;

@@ -42,3 +42,17 @@ public sealed record Request(
         ? Path.GetFullPath(SaveFolder)
         : throw new ArgumentException("Save folder cannot be null or whitespace.", nameof(SaveFolder));
 }
+
+/// <summary>
+///     Persisted row for one generation request — the original <see cref="Request" /> plus the identity
+///     and bookkeeping fields needed to reconstruct <see cref="Summary" />/resume jobs after a restart.
+/// </summary>
+/// <param name="RequestId">Groups every job spawned for this request.</param>
+/// <param name="Request">The original submitted request.</param>
+/// <param name="LogPath">Path to the single log file shared by every job of this request.</param>
+/// <param name="CreatedAt">UTC timestamp when the request was created.</param>
+public sealed record RequestRecord(
+    string RequestId,
+    Request Request,
+    string LogPath,
+    DateTimeOffset CreatedAt);

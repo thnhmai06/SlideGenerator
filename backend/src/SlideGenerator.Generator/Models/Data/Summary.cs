@@ -47,15 +47,26 @@ public sealed record Summary
     /// </summary>
     public required IReadOnlyList<LogEntry> Logs { get; init; }
 
-    /// <summary>Gets each job of this request, keyed by job id (the WorkflowCore instance id).</summary>
-    public required IReadOnlyDictionary<string, JobSummary> Jobs { get; init; }
+    /// <summary>Gets each job of this request, keyed by job id (its ordinal within the request).</summary>
+    public required IReadOnlyDictionary<int, JobSummary> Jobs { get; init; }
 }
 
-/// <summary>Lightweight snapshot of a single job workflow instance within a <see cref="Summary" />.</summary>
+/// <summary>
+///     Lightweight snapshot of a single job within a <see cref="Summary" />. Carries only current-state
+///     fields — per-row history is not persisted (see <see cref="JobPhase" />/<see cref="CurrentIndex" />
+///     as the sole resume state); row-level detail is only available live via the <c>progress/rows</c>
+///     JSON-RPC notification, not through this snapshot.
+/// </summary>
 public sealed record JobSummary
 {
     /// <summary>Gets the execution status of this specific job.</summary>
     public required Status Status { get; init; }
+
+    /// <summary>Gets the current phase within the 4-phase pipeline.</summary>
+    public required JobPhase Phase { get; init; }
+
+    /// <summary>Gets how many rows have completed within <see cref="Phase" /> — the resume point.</summary>
+    public required int CurrentIndex { get; init; }
 
     /// <summary>Gets the output file path this job writes to.</summary>
     public required string OutputPath { get; init; }
@@ -63,29 +74,7 @@ public sealed record JobSummary
     /// <summary>Gets the UTC timestamp when this job finished or was terminated, if applicable.</summary>
     public DateTimeOffset? CompletedAt { get; init; }
 
-    /// <summary>Gets every data row of this job, keyed by 1-based row index.</summary>
-    public required IReadOnlyDictionary<int, RowSummary> Rows { get; init; }
-
-    /// <summary>Gets log lines scoped to this job (including rows without their own row-specific entry).</summary>
-    public required IReadOnlyList<LogEntry> Logs { get; init; }
-}
-
-/// <summary>Lightweight snapshot of a single data row's processing state within a <see cref="JobSummary" />.</summary>
-public sealed record RowSummary
-{
-    /// <summary>Gets the current row processing status.</summary>
-    public required RowStatus Status { get; init; }
-
-    /// <summary>Gets the granular sub-action last reported for this row.</summary>
-    public RowStage Stage { get; init; }
-
-    /// <summary>Gets free-text context for <see cref="Stage" />, or <see langword="null" /> if not applicable.</summary>
-    public string? Note { get; init; }
-
-    /// <summary>Gets the UTC timestamp of the last update to this row.</summary>
-    public required DateTimeOffset Timestamp { get; init; }
-
-    /// <summary>Gets log lines scoped exactly to this row.</summary>
+    /// <summary>Gets log lines scoped to this job (including its rows, which have no row-specific entry point anymore).</summary>
     public required IReadOnlyList<LogEntry> Logs { get; init; }
 }
 

@@ -55,13 +55,12 @@ internal static partial class Program
 
             Log.Information("Initializing application directories...");
             NameAndPaths.InitializeDirectories();
-            Log.Information("Workflows DB: {Path}", NameAndPaths.DataFolder.WorkflowsFile.FilePath);
-            Log.Information("Recipes DB:   {Path}", NameAndPaths.DataFolder.RecipesFile.FilePath);
+            Log.Information("Data DB: {Path}", NameAndPaths.DataFolder.DataFile.FilePath);
 
             Log.Information("Loading settings...");
             await LoadSettingsAsync(services).ConfigureAwait(false);
 
-            Log.Information("Starting workflow host...");
+            Log.Information("Starting job runner...");
             await workflowService.InitializeAsync(CancellationToken.None).ConfigureAwait(false);
 
             Log.Information("Initializing JSON-RPC connection...");

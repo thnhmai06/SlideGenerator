@@ -32,7 +32,7 @@ public static class Registration
     /// <returns>The updated service collection.</returns>
     public static IServiceCollection AddRecipeServices(this IServiceCollection services)
     {
-        services.AddSingleton(new SqliteConnectionStringBuilder(NameAndPaths.DataFolder.RecipesFile.ConnectionString));
+        services.AddSingleton(new SqliteConnectionStringBuilder(NameAndPaths.DataFolder.DataFile.ConnectionString));
         services.AddSingleton(typeof(IRecipeRepository),
             sp => new RecipeRepository(sp.GetRequiredService<SqliteConnectionStringBuilder>()));
         return services;

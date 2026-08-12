@@ -25,7 +25,6 @@ using SlideGenerator.Image;
 using SlideGenerator.Logging;
 using SlideGenerator.Recipe;
 using SlideGenerator.Settings.Config;
-using SlideGenerator.Settings.Rules;
 using SlideGenerator.Settings;
 using SlideGenerator.Summarization;
 
@@ -75,7 +74,6 @@ internal static partial class Program
 
         Log.Information("Registering Application services...");
         services.AddGeneratorServices();
-        services.AddWorkflow(x => x.UseSqlite(NameAndPaths.DataFolder.WorkflowsFile.ConnectionString, true));
         services.AddIpcServices();
     }
 

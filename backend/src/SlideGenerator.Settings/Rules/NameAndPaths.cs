@@ -153,106 +153,26 @@ public static class NameAndPaths
         public static string FolderPath => Path.Combine(UserPath, "Data");
 
         /// <summary>
-        ///     Contains naming rules for the WorkflowCore SQLite persistence database.
+        ///     Contains naming rules for the single shared SQLite database (<c>Recipes</c>/<c>Requests</c>/
+        ///     <c>Jobs</c> tables) — replaces the old per-purpose <c>Workflows.db</c>/<c>Recipes.db</c>/
+        ///     <c>Cache.db</c>/<c>Studio.db</c> split.
         /// </summary>
-        public static class WorkflowsFile
+        public static class DataFile
         {
-            private const string FileName = "Workflows";
+            private const string FileName = "Data";
 
             /// <summary>
-            ///     Gets the full path to the SQLite database used for workflow persistence.
+            ///     Gets the full path to the shared SQLite database.
             /// </summary>
             public static string FilePath => Path.Combine(FolderPath, $"{FileName}.db");
 
             /// <summary>
-            ///     Gets the SQLite connection string for the workflow persistence database.
+            ///     Gets the SQLite connection string for the shared database.
             /// </summary>
             public static string ConnectionString =>
                 new SqliteConnectionStringBuilder { DataSource = FilePath }.ConnectionString;
         }
 
-        /// <summary>
-        ///     Contains naming rules for the recipe SQLite database.
-        /// </summary>
-        public static class RecipesFile
-        {
-            private const string FileName = "Recipes";
-
-            /// <summary>
-            ///     Gets the full path to the SQLite database used for recipe storage.
-            /// </summary>
-            public static string FilePath => Path.Combine(FolderPath, $"{FileName}.db");
-
-            /// <summary>
-            ///     Gets the SQLite connection string for the recipe database.
-            /// </summary>
-            public static string ConnectionString =>
-                new SqliteConnectionStringBuilder { DataSource = FilePath }.ConnectionString;
-        }
-
-        /// <summary>
-        ///     Contains naming rules for the shared URL-resolution/download cache SQLite database.
-        /// </summary>
-        public static class CacheFile
-        {
-            private const string FileName = "Cache";
-
-            /// <summary>
-            ///     Gets the full path to the SQLite database used for the shared cache.
-            /// </summary>
-            public static string FilePath => Path.Combine(FolderPath, $"{FileName}.db");
-
-            /// <summary>
-            ///     Gets the SQLite connection string for the shared cache database.
-            /// </summary>
-            public static string ConnectionString =>
-                new SqliteConnectionStringBuilder { DataSource = FilePath }.ConnectionString;
-
-            /// <summary>Defines table naming conventions for the shared cache SQLite database.</summary>
-            public static class TableNames
-            {
-                /// <summary>Table name for the inspected-URL cache (source string → resolved <c>ContentInfo</c>, nullable).</summary>
-                public const string InspectedUrlsTable = "InspectedUrls";
-
-                /// <summary>
-                ///     Table name for the downloaded-file registry (resolved URI → extension of its permanent
-                ///     temp-cached file, nullable). No consumer count is tracked — entries live until TTL eviction.
-                /// </summary>
-                public const string DownloadedFilesTable = "DownloadedFiles";
-            }
-        }
-
-        /// <summary>
-        ///     Contains naming rules for the Progress persistence database (Requests/Jobs/Rows).
-        /// </summary>
-        public static class StudioFile
-        {
-            private const string FileName = "Studio";
-
-            /// <summary>
-            ///     Gets the full path to the SQLite database used for progress persistence.
-            /// </summary>
-            public static string FilePath => Path.Combine(FolderPath, $"{FileName}.db");
-
-            /// <summary>
-            ///     Gets the SQLite connection string for the progress persistence database.
-            /// </summary>
-            public static string ConnectionString =>
-                new SqliteConnectionStringBuilder { DataSource = FilePath }.ConnectionString;
-
-            /// <summary>Defines table naming conventions for the progress persistence database.</summary>
-            public static class TableNames
-            {
-                /// <summary>Table name for request-scoped progress rows.</summary>
-                public const string RequestsTable = "Requests";
-
-                /// <summary>Table name for job-scoped progress rows.</summary>
-                public const string JobsTable = "Jobs";
-
-                /// <summary>Table name for row-scoped progress rows.</summary>
-                public const string RowsTable = "Rows";
-            }
-        }
     }
 
     /// <summary>

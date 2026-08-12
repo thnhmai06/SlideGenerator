@@ -13,36 +13,39 @@
  */
 
 using FluentAssertions;
-using SlideGenerator.Generator.Steps;
-using SlideGenerator.Generator.Tests.Unit.Helpers;
+using Microsoft.Extensions.Logging;
+using NSubstitute;
+using SlideGenerator.Generator.Services;
 using Xunit;
 
 namespace SlideGenerator.Generator.Tests.Unit;
 
 /// <summary>
 ///     Unit tests for <see cref="PreflightCleanup" />, locking its per-job overwrite-only behavior
-///     (no longer deletes the whole parent output directory — see <c>JobSpec.OutputPath</c> only).
+///     (never touches the parent output directory or sibling files).
 /// </summary>
 public sealed class PreflightCleanupTests
 {
+    private static readonly ILogger Logger = Substitute.For<ILogger>();
+
     /// <summary>Verifies an existing output file for this job is deleted.</summary>
     [Fact]
     public void Run_OutputFileExists_DeletesIt()
     {
-        var (ctx, data) = StepHelper.CreateContextPair();
-        var outputPath = data.Persist.Specification.OutputPath;
-        Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
+        var dir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        var outputPath = Path.Combine(dir, "output.pptx");
+        Directory.CreateDirectory(dir);
         File.WriteAllText(outputPath, "stale");
 
         try
         {
-            new PreflightCleanup().Run(ctx);
+            PreflightCleanup.Run(outputPath, Logger);
 
             File.Exists(outputPath).Should().BeFalse();
         }
         finally
         {
-            if (File.Exists(outputPath)) File.Delete(outputPath);
+            if (Directory.Exists(dir)) Directory.Delete(dir, true);
         }
     }
 
@@ -50,11 +53,9 @@ public sealed class PreflightCleanupTests
     [Fact]
     public void Run_OutputFileMissing_DoesNotThrow()
     {
-        var (ctx, data) = StepHelper.CreateContextPair();
-        var outputPath = data.Persist.Specification.OutputPath;
-        if (File.Exists(outputPath)) File.Delete(outputPath);
+        var outputPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "output.pptx");
 
-        var act = () => new PreflightCleanup().Run(ctx);
+        var act = () => PreflightCleanup.Run(outputPath, Logger);
 
         act.Should().NotThrow();
     }
@@ -63,21 +64,21 @@ public sealed class PreflightCleanupTests
     [Fact]
     public void Run_SiblingFileInSameDirectory_IsNotDeleted()
     {
-        var (ctx, data) = StepHelper.CreateContextPair();
-        var dir = Path.GetDirectoryName(data.Persist.Specification.OutputPath)!;
+        var dir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dir);
+        var outputPath = Path.Combine(dir, "output.pptx");
         var siblingPath = Path.Combine(dir, "sibling-job-output.pptx");
         File.WriteAllText(siblingPath, "belongs to another job");
 
         try
         {
-            new PreflightCleanup().Run(ctx);
+            PreflightCleanup.Run(outputPath, Logger);
 
             File.Exists(siblingPath).Should().BeTrue();
         }
         finally
         {
-            File.Delete(siblingPath);
+            Directory.Delete(dir, true);
         }
     }
 }

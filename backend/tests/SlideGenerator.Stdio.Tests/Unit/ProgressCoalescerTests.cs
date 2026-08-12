@@ -30,20 +30,21 @@ namespace SlideGenerator.Stdio.Tests.Unit;
 ///     <see cref="JsonRpc" /> connection (an in-memory duplex stream pair, no Syncfusion/sidecar needed).
 ///     Exercises three things no mocked test can: (1) System.Text.Json actually serializing the new
 ///     Request/Job/Row progress records + enums through the same <see cref="SystemTextJsonFormatter" />
-///     configuration production uses, (2) the coalescer's flush timer actually firing and delivering a
-///     notification, and (3) the <see cref="RequestPhase.ProcessingStarted" /> race fix — it must not fire
-///     until every job announced via <c>AnnounceExpectedJobCount</c> has left <see cref="Status.Pending" />.
+///     configuration production uses, (2) <see cref="IJobsRepository.Flushed" /> actually driving a
+///     <c>progress/jobs</c> notification, and (3) the <see cref="RequestPhase.ProcessingStarted" /> race
+///     fix — it must not fire until every job announced via <c>AnnounceExpectedJobCount</c> has left
+///     <see cref="Status.Pending" />.
 /// </summary>
 public sealed class ProgressCoalescerTests : IAsyncDisposable
 {
     private readonly GeneratingEventBus _bus = new();
     private readonly LogNotifier _logNotifier = new();
-    private readonly FakeStudioRepository _repository = new();
+    private readonly FakeJobsRepository _repository = new();
     private readonly ProgressCoalescer _coalescer;
     private readonly JsonRpc _serverRpc;
     private readonly JsonRpc _clientRpc;
 
-    private readonly List<JobProgress> _receivedJobs = [];
+    private readonly List<JobRecord> _receivedJobs = [];
     private readonly List<RequestProgress> _receivedRequests = [];
 
     public readonly List<string> LoggedWarnings = [];
@@ -65,7 +66,7 @@ public sealed class ProgressCoalescerTests : IAsyncDisposable
         // a fixed-arity delegate signature. Deserializing manually still exercises the exact same
         // SystemTextJsonFormatter/JsonSerializerOptions production uses.
         _clientRpc.AddLocalRpcMethod("progress/jobs", (Action<JsonElement>)(payload =>
-            _receivedJobs.AddRange(payload.Deserialize<List<JobProgress>>(jsonOptions)!)));
+            _receivedJobs.AddRange(payload.Deserialize<List<JobRecord>>(jsonOptions)!)));
         _clientRpc.AddLocalRpcMethod("progress/request", (Action<JsonElement>)(payload =>
             _receivedRequests.AddRange(payload.Deserialize<List<RequestProgress>>(jsonOptions)!)));
         _clientRpc.StartListening();
@@ -81,10 +82,13 @@ public sealed class ProgressCoalescerTests : IAsyncDisposable
         _clientRpc.Dispose();
     }
 
+    private static JobSpecification DummySpec => new("wb.xlsx", "Sheet1", null, null, "template.pptx", 1, [], [], "out.pptx");
+
+    private static JobRecord Job(string requestId, int jobId, Status status) =>
+        new(requestId, jobId, status, JobPhase.CreatingOutput, 0, DummySpec, DateTimeOffset.UtcNow);
+
     /// <summary>
-    ///     Waits (polling) until <paramref name="predicate" /> is true or the timeout elapses — the flush
-    ///     loop runs on a ~1s <see cref="System.Threading.PeriodicTimer" />, so a plain assertion right
-    ///     after publishing would race it.
+    ///     Waits (polling) until <paramref name="predicate" /> is true or the timeout elapses.
     /// </summary>
     private static async Task WaitUntilAsync(Func<bool> predicate, TimeSpan timeout)
     {
@@ -92,50 +96,49 @@ public sealed class ProgressCoalescerTests : IAsyncDisposable
         while (DateTime.UtcNow < deadline)
         {
             if (predicate()) return;
-            await Task.Delay(100);
+            await Task.Delay(50);
         }
     }
 
     /// <summary>
-    ///     Publishing two jobs' progress and letting one flush tick pass must deliver a real
-    ///     <c>progress/jobs</c> JSON-RPC notification whose payload deserializes back to the same
-    ///     statuses — proving STJ can actually round-trip <see cref="JobProgress" />/<see cref="Status" />
-    ///     through the production formatter configuration, and that the flush timer fires end to end.
+    ///     Publishing a job's progress must enqueue it into <see cref="IJobsRepository" /> and, once
+    ///     flushed, deliver a real <c>progress/jobs</c> JSON-RPC notification whose payload deserializes
+    ///     back to the same status — proving STJ can round-trip <see cref="JobRecord" />/<see cref="Status" />
+    ///     through the production formatter configuration.
     /// </summary>
     [Fact]
-    public async Task PublishJobProgress_AfterFlushTick_DeliversNotificationOverRealJsonRpc()
+    public async Task PublishJobProgress_AfterFlush_DeliversNotificationOverRealJsonRpc()
     {
         var requestId = Guid.NewGuid().ToString();
-        _bus.Publish(new JobProgress { RequestId = requestId, JobId = "job-1", Status = Status.Running, Timestamp = DateTimeOffset.UtcNow });
+        _bus.Publish(Job(requestId, 1, Status.Running));
 
-        await WaitUntilAsync(() => _repository.UpsertedJobs.Count > 0, TimeSpan.FromSeconds(3));
-        _repository.UpsertedJobs.Should().ContainSingle(j => j.JobId == "job-1");
+        await WaitUntilAsync(() => _repository.Enqueued.Count > 0, TimeSpan.FromSeconds(3));
+        _repository.Enqueued.Should().ContainSingle(j => j.JobId == 1);
 
         await WaitUntilAsync(() => _receivedJobs.Count > 0, TimeSpan.FromSeconds(3));
-        _receivedJobs.Should().ContainSingle(j => j.JobId == "job-1" && j.Status == Status.Running,
+        _receivedJobs.Should().ContainSingle(j => j.JobId == 1 && j.Status == Status.Running,
             "logged warnings: " + string.Join(" | ", LoggedWarnings));
     }
 
     /// <summary>
     ///     <see cref="RequestPhase.ProcessingStarted" /> must not fire while any announced job is still
-    ///     <see cref="Status.Pending" />, even though the coalescer only sees one job's transition per
-    ///     flush tick — this is the race the plan flagged and the implementation fixes via
-    ///     <c>AnnounceExpectedJobCount</c>.
+    ///     <see cref="Status.Pending" />, even though the coalescer sees one job's transition at a time —
+    ///     this is the race the plan flagged and <c>AnnounceExpectedJobCount</c> fixes.
     /// </summary>
     [Fact]
     public async Task ProcessingStarted_DoesNotFireUntilEveryAnnouncedJobLeavesPending()
     {
         var requestId = Guid.NewGuid().ToString();
         _bus.AnnounceExpectedJobCount(requestId, 2);
-        _bus.Publish(new JobProgress { RequestId = requestId, JobId = "job-1", Status = Status.Pending, Timestamp = DateTimeOffset.UtcNow });
-        _bus.Publish(new JobProgress { RequestId = requestId, JobId = "job-2", Status = Status.Pending, Timestamp = DateTimeOffset.UtcNow });
-        _bus.Publish(new JobProgress { RequestId = requestId, JobId = "job-1", Status = Status.Running, Timestamp = DateTimeOffset.UtcNow });
+        _bus.Publish(Job(requestId, 1, Status.Pending));
+        _bus.Publish(Job(requestId, 2, Status.Pending));
+        _bus.Publish(Job(requestId, 1, Status.Running));
 
-        await WaitUntilAsync(() => _receivedJobs.Any(j => j.JobId == "job-1" && j.Status == Status.Running), TimeSpan.FromSeconds(3));
+        await WaitUntilAsync(() => _receivedJobs.Any(j => j.JobId == 1 && j.Status == Status.Running), TimeSpan.FromSeconds(3));
 
         _receivedRequests.Should().NotContain(r => r.RequestId == requestId && r.Phase == RequestPhase.ProcessingStarted);
 
-        _bus.Publish(new JobProgress { RequestId = requestId, JobId = "job-2", Status = Status.Running, Timestamp = DateTimeOffset.UtcNow });
+        _bus.Publish(Job(requestId, 2, Status.Running));
 
         await WaitUntilAsync(
             () => _receivedRequests.Any(r => r.RequestId == requestId && r.Phase == RequestPhase.ProcessingStarted),
@@ -158,30 +161,34 @@ public sealed class ProgressCoalescerTests : IAsyncDisposable
         }
     }
 
-    /// <summary>Minimal in-memory <see cref="IStudioRepository" /> fake — records what would have been upserted, does nothing else.</summary>
-    private sealed class FakeStudioRepository : IStudioRepository
+    /// <summary>
+    ///     Minimal in-memory <see cref="IJobsRepository" /> fake — <see cref="Enqueue" /> immediately raises
+    ///     <see cref="Flushed" /> (no real buffering/timer), since this test exercises the coalescer's
+    ///     wiring, not <c>BufferedRepository</c>'s own coalesce/flush behavior (covered separately).
+    /// </summary>
+    private sealed class FakeJobsRepository : IJobsRepository
     {
-        public readonly List<JobProgress> UpsertedJobs = [];
+        public readonly List<JobRecord> Enqueued = [];
 
-        public Task UpsertRequestAsync(RequestProgress progress, CancellationToken ct = default) => Task.CompletedTask;
-
-        public Task UpsertJobsAsync(IReadOnlyList<JobProgress> progress, CancellationToken ct = default)
+        public void Enqueue(JobRecord record)
         {
-            UpsertedJobs.AddRange(progress);
-            return Task.CompletedTask;
+            Enqueued.Add(record);
+            Flushed?.Invoke([record]);
         }
 
-        public Task UpsertRowsAsync(IReadOnlyList<RowProgress> progress, CancellationToken ct = default) => Task.CompletedTask;
+        public Task FlushAsync(CancellationToken ct = default) => Task.CompletedTask;
 
-        public Task<RequestProgress?> GetRequestAsync(string requestId, CancellationToken ct = default) =>
-            Task.FromResult<RequestProgress?>(null);
+        public event Action<IReadOnlyList<JobRecord>>? Flushed;
 
-        public Task<IReadOnlyDictionary<string, JobProgress>> GetJobsAsync(string requestId, CancellationToken ct = default) =>
-            Task.FromResult<IReadOnlyDictionary<string, JobProgress>>(new Dictionary<string, JobProgress>());
+        public Task<IReadOnlyList<JobRecord>> GetByRequestIdAsync(string requestId, CancellationToken ct = default) =>
+            Task.FromResult<IReadOnlyList<JobRecord>>(Enqueued.Where(j => j.RequestId == requestId).ToList());
 
-        public Task<IReadOnlyDictionary<int, RowProgress>> GetRowsAsync(string requestId, string jobId, CancellationToken ct = default) =>
-            Task.FromResult<IReadOnlyDictionary<int, RowProgress>>(new Dictionary<int, RowProgress>());
+        public Task<IReadOnlyList<JobRecord>> GetNonTerminalAsync(CancellationToken ct = default) =>
+            Task.FromResult<IReadOnlyList<JobRecord>>([]);
 
-        public Task DeleteRequestAsync(string requestId, CancellationToken ct = default) => Task.CompletedTask;
+        public Task<IReadOnlyList<JobRecord>> GetAllAsync(CancellationToken ct = default) =>
+            Task.FromResult<IReadOnlyList<JobRecord>>(Enqueued.ToList());
+
+        public Task DeleteByRequestIdAsync(string requestId, CancellationToken ct = default) => Task.CompletedTask;
     }
 }

@@ -38,8 +38,8 @@ namespace SlideGenerator.Generator.Abstractions
         /// <summary>Publishes a <see cref="RequestProgress" /> event to all registered observers.</summary>
         void Publish(RequestProgress progress);
 
-        /// <summary>Publishes a <see cref="JobProgress" /> event to all registered observers.</summary>
-        void Publish(JobProgress progress);
+        /// <summary>Publishes a <see cref="JobRecord" /> event to all registered observers.</summary>
+        void Publish(JobRecord job);
 
         /// <summary>Publishes a <see cref="RowProgress" /> event to all registered observers.</summary>
         void Publish(RowProgress progress);
