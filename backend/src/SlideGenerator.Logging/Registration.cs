@@ -15,8 +15,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
-using SlideGenerator.Logging.Abstractions;
-using SlideGenerator.Logging.Services;
+using SlideGenerator.Logging.FileLogging;
 
 namespace SlideGenerator.Logging;
 

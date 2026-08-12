@@ -14,13 +14,13 @@
 
 using System.Drawing;
 using Microsoft.Extensions.Logging;
-using SlideGenerator.Cloud.Models;
-using SlideGenerator.Document.Abstractions.Slide;
-using SlideGenerator.Document.Models.Sheet;
-using SlideGenerator.Document.Models.Slide;
+using SlideGenerator.Cloud;
+using SlideGenerator.Document.Slide;
+using SlideGenerator.Document.Workbook;
 using SlideGenerator.Generator.Abstractions;
 using SlideGenerator.Generator.Models.Enum;
-using SlideGenerator.Image.Models;
+using SlideGenerator.Image.Cropping;
+using SlideGenerator.Image.Loading;
 using SlideGenerator.Recipe.Models.Components;
 using SlideGenerator.Settings.Rules;
 using SlideGenerator.Utilities;

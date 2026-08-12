@@ -24,7 +24,7 @@ using SlideGenerator.Generator;
 using SlideGenerator.Image;
 using SlideGenerator.Logging;
 using SlideGenerator.Recipe;
-using SlideGenerator.Settings.Abstractions;
+using SlideGenerator.Settings.Config;
 using SlideGenerator.Settings.Rules;
 using SlideGenerator.Settings;
 using SlideGenerator.Summarization;

@@ -15,13 +15,13 @@
 using System.Drawing;
 using FluentAssertions;
 using NSubstitute;
-using SlideGenerator.Image.Abstractions;
-using SlideGenerator.Image.Models;
-using SlideGenerator.Image.Services;
 using Xunit;
 
 // ReSharper disable AccessToDisposedClosure
 
+using SlideGenerator.Image.Cropping;
+using SlideGenerator.Image.FaceDetection;
+using SlideGenerator.Image.Loading;
 namespace SlideGenerator.Image.Tests.Unit;
 
 /// <summary>

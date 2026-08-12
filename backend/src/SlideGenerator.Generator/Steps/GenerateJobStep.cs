@@ -14,16 +14,17 @@
 
 using Microsoft.Extensions.Logging;
 using Serilog.Context;
-using SlideGenerator.Cloud.Services;
-using SlideGenerator.Cloud.Models;
-using SlideGenerator.Document.Abstractions;
-using SlideGenerator.Document.Models.Slide;
+using SlideGenerator.Cloud;
+using SlideGenerator.Document.Slide;
+using SlideGenerator.Document.Template;
+using SlideGenerator.Document.Workbook;
 using SlideGenerator.Generator.Abstractions;
 using SlideGenerator.Generator.Models.Data;
 using SlideGenerator.Generator.Models.Enum;
-using SlideGenerator.Image.Abstractions;
+using SlideGenerator.Image.Cropping;
+using SlideGenerator.Image.Loading;
 using SlideGenerator.Recipe.Models;
-using SlideGenerator.Settings.Abstractions;
+using SlideGenerator.Settings.Config;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
 

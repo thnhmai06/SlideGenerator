@@ -16,8 +16,7 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Context;
-using SlideGenerator.Logging.Models;
-using SlideGenerator.Logging.Services;
+using SlideGenerator.Logging.FileLogging;
 using Xunit;
 
 namespace SlideGenerator.Logging.Tests.Unit;

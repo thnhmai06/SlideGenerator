@@ -12,11 +12,11 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Document.Models.Sheet;
-using SlideGenerator.Document.Models.Slide;
-using SlideGenerator.Summarization.Abstractions;
-using SlideGenerator.Summarization.Models.Sheet;
-using SlideGenerator.Summarization.Models.Slide;
+using SlideGenerator.Document.Slide;
+using SlideGenerator.Document.Workbook;
+using SlideGenerator.Summarization;
+using SlideGenerator.Summarization.Slide;
+using SlideGenerator.Summarization.Workbook;
 
 namespace SlideGenerator.Stdio.Handlers;
 

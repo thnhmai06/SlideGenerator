@@ -13,8 +13,6 @@
  */
 
 using Microsoft.Extensions.DependencyInjection;
-using SlideGenerator.Summarization.Abstractions;
-using SlideGenerator.Summarization.Services;
 
 namespace SlideGenerator.Summarization;
 

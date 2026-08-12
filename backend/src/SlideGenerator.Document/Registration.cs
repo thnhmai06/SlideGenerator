@@ -14,11 +14,10 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using SlideGenerator.Document.Abstractions;
-using SlideGenerator.Document.Services;
-using SlideGenerator.Document.Services;
+using SlideGenerator.Document.Slide;
+using SlideGenerator.Document.Template;
+using SlideGenerator.Document.Workbook;
 using Syncfusion.Licensing;
-using MustacheEngine = SlideGenerator.Document.Services.MustacheEngine;
 
 namespace SlideGenerator.Document;
 

@@ -13,8 +13,8 @@
  */
 
 using System.Drawing;
-using SlideGenerator.Document.Models.Sheet;
-using SlideGenerator.Document.Models.Slide;
+using SlideGenerator.Document.Slide;
+using SlideGenerator.Document.Workbook;
 using SlideGenerator.Recipe.Adapters;
 using SlideGenerator.Recipe.Models.Components;
 

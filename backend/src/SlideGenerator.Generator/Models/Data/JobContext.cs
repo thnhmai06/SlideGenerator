@@ -15,8 +15,8 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using SlideGenerator.Cloud.Models;
-using SlideGenerator.Document.Abstractions.Slide;
+using SlideGenerator.Cloud;
+using SlideGenerator.Document.Slide;
 
 namespace SlideGenerator.Generator.Models.Data;
 

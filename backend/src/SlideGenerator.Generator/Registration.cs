@@ -17,9 +17,8 @@ using SlideGenerator.Generator.Abstractions;
 using SlideGenerator.Generator.Steps;
 using SlideGenerator.Generator.Services;
 using GeneratorMiddleware = SlideGenerator.Generator.Middleware.Middleware;
-using SlideGenerator.Image.Abstractions;
-using SlideGenerator.Image.Services;
-using SlideGenerator.Settings.Abstractions;
+using SlideGenerator.Image.FaceDetection;
+using SlideGenerator.Settings.Config;
 using SlideGenerator.Settings.Rules;
 
 namespace SlideGenerator.Generator;
