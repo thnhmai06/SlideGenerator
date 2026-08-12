@@ -14,13 +14,12 @@
 
 using Microsoft.Extensions.Logging;
 using Serilog.Context;
-using SlideGenerator.Cloud.Services;
-using SlideGenerator.Cloud.Models;
-using SlideGenerator.Document.Services;
+using SlideGenerator.Cloud;
+using SlideGenerator.Document.Workbook;
 using SlideGenerator.Generator.Abstractions;
 using SlideGenerator.Generator.Models.Data;
 using SlideGenerator.Recipe.Models;
-using SlideGenerator.Settings.Abstractions;
+using SlideGenerator.Settings.Config;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
 

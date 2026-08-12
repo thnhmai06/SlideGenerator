@@ -14,10 +14,8 @@
 
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
-using SlideGenerator.Document.Adapters.Sheet;
-using SlideGenerator.Document.Adapters.Slide;
-using SlideGenerator.Document.Models.Sheet;
-using SlideGenerator.Document.Models.Slide;
+using SlideGenerator.Document.Slide;
+using SlideGenerator.Document.Workbook;
 using SlideGenerator.Generator.Models.Data;
 
 namespace SlideGenerator.Generator.Steps;

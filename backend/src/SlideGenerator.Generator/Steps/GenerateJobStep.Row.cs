@@ -14,11 +14,9 @@
 
 using Microsoft.Extensions.Logging;
 using Serilog.Context;
-using SlideGenerator.Document.Services;
-using SlideGenerator.Document.Adapters.Sheet;
-using SlideGenerator.Document.Adapters.Slide;
-using SlideGenerator.Document.Models.Sheet;
-using SlideGenerator.Document.Models.Slide;
+using SlideGenerator.Document.Slide;
+using SlideGenerator.Document.Template;
+using SlideGenerator.Document.Workbook;
 using SlideGenerator.Generator.Models.Enum;
 using SlideGenerator.Recipe.Models;
 using SlideGenerator.Recipe.Models.Components;
