@@ -13,11 +13,10 @@
  */
 
 using Microsoft.Extensions.Logging.Abstractions;
-using SlideGenerator.Image.Abstractions;
-using SlideGenerator.Image.Services;
-using SlideGenerator.Image.Adapters;
-using SlideGenerator.Image.Services;
 
+using SlideGenerator.Image.Cropping;
+using SlideGenerator.Image.FaceDetection;
+using SlideGenerator.Image.Loading;
 namespace SlideGenerator.Image.Tests.Integration.Fixtures;
 
 /// <summary>

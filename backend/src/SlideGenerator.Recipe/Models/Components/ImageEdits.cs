@@ -12,7 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Image.Models;
+using SlideGenerator.Image.Cropping;
 
 namespace SlideGenerator.Recipe.Models.Components;
 

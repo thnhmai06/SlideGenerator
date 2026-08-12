@@ -15,8 +15,8 @@
 using System.Drawing;
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
-using SlideGenerator.Document.Models.Sheet;
-using SlideGenerator.Document.Models.Slide;
+using SlideGenerator.Document.Workbook;
+using SlideGenerator.Document.Slide;
 using SlideGenerator.Recipe.Models;
 using SlideGenerator.Recipe.Services;
 using Xunit;

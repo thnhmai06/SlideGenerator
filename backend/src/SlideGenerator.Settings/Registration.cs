@@ -14,8 +14,7 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using SlideGenerator.Settings.Abstractions;
-using SlideGenerator.Settings.Services;
+using SlideGenerator.Settings.Config;
 
 namespace SlideGenerator.Settings;
 
@@ -25,16 +24,13 @@ namespace SlideGenerator.Settings;
 public static class Registration
 {
     /// <summary>
-    ///     Adds settings management, serialization, and provider services to the service collection.
+    ///     Adds settings management and provider services to the service collection.
     /// </summary>
     /// <param name="services">The service collection to add the services to.</param>
     /// <returns>The updated service collection.</returns>
     public static IServiceCollection AddSettingsServices(this IServiceCollection services)
     {
-        services.AddSingleton<ISerializer, YamlSerializer>();
-
         services.AddSingleton<ISettingManager>(sp => new SettingManager(
-            sp.GetRequiredService<ISerializer>(),
             sp.GetService<ILogger<SettingManager>>()));
         services.AddSingleton<ISettingProvider>(sp => sp.GetRequiredService<ISettingManager>());
         return services;

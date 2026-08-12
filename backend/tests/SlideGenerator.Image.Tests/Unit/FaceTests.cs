@@ -14,9 +14,11 @@
 
 using System.Drawing;
 using FluentAssertions;
-using SlideGenerator.Image.Models;
 using Xunit;
 
+using SlideGenerator.Image.Cropping;
+using SlideGenerator.Image.FaceDetection;
+using SlideGenerator.Image.Loading;
 namespace SlideGenerator.Image.Tests.Unit;
 
 /// <summary>

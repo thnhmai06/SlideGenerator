@@ -12,7 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Document.Models.Sheet;
+using SlideGenerator.Document.Workbook;
 
 namespace SlideGenerator.Recipe.Models.Components;
 

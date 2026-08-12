@@ -15,36 +15,35 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using NSubstitute;
-using SlideGenerator.Settings.Abstractions;
-using SlideGenerator.Settings.Models;
-using SlideGenerator.Settings.Rules;
-using SlideGenerator.Settings.Services;
+using SlideGenerator.Settings.Config;
 using Xunit;
 
 namespace SlideGenerator.Settings.Tests.Unit;
 
 /// <summary>
-///     Unit tests for <see cref="SettingManager" />, verifying load/save lifecycle,
-///     defaults reset, and state propagation. Each test runs in isolation using a unique temporary file path.
+///     Unit tests for <see cref="SettingManager" />, verifying load/save lifecycle (including real
+///     YAML round-tripping to disk), defaults reset, and state propagation. Each test runs in
+///     isolation against a unique temp file path (via the test-only <c>filePath</c> constructor
+///     override), never touching the real user settings file.
 /// </summary>
 public sealed class SettingManagerTests : IDisposable
 {
     private static readonly Setting DefaultSetting = new();
     private readonly ILogger<SettingManager> _logger = NullLogger<SettingManager>.Instance;
     private readonly SettingManager _manager;
-    private readonly ISerializer _serializer = Substitute.For<ISerializer>();
     private readonly string _testFilePath;
 
+    /// <summary>
+    ///     Initializes a new <see cref="SettingManager" /> pointed at a unique temp file so tests
+    ///     never collide with each other or with the real settings file.
+    /// </summary>
     public SettingManagerTests()
     {
-        var testExt = $".test{Guid.NewGuid():N}";
-        _serializer.FileExtension.Returns(testExt);
-        _testFilePath = NameAndPaths.SettingsFile.GetFilePath(testExt);
-        Directory.CreateDirectory(Path.GetDirectoryName(_testFilePath)!);
-        _manager = new SettingManager(_serializer, _logger);
+        _testFilePath = Path.Combine(Path.GetTempPath(), $"SlideGeneratorSettingsTest_{Guid.NewGuid():N}.yaml");
+        _manager = new SettingManager(_logger, _testFilePath);
     }
 
+    /// <summary>Deletes the temp settings file created by the test, if any.</summary>
     public void Dispose()
     {
         if (File.Exists(_testFilePath))
@@ -60,7 +59,6 @@ public sealed class SettingManagerTests : IDisposable
     [Fact]
     public async Task ResetToDefaults_WithCustomSetting_SetsCurrentToDefault()
     {
-        _serializer.Serialize(Arg.Any<Setting>()).Returns("serialized-content");
         var custom = new Setting
         {
             Performance = new Setting.PerformanceSetting { MaxConcurrentJobs = 42u }
@@ -78,12 +76,11 @@ public sealed class SettingManagerTests : IDisposable
 
     /// <summary>
     ///     Verifies that <see cref="SettingManager.Update" /> replaces <see cref="SettingManager.Current" />
-    ///     with the supplied <see cref="Setting" /> instance and persists it by calling the serializer.
+    ///     with the supplied <see cref="Setting" /> instance and persists it to disk as YAML.
     /// </summary>
     [Fact]
-    public async Task Update_NewSetting_UpdatesCurrentAndPersists()
+    public async Task Update_NewSetting_UpdatesCurrentAndPersistsToDisk()
     {
-        _serializer.Serialize(Arg.Any<Setting>()).Returns("serialized-content");
         var newSetting = new Setting
         {
             Performance = new Setting.PerformanceSetting { MaxConcurrentJobs = 7u }
@@ -92,7 +89,8 @@ public sealed class SettingManagerTests : IDisposable
         await _manager.Update(newSetting);
 
         _manager.Current.Should().Be(newSetting);
-        _serializer.Received(1).Serialize(Arg.Any<Setting>());
+        File.Exists(_testFilePath).Should().BeTrue();
+        (await File.ReadAllTextAsync(_testFilePath)).Should().NotBeNullOrWhiteSpace();
     }
 
     #endregion
@@ -100,11 +98,11 @@ public sealed class SettingManagerTests : IDisposable
     #region Save
 
     /// <summary>
-    ///     Verifies that <see cref="SettingManager.Save" /> passes <see cref="SettingManager.Current" /> directly
-    ///     to the serializer without any transformation.
+    ///     Verifies that <see cref="SettingManager.Save" /> writes <see cref="SettingManager.Current" />'s
+    ///     field values to disk without any transformation.
     /// </summary>
     [Fact]
-    public async Task Save_CurrentSetting_SerializesDirectly()
+    public async Task Save_CurrentSetting_WritesFieldsToDisk()
     {
         var setting = new Setting
         {
@@ -113,12 +111,11 @@ public sealed class SettingManagerTests : IDisposable
                 Proxy = new Setting.Proxy { Password = "plain-text" }
             }
         };
-        _serializer.Serialize(Arg.Any<Setting>()).Returns("serialized-content");
 
         await _manager.Update(setting);
 
-        _serializer.Received(1).Serialize(Arg.Is<Setting>(s =>
-            s.Network.Proxy.Password == "plain-text"));
+        var content = await File.ReadAllTextAsync(_testFilePath);
+        content.Should().Contain("plain-text");
     }
 
     #endregion
@@ -142,17 +139,16 @@ public sealed class SettingManagerTests : IDisposable
 
     /// <summary>
     ///     Verifies that <see cref="SettingManager.Load" /> returns <see langword="true" /> when the settings file
-    ///     exists, deserializes its content, and updates <see cref="SettingManager.Current" />.
+    ///     exists, deserializes its YAML content, and updates <see cref="SettingManager.Current" />.
     /// </summary>
     [Fact]
     public async Task Load_SettingsFilePresent_ReturnsTrueAndUpdatesCurrent()
     {
-        var expected = new Setting
+        var writer = new SettingManager(_logger, _testFilePath);
+        await writer.Update(new Setting
         {
             Performance = new Setting.PerformanceSetting { MaxConcurrentJobs = 99u }
-        };
-        await File.WriteAllTextAsync(_testFilePath, "serialized-content", TestContext.Current.CancellationToken);
-        _serializer.Deserialize<Setting>("serialized-content").Returns(expected);
+        });
 
         var result = await _manager.Load();
 

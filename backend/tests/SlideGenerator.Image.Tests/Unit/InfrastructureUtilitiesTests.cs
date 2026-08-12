@@ -15,11 +15,12 @@
 using System.Drawing;
 using FluentAssertions;
 using NetVips;
-using SlideGenerator.Image.Models;
-using SlideGenerator.Image.Adapters;
 using Xunit;
 using OpenCvSize = OpenCvSharp.Size;
 
+using SlideGenerator.Image.Cropping;
+using SlideGenerator.Image.FaceDetection;
+using SlideGenerator.Image.Loading;
 namespace SlideGenerator.Image.Tests.Unit;
 
 /// <summary>

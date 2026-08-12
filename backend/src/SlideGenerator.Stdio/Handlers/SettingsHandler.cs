@@ -12,8 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Settings.Abstractions;
-using SlideGenerator.Settings.Models;
+using SlideGenerator.Settings.Config;
 
 namespace SlideGenerator.Stdio.Handlers;
 

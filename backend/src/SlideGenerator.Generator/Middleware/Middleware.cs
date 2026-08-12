@@ -15,7 +15,7 @@
 using Serilog.Events;
 using SlideGenerator.Generator.Abstractions;
 using SlideGenerator.Generator.Models.Data;
-using SlideGenerator.Logging.Abstractions;
+using SlideGenerator.Logging.FileLogging;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
 

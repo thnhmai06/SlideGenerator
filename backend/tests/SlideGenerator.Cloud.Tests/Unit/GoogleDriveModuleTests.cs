@@ -14,7 +14,7 @@
 
 using System.Net;
 using FluentAssertions;
-using SlideGenerator.Cloud.Services;
+using SlideGenerator.Cloud.Resolver;
 using SlideGenerator.Cloud.Tests.Helpers;
 using Xunit;
 
