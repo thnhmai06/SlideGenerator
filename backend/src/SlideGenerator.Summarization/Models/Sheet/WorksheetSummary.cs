@@ -14,7 +14,7 @@
 
 using SlideGenerator.Document.Domain.Models.Sheet;
 
-namespace SlideGenerator.Summarization.Domain.Models.Sheet;
+namespace SlideGenerator.Summarization.Models.Sheet;
 
 public sealed record WorksheetSummary(
     WorkbookIdentifier Book,

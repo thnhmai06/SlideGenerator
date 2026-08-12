@@ -15,12 +15,12 @@
 using SlideGenerator.Document.Application.Abstractions;
 using SlideGenerator.Document.Domain.Models.Sheet;
 using SlideGenerator.Document.Domain.Models.Slide;
-using SlideGenerator.Summarization.Application.Abstractions;
-using SlideGenerator.Summarization.Domain.Models.Sheet;
-using SlideGenerator.Summarization.Domain.Models.Slide;
-using SlideGenerator.Summarization.Domain.Rules;
+using SlideGenerator.Summarization.Abstractions;
+using SlideGenerator.Summarization.Models.Sheet;
+using SlideGenerator.Summarization.Models.Slide;
+using SlideGenerator.Summarization.Rules;
 
-namespace SlideGenerator.Summarization.Application.Services;
+namespace SlideGenerator.Summarization.Services;
 
 /// <summary>
 ///     Provides discovery services for Excel workbooks and PowerPoint presentations.

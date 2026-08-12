@@ -27,7 +27,7 @@ using SlideGenerator.Recipe.Injection;
 using SlideGenerator.Settings.Abstractions;
 using SlideGenerator.Settings.Rules;
 using SlideGenerator.Settings;
-using SlideGenerator.Summarization.Injection;
+using SlideGenerator.Summarization;
 
 namespace SlideGenerator.Stdio;
 

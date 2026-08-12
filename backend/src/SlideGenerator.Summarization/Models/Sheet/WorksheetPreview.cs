@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Summarization
- * File: SlideSummary.cs
+ * File: WorksheetPreview.cs
  *
  * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -12,13 +12,6 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Document.Domain.Models.Slide;
+namespace SlideGenerator.Summarization.Models.Sheet;
 
-namespace SlideGenerator.Summarization.Domain.Models.Slide;
-
-public sealed record SlideSummary(
-    PresentationIdentifier Presentation,
-    SlideIdentifier Slide,
-    IReadOnlyList<string> Placeholders,
-    IReadOnlyList<ShapeSummary> ImageShapes,
-    byte[]? Preview);
+public record WorksheetPreview(IReadOnlyList<string> Headers, IReadOnlyList<IReadOnlyList<string>> Rows);

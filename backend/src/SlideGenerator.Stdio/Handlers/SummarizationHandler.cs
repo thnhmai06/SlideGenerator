@@ -14,9 +14,9 @@
 
 using SlideGenerator.Document.Domain.Models.Sheet;
 using SlideGenerator.Document.Domain.Models.Slide;
-using SlideGenerator.Summarization.Application.Abstractions;
-using SlideGenerator.Summarization.Domain.Models.Sheet;
-using SlideGenerator.Summarization.Domain.Models.Slide;
+using SlideGenerator.Summarization.Abstractions;
+using SlideGenerator.Summarization.Models.Sheet;
+using SlideGenerator.Summarization.Models.Slide;
 
 namespace SlideGenerator.Stdio.Handlers;
 

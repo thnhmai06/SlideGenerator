@@ -12,6 +12,6 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Summarization.Domain.Models.Slide;
+namespace SlideGenerator.Summarization.Models.Slide;
 
 public record PresentationSummary(string PresentationPath, IReadOnlyList<SlideSummary> Slides);

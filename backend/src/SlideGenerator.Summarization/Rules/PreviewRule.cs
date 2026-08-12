@@ -12,7 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Summarization.Domain.Rules;
+namespace SlideGenerator.Summarization.Rules;
 
 /// <summary>
 ///     Contains rules related to preview configurations for summarization operations.

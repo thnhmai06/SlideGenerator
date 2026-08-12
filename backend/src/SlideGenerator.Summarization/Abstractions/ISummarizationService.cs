@@ -14,10 +14,10 @@
 
 using SlideGenerator.Document.Domain.Models.Sheet;
 using SlideGenerator.Document.Domain.Models.Slide;
-using SlideGenerator.Summarization.Domain.Models.Sheet;
-using SlideGenerator.Summarization.Domain.Models.Slide;
+using SlideGenerator.Summarization.Models.Sheet;
+using SlideGenerator.Summarization.Models.Slide;
 
-namespace SlideGenerator.Summarization.Application.Abstractions;
+namespace SlideGenerator.Summarization.Abstractions;
 
 /// <summary>
 ///     Provides methods to analyze and summarize the structure of Excel workbooks and PowerPoint presentations.

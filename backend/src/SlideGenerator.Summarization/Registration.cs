@@ -13,10 +13,10 @@
  */
 
 using Microsoft.Extensions.DependencyInjection;
-using SlideGenerator.Summarization.Application.Abstractions;
-using SlideGenerator.Summarization.Application.Services;
+using SlideGenerator.Summarization.Abstractions;
+using SlideGenerator.Summarization.Services;
 
-namespace SlideGenerator.Summarization.Injection;
+namespace SlideGenerator.Summarization;
 
 /// <summary>
 ///     Provides extension methods to register scanning services into the dependency injection container.
