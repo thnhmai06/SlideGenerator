@@ -13,7 +13,7 @@
  */
 
 using System.Drawing;
-using SlideGenerator.Image.Entities;
+using SlideGenerator.Image.Models;
 using NetVipsEnums = NetVips.Enums;
 using NetVipsImage = NetVips.Image;
 using Size = System.Drawing.Size;

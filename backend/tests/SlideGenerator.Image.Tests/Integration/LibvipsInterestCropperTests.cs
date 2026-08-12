@@ -16,7 +16,6 @@ using System.Drawing;
 using FluentAssertions;
 using NSubstitute;
 using SlideGenerator.Image.Models;
-using SlideGenerator.Image.Entities;
 using SlideGenerator.Image.Adapters;
 using SlideGenerator.Image.Services;
 using Xunit;

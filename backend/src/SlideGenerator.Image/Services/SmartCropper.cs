@@ -16,7 +16,6 @@ using System.Drawing;
 using Microsoft.Extensions.Logging;
 using SlideGenerator.Image.Abstractions;
 using SlideGenerator.Image.Models;
-using SlideGenerator.Image.Entities;
 
 namespace SlideGenerator.Image.Services;
 

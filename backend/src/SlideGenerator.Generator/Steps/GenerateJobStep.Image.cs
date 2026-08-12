@@ -20,7 +20,7 @@ using SlideGenerator.Document.Models.Sheet;
 using SlideGenerator.Document.Models.Slide;
 using SlideGenerator.Generator.Abstractions;
 using SlideGenerator.Generator.Models.Enum;
-using SlideGenerator.Image.Entities;
+using SlideGenerator.Image.Models;
 using SlideGenerator.Recipe.Models.Components;
 using SlideGenerator.Settings.Rules;
 using SlideGenerator.Utilities;

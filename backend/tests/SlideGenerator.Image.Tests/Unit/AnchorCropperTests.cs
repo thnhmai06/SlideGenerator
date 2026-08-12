@@ -19,8 +19,6 @@ using NSubstitute;
 using SlideGenerator.Image.Abstractions;
 using SlideGenerator.Image.Models;
 using SlideGenerator.Image.Services;
-using SlideGenerator.Image.Entities;
-using SlideGenerator.Image.Models;
 using Xunit;
 
 namespace SlideGenerator.Image.Tests.Unit;

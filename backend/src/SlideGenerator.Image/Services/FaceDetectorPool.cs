@@ -13,7 +13,6 @@
  */
 
 using SlideGenerator.Image.Abstractions;
-using SlideGenerator.Image.Entities;
 using SlideGenerator.Image.Models;
 using SlideGenerator.Utilities;
 

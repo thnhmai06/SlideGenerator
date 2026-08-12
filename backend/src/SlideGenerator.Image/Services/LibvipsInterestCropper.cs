@@ -15,7 +15,6 @@
 using System.Drawing;
 using SlideGenerator.Image.Abstractions;
 using SlideGenerator.Image.Models;
-using SlideGenerator.Image.Entities;
 using SlideGenerator.Image.Adapters;
 using NetVipsEnums = NetVips.Enums;
 using NetVipsImage = NetVips.Image;

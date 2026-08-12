@@ -14,7 +14,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using SlideGenerator.Image.Abstractions;
-using SlideGenerator.Image.Entities;
+using SlideGenerator.Image.Models;
 using SlideGenerator.Image.Adapters;
 using NetVipsImage = NetVips.Image;
 

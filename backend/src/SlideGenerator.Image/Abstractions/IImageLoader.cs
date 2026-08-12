@@ -13,7 +13,7 @@
  */
 
 using System.Diagnostics.CodeAnalysis;
-using SlideGenerator.Image.Entities;
+using SlideGenerator.Image.Models;
 
 namespace SlideGenerator.Image.Abstractions;
 

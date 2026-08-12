@@ -15,7 +15,7 @@
 using FluentAssertions;
 using NSubstitute;
 using SlideGenerator.Image.Abstractions;
-using SlideGenerator.Image.Entities;
+using SlideGenerator.Image.Models;
 using SlideGenerator.Image.Tests.Integration.Fixtures;
 using Xunit;
 
@@ -130,7 +130,7 @@ public sealed class FaceDetectionIntegrationTests(FaceDatasetFixture dataset, Im
 
     /// <summary>
     ///     Verifies that <see cref="IFaceDetector.DetectAsync" /> returns an empty list without
-    ///     throwing when the image's <see cref="SlideGenerator.Image.Entities.IImage.ToPng()" />
+    ///     throwing when the image's <see cref="SlideGenerator.Image.Models.IImage.ToPng()" />
     ///     returns an empty byte array.
     /// </summary>
     [Fact]

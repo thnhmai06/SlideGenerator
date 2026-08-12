@@ -14,7 +14,6 @@
 
 using System.Drawing;
 using SlideGenerator.Image.Models;
-using SlideGenerator.Image.Entities;
 
 namespace SlideGenerator.Image.Abstractions;
 

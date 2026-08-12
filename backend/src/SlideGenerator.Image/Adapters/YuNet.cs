@@ -16,7 +16,6 @@ using System.Drawing;
 using OpenCvSharp;
 using SlideGenerator.Image.Abstractions;
 using SlideGenerator.Image;
-using SlideGenerator.Image.Entities;
 using SlideGenerator.Image.Models;
 using Point = System.Drawing.Point;
 using Size = OpenCvSharp.Size;

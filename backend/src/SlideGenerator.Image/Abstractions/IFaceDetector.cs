@@ -12,7 +12,6 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Image.Entities;
 using SlideGenerator.Image.Models;
 
 namespace SlideGenerator.Image.Abstractions;

@@ -12,7 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Image.Entities;
+namespace SlideGenerator.Image.Models;
 
 /// <summary>
 ///     Represents metadata of an image, including its dimensions.

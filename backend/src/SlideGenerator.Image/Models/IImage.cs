@@ -14,7 +14,7 @@
 
 using System.Drawing;
 
-namespace SlideGenerator.Image.Entities;
+namespace SlideGenerator.Image.Models;
 
 /// <summary>
 ///     Represents an abstract image that can be manipulated and queried.
