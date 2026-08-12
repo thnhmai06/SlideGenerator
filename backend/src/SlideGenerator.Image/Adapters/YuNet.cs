@@ -29,7 +29,7 @@ namespace SlideGenerator.Image.Adapters;
 internal sealed class YuNet : IFaceDetector
 {
     private static readonly string ModelPath =
-        Path.Combine(AppContext.BaseDirectory, "Infrastructure", "Binary", "YuNet.onnx");
+        Path.Combine(AppContext.BaseDirectory, "Binary", "YuNet.onnx");
 
     private readonly FaceDetectorYN _core;
     private readonly Lock _detectLock = new();
