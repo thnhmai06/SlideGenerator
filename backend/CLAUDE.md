@@ -167,9 +167,10 @@ Host
 ### Dependency Rules
 
 - Dependencies flow downward only — no circular references.
-- Each module has `Injection/Registration.cs` (or root `Registration.cs`) as DI entry point.
+- Each module has a root `Registration.cs` as DI entry point.
 - `SlideGenerator.Stdio` is the executable that wires all modules.
-- Exception: `SlideGenerator.Generator` permits `Application/` and `Domain/` layers to depend on WorkflowCore directly.
+- Exception: `SlideGenerator.Generator`'s `Steps/`, `Workflows/`, and `Models/` folders permit depending on
+  WorkflowCore directly.
 
 ## DI Registration Methods
 
@@ -242,19 +243,19 @@ shutdown in `Program.Startup.cs`) flushes one last time before cancelling the ti
 buffered progress/logs isn't dropped.
 
 `GeneratingEventBus` (in `Implementations/GeneratingEventBus.cs`) is registered as both `GeneratingEventBus` (concrete)
-and `IEventBus` (interface, `SlideGenerator.Generator.Application.Abstractions.IEventBus`) in the Stdio
+and `IEventBus` (interface, `SlideGenerator.Generator.Abstractions.IEventBus`) in the Stdio
 `Registration.cs` so that `ProgressCoalescer.Attach` can receive the concrete type. `LogNotifier`/`ILogNotifier`
 mirror the same pattern for log lines (see **Logging scope notifications** below).
 
 ### STJ adapters
 
-`Infrastructure/Adapters/` contains custom STJ converters registered in `BuildJsonSerializerOptions()`
+`Implementations/Adapters/` contains custom STJ converters registered in `BuildJsonSerializerOptions()`
 (`JsonRpcBootstrap.cs`):
 
 - `RoiOptionJsonAdapter` — polymorphic `RoiOption` discriminated by `"type"` (`"Center"` | `"RuleOfThirds"`)
 - `RectangleFJsonAdapter` — `RectangleF` as `{"x", "y", "width", "height"}`
 - `Vector2JsonConverter` (in `Implementations/Adapters/`)
-- `NodeJsonConverter` (from `SlideGenerator.Recipe.Infrastructure.Adapters`)
+- `NodeJsonConverter` (from `SlideGenerator.Recipe.Adapters`)
 
 `JsonStringEnumConverter` is registered globally — all enums serialize as strings automatically.
 
@@ -310,7 +311,7 @@ parallel across the whole app.
 `WorkflowConsumer` (not snapshotted at `Start()`), set via the public `WorkflowOptions.UseMaxConcurrentWorkflows(int)`
 method — never assign the field directly (it isn't accessible outside the WorkflowCore assembly).
 
-`Service.ApplyMaxConcurrentJobs()` (private, `Infrastructure/Services/Service.cs`) calls
+`Service.ApplyMaxConcurrentJobs()` (private, `Services/Service.cs`) calls
 `workflowOptions.UseMaxConcurrentWorkflows((int)settingProvider.Current.Performance.MaxConcurrentJobs)` — called once
 in `InitializeAsync` (startup) and again at the start of every `CreateAsync` call. It is **not** on `IService` and
 `SettingsHandler` does not call it — `Service` reads `ISettingProvider` itself rather than being told to re-apply
@@ -343,7 +344,7 @@ only at system boundaries (file I/O, Syncfusion API).
 
 ## Workflow System (WorkflowCore)
 
-**One `Job` = one WorkflowCore instance.** `JobWorkflow` (`Application/Workflows/JobWorkflow.cs`, implements
+**One `Job` = one WorkflowCore instance.** `JobWorkflow` (`Workflows/JobWorkflow.cs`, implements
 `IWorkflow<JobContext>`) is the **only** workflow type registered with WorkflowCore:
 
 ```
@@ -351,11 +352,11 @@ PreflightCleanup → InspectUrlsStep → GenerateJobStep
 ```
 
 There is no `ForEach`/barrier orchestration inside WorkflowCore anymore — each job runs to completion independently
-in its own instance. `Phase` enum (`Application/Workflows/JobWorkflow.cs`) has 2 values: `Preparation` (only
+in its own instance. `Phase` enum (`Workflows/JobWorkflow.cs`) has 2 values: `Preparation` (only
 `PreflightCleanup` maps here now), `Generation` (`GenerateJobStep`); `InspectUrlsStep` still maps to no phase (`null`,
 a pre-existing gap, out of scope).
 
-**Spawn phase — deliberately NOT a WorkflowCore workflow**: `Service.CreateAsync` (`Infrastructure/Services/Service.cs`)
+**Spawn phase — deliberately NOT a WorkflowCore workflow**: `Service.CreateAsync` (`Services/Service.cs`)
 reads the recipe, computes the job list (`Service.BuildJobs`, internal static — a plain recipe-graph-to-`List<Job>`
 flattening), and loops `workflowHost.StartWorkflow(nameof(JobWorkflow), 1, jobContext)` once per job — all as plain
 async C# code, not itself a workflow instance. This is intentional: if spawning were itself a WorkflowCore workflow,
@@ -377,18 +378,18 @@ found — this is what actually prevents the (very narrow) race where jobs orpha
 C# `foreach`, `Parallel.ForEach`, or `Task.WhenAll` inside a Step. (This no longer applies to the top-level job list —
 that's spawned via a plain loop in `Service.CreateAsync`, not inside a Step.)
 
-**Data model** (`Domain/Models/Contexts/`): `JobContext` splits into `JobPersistContext` (serialized: `RequestId` —
-groups every `JobWorkflow` instance spawned for the same request, `Request`, `Recipe`, `LogPath`, `Job` — a single
-job, not a dictionary, `InspectedUrls: ConcurrentDictionary<string, ContentInfo?>` — scoped to just this one job now)
-and `TransientContext` (`LoggerFactory`, `TemplateSlides`). `Job` (`Domain/Models/Contexts/Job.cs`, unchanged) has
-nested `WorkbookRef`/`PresentationRef` records.
+**Data model** (`Models/Data/`): `JobContext` splits into `JobPersistContext` (serialized: `RequestId` —
+groups every `JobWorkflow` instance spawned for the same request, `Request`, `Recipe`, `LogPath`, `Specification` —
+a single `JobSpecification`, not a dictionary, `InspectedUrls: ConcurrentDictionary<string, ContentInfo?>` — scoped
+to just this one job now) and `TransientContext` (`LoggerFactory`, `TemplateSlides`). `JobSpecification`
+(`Models/Data/JobSpecification.cs`) has nested `WorkbookRef`/`PresentationRef` records.
 
 **Persistence**: WorkflowCore persists `JobPersistContext` to SQLite (`%LOCALAPPDATA%\SlideGenerator\Data\Workflows.db`)
 via Newtonsoft.Json, one row per job. Fields that cannot serialize (file handles, `ILoggerFactory`) live on
 `TransientContext` and/or carry `[Newtonsoft.Json.JsonIgnore]`. Handles are lazily reopened after resume via
-`GetOrOpenWorkbook`/`GetOrOpenPresentation`/`GetOrOpenOutput` extension methods in `Application/Utilities.cs`.
+`GetOrOpenWorkbook`/`GetOrOpenPresentation`/`GetOrOpenOutput` extension methods in `Utilities.cs`.
 
-**Step middleware** (registered in `AddGeneratorServices`), in `Infrastructure/Middleware/Middleware.cs` — the only
+**Step middleware** (registered in `AddGeneratorServices`), in `Middleware/Middleware.cs` — the only
 step middleware left (`ProgressMiddleware` was removed; step-completion is no longer a Progress concept, see
 **Progress model** below):
 
@@ -406,7 +407,7 @@ and grouping by `Persist.RequestId` — no dedicated record type; the `RequestId
 mirroring how `Summary` itself carries no `RequestId` field (see below). `Service.DeriveStatus` (internal static)
 aggregates each group's N `WorkflowInstance.Status` values into one request-level `Status`: any `Runnable` →
 `Running`; else any `Suspended` → `Paused`; else all `Terminated` → `Cancelled`; else → `Complete` (covers
-all-`Complete` and mixed `Complete`+`Terminated`). `Summary` (`Domain/Models/Summary.cs`) has no `RequestId` field of
+all-`Complete` and mixed `Complete`+`Terminated`). `Summary` (`Models/Data/Summary.cs`) has no `RequestId` field of
 its own — `IService.ListActiveAsync`/`ListCompletedAsync` return `IReadOnlyDictionary<string, Summary>` keyed by
 `RequestId` instead, so the id lives only as the dictionary key, never duplicated onto the value. `Summary` is
 otherwise two-level: request-level fields (the original submitted `Request` — carries `Name`/`RecipeId`/etc., no
@@ -444,7 +445,7 @@ at spawn time and logs `Job spawned | JobId: {JobId} | OutputPath: {OutputPath}`
 first becomes known, before it's later referenced as `JobId` in `Progress` (see below) or as `WorkflowInstance.Id`
 inside a `Summary.Jobs` entry.
 
-**Progress model** (`Domain/Models/Data/Progress.cs`) is 3 separate records, one per scope, each published through a
+**Progress model** (`Models/Data/Progress.cs`) is 3 separate records, one per scope, each published through a
 matching `IEventBus.Publish` overload — there is no single flat event type anymore:
 
 - `RequestProgress` — `RequestId`, `Phase` (`RequestPhase`: `PreparationStarted` | `ProcessingStarted` | `Completed`,
@@ -459,7 +460,7 @@ matching `IEventBus.Publish` overload — there is no single flat event type any
   happen inside the per-row loop; the old job-level stages `OpeningWorkbook`/`OpeningPresentation`/`LoadTemplate`/
   `CleaningUpOutput` are now plain `ILogger` calls, not Progress, since `JobProgress` carries no `Stage`), `Note`
   (free text — e.g. the URL being downloaded, or a row's failure message), `Timestamp`. Published exclusively via
-  `StepProgress` (`Application/StepProgress.cs`) — a per-step-execution helper constructed once via
+  `StepProgress` (`StepProgress.cs`) — a per-step-execution helper constructed once via
   `StepProgress.From(eventBus, requestId, jobId)` at the top of `GenerateJobStep.RunAsync`, then threaded through
   partial-file helper methods as a captured field, exposing `ReportRow(rowIndex, status, stage, note)` (one call per
   row/image, like a logger call) and `SeedRows(rowIndices)` (pre-seeds every remaining row as `Waiting` in one batch
@@ -483,8 +484,8 @@ transition).
 
 ### Studio.db — Progress persistence
 
-`IStudioRepository`/`StudioRepository` (`Application/Abstractions/IStudioRepository.cs`,
-`Infrastructure/Services/StudioRepository.cs`) persist current-state Progress (UPSERT semantics) to
+`IStudioRepository`/`StudioRepository` (`Abstractions/IStudioRepository.cs`,
+`Services/StudioRepository.cs`) persist current-state Progress (UPSERT semantics) to
 `NameAndPaths.DataFolder.StudioFile` (`%LOCALAPPDATA%\SlideGenerator\Data\Studio.db`, WAL mode — same
 short-lived-connection-per-operation pattern as `SqliteCache`/`RecipeRepository`), 3 tables (`Requests`/`Jobs`/`Rows`,
 composite primary keys, `ON CONFLICT DO UPDATE`). Every upsert method is batch-shaped — `ProgressCoalescer` gathers
@@ -524,7 +525,7 @@ notification.
 
 `Service.ToSummaryAsync`/`ToJobSummaryAsync` populate `Summary.Logs`/`JobSummary.Logs`/`RowSummary.Logs` by reading
 the `.log` file straight off disk on every call, via `ILogFileReader`/`LogFileReader`
-(`Infrastructure/Services/LogFileReader.cs` — a regex parser matching `FileLogFormatter`'s line shape) and filtering
+(`Services/LogFileReader.cs` — a regex parser matching `FileLogFormatter`'s line shape) and filtering
 by scope-path prefix. Deliberately **not** cached in RAM — accumulating every log line for a long-running, high-volume
 job risks unbounded memory growth, and `ListActiveAsync`/`ListCompletedAsync` isn't polled often enough for the
 per-call file scan to matter.
@@ -608,31 +609,33 @@ files (see `PreflightCleanupTests.cs`).
 
 ## Development Patterns
 
-### Folder structure (Clean Architecture)
+### Folder structure (flat, functional)
 
-All modules follow a layered folder layout:
+Every module (10/10, no exceptions) uses a flat, functional-folder layout at its project root — no
+Domain/Application/Infrastructure/Injection layer split:
 
 ```
-Domain/
-  Abstractions/   — domain interfaces (port definitions owned by domain)
-  Models/         — records, enums, value objects
-Application/
-  Abstractions/   — use-case interfaces (input/output ports)
-  Services/       — use-case implementations
-  Steps/          — WorkflowCore step bodies (Generator only)
-  Workflows/      — WorkflowCore workflow definitions (Generator only)
-Infrastructure/
-  Adapters/       — anti-corruption wrappers around external libs
-  Services/       — infrastructure implementations (DB, HTTP, file)
-  Middleware/     — WorkflowCore step middleware (Generator only)
-Injection/
-  Registration.cs — DI entry point
+Abstractions/    — interfaces (domain contracts and use-case ports alike)
+Models/          — records, enums, value objects
+Rules/           — domain/business rule helpers
+Services/        — implementations (use-case and infrastructure alike — DB, HTTP, file)
+Adapters/        — anti-corruption wrappers around external libs
+Steps/           — WorkflowCore step bodies (Generator only)
+Workflows/       — WorkflowCore workflow definitions (Generator only)
+Middleware/      — WorkflowCore step middleware (Generator only)
+Registration.cs  — DI entry point, at module root, namespace = bare `SlideGenerator.{Module}`
 ```
+
+Not every module has every folder — a module only has the folders its content needs (e.g.
+`SlideGenerator.Utilities` is loose files with no subfolders at all; `SlideGenerator.Summarization` has no
+`Adapters/`). Sub-folders under a functional folder (e.g. `Models/Sheet/`, `Models/Slide/`,
+`Models/Components/`) are common where a module's types split by concept. Namespace mirrors the physical
+folder path 1:1 (e.g. `Models/Sheet/WorkbookSummary.cs` → `namespace SlideGenerator.Summarization.Models.Sheet;`).
 
 ### Step (WorkflowCore)
 
 - Inherit `StepBody` or `StepBodyAsync`.
-- Live in `Application/Steps/`.
+- Live in `Steps/`.
 - Process a single item (from `context.Item`); receive via `.Input()` mapping in `Build()`.
 - Register as `Transient` in `Registration.cs`.
 
@@ -710,9 +713,9 @@ for this; replicate the pattern in any new service that logs file paths from ext
 
 ## Invariants Checklist
 
-- [ ] Each module has `Injection/Registration.cs` with DI setup
+- [ ] Each module has root `Registration.cs` with DI setup
 - [ ] Module dependencies flow downward only
-- [ ] Steps inherit from `StepBody` or `StepBodyAsync`; live in `Application/Steps/`
+- [ ] Steps inherit from `StepBody` or `StepBodyAsync`; live in `Steps/`
 - [ ] Workflows implement `IWorkflow<TData>` with a parameterless constructor
 - [ ] Async code uses `ConfigureAwait(false)`
 - [ ] `record` for data, `sealed` for logic by default
