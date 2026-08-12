@@ -13,11 +13,11 @@
  */
 
 using Microsoft.Extensions.Logging;
-using SlideGenerator.Settings.Application.Abstractions;
-using SlideGenerator.Settings.Domain.Models;
-using SlideGenerator.Settings.Domain.Rules;
+using SlideGenerator.Settings.Abstractions;
+using SlideGenerator.Settings.Models;
+using SlideGenerator.Settings.Rules;
 
-namespace SlideGenerator.Settings.Infrastructure.Services;
+namespace SlideGenerator.Settings.Services;
 
 /// <summary>
 ///     Manages the loading, saving, and state of the application's <see cref="Setting" /> configuration.

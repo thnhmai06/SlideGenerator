@@ -14,9 +14,9 @@
 
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
-using ISerializer = SlideGenerator.Settings.Application.Abstractions.ISerializer;
+using ISerializer = SlideGenerator.Settings.Abstractions.ISerializer;
 
-namespace SlideGenerator.Settings.Infrastructure.Services;
+namespace SlideGenerator.Settings.Services;
 
 /// <summary>
 ///     Implements the <see cref="ISerializer" /> abstraction using the YAML format.

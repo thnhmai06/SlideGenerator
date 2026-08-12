@@ -16,10 +16,10 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
-using SlideGenerator.Settings.Application.Abstractions;
-using SlideGenerator.Settings.Domain.Models;
-using SlideGenerator.Settings.Domain.Rules;
-using SlideGenerator.Settings.Infrastructure.Services;
+using SlideGenerator.Settings.Abstractions;
+using SlideGenerator.Settings.Models;
+using SlideGenerator.Settings.Rules;
+using SlideGenerator.Settings.Services;
 using Xunit;
 
 namespace SlideGenerator.Settings.Tests.Unit;

@@ -12,7 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Settings.Application.Abstractions;
+namespace SlideGenerator.Settings.Abstractions;
 
 /// <summary>
 ///     Provides an abstraction for serializing and deserializing objects.

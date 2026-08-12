@@ -17,10 +17,10 @@ using Microsoft.Data.Sqlite;
 using SlideGenerator.Cloud.Models;
 using SlideGenerator.Generator.Application.Abstractions;
 using SlideGenerator.Generator.Infrastructure.Services;
-using SlideGenerator.Settings.Domain.Rules;
+using SlideGenerator.Settings.Rules;
 using SlideGenerator.Utilities;
 using Xunit;
-using static SlideGenerator.Settings.Domain.Rules.NameAndPaths.DataFolder.CacheFile.TableNames;
+using static SlideGenerator.Settings.Rules.NameAndPaths.DataFolder.CacheFile.TableNames;
 
 namespace SlideGenerator.Generator.Tests.Unit;
 

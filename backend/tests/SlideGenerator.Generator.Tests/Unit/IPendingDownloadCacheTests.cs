@@ -14,7 +14,7 @@
 
 using FluentAssertions;
 using SlideGenerator.Generator.Application.Abstractions;
-using SlideGenerator.Settings.Domain.Rules;
+using SlideGenerator.Settings.Rules;
 using SlideGenerator.Utilities;
 using Xunit;
 

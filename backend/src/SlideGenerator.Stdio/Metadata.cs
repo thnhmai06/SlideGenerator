@@ -13,7 +13,7 @@
  */
 
 using System.Reflection;
-using SlideGenerator.Settings.Domain.Rules;
+using SlideGenerator.Settings.Rules;
 
 namespace SlideGenerator.Stdio;
 

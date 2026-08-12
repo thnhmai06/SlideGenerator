@@ -20,7 +20,7 @@ using SlideGenerator.Document.Application.Abstractions;
 using SlideGenerator.Generator.Application.Abstractions;
 using SlideGenerator.Generator.Domain.Models.Data;
 using SlideGenerator.Recipe.Domain.Models;
-using SlideGenerator.Settings.Application.Abstractions;
+using SlideGenerator.Settings.Abstractions;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
 

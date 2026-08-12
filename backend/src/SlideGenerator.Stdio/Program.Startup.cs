@@ -17,7 +17,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using SlideGenerator.Generator.Application.Abstractions;
-using SlideGenerator.Settings.Domain.Rules;
+using SlideGenerator.Settings.Rules;
 using SlideGenerator.Stdio.Implementations;
 using SlideGenerator.Utilities;
 using StreamJsonRpc;

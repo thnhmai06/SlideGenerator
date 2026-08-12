@@ -12,9 +12,9 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Settings.Domain.Models;
+using SlideGenerator.Settings.Models;
 
-namespace SlideGenerator.Settings.Application.Abstractions;
+namespace SlideGenerator.Settings.Abstractions;
 
 /// <summary>
 ///     Provides read-only access to the current application configuration.

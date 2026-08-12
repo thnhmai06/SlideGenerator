@@ -13,7 +13,7 @@
  */
 
 using SlideGenerator.Cloud.Models;
-using SlideGenerator.Settings.Domain.Rules;
+using SlideGenerator.Settings.Rules;
 using SlideGenerator.Utilities;
 
 namespace SlideGenerator.Generator.Application.Abstractions;

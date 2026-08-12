@@ -12,9 +12,9 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Settings.Domain.Models;
+using SlideGenerator.Settings.Models;
 
-namespace SlideGenerator.Settings.Application.Abstractions;
+namespace SlideGenerator.Settings.Abstractions;
 
 /// <summary>
 ///     Defines the contract for managing the application settings lifecycle:

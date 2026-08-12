@@ -18,8 +18,8 @@ using Microsoft.Data.Sqlite;
 using SlideGenerator.Generator.Application.Abstractions;
 using SlideGenerator.Generator.Domain.Models.Data;
 using SlideGenerator.Generator.Domain.Models.Enum;
-using SlideGenerator.Settings.Domain.Rules;
-using static SlideGenerator.Settings.Domain.Rules.NameAndPaths.DataFolder.StudioFile.TableNames;
+using SlideGenerator.Settings.Rules;
+using static SlideGenerator.Settings.Rules.NameAndPaths.DataFolder.StudioFile.TableNames;
 
 namespace SlideGenerator.Generator.Infrastructure.Services;
 

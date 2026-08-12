@@ -12,7 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Settings.Domain.Models;
+namespace SlideGenerator.Settings.Models;
 
 public sealed partial record Setting
 {

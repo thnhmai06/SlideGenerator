@@ -15,8 +15,8 @@
 using SlideGenerator.Cloud.Models;
 using SlideGenerator.Document.Domain.Abstractions.Sheet;
 using SlideGenerator.Document.Domain.Models.Sheet;
-using SlideGenerator.Settings.Application.Abstractions;
-using SlideGenerator.Settings.Domain.Rules;
+using SlideGenerator.Settings.Abstractions;
+using SlideGenerator.Settings.Rules;
 
 namespace SlideGenerator.Generator.Application;
 

@@ -19,8 +19,8 @@ using SlideGenerator.Generator.Infrastructure.Middleware;
 using SlideGenerator.Generator.Infrastructure.Services;
 using SlideGenerator.Image.Application.Abstractions;
 using SlideGenerator.Image.Infrastructure.Services;
-using SlideGenerator.Settings.Application.Abstractions;
-using SlideGenerator.Settings.Domain.Rules;
+using SlideGenerator.Settings.Abstractions;
+using SlideGenerator.Settings.Rules;
 
 namespace SlideGenerator.Generator.Injection;
 

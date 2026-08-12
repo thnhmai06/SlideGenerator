@@ -13,8 +13,8 @@
  */
 
 using FluentAssertions;
-using SlideGenerator.Settings.Domain.Models;
-using SlideGenerator.Settings.Infrastructure.Services;
+using SlideGenerator.Settings.Models;
+using SlideGenerator.Settings.Services;
 using Xunit;
 
 namespace SlideGenerator.Settings.Tests.Unit;

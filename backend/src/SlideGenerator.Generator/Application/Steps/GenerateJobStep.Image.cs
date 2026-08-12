@@ -22,7 +22,7 @@ using SlideGenerator.Generator.Application.Abstractions;
 using SlideGenerator.Generator.Domain.Models.Enum;
 using SlideGenerator.Image.Domain.Entities;
 using SlideGenerator.Recipe.Domain.Models.Components;
-using SlideGenerator.Settings.Domain.Rules;
+using SlideGenerator.Settings.Rules;
 using SlideGenerator.Utilities;
 
 namespace SlideGenerator.Generator.Application.Steps;

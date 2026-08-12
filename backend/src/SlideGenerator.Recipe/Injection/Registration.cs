@@ -16,7 +16,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.DependencyInjection;
 using SlideGenerator.Recipe.Application.Abstractions;
 using SlideGenerator.Recipe.Infrastructure.Services;
-using SlideGenerator.Settings.Domain.Rules;
+using SlideGenerator.Settings.Rules;
 
 namespace SlideGenerator.Recipe.Injection;
 

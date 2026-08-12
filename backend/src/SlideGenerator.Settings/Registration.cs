@@ -14,10 +14,10 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using SlideGenerator.Settings.Application.Abstractions;
-using SlideGenerator.Settings.Infrastructure.Services;
+using SlideGenerator.Settings.Abstractions;
+using SlideGenerator.Settings.Services;
 
-namespace SlideGenerator.Settings.Injection;
+namespace SlideGenerator.Settings;
 
 /// <summary>
 ///     Provides extension methods to register settings-related services into the dependency injection container.
