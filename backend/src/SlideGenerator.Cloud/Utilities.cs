@@ -14,7 +14,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-namespace SlideGenerator.Cloud.Application;
+namespace SlideGenerator.Cloud;
 
 /// <summary>
 ///     Shared URI parsing utilities used across the Cloud module.

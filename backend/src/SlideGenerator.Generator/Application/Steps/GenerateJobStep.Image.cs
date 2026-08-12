@@ -14,7 +14,7 @@
 
 using System.Drawing;
 using Microsoft.Extensions.Logging;
-using SlideGenerator.Cloud.Domain.Models;
+using SlideGenerator.Cloud.Models;
 using SlideGenerator.Document.Domain.Abstractions.Slide;
 using SlideGenerator.Document.Domain.Models.Sheet;
 using SlideGenerator.Document.Domain.Models.Slide;

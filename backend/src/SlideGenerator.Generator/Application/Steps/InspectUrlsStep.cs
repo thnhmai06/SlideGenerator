@@ -14,8 +14,8 @@
 
 using Microsoft.Extensions.Logging;
 using Serilog.Context;
-using SlideGenerator.Cloud.Application.Abstractions;
-using SlideGenerator.Cloud.Domain.Models;
+using SlideGenerator.Cloud.Abstractions;
+using SlideGenerator.Cloud.Models;
 using SlideGenerator.Document.Application.Abstractions;
 using SlideGenerator.Generator.Application.Abstractions;
 using SlideGenerator.Generator.Domain.Models.Data;

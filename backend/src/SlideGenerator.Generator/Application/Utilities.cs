@@ -12,7 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Cloud.Domain.Models;
+using SlideGenerator.Cloud.Models;
 using SlideGenerator.Document.Domain.Abstractions.Sheet;
 using SlideGenerator.Document.Domain.Models.Sheet;
 using SlideGenerator.Settings.Application.Abstractions;

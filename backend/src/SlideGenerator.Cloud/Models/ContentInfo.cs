@@ -12,7 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Cloud.Domain.Models;
+namespace SlideGenerator.Cloud.Models;
 
 /// <summary>
 ///     Holds metadata about a remote resource obtained by inspecting its HTTP response headers.

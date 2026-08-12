@@ -12,7 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Cloud.Application.Abstractions;
+namespace SlideGenerator.Cloud.Abstractions;
 
 /// <summary>
 ///     Defines the contract for a single provider resolver module.

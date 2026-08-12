@@ -13,8 +13,8 @@
  */
 
 using FluentAssertions;
-using SlideGenerator.Cloud.Application;
-using SlideGenerator.Cloud.Infrastructure.Services;
+using SlideGenerator.Cloud;
+using SlideGenerator.Cloud.Services;
 using SlideGenerator.Cloud.Tests.Helpers;
 using SlideGenerator.Cloud.Tests.Integration.Models;
 using Xunit;

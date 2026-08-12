@@ -15,7 +15,7 @@
 using System.Text.Json;
 using Dapper;
 using Microsoft.Data.Sqlite;
-using SlideGenerator.Cloud.Domain.Models;
+using SlideGenerator.Cloud.Models;
 using SlideGenerator.Generator.Application.Abstractions;
 using SlideGenerator.Generator.Application.Rules;
 using SlideGenerator.Settings.Domain.Rules;

@@ -14,7 +14,7 @@
 
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
-using SlideGenerator.Cloud.Domain.Models;
+using SlideGenerator.Cloud.Models;
 using SlideGenerator.Generator.Application.Abstractions;
 using SlideGenerator.Generator.Infrastructure.Services;
 using SlideGenerator.Settings.Domain.Rules;

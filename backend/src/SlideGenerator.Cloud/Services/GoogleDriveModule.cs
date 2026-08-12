@@ -14,9 +14,9 @@
 
 using System.Text.RegularExpressions;
 using System.Web;
-using SlideGenerator.Cloud.Application.Abstractions;
+using SlideGenerator.Cloud.Abstractions;
 
-namespace SlideGenerator.Cloud.Infrastructure.Module;
+namespace SlideGenerator.Cloud.Services;
 
 /// <summary>
 ///     Resolves Google Drive sharing links to direct download URIs.

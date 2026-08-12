@@ -18,7 +18,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using Serilog.Events;
 using Serilog.Exceptions;
-using SlideGenerator.Cloud.Injection;
+using SlideGenerator.Cloud;
 using SlideGenerator.Document.Injection;
 using SlideGenerator.Generator.Injection;
 using SlideGenerator.Image.Injection;

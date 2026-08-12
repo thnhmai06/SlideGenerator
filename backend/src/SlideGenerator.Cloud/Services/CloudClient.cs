@@ -14,11 +14,10 @@
 
 using System.Net;
 using Microsoft.Extensions.Logging;
-using SlideGenerator.Cloud.Application.Abstractions;
-using SlideGenerator.Cloud.Domain.Models;
-using SlideGenerator.Cloud.Infrastructure.Module;
+using SlideGenerator.Cloud.Abstractions;
+using SlideGenerator.Cloud.Models;
 
-namespace SlideGenerator.Cloud.Infrastructure.Services;
+namespace SlideGenerator.Cloud.Services;
 
 /// <summary>
 ///     HTTP client facade that follows redirects, resolves cloud provider sharing links,

@@ -14,11 +14,10 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using SlideGenerator.Cloud.Application.Abstractions;
-using SlideGenerator.Cloud.Infrastructure.Services;
+using SlideGenerator.Cloud.Abstractions;
+using SlideGenerator.Cloud.Services;
 
-
-namespace SlideGenerator.Cloud.Injection;
+namespace SlideGenerator.Cloud;
 
 /// <summary>
 ///     Registers collector services into the dependency injection container.

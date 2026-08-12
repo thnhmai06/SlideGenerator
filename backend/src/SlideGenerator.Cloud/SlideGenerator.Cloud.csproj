@@ -17,8 +17,4 @@
         <InternalsVisibleTo Include="SlideGenerator.Cloud.Tests"/>
     </ItemGroup>
 
-    <ItemGroup>
-        <Folder Include="Infrastructure\"/>
-    </ItemGroup>
-
 </Project>

@@ -15,7 +15,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using FluentAssertions;
-using SlideGenerator.Cloud.Infrastructure.Services;
+using SlideGenerator.Cloud.Services;
 using SlideGenerator.Cloud.Tests.Helpers;
 using Xunit;
 

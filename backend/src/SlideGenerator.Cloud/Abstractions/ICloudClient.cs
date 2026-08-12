@@ -12,9 +12,9 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Cloud.Domain.Models;
+using SlideGenerator.Cloud.Models;
 
-namespace SlideGenerator.Cloud.Application.Abstractions;
+namespace SlideGenerator.Cloud.Abstractions;
 
 /// <summary>
 ///     Performs HTTP-based cloud resource operations: content inspection and file download.
