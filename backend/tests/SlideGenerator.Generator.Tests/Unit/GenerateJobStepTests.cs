@@ -16,7 +16,7 @@ using FluentAssertions;
 using NSubstitute;
 using SlideGenerator.Document.Abstractions.Sheet;
 using SlideGenerator.Document.Models.Sheet;
-using SlideGenerator.Generator.Application.Steps;
+using SlideGenerator.Generator.Steps;
 using SlideGenerator.Recipe.Models.Components;
 using Xunit;
 
@@ -90,7 +90,7 @@ public sealed class GenerateJobStepTests
         var worksheet = Substitute.For<IReadOnlyWorksheet>();
         worksheet.GetRow(1).Returns(new List<string> { "A", "B", "C" });
 
-        var result = Application.Utilities.BuildHeaderToIndexMap(worksheet);
+        var result = Utilities.BuildHeaderToIndexMap(worksheet);
 
         result.Should().BeEquivalentTo(new Dictionary<ColumnIdentifier, int>
         {

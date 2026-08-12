@@ -13,7 +13,7 @@
  */
 
 using FluentAssertions;
-using SlideGenerator.Generator.Application.Abstractions;
+using SlideGenerator.Generator.Abstractions;
 using SlideGenerator.Settings.Rules;
 using SlideGenerator.Utilities;
 using Xunit;

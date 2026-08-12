@@ -14,9 +14,9 @@
 
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
-using SlideGenerator.Generator.Application.Abstractions;
-using SlideGenerator.Generator.Domain.Models.Data;
-using SlideGenerator.Generator.Domain.Models.Enum;
+using SlideGenerator.Generator.Abstractions;
+using SlideGenerator.Generator.Models.Data;
+using SlideGenerator.Generator.Models.Enum;
 using StreamJsonRpc;
 
 namespace SlideGenerator.Stdio.Implementations;

@@ -14,9 +14,9 @@
 
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
-using SlideGenerator.Generator.Domain.Models.Data;
-using SlideGenerator.Generator.Domain.Models.Enum;
-using SlideGenerator.Generator.Infrastructure.Services;
+using SlideGenerator.Generator.Models.Data;
+using SlideGenerator.Generator.Models.Enum;
+using SlideGenerator.Generator.Services;
 using Xunit;
 
 namespace SlideGenerator.Generator.Tests.Unit;

@@ -19,8 +19,8 @@ using Xunit;
 namespace SlideGenerator.Generator.Tests.Unit;
 
 /// <summary>
-///     Unit tests for <see cref="Application.Utilities.ExecuteWithBackoffAsync{T}" /> and
-///     <see cref="Application.Utilities.ExceedsMaxDownloadBytes" />.
+///     Unit tests for <see cref="Utilities.ExecuteWithBackoffAsync{T}" /> and
+///     <see cref="Utilities.ExceedsMaxDownloadBytes" />.
 /// </summary>
 public sealed class UtilitiesTests
 {
@@ -39,7 +39,7 @@ public sealed class UtilitiesTests
             return Task.CompletedTask;
         }
 
-        var result = await Application.Utilities.ExecuteWithBackoffAsync(
+        var result = await Utilities.ExecuteWithBackoffAsync(
             3, TimeSpan.FromSeconds(16), () => Task.FromResult<string?>("ok"), CancellationToken.None, Delay);
 
         result.Should().Be("ok");
@@ -57,7 +57,7 @@ public sealed class UtilitiesTests
             return Task.FromResult(calls < 3 ? null : "ok");
         }
 
-        var result = await Application.Utilities.ExecuteWithBackoffAsync(
+        var result = await Utilities.ExecuteWithBackoffAsync(
             5, TimeSpan.FromSeconds(16), Action, CancellationToken.None, NoDelay);
 
         result.Should().Be("ok");
@@ -75,7 +75,7 @@ public sealed class UtilitiesTests
             return Task.FromResult<string?>(null);
         }
 
-        var result = await Application.Utilities.ExecuteWithBackoffAsync(
+        var result = await Utilities.ExecuteWithBackoffAsync(
             3, TimeSpan.FromSeconds(16), Action, CancellationToken.None, NoDelay);
 
         result.Should().BeNull();
@@ -93,7 +93,7 @@ public sealed class UtilitiesTests
             throw new InvalidOperationException("boom");
         }
 
-        var act = () => Application.Utilities.ExecuteWithBackoffAsync(
+        var act = () => Utilities.ExecuteWithBackoffAsync(
             2, TimeSpan.FromSeconds(16), Action, CancellationToken.None, NoDelay);
 
         await act.Should().ThrowAsync<InvalidOperationException>();
@@ -114,7 +114,7 @@ public sealed class UtilitiesTests
             throw new OperationCanceledException(cts.Token);
         }
 
-        var act = () => Application.Utilities.ExecuteWithBackoffAsync(
+        var act = () => Utilities.ExecuteWithBackoffAsync(
             5, TimeSpan.FromSeconds(16), Action, cts.Token, NoDelay);
 
         await act.Should().ThrowAsync<OperationCanceledException>();
@@ -129,7 +129,7 @@ public sealed class UtilitiesTests
     [Fact]
     public void ExceedsMaxDownloadBytes_NullContentInfo_ReturnsFalse()
     {
-        Application.Utilities.ExceedsMaxDownloadBytes(null, 1000).Should().BeFalse();
+        Utilities.ExceedsMaxDownloadBytes(null, 1000).Should().BeFalse();
     }
 
     /// <summary>Verifies an unknown (null) content length never exceeds the limit.</summary>
@@ -138,7 +138,7 @@ public sealed class UtilitiesTests
     {
         var info = new ContentInfo(new Uri("https://example.com/a.png"), "image/png", null, ".png");
 
-        Application.Utilities.ExceedsMaxDownloadBytes(info, 1000).Should().BeFalse();
+        Utilities.ExceedsMaxDownloadBytes(info, 1000).Should().BeFalse();
     }
 
     /// <summary>Verifies a content length over the limit returns true.</summary>
@@ -147,7 +147,7 @@ public sealed class UtilitiesTests
     {
         var info = new ContentInfo(new Uri("https://example.com/a.png"), "image/png", 2000, ".png");
 
-        Application.Utilities.ExceedsMaxDownloadBytes(info, 1000).Should().BeTrue();
+        Utilities.ExceedsMaxDownloadBytes(info, 1000).Should().BeTrue();
     }
 
     /// <summary>Verifies a content length within the limit returns false.</summary>
@@ -156,7 +156,7 @@ public sealed class UtilitiesTests
     {
         var info = new ContentInfo(new Uri("https://example.com/a.png"), "image/png", 500, ".png");
 
-        Application.Utilities.ExceedsMaxDownloadBytes(info, 1000).Should().BeFalse();
+        Utilities.ExceedsMaxDownloadBytes(info, 1000).Should().BeFalse();
     }
 
     /// <summary>Verifies a <c>maxDownloadBytes</c> of 0 (unlimited) never exceeds, regardless of length.</summary>
@@ -165,7 +165,7 @@ public sealed class UtilitiesTests
     {
         var info = new ContentInfo(new Uri("https://example.com/a.png"), "image/png", uint.MaxValue, ".png");
 
-        Application.Utilities.ExceedsMaxDownloadBytes(info, 0).Should().BeFalse();
+        Utilities.ExceedsMaxDownloadBytes(info, 0).Should().BeFalse();
     }
 
     #endregion

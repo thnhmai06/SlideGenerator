@@ -17,9 +17,8 @@ using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Serilog.Events;
 using SlideGenerator.Document.Models.Slide;
-using SlideGenerator.Generator.Application.Abstractions;
-using SlideGenerator.Generator.Domain.Models.Data;
-using SlideGenerator.Generator.Infrastructure.Middleware;
+using SlideGenerator.Generator.Abstractions;
+using SlideGenerator.Generator.Models.Data;
 using SlideGenerator.Logging.Abstractions;
 using SlideGenerator.Logging.Models;
 using WorkflowCore.Interface;
@@ -29,7 +28,7 @@ using Xunit;
 namespace SlideGenerator.Generator.Tests.Unit;
 
 /// <summary>
-///     Unit tests for <see cref="Middleware" />.
+///     Unit tests for <see cref="global::SlideGenerator.Generator.Middleware.Middleware" />.
 /// </summary>
 public sealed class MiddlewareTests
 {
@@ -40,7 +39,7 @@ public sealed class MiddlewareTests
     private readonly IFileLoggerFactory _fileLoggerFactory = Substitute.For<IFileLoggerFactory>();
     private readonly ILogNotifier _logNotifier = Substitute.For<ILogNotifier>();
 
-    private Middleware CreateMiddleware() => new(_fileLoggerFactory, _logNotifier);
+    private global::SlideGenerator.Generator.Middleware.Middleware CreateMiddleware() => new(_fileLoggerFactory, _logNotifier);
 
     private static (IStepExecutionContext Context, JobContext Data) CreateContext()
     {

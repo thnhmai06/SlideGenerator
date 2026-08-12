@@ -12,8 +12,8 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Generator.Application.Abstractions;
-using SlideGenerator.Generator.Domain.Models.Data;
+using SlideGenerator.Generator.Abstractions;
+using SlideGenerator.Generator.Models.Data;
 
 namespace SlideGenerator.Stdio.Implementations;
 

@@ -1,0 +1,109 @@
+/*
+ * Copyright (C) 2026 Thành Mai (thnhmai06)
+ *
+ * Solution: SlideGenerator
+ * Project: SlideGenerator.Generator
+ * File: Summary.cs
+ *
+ * This file is part of this solution.
+ * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
+ *
+ * Licensed under the Apache License 2.0.
+ * See the LICENSE file in the project root for full license information.
+ */
+
+using SlideGenerator.Generator.Models.Enum;
+
+namespace SlideGenerator.Generator.Models.Data;
+
+/// <summary>
+///     Lightweight snapshot of a generation request returned by <c>generating.active.list</c> and
+///     <c>generating.completed.list</c> IPC methods, keyed by request id in the returned dictionary (see
+///     <c>IService.ListActiveAsync</c>/<c>ListCompletedAsync</c>) — not carried as a field here. Three
+///     levels: request-level aggregate fields, <see cref="Jobs" /> — one <see cref="JobSummary" /> per
+///     job workflow instance spawned for this request, keyed by job id — and, within each job,
+///     <see cref="JobSummary.Rows" /> — one <see cref="RowSummary" /> per data row.
+/// </summary>
+public sealed record Summary
+{
+    /// <summary>Gets the original request submitted to <c>generating.active.create</c>.</summary>
+    public required Request Request { get; init; }
+
+    /// <summary>Gets the aggregate execution status across every job of this request (see <c>Service.DeriveStatus</c>).</summary>
+    public required Status Status { get; init; }
+
+    /// <summary>Gets the aggregate lifecycle phase of this request, or <see langword="null" /> if none recorded yet.</summary>
+    public RequestPhase? Phase { get; init; }
+
+    /// <summary>Gets the UTC timestamp when the earliest job of this request was created.</summary>
+    public required DateTimeOffset CreatedAt { get; init; }
+
+    /// <summary>Gets the UTC timestamp when the latest job finished or was terminated, if the request is complete/canceled.</summary>
+    public DateTimeOffset? CompletedAt { get; init; }
+
+    /// <summary>
+    ///     Gets log lines scoped to the request itself (not attributable to any specific job) — typically
+    ///     empty, since almost every log line produced during generation belongs to a job.
+    /// </summary>
+    public required IReadOnlyList<LogEntry> Logs { get; init; }
+
+    /// <summary>Gets each job of this request, keyed by job id (the WorkflowCore instance id).</summary>
+    public required IReadOnlyDictionary<string, JobSummary> Jobs { get; init; }
+}
+
+/// <summary>Lightweight snapshot of a single job workflow instance within a <see cref="Summary" />.</summary>
+public sealed record JobSummary
+{
+    /// <summary>Gets the execution status of this specific job.</summary>
+    public required Status Status { get; init; }
+
+    /// <summary>Gets the output file path this job writes to.</summary>
+    public required string OutputPath { get; init; }
+
+    /// <summary>Gets the UTC timestamp when this job finished or was terminated, if applicable.</summary>
+    public DateTimeOffset? CompletedAt { get; init; }
+
+    /// <summary>Gets every data row of this job, keyed by 1-based row index.</summary>
+    public required IReadOnlyDictionary<int, RowSummary> Rows { get; init; }
+
+    /// <summary>Gets log lines scoped to this job (including rows without their own row-specific entry).</summary>
+    public required IReadOnlyList<LogEntry> Logs { get; init; }
+}
+
+/// <summary>Lightweight snapshot of a single data row's processing state within a <see cref="JobSummary" />.</summary>
+public sealed record RowSummary
+{
+    /// <summary>Gets the current row processing status.</summary>
+    public required RowStatus Status { get; init; }
+
+    /// <summary>Gets the granular sub-action last reported for this row.</summary>
+    public RowStage Stage { get; init; }
+
+    /// <summary>Gets free-text context for <see cref="Stage" />, or <see langword="null" /> if not applicable.</summary>
+    public string? Note { get; init; }
+
+    /// <summary>Gets the UTC timestamp of the last update to this row.</summary>
+    public required DateTimeOffset Timestamp { get; init; }
+
+    /// <summary>Gets log lines scoped exactly to this row.</summary>
+    public required IReadOnlyList<LogEntry> Logs { get; init; }
+}
+
+/// <summary>A single log line captured from the workflow log file, attributed to a Request/Job/Row scope.</summary>
+public sealed record LogEntry
+{
+    /// <summary>Gets the timestamp when this line was written.</summary>
+    public required DateTimeOffset Timestamp { get; init; }
+
+    /// <summary>
+    ///     Gets the scope path this line belongs to: <c>"&lt;requestId&gt;"</c>,
+    ///     <c>"&lt;requestId&gt;/&lt;jobId&gt;"</c>, or <c>"&lt;requestId&gt;/&lt;jobId&gt;/&lt;rowIndex&gt;"</c>.
+    /// </summary>
+    public required string Path { get; init; }
+
+    /// <summary>Gets the log level abbreviation (e.g. <c>"INF"</c>, <c>"WRN"</c>, <c>"ERR"</c>).</summary>
+    public required string Level { get; init; }
+
+    /// <summary>Gets the rendered log message.</summary>
+    public required string Info { get; init; }
+}

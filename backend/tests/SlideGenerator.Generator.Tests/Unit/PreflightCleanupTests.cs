@@ -13,7 +13,7 @@
  */
 
 using FluentAssertions;
-using SlideGenerator.Generator.Application.Steps;
+using SlideGenerator.Generator.Steps;
 using SlideGenerator.Generator.Tests.Unit.Helpers;
 using Xunit;
 
