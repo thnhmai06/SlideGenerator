@@ -17,10 +17,10 @@ using System.Text;
 using System.Text.Json;
 using ICSharpCode.SharpZipLib.Core;
 using ICSharpCode.SharpZipLib.Zip;
-using SlideGenerator.Recipe.Domain.Models;
-using SlideGenerator.Recipe.Domain.Rules;
+using SlideGenerator.Recipe.Models;
+using SlideGenerator.Recipe.Rules;
 
-namespace SlideGenerator.Recipe.Infrastructure.Services;
+namespace SlideGenerator.Recipe.Services;
 
 internal sealed partial class RecipeRepository
 {
@@ -81,7 +81,7 @@ internal sealed partial class RecipeRepository
     {
         filePath = Path.GetFullPath(filePath);
         var name = Path.GetFileNameWithoutExtension(filePath);
-        Domain.Models.Recipe imported = new(new Dictionary<string, Node>(), []);
+        Models.Recipe imported = new(new Dictionary<string, Node>(), []);
 
         var workbooksDirectory = Path.GetFullPath(saveFolders.Workbooks);
         var presentationsDirectory = Path.GetFullPath(saveFolders.Presentations);
@@ -111,7 +111,7 @@ internal sealed partial class RecipeRepository
                                 $"Archive rejected: required entry '{RecipePackageRules.Data.RecipeFileName}' is missing.");
             try
             {
-                imported = JsonSerializer.Deserialize<Domain.Models.Recipe>(graphJson, GraphSerializerOptions)
+                imported = JsonSerializer.Deserialize<Models.Recipe>(graphJson, GraphSerializerOptions)
                                 ?? throw new InvalidDataException(
                                     $"Archive rejected: '{RecipePackageRules.Data.RecipeFileName}' deserialize as null.");
             }
@@ -148,7 +148,7 @@ internal sealed partial class RecipeRepository
     ///     mapping to the deduplicated absolute path where the file will be extracted.
     /// </returns>
     private static (Dictionary<string, string> Workbooks, Dictionary<string, string> Presentations)
-        Import_BuildPathMappings(Domain.Models.Recipe graph, string workbooksDir, string presentationsDir)
+        Import_BuildPathMappings(Models.Recipe graph, string workbooksDir, string presentationsDir)
     {
         var wbUsed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var pptUsed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -205,8 +205,8 @@ internal sealed partial class RecipeRepository
     ///     path from the corresponding mapping. Nodes whose filename is absent from the mapping are
     ///     left unchanged.
     /// </summary>
-    private static Domain.Models.Recipe Import_ApplyPathMappings(
-        Domain.Models.Recipe graph,
+    private static Models.Recipe Import_ApplyPathMappings(
+        Models.Recipe graph,
         Dictionary<string, string> workbookMapping,
         Dictionary<string, string> presentationMapping)
     {
@@ -411,8 +411,8 @@ internal sealed partial class RecipeRepository
     ///     its path replaced by the plain filename (e.g. <c>data.xlsx</c>) suitable for storage
     ///     inside the zip archive. Nodes whose paths are not in the mapping are left unchanged.
     /// </summary>
-    private static Domain.Models.Recipe Export_BuildGraph(
-        Domain.Models.Recipe graph,
+    private static Models.Recipe Export_BuildGraph(
+        Models.Recipe graph,
         ReadOnlyDictionary<string, string> workbookEntryMapping,
         ReadOnlyDictionary<string, string> presentationEntryMapping)
     {

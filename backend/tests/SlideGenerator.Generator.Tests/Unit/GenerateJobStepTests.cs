@@ -17,7 +17,7 @@ using NSubstitute;
 using SlideGenerator.Document.Abstractions.Sheet;
 using SlideGenerator.Document.Models.Sheet;
 using SlideGenerator.Generator.Application.Steps;
-using SlideGenerator.Recipe.Domain.Models.Components;
+using SlideGenerator.Recipe.Models.Components;
 using Xunit;
 
 namespace SlideGenerator.Generator.Tests.Unit;

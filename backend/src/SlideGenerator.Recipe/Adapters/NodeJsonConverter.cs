@@ -14,9 +14,9 @@
 
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using SlideGenerator.Recipe.Domain.Models;
+using SlideGenerator.Recipe.Models;
 
-namespace SlideGenerator.Recipe.Infrastructure.Adapters;
+namespace SlideGenerator.Recipe.Adapters;
 
 /// <summary>
 ///     Polymorphic STJ converter for <see cref="Node" /> — discriminates on the <c>type</c> field

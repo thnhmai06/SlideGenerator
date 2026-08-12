@@ -19,10 +19,10 @@ using SlideGenerator.Document.Models.Slide;
 using SlideGenerator.Generator.Domain.Models.Data;
 using SlideGenerator.Generator.Domain.Models.Enum;
 using SlideGenerator.Generator.Infrastructure.Services;
-using SlideGenerator.Recipe.Domain.Models;
+using SlideGenerator.Recipe.Models;
 using WorkflowCore.Models;
 using Xunit;
-using RecipeGraph = SlideGenerator.Recipe.Domain.Models.Recipe;
+using RecipeGraph = SlideGenerator.Recipe.Models.Recipe;
 
 namespace SlideGenerator.Generator.Tests.Unit;
 

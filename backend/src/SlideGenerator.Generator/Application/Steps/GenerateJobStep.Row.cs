@@ -20,8 +20,8 @@ using SlideGenerator.Document.Abstractions.Slide;
 using SlideGenerator.Document.Models.Sheet;
 using SlideGenerator.Document.Models.Slide;
 using SlideGenerator.Generator.Domain.Models.Enum;
-using SlideGenerator.Recipe.Domain.Models;
-using SlideGenerator.Recipe.Domain.Models.Components;
+using SlideGenerator.Recipe.Models;
+using SlideGenerator.Recipe.Models.Components;
 
 namespace SlideGenerator.Generator.Application.Steps;
 

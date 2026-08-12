@@ -15,7 +15,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace SlideGenerator.Recipe.Infrastructure.Adapters;
+namespace SlideGenerator.Recipe.Adapters;
 
 /// <summary>
 ///     STJ converter that maps <see cref="IReadOnlySet{T}" /> to/from a JSON array using

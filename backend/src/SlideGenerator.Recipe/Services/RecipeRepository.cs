@@ -17,11 +17,11 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Dapper;
 using Microsoft.Data.Sqlite;
-using SlideGenerator.Recipe.Application.Abstractions;
-using SlideGenerator.Recipe.Domain.Models;
-using SlideGenerator.Recipe.Infrastructure.Adapters;
+using SlideGenerator.Recipe.Abstractions;
+using SlideGenerator.Recipe.Models;
+using SlideGenerator.Recipe.Adapters;
 
-namespace SlideGenerator.Recipe.Infrastructure.Services;
+namespace SlideGenerator.Recipe.Services;
 
 /// <summary>
 ///     SQLite-backed implementation of <see cref="IRecipeRepository" />.
@@ -112,15 +112,15 @@ internal sealed partial class RecipeRepository : IRecipeRepository
 
     private static RecipeEntry DbReadEntry(RecipeRow row)
     {
-        Domain.Models.Recipe graph;
+        Models.Recipe graph;
         try
         {
-            graph = JsonSerializer.Deserialize<Domain.Models.Recipe>(row.Recipe, GraphSerializerOptions) ??
-                    new Domain.Models.Recipe(new Dictionary<string, Node>(), []);
+            graph = JsonSerializer.Deserialize<Models.Recipe>(row.Recipe, GraphSerializerOptions) ??
+                    new Models.Recipe(new Dictionary<string, Node>(), []);
         }
         catch (JsonException)
         {
-            graph = new Domain.Models.Recipe(new Dictionary<string, Node>(), []);
+            graph = new Models.Recipe(new Dictionary<string, Node>(), []);
         }
 
         return new RecipeEntry(

@@ -15,7 +15,7 @@
 using SlideGenerator.Document.Models.Sheet;
 using SlideGenerator.Document.Models.Slide;
 
-namespace SlideGenerator.Recipe.Domain.Rules;
+namespace SlideGenerator.Recipe.Rules;
 
 /// <summary>
 ///     Constraints applied when importing a <c>*.recipe</c> archive.

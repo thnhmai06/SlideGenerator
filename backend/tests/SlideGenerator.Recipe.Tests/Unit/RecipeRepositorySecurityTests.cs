@@ -16,8 +16,8 @@ using System.Text;
 using FluentAssertions;
 using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.Data.Sqlite;
-using SlideGenerator.Recipe.Domain.Rules;
-using SlideGenerator.Recipe.Infrastructure.Services;
+using SlideGenerator.Recipe.Rules;
+using SlideGenerator.Recipe.Services;
 using Xunit;
 
 namespace SlideGenerator.Recipe.Tests.Unit;

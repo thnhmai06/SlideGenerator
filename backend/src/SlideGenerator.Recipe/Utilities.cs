@@ -14,7 +14,7 @@
 
 using Microsoft.Data.Sqlite;
 
-namespace SlideGenerator.Recipe.Infrastructure;
+namespace SlideGenerator.Recipe;
 
 /// <summary>
 ///     General utility helpers for the infrastructure layer, including SQLite connection extensions.

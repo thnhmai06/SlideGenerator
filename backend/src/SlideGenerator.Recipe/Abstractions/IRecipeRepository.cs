@@ -12,9 +12,9 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Recipe.Domain.Models;
+using SlideGenerator.Recipe.Models;
 
-namespace SlideGenerator.Recipe.Application.Abstractions;
+namespace SlideGenerator.Recipe.Abstractions;
 
 /// <summary>
 ///     Provides persistent storage for <see cref="RecipeEntry" /> configurations.

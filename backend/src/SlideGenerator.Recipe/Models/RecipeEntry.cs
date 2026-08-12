@@ -12,7 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Recipe.Domain.Models;
+namespace SlideGenerator.Recipe.Models;
 
 /// <summary>
 ///     The mutable user-visible properties of a recipe, used for create/update operations.

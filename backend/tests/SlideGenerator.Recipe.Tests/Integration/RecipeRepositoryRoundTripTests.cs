@@ -18,7 +18,7 @@ namespace SlideGenerator.Recipe.Tests.Integration;
 
 /// <summary>
 ///     Integration tests for full export/import round-trips of
-///     <see cref="SlideGenerator.Recipe.Infrastructure.Services.RecipeRepository" />
+///     <see cref="SlideGenerator.Recipe.Services.RecipeRepository" />
 ///     using real workbook and presentation files bundled into the archive.
 /// </summary>
 public sealed class RecipeRepositoryRoundTripTests

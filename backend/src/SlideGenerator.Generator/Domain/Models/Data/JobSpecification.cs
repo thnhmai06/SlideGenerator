@@ -33,7 +33,7 @@ public sealed class JobSpecification
     /// <summary>Template presentation and slide node ids.</summary>
     public PresentationRef Template { get; init; } = null!;
 
-    /// <summary>Key of the <see cref="Recipe.Domain.Models.MapNode" /> in <c>Recipe.Nodes</c>.</summary>
+    /// <summary>Key of the <see cref="Recipe.Models.MapNode" /> in <c>Recipe.Nodes</c>.</summary>
     public string MapNodeId { get; init; } = null!;
 
     /// <summary>Absolute path to the output presentation file for this job.</summary>

@@ -12,7 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Recipe.Domain.Models;
+namespace SlideGenerator.Recipe.Models;
 
 /// <summary>
 ///     Discriminates the concrete type of <see cref="Node" /> within a recipe graph.

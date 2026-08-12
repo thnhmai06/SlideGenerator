@@ -19,8 +19,8 @@ using SlideGenerator.Generator.Application.Abstractions;
 using SlideGenerator.Generator.Application.Workflows;
 using SlideGenerator.Generator.Domain.Models.Data;
 using SlideGenerator.Generator.Domain.Models.Enum;
-using SlideGenerator.Recipe.Application.Abstractions;
-using SlideGenerator.Recipe.Domain.Models;
+using SlideGenerator.Recipe.Abstractions;
+using SlideGenerator.Recipe.Models;
 using SlideGenerator.Settings.Abstractions;
 using SlideGenerator.Settings.Rules;
 using SlideGenerator.Utilities;
@@ -385,7 +385,7 @@ internal sealed class Service(
         return new PartialResult(succeeded, skipped);
     }
 
-    internal static List<JobSpecification> BuildJobs(Recipe.Domain.Models.Recipe recipe, Request request)
+    internal static List<JobSpecification> BuildJobs(Recipe.Models.Recipe recipe, Request request)
     {
         var jobs = new List<JobSpecification>();
         var mapNodes = recipe.Nodes

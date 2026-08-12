@@ -20,9 +20,9 @@ using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.Data.Sqlite;
 using SlideGenerator.Document.Models.Sheet;
 using SlideGenerator.Document.Models.Slide;
-using SlideGenerator.Recipe.Domain.Models;
-using SlideGenerator.Recipe.Domain.Rules;
-using SlideGenerator.Recipe.Infrastructure.Services;
+using SlideGenerator.Recipe.Models;
+using SlideGenerator.Recipe.Rules;
+using SlideGenerator.Recipe.Services;
 using Xunit;
 
 namespace SlideGenerator.Recipe.Tests.Unit;
@@ -91,7 +91,7 @@ public sealed class RecipeRepositoryPackageTests : IDisposable
     {
         var dir = NewTempDir();
         var wbPath = CreateDummyFile(dir, "sales.xlsx");
-        var graph = new Domain.Models.Recipe(
+        var graph = new Models.Recipe(
             new Dictionary<string, Node> { ["wb1"] = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wbPath), new HashSet<string>()) }, []);
         var metadata = await _repo.AddAsync(new RecipeInput("Test", graph), TestContext.Current.CancellationToken);
         var zipPath = NewZipPath(dir);
@@ -113,7 +113,7 @@ public sealed class RecipeRepositoryPackageTests : IDisposable
     {
         var dir = NewTempDir();
         var presPath = CreateDummyFile(dir, "template.pptx");
-        var graph = new Domain.Models.Recipe(
+        var graph = new Models.Recipe(
             new Dictionary<string, Node> { ["pres1"] = new PresentationNode(new Point(0, 0), new PresentationIdentifier(presPath), new HashSet<string>()) }, []);
         var metadata = await _repo.AddAsync(new RecipeInput("Test", graph), TestContext.Current.CancellationToken);
         var zipPath = NewZipPath(dir);
@@ -138,7 +138,7 @@ public sealed class RecipeRepositoryPackageTests : IDisposable
         var dirB = NewTempDir();
         var wbPath1 = CreateDummyFile(dirA, "data.xlsx");
         var wbPath2 = CreateDummyFile(dirB, "data.xlsx");
-        var graph = new Domain.Models.Recipe(
+        var graph = new Models.Recipe(
             new Dictionary<string, Node>
             {
                 ["wb1"] = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wbPath1), new HashSet<string>()),
@@ -165,7 +165,7 @@ public sealed class RecipeRepositoryPackageTests : IDisposable
     {
         var dir = NewTempDir();
         var wbPath = CreateDummyFile(dir, "my file.xlsx");
-        var graph = new Domain.Models.Recipe(
+        var graph = new Models.Recipe(
             new Dictionary<string, Node> { ["wb1"] = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wbPath), new HashSet<string>()) }, []);
         var metadata = await _repo.AddAsync(new RecipeInput("Test", graph), TestContext.Current.CancellationToken);
         var zipPath = NewZipPath(dir);
@@ -275,7 +275,7 @@ public sealed class RecipeRepositoryPackageTests : IDisposable
     {
         var srcDir = NewTempDir();
         var wbPath = CreateDummyFile(srcDir, "report.xlsx");
-        var graph = new Domain.Models.Recipe(
+        var graph = new Models.Recipe(
             new Dictionary<string, Node> { ["wb1"] = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wbPath), new HashSet<string>()) }, []);
         var exported = await _repo.AddAsync(new RecipeInput("Round-trip", graph),
             TestContext.Current.CancellationToken);

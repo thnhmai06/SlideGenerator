@@ -12,7 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Recipe.Domain.Models;
+namespace SlideGenerator.Recipe.Models;
 
 /// <summary>
 ///     The root structure of a recipe as a graph, containing all <see cref="Node"/> keyed by id

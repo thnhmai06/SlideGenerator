@@ -12,7 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Recipe.Domain.Models;
+namespace SlideGenerator.Recipe.Models;
 
 /// <summary>
 ///     A directed data-flow connection between two <see cref="CanvasNode"/> in a recipe graph.

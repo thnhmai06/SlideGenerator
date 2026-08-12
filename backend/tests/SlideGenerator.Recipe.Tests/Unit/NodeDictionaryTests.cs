@@ -18,8 +18,8 @@ using Microsoft.Data.Sqlite;
 using Newtonsoft.Json;
 using SlideGenerator.Document.Models.Sheet;
 using SlideGenerator.Document.Models.Slide;
-using SlideGenerator.Recipe.Domain.Models;
-using SlideGenerator.Recipe.Infrastructure.Services;
+using SlideGenerator.Recipe.Models;
+using SlideGenerator.Recipe.Services;
 using Xunit;
 
 namespace SlideGenerator.Recipe.Tests.Unit;
@@ -60,7 +60,7 @@ public sealed class NodeDictionaryTests : IDisposable
     [Fact]
     public void RecipeGraph_Nodes_IsReadOnlyDictionaryOfNode()
     {
-        var graph = new Domain.Models.Recipe(new Dictionary<string, Node>(), []);
+        var graph = new Models.Recipe(new Dictionary<string, Node>(), []);
         graph.Nodes.Should().BeAssignableTo<IReadOnlyDictionary<string, Node>>();
     }
 
@@ -99,7 +99,7 @@ public sealed class NodeDictionaryTests : IDisposable
         var sheet = new WorksheetNode(new WorksheetIdentifier("SalesData"));
         var wbNode = new WorkbookNode(new Point(10, 20), new WorkbookIdentifier(wbPath), new HashSet<string> { "ws1" });
         var nodes = new Dictionary<string, Node> { ["wb1"] = wbNode, ["ws1"] = sheet };
-        var graph = new Domain.Models.Recipe(nodes, []);
+        var graph = new Models.Recipe(nodes, []);
 
         var meta = await _repo.AddAsync(new RecipeInput("DictTest", graph), TestContext.Current.CancellationToken);
         var entry = await _repo.GetAsync(meta.Id, TestContext.Current.CancellationToken);
@@ -124,7 +124,7 @@ public sealed class NodeDictionaryTests : IDisposable
             ["p1"] = new PresentationNode(new Point(200, 0), new PresentationIdentifier(presPath), new HashSet<string>()),
             ["m1"] = new MapNode(new Point(100, 100), [], [])
         };
-        var graph = new Domain.Models.Recipe(nodes, []);
+        var graph = new Models.Recipe(nodes, []);
 
         var meta = await _repo.AddAsync(new RecipeInput("MultiType", graph), TestContext.Current.CancellationToken);
         var entry = await _repo.GetAsync(meta.Id, TestContext.Current.CancellationToken);
@@ -154,10 +154,10 @@ public sealed class NodeDictionaryTests : IDisposable
             ["m1"] = new MapNode(new Point(50, 50), [], []),
             ["c1"] = new CommentNode(new Point(200, 0), Color.Yellow, 0.8f, "Note")
         };
-        var recipe = new Domain.Models.Recipe(nodes, []);
+        var recipe = new Models.Recipe(nodes, []);
 
         var json = JsonConvert.SerializeObject(recipe);
-        var restored = JsonConvert.DeserializeObject<Domain.Models.Recipe>(json);
+        var restored = JsonConvert.DeserializeObject<Models.Recipe>(json);
 
         restored.Should().NotBeNull();
         restored.Nodes.Should().HaveCount(4);
@@ -174,9 +174,9 @@ public sealed class NodeDictionaryTests : IDisposable
     [Fact]
     public void NodeNewtonsoftConverter_EmptyDict_RoundTrips()
     {
-        var recipe = new Domain.Models.Recipe(new Dictionary<string, Node>(), []);
+        var recipe = new Models.Recipe(new Dictionary<string, Node>(), []);
         var json = JsonConvert.SerializeObject(recipe);
-        var restored = JsonConvert.DeserializeObject<Domain.Models.Recipe>(json);
+        var restored = JsonConvert.DeserializeObject<Models.Recipe>(json);
 
         restored.Should().NotBeNull();
         restored.Nodes.Should().BeEmpty();

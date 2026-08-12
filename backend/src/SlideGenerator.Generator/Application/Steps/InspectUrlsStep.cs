@@ -19,7 +19,7 @@ using SlideGenerator.Cloud.Models;
 using SlideGenerator.Document.Abstractions;
 using SlideGenerator.Generator.Application.Abstractions;
 using SlideGenerator.Generator.Domain.Models.Data;
-using SlideGenerator.Recipe.Domain.Models;
+using SlideGenerator.Recipe.Models;
 using SlideGenerator.Settings.Abstractions;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;

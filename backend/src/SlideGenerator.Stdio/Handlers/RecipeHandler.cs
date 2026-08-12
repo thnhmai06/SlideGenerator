@@ -12,8 +12,8 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Recipe.Application.Abstractions;
-using SlideGenerator.Recipe.Domain.Models;
+using SlideGenerator.Recipe.Abstractions;
+using SlideGenerator.Recipe.Models;
 
 namespace SlideGenerator.Stdio.Handlers;
 
@@ -45,7 +45,7 @@ public sealed class RecipeHandler(IRecipeRepository recipeRepository)
     /// <param name="displayName">Human-readable name.</param>
     /// <param name="graph">The recipe graph.</param>
     /// <param name="ct">Cancellation token.</param>
-    public Task<IRecipeMetadata> AddAsync(string displayName, Recipe.Domain.Models.Recipe graph, CancellationToken ct)
+    public Task<IRecipeMetadata> AddAsync(string displayName, Recipe.Models.Recipe graph, CancellationToken ct)
     {
         return recipeRepository.AddAsync(new RecipeInput(displayName, graph), ct);
     }
@@ -59,7 +59,7 @@ public sealed class RecipeHandler(IRecipeRepository recipeRepository)
     /// <param name="ct">Cancellation token.</param>
     /// <returns>The updated <see cref="IRecipeMetadata" />.</returns>
     /// <exception cref="InvalidOperationException">Thrown when the recipe is not found.</exception>
-    public Task<IRecipeMetadata> UpdateAsync(int id, string displayName, Recipe.Domain.Models.Recipe graph, CancellationToken ct)
+    public Task<IRecipeMetadata> UpdateAsync(int id, string displayName, Recipe.Models.Recipe graph, CancellationToken ct)
     {
         return recipeRepository.UpdateAsync(id, new RecipeInput(displayName, graph), ct);
     }

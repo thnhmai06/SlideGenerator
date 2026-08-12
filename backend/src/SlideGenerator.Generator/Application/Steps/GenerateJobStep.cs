@@ -22,7 +22,7 @@ using SlideGenerator.Generator.Application.Abstractions;
 using SlideGenerator.Generator.Domain.Models.Data;
 using SlideGenerator.Generator.Domain.Models.Enum;
 using SlideGenerator.Image.Abstractions;
-using SlideGenerator.Recipe.Domain.Models;
+using SlideGenerator.Recipe.Models;
 using SlideGenerator.Settings.Abstractions;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;

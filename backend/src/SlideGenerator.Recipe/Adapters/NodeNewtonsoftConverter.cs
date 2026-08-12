@@ -14,9 +14,9 @@
 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using SlideGenerator.Recipe.Domain.Models;
+using SlideGenerator.Recipe.Models;
 
-namespace SlideGenerator.Recipe.Domain.Adapters;
+namespace SlideGenerator.Recipe.Adapters;
 
 /// <summary>
 ///     Newtonsoft.Json polymorphic converter for <see cref="Node" />.

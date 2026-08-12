@@ -17,8 +17,8 @@ using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using SlideGenerator.Document.Models.Sheet;
 using SlideGenerator.Document.Models.Slide;
-using SlideGenerator.Recipe.Domain.Models;
-using SlideGenerator.Recipe.Infrastructure.Services;
+using SlideGenerator.Recipe.Models;
+using SlideGenerator.Recipe.Services;
 using Xunit;
 
 namespace SlideGenerator.Recipe.Tests.Unit;
@@ -167,7 +167,7 @@ public sealed class NodeHierarchyTests : IDisposable
     [Fact]
     public void RecipeGraph_Nodes_IsReadOnlyDictionaryOfNode()
     {
-        var graph = new Domain.Models.Recipe(new Dictionary<string, Node>(), []);
+        var graph = new Models.Recipe(new Dictionary<string, Node>(), []);
         graph.Nodes.Should().BeAssignableTo<IReadOnlyDictionary<string, Node>>();
     }
 
@@ -185,7 +185,7 @@ public sealed class NodeHierarchyTests : IDisposable
         var wbPath = Path.GetFullPath("dummy.xlsx");
         var sheet = new WorksheetNode(new WorksheetIdentifier("SalesData"));
         var node = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wbPath), new HashSet<string> { "ws1" });
-        var graph = new Domain.Models.Recipe(
+        var graph = new Models.Recipe(
             new Dictionary<string, Node> { ["wb1"] = node, ["ws1"] = sheet }, []);
 
         var metadata = await _repo.AddAsync(new RecipeInput("Test", graph), TestContext.Current.CancellationToken);
@@ -207,7 +207,7 @@ public sealed class NodeHierarchyTests : IDisposable
         var presPath = Path.GetFullPath("template.pptx");
         var slide = new SlideNode(new SlideIdentifier(3));
         var node = new PresentationNode(new Point(0, 0), new PresentationIdentifier(presPath), new HashSet<string> { "s1" });
-        var graph = new Domain.Models.Recipe(
+        var graph = new Models.Recipe(
             new Dictionary<string, Node> { ["p1"] = node, ["s1"] = slide }, []);
 
         var metadata = await _repo.AddAsync(new RecipeInput("Test", graph), TestContext.Current.CancellationToken);

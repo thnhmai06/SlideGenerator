@@ -20,9 +20,9 @@ using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.Data.Sqlite;
 using SlideGenerator.Document.Models.Sheet;
 using SlideGenerator.Document.Models.Slide;
-using SlideGenerator.Recipe.Domain.Models;
-using SlideGenerator.Recipe.Domain.Rules;
-using SlideGenerator.Recipe.Infrastructure.Services;
+using SlideGenerator.Recipe.Models;
+using SlideGenerator.Recipe.Rules;
+using SlideGenerator.Recipe.Services;
 using Xunit;
 
 namespace SlideGenerator.Recipe.Tests.Unit;
@@ -62,7 +62,7 @@ public sealed class RecipeRepositoryTests : IDisposable
     /// <summary>Returns an input with an empty graph.</summary>
     private static RecipeInput Input(string name)
     {
-        return new RecipeInput(name, new Domain.Models.Recipe(new Dictionary<string, Node>(), []));
+        return new RecipeInput(name, new Models.Recipe(new Dictionary<string, Node>(), []));
     }
 
     /// <summary>Returns an input whose graph contains the given nodes (keys are auto-generated).</summary>
@@ -70,7 +70,7 @@ public sealed class RecipeRepositoryTests : IDisposable
     {
         var dict = nodes.Select((n, i) => (Key: $"n{i}", Node: n))
             .ToDictionary(x => x.Key, x => x.Node);
-        return new RecipeInput(name, new Domain.Models.Recipe(dict, []));
+        return new RecipeInput(name, new Models.Recipe(dict, []));
     }
 
     #region AddAsync
@@ -451,7 +451,7 @@ public sealed class RecipeRepositoryTests : IDisposable
             await File.WriteAllBytesAsync(wbPath, [], TestContext.Current.CancellationToken);
             await File.WriteAllBytesAsync(pptPath, [], TestContext.Current.CancellationToken);
 
-            var graph = new Domain.Models.Recipe(
+            var graph = new Models.Recipe(
                 new Dictionary<string, Node>
                 {
                     ["wb1"] = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wbPath), new HashSet<string>()),
@@ -537,7 +537,7 @@ public sealed class RecipeRepositoryTests : IDisposable
         {
             await File.WriteAllBytesAsync(wbPath, [], TestContext.Current.CancellationToken);
 
-            var graph = new Domain.Models.Recipe(
+            var graph = new Models.Recipe(
                 new Dictionary<string, Node> { ["wb1"] = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wbPath), new HashSet<string>()) }, []);
             var exported = await _repo.AddAsync(new RecipeInput("SlipTest", graph),
                 TestContext.Current.CancellationToken);
@@ -653,7 +653,7 @@ public sealed class RecipeRepositoryTests : IDisposable
         {
             await File.WriteAllBytesAsync(wbPath, [0x01], TestContext.Current.CancellationToken);
 
-            var graph = new Domain.Models.Recipe(
+            var graph = new Models.Recipe(
                 new Dictionary<string, Node> { ["wb1"] = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wbPath), new HashSet<string>()) }, []);
             var exported = await _repo.AddAsync(new RecipeInput("DupImport", graph),
                 TestContext.Current.CancellationToken);
@@ -713,7 +713,7 @@ public sealed class RecipeRepositoryTests : IDisposable
             await File.WriteAllBytesAsync(wb1, [0x01], TestContext.Current.CancellationToken);
             await File.WriteAllBytesAsync(wb2, [0x02], TestContext.Current.CancellationToken);
 
-            var graph = new Domain.Models.Recipe(
+            var graph = new Models.Recipe(
                 new Dictionary<string, Node>
                 {
                     ["wb1"] = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wb1), new HashSet<string>()),
@@ -823,7 +823,7 @@ public sealed class RecipeRepositoryTests : IDisposable
         {
             await File.WriteAllBytesAsync(pptPath, [0x01], TestContext.Current.CancellationToken);
 
-            var graph = new Domain.Models.Recipe(
+            var graph = new Models.Recipe(
                 new Dictionary<string, Node> { ["ppt1"] = new PresentationNode(new Point(0, 0), new PresentationIdentifier(pptPath), new HashSet<string>()) }, []);
             var exported = await _repo.AddAsync(new RecipeInput("PptDedup", graph),
                 TestContext.Current.CancellationToken);
@@ -873,7 +873,7 @@ public sealed class RecipeRepositoryTests : IDisposable
         {
             await File.WriteAllBytesAsync(wbPath, [0x01], TestContext.Current.CancellationToken);
 
-            var graph = new Domain.Models.Recipe(
+            var graph = new Models.Recipe(
                 new Dictionary<string, Node> { ["wb1"] = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wbPath), new HashSet<string>()) }, []);
             var exported = await _repo.AddAsync(new RecipeInput("MultiConflict", graph),
                 TestContext.Current.CancellationToken);
@@ -933,7 +933,7 @@ public sealed class RecipeRepositoryTests : IDisposable
             await File.WriteAllBytesAsync(wb1, [0x01], TestContext.Current.CancellationToken);
             await File.WriteAllBytesAsync(wb2, [0x02], TestContext.Current.CancellationToken);
 
-            var graph = new Domain.Models.Recipe(
+            var graph = new Models.Recipe(
                 new Dictionary<string, Node>
                 {
                     ["wb1"] = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wb1), new HashSet<string>()),
@@ -1211,7 +1211,7 @@ public sealed class RecipeRepositoryTests : IDisposable
             await File.WriteAllBytesAsync(wbPath, [0x01], TestContext.Current.CancellationToken);
             await File.WriteAllBytesAsync(pptPath, [0x02], TestContext.Current.CancellationToken);
 
-            var graph = new Domain.Models.Recipe(
+            var graph = new Models.Recipe(
                 new Dictionary<string, Node>
                 {
                     ["wb1"] = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wbPath), new HashSet<string>()),
@@ -1276,7 +1276,7 @@ public sealed class RecipeRepositoryTests : IDisposable
             await File.WriteAllBytesAsync(wbB, [0x02], TestContext.Current.CancellationToken);
             await File.WriteAllBytesAsync(wbC, [0x03], TestContext.Current.CancellationToken);
 
-            var graph = new Domain.Models.Recipe(
+            var graph = new Models.Recipe(
                 new Dictionary<string, Node>
                 {
                     ["a"] = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wbA), new HashSet<string>()),

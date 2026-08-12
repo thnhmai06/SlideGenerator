@@ -21,7 +21,7 @@ using SlideGenerator.Document.Models.Slide;
 using SlideGenerator.Generator.Application.Abstractions;
 using SlideGenerator.Generator.Domain.Models.Enum;
 using SlideGenerator.Image.Entities;
-using SlideGenerator.Recipe.Domain.Models.Components;
+using SlideGenerator.Recipe.Models.Components;
 using SlideGenerator.Settings.Rules;
 using SlideGenerator.Utilities;
 

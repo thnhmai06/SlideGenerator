@@ -57,10 +57,10 @@ public sealed class JobPersistContext
     /// <summary>
     ///     The recipe snapshot frozen at the time <c>Service.StartAsync</c> read it.
     ///     Persisted so steps can resolve nodes by id without re-loading from the database on resume.
-    ///     Newtonsoft handles <see cref="Recipe.Domain.Models.CanvasNode" /> polymorphism
+    ///     Newtonsoft handles <see cref="Recipe.Models.CanvasNode" /> polymorphism
     ///     via the <c>[JsonConverter]</c> attribute on that type.
     /// </summary>
-    public Recipe.Domain.Models.Recipe Recipe { get; init; } = null!;
+    public Recipe.Models.Recipe Recipe { get; init; } = null!;
 
     /// <summary>Path to the workflow log file.</summary>
     public string LogPath { get; init; } = null!;

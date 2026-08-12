@@ -15,10 +15,10 @@
 using System.Drawing;
 using SlideGenerator.Document.Models.Sheet;
 using SlideGenerator.Document.Models.Slide;
-using SlideGenerator.Recipe.Domain.Adapters;
-using SlideGenerator.Recipe.Domain.Models.Components;
+using SlideGenerator.Recipe.Adapters;
+using SlideGenerator.Recipe.Models.Components;
 
-namespace SlideGenerator.Recipe.Domain.Models;
+namespace SlideGenerator.Recipe.Models;
 
 #region Base
 

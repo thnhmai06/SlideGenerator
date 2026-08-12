@@ -13,7 +13,7 @@
  */
 
 using SlideGenerator.Document.Models.Sheet;
-using SlideGenerator.Recipe.Domain.Models.Components;
+using SlideGenerator.Recipe.Models.Components;
 
 namespace SlideGenerator.Generator.Application.Steps;
 

@@ -23,7 +23,7 @@ using SlideGenerator.Document;
 using SlideGenerator.Generator.Injection;
 using SlideGenerator.Image;
 using SlideGenerator.Logging;
-using SlideGenerator.Recipe.Injection;
+using SlideGenerator.Recipe;
 using SlideGenerator.Settings.Abstractions;
 using SlideGenerator.Settings.Rules;
 using SlideGenerator.Settings;

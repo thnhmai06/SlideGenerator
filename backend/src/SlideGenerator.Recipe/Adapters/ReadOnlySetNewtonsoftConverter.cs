@@ -14,7 +14,7 @@
 
 using Newtonsoft.Json;
 
-namespace SlideGenerator.Recipe.Domain.Adapters;
+namespace SlideGenerator.Recipe.Adapters;
 
 /// <summary>
 ///     Newtonsoft.Json converter that maps any <c>IReadOnlySet&lt;T&gt;</c> property to/from a JSON

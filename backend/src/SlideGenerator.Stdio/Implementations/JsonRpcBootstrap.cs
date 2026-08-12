@@ -16,7 +16,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.DependencyInjection;
-using SlideGenerator.Recipe.Infrastructure.Adapters;
+using SlideGenerator.Recipe.Adapters;
 using SlideGenerator.Stdio.Handlers;
 using SlideGenerator.Stdio.Implementations.Adapters;
 using StreamJsonRpc;

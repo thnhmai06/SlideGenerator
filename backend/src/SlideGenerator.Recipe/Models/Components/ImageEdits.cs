@@ -14,7 +14,7 @@
 
 using SlideGenerator.Image.Models;
 
-namespace SlideGenerator.Recipe.Domain.Models.Components;
+namespace SlideGenerator.Recipe.Models.Components;
 
 /// <summary>
 ///     Defines the processing rules for image transformations.

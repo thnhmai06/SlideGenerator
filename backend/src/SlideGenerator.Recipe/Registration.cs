@@ -14,11 +14,11 @@
 
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.DependencyInjection;
-using SlideGenerator.Recipe.Application.Abstractions;
-using SlideGenerator.Recipe.Infrastructure.Services;
+using SlideGenerator.Recipe.Abstractions;
+using SlideGenerator.Recipe.Services;
 using SlideGenerator.Settings.Rules;
 
-namespace SlideGenerator.Recipe.Injection;
+namespace SlideGenerator.Recipe;
 
 /// <summary>
 ///     Provides extension methods to register recipe services into the dependency injection container.
