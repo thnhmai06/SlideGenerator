@@ -12,10 +12,8 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using System.Drawing;
 using System.Text;
 using FluentAssertions;
-using ICSharpCode.SharpZipLib.Core;
 using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.Data.Sqlite;
 using SlideGenerator.Document.Workbook;
@@ -54,31 +52,35 @@ public sealed class RecipeRepositoryTests : IDisposable
     }
 
     /// <inheritdoc />
-    public void Dispose()
+    public void Dispose() => _anchor.Dispose();
+
+    /// <summary>Returns an input with an empty recipe (no mappings).</summary>
+    private static RecipeInput Input(string name) => new(name, new Models.Recipe([]));
+
+    /// <summary>Returns an input whose recipe contains one mapping with one worksheet source.</summary>
+    private static RecipeInput InputWithMapping(string name, string wbPath, string pptPath) => new(name,
+        RecipeWithMapping(wbPath, pptPath));
+
+    /// <summary>Returns an input whose recipe contains one mapping referencing several workbooks.</summary>
+    private static RecipeInput InputWithWorkbooks(string name, params string[] wbPaths)
     {
-        _anchor.Dispose();
+        var pptPath = Path.GetFullPath("template.pptx");
+        return new RecipeInput(name, new Models.Recipe([
+            new Mapping(
+                wbPaths.Select(p => new WorksheetSource(new WorkbookIdentifier(p), new WorksheetIdentifier("Sheet1")))
+                    .ToList(),
+                new PresentationIdentifier(pptPath), new SlideIdentifier(1), [], [])
+        ]));
     }
 
-    /// <summary>Returns an input with an empty graph.</summary>
-    private static RecipeInput Input(string name)
-    {
-        return new RecipeInput(name, new Models.Recipe(new Dictionary<string, Node>(), []));
-    }
+    private static Models.Recipe RecipeWithMapping(string wbPath, string pptPath) => new([
+        new Mapping(
+            [new WorksheetSource(new WorkbookIdentifier(wbPath), new WorksheetIdentifier("Sheet1"))],
+            new PresentationIdentifier(pptPath), new SlideIdentifier(1), [], [])
+    ]);
 
-    /// <summary>Returns an input whose graph contains the given nodes (keys are auto-generated).</summary>
-    private static RecipeInput Input(string name, params Node[] nodes)
-    {
-        var dict = nodes.Select((n, i) => (Key: $"n{i}", Node: n))
-            .ToDictionary(x => x.Key, x => x.Node);
-        return new RecipeInput(name, new Models.Recipe(dict, []));
-    }
+    #region AddAsync / GetAsync / ListAsync / UpdateAsync / DeleteAsync
 
-    #region AddAsync
-
-    /// <summary>
-    ///     Verifies that <see cref="RecipeRepository.AddAsync" /> inserts a row and returns metadata
-    ///     with a positive ID.
-    /// </summary>
     [Fact]
     public async Task AddAsync_ValidEntry_ReturnsMetadataWithPositiveId()
     {
@@ -88,10 +90,6 @@ public sealed class RecipeRepositoryTests : IDisposable
         metadata.Name.Should().Be("My Recipe");
     }
 
-    /// <summary>
-    ///     Verifies that successive <see cref="RecipeRepository.AddAsync" /> calls assign
-    ///     monotonically increasing IDs.
-    /// </summary>
     [Fact]
     public async Task AddAsync_MultipleEntries_IdsAreIncreasing()
     {
@@ -101,62 +99,31 @@ public sealed class RecipeRepositoryTests : IDisposable
         m2.Id.Should().BeGreaterThan(m1.Id);
     }
 
-    /// <summary>
-    ///     Verifies that a graph with a <see cref="WorkbookNode" /> round-trips through the database
-    ///     with the node count preserved.
-    /// </summary>
     [Fact]
-    public async Task AddAsync_WithWorkbookNode_GraphRoundTripsNodeCount()
+    public async Task AddAsync_WithMapping_GraphRoundTripsMappingCount()
     {
         var wbPath = Path.GetFullPath("dummy.xlsx");
-        var node = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wbPath), new HashSet<string>());
-        var metadata = await _repo.AddAsync(Input("WithNode", node), TestContext.Current.CancellationToken);
+        var pptPath = Path.GetFullPath("dummy.pptx");
+        var metadata = await _repo.AddAsync(InputWithMapping("WithMapping", wbPath, pptPath),
+            TestContext.Current.CancellationToken);
 
         var entry = await _repo.GetAsync(metadata.Id, TestContext.Current.CancellationToken);
 
-        entry.Recipe.Nodes.Should().HaveCount(1);
-        entry.Recipe.Nodes.Values.First().Should().BeOfType<WorkbookNode>();
+        entry.Recipe.Mappings.Should().HaveCount(1);
+        entry.Recipe.Mappings[0].Sources.Should().HaveCount(1);
+        entry.Recipe.Mappings[0].TemplatePresentation.PresentationPath.Should().Be(pptPath);
     }
 
-    /// <summary>
-    ///     Verifies that a graph with a <see cref="PresentationNode" /> round-trips through the
-    ///     database preserving the path value.
-    /// </summary>
     [Fact]
-    public async Task AddAsync_WithPresentationNode_GraphRoundTripsPresentationPath()
-    {
-        var presPath = Path.GetFullPath("template.pptx");
-        var node = new PresentationNode(new Point(0, 0), new PresentationIdentifier(presPath), new HashSet<string>());
-        var metadata = await _repo.AddAsync(Input("WithPres", node), TestContext.Current.CancellationToken);
-
-        var entry = await _repo.GetAsync(metadata.Id, TestContext.Current.CancellationToken);
-
-        var restored = entry.Recipe.Nodes.Values.OfType<PresentationNode>().Single();
-        restored.Presentation.PresentationPath.Should().Be(presPath);
-    }
-
-    /// <summary>
-    ///     Verifies that an empty graph round-trips without error.
-    /// </summary>
-    [Fact]
-    public async Task AddAsync_WithEmptyGraph_PersistsEmptyNodeList()
+    public async Task AddAsync_WithEmptyRecipe_PersistsEmptyMappingList()
     {
         var metadata = await _repo.AddAsync(Input("Empty"), TestContext.Current.CancellationToken);
 
         var entry = await _repo.GetAsync(metadata.Id, TestContext.Current.CancellationToken);
 
-        entry.Recipe.Nodes.Should().BeEmpty();
-        entry.Recipe.Edges.Should().BeEmpty();
+        entry.Recipe.Mappings.Should().BeEmpty();
     }
 
-    #endregion
-
-    #region GetAsync
-
-    /// <summary>
-    ///     Verifies that <see cref="RecipeRepository.GetAsync" /> throws
-    ///     <see cref="InvalidOperationException" /> for a non-existent ID.
-    /// </summary>
     [Fact]
     public async Task GetAsync_NonExistentId_ThrowsInvalidOperationException()
     {
@@ -165,10 +132,6 @@ public sealed class RecipeRepositoryTests : IDisposable
         await act.Should().ThrowAsync<InvalidOperationException>();
     }
 
-    /// <summary>
-    ///     Verifies that <see cref="RecipeRepository.GetAsync" /> returns the correct name and ID
-    ///     after insertion.
-    /// </summary>
     [Fact]
     public async Task GetAsync_ExistingId_ReturnsCorrectNameAndId()
     {
@@ -180,31 +143,6 @@ public sealed class RecipeRepositoryTests : IDisposable
         entry.Name.Should().Be("TestName");
     }
 
-    /// <summary>
-    ///     Verifies that <see cref="RecipeRepository.GetAsync" /> returns a <see cref="Recipe" />
-    ///     whose node count matches what was stored.
-    /// </summary>
-    [Fact]
-    public async Task GetAsync_ExistingId_ReturnsGraphWithCorrectNodeCount()
-    {
-        var wbPath = Path.GetFullPath("a.xlsx");
-        var n1 = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wbPath), new HashSet<string>());
-        var n2 = new WorkbookNode(new Point(100, 0), new WorkbookIdentifier(wbPath), new HashSet<string>());
-        var metadata = await _repo.AddAsync(Input("TwoNodes", n1, n2), TestContext.Current.CancellationToken);
-
-        var entry = await _repo.GetAsync(metadata.Id, TestContext.Current.CancellationToken);
-
-        entry.Recipe.Nodes.Should().HaveCount(2);
-    }
-
-    #endregion
-
-    #region ListAsync
-
-    /// <summary>
-    ///     Verifies that <see cref="RecipeRepository.ListAsync" /> returns an empty list when the
-    ///     database contains no entries.
-    /// </summary>
     [Fact]
     public async Task ListAsync_EmptyDatabase_ReturnsEmptyList()
     {
@@ -213,9 +151,6 @@ public sealed class RecipeRepositoryTests : IDisposable
         list.Should().BeEmpty();
     }
 
-    /// <summary>
-    ///     Verifies that <see cref="RecipeRepository.ListAsync" /> returns metadata for all inserted entries.
-    /// </summary>
     [Fact]
     public async Task ListAsync_MultipleEntries_ReturnsAllMetadata()
     {
@@ -229,31 +164,6 @@ public sealed class RecipeRepositoryTests : IDisposable
         list.Select(e => e.Name).Should().Contain(["Alpha", "Beta", "Gamma"]);
     }
 
-    /// <summary>
-    ///     Verifies that <see cref="RecipeRepository.ListAsync" /> preserves the graph node count
-    ///     for each entry.
-    /// </summary>
-    [Fact]
-    public async Task ListAsync_EntryWithNodes_ReturnsGraphWithNodeCount()
-    {
-        var wbPath = Path.GetFullPath("wb.xlsx");
-        var node = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wbPath), new HashSet<string>());
-        var metadata = await _repo.AddAsync(Input("WithNode", node), TestContext.Current.CancellationToken);
-
-        var list = await _repo.ListAsync(TestContext.Current.CancellationToken);
-        var match = list.OfType<RecipeEntry>().Single(e => e.Id == metadata.Id);
-
-        match.Recipe.Nodes.Should().HaveCount(1);
-    }
-
-    #endregion
-
-    #region UpdateAsync
-
-    /// <summary>
-    ///     Verifies that <see cref="RecipeRepository.UpdateAsync" /> throws
-    ///     <see cref="InvalidOperationException" /> for a non-existent ID.
-    /// </summary>
     [Fact]
     public async Task UpdateAsync_NonExistentId_ThrowsInvalidOperationException()
     {
@@ -262,44 +172,21 @@ public sealed class RecipeRepositoryTests : IDisposable
         await act.Should().ThrowAsync<InvalidOperationException>();
     }
 
-    /// <summary>
-    ///     Verifies that <see cref="RecipeRepository.UpdateAsync" /> overwrites the display name.
-    /// </summary>
     [Fact]
-    public async Task UpdateAsync_ExistingId_OverwritesName()
+    public async Task UpdateAsync_ExistingId_OverwritesNameAndMappings()
     {
         var metadata = await _repo.AddAsync(Input("Old"), TestContext.Current.CancellationToken);
-
-        var updated = await _repo.UpdateAsync(metadata.Id, Input("New"), TestContext.Current.CancellationToken);
-
-        updated.Name.Should().Be("New");
-    }
-
-    /// <summary>
-    ///     Verifies that <see cref="RecipeRepository.UpdateAsync" /> replaces the graph, so that
-    ///     the new node count is reflected after a subsequent <see cref="RecipeRepository.GetAsync" />.
-    /// </summary>
-    [Fact]
-    public async Task UpdateAsync_ExistingId_OverwritesGraph()
-    {
-        var metadata = await _repo.AddAsync(Input("Recipe"), TestContext.Current.CancellationToken);
         var wbPath = Path.GetFullPath("new.xlsx");
-        var node = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wbPath), new HashSet<string>());
+        var pptPath = Path.GetFullPath("new.pptx");
 
-        await _repo.UpdateAsync(metadata.Id, Input("Recipe", node), TestContext.Current.CancellationToken);
+        var updated = await _repo.UpdateAsync(metadata.Id, InputWithMapping("New", wbPath, pptPath),
+            TestContext.Current.CancellationToken);
         var entry = await _repo.GetAsync(metadata.Id, TestContext.Current.CancellationToken);
 
-        entry.Recipe.Nodes.Should().HaveCount(1);
+        updated.Name.Should().Be("New");
+        entry.Recipe.Mappings.Should().HaveCount(1);
     }
 
-    #endregion
-
-    #region DeleteAsync
-
-    /// <summary>
-    ///     Verifies that <see cref="RecipeRepository.DeleteAsync" /> returns <see langword="false" />
-    ///     for a non-existent ID without throwing.
-    /// </summary>
     [Fact]
     public async Task DeleteAsync_NonExistentId_ReturnsFalse()
     {
@@ -308,10 +195,6 @@ public sealed class RecipeRepositoryTests : IDisposable
         deleted.Should().BeFalse();
     }
 
-    /// <summary>
-    ///     Verifies that <see cref="RecipeRepository.DeleteAsync" /> removes the row so that a
-    ///     subsequent <see cref="RecipeRepository.GetAsync" /> throws.
-    /// </summary>
     [Fact]
     public async Task DeleteAsync_ExistingId_RemovesRow()
     {
@@ -328,10 +211,6 @@ public sealed class RecipeRepositoryTests : IDisposable
 
     #region ExportAsync / ImportAsync
 
-    /// <summary>
-    ///     Verifies that <see cref="RecipeRepository.ExportAsync" /> writes a ZIP file to the
-    ///     specified path without throwing.
-    /// </summary>
     [Fact]
     public async Task ExportAsync_ExistingRecipe_CreatesZipFile()
     {
@@ -351,10 +230,6 @@ public sealed class RecipeRepositoryTests : IDisposable
         }
     }
 
-    /// <summary>
-    ///     Verifies that <see cref="RecipeRepository.ExportAsync" /> throws
-    ///     <see cref="InvalidOperationException" /> for a non-existent recipe ID.
-    /// </summary>
     [Fact]
     public async Task ExportAsync_NonExistentId_ThrowsInvalidOperationException()
     {
@@ -365,16 +240,10 @@ public sealed class RecipeRepositoryTests : IDisposable
         await act.Should().ThrowAsync<InvalidOperationException>();
     }
 
-    /// <summary>
-    ///     Verifies that <see cref="RecipeRepository.ImportAsync" /> reads a ZIP exported by
-    ///     <see cref="RecipeRepository.ExportAsync" />, inserts a new row with a distinct positive ID,
-    ///     and preserves the recipe name.
-    /// </summary>
     [Fact]
     public async Task ImportAsync_ValidZipFile_InsertsNewRowWithMatchingName()
     {
         var exported = await _repo.AddAsync(Input("Original"), TestContext.Current.CancellationToken);
-        // Names zip "Original" so ImportAsync derives that name from the filename.
         var zipPath = Path.Combine(Path.GetTempPath(), $"Original{RecipePackageRules.PackageExtension}");
         var workbooksDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
         var presentationsDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
@@ -390,7 +259,7 @@ public sealed class RecipeRepositoryTests : IDisposable
             imported.Id.Should().BeGreaterThan(0);
             imported.Id.Should().NotBe(exported.Id);
             entry.Name.Should().Be("Original");
-            entry.Recipe.Nodes.Should().BeEmpty();
+            entry.Recipe.Mappings.Should().BeEmpty();
         }
         finally
         {
@@ -400,10 +269,6 @@ public sealed class RecipeRepositoryTests : IDisposable
         }
     }
 
-    /// <summary>
-    ///     Verifies that <see cref="RecipeRepository.ImportAsync" /> throws
-    ///     <see cref="InvalidDataException" /> when the archive is missing <c>Recipe.json</c>.
-    /// </summary>
     [Fact]
     public async Task ImportAsync_MissingGraphJson_ThrowsInvalidDataException()
     {
@@ -413,7 +278,6 @@ public sealed class RecipeRepositoryTests : IDisposable
 
         try
         {
-            // Empty zip (no entries at all)
             await using (var fs = File.Create(zipPath))
             await using (var zos = new ZipOutputStream(fs))
             {
@@ -432,12 +296,6 @@ public sealed class RecipeRepositoryTests : IDisposable
         }
     }
 
-    /// <summary>
-    ///     Verifies that <see cref="RecipeRepository.ExportAsync" /> serializes zip-relative paths
-    ///     into <c>Recipe.json</c>, and <see cref="RecipeRepository.ImportAsync" /> rewrites them to
-    ///     absolute extracted paths so that file nodes in the imported graph point to the extracted
-    ///     files on disk.
-    /// </summary>
     [Fact]
     public async Task ImportAsync_GraphWithFilePaths_RoundTripsPathsToExtractedDirectories()
     {
@@ -451,13 +309,7 @@ public sealed class RecipeRepositoryTests : IDisposable
             await File.WriteAllBytesAsync(wbPath, [], TestContext.Current.CancellationToken);
             await File.WriteAllBytesAsync(pptPath, [], TestContext.Current.CancellationToken);
 
-            var graph = new Models.Recipe(
-                new Dictionary<string, Node>
-                {
-                    ["wb1"] = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wbPath), new HashSet<string>()),
-                    ["ppt1"] = new PresentationNode(new Point(0, 0), new PresentationIdentifier(pptPath), new HashSet<string>())
-                }, []);
-            var exported = await _repo.AddAsync(new RecipeInput("OrigName", graph),
+            var exported = await _repo.AddAsync(InputWithMapping("OrigName", wbPath, pptPath),
                 TestContext.Current.CancellationToken);
             await _repo.ExportAsync(exported.Id, zipPath, null, TestContext.Current.CancellationToken);
 
@@ -465,13 +317,14 @@ public sealed class RecipeRepositoryTests : IDisposable
                 TestContext.Current.CancellationToken);
             var entry = await _repo.GetAsync(imported.Id, TestContext.Current.CancellationToken);
 
-            var importedWb = entry.Recipe.Nodes.Values.OfType<WorkbookNode>().Single();
-            var importedPpt = entry.Recipe.Nodes.Values.OfType<PresentationNode>().Single();
+            var mapping = entry.Recipe.Mappings.Single();
+            var importedWb = mapping.Sources.Single().Workbook.BookPath;
+            var importedPpt = mapping.TemplatePresentation.PresentationPath;
 
-            importedWb.Workbook.BookPath.Should().StartWith(workbooksDir);
-            File.Exists(importedWb.Workbook.BookPath).Should().BeTrue();
-            importedPpt.Presentation.PresentationPath.Should().StartWith(presentationsDir);
-            File.Exists(importedPpt.Presentation.PresentationPath).Should().BeTrue();
+            importedWb.Should().StartWith(workbooksDir);
+            File.Exists(importedWb).Should().BeTrue();
+            importedPpt.Should().StartWith(presentationsDir);
+            File.Exists(importedPpt).Should().BeTrue();
         }
         finally
         {
@@ -483,10 +336,6 @@ public sealed class RecipeRepositoryTests : IDisposable
         }
     }
 
-    /// <summary>
-    ///     Verifies that <see cref="RecipeRepository.ImportAsync" /> throws
-    ///     <see cref="InvalidDataException" /> when <c>Recipe.json</c> contains malformed JSON.
-    /// </summary>
     [Fact]
     public async Task ImportAsync_InvalidGraphJson_ThrowsInvalidDataException()
     {
@@ -500,8 +349,7 @@ public sealed class RecipeRepositoryTests : IDisposable
             await using (var zos = new ZipOutputStream(fs))
             {
                 var bytes = Encoding.UTF8.GetBytes("not valid json {{{");
-                var entry = new ZipEntry(RecipePackageRules.Data.RecipeFileName)
-                    { Size = bytes.Length };
+                var entry = new ZipEntry(RecipePackageRules.Data.RecipeFileName) { Size = bytes.Length };
                 await zos.PutNextEntryAsync(entry, TestContext.Current.CancellationToken);
                 zos.Write(bytes, 0, bytes.Length);
                 zos.CloseEntry();
@@ -520,81 +368,6 @@ public sealed class RecipeRepositoryTests : IDisposable
         }
     }
 
-    /// <summary>
-    ///     Verifies that <see cref="RecipeRepository.ImportAsync" /> throws
-    ///     <see cref="InvalidDataException" /> when a zip entry under <c>Workbooks/</c> uses a
-    ///     path-traversal name (Zip Slip attack).
-    /// </summary>
-    [Fact]
-    public async Task ImportAsync_ZipSlipWorkbookEntry_ThrowsInvalidDataException()
-    {
-        var wbPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.xlsx");
-        var zipPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{RecipePackageRules.PackageExtension}");
-        var workbooksDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-        var presentationsDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-
-        try
-        {
-            await File.WriteAllBytesAsync(wbPath, [], TestContext.Current.CancellationToken);
-
-            var graph = new Models.Recipe(
-                new Dictionary<string, Node> { ["wb1"] = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wbPath), new HashSet<string>()) }, []);
-            var exported = await _repo.AddAsync(new RecipeInput("SlipTest", graph),
-                TestContext.Current.CancellationToken);
-            await _repo.ExportAsync(exported.Id, zipPath, null, TestContext.Current.CancellationToken);
-
-            // Re-open the zip and inject a malicious entry alongside the legitimate ones.
-            var maliciousZipPath = Path.Combine(Path.GetTempPath(),
-                $"{Guid.NewGuid():N}{RecipePackageRules.PackageExtension}");
-            try
-            {
-                // Build malicious zip (streams fully closed before ImportAsync reads it).
-                await using (var inFs = File.OpenRead(zipPath))
-                using (var inZip = new ZipFile(inFs))
-                await using (var outFs = File.Create(maliciousZipPath))
-                await using (var outZos = new ZipOutputStream(outFs))
-                {
-                    foreach (ZipEntry e in inZip)
-                    {
-                        if (!e.IsFile) continue;
-                        var copy = new ZipEntry(e.Name) { Size = e.Size };
-                        await outZos.PutNextEntryAsync(copy, TestContext.Current.CancellationToken);
-                        StreamUtils.Copy(inZip.GetInputStream(e), outZos, new byte[4096]);
-                        outZos.CloseEntry();
-                    }
-
-                    // Malicious entry: path traversal out of Workbooks/
-                    var payload = new byte[] { 0x00 };
-                    var malEntry = new ZipEntry("Workbooks/../../escape.xlsx")
-                        { Size = payload.Length };
-                    await outZos.PutNextEntryAsync(malEntry, TestContext.Current.CancellationToken);
-                    outZos.Write(payload, 0, payload.Length);
-                    outZos.CloseEntry();
-                    outZos.Finish();
-                }
-
-                var act = async () => await _repo.ImportAsync(maliciousZipPath, null,
-                    (workbooksDir, presentationsDir), TestContext.Current.CancellationToken);
-
-                await act.Should().ThrowAsync<InvalidDataException>()
-                    .WithMessage("*escapes the target directory*");
-            }
-            finally
-            {
-                if (File.Exists(maliciousZipPath)) File.Delete(maliciousZipPath);
-            }
-        }
-        finally
-        {
-            if (File.Exists(wbPath)) File.Delete(wbPath);
-            if (File.Exists(zipPath)) File.Delete(zipPath);
-        }
-    }
-
-    /// <summary>
-    ///     Verifies that <see cref="RecipeRepository.ImportAsync" /> does not extract a file whose
-    ///     extension is not on the allowed list (e.g. <c>.exe</c> inside <c>Workbooks/</c>).
-    /// </summary>
     [Fact]
     public async Task ImportAsync_DisallowedExtensionInWorkbooks_FileNotExtracted()
     {
@@ -604,20 +377,17 @@ public sealed class RecipeRepositoryTests : IDisposable
 
         try
         {
-            // Build a zip with a valid Recipe.json (empty graph) + a disallowed entry.
             await using (var fs = File.Create(zipPath))
             await using (var zos = new ZipOutputStream(fs))
             {
-                var graphBytes = Encoding.UTF8.GetBytes("{\"nodes\":{},\"edges\":[]}");
-                var graphEntry = new ZipEntry(RecipePackageRules.Data.RecipeFileName)
-                    { Size = graphBytes.Length };
+                var graphBytes = Encoding.UTF8.GetBytes("{\"mappings\":[]}");
+                var graphEntry = new ZipEntry(RecipePackageRules.Data.RecipeFileName) { Size = graphBytes.Length };
                 await zos.PutNextEntryAsync(graphEntry, TestContext.Current.CancellationToken);
                 zos.Write(graphBytes, 0, graphBytes.Length);
                 zos.CloseEntry();
 
                 var payload = new byte[] { 0xFF, 0xD8 };
-                var badEntry = new ZipEntry("Workbooks/payload.exe")
-                    { Size = payload.Length };
+                var badEntry = new ZipEntry("Workbooks/payload.exe") { Size = payload.Length };
                 await zos.PutNextEntryAsync(badEntry, TestContext.Current.CancellationToken);
                 zos.Write(payload, 0, payload.Length);
                 zos.CloseEntry();
@@ -636,15 +406,11 @@ public sealed class RecipeRepositoryTests : IDisposable
         }
     }
 
-    /// <summary>
-    ///     Verifies that <see cref="RecipeRepository.ImportAsync" /> does not overwrite an existing file
-    ///     in the target folder, but instead extracts to a deduplicated path (with <c>_N</c> suffix),
-    ///     and that the imported graph node points to the deduplicated path.
-    /// </summary>
     [Fact]
     public async Task ImportAsync_WorkbookFileAlreadyExistsInTargetFolder_DeduplicatesExtractedFile()
     {
         var wbPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.xlsx");
+        var pptPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.pptx");
         var zipPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{RecipePackageRules.PackageExtension}");
         var workbooksDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
         var presentationsDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
@@ -652,10 +418,9 @@ public sealed class RecipeRepositoryTests : IDisposable
         try
         {
             await File.WriteAllBytesAsync(wbPath, [0x01], TestContext.Current.CancellationToken);
+            await File.WriteAllBytesAsync(pptPath, [], TestContext.Current.CancellationToken);
 
-            var graph = new Models.Recipe(
-                new Dictionary<string, Node> { ["wb1"] = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wbPath), new HashSet<string>()) }, []);
-            var exported = await _repo.AddAsync(new RecipeInput("DupImport", graph),
+            var exported = await _repo.AddAsync(InputWithMapping("DupImport", wbPath, pptPath),
                 TestContext.Current.CancellationToken);
             await _repo.ExportAsync(exported.Id, zipPath, null, TestContext.Current.CancellationToken);
 
@@ -668,33 +433,25 @@ public sealed class RecipeRepositoryTests : IDisposable
                 TestContext.Current.CancellationToken);
             var entry = await _repo.GetAsync(imported.Id, TestContext.Current.CancellationToken);
 
-            var importedWb = entry.Recipe.Nodes.Values.OfType<WorkbookNode>().Single();
+            var importedWb = entry.Recipe.Mappings.Single().Sources.Single().Workbook.BookPath;
 
-            // Pre-existing file must not be overwritten.
             (await File.ReadAllBytesAsync(conflictingPath, TestContext.Current.CancellationToken))[0]
                 .Should().Be(0xFF);
-            // Recipe node must point to a deduplicated path, not the conflicting one.
-            importedWb.Workbook.BookPath.Should().NotBe(conflictingPath);
-            importedWb.Workbook.BookPath.Should().StartWith(workbooksDir);
-            // The extracted file must exist with the content from the zip (0x01).
-            File.Exists(importedWb.Workbook.BookPath).Should().BeTrue();
-            (await File.ReadAllBytesAsync(importedWb.Workbook.BookPath,
-                TestContext.Current.CancellationToken))[0].Should().Be(0x01);
+            importedWb.Should().NotBe(conflictingPath);
+            importedWb.Should().StartWith(workbooksDir);
+            File.Exists(importedWb).Should().BeTrue();
+            (await File.ReadAllBytesAsync(importedWb, TestContext.Current.CancellationToken))[0].Should().Be(0x01);
         }
         finally
         {
             if (File.Exists(wbPath)) File.Delete(wbPath);
+            if (File.Exists(pptPath)) File.Delete(pptPath);
             if (File.Exists(zipPath)) File.Delete(zipPath);
             if (Directory.Exists(workbooksDir)) Directory.Delete(workbooksDir, true);
             if (Directory.Exists(presentationsDir)) Directory.Delete(presentationsDir, true);
         }
     }
 
-    /// <summary>
-    ///     Verifies that <see cref="RecipeRepository.ExportAsync" /> deduplicates workbook files
-    ///     sharing the same stem (from different directories) by appending <c>_N</c> suffixes, and
-    ///     that <see cref="RecipeRepository.ImportAsync" /> restores both files under the target folder.
-    /// </summary>
     [Fact]
     public async Task ExportAsync_DuplicateStemWorkbooks_BothFilesExtractedAfterImport()
     {
@@ -713,13 +470,7 @@ public sealed class RecipeRepositoryTests : IDisposable
             await File.WriteAllBytesAsync(wb1, [0x01], TestContext.Current.CancellationToken);
             await File.WriteAllBytesAsync(wb2, [0x02], TestContext.Current.CancellationToken);
 
-            var graph = new Models.Recipe(
-                new Dictionary<string, Node>
-                {
-                    ["wb1"] = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wb1), new HashSet<string>()),
-                    ["wb2"] = new WorkbookNode(new Point(1, 0), new WorkbookIdentifier(wb2), new HashSet<string>())
-                }, []);
-            var exported = await _repo.AddAsync(new RecipeInput("DupStem", graph),
+            var exported = await _repo.AddAsync(InputWithWorkbooks("DupStem", wb1, wb2),
                 TestContext.Current.CancellationToken);
             await _repo.ExportAsync(exported.Id, zipPath, null, TestContext.Current.CancellationToken);
 
@@ -727,11 +478,10 @@ public sealed class RecipeRepositoryTests : IDisposable
                 TestContext.Current.CancellationToken);
             var entry = await _repo.GetAsync(imported.Id, TestContext.Current.CancellationToken);
 
-            var importedWbs = entry.Recipe.Nodes.Values.OfType<WorkbookNode>().ToList();
+            var importedWbs = entry.Recipe.Mappings.Single().Sources.Select(s => s.Workbook.BookPath).ToList();
             importedWbs.Should().HaveCount(2);
-            importedWbs.Should().AllSatisfy(n => File.Exists(n.Workbook.BookPath).Should().BeTrue());
-            // Both paths must be distinct (deduplication gave them different names).
-            importedWbs.Select(n => n.Workbook.BookPath).Distinct().Should().HaveCount(2);
+            importedWbs.Should().AllSatisfy(p => File.Exists(p).Should().BeTrue());
+            importedWbs.Distinct().Should().HaveCount(2);
         }
         finally
         {
@@ -745,17 +495,12 @@ public sealed class RecipeRepositoryTests : IDisposable
         }
     }
 
-    /// <summary>
-    ///     Verifies that a password-protected export can be re-imported with the same password,
-    ///     producing a new recipe row with the correct name.
-    /// </summary>
     [Fact]
     public async Task ExportAsync_WithPassword_CanBeImportedWithSamePassword()
     {
         const string password = "s3cr3t!";
         var exported = await _repo.AddAsync(Input("Encrypted"), TestContext.Current.CancellationToken);
-        var zipPath = Path.Combine(Path.GetTempPath(),
-            $"Encrypted{RecipePackageRules.PackageExtension}");
+        var zipPath = Path.Combine(Path.GetTempPath(), $"Encrypted{RecipePackageRules.PackageExtension}");
         var workbooksDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
         var presentationsDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
 
@@ -778,10 +523,48 @@ public sealed class RecipeRepositoryTests : IDisposable
         }
     }
 
-    /// <summary>
-    ///     Verifies that importing a password-protected archive without a password (or with the wrong
-    ///     password) throws an exception, preventing unauthorized extraction.
-    /// </summary>
+    [Fact]
+    public async Task ExportAsync_WithPasswordAndFileMapping_FilesEncryptedAndExtractedCorrectly()
+    {
+        const string password = "p@ssw0rd!";
+        var wbPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.xlsx");
+        var pptPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.pptx");
+        var zipPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{RecipePackageRules.PackageExtension}");
+        var workbooksDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        var presentationsDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+
+        try
+        {
+            await File.WriteAllBytesAsync(wbPath, [0x01], TestContext.Current.CancellationToken);
+            await File.WriteAllBytesAsync(pptPath, [0x02], TestContext.Current.CancellationToken);
+
+            var exported = await _repo.AddAsync(InputWithMapping("EncryptedWithFiles", wbPath, pptPath),
+                TestContext.Current.CancellationToken);
+            await _repo.ExportAsync(exported.Id, zipPath, password, TestContext.Current.CancellationToken);
+
+            var imported = await _repo.ImportAsync(zipPath, password, (workbooksDir, presentationsDir),
+                TestContext.Current.CancellationToken);
+            var entry = await _repo.GetAsync(imported.Id, TestContext.Current.CancellationToken);
+
+            var mapping = entry.Recipe.Mappings.Single();
+            var importedWb = mapping.Sources.Single().Workbook.BookPath;
+            var importedPpt = mapping.TemplatePresentation.PresentationPath;
+
+            File.Exists(importedWb).Should().BeTrue();
+            (await File.ReadAllBytesAsync(importedWb, TestContext.Current.CancellationToken))[0].Should().Be(0x01);
+            File.Exists(importedPpt).Should().BeTrue();
+            (await File.ReadAllBytesAsync(importedPpt, TestContext.Current.CancellationToken))[0].Should().Be(0x02);
+        }
+        finally
+        {
+            if (File.Exists(wbPath)) File.Delete(wbPath);
+            if (File.Exists(pptPath)) File.Delete(pptPath);
+            if (File.Exists(zipPath)) File.Delete(zipPath);
+            if (Directory.Exists(workbooksDir)) Directory.Delete(workbooksDir, true);
+            if (Directory.Exists(presentationsDir)) Directory.Delete(presentationsDir, true);
+        }
+    }
+
     [Fact]
     public async Task ImportAsync_WrongPassword_ThrowsException()
     {
@@ -793,8 +576,7 @@ public sealed class RecipeRepositoryTests : IDisposable
 
         try
         {
-            await _repo.ExportAsync(exported.Id, zipPath, correctPassword,
-                TestContext.Current.CancellationToken);
+            await _repo.ExportAsync(exported.Id, zipPath, correctPassword, TestContext.Current.CancellationToken);
 
             var act = async () => await _repo.ImportAsync(zipPath, "wrongpassword",
                 (workbooksDir, presentationsDir), TestContext.Current.CancellationToken);
@@ -807,180 +589,6 @@ public sealed class RecipeRepositoryTests : IDisposable
         }
     }
 
-    /// <summary>
-    ///     Verifies that <see cref="RecipeRepository.ImportAsync" /> deduplicates a presentation file
-    ///     when a file with the same name already exists in the target presentations folder.
-    /// </summary>
-    [Fact]
-    public async Task ImportAsync_PresentationFileAlreadyExistsInTargetFolder_DeduplicatesExtractedFile()
-    {
-        var pptPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.pptx");
-        var zipPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{RecipePackageRules.PackageExtension}");
-        var workbooksDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-        var presentationsDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-
-        try
-        {
-            await File.WriteAllBytesAsync(pptPath, [0x01], TestContext.Current.CancellationToken);
-
-            var graph = new Models.Recipe(
-                new Dictionary<string, Node> { ["ppt1"] = new PresentationNode(new Point(0, 0), new PresentationIdentifier(pptPath), new HashSet<string>()) }, []);
-            var exported = await _repo.AddAsync(new RecipeInput("PptDedup", graph),
-                TestContext.Current.CancellationToken);
-            await _repo.ExportAsync(exported.Id, zipPath, null, TestContext.Current.CancellationToken);
-
-            Directory.CreateDirectory(presentationsDir);
-            var conflictingPath = Path.Combine(presentationsDir, Path.GetFileName(pptPath));
-            await File.WriteAllBytesAsync(conflictingPath, [0xFF], TestContext.Current.CancellationToken);
-
-            var imported = await _repo.ImportAsync(zipPath, null, (workbooksDir, presentationsDir),
-                TestContext.Current.CancellationToken);
-            var entry = await _repo.GetAsync(imported.Id, TestContext.Current.CancellationToken);
-
-            var importedPpt = entry.Recipe.Nodes.Values.OfType<PresentationNode>().Single();
-
-            (await File.ReadAllBytesAsync(conflictingPath, TestContext.Current.CancellationToken))[0]
-                .Should().Be(0xFF);
-            importedPpt.Presentation.PresentationPath.Should().NotBe(conflictingPath);
-            importedPpt.Presentation.PresentationPath.Should().StartWith(presentationsDir);
-            File.Exists(importedPpt.Presentation.PresentationPath).Should().BeTrue();
-            (await File.ReadAllBytesAsync(importedPpt.Presentation.PresentationPath,
-                TestContext.Current.CancellationToken))[0].Should().Be(0x01);
-        }
-        finally
-        {
-            if (File.Exists(pptPath)) File.Delete(pptPath);
-            if (File.Exists(zipPath)) File.Delete(zipPath);
-            if (Directory.Exists(workbooksDir)) Directory.Delete(workbooksDir, true);
-            if (Directory.Exists(presentationsDir)) Directory.Delete(presentationsDir, true);
-        }
-    }
-
-    /// <summary>
-    ///     Verifies that when both <c>report.xlsx</c> and <c>report_1.xlsx</c> already exist in the
-    ///     target folder, <see cref="RecipeRepository.ImportAsync" /> assigns <c>report_2.xlsx</c>
-    ///     (i.e., deduplication skips over all occupied slots).
-    /// </summary>
-    [Fact]
-    public async Task ImportAsync_MultipleConflictsAlreadyExist_DeduplicatesIncrementally()
-    {
-        var wbPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.xlsx");
-        var zipPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{RecipePackageRules.PackageExtension}");
-        var workbooksDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-        var presentationsDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-
-        try
-        {
-            await File.WriteAllBytesAsync(wbPath, [0x01], TestContext.Current.CancellationToken);
-
-            var graph = new Models.Recipe(
-                new Dictionary<string, Node> { ["wb1"] = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wbPath), new HashSet<string>()) }, []);
-            var exported = await _repo.AddAsync(new RecipeInput("MultiConflict", graph),
-                TestContext.Current.CancellationToken);
-            await _repo.ExportAsync(exported.Id, zipPath, null, TestContext.Current.CancellationToken);
-
-            // Pre-occupy both "name.xlsx" and "name_1.xlsx".
-            Directory.CreateDirectory(workbooksDir);
-            var stem = Path.GetFileNameWithoutExtension(wbPath);
-            var ext = Path.GetExtension(wbPath);
-            await File.WriteAllBytesAsync(Path.Combine(workbooksDir, Path.GetFileName(wbPath)), [0xAA],
-                TestContext.Current.CancellationToken);
-            await File.WriteAllBytesAsync(Path.Combine(workbooksDir, $"{stem}_1{ext}"), [0xBB],
-                TestContext.Current.CancellationToken);
-
-            var imported = await _repo.ImportAsync(zipPath, null, (workbooksDir, presentationsDir),
-                TestContext.Current.CancellationToken);
-            var entry = await _repo.GetAsync(imported.Id, TestContext.Current.CancellationToken);
-
-            var importedWb = entry.Recipe.Nodes.Values.OfType<WorkbookNode>().Single();
-            var expectedName = $"{stem}_2{ext}";
-
-            Path.GetFileName(importedWb.Workbook.BookPath).Should().Be(expectedName,
-                "first two slots are occupied so _2 must be chosen");
-            File.Exists(importedWb.Workbook.BookPath).Should().BeTrue();
-            (await File.ReadAllBytesAsync(importedWb.Workbook.BookPath,
-                TestContext.Current.CancellationToken))[0].Should().Be(0x01);
-        }
-        finally
-        {
-            if (File.Exists(wbPath)) File.Delete(wbPath);
-            if (File.Exists(zipPath)) File.Delete(zipPath);
-            if (Directory.Exists(workbooksDir)) Directory.Delete(workbooksDir, true);
-            if (Directory.Exists(presentationsDir)) Directory.Delete(presentationsDir, true);
-        }
-    }
-
-    /// <summary>
-    ///     Verifies that when the graph contains two nodes whose files export with the same deduped
-    ///     names (e.g. <c>report.xlsx</c> and <c>report_1.xlsx</c>) and the target folder already
-    ///     contains <c>report.xlsx</c>, both imported files land at free slots without collision.
-    /// </summary>
-    [Fact]
-    public async Task ImportAsync_DuplicateStemNodesWithPreExistingConflict_AllFilesExtractedDistinct()
-    {
-        var dir1 = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-        var dir2 = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(dir1);
-        Directory.CreateDirectory(dir2);
-        var wb1 = Path.Combine(dir1, "data.xlsx");
-        var wb2 = Path.Combine(dir2, "data.xlsx");
-        var zipPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{RecipePackageRules.PackageExtension}");
-        var workbooksDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-        var presentationsDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-
-        try
-        {
-            await File.WriteAllBytesAsync(wb1, [0x01], TestContext.Current.CancellationToken);
-            await File.WriteAllBytesAsync(wb2, [0x02], TestContext.Current.CancellationToken);
-
-            var graph = new Models.Recipe(
-                new Dictionary<string, Node>
-                {
-                    ["wb1"] = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wb1), new HashSet<string>()),
-                    ["wb2"] = new WorkbookNode(new Point(1, 0), new WorkbookIdentifier(wb2), new HashSet<string>())
-                }, []);
-            var exported = await _repo.AddAsync(new RecipeInput("DupConflict", graph),
-                TestContext.Current.CancellationToken);
-            await _repo.ExportAsync(exported.Id, zipPath, null, TestContext.Current.CancellationToken);
-
-            // Pre-occupy "data.xlsx" in target folder.
-            Directory.CreateDirectory(workbooksDir);
-            await File.WriteAllBytesAsync(Path.Combine(workbooksDir, "data.xlsx"), [0xFF],
-                TestContext.Current.CancellationToken);
-
-            var imported = await _repo.ImportAsync(zipPath, null, (workbooksDir, presentationsDir),
-                TestContext.Current.CancellationToken);
-            var entry = await _repo.GetAsync(imported.Id, TestContext.Current.CancellationToken);
-
-            var importedWbs = entry.Recipe.Nodes.Values.OfType<WorkbookNode>().ToList();
-            importedWbs.Should().HaveCount(2);
-            importedWbs.Should().AllSatisfy(n => File.Exists(n.Workbook.BookPath).Should().BeTrue());
-            // All three paths (pre-existing + two imported) must be distinct.
-            importedWbs.Select(n => n.Workbook.BookPath)
-                .Concat([Path.Combine(workbooksDir, "data.xlsx")])
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .Should().HaveCount(3);
-            // Pre-existing file must be untouched.
-            (await File.ReadAllBytesAsync(Path.Combine(workbooksDir, "data.xlsx"),
-                TestContext.Current.CancellationToken))[0].Should().Be(0xFF);
-        }
-        finally
-        {
-            if (File.Exists(wb1)) File.Delete(wb1);
-            if (File.Exists(wb2)) File.Delete(wb2);
-            if (Directory.Exists(dir1)) Directory.Delete(dir1, true);
-            if (Directory.Exists(dir2)) Directory.Delete(dir2, true);
-            if (File.Exists(zipPath)) File.Delete(zipPath);
-            if (Directory.Exists(workbooksDir)) Directory.Delete(workbooksDir, true);
-            if (Directory.Exists(presentationsDir)) Directory.Delete(presentationsDir, true);
-        }
-    }
-
-    /// <summary>
-    ///     Verifies that a zip entry whose path does not start with a known folder prefix
-    ///     (<c>Workbooks/</c> or <c>Presentations/</c>) is silently ignored and does not prevent
-    ///     a successful import.
-    /// </summary>
     [Fact]
     public async Task ImportAsync_EntryInUnknownFolderPrefix_IsIgnoredAndImportSucceeds()
     {
@@ -993,16 +601,14 @@ public sealed class RecipeRepositoryTests : IDisposable
             using (var fs = File.Create(zipPath))
             using (var zos = new ZipOutputStream(fs))
             {
-                var graphBytes = Encoding.UTF8.GetBytes("{\"nodes\":{},\"edges\":[]}");
-                var graphEntry = new ZipEntry(RecipePackageRules.Data.RecipeFileName)
-                    { Size = graphBytes.Length };
+                var graphBytes = Encoding.UTF8.GetBytes("{\"mappings\":[]}");
+                var graphEntry = new ZipEntry(RecipePackageRules.Data.RecipeFileName) { Size = graphBytes.Length };
                 zos.PutNextEntry(graphEntry);
                 zos.Write(graphBytes, 0, graphBytes.Length);
                 zos.CloseEntry();
 
                 var payload = new byte[] { 0x42 };
-                var unknownEntry = new ZipEntry("Secret/evil.xlsx")
-                    { Size = payload.Length };
+                var unknownEntry = new ZipEntry("Secret/evil.xlsx") { Size = payload.Length };
                 zos.PutNextEntry(unknownEntry);
                 zos.Write(payload, 0, payload.Length);
                 zos.CloseEntry();
@@ -1022,11 +628,6 @@ public sealed class RecipeRepositoryTests : IDisposable
         }
     }
 
-    /// <summary>
-    ///     Verifies that <see cref="RecipeRepository.ImportAsync" /> throws
-    ///     <see cref="InvalidDataException" /> when the archive contains more entries than
-    ///     <see cref="RecipePackageRules.MaxEntryCount" /> allows.
-    /// </summary>
     [Fact]
     public async Task ImportAsync_ExceedsMaxEntryCount_ThrowsInvalidDataException()
     {
@@ -1063,11 +664,6 @@ public sealed class RecipeRepositoryTests : IDisposable
         }
     }
 
-    /// <summary>
-    ///     Verifies that <see cref="RecipeRepository.ImportAsync" /> throws
-    ///     <see cref="InvalidDataException" /> when <c>Recipe.json</c>'s uncompressed size exceeds
-    ///     <see cref="RecipePackageRules.MaxGraphUncompressedBytes" />.
-    /// </summary>
     [Fact]
     public async Task ImportAsync_GraphJsonExceedsUncompressedSizeLimit_ThrowsInvalidDataException()
     {
@@ -1082,8 +678,7 @@ public sealed class RecipeRepositoryTests : IDisposable
             using (var zos = new ZipOutputStream(fs))
             {
                 zos.SetLevel(9);
-                var e = new ZipEntry(RecipePackageRules.Data.RecipeFileName)
-                    { Size = oversized.Length };
+                var e = new ZipEntry(RecipePackageRules.Data.RecipeFileName) { Size = oversized.Length };
                 zos.PutNextEntry(e);
                 zos.Write(oversized, 0, oversized.Length);
                 zos.CloseEntry();
@@ -1102,11 +697,6 @@ public sealed class RecipeRepositoryTests : IDisposable
         }
     }
 
-    /// <summary>
-    ///     Verifies that <see cref="RecipeRepository.ImportAsync" /> throws
-    ///     <see cref="InvalidDataException" /> when <c>Recipe.json</c>'s compression ratio exceeds
-    ///     <see cref="RecipePackageRules.MaxEntryCompressionRatio" />.
-    /// </summary>
     [Fact]
     public async Task ImportAsync_GraphJsonExceedsCompressionRatio_ThrowsInvalidDataException()
     {
@@ -1122,8 +712,7 @@ public sealed class RecipeRepositoryTests : IDisposable
             using (var zos = new ZipOutputStream(fs))
             {
                 zos.SetLevel(9);
-                var e = new ZipEntry(RecipePackageRules.Data.RecipeFileName)
-                    { Size = compressible.Length };
+                var e = new ZipEntry(RecipePackageRules.Data.RecipeFileName) { Size = compressible.Length };
                 zos.PutNextEntry(e);
                 zos.Write(compressible, 0, compressible.Length);
                 zos.CloseEntry();
@@ -1139,177 +728,6 @@ public sealed class RecipeRepositoryTests : IDisposable
         finally
         {
             if (File.Exists(zipPath)) File.Delete(zipPath);
-        }
-    }
-
-    /// <summary>
-    ///     Verifies that <see cref="RecipeRepository.ImportAsync" /> throws
-    ///     <see cref="InvalidDataException" /> when a data file entry's compression ratio exceeds
-    ///     <see cref="RecipePackageRules.MaxEntryCompressionRatio" />.
-    /// </summary>
-    [Fact]
-    public async Task ImportAsync_DataEntryExceedsCompressionRatio_ThrowsInvalidDataException()
-    {
-        var zipPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{RecipePackageRules.PackageExtension}");
-        var workbooksDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-        var presentationsDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-
-        try
-        {
-            var graphBytes = Encoding.UTF8.GetBytes("{\"nodes\":{},\"edges\":[]}");
-            var compressible = new byte[100 * 1024];
-
-            using (var fs = File.Create(zipPath))
-            using (var zos = new ZipOutputStream(fs))
-            {
-                zos.SetLevel(9);
-
-                var graphEntry = new ZipEntry(RecipePackageRules.Data.RecipeFileName)
-                    { Size = graphBytes.Length };
-                zos.PutNextEntry(graphEntry);
-                zos.Write(graphBytes, 0, graphBytes.Length);
-                zos.CloseEntry();
-
-                // Data entry with extreme compression ratio (100 KB of zeros → far exceeds 100x).
-                var dataEntry = new ZipEntry("Workbooks/bomb.xlsx")
-                    { Size = compressible.Length };
-                zos.PutNextEntry(dataEntry);
-                zos.Write(compressible, 0, compressible.Length);
-                zos.CloseEntry();
-
-                zos.Finish();
-            }
-
-            var act = async () => await _repo.ImportAsync(zipPath, null, (workbooksDir, presentationsDir),
-                TestContext.Current.CancellationToken);
-
-            await act.Should().ThrowAsync<InvalidDataException>()
-                .WithMessage("*compression ratio*");
-        }
-        finally
-        {
-            if (File.Exists(zipPath)) File.Delete(zipPath);
-        }
-    }
-
-    /// <summary>
-    ///     Verifies that when a recipe with real file nodes is exported with a password, the data
-    ///     files are AES-256 encrypted and can be fully round-tripped back with the same password.
-    /// </summary>
-    [Fact]
-    public async Task ExportAsync_WithPasswordAndFileNodes_FilesEncryptedAndExtractedCorrectly()
-    {
-        const string password = "p@ssw0rd!";
-        var wbPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.xlsx");
-        var pptPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.pptx");
-        var zipPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{RecipePackageRules.PackageExtension}");
-        var workbooksDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-        var presentationsDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-
-        try
-        {
-            await File.WriteAllBytesAsync(wbPath, [0x01], TestContext.Current.CancellationToken);
-            await File.WriteAllBytesAsync(pptPath, [0x02], TestContext.Current.CancellationToken);
-
-            var graph = new Models.Recipe(
-                new Dictionary<string, Node>
-                {
-                    ["wb1"] = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wbPath), new HashSet<string>()),
-                    ["ppt1"] = new PresentationNode(new Point(1, 0), new PresentationIdentifier(pptPath), new HashSet<string>())
-                }, []);
-            var exported = await _repo.AddAsync(new RecipeInput("EncryptedWithFiles", graph),
-                TestContext.Current.CancellationToken);
-            await _repo.ExportAsync(exported.Id, zipPath, password, TestContext.Current.CancellationToken);
-
-            var imported = await _repo.ImportAsync(zipPath, password, (workbooksDir, presentationsDir),
-                TestContext.Current.CancellationToken);
-            var entry = await _repo.GetAsync(imported.Id, TestContext.Current.CancellationToken);
-
-            var importedWb = entry.Recipe.Nodes.Values.OfType<WorkbookNode>().Single();
-            var importedPpt = entry.Recipe.Nodes.Values.OfType<PresentationNode>().Single();
-
-            File.Exists(importedWb.Workbook.BookPath).Should().BeTrue();
-            (await File.ReadAllBytesAsync(importedWb.Workbook.BookPath,
-                TestContext.Current.CancellationToken))[0].Should().Be(0x01);
-            File.Exists(importedPpt.Presentation.PresentationPath).Should().BeTrue();
-            (await File.ReadAllBytesAsync(importedPpt.Presentation.PresentationPath,
-                TestContext.Current.CancellationToken))[0].Should().Be(0x02);
-        }
-        finally
-        {
-            if (File.Exists(wbPath)) File.Delete(wbPath);
-            if (File.Exists(pptPath)) File.Delete(pptPath);
-            if (File.Exists(zipPath)) File.Delete(zipPath);
-            if (Directory.Exists(workbooksDir)) Directory.Delete(workbooksDir, true);
-            if (Directory.Exists(presentationsDir)) Directory.Delete(presentationsDir, true);
-        }
-    }
-
-    /// <summary>
-    ///     Verifies that three workbooks where the third file's stem collides with a dedup-generated
-    ///     name (<c>data_1.xlsx</c>, produced for the second file) are all correctly deduplicated
-    ///     during export, and all three files are extracted after import.
-    ///     This exercises the fallback loop in <c>Export_ResolveFileName</c> where the original
-    ///     name for a new stem is already occupied by a dedup suffix of another stem.
-    /// </summary>
-    [Fact]
-    public async Task ExportAsync_ThreeFilesWithStemCollision_AllDeduplicatedAndExtracted()
-    {
-        var dirA = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-        var dirB = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-        var dirC = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(dirA);
-        Directory.CreateDirectory(dirB);
-        Directory.CreateDirectory(dirC);
-        // dirA/data.xlsx → "data.xlsx", dirB/data.xlsx → "data_1.xlsx",
-        // dirC/data_1.xlsx → "data_1.xlsx" already taken → fallback to "data_1_1.xlsx"
-        var wbA = Path.Combine(dirA, "data.xlsx");
-        var wbB = Path.Combine(dirB, "data.xlsx");
-        var wbC = Path.Combine(dirC, "data_1.xlsx");
-        var zipPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{RecipePackageRules.PackageExtension}");
-        var workbooksDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-        var presentationsDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-
-        try
-        {
-            await File.WriteAllBytesAsync(wbA, [0x01], TestContext.Current.CancellationToken);
-            await File.WriteAllBytesAsync(wbB, [0x02], TestContext.Current.CancellationToken);
-            await File.WriteAllBytesAsync(wbC, [0x03], TestContext.Current.CancellationToken);
-
-            var graph = new Models.Recipe(
-                new Dictionary<string, Node>
-                {
-                    ["a"] = new WorkbookNode(new Point(0, 0), new WorkbookIdentifier(wbA), new HashSet<string>()),
-                    ["b"] = new WorkbookNode(new Point(1, 0), new WorkbookIdentifier(wbB), new HashSet<string>()),
-                    ["c"] = new WorkbookNode(new Point(2, 0), new WorkbookIdentifier(wbC), new HashSet<string>())
-                }, []);
-            var exported = await _repo.AddAsync(new RecipeInput("StemCollision", graph),
-                TestContext.Current.CancellationToken);
-            await _repo.ExportAsync(exported.Id, zipPath, null, TestContext.Current.CancellationToken);
-
-            var imported = await _repo.ImportAsync(zipPath, null, (workbooksDir, presentationsDir),
-                TestContext.Current.CancellationToken);
-            var entry = await _repo.GetAsync(imported.Id, TestContext.Current.CancellationToken);
-
-            var importedWbs = entry.Recipe.Nodes.Values.OfType<WorkbookNode>().ToList();
-            importedWbs.Should().HaveCount(3);
-            importedWbs.Should().AllSatisfy(n => File.Exists(n.Workbook.BookPath).Should().BeTrue());
-            importedWbs.Select(n => n.Workbook.BookPath)
-                .Distinct(StringComparer.OrdinalIgnoreCase).Should().HaveCount(3);
-            // Contents must match original files (order-agnostic check on the set of byte values).
-            var extractedFirstBytes = importedWbs
-                .Select(n => File.ReadAllBytes(n.Workbook.BookPath)[0])
-                .Order().ToList();
-            extractedFirstBytes.Should().Equal(0x01, 0x02, 0x03);
-        }
-        finally
-        {
-            foreach (var d in new[] { dirA, dirB, dirC })
-                if (Directory.Exists(d))
-                    Directory.Delete(d, true);
-            if (File.Exists(zipPath)) File.Delete(zipPath);
-            if (Directory.Exists(workbooksDir)) Directory.Delete(workbooksDir, true);
-            if (Directory.Exists(presentationsDir)) Directory.Delete(presentationsDir, true);
         }
     }
 

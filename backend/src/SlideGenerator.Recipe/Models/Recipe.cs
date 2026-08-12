@@ -12,35 +12,61 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using SlideGenerator.Document.Slide;
+using SlideGenerator.Document.Workbook;
+using SlideGenerator.Recipe.Models.Components;
+
 namespace SlideGenerator.Recipe.Models;
 
 /// <summary>
-///     The root structure of a recipe as a graph, containing all <see cref="Node"/> keyed by id
-///     and directed <see cref="Edge"/>.
+///     The root structure of a recipe: a flat list of <see cref="Mapping" />, each describing how
+///     data from one or more worksheets flows into a single template slide.
 /// </summary>
-/// <remarks>
-///     Data-flow edges run <see cref="WorksheetNode" /> → <see cref="MapNode" /> → <see cref="SlideNode" />.
-///     Containment (workbook/worksheet, presentation/slide) is expressed by id-references:
-///     <see cref="WorkbookNode.WorksheetIds" /> and <see cref="PresentationNode.SlideIds" /> list the ids of
-///     their child nodes, which are stored as first-class entries in <see cref="Nodes" />.
-/// </remarks>
-/// <param name="Nodes">All <see cref="Node" /> instances (canvas and child) keyed by their unique id.</param>
-/// <param name="Edges">Directed data-flow <see cref="Edge"/> between nodes.</param>
-public record Recipe(
-    IReadOnlyDictionary<string, Node> Nodes,
-    IReadOnlyList<Edge> Edges)
+/// <param name="Mappings">Every source-to-template mapping that makes up this recipe.</param>
+public sealed record Recipe(IReadOnlyList<Mapping> Mappings)
 {
     /// <summary>
-    ///     Extracts all unique file paths referenced by workbook and presentation nodes in the graph.
+    ///     Extracts all unique workbook and presentation file paths referenced by this recipe.
     /// </summary>
-    public (IReadOnlySet<string> Workbooks, IReadOnlySet<string> Presentations) GetReferencedFiles()
+    public IReadOnlySet<string> GetReferencedFiles()
     {
-        var workbooks = Nodes.Values.OfType<WorkbookNode>()
-            .Select(n => n.Workbook.BookPath)
+        return (Mappings ?? [])
+            .SelectMany(m => (m.Sources ?? [])
+                .Select(s => s.Workbook.BookPath)
+                .Append(m.TemplatePresentation.PresentationPath))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var presentations = Nodes.Values.OfType<PresentationNode>()
-            .Select(n => n.Presentation.PresentationPath)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        return (workbooks, presentations);
     }
 }
+
+/// <summary>
+///     Describes how data from one or more <see cref="WorksheetSource" /> flows into a single
+///     template slide, via text and image instructions.
+/// </summary>
+/// <param name="Sources">Worksheets feeding this mapping.</param>
+/// <param name="TemplatePresentation">Identifies the presentation file that hosts the template slide.</param>
+/// <param name="TemplateSlide">Identifies the template slide within <see cref="TemplatePresentation" />.</param>
+/// <param name="TextInstructions">Rules for mapping worksheet columns to slide text placeholders.</param>
+/// <param name="ImageInstructions">Rules for mapping worksheet columns to slide image shapes.</param>
+public sealed record Mapping(
+    IReadOnlyList<WorksheetSource> Sources,
+    PresentationIdentifier TemplatePresentation,
+    SlideIdentifier TemplateSlide,
+    IReadOnlyList<TextInstruction> TextInstructions,
+    IReadOnlyList<ImageInstruction> ImageInstructions);
+
+/// <summary>
+///     Identifies one worksheet as a data source, with optional column/row filtering.
+/// </summary>
+/// <param name="Workbook">Identifies the workbook file.</param>
+/// <param name="Worksheet">Identifies the worksheet by name within the workbook.</param>
+/// <param name="UsedColumns">
+///     Column headers visible to downstream instructions. <see langword="null" /> means all columns are used.
+/// </param>
+/// <param name="RowFilter">
+///     Row-selection strategy for this worksheet. <see langword="null" /> means all rows participate.
+/// </param>
+public sealed record WorksheetSource(
+    WorkbookIdentifier Workbook,
+    WorksheetIdentifier Worksheet,
+    IReadOnlySet<ColumnIdentifier>? UsedColumns = null,
+    RowFilter? RowFilter = null);

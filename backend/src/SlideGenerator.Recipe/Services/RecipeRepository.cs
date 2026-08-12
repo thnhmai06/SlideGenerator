@@ -116,12 +116,16 @@ internal sealed partial class RecipeRepository : IRecipeRepository
         try
         {
             graph = JsonSerializer.Deserialize<Models.Recipe>(row.Recipe, GraphSerializerOptions) ??
-                    new Models.Recipe(new Dictionary<string, Node>(), []);
+                    new Models.Recipe([]);
         }
         catch (JsonException)
         {
-            graph = new Models.Recipe(new Dictionary<string, Node>(), []);
+            graph = new Models.Recipe([]);
         }
+
+        // ponytail: missing/null "mappings" on otherwise-valid JSON is treated as an empty recipe,
+        // not a crash — matches the "archive rejected? no, just empty" spirit without hiding real parse errors.
+        graph = graph with { Mappings = graph.Mappings ?? [] };
 
         return new RecipeEntry(
             (int)row.Id,
@@ -161,7 +165,6 @@ internal sealed partial class RecipeRepository : IRecipeRepository
         };
         options.Converters.Add(new JsonStringEnumConverter());
         options.Converters.Add(new ReadOnlySetJsonConverterFactory());
-        options.Converters.Add(new NodeJsonConverter());
         return options;
     }
 

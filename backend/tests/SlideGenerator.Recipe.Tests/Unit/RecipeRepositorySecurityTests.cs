@@ -28,7 +28,8 @@ namespace SlideGenerator.Recipe.Tests.Unit;
 ///     <c>RecipeRepositoryTests</c>. These tests demonstrate:
 ///     <list type="bullet">
 ///         <item>Zip Slip (CWE-22 path traversal) when an attacker crafts entries that escape the target directory.</item>
-///         <item>Missing <c>recipe.json</c> silently produces a row with <see langword="null" /> recipe content.</item>
+///         <item>A field-less <c>recipe.json</c> (<c>"{}"</c>) must not crash the import with a
+///         <see cref="NullReferenceException" /> — it is treated as an empty recipe.</item>
 ///     </list>
 /// </summary>
 public sealed class RecipeRepositorySecurityTests : IDisposable
