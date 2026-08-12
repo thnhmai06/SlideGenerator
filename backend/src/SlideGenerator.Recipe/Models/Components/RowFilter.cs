@@ -32,7 +32,7 @@ public enum RowFilterMode
 }
 
 /// <summary>
-///     Base type for row-filter configurations on a <see cref="WorksheetNode" />.
+///     Base type for row-filter configurations on a <see cref="WorksheetSource" />.
 /// </summary>
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "mode")]
 [JsonDerivedType(typeof(AllRowFilter), nameof(RowFilterMode.All))]

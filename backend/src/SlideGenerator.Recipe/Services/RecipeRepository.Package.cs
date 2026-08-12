@@ -204,8 +204,8 @@ internal sealed partial class RecipeRepository
     }
 
     /// <summary>
-    ///     Returns a copy of <paramref name="graph" /> in which each <see cref="WorkbookNode" />
-    ///     and <see cref="PresentationNode" /> has its path replaced by the deduplicated absolute
+    ///     Returns a copy of <paramref name="graph" /> in which each <see cref="WorksheetSource" />
+    ///     and <see cref="Mapping.TemplatePresentation" /> has its path replaced by the deduplicated absolute
     ///     path from the corresponding mapping. Nodes whose filename is absent from the mapping are
     ///     left unchanged.
     /// </summary>
@@ -410,8 +410,8 @@ internal sealed partial class RecipeRepository
     }
 
     /// <summary>
-    ///     Returns a copy of <paramref name="graph" /> in which every <see cref="WorkbookNode" />
-    ///     and <see cref="PresentationNode" /> whose an absolute path appears in the entry mapping has
+    ///     Returns a copy of <paramref name="graph" /> in which every <see cref="WorksheetSource" />
+    ///     and <see cref="Mapping.TemplatePresentation" /> whose an absolute path appears in the entry mapping has
     ///     its path replaced by the plain filename (e.g. <c>data.xlsx</c>) suitable for storage
     ///     inside the zip archive. Nodes whose paths are not in the mapping are left unchanged.
     /// </summary>
