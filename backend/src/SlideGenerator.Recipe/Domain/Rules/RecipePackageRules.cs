@@ -12,8 +12,8 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Document.Domain.Models.Sheet;
-using SlideGenerator.Document.Domain.Models.Slide;
+using SlideGenerator.Document.Models.Sheet;
+using SlideGenerator.Document.Models.Slide;
 
 namespace SlideGenerator.Recipe.Domain.Rules;
 

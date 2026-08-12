@@ -15,10 +15,10 @@
 using System.Drawing;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
-using SlideGenerator.Document.Application.Services;
-using SlideGenerator.Document.Domain.Abstractions.Slide;
-using SlideGenerator.Document.Domain.Models.Slide;
-using SlideGenerator.Document.Infrastructure.Services;
+using SlideGenerator.Document.Services;
+using SlideGenerator.Document.Abstractions.Slide;
+using SlideGenerator.Document.Models.Slide;
+using SlideGenerator.Document.Services;
 using Xunit;
 
 namespace SlideGenerator.Document.Tests.Unit;

@@ -14,7 +14,7 @@
 
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
-using SlideGenerator.Document.Domain.Models.Slide;
+using SlideGenerator.Document.Models.Slide;
 using SlideGenerator.Generator.Application.Abstractions;
 using SlideGenerator.Generator.Application.Workflows;
 using SlideGenerator.Generator.Domain.Models.Data;

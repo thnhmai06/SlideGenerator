@@ -13,8 +13,8 @@
  */
 
 using SlideGenerator.Cloud.Models;
-using SlideGenerator.Document.Domain.Abstractions.Sheet;
-using SlideGenerator.Document.Domain.Models.Sheet;
+using SlideGenerator.Document.Abstractions.Sheet;
+using SlideGenerator.Document.Models.Sheet;
 using SlideGenerator.Settings.Abstractions;
 using SlideGenerator.Settings.Rules;
 

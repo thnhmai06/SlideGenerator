@@ -14,8 +14,8 @@
 
 using FluentAssertions;
 using NSubstitute;
-using SlideGenerator.Document.Domain.Abstractions.Sheet;
-using SlideGenerator.Document.Domain.Models.Sheet;
+using SlideGenerator.Document.Abstractions.Sheet;
+using SlideGenerator.Document.Models.Sheet;
 using SlideGenerator.Generator.Application.Steps;
 using SlideGenerator.Recipe.Domain.Models.Components;
 using Xunit;

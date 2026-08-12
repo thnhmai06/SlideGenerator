@@ -12,9 +12,9 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Document.Application.Abstractions;
-using SlideGenerator.Document.Domain.Models.Sheet;
-using SlideGenerator.Document.Domain.Models.Slide;
+using SlideGenerator.Document.Abstractions;
+using SlideGenerator.Document.Models.Sheet;
+using SlideGenerator.Document.Models.Slide;
 using SlideGenerator.Summarization.Abstractions;
 using SlideGenerator.Summarization.Models.Sheet;
 using SlideGenerator.Summarization.Models.Slide;

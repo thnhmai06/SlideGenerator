@@ -16,7 +16,7 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Serilog.Events;
-using SlideGenerator.Document.Domain.Models.Slide;
+using SlideGenerator.Document.Models.Slide;
 using SlideGenerator.Generator.Application.Abstractions;
 using SlideGenerator.Generator.Domain.Models.Data;
 using SlideGenerator.Generator.Infrastructure.Middleware;

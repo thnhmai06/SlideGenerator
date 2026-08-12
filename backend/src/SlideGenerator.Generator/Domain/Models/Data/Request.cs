@@ -12,7 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Document.Domain.Models.Slide;
+using SlideGenerator.Document.Models.Slide;
 
 namespace SlideGenerator.Generator.Domain.Models.Data;
 

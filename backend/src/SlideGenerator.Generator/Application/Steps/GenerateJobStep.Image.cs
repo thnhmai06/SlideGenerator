@@ -15,9 +15,9 @@
 using System.Drawing;
 using Microsoft.Extensions.Logging;
 using SlideGenerator.Cloud.Models;
-using SlideGenerator.Document.Domain.Abstractions.Slide;
-using SlideGenerator.Document.Domain.Models.Sheet;
-using SlideGenerator.Document.Domain.Models.Slide;
+using SlideGenerator.Document.Abstractions.Slide;
+using SlideGenerator.Document.Models.Sheet;
+using SlideGenerator.Document.Models.Slide;
 using SlideGenerator.Generator.Application.Abstractions;
 using SlideGenerator.Generator.Domain.Models.Enum;
 using SlideGenerator.Image.Domain.Entities;

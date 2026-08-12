@@ -14,10 +14,10 @@
 
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
-using SlideGenerator.Document.Domain.Abstractions.Sheet;
-using SlideGenerator.Document.Domain.Abstractions.Slide;
-using SlideGenerator.Document.Domain.Models.Sheet;
-using SlideGenerator.Document.Domain.Models.Slide;
+using SlideGenerator.Document.Abstractions.Sheet;
+using SlideGenerator.Document.Abstractions.Slide;
+using SlideGenerator.Document.Models.Sheet;
+using SlideGenerator.Document.Models.Slide;
 using SlideGenerator.Generator.Domain.Models.Data;
 
 namespace SlideGenerator.Generator.Application.Steps;

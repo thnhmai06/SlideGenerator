@@ -19,7 +19,7 @@ using Serilog;
 using Serilog.Events;
 using Serilog.Exceptions;
 using SlideGenerator.Cloud;
-using SlideGenerator.Document.Injection;
+using SlideGenerator.Document;
 using SlideGenerator.Generator.Injection;
 using SlideGenerator.Image.Injection;
 using SlideGenerator.Logging;

@@ -14,7 +14,7 @@
 
 using Microsoft.Extensions.Logging;
 using NSubstitute;
-using SlideGenerator.Document.Domain.Models.Slide;
+using SlideGenerator.Document.Models.Slide;
 using SlideGenerator.Generator.Domain.Models.Data;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;

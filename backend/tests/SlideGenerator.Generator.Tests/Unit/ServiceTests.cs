@@ -14,8 +14,8 @@
 
 using System.Drawing;
 using FluentAssertions;
-using SlideGenerator.Document.Domain.Models.Sheet;
-using SlideGenerator.Document.Domain.Models.Slide;
+using SlideGenerator.Document.Models.Sheet;
+using SlideGenerator.Document.Models.Slide;
 using SlideGenerator.Generator.Domain.Models.Data;
 using SlideGenerator.Generator.Domain.Models.Enum;
 using SlideGenerator.Generator.Infrastructure.Services;
