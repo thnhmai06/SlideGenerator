@@ -19,10 +19,11 @@ namespace SlideGenerator.Generator.Models.Data;
 /// <summary>
 ///     Lightweight snapshot of a generation request returned by <c>generating.active.list</c> and
 ///     <c>generating.completed.list</c> IPC methods, keyed by request id in the returned dictionary (see
-///     <c>IService.ListActiveAsync</c>/<c>ListCompletedAsync</c>) — not carried as a field here. Three
-///     levels: request-level aggregate fields, <see cref="Jobs" /> — one <see cref="JobSummary" /> per
-///     job workflow instance spawned for this request, keyed by job id — and, within each job,
-///     <see cref="JobSummary.Rows" /> — one <see cref="RowSummary" /> per data row.
+///     <c>IService.ListActiveAsync</c>/<c>ListCompletedAsync</c>) — not carried as a field here. Two
+///     levels: request-level aggregate fields, and <see cref="Jobs" /> — one <see cref="JobSummary" /> per
+///     job spawned for this request, keyed by job id. Row-level detail is no longer persisted — a job's
+///     resume position is <see cref="JobSummary.CurrentIndex" /> within <see cref="JobSummary.Phase" />;
+///     live row-by-row progress is only available via the <c>progress/rows</c> JSON-RPC notification stream.
 /// </summary>
 public sealed record Summary
 {
