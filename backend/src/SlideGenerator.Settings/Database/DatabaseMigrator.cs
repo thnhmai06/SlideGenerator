@@ -15,7 +15,6 @@
 using System.Reflection;
 using DbUp;
 using DbUp.Engine.Output;
-using DbUp.Sqlite;
 using Serilog;
 
 namespace SlideGenerator.Settings.Database;

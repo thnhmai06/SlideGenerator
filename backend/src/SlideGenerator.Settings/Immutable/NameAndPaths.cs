@@ -173,26 +173,25 @@ public static class NameAndPaths
                 new SqliteConnectionStringBuilder { DataSource = FilePath }.ConnectionString;
         }
 
-    }
-
-    /// <summary>
-    ///     Contains naming rules for general application settings.
-    /// </summary>
-    public static class SettingsFile
-    {
         /// <summary>
-        ///     The default base filename for the main settings file.
+        ///     Contains naming rules for the general application settings file.
         /// </summary>
-        private const string FileName = "appsettings";
-
-        /// <summary>
-        ///     Calculates the full file path for the settings file with the specified extension.
-        /// </summary>
-        /// <param name="ext">The file extension to append.</param>
-        /// <returns>The complete path to the settings file.</returns>
-        public static string GetFilePath(string ext)
+        public static class SettingsFile
         {
-            return Path.Combine(UserPath, $"{FileName}{ext}");
+            /// <summary>
+            ///     The default base filename for the settings file.
+            /// </summary>
+            private const string FileName = "UserSettings";
+
+            /// <summary>
+            ///     Calculates the full file path for the settings file with the specified extension.
+            /// </summary>
+            /// <param name="ext">The file extension to append.</param>
+            /// <returns>The complete path to the settings file.</returns>
+            public static string GetFilePath(string ext)
+            {
+                return Path.Combine(FolderPath, $"{FileName}{ext}");
+            }
         }
     }
 }

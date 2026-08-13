@@ -124,10 +124,11 @@ public sealed class SettingManagerTests : IDisposable
 
     /// <summary>
     ///     Verifies that <see cref="SettingManager.Load" /> returns <see langword="false" /> when the settings
-    ///     file does not exist on disk, leaving <see cref="SettingManager.Current" /> at its default value.
+    ///     file does not exist on disk, leaves <see cref="SettingManager.Current" /> at its default value, and
+    ///     creates the file on disk with those defaults.
     /// </summary>
     [Fact]
-    public async Task Load_SettingsFileNotFound_ReturnsFalse()
+    public async Task Load_SettingsFileNotFound_ReturnsFalseAndCreatesDefaultFile()
     {
         // File does not exist at _testFilePath
 
@@ -135,6 +136,7 @@ public sealed class SettingManagerTests : IDisposable
 
         result.Should().BeFalse();
         _manager.Current.Should().Be(DefaultSetting);
+        File.Exists(_testFilePath).Should().BeTrue();
     }
 
     /// <summary>

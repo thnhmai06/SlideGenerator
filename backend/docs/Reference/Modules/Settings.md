@@ -11,8 +11,10 @@ The **SlideGenerator.Settings** module handles application-wide configuration.
 ## Persistence
 
 - **Format**: JSON (`System.Text.Json`), under the `"Application"` section.
-- **Location**: `%LOCALAPPDATA%/SlideGenerator/appsettings.json`.
+- **Location**: `%LOCALAPPDATA%/SlideGenerator/Data/UserSettings.json` (same folder as `Data.db`).
 - **Reset**: Includes a default configuration provider to restore factory settings.
+- **Example**: [UserSettings.example.json](UserSettings.example.json).
+- **Schema**: [UserSettings.schema.json](UserSettings.schema.json).
 
 ## Configuration Categories
 

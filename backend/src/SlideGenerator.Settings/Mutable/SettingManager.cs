@@ -19,17 +19,49 @@ using SlideGenerator.Settings.Immutable;
 namespace SlideGenerator.Settings.Mutable;
 
 /// <summary>
+///     Provides read-only access to the current application configuration.
+/// </summary>
+public interface ISettingProvider
+{
+    /// <summary>
+    ///     Gets the current active <see cref="Setting" /> configuration.
+    /// </summary>
+    public Setting Current { get; }
+}
+
+/// <summary>
+///     Defines the contract for managing the application settings lifecycle:
+///     load from disk, persist to disk, update in memory, and reset to defaults.
+/// </summary>
+public interface ISettingManager : ISettingProvider
+{
+    /// <summary>Loads settings from the persisted YAML file into memory.</summary>
+    /// <returns><see langword="true" /> if the file existed and was loaded; <see langword="false" /> if defaults were used.</returns>
+    Task<bool> Load();
+
+    /// <summary>Persists the current in-memory settings to disk.</summary>
+    Task Save();
+
+    /// <summary>Resets all settings to factory defaults and persists them to disk.</summary>
+    Task ResetToDefaults();
+
+    /// <summary>
+    ///     Replaces the current settings with <paramref name="newSetting" /> and persists them to disk.
+    /// </summary>
+    Task Update(Setting newSetting);
+}
+
+/// <summary>
 ///     Manages the loading, saving, and state of the application's <see cref="Setting" /> configuration.
-///     Persists to <c>appsettings.json</c> under the <c>"Application"</c> section.
+///     Persists to <c>UserSettings.json</c> (in the same folder as <see cref="NameAndPaths.DataFolder.DataFile" />)
+///     under the <c>"Application"</c> section.
 /// </summary>
 /// <param name="logger">The logger instance.</param>
 /// <param name="filePath">
 ///     Overrides the settings file path; used only by tests to avoid touching the real user settings
 ///     file. When <see langword="null" />, the real settings path is used.
 /// </param>
-internal sealed class SettingManager(
-    ILogger<SettingManager>? logger = null,
-    string? filePath = null)
+internal sealed class SettingManager(ILogger<SettingManager>? logger = null, string? filePath = null)
     : ISettingManager
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
@@ -37,20 +69,22 @@ internal sealed class SettingManager(
     /// <summary>
     ///     Gets the full file path where settings are stored.
     /// </summary>
-    private string FilePath => filePath ?? NameAndPaths.SettingsFile.GetFilePath(".json");
+    private string FilePath => filePath ?? NameAndPaths.DataFolder.SettingsFile.GetFilePath(".json");
 
     /// <inheritdoc />
     public Setting Current { get; private set; } = new();
 
     /// <summary>
-    ///     Asynchronously loads settings from the disk.
+    ///     Asynchronously loads settings from the disk. If the file does not exist, creates it with
+    ///     default settings.
     /// </summary>
-    /// <returns>True if the settings were successfully loaded; false if the file does not exist.</returns>
+    /// <returns>True if an existing settings file was loaded; false if a new default file was created.</returns>
     public async Task<bool> Load()
     {
         if (!File.Exists(FilePath))
         {
-            logger?.LogInformation("Setting file not found at {Path}. Using default settings.", L(FilePath));
+            logger?.LogWarning("Setting file not found at {Path}. Creating with default settings.", L(FilePath));
+            await ResetToDefaults().ConfigureAwait(false);
             return false;
         }
 
@@ -121,6 +155,6 @@ internal sealed class SettingManager(
         return s?.ReplaceLineEndings(" ") ?? "";
     }
 
-    /// <summary>The <c>appsettings.json</c> root shape: settings live under the <c>"Application"</c> key.</summary>
+    /// <summary>The settings file's root shape: settings live under the <c>"Application"</c> key.</summary>
     private sealed record AppSettingsRoot(Setting Application);
 }

@@ -771,14 +771,14 @@ Sub-path layout under `UserPath`:
 
 ```
 UserPath/
-├── appsettings.json       — SettingsFile (JSON, "Application" section)
 ├── Instance.pid           — AppLocker
 ├── Logs/System/           — LogsFolder.SystemPath
 ├── Logs/Workflows/        — LogsFolder.WorkflowPath (per-request .log files; folder name predates the
 │                             WorkflowCore removal, kept as-is — not worth the rename churn)
 └── Data/
-    └── Data.db            — DataFolder.DataFile (single shared SQLite DB: Recipes/Requests/Jobs tables —
-                              see Job Execution (JobRunner) → Data.db above)
+    ├── Data.db            — DataFolder.DataFile (single shared SQLite DB: Recipes/Requests/Jobs tables —
+    │                         see Job Execution (JobRunner) → Data.db above)
+    └── UserSettings.json  — DataFolder.SettingsFile (JSON, "Application" section)
 
 TempFolder.RootPath (%TEMP%\SlideGenerator) — per-job download cache, outside UserPath. Structured as
 {RootPath}/{requestId}/{jobId}/{hash(url)}{ext} (see JobRunner.JobTempFolder) — deleted wholesale by JobRunner
