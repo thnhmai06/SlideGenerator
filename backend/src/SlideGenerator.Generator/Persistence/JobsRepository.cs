@@ -57,7 +57,7 @@ public interface IJobsRepository
 ///     the only table in the shared database that changes on every row/phase transition. Every field of
 ///     <see cref="JobSpecification" /> gets an explicit column; only the free-form nested lists
 ///     (<c>UsedColumns</c>/<c>TextInstructions</c>/<c>ImageInstructions</c>) are stored as named JSON
-///     columns — see the schema comment on <see cref="DbEnsureCreated" /> for the reasoning.
+///     columns — see <c>0003_CreateJobs.sql</c> (<see cref="SlideGenerator.Settings.Database.DatabaseMigrator" />) for the schema.
 /// </summary>
 internal sealed class JobsRepository : BufferedRepository<(string RequestId, int JobId), JobRecord>, IJobsRepository
 {
@@ -66,7 +66,6 @@ internal sealed class JobsRepository : BufferedRepository<(string RequestId, int
     public JobsRepository(SqliteConnectionStringBuilder builder, ILogger<JobsRepository> logger) : base(logger)
     {
         _builder = builder;
-        DbEnsureCreated();
     }
 
     /// <inheritdoc cref="IJobsRepository.Enqueue" />
@@ -243,49 +242,6 @@ internal sealed class JobsRepository : BufferedRepository<(string RequestId, int
         var conn = new SqliteConnection(_builder.ConnectionString);
         await conn.OpenAsync(ct).ConfigureAwait(false);
         return conn;
-    }
-
-    /// <summary>
-    ///     Creates the <c>Jobs</c> table if missing. The 3 <c>*Json</c> columns are a deliberate, named
-    ///     exception to "every field its own column": <c>UsedColumns</c>/<c>TextInstructions</c>/
-    ///     <c>ImageInstructions</c> are variable-length lists of nested, sometimes-polymorphic objects
-    ///     (e.g. one <c>ImageInstruction</c> carries a set of shapes, a list of columns, and an ordered
-    ///     list of polymorphic ROI options) — splitting those into normalized child tables would only
-    ///     serve a query pattern nobody uses (they're read once, whole, when a job runs), mirroring how
-    ///     <c>Recipes</c> already stores an entire <see cref="Recipe.Mappings.Recipe" /> under one JSON column.
-    ///     <see cref="RowFilter" /> stayed a handful of explicit columns instead, since it is a small,
-    ///     closed set of 3 shapes.
-    /// </summary>
-    private void DbEnsureCreated()
-    {
-        using var conn = new SqliteConnection(_builder.ConnectionString);
-        conn.Open();
-        conn.Execute("PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;");
-        conn.Execute("""
-                     CREATE TABLE IF NOT EXISTS Jobs (
-                         RequestId  TEXT NOT NULL,
-                         JobId      INTEGER NOT NULL,
-                         Status     TEXT NOT NULL,
-                         Phase      TEXT NOT NULL DEFAULT 'CreatingOutput',
-                         CurrentIndex INTEGER NOT NULL DEFAULT 0,
-
-                         WorkbookPath   TEXT NOT NULL,
-                         WorksheetName  TEXT NOT NULL,
-                         UsedColumnsJson TEXT NULL,
-                         RowFilterType  TEXT NULL,
-                         RowFilterStart INTEGER NULL, RowFilterEnd INTEGER NULL,
-                         RowFilterPartitionIndex INTEGER NULL, RowFilterPartitionCount INTEGER NULL,
-
-                         TemplatePresentationPath TEXT NOT NULL,
-                         TemplateSlideIndex       INTEGER NOT NULL,
-                         TextInstructionsJson     TEXT NOT NULL,
-                         ImageInstructionsJson    TEXT NOT NULL,
-
-                         OutputPath TEXT NOT NULL,
-                         Timestamp  TEXT NOT NULL,
-                         PRIMARY KEY (RequestId, JobId)
-                     );
-                     """);
     }
 
     #endregion

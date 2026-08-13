@@ -48,7 +48,6 @@ internal sealed class RequestsRepository : IRequestsRepository
     public RequestsRepository(SqliteConnectionStringBuilder builder)
     {
         _builder = builder;
-        DbEnsureCreated();
     }
 
     /// <inheritdoc />
@@ -125,25 +124,6 @@ internal sealed class RequestsRepository : IRequestsRepository
         var conn = new SqliteConnection(_builder.ConnectionString);
         await conn.OpenAsync(ct).ConfigureAwait(false);
         return conn;
-    }
-
-    private void DbEnsureCreated()
-    {
-        using var conn = new SqliteConnection(_builder.ConnectionString);
-        conn.Open();
-        conn.Execute("PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;");
-        conn.Execute("""
-                     CREATE TABLE IF NOT EXISTS Requests (
-                         RequestId       TEXT PRIMARY KEY,
-                         RecipeId        INTEGER NOT NULL,
-                         Name            TEXT NOT NULL,
-                         OutputType      TEXT NOT NULL,
-                         SaveFolder      TEXT NOT NULL,
-                         AllowLocalPaths INTEGER NOT NULL,
-                         LogPath         TEXT NOT NULL,
-                         CreatedAt       TEXT NOT NULL
-                     );
-                     """);
     }
 
     #endregion

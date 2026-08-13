@@ -97,11 +97,9 @@ internal sealed partial class RecipeRepository : IRecipeRepository
 {
     private readonly SqliteConnectionStringBuilder _builder;
 
-    /// <summary>Ensures the database schema exists using a one-shot connection.</summary>
     public RecipeRepository(SqliteConnectionStringBuilder builder)
     {
         _builder = builder;
-        DbEnsureCreated();
     }
 
     /// <inheritdoc />
@@ -203,21 +201,6 @@ internal sealed partial class RecipeRepository : IRecipeRepository
             DateTimeOffset.Parse(row.UpdatedTimestamp,
                 CultureInfo.InvariantCulture,
                 DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal));
-    }
-
-    private void DbEnsureCreated()
-    {
-        using var conn = _builder.OpenConnection();
-        conn.Execute("PRAGMA journal_mode=WAL;");
-        conn.Execute("""
-                     CREATE TABLE IF NOT EXISTS Recipes (
-                         Id               INTEGER PRIMARY KEY AUTOINCREMENT,
-                         Name      TEXT NOT NULL,
-                         Recipe            TEXT NOT NULL,
-                         CreatedTimestamp TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-                         UpdatedTimestamp TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
-                     );
-                     """);
     }
 
     private static readonly JsonSerializerOptions GraphSerializerOptions = BuildGraphSerializerOptions();

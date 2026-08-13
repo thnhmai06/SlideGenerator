@@ -18,6 +18,7 @@ using Serilog;
 using Serilog.Events;
 using Serilog.Exceptions;
 using SlideGenerator.Logging.Formats;
+using SlideGenerator.Settings.Database;
 using SlideGenerator.Settings.Immutable;
 using SlideGenerator.Stdio.Implementations;
 
@@ -51,6 +52,10 @@ internal static partial class Program
 
         EnsureSingleInstance();
         BootstrapSystemLogger(bootstrapConfiguration);
+
+        Directory.CreateDirectory(NameAndPaths.DataFolder.FolderPath);
+        DatabaseMigrator.Migrate(NameAndPaths.DataFolder.DataFile.ConnectionString);
+
         PrintMetadata();
 
         try
