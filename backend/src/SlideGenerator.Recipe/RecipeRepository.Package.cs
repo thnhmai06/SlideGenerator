@@ -114,7 +114,7 @@ internal sealed partial class RecipeRepository
 
             // A syntactically valid but field-less recipe.json (e.g. "{}") deserializes with a null
             // Mappings — treat that as an empty recipe rather than crash downstream.
-            imported = new Mappings.Recipe(Mappings: imported.Mappings);
+            imported = new Mappings.Recipe(Mappings: imported.Mappings ?? []);
 
             // Data files
             var (wbMapping, pptMapping) = Import_BuildPathMappings(
