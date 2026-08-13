@@ -12,14 +12,14 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Generator.Abstractions;
-using SlideGenerator.Generator.Models.Data;
+using SlideGenerator.Generator;
+using SlideGenerator.Generator.Progress;
 
 namespace SlideGenerator.Stdio.Implementations;
 
 /// <summary>
 ///     A lightweight, in-process event bus for scoped log line notifications. Decouples
-///     <c>Middleware</c> (Generator, publisher) from <see cref="ProgressCoalescer" /> (subscriber),
+///     <c>JobRunner</c> (Generator, publisher) from <see cref="ProgressCoalescer" /> (subscriber),
 ///     mirroring <see cref="GeneratingEventBus" />'s pattern for <c>IEventBus</c>.
 /// </summary>
 internal sealed class LogNotifier : ILogNotifier

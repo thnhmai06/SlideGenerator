@@ -18,9 +18,7 @@ using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.Data.Sqlite;
 using SlideGenerator.Document.Slides;
 using SlideGenerator.Document.Workbooks;
-using SlideGenerator.Recipe.Models;
-using SlideGenerator.Recipe.Rules;
-using SlideGenerator.Recipe.Services;
+using SlideGenerator.Recipe.Mappings;
 using Xunit;
 
 namespace SlideGenerator.Recipe.Tests.Unit;
@@ -55,7 +53,7 @@ public sealed class RecipeRepositoryTests : IDisposable
     public void Dispose() => _anchor.Dispose();
 
     /// <summary>Returns an input with an empty recipe (no mappings).</summary>
-    private static RecipeInput Input(string name) => new(name, new Models.Recipe([]));
+    private static RecipeInput Input(string name) => new(name, new Mappings.Recipe([]));
 
     /// <summary>Returns an input whose recipe contains one mapping with one worksheet source.</summary>
     private static RecipeInput InputWithMapping(string name, string wbPath, string pptPath) => new(name,
@@ -65,7 +63,7 @@ public sealed class RecipeRepositoryTests : IDisposable
     private static RecipeInput InputWithWorkbooks(string name, params string[] wbPaths)
     {
         var pptPath = Path.GetFullPath("template.pptx");
-        return new RecipeInput(name, new Models.Recipe([
+        return new RecipeInput(name, new Mappings.Recipe([
             new Mapping(
                 [
                     .. wbPaths.Select(p =>
@@ -75,7 +73,7 @@ public sealed class RecipeRepositoryTests : IDisposable
         ]));
     }
 
-    private static Models.Recipe RecipeWithMapping(string wbPath, string pptPath) => new([
+    private static Mappings.Recipe RecipeWithMapping(string wbPath, string pptPath) => new([
         new Mapping(
             [new WorksheetSource(new WorkbookIdentifier(wbPath), new WorksheetIdentifier("Sheet1"))],
             new PresentationIdentifier(pptPath), new SlideIdentifier(1), [], [])

@@ -15,10 +15,9 @@
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging.Abstractions;
-using SlideGenerator.Generator.Models.Data;
-using SlideGenerator.Generator.Models.Enum;
-using SlideGenerator.Generator.Services;
-using SlideGenerator.Recipe.Models.Components;
+using SlideGenerator.Generator.Job;
+using SlideGenerator.Generator.Persistence;
+using SlideGenerator.Recipe.Mappings;
 using Xunit;
 
 namespace SlideGenerator.Generator.Tests.Unit;

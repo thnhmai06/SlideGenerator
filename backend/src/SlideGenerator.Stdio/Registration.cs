@@ -13,7 +13,8 @@
  */
 
 using Microsoft.Extensions.DependencyInjection;
-using SlideGenerator.Generator.Abstractions;
+using SlideGenerator.Generator;
+using SlideGenerator.Generator.Progress;
 using SlideGenerator.Stdio.Handlers;
 using SlideGenerator.Stdio.Implementations;
 

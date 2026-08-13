@@ -15,7 +15,7 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
-using SlideGenerator.Generator.Services;
+using SlideGenerator.Generator.Job;
 using Xunit;
 
 namespace SlideGenerator.Generator.Tests.Unit;

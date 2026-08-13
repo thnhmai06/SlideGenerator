@@ -14,8 +14,9 @@
 
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.DependencyInjection;
-using SlideGenerator.Generator.Abstractions;
-using SlideGenerator.Generator.Services;
+using SlideGenerator.Generator.Job;
+using SlideGenerator.Generator.Persistence;
+using SlideGenerator.Generator.Progress;
 using SlideGenerator.Image.FaceDetection;
 using SlideGenerator.Settings.Immutable;
 using SlideGenerator.Settings.Mutable;

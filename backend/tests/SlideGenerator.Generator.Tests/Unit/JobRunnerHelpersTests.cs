@@ -15,8 +15,8 @@
 using FluentAssertions;
 using NSubstitute;
 using SlideGenerator.Document.Workbooks;
-using SlideGenerator.Generator.Services;
-using SlideGenerator.Recipe.Models.Components;
+using SlideGenerator.Generator.Job;
+using SlideGenerator.Recipe.Mappings;
 using Xunit;
 
 namespace SlideGenerator.Generator.Tests.Unit;

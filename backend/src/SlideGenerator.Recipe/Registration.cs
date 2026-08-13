@@ -14,8 +14,6 @@
 
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.DependencyInjection;
-using SlideGenerator.Recipe.Abstractions;
-using SlideGenerator.Recipe.Services;
 using SlideGenerator.Settings.Immutable;
 
 namespace SlideGenerator.Recipe;

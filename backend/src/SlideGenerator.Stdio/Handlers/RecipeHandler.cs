@@ -12,8 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Recipe.Abstractions;
-using SlideGenerator.Recipe.Models;
+using SlideGenerator.Recipe;
 
 namespace SlideGenerator.Stdio.Handlers;
 
@@ -45,7 +44,7 @@ public sealed class RecipeHandler(IRecipeRepository recipeRepository)
     /// <param name="displayName">Human-readable name.</param>
     /// <param name="graph">The recipe graph.</param>
     /// <param name="ct">Cancellation token.</param>
-    public Task<IRecipeMetadata> AddAsync(string displayName, Recipe.Models.Recipe graph, CancellationToken ct)
+    public Task<IRecipeMetadata> AddAsync(string displayName, Recipe.Mappings.Recipe graph, CancellationToken ct)
     {
         return recipeRepository.AddAsync(new RecipeInput(displayName, graph), ct);
     }
@@ -59,14 +58,14 @@ public sealed class RecipeHandler(IRecipeRepository recipeRepository)
     /// <param name="ct">Cancellation token.</param>
     /// <returns>The updated <see cref="IRecipeMetadata" />.</returns>
     /// <exception cref="InvalidOperationException">Thrown when the recipe is not found.</exception>
-    public Task<IRecipeMetadata> UpdateAsync(int id, string displayName, Recipe.Models.Recipe graph, CancellationToken ct)
+    public Task<IRecipeMetadata> UpdateAsync(int id, string displayName, Recipe.Mappings.Recipe graph, CancellationToken ct)
     {
         return recipeRepository.UpdateAsync(id, new RecipeInput(displayName, graph), ct);
     }
 
     /// <summary>
-    ///     Permanently deletes a recipe entry by its id. Any in-progress generation request already holds
-    ///     its own snapshot of the recipe graph (<c>JobPersistContext.Recipe</c>) and is unaffected.
+    ///     Permanently deletes a recipe entry by its id. Any in-progress generation job already has every
+    ///     value it needs resolved onto its own <c>JobRecord</c> and is unaffected by this deletion.
     /// </summary>
     /// <returns><see langword="true" /> if deleted; <see langword="false" /> if the id was not found.</returns>
     public Task<bool> DeleteAsync(int id, CancellationToken ct)

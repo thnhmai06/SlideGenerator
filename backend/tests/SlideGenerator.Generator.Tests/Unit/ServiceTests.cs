@@ -15,10 +15,9 @@
 using FluentAssertions;
 using SlideGenerator.Document.Slides;
 using SlideGenerator.Document.Workbooks;
-using SlideGenerator.Generator.Models.Data;
-using SlideGenerator.Generator.Models.Enum;
-using SlideGenerator.Generator.Services;
-using SlideGenerator.Recipe.Models;
+using SlideGenerator.Generator;
+using SlideGenerator.Generator.Job;
+using SlideGenerator.Recipe.Mappings;
 using Xunit;
 
 namespace SlideGenerator.Generator.Tests.Unit;
@@ -32,7 +31,7 @@ public sealed class ServiceTests
 {
     #region BuildJobs
 
-    private static Recipe.Models.Recipe OneMappingOneSource()
+    private static Recipe.Mappings.Recipe OneMappingOneSource()
     {
         var source = new WorksheetSource(
             new WorkbookIdentifier(Path.Combine(Path.GetTempPath(), "data.xlsx")),
@@ -42,7 +41,7 @@ public sealed class ServiceTests
             new PresentationIdentifier(Path.Combine(Path.GetTempPath(), "template.pptx")),
             new SlideIdentifier(1),
             [], []);
-        return new Recipe.Models.Recipe([mapping]);
+        return new Recipe.Mappings.Recipe([mapping]);
     }
 
     /// <summary>Verifies that one mapping with one source produces exactly one job with resolved values.</summary>
@@ -73,7 +72,7 @@ public sealed class ServiceTests
             new PresentationIdentifier(Path.Combine(Path.GetTempPath(), "template.pptx")),
             new SlideIdentifier(1),
             [], []);
-        var recipe = new Recipe.Models.Recipe([mapping]);
+        var recipe = new Recipe.Mappings.Recipe([mapping]);
         var request = new Request(1, "Test", PresentationType.Pptx, Path.GetTempPath());
 
         var jobs = Service.BuildJobs(recipe, request);
@@ -86,7 +85,7 @@ public sealed class ServiceTests
     [Fact]
     public void BuildJobs_EmptyRecipe_ProducesNoJobs()
     {
-        var recipe = new Recipe.Models.Recipe([]);
+        var recipe = new Recipe.Mappings.Recipe([]);
         var request = new Request(1, "Empty", PresentationType.Pptx, Path.GetTempPath());
 
         var jobs = Service.BuildJobs(recipe, request);
