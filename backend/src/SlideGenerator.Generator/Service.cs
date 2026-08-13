@@ -13,7 +13,7 @@
  */
 
 using Microsoft.Extensions.Logging;
-using SlideGenerator.Document.Slides;
+using SlideGenerator.Document.Presentations.Identifiers;
 using SlideGenerator.Generator.Job;
 using SlideGenerator.Generator.Persistence;
 using SlideGenerator.Generator.Progress;
@@ -334,8 +334,8 @@ internal sealed class Service(
             s.Worksheet.SheetName,
             s.UsedColumns,
             s.RowFilter,
-            m.TemplatePresentation.PresentationPath,
-            m.TemplateSlide.SlideIndex,
+            m.Template.Presentation.PresentationPath,
+            m.Template.Slide.SlideIndex,
             m.TextInstructions,
             m.ImageInstructions,
             BuildOutputPath(request, s.Workbook.BookPath, s.Worksheet.SheetName))))

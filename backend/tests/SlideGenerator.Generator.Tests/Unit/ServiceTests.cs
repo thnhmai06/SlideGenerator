@@ -13,9 +13,8 @@
  */
 
 using FluentAssertions;
-using SlideGenerator.Document.Slides;
-using SlideGenerator.Document.Workbooks;
-using SlideGenerator.Generator;
+using SlideGenerator.Document.Presentations.Identifiers;
+using SlideGenerator.Document.Workbooks.Identifiers;
 using SlideGenerator.Generator.Job;
 using SlideGenerator.Recipe.Mappings;
 using Xunit;
@@ -38,8 +37,9 @@ public sealed class ServiceTests
             new WorksheetIdentifier("Sheet1"));
         var mapping = new Mapping(
             [source],
-            new PresentationIdentifier(Path.Combine(Path.GetTempPath(), "template.pptx")),
-            new SlideIdentifier(1),
+            new PresentationSource(
+                new PresentationIdentifier(Path.Combine(Path.GetTempPath(), "template.pptx")),
+                new SlideIdentifier(1)),
             [], []);
         return new Recipe.Mappings.Recipe([mapping]);
     }
@@ -66,11 +66,14 @@ public sealed class ServiceTests
     {
         var mapping = new Mapping(
             [
-                new WorksheetSource(new WorkbookIdentifier(Path.Combine(Path.GetTempPath(), "a.xlsx")), new WorksheetIdentifier("A")),
-                new WorksheetSource(new WorkbookIdentifier(Path.Combine(Path.GetTempPath(), "b.xlsx")), new WorksheetIdentifier("B"))
+                new WorksheetSource(new WorkbookIdentifier(Path.Combine(Path.GetTempPath(), "a.xlsx")),
+                    new WorksheetIdentifier("A")),
+                new WorksheetSource(new WorkbookIdentifier(Path.Combine(Path.GetTempPath(), "b.xlsx")),
+                    new WorksheetIdentifier("B"))
             ],
-            new PresentationIdentifier(Path.Combine(Path.GetTempPath(), "template.pptx")),
-            new SlideIdentifier(1),
+            new PresentationSource(
+                new PresentationIdentifier(Path.Combine(Path.GetTempPath(), "template.pptx")),
+                new SlideIdentifier(1)),
             [], []);
         var recipe = new Recipe.Mappings.Recipe([mapping]);
         var request = new Request(1, "Test", PresentationType.Pptx, Path.GetTempPath());

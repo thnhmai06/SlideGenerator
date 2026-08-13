@@ -12,11 +12,11 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Document.Slides;
-using SlideGenerator.Document.Workbooks;
+using SlideGenerator.Document.Presentations.Identifiers;
+using SlideGenerator.Document.Workbooks.Identifiers;
 using SlideGenerator.Summarization;
-using SlideGenerator.Summarization.Slide;
-using SlideGenerator.Summarization.Workbook;
+using SlideGenerator.Summarization.Presentations;
+using SlideGenerator.Summarization.Workbooks;
 
 namespace SlideGenerator.Stdio.Handlers;
 

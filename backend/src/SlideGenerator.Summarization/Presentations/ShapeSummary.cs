@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Summarization
- * File: PresentationSummary.cs
+ * File: ShapeSummary.cs
  *
  * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -12,6 +12,9 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Summarization.Slide;
+using System.Drawing;
+using SlideGenerator.Document.Presentations.Identifiers;
 
-public record PresentationSummary(string PresentationPath, IReadOnlyList<SlideSummary> Slides);
+namespace SlideGenerator.Summarization.Presentations;
+
+public record ShapeSummary(SlideIdentifier Slide, ShapeIdentifier Shape, RectangleF Bounds);

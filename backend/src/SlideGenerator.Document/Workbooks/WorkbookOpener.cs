@@ -12,8 +12,11 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using SlideGenerator.Document.Workbooks.Components;
+using SlideGenerator.Document.Workbooks.Identifiers;
 using SlideGenerator.Utilities;
 using Syncfusion.XlsIO;
+using IWorkbook = SlideGenerator.Document.Workbooks.Components.IWorkbook;
 
 namespace SlideGenerator.Document.Workbooks;
 

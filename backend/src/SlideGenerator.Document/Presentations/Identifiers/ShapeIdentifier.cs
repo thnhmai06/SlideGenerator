@@ -12,7 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Document.Slides;
+namespace SlideGenerator.Document.Presentations.Identifiers;
 
 /// <summary>
 ///     Identifies a shape by its name within an already-known slide context.

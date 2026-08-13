@@ -12,7 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Document.Workbooks;
+namespace SlideGenerator.Document.Workbooks.Identifiers;
 
 /// <summary>
 ///     Specifies the supported file types for Excel-like workbooks.

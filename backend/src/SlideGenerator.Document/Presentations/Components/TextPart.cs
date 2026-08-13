@@ -14,7 +14,7 @@
 
 using SyncfusionTextPart = Syncfusion.Presentation.ITextPart;
 
-namespace SlideGenerator.Document.Slides;
+namespace SlideGenerator.Document.Presentations.Components;
 
 /// <summary>
 ///     Represents a read-only view of a part of text within a paragraph.

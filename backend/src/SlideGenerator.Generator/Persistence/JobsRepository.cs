@@ -17,7 +17,7 @@ using System.Text.Json;
 using Dapper;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
-using SlideGenerator.Document.Workbooks;
+using SlideGenerator.Document.Workbooks.Identifiers;
 using SlideGenerator.Generator.Job;
 using SlideGenerator.Recipe.Mappings;
 
@@ -220,8 +220,8 @@ internal sealed class JobsRepository : BufferedRepository<(string RequestId, int
         return new JobRecord(
             row.RequestId,
             (int)row.JobId,
-            System.Enum.Parse<Status>(row.Status),
-            System.Enum.Parse<JobPhase>(row.Phase),
+            Enum.Parse<Status>(row.Status),
+            Enum.Parse<JobPhase>(row.Phase),
             (int)row.CurrentIndex,
             spec,
             DbParseUtc(row.Timestamp));

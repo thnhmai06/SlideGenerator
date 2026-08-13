@@ -14,7 +14,7 @@
 
 using System.Text;
 using System.Text.RegularExpressions;
-using SlideGenerator.Document.Slides;
+using SlideGenerator.Document.Presentations.Components;
 
 namespace SlideGenerator.Document.Template;
 

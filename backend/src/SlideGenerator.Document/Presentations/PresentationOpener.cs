@@ -12,10 +12,13 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using SlideGenerator.Document.Presentations.Components;
+using SlideGenerator.Document.Presentations.Identifiers;
 using SlideGenerator.Utilities;
 using Syncfusion.Presentation;
+using IPresentation = SlideGenerator.Document.Presentations.Components.IPresentation;
 
-namespace SlideGenerator.Document.Slides;
+namespace SlideGenerator.Document.Presentations;
 
 /// <summary>
 ///     Defines the contract for opening PowerPoint presentations.

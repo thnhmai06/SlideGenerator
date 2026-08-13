@@ -12,7 +12,6 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using System.Text;
 using FluentAssertions;
 using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.Data.Sqlite;
@@ -105,7 +104,7 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
             zos.SetLevel(0);
             await zos.PutNextEntryAsync(new ZipEntry("Workbooks/data.xlsx") { DateTime = DateTime.UtcNow },
                 TestContext.Current.CancellationToken);
-            var data = Encoding.UTF8.GetBytes("placeholder");
+            var data = "placeholder"u8.ToArray();
             zos.Write(data, 0, data.Length);
             zos.CloseEntry();
             zos.Finish();

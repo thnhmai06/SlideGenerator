@@ -19,7 +19,7 @@ namespace SlideGenerator.Recipe.Mappings;
 /// <summary>
 ///     Discriminator for the row-selection strategy applied to a worksheet.
 /// </summary>
-public enum RowFilterMode
+public enum RowFilterMode : byte
 {
     /// <summary>All rows participate.</summary>
     All,

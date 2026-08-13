@@ -12,6 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using System.Collections.Immutable;
 using System.Net;
 using Microsoft.Extensions.Logging;
 using SlideGenerator.Cloud.Resolvers;
@@ -116,7 +117,7 @@ public interface ICloudClient
 /// </summary>
 internal sealed class CloudClient(ILogger<CloudClient>? logger = null) : ICloudClient
 {
-    private readonly IReadOnlyList<CloudResolver> _resolvers = [new GoogleDriveResolver()];
+    private readonly ImmutableArray<CloudResolver> _resolvers = [new GoogleDriveResolver()];
 
     /// <inheritdoc />
     /// <remarks>

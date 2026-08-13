@@ -14,7 +14,7 @@
 
 using SyncfusionParagraph = Syncfusion.Presentation.IParagraph;
 
-namespace SlideGenerator.Document.Slides;
+namespace SlideGenerator.Document.Presentations.Components;
 
 /// <summary>
 ///     Represents a read-only view of a paragraph in a shape.

@@ -12,8 +12,6 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Recipe.Mappings;
-
 namespace SlideGenerator.Recipe;
 
 /// <summary>

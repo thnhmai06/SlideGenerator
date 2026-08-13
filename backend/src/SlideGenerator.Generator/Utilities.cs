@@ -13,7 +13,8 @@
  */
 
 using SlideGenerator.Cloud;
-using SlideGenerator.Document.Workbooks;
+using SlideGenerator.Document.Workbooks.Components;
+using SlideGenerator.Document.Workbooks.Identifiers;
 using SlideGenerator.Settings.Immutable;
 using SlideGenerator.Settings.Mutable;
 

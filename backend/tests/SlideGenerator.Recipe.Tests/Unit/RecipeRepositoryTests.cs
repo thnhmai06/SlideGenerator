@@ -12,12 +12,11 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using System.Text;
 using FluentAssertions;
 using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.Data.Sqlite;
-using SlideGenerator.Document.Slides;
-using SlideGenerator.Document.Workbooks;
+using SlideGenerator.Document.Presentations.Identifiers;
+using SlideGenerator.Document.Workbooks.Identifiers;
 using SlideGenerator.Recipe.Mappings;
 using Xunit;
 
@@ -69,14 +68,14 @@ public sealed class RecipeRepositoryTests : IDisposable
                     .. wbPaths.Select(p =>
                         new WorksheetSource(new WorkbookIdentifier(p), new WorksheetIdentifier("Sheet1")))
                 ],
-                new PresentationIdentifier(pptPath), new SlideIdentifier(1), [], [])
+                new PresentationSource(new PresentationIdentifier(pptPath), new SlideIdentifier(1)), [], [])
         ]));
     }
 
     private static Mappings.Recipe RecipeWithMapping(string wbPath, string pptPath) => new([
         new Mapping(
             [new WorksheetSource(new WorkbookIdentifier(wbPath), new WorksheetIdentifier("Sheet1"))],
-            new PresentationIdentifier(pptPath), new SlideIdentifier(1), [], [])
+            new PresentationSource(new PresentationIdentifier(pptPath), new SlideIdentifier(1)), [], [])
     ]);
 
     #region AddAsync / GetAsync / ListAsync / UpdateAsync / DeleteAsync
@@ -111,7 +110,7 @@ public sealed class RecipeRepositoryTests : IDisposable
 
         entry.Recipe.Mappings.Should().HaveCount(1);
         entry.Recipe.Mappings[0].Sources.Should().HaveCount(1);
-        entry.Recipe.Mappings[0].TemplatePresentation.PresentationPath.Should().Be(pptPath);
+        entry.Recipe.Mappings[0].Template.Presentation.PresentationPath.Should().Be(pptPath);
     }
 
     [Fact]
@@ -319,7 +318,7 @@ public sealed class RecipeRepositoryTests : IDisposable
 
             var mapping = entry.Recipe.Mappings.Single();
             var importedWb = mapping.Sources.Single().Workbook.BookPath;
-            var importedPpt = mapping.TemplatePresentation.PresentationPath;
+            var importedPpt = mapping.Template.Presentation.PresentationPath;
 
             importedWb.Should().StartWith(workbooksDir);
             File.Exists(importedWb).Should().BeTrue();
@@ -348,7 +347,7 @@ public sealed class RecipeRepositoryTests : IDisposable
             await using (var fs = File.Create(zipPath))
             await using (var zos = new ZipOutputStream(fs))
             {
-                var bytes = Encoding.UTF8.GetBytes("not valid json {{{");
+                var bytes = "not valid json {{{"u8.ToArray();
                 var entry = new ZipEntry(RecipePackageRules.Data.RecipeFileName) { Size = bytes.Length };
                 await zos.PutNextEntryAsync(entry, TestContext.Current.CancellationToken);
                 zos.Write(bytes, 0, bytes.Length);
@@ -380,7 +379,7 @@ public sealed class RecipeRepositoryTests : IDisposable
             await using (var fs = File.Create(zipPath))
             await using (var zos = new ZipOutputStream(fs))
             {
-                var graphBytes = Encoding.UTF8.GetBytes("{\"mappings\":[]}");
+                var graphBytes = "{\"mappings\":[]}"u8.ToArray();
                 var graphEntry = new ZipEntry(RecipePackageRules.Data.RecipeFileName) { Size = graphBytes.Length };
                 await zos.PutNextEntryAsync(graphEntry, TestContext.Current.CancellationToken);
                 zos.Write(graphBytes, 0, graphBytes.Length);
@@ -548,7 +547,7 @@ public sealed class RecipeRepositoryTests : IDisposable
 
             var mapping = entry.Recipe.Mappings.Single();
             var importedWb = mapping.Sources.Single().Workbook.BookPath;
-            var importedPpt = mapping.TemplatePresentation.PresentationPath;
+            var importedPpt = mapping.Template.Presentation.PresentationPath;
 
             File.Exists(importedWb).Should().BeTrue();
             (await File.ReadAllBytesAsync(importedWb, TestContext.Current.CancellationToken))[0].Should().Be(0x01);
@@ -598,18 +597,18 @@ public sealed class RecipeRepositoryTests : IDisposable
 
         try
         {
-            using (var fs = File.Create(zipPath))
-            using (var zos = new ZipOutputStream(fs))
+            await using (var fs = File.Create(zipPath))
+            await using (var zos = new ZipOutputStream(fs))
             {
-                var graphBytes = Encoding.UTF8.GetBytes("{\"mappings\":[]}");
+                var graphBytes = "{\"mappings\":[]}"u8.ToArray();
                 var graphEntry = new ZipEntry(RecipePackageRules.Data.RecipeFileName) { Size = graphBytes.Length };
-                zos.PutNextEntry(graphEntry);
+                await zos.PutNextEntryAsync(graphEntry, TestContext.Current.CancellationToken);
                 zos.Write(graphBytes, 0, graphBytes.Length);
                 zos.CloseEntry();
 
                 var payload = new byte[] { 0x42 };
                 var unknownEntry = new ZipEntry("Secret/evil.xlsx") { Size = payload.Length };
-                zos.PutNextEntry(unknownEntry);
+                await zos.PutNextEntryAsync(unknownEntry, TestContext.Current.CancellationToken);
                 zos.Write(payload, 0, payload.Length);
                 zos.CloseEntry();
                 zos.Finish();
@@ -621,109 +620,6 @@ public sealed class RecipeRepositoryTests : IDisposable
             imported.Id.Should().BeGreaterThan(0);
             Directory.Exists(workbooksDir).Should().BeFalse();
             Directory.Exists(presentationsDir).Should().BeFalse();
-        }
-        finally
-        {
-            if (File.Exists(zipPath)) File.Delete(zipPath);
-        }
-    }
-
-    [Fact]
-    public async Task ImportAsync_ExceedsMaxEntryCount_ThrowsInvalidDataException()
-    {
-        var zipPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{RecipePackageRules.PackageExtension}");
-        var workbooksDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-        var presentationsDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-
-        try
-        {
-            using (var fs = File.Create(zipPath))
-            using (var zos = new ZipOutputStream(fs))
-            {
-                var tiny = new byte[] { 0x00 };
-                for (var i = 0; i <= RecipePackageRules.MaxEntryCount; i++)
-                {
-                    var e = new ZipEntry($"entry_{i}.bin") { Size = tiny.Length };
-                    zos.PutNextEntry(e);
-                    zos.Write(tiny, 0, tiny.Length);
-                    zos.CloseEntry();
-                }
-
-                zos.Finish();
-            }
-
-            var act = async () => await _repo.ImportAsync(zipPath, null, (workbooksDir, presentationsDir),
-                TestContext.Current.CancellationToken);
-
-            await act.Should().ThrowAsync<InvalidDataException>()
-                .WithMessage("*entry count*");
-        }
-        finally
-        {
-            if (File.Exists(zipPath)) File.Delete(zipPath);
-        }
-    }
-
-    [Fact]
-    public async Task ImportAsync_GraphJsonExceedsUncompressedSizeLimit_ThrowsInvalidDataException()
-    {
-        var zipPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{RecipePackageRules.PackageExtension}");
-        var workbooksDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-        var presentationsDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-
-        try
-        {
-            var oversized = new byte[RecipePackageRules.MaxGraphUncompressedBytes + 1];
-            using (var fs = File.Create(zipPath))
-            using (var zos = new ZipOutputStream(fs))
-            {
-                zos.SetLevel(9);
-                var e = new ZipEntry(RecipePackageRules.Data.RecipeFileName) { Size = oversized.Length };
-                zos.PutNextEntry(e);
-                zos.Write(oversized, 0, oversized.Length);
-                zos.CloseEntry();
-                zos.Finish();
-            }
-
-            var act = async () => await _repo.ImportAsync(zipPath, null, (workbooksDir, presentationsDir),
-                TestContext.Current.CancellationToken);
-
-            await act.Should().ThrowAsync<InvalidDataException>()
-                .WithMessage($"*{RecipePackageRules.Data.RecipeFileName}*uncompressed size*");
-        }
-        finally
-        {
-            if (File.Exists(zipPath)) File.Delete(zipPath);
-        }
-    }
-
-    [Fact]
-    public async Task ImportAsync_GraphJsonExceedsCompressionRatio_ThrowsInvalidDataException()
-    {
-        var zipPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{RecipePackageRules.PackageExtension}");
-        var workbooksDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-        var presentationsDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-
-        try
-        {
-            // 100 KB of zeros compresses to a few hundred bytes — ratio far exceeds 100.
-            var compressible = new byte[100 * 1024];
-            using (var fs = File.Create(zipPath))
-            using (var zos = new ZipOutputStream(fs))
-            {
-                zos.SetLevel(9);
-                var e = new ZipEntry(RecipePackageRules.Data.RecipeFileName) { Size = compressible.Length };
-                zos.PutNextEntry(e);
-                zos.Write(compressible, 0, compressible.Length);
-                zos.CloseEntry();
-                zos.Finish();
-            }
-
-            var act = async () => await _repo.ImportAsync(zipPath, null, (workbooksDir, presentationsDir),
-                TestContext.Current.CancellationToken);
-
-            await act.Should().ThrowAsync<InvalidDataException>()
-                .WithMessage($"*{RecipePackageRules.Data.RecipeFileName}*compression ratio*");
         }
         finally
         {

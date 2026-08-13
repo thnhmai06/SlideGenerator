@@ -17,7 +17,7 @@ using Microsoft.Extensions.Logging;
 using Serilog.Context;
 using Serilog.Events;
 using SlideGenerator.Cloud;
-using SlideGenerator.Document.Slides;
+using SlideGenerator.Document.Presentations;
 using SlideGenerator.Document.Template;
 using SlideGenerator.Document.Workbooks;
 using SlideGenerator.Generator.Persistence;
@@ -107,7 +107,7 @@ internal sealed partial class JobRunner(
     /// <inheritdoc />
     public async Task ShutdownAsync(CancellationToken ct = default)
     {
-        foreach (var job in _running.Values) job.Cts.Cancel();
+        foreach (var job in _running.Values) await job.Cts.CancelAsync();
         await Task.WhenAll(_running.Values.Select(j => j.RunTask ?? Task.CompletedTask))
             .ContinueWith(_ => { }, TaskScheduler.Default).ConfigureAwait(false);
         await jobsRepository.FlushAsync(CancellationToken.None).ConfigureAwait(false);
@@ -259,7 +259,7 @@ internal sealed partial class JobRunner(
 
     /// <summary>
     ///     Per-job download cache folder: <c>%TEMP%\SlideGenerator\{requestId}\{jobId}\</c>. Kept isolated
-    ///     per job so concurrent jobs never contend on the same file (see <c>Utilities.cs</c>'s ponytail
+    ///     per job, so concurrent jobs never contend on the same file (see <c>Utilities.cs</c>'s ponytail
     ///     note on dropping the old file-lock).
     /// </summary>
     internal static string JobTempFolder(string requestId, int jobId) =>
@@ -279,7 +279,7 @@ internal sealed partial class JobRunner(
         }
     }
 
-    /// <summary>In-memory registry entry for one currently-running (or resumed) job.</summary>
+    /// <summary>In-memory registry entry for one currently running (or resumed) job.</summary>
     private sealed class RunningJob
     {
         public required CancellationTokenSource Cts { get; init; }

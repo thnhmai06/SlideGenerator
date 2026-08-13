@@ -12,7 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Document.Slides;
+namespace SlideGenerator.Document.Presentations.Identifiers;
 
 /// <summary>
 ///     Specifies the supported file extensions for presentations.

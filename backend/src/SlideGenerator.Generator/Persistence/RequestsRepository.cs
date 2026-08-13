@@ -15,7 +15,7 @@
 using System.Globalization;
 using Dapper;
 using Microsoft.Data.Sqlite;
-using SlideGenerator.Document.Slides;
+using SlideGenerator.Document.Presentations.Identifiers;
 
 namespace SlideGenerator.Generator.Persistence;
 
@@ -103,7 +103,7 @@ internal sealed class RequestsRepository : IRequestsRepository
         new Request(
             (int)row.RecipeId,
             row.Name,
-            System.Enum.Parse<PresentationType>(row.OutputType),
+            Enum.Parse<PresentationType>(row.OutputType),
             row.SaveFolder,
             row.AllowLocalPaths != 0),
         row.LogPath,

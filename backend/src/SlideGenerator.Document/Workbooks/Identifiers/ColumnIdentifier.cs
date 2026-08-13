@@ -12,7 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Document.Workbooks;
+namespace SlideGenerator.Document.Workbooks.Identifiers;
 
 /// <summary>
 ///     Identifies a column by its header name within an already-known worksheet context.

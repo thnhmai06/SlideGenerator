@@ -17,8 +17,6 @@ using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Events;
 using Serilog.Exceptions;
-using SlideGenerator.Logging;
-using SlideGenerator.Logging.FileLogging;
 using SlideGenerator.Logging.Formats;
 using SlideGenerator.Settings.Immutable;
 using SlideGenerator.Stdio.Implementations;

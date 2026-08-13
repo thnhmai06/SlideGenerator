@@ -12,8 +12,8 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Document.Slides;
-using SlideGenerator.Document.Workbooks;
+using SlideGenerator.Document.Presentations.Identifiers;
+using SlideGenerator.Document.Workbooks.Identifiers;
 
 namespace SlideGenerator.Recipe.Mappings;
 
@@ -29,10 +29,10 @@ public sealed record Recipe(IReadOnlyList<Mapping> Mappings)
     /// </summary>
     public IReadOnlySet<string> GetReferencedFiles()
     {
-        return (Mappings ?? [])
-            .SelectMany(m => (m.Sources ?? [])
+        return Mappings
+            .SelectMany(m => m.Sources
                 .Select(s => s.Workbook.BookPath)
-                .Append(m.TemplatePresentation.PresentationPath))
+                .Append(m.Template.Presentation.PresentationPath))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
     }
 }
@@ -42,14 +42,12 @@ public sealed record Recipe(IReadOnlyList<Mapping> Mappings)
 ///     template slide, via text and image instructions.
 /// </summary>
 /// <param name="Sources">Worksheets feeding this mapping.</param>
-/// <param name="TemplatePresentation">Identifies the presentation file that hosts the template slide.</param>
-/// <param name="TemplateSlide">Identifies the template slide within <see cref="TemplatePresentation" />.</param>
+/// <param name="Template">Identifies the template slide this mapping renders into.</param>
 /// <param name="TextInstructions">Rules for mapping worksheet columns to slide text placeholders.</param>
 /// <param name="ImageInstructions">Rules for mapping worksheet columns to slide image shapes.</param>
 public sealed record Mapping(
     IReadOnlyList<WorksheetSource> Sources,
-    PresentationIdentifier TemplatePresentation,
-    SlideIdentifier TemplateSlide,
+    PresentationSource Template,
     IReadOnlyList<TextInstruction> TextInstructions,
     IReadOnlyList<ImageInstruction> ImageInstructions);
 
@@ -69,3 +67,13 @@ public sealed record WorksheetSource(
     WorksheetIdentifier Worksheet,
     IReadOnlySet<ColumnIdentifier>? UsedColumns = null,
     RowFilter? RowFilter = null);
+
+/// <summary>
+///     Identifies one template slide as a render target: the presentation file that hosts it
+///     plus the slide within that presentation.
+/// </summary>
+/// <param name="Presentation">Identifies the presentation file that hosts the template slide.</param>
+/// <param name="Slide">Identifies the template slide within <see cref="Presentation" />.</param>
+public sealed record PresentationSource(
+    PresentationIdentifier Presentation,
+    SlideIdentifier Slide);

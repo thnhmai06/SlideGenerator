@@ -14,8 +14,8 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <GeneratePathProperty>true</GeneratePathProperty>
         </PackageReference>
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.9" />
-        <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.8"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.11" />
+        <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.11" />
         <PackageReference Include="Syncfusion.XlsIO.NET" Version="*"/>
         <PackageReference Include="Syncfusion.Presentation.NET" Version="*"/>
         <PackageReference Include="Syncfusion.PresentationRenderer.NET" Version="*"/>
@@ -24,7 +24,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\SlideGenerator.Image\SlideGenerator.Image.csproj"/>
         <ProjectReference Include="..\SlideGenerator.Utilities\SlideGenerator.Utilities.csproj"/>
     </ItemGroup>
 

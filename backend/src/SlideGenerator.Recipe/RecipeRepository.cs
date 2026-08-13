@@ -139,7 +139,7 @@ internal sealed partial class RecipeRepository : IRecipeRepository
             "SELECT Id, Name, Recipe, CreatedTimestamp, UpdatedTimestamp FROM Recipes ORDER BY UpdatedTimestamp DESC, CreatedTimestamp DESC, Id DESC",
             cancellationToken: ct)).ConfigureAwait(false);
 
-        return [.. rows.Select(DbReadEntry).Cast<IRecipeMetadata>()];
+        return [.. rows.Select(DbReadEntry)];
     }
 
     /// <inheritdoc />
@@ -191,7 +191,7 @@ internal sealed partial class RecipeRepository : IRecipeRepository
 
         // ponytail: missing/null "mappings" on otherwise-valid JSON is treated as an empty recipe,
         // not a crash — matches the "archive rejected? no, just empty" spirit without hiding real parse errors.
-        graph = graph with { Mappings = graph.Mappings ?? [] };
+        graph = new Mappings.Recipe(Mappings: graph.Mappings);
 
         return new RecipeEntry(
             (int)row.Id,

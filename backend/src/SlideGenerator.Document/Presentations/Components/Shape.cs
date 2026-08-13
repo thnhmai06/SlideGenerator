@@ -13,9 +13,10 @@
  */
 
 using System.Drawing;
+using SlideGenerator.Document.Presentations.Identifiers;
 using Syncfusion.Presentation;
 
-namespace SlideGenerator.Document.Slides;
+namespace SlideGenerator.Document.Presentations.Components;
 
 /// <summary>
 ///     Represents a read-only view of a shape on a PowerPoint slide.

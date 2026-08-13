@@ -31,7 +31,7 @@ internal sealed partial class RecipeRepository
             .SelectMany(m => m.Sources.Select(s => s.Workbook.BookPath))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
         var presentationPaths = entry.Recipe.Mappings
-            .Select(m => m.TemplatePresentation.PresentationPath)
+            .Select(m => m.Template.Presentation.PresentationPath)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var dir = Path.GetDirectoryName(outputPath);
@@ -91,22 +91,10 @@ internal sealed partial class RecipeRepository
 
         await Task.Run(() =>
         {
-            // Validation
-            var compressedSize = new FileInfo(filePath).Length;
-            if (compressedSize > RecipePackageRules.MaxCompressedArchiveBytes)
-                throw new InvalidDataException(
-                    $"Archive rejected: compressed size {compressedSize} exceeds limit " +
-                    $"{RecipePackageRules.MaxCompressedArchiveBytes} bytes.");
-
             using var inputStream = File.OpenRead(filePath);
             using var zipFile = new ZipFile(inputStream);
             if (!string.IsNullOrEmpty(password))
                 zipFile.Password = password;
-
-            if (zipFile.Count > RecipePackageRules.MaxEntryCount)
-                throw new InvalidDataException(
-                    $"Archive rejected: entry count {zipFile.Count} exceeds limit " +
-                    $"{RecipePackageRules.MaxEntryCount}.");
 
             // Recipe file
             var graphJson = Import_ReadGraphFile(zipFile)
@@ -126,7 +114,7 @@ internal sealed partial class RecipeRepository
 
             // A syntactically valid but field-less recipe.json (e.g. "{}") deserializes with a null
             // Mappings — treat that as an empty recipe rather than crash downstream.
-            imported = imported with { Mappings = imported.Mappings ?? [] };
+            imported = new Mappings.Recipe(Mappings: imported.Mappings);
 
             // Data files
             var (wbMapping, pptMapping) = Import_BuildPathMappings(
@@ -171,7 +159,7 @@ internal sealed partial class RecipeRepository
                     wbMapping[filename] = Import_ResolveTargetPath(filename, workbooksDir, wbUsed);
             }
 
-            var pptFilename = Path.GetFileName(mapping.TemplatePresentation.PresentationPath);
+            var pptFilename = Path.GetFileName(mapping.Template.Presentation.PresentationPath);
             if (!string.IsNullOrEmpty(pptFilename) && !pptMapping.ContainsKey(pptFilename))
                 pptMapping[pptFilename] = Import_ResolveTargetPath(pptFilename, presentationsDir, pptUsed);
         }
@@ -203,7 +191,7 @@ internal sealed partial class RecipeRepository
 
     /// <summary>
     ///     Returns a copy of <paramref name="graph" /> in which each <see cref="Mappings.WorksheetSource" />
-    ///     and <see cref="Mappings.Mapping.TemplatePresentation" /> has its path replaced by the deduplicated absolute
+    ///     and <see cref="Mappings.Mapping.Template" /> has its path replaced by the deduplicated absolute
     ///     path from the corresponding mapping. Nodes whose filename is absent from the mapping are
     ///     left unchanged.
     /// </summary>
@@ -219,18 +207,17 @@ internal sealed partial class RecipeRepository
                     ? s with { Workbook = s.Workbook with { BookPath = dest } }
                     : s).ToList();
             var fixedTemplate = presentationMapping.TryGetValue(
-                Path.GetFileName(m.TemplatePresentation.PresentationPath), out var pptDest)
-                ? m.TemplatePresentation with { PresentationPath = pptDest }
-                : m.TemplatePresentation;
-            return m with { Sources = fixedSources, TemplatePresentation = fixedTemplate };
+                Path.GetFileName(m.Template.Presentation.PresentationPath), out var pptDest)
+                ? m.Template with { Presentation = m.Template.Presentation with { PresentationPath = pptDest } }
+                : m.Template;
+            return m with { Sources = fixedSources, Template = fixedTemplate };
         }).ToList();
-        return graph with { Mappings = fixedMappings };
+        return new Mappings.Recipe(Mappings: fixedMappings);
     }
 
     /// <summary>
-    ///     Iterates all file entries in <paramref name="zipFile" />, enforces per-entry size limits,
-    ///     and delegates each entry to <see cref="Import_ExtractSingleEntry" />.
-    ///     Skips <c>Recipe.json</c> and directory entries.
+    ///     Iterates all file entries in <paramref name="zipFile" /> and delegates each entry to
+    ///     <see cref="Import_ExtractSingleEntry" />. Skips <c>Recipe.json</c> and directory entries.
     /// </summary>
     private static void Import_ExtractWithMappings(
         ZipFile zipFile,
@@ -239,7 +226,6 @@ internal sealed partial class RecipeRepository
         string workbooksFull, string presentationsFull,
         CancellationToken ct)
     {
-        var totalUncompressed = 0L;
         foreach (ZipEntry zipEntry in zipFile)
         {
             ct.ThrowIfCancellationRequested();
@@ -248,7 +234,6 @@ internal sealed partial class RecipeRepository
             var entryName = zipEntry.Name;
             if (string.Equals(entryName, RecipePackageRules.Data.RecipeFileName,
                     StringComparison.OrdinalIgnoreCase)) continue;
-            Import_EnforceEntrySizeLimits(zipEntry, ref totalUncompressed);
             Import_ExtractSingleEntry(zipFile, zipEntry, entryName,
                 workbookMapping, presentationMapping, workbooksFull, presentationsFull, ct);
         }
@@ -318,10 +303,6 @@ internal sealed partial class RecipeRepository
     ///     Finds and returns the UTF-8 text of the graph file entry inside
     ///     <paramref name="zipFile" />, or <see langword="null" /> if the entry is absent.
     /// </summary>
-    /// <remarks>
-    ///     Validates the entry's uncompressed size and compression ratio against
-    ///     <see cref="RecipePackageRules" /> limits before reading to prevent OOM attacks.
-    /// </remarks>
     private static string? Import_ReadGraphFile(ZipFile zipFile)
     {
         foreach (ZipEntry entry in zipFile)
@@ -330,53 +311,12 @@ internal sealed partial class RecipeRepository
             if (!string.Equals(entry.Name, RecipePackageRules.Data.RecipeFileName, StringComparison.OrdinalIgnoreCase))
                 continue;
 
-            if (entry.Size > RecipePackageRules.MaxGraphUncompressedBytes)
-                throw new InvalidDataException(
-                    $"Archive rejected: '{RecipePackageRules.Data.RecipeFileName}' uncompressed size {entry.Size} " +
-                    $"exceeds limit {RecipePackageRules.MaxGraphUncompressedBytes}.");
-            if (entry.CompressedSize > 0)
-            {
-                var ratio = (double)entry.Size / entry.CompressedSize;
-                if (ratio > RecipePackageRules.MaxEntryCompressionRatio)
-                    throw new InvalidDataException(
-                        $"Archive rejected: '{RecipePackageRules.Data.RecipeFileName}' compression ratio {ratio:F1} " +
-                        $"exceeds limit {RecipePackageRules.MaxEntryCompressionRatio:F1}.");
-            }
-
             using var stream = zipFile.GetInputStream(entry);
             using var reader = new StreamReader(stream, Encoding.UTF8);
             return reader.ReadToEnd();
         }
 
         return null;
-    }
-
-    /// <summary>
-    ///     Validates the uncompressed size and compression ratio of a single entry against
-    ///     <see cref="RecipePackageRules" /> limits and accumulates the running total.
-    ///     Throws <see cref="InvalidDataException" /> if any limit is exceeded.
-    /// </summary>
-    private static void Import_EnforceEntrySizeLimits(ZipEntry entry, ref long totalUncompressed)
-    {
-        if (entry.Size > RecipePackageRules.MaxEntryUncompressedBytes)
-            throw new InvalidDataException(
-                $"Archive rejected: entry '{entry.Name}' uncompressed size {entry.Size} exceeds limit " +
-                $"{RecipePackageRules.MaxEntryUncompressedBytes}.");
-
-        if (entry.CompressedSize > 0)
-        {
-            var ratio = (double)entry.Size / entry.CompressedSize;
-            if (ratio > RecipePackageRules.MaxEntryCompressionRatio)
-                throw new InvalidDataException(
-                    $"Archive rejected: entry '{entry.Name}' compression ratio {ratio:F1} exceeds limit " +
-                    $"{RecipePackageRules.MaxEntryCompressionRatio:F1}.");
-        }
-
-        totalUncompressed += Math.Max(0, entry.Size);
-        if (totalUncompressed > RecipePackageRules.MaxTotalUncompressedBytes)
-            throw new InvalidDataException(
-                $"Archive rejected: total uncompressed size {totalUncompressed} exceeds limit " +
-                $"{RecipePackageRules.MaxTotalUncompressedBytes}.");
     }
 
     #endregion
@@ -409,7 +349,7 @@ internal sealed partial class RecipeRepository
 
     /// <summary>
     ///     Returns a copy of <paramref name="graph" /> in which every <see cref="Mappings.WorksheetSource" />
-    ///     and <see cref="Mappings.Mapping.TemplatePresentation" /> whose an absolute path appears in the entry mapping has
+    ///     and <see cref="Mappings.Mapping.Template" /> whose an absolute path appears in the entry mapping has
     ///     its path replaced by the plain filename (e.g. <c>data.xlsx</c>) suitable for storage
     ///     inside the zip archive. Nodes whose paths are not in the mapping are left unchanged.
     /// </summary>
@@ -425,12 +365,12 @@ internal sealed partial class RecipeRepository
                     ? s with { Workbook = s.Workbook with { BookPath = Path.GetFileName(entry) } }
                     : s).ToList();
             var exportTemplate = presentationEntryMapping.TryGetValue(
-                m.TemplatePresentation.PresentationPath, out var pptEntry)
-                ? m.TemplatePresentation with { PresentationPath = Path.GetFileName(pptEntry) }
-                : m.TemplatePresentation;
-            return m with { Sources = exportSources, TemplatePresentation = exportTemplate };
+                m.Template.Presentation.PresentationPath, out var pptEntry)
+                ? m.Template with { Presentation = m.Template.Presentation with { PresentationPath = Path.GetFileName(pptEntry) } }
+                : m.Template;
+            return m with { Sources = exportSources, Template = exportTemplate };
         }).ToList();
-        return graph with { Mappings = exportMappings };
+        return new Mappings.Recipe(Mappings: exportMappings);
     }
 
     /// <summary>

@@ -22,11 +22,11 @@ namespace SlideGenerator.Generator.Persistence;
 ///     (last write per key wins); a background loop atomically drains the buffer roughly once a second and
 ///     calls <see cref="UpsertBatchAsync" /> once per tick, then raises <see cref="Flushed" /> with the
 ///     batch. Extracted from the pattern used by the old Stdio-side progress coalescer so any table that
-///     changes often (here, just <c>Jobs</c>) can reuse the same buffering without re-deriving it.
+///     often changes (here, just <c>Jobs</c>) can reuse the same buffering without re-deriving it.
 /// </summary>
 internal abstract class BufferedRepository<TKey, TValue> : IAsyncDisposable where TKey : notnull
 {
-    private static readonly TimeSpan FlushInterval = TimeSpan.FromSeconds(1);
+    private const uint FlushIntervalSeconds = 1;
 
     private readonly ILogger _logger;
     private ConcurrentDictionary<TKey, TValue> _dirty = new();
@@ -42,7 +42,7 @@ internal abstract class BufferedRepository<TKey, TValue> : IAsyncDisposable wher
     /// <summary>Marks <paramref name="value" /> dirty under <paramref name="key" /> — last write wins.</summary>
     public void Enqueue(TKey key, TValue value) => _dirty[key] = value;
 
-    /// <summary>Raised after each successful flush with the batch that was just persisted.</summary>
+    /// <summary>Rose after each successful flush with the batch that was just persisted.</summary>
     public event Action<IReadOnlyList<TValue>>? Flushed;
 
     /// <summary>Persists one batch of dirty values in a single round-trip.</summary>
@@ -61,7 +61,7 @@ internal abstract class BufferedRepository<TKey, TValue> : IAsyncDisposable wher
 
     private async Task RunFlushLoopAsync(CancellationToken ct)
     {
-        using var timer = new PeriodicTimer(FlushInterval);
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(FlushIntervalSeconds));
         try
         {
             while (await timer.WaitForNextTickAsync(ct).ConfigureAwait(false))
@@ -71,7 +71,7 @@ internal abstract class BufferedRepository<TKey, TValue> : IAsyncDisposable wher
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
-                    // One failed flush (DB I/O, etc.) must not permanently stop delivery of subsequent
+                    // One failed flush (DB I/O, etc.) must not permanently stop delivery of the following
                     // updates for the rest of the process lifetime.
                     _logger.LogWarning(ex, "Buffered flush failed; will retry on the next tick.");
                 }
@@ -82,7 +82,7 @@ internal abstract class BufferedRepository<TKey, TValue> : IAsyncDisposable wher
         }
     }
 
-    /// <summary>Cancels the flush loop and flushes one last time so nothing accumulated since the previous tick is dropped.</summary>
+    /// <summary>Cancels the flush loop and flushes one last time, so nothing accumulated since the previous tick is dropped.</summary>
     public async ValueTask DisposeAsync()
     {
         await _cts.CancelAsync().ConfigureAwait(false);

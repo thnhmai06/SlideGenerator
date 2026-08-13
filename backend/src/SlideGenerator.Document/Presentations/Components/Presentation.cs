@@ -12,10 +12,11 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using SlideGenerator.Document.Presentations.Identifiers;
 using Syncfusion.Presentation;
 using SyncfusionPresentation = Syncfusion.Presentation.IPresentation;
 
-namespace SlideGenerator.Document.Slides;
+namespace SlideGenerator.Document.Presentations.Components;
 
 /// <summary>
 ///     Represents a read-only view of a PowerPoint presentation.

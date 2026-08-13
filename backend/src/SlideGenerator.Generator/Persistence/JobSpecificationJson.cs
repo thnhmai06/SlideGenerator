@@ -143,7 +143,7 @@ internal sealed class RoiOptionJsonAdapter : JsonConverter<RoiOption>
     private static AnchorOption ReadAnchor(JsonElement root)
     {
         var anchorType = root.TryGetProperty("anchorType", out var anchorEl)
-            ? System.Enum.Parse<AnchorType>(anchorEl.GetString()!, true)
+            ? Enum.Parse<AnchorType>(anchorEl.GetString()!, true)
             : AnchorType.Image;
         return new AnchorOption
         {
@@ -156,7 +156,7 @@ internal sealed class RoiOptionJsonAdapter : JsonConverter<RoiOption>
     private static InterestOption ReadInterest(JsonElement root)
     {
         var interestType = root.TryGetProperty("interestType", out var modeEl)
-            ? System.Enum.Parse<InterestType>(modeEl.GetString()!, true)
+            ? Enum.Parse<InterestType>(modeEl.GetString()!, true)
             : InterestType.Attention;
         return new InterestOption { Type = interestType };
     }

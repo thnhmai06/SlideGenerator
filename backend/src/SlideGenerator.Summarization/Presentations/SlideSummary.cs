@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Summarization
- * File: WorkbookSummary.cs
+ * File: SlideSummary.cs
  *
  * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -12,6 +12,13 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Summarization.Workbook;
+using SlideGenerator.Document.Presentations.Identifiers;
 
-public record WorkbookSummary(string FilePath, string Name, IReadOnlyList<WorksheetSummary> Worksheets);
+namespace SlideGenerator.Summarization.Presentations;
+
+public sealed record SlideSummary(
+    PresentationIdentifier Presentation,
+    SlideIdentifier Slide,
+    IReadOnlyList<string> Placeholders,
+    IReadOnlyList<ShapeSummary> ImageShapes,
+    byte[]? Preview);

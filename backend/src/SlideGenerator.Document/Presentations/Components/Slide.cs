@@ -14,10 +14,11 @@
 
 using System.Security.Cryptography;
 using System.Text;
+using SlideGenerator.Document.Presentations.Identifiers;
 using Syncfusion.Presentation;
 using Syncfusion.PresentationRenderer;
 
-namespace SlideGenerator.Document.Slides;
+namespace SlideGenerator.Document.Presentations.Components;
 
 /// <summary>
 ///     Represents a read-only view of a single slide in a presentation.

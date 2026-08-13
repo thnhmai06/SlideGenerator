@@ -19,7 +19,7 @@ namespace SlideGenerator.Generator.Job;
 ///     forward (never regresses) through these phases; <see cref="JobRecord.CurrentIndex" />
 ///     tracks how far it got within the current phase.
 /// </summary>
-public enum JobPhase
+public enum JobPhase : byte
 {
     /// <summary>Opening (resume) or creating (fresh) the output presentation file.</summary>
     CreatingOutput,

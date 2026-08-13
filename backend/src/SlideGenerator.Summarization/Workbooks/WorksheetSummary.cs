@@ -12,12 +12,14 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Document.Workbooks;
+using SlideGenerator.Document.Workbooks.Identifiers;
 
-namespace SlideGenerator.Summarization.Workbook;
+namespace SlideGenerator.Summarization.Workbooks;
+
+public record WorksheetPreview(IReadOnlyList<string> Headers, IReadOnlyList<IReadOnlyList<string>> Rows);
 
 public sealed record WorksheetSummary(
-    WorkbookIdentifier Book,
+    WorkbookIdentifier Workbook,
     WorksheetIdentifier Worksheet,
     int Count,
     WorksheetPreview? Preview = null);

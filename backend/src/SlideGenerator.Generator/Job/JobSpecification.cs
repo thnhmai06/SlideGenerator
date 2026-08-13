@@ -12,7 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Document.Workbooks;
+using SlideGenerator.Document.Workbooks.Identifiers;
 using SlideGenerator.Recipe.Mappings;
 
 namespace SlideGenerator.Generator.Job;

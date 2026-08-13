@@ -86,7 +86,7 @@ internal sealed class ProgressCoalescer(IJobsRepository jobsRepository, ILogger<
         if (_logNotifier != null) _logNotifier.OnLogEntry -= HandleLog;
         jobsRepository.Flushed -= HandleJobsFlushed;
 
-        _cts?.Cancel();
+        await _cts?.CancelAsync();
 
         try
         {

@@ -19,7 +19,7 @@ namespace SlideGenerator.Recipe;
 
 /// <summary>
 ///     STJ converter that maps <see cref="IReadOnlySet{T}" /> to/from a JSON array using
-///     <see cref="HashSet{T}" /> as the concrete deserialisation target.
+///     <see cref="HashSet{T}" /> as the concrete deserialization target.
 /// </summary>
 internal sealed class ReadOnlySetJsonConverter<T> : JsonConverter<IReadOnlySet<T>>
 {

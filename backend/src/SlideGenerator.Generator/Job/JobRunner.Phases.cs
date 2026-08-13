@@ -16,8 +16,10 @@ using System.Drawing;
 using Microsoft.Extensions.Logging;
 using Serilog.Context;
 using SlideGenerator.Cloud;
-using SlideGenerator.Document.Slides;
-using SlideGenerator.Document.Workbooks;
+using SlideGenerator.Document.Presentations.Components;
+using SlideGenerator.Document.Presentations.Identifiers;
+using SlideGenerator.Document.Workbooks.Components;
+using SlideGenerator.Document.Workbooks.Identifiers;
 using SlideGenerator.Generator.Progress;
 using SlideGenerator.Image.Loading;
 using SlideGenerator.Recipe.Mappings;
@@ -327,7 +329,7 @@ internal sealed partial class JobRunner
         if (!string.IsNullOrWhiteSpace(source))
         {
             if (File.Exists(source))
-                return await EditImageFromPathAsync(source, targetSize, instruction.ImageEdits, rowIndex, logger, ct)
+                return await EditImageFromPathAsync(source, targetSize, instruction.ImageEditInstruction, rowIndex, logger, ct)
                     .ConfigureAwait(false);
 
             if (inspected != null)
@@ -336,7 +338,7 @@ internal sealed partial class JobRunner
                     .ConfigureAwait(false);
                 if (bytes != null)
                 {
-                    var edited = await EditImageFromBytesAsync(bytes, targetSize, instruction.ImageEdits, rowIndex,
+                    var edited = await EditImageFromBytesAsync(bytes, targetSize, instruction.ImageEditInstruction, rowIndex,
                         logger, ct).ConfigureAwait(false);
                     if (edited != null) return edited;
                 }
@@ -344,7 +346,7 @@ internal sealed partial class JobRunner
         }
 
         if (instruction.FallbackImagePath is { } fallback && File.Exists(fallback))
-            return await EditImageFromPathAsync(fallback, targetSize, instruction.ImageEdits, rowIndex, logger, ct)
+            return await EditImageFromPathAsync(fallback, targetSize, instruction.ImageEditInstruction, rowIndex, logger, ct)
                 .ConfigureAwait(false);
 
         return null;
@@ -383,26 +385,26 @@ internal sealed partial class JobRunner
     }
 
     private async Task<byte[]?> EditImageFromPathAsync(
-        string path, Size targetSize, ImageEdits edits, int rowIndex, ILogger logger, CancellationToken ct)
+        string path, Size targetSize, ImageEditInstruction editInstruction, int rowIndex, ILogger logger, CancellationToken ct)
     {
         using var image = imageLoader.Open(path);
-        return await CropToPngAsync(image, targetSize, edits, path, rowIndex, logger, ct).ConfigureAwait(false);
+        return await CropToPngAsync(image, targetSize, editInstruction, path, rowIndex, logger, ct).ConfigureAwait(false);
     }
 
     private async Task<byte[]?> EditImageFromBytesAsync(
-        byte[] data, Size targetSize, ImageEdits edits, int rowIndex, ILogger logger, CancellationToken ct)
+        byte[] data, Size targetSize, ImageEditInstruction editInstruction, int rowIndex, ILogger logger, CancellationToken ct)
     {
         using var image = imageLoader.Open(data);
-        return await CropToPngAsync(image, targetSize, edits, "<in-memory>", rowIndex, logger, ct).ConfigureAwait(false);
+        return await CropToPngAsync(image, targetSize, editInstruction, "<in-memory>", rowIndex, logger, ct).ConfigureAwait(false);
     }
 
     private async Task<byte[]?> CropToPngAsync(
-        IImage image, Size targetSize, ImageEdits edits, string sourceLabel, int rowIndex, ILogger logger,
+        IImage image, Size targetSize, ImageEditInstruction editInstruction, string sourceLabel, int rowIndex, ILogger logger,
         CancellationToken ct)
     {
         try
         {
-            using var cropped = await smartCropper.CropAsync(image, targetSize, [.. edits.RoiOptions])
+            using var cropped = await smartCropper.CropAsync(image, targetSize, [.. editInstruction.RoiOptions])
                 .ConfigureAwait(false);
             return cropped?.ToPng();
         }

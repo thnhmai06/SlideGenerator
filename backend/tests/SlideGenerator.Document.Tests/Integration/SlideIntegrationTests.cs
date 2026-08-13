@@ -13,7 +13,8 @@
  */
 
 using FluentAssertions;
-using SlideGenerator.Document.Slides;
+using SlideGenerator.Document.Presentations;
+using SlideGenerator.Document.Presentations.Identifiers;
 using Syncfusion.Licensing;
 using Xunit;
 

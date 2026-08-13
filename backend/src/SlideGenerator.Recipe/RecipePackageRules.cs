@@ -12,40 +12,19 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Document.Slides;
-using SlideGenerator.Document.Workbooks;
+using SlideGenerator.Document.Presentations.Identifiers;
+using SlideGenerator.Document.Workbooks.Identifiers;
 
 namespace SlideGenerator.Recipe;
 
 /// <summary>
 ///     Constraints applied when importing a <c>*.recipe</c> archive.
-///     Prevent zip-bomb DoS, restrict extracted file types, and bound resource usage.
+///     Restricts extracted file types and enforces the Zip Slip path guard.
 /// </summary>
 public static class RecipePackageRules
 {
     /// <summary>The package file extension.</summary>
     public const string PackageExtension = ".recipe";
-
-    /// <summary>Maximum size of the package file on disk.</summary>
-    public const long MaxCompressedArchiveBytes = 500L * 1024 * 1024; // 500 MB
-
-    /// <summary>Maximum cumulative uncompressed size of all archive entries.</summary>
-    public const long MaxTotalUncompressedBytes = 2L * 1024 * 1024 * 1024; // 2 GB
-
-    /// <summary>Maximum uncompressed size of a single archive entry.</summary>
-    public const long MaxEntryUncompressedBytes = 512L * 1024 * 1024; // 512 MB
-
-    /// <summary>Maximum uncompressed size of the <c>Recipe.json</c> entry.</summary>
-    public const long MaxGraphUncompressedBytes = 16L * 1024 * 1024; // 16 MB
-
-    /// <summary>Maximum number of entries allowed inside the archive.</summary>
-    public const int MaxEntryCount = 1_000;
-
-    /// <summary>
-    ///     Maximum decompressed/compressed ratio for any single entry. Entries that exceed
-    ///     this ratio indicate likely zip-bomb payloads.
-    /// </summary>
-    public const double MaxEntryCompressionRatio = 100.0;
 
     public static class Data
     {

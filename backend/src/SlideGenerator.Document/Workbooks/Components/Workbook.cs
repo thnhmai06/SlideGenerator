@@ -12,9 +12,10 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using SlideGenerator.Document.Workbooks.Identifiers;
 using SyncfusionWorkbook = Syncfusion.XlsIO.IWorkbook;
 
-namespace SlideGenerator.Document.Workbooks;
+namespace SlideGenerator.Document.Workbooks.Components;
 
 /// <summary>
 ///     Represents a read-only view of an Excel workbook.
