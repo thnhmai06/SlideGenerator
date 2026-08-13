@@ -20,7 +20,7 @@ namespace SlideGenerator.Stdio.Handlers;
 ///     Handles all <c>recipe.*</c> JSON-RPC methods.
 ///     Provides CRUD access and package export/import for <see cref="RecipeEntry" /> records.
 /// </summary>
-public sealed class RecipeHandler(IRecipeRepository recipeRepository)
+public sealed class RecipeHandler(IRecipeRepository recipeRepository, IRecipePackageService recipePackageService)
 {
     /// <summary>
     ///     Returns metadata for all stored recipe entries, ordered by the most recently updated.
@@ -78,7 +78,7 @@ public sealed class RecipeHandler(IRecipeRepository recipeRepository)
     /// </summary>
     public Task ExportAsync(int recipeId, string outputFilePath, CancellationToken ct)
     {
-        return recipeRepository.ExportAsync(recipeId, outputFilePath, ct);
+        return recipePackageService.ExportAsync(recipeId, outputFilePath, ct);
     }
 
     /// <summary>
@@ -87,6 +87,6 @@ public sealed class RecipeHandler(IRecipeRepository recipeRepository)
     public Task<IRecipeMetadata> ImportAsync(string filePath, string workbooksDirectory,
         string presentationsDirectory, CancellationToken ct)
     {
-        return recipeRepository.ImportAsync(filePath, (workbooksDirectory, presentationsDirectory), ct);
+        return recipePackageService.ImportAsync(filePath, (workbooksDirectory, presentationsDirectory), ct);
     }
 }

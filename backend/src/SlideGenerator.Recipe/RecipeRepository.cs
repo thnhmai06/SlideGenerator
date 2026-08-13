@@ -14,7 +14,6 @@
 
 using System.Globalization;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Dapper;
 using Microsoft.Data.Sqlite;
 
@@ -65,50 +64,24 @@ public interface IRecipeRepository
     /// <param name="ct">Cancellation token.</param>
     /// <returns><see langword="true" /> if a row was deleted; <see langword="false" /> if the id was not found.</returns>
     Task<bool> DeleteAsync(int id, CancellationToken ct = default);
-
-    /// <summary>
-    ///     Exports a stored recipe as a package file.
-    /// </summary>
-    /// <param name="id">The id of the recipe to export.</param>
-    /// <param name="outputPath">The full path to write the output file.</param>
-    /// <param name="ct">Cancellation token.</param>
-    Task ExportAsync(int id, string outputPath, CancellationToken ct = default);
-
-    /// <summary>
-    ///     Imports a package file, extracts its resources, and stores the recipe in the database.
-    /// </summary>
-    /// <param name="filePath">The full path to the package file.</param>
-    /// <param name="saveFolders">Target directories for extracted workbook and presentation files.</param>
-    /// <param name="ct">Cancellation token.</param>
-    /// <returns>The metadata of the newly imported recipe.</returns>
-    Task<IRecipeMetadata> ImportAsync(
-        string filePath,
-        (string Workbooks, string Presentations) saveFolders,
-        CancellationToken ct = default);
 }
 
 /// <summary>
 ///     SQLite-backed implementation of <see cref="IRecipeRepository" />.
 ///     Creates a short-lived connection per CRUD operation; no shared long-lived connection.
+///     Package export/import lives in <see cref="RecipePackageService" /> instead — this type is CRUD-only.
 /// </summary>
-internal sealed partial class RecipeRepository : IRecipeRepository
+internal sealed class SqliteRecipeRepository(SqliteConnectionStringBuilder builder) : IRecipeRepository
 {
-    private readonly SqliteConnectionStringBuilder _builder;
-
-    public RecipeRepository(SqliteConnectionStringBuilder builder)
-    {
-        _builder = builder;
-    }
-
     /// <inheritdoc />
     public async Task<IRecipeMetadata> AddAsync(RecipeInput input, CancellationToken ct = default)
     {
         var now = DbFormatUtc(DateTimeOffset.UtcNow);
-        await using var conn = await _builder.OpenConnectionAsync(ct).ConfigureAwait(false);
+        await using var conn = await builder.OpenConnectionAsync(ct).ConfigureAwait(false);
         var id = await conn.ExecuteScalarAsync<int>(new CommandDefinition(
             "INSERT INTO Recipes (Name, Recipe, CreatedTimestamp, UpdatedTimestamp) " +
             "VALUES (@name, @graph, @now, @now); SELECT last_insert_rowid();",
-            new { name = input.Name, graph = JsonSerializer.Serialize(input.Recipe, GraphSerializerOptions), now },
+            new { name = input.Name, graph = JsonSerializer.Serialize(input.Recipe, RecipeGraphJson.Options), now },
             cancellationToken: ct)).ConfigureAwait(false);
         var ts = DateTimeOffset.Parse(now, CultureInfo.InvariantCulture,
             DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal);
@@ -118,19 +91,17 @@ internal sealed partial class RecipeRepository : IRecipeRepository
     /// <inheritdoc />
     public async Task<RecipeEntry> GetAsync(int id, CancellationToken ct = default)
     {
-        await using var conn = await _builder.OpenConnectionAsync(ct).ConfigureAwait(false);
+        await using var conn = await builder.OpenConnectionAsync(ct).ConfigureAwait(false);
         var row = await conn.QuerySingleOrDefaultAsync<RecipeRow>(new CommandDefinition(
             "SELECT Id, Name, Recipe, CreatedTimestamp, UpdatedTimestamp FROM Recipes WHERE Id = @id",
             new { id }, cancellationToken: ct)).ConfigureAwait(false);
-        if (row is null) throw new InvalidOperationException($"Recipe {id} not found.");
-
-        return DbReadEntry(row);
+        return row is not null ? DbReadEntry(row) : throw new InvalidOperationException($"Recipe {id} not found.");
     }
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<IRecipeMetadata>> ListAsync(CancellationToken ct = default)
     {
-        await using var conn = await _builder.OpenConnectionAsync(ct).ConfigureAwait(false);
+        await using var conn = await builder.OpenConnectionAsync(ct).ConfigureAwait(false);
         var rows = await conn.QueryAsync<RecipeRow>(new CommandDefinition(
             "SELECT Id, Name, Recipe, CreatedTimestamp, UpdatedTimestamp FROM Recipes ORDER BY UpdatedTimestamp DESC, CreatedTimestamp DESC, Id DESC",
             cancellationToken: ct)).ConfigureAwait(false);
@@ -142,10 +113,10 @@ internal sealed partial class RecipeRepository : IRecipeRepository
     public async Task<IRecipeMetadata> UpdateAsync(int id, RecipeInput input, CancellationToken ct = default)
     {
         var now = DbFormatUtc(DateTimeOffset.UtcNow);
-        await using var conn = await _builder.OpenConnectionAsync(ct).ConfigureAwait(false);
+        await using var conn = await builder.OpenConnectionAsync(ct).ConfigureAwait(false);
         var affected = await conn.ExecuteAsync(new CommandDefinition(
             "UPDATE Recipes SET Name = @name, Recipe = @graph, UpdatedTimestamp = @now WHERE Id = @id",
-            new { name = input.Name, graph = JsonSerializer.Serialize(input.Recipe, GraphSerializerOptions), now, id },
+            new { name = input.Name, graph = JsonSerializer.Serialize(input.Recipe, RecipeGraphJson.Options), now, id },
             cancellationToken: ct)).ConfigureAwait(false);
         if (affected == 0) throw new InvalidOperationException($"Recipe {id} not found.");
         return await GetAsync(id, ct).ConfigureAwait(false);
@@ -154,7 +125,7 @@ internal sealed partial class RecipeRepository : IRecipeRepository
     /// <inheritdoc />
     public async Task<bool> DeleteAsync(int id, CancellationToken ct = default)
     {
-        await using var conn = await _builder.OpenConnectionAsync(ct).ConfigureAwait(false);
+        await using var conn = await builder.OpenConnectionAsync(ct).ConfigureAwait(false);
         var affected = await conn.ExecuteAsync(new CommandDefinition(
             "DELETE FROM Recipes WHERE Id = @id", new { id }, cancellationToken: ct)).ConfigureAwait(false);
         return affected > 0;
@@ -170,14 +141,19 @@ internal sealed partial class RecipeRepository : IRecipeRepository
     }
 
     /// <summary>Raw row shape returned by Dapper for the <c>Recipes</c> table (SQLite INTEGER columns bind as <see cref="long" />).</summary>
-    private sealed record RecipeRow(long Id, string Name, string Recipe, string CreatedTimestamp, string UpdatedTimestamp);
+    private sealed record RecipeRow(
+        long Id,
+        string Name,
+        string Recipe,
+        string CreatedTimestamp,
+        string UpdatedTimestamp);
 
     private static RecipeEntry DbReadEntry(RecipeRow row)
     {
         Mappings.Recipe graph;
         try
         {
-            graph = JsonSerializer.Deserialize<Mappings.Recipe>(row.Recipe, GraphSerializerOptions) ??
+            graph = JsonSerializer.Deserialize<Mappings.Recipe>(row.Recipe, RecipeGraphJson.Options) ??
                     new Mappings.Recipe([]);
         }
         catch (JsonException)
@@ -199,20 +175,6 @@ internal sealed partial class RecipeRepository : IRecipeRepository
             DateTimeOffset.Parse(row.UpdatedTimestamp,
                 CultureInfo.InvariantCulture,
                 DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal));
-    }
-
-    private static readonly JsonSerializerOptions GraphSerializerOptions = BuildGraphSerializerOptions();
-
-    private static JsonSerializerOptions BuildGraphSerializerOptions()
-    {
-        var options = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-        };
-        options.Converters.Add(new JsonStringEnumConverter());
-        options.Converters.Add(new ReadOnlySetJsonConverterFactory());
-        return options;
     }
 
     #endregion

@@ -21,8 +21,8 @@ using Xunit;
 namespace SlideGenerator.Recipe.Tests.Unit;
 
 /// <summary>
-///     Security-focused tests for <see cref="RecipeRepository" /> covering issues that exist in
-///     <see cref="RecipeRepository.ImportAsync" /> but are not exercised by the happy-path tests in
+///     Security-focused tests for <see cref="SqliteRecipeRepository" /> covering issues that exist in
+///     <see cref="SqliteRecipeRepository.ImportAsync" /> but are not exercised by the happy-path tests in
 ///     <c>RecipeRepositoryTests</c>. These tests demonstrate:
 ///     <list type="bullet">
 ///         <item>Zip Slip (CWE-22 path traversal) when an attacker crafts entries that escape the target directory.</item>
@@ -35,7 +35,8 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
     private readonly SqliteConnection _anchor;
     private readonly List<string> _cleanupDirs = [];
     private readonly List<string> _cleanupFiles = [];
-    private readonly RecipeRepository _repo;
+    private readonly SqliteRecipeRepository _repo;
+    private readonly RecipePackageService _pkg;
 
     /// <summary>
     ///     Sets up a shared-cache in-memory SQLite database with an anchor connection.
@@ -51,7 +52,8 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
         _anchor = new SqliteConnection(builder.ConnectionString);
         _anchor.Open();
         DatabaseMigrator.Migrate(builder.ConnectionString);
-        _repo = new RecipeRepository(builder);
+        _repo = new SqliteRecipeRepository(builder);
+        _pkg = new RecipePackageService(_repo);
     }
 
     /// <inheritdoc />
@@ -82,7 +84,7 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
     #region Edge — missing recipe.json
 
     /// <summary>
-    ///     Verifies that <see cref="RecipeRepository.ImportAsync" /> rejects archives that do not
+    ///     Verifies that <see cref="SqliteRecipeRepository.ImportAsync" /> rejects archives that do not
     ///     contain the required <c>recipe.json</c> entry by throwing <see cref="InvalidDataException" />.
     /// </summary>
     [Fact(DisplayName = "ImportAsync rejects archives missing recipe.json")]
@@ -109,7 +111,7 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
             await entryStream.WriteAsync(data, TestContext.Current.CancellationToken);
         }
 
-        var act = async () => await _repo.ImportAsync(zipPath, (workbooksDir, presentationsDir),
+        var act = async () => await _pkg.ImportAsync(zipPath, (workbooksDir, presentationsDir),
             TestContext.Current.CancellationToken);
 
         await act.Should().ThrowAsync<InvalidDataException>();
@@ -120,7 +122,7 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
     #region BUG — Zip Slip (path traversal)
 
     /// <summary>
-    ///     SECURITY BUG (CRITICAL, CWE-22): <see cref="RecipeRepository.ImportAsync" /> blindly
+    ///     SECURITY BUG (CRITICAL, CWE-22): <see cref="SqliteRecipeRepository.ImportAsync" /> blindly
     ///     trusts the entry names inside the archive. An attacker who controls the recipe file
     ///     can place entries such as <c>Workbooks/../../escape.txt</c>; the code strips the
     ///     <c>Workbooks/</c> prefix, then calls <see cref="Path.Combine(string, string)" /> with the remaining
@@ -192,7 +194,7 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
         // in either case nothing may escape the sandbox.
         async Task Act()
         {
-            await _repo.ImportAsync(zipPath, (workbooksDir, presentationsDir),
+            await _pkg.ImportAsync(zipPath, (workbooksDir, presentationsDir),
                 TestContext.Current.CancellationToken);
         }
     }
@@ -246,7 +248,7 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
 
         async Task Act()
         {
-            await _repo.ImportAsync(zipPath, (workbooksDir, presentationsDir),
+            await _pkg.ImportAsync(zipPath, (workbooksDir, presentationsDir),
                 TestContext.Current.CancellationToken);
         }
     }

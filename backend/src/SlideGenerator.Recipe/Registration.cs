@@ -32,7 +32,8 @@ public static class Registration
     {
         services.AddSingleton(new SqliteConnectionStringBuilder(NameAndPaths.DataFolder.DataFile.ConnectionString));
         services.AddSingleton(typeof(IRecipeRepository),
-            sp => new RecipeRepository(sp.GetRequiredService<SqliteConnectionStringBuilder>()));
+            sp => new SqliteRecipeRepository(sp.GetRequiredService<SqliteConnectionStringBuilder>()));
+        services.AddSingleton<IRecipePackageService, RecipePackageService>();
         return services;
     }
 }

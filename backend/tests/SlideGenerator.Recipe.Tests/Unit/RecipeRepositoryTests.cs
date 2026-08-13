@@ -24,19 +24,20 @@ using Xunit;
 namespace SlideGenerator.Recipe.Tests.Unit;
 
 /// <summary>
-///     Unit tests for <see cref="RecipeRepository" />, verifying CRUD operations and
+///     Unit tests for <see cref="SqliteRecipeRepository" />, verifying CRUD operations and
 ///     export/import functionality using an in-memory SQLite database to avoid file-system side effects.
 /// </summary>
-public sealed class RecipeRepositoryTests : IDisposable
+public sealed class SqliteRecipeRepositoryTests : IDisposable
 {
     private readonly SqliteConnection _anchor;
-    private readonly RecipeRepository _repo;
+    private readonly SqliteRecipeRepository _repo;
+    private readonly RecipePackageService _pkg;
 
     /// <summary>
     ///     Sets up a shared-cache in-memory SQLite database. The anchor connection keeps the
     ///     in-memory database alive across all short-lived per-CRUD connections.
     /// </summary>
-    public RecipeRepositoryTests()
+    public SqliteRecipeRepositoryTests()
     {
         var builder = new SqliteConnectionStringBuilder
         {
@@ -47,7 +48,8 @@ public sealed class RecipeRepositoryTests : IDisposable
         _anchor = new SqliteConnection(builder.ConnectionString);
         _anchor.Open();
         DatabaseMigrator.Migrate(builder.ConnectionString);
-        _repo = new RecipeRepository(builder);
+        _repo = new SqliteRecipeRepository(builder);
+        _pkg = new RecipePackageService(_repo);
     }
 
     /// <inheritdoc />
@@ -220,7 +222,7 @@ public sealed class RecipeRepositoryTests : IDisposable
 
         try
         {
-            await _repo.ExportAsync(metadata.Id, outputPath, TestContext.Current.CancellationToken);
+            await _pkg.ExportAsync(metadata.Id, outputPath, TestContext.Current.CancellationToken);
 
             File.Exists(outputPath).Should().BeTrue();
             new FileInfo(outputPath).Length.Should().BeGreaterThan(0);
@@ -236,7 +238,7 @@ public sealed class RecipeRepositoryTests : IDisposable
     {
         var outputPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{RecipePackageRules.PackageExtension}");
 
-        var act = async () => await _repo.ExportAsync(9999, outputPath, TestContext.Current.CancellationToken);
+        var act = async () => await _pkg.ExportAsync(9999, outputPath, TestContext.Current.CancellationToken);
 
         await act.Should().ThrowAsync<InvalidOperationException>();
     }
@@ -251,9 +253,9 @@ public sealed class RecipeRepositoryTests : IDisposable
 
         try
         {
-            await _repo.ExportAsync(exported.Id, zipPath, TestContext.Current.CancellationToken);
+            await _pkg.ExportAsync(exported.Id, zipPath, TestContext.Current.CancellationToken);
 
-            var imported = await _repo.ImportAsync(zipPath, (workbooksDir, presentationsDir),
+            var imported = await _pkg.ImportAsync(zipPath, (workbooksDir, presentationsDir),
                 TestContext.Current.CancellationToken);
             var entry = await _repo.GetAsync(imported.Id, TestContext.Current.CancellationToken);
 
@@ -285,7 +287,7 @@ public sealed class RecipeRepositoryTests : IDisposable
                 // empty archive
             }
 
-            var act = async () => await _repo.ImportAsync(zipPath, (workbooksDir, presentationsDir),
+            var act = async () => await _pkg.ImportAsync(zipPath, (workbooksDir, presentationsDir),
                 TestContext.Current.CancellationToken);
 
             await act.Should().ThrowAsync<InvalidDataException>()
@@ -312,9 +314,9 @@ public sealed class RecipeRepositoryTests : IDisposable
 
             var exported = await _repo.AddAsync(InputWithMapping("OrigName", wbPath, pptPath),
                 TestContext.Current.CancellationToken);
-            await _repo.ExportAsync(exported.Id, zipPath, TestContext.Current.CancellationToken);
+            await _pkg.ExportAsync(exported.Id, zipPath, TestContext.Current.CancellationToken);
 
-            var imported = await _repo.ImportAsync(zipPath, (workbooksDir, presentationsDir),
+            var imported = await _pkg.ImportAsync(zipPath, (workbooksDir, presentationsDir),
                 TestContext.Current.CancellationToken);
             var entry = await _repo.GetAsync(imported.Id, TestContext.Current.CancellationToken);
 
@@ -355,7 +357,7 @@ public sealed class RecipeRepositoryTests : IDisposable
                 await entryStream.WriteAsync(bytes, TestContext.Current.CancellationToken);
             }
 
-            var act = async () => await _repo.ImportAsync(zipPath, (workbooksDir, presentationsDir),
+            var act = async () => await _pkg.ImportAsync(zipPath, (workbooksDir, presentationsDir),
                 TestContext.Current.CancellationToken);
 
             await act.Should().ThrowAsync<InvalidDataException>()
@@ -390,7 +392,7 @@ public sealed class RecipeRepositoryTests : IDisposable
                     await badStream.WriteAsync(payload, TestContext.Current.CancellationToken);
             }
 
-            await _repo.ImportAsync(zipPath, (workbooksDir, presentationsDir),
+            await _pkg.ImportAsync(zipPath, (workbooksDir, presentationsDir),
                 TestContext.Current.CancellationToken);
 
             Directory.Exists(workbooksDir).Should().BeFalse();
@@ -418,14 +420,14 @@ public sealed class RecipeRepositoryTests : IDisposable
 
             var exported = await _repo.AddAsync(InputWithMapping("DupImport", wbPath, pptPath),
                 TestContext.Current.CancellationToken);
-            await _repo.ExportAsync(exported.Id, zipPath, TestContext.Current.CancellationToken);
+            await _pkg.ExportAsync(exported.Id, zipPath, TestContext.Current.CancellationToken);
 
             // Pre-create a conflicting file in the target folder.
             Directory.CreateDirectory(workbooksDir);
             var conflictingPath = Path.Combine(workbooksDir, Path.GetFileName(wbPath));
             await File.WriteAllBytesAsync(conflictingPath, [0xFF], TestContext.Current.CancellationToken);
 
-            var imported = await _repo.ImportAsync(zipPath, (workbooksDir, presentationsDir),
+            var imported = await _pkg.ImportAsync(zipPath, (workbooksDir, presentationsDir),
                 TestContext.Current.CancellationToken);
             var entry = await _repo.GetAsync(imported.Id, TestContext.Current.CancellationToken);
 
@@ -468,9 +470,9 @@ public sealed class RecipeRepositoryTests : IDisposable
 
             var exported = await _repo.AddAsync(InputWithWorkbooks("DupStem", wb1, wb2),
                 TestContext.Current.CancellationToken);
-            await _repo.ExportAsync(exported.Id, zipPath, TestContext.Current.CancellationToken);
+            await _pkg.ExportAsync(exported.Id, zipPath, TestContext.Current.CancellationToken);
 
-            var imported = await _repo.ImportAsync(zipPath, (workbooksDir, presentationsDir),
+            var imported = await _pkg.ImportAsync(zipPath, (workbooksDir, presentationsDir),
                 TestContext.Current.CancellationToken);
             var entry = await _repo.GetAsync(imported.Id, TestContext.Current.CancellationToken);
 
@@ -514,7 +516,7 @@ public sealed class RecipeRepositoryTests : IDisposable
                     await unknownStream.WriteAsync(payload, TestContext.Current.CancellationToken);
             }
 
-            var imported = await _repo.ImportAsync(zipPath, (workbooksDir, presentationsDir),
+            var imported = await _pkg.ImportAsync(zipPath, (workbooksDir, presentationsDir),
                 TestContext.Current.CancellationToken);
 
             imported.Id.Should().BeGreaterThan(0);
