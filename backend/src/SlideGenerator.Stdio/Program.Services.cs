@@ -26,7 +26,7 @@ using SlideGenerator.Logging;
 using SlideGenerator.Recipe;
 using SlideGenerator.Settings;
 using SlideGenerator.Settings.Mutable;
-using SlideGenerator.Summarization;
+using SlideGenerator.Summarizer;
 
 namespace SlideGenerator.Stdio;
 

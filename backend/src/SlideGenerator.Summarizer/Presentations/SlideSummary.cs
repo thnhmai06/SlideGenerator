@@ -2,7 +2,7 @@
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Summarization
+ * Project: SlideGenerator.Summarizer
  * File: SlideSummary.cs
  *
  * This file is part of this solution.
@@ -14,7 +14,7 @@
 
 using SlideGenerator.Document.Presentations.Identifiers;
 
-namespace SlideGenerator.Summarization.Presentations;
+namespace SlideGenerator.Summarizer.Presentations;
 
 public sealed record SlideSummary(
     PresentationIdentifier Presentation,

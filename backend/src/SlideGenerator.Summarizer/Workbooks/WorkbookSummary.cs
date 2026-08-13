@@ -2,8 +2,8 @@
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Summarization
- * File: PresentationSummary.cs
+ * Project: SlideGenerator.Summarizer
+ * File: WorkbookSummary.cs
  *
  * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -12,6 +12,6 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Summarization.Presentations;
+namespace SlideGenerator.Summarizer.Workbooks;
 
-public record PresentationSummary(string PresentationPath, IReadOnlyList<SlideSummary> Slides);
+public record WorkbookSummary(string FilePath, string Name, IReadOnlyList<WorksheetSummary> Worksheets);

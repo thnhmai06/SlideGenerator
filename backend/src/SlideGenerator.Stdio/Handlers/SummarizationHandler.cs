@@ -14,9 +14,9 @@
 
 using SlideGenerator.Document.Presentations.Identifiers;
 using SlideGenerator.Document.Workbooks.Identifiers;
-using SlideGenerator.Summarization;
-using SlideGenerator.Summarization.Presentations;
-using SlideGenerator.Summarization.Workbooks;
+using SlideGenerator.Summarizer;
+using SlideGenerator.Summarizer.Presentations;
+using SlideGenerator.Summarizer.Workbooks;
 
 namespace SlideGenerator.Stdio.Handlers;
 

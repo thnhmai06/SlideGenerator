@@ -38,7 +38,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\SlideGenerator.Generator\SlideGenerator.Generator.csproj"/>
-        <ProjectReference Include="..\SlideGenerator.Summarization\SlideGenerator.Summarization.csproj"/>
+        <ProjectReference Include="..\SlideGenerator.Summarizer\SlideGenerator.Summarizer.csproj" />
         <ProjectReference Include="..\SlideGenerator.Recipe\SlideGenerator.Recipe.csproj"/>
         <ProjectReference Include="..\SlideGenerator.Settings\SlideGenerator.Settings.csproj"/>
         <ProjectReference Include="..\SlideGenerator.Document\SlideGenerator.Document.csproj"/>

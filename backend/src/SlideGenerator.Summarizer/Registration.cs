@@ -2,7 +2,7 @@
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Summarization
+ * Project: SlideGenerator.Summarizer
  * File: Registration.cs
  *
  * This file is part of this solution.
@@ -14,7 +14,7 @@
 
 using Microsoft.Extensions.DependencyInjection;
 
-namespace SlideGenerator.Summarization;
+namespace SlideGenerator.Summarizer;
 
 /// <summary>
 ///     Provides extension methods to register scanning services into the dependency injection container.

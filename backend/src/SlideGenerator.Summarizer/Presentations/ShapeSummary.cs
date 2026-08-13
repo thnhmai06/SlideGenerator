@@ -2,8 +2,8 @@
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Summarization
- * File: WorkbookSummary.cs
+ * Project: SlideGenerator.Summarizer
+ * File: ShapeSummary.cs
  *
  * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -12,6 +12,9 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Summarization.Workbooks;
+using System.Drawing;
+using SlideGenerator.Document.Presentations.Identifiers;
 
-public record WorkbookSummary(string FilePath, string Name, IReadOnlyList<WorksheetSummary> Worksheets);
+namespace SlideGenerator.Summarizer.Presentations;
+
+public record ShapeSummary(SlideIdentifier Slide, ShapeIdentifier Shape, RectangleF Bounds);

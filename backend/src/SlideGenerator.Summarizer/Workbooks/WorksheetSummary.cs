@@ -2,7 +2,7 @@
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Summarization
+ * Project: SlideGenerator.Summarizer
  * File: WorksheetSummary.cs
  *
  * This file is part of this solution.
@@ -14,7 +14,7 @@
 
 using SlideGenerator.Document.Workbooks.Identifiers;
 
-namespace SlideGenerator.Summarization.Workbooks;
+namespace SlideGenerator.Summarizer.Workbooks;
 
 public record WorksheetPreview(IReadOnlyList<string> Headers, IReadOnlyList<IReadOnlyList<string>> Rows);
 

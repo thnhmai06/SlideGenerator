@@ -2,7 +2,7 @@
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Summarization
+ * Project: SlideGenerator.Summarizer
  * File: SummarizationService.cs
  *
  * This file is part of this solution.
@@ -17,10 +17,10 @@ using SlideGenerator.Document.Presentations.Identifiers;
 using SlideGenerator.Document.Template;
 using SlideGenerator.Document.Workbooks;
 using SlideGenerator.Document.Workbooks.Identifiers;
-using SlideGenerator.Summarization.Presentations;
-using SlideGenerator.Summarization.Workbooks;
+using SlideGenerator.Summarizer.Presentations;
+using SlideGenerator.Summarizer.Workbooks;
 
-namespace SlideGenerator.Summarization;
+namespace SlideGenerator.Summarizer;
 
 /// <summary>
 ///     Provides methods to analyze and summarize the structure of Excel workbooks and PowerPoint presentations.
