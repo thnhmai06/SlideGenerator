@@ -13,6 +13,7 @@
  */
 
 using SlideGenerator.Generator;
+using SlideGenerator.Generator.Progress;
 
 namespace SlideGenerator.Stdio.Handlers;
 

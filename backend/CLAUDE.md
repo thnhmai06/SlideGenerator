@@ -102,13 +102,13 @@ backend/
 ├── src/                                — 10 source modules (slnx-tracked)
 │   ├── SlideGenerator.Utilities/        — loose files, no subfolders
 │   ├── SlideGenerator.Settings/         — Config/, Rules/ (NameAndPaths stays put — see below)
-│   ├── SlideGenerator.Cloud/            — Resolver/, root Client.cs
-│   ├── SlideGenerator.Document/         — Workbook/, Slide/, Template/
+│   ├── SlideGenerator.Cloud/            — Resolvers/, root CloudClient.cs
+│   ├── SlideGenerator.Document/         — Workbooks/, Slides/, Template/
 │   ├── SlideGenerator.Logging/          — FileLogging/, root formatters/helpers
 │   ├── SlideGenerator.Image/            — FaceDetection/, Cropping/, Loading/
 │   ├── SlideGenerator.Summarization/    — Workbook/, Slide/, root service
-│   ├── SlideGenerator.Recipe/           — flat Abstractions/Models/Services/Rules/Adapters (untouched by the reorg)
-│   ├── SlideGenerator.Generator/        — flat Abstractions/Models/Services (untouched by the reorg)
+│   ├── SlideGenerator.Recipe/           — Mappings/, root RecipeRepository+entry+package rules
+│   ├── SlideGenerator.Generator/        — Job/, Persistence/, Progress/, root Service+DTOs
 │   └── SlideGenerator.Stdio/            — Handlers/, Implementations/ (already 1 feature = 1 IPC method group)
 └── tests/                              — 9 test projects (mirrors src, standalone)
     ├── SlideGenerator.Utilities.Tests/
@@ -122,14 +122,11 @@ backend/
     └── SlideGenerator.Stdio.Tests/
 ```
 
-7 modules (Utilities/Settings/Cloud/Document/Logging/Image/Summarization) were reorganized from a flat,
-role-based layout (`Abstractions/Models/Rules/Services/Adapters`) to a **feature-folder** layout — see
-**Development Patterns → Folder structure** below for the convention and rationale. `SlideGenerator.Recipe`,
-`SlideGenerator.Generator`, and `SlideGenerator.Stdio` were **not** reorganized (they were rewritten in the
-WorkflowCore-removal pass instead — reorganizing them first would have meant reorganizing, then immediately
-rewriting most of the same files) and still use the old flat layout; `SlideGenerator.Stdio`'s `Handlers/`/
-`Implementations/` split was already feature-shaped (one handler class per IPC method group) so nothing there
-needed to change either way.
+All 9 non-host modules now use a **feature-folder** layout — see **Development Patterns → Folder structure**
+below for the convention and rationale. `SlideGenerator.Recipe` and `SlideGenerator.Generator` were reorganized
+last (after the WorkflowCore-removal rewrite settled their file contents, to avoid reorganizing then immediately
+rewriting most of the same files). `SlideGenerator.Stdio`'s `Handlers/`/`Implementations/` split was already
+feature-shaped (one handler class per IPC method group) from the start, so it never needed a separate reorg pass.
 
 **WorkflowCore has been removed entirely** (package, all `Steps/`/`Workflows/`/`Middleware/` folders, the
 `Workflows.db` SQLite store) — job execution is now plain `Task`-based C# in `SlideGenerator.Generator`'s
@@ -332,7 +329,7 @@ model** below).
 
 There is no per-operation concurrency gate anywhere in the pipeline (downloading, image editing, and presentation
 saving run uncontended within a job). The **sole** concurrency/RAM control is at the job level, now owned entirely
-by `JobRunner` (`SlideGenerator.Generator/Services/JobRunner.cs`) via a plain `SemaphoreSlim` field — no external
+by `JobRunner` (`SlideGenerator.Generator/Job/JobRunner.cs`) via a plain `SemaphoreSlim` field — no external
 workflow engine involved.
 
 `JobRunner.ApplyMaxConcurrentJobs()` (private) does `_semaphore = new SemaphoreSlim(value, value)` — it **swaps in a
@@ -376,7 +373,7 @@ disk file (see `JobRunner.Phases.cs` → `CropToPngAsync`).
 ## Job Execution (JobRunner)
 
 **One `Job` = one in-process `Task`, tracked in an in-memory registry.** `JobRunner`
-(`SlideGenerator.Generator/Services/JobRunner.cs`, implements `IJobRunner`) replaces WorkflowCore entirely — there is
+(`SlideGenerator.Generator/Job/JobRunner.cs`, implements `IJobRunner`) replaces WorkflowCore entirely — there is
 no external workflow engine, no separate persistence engine for job state. Each job runs its 4 phases sequentially,
 in order, inside one `Task.Run`:
 
@@ -384,7 +381,7 @@ in order, inside one `Task.Run`:
 CreatingOutput → CreatingSlides → FillingText → FillingImages (→ Done)
 ```
 
-`JobPhase` (`Models/Enum/JobPhase.cs`) has these 5 values (`Done` is the terminal value stamped onto the final
+`JobPhase` (`Job/JobPhase.cs`) has these 5 values (`Done` is the terminal value stamped onto the final
 `JobRecord`, never actually "run"). Phase bodies live in `JobRunner.Phases.cs` (a `partial class` split of
 `JobRunner`), each in its own `#region`:
 
@@ -401,7 +398,7 @@ CreatingOutput → CreatingSlides → FillingText → FillingImages (→ Done)
   after each row.
 
 There is no `ForEach`/barrier orchestration and no separate "spawn phase workflow" concept — `Service.CreateAsync`
-(`Services/Service.cs`) reads the recipe, computes the job list (`Service.BuildJobs`, internal static — a plain
+(`Service.cs`) reads the recipe, computes the job list (`Service.BuildJobs`, internal static — a plain
 `Recipe.Mappings`-to-`List<JobSpecification>` flattening, see **Input mapping** below), and loops
 `jobRunner.StartJobAsync(requestId, jobId, spec, logPath, ct)` once per job — all plain async C# code.
 `StartJobAsync` runs `PreflightCleanup` synchronously, persists the job's initial `Pending` `JobRecord` (flushed
@@ -421,16 +418,16 @@ between checkpoints too — so pause/cancel granularity is "between rows," never
 job's own `CancellationTokenSource` and also calls `Gate.Resume()` so a paused job unblocks immediately to observe
 the cancellation rather than sitting blocked on the pause signal forever.
 
-**Data model** (`Models/Data/`): there is no `JobContext`/`TransientContext` split anymore — `JobSpecification`
+**Data model** (`Job/`): there is no `JobContext`/`TransientContext` split anymore — `JobSpecification`
 (fully resolved: `WorkbookPath`, `WorksheetName`, `UsedColumns`, `RowFilter`, `TemplatePresentationPath`,
 `TemplateSlideIndex`, `TextInstructions`, `ImageInstructions`, `OutputPath`) plus 4 scalars
 (`Status`/`Phase`/`CurrentIndex`/`Timestamp`) fully describe a job's state in one record, `JobRecord`
-(`Models/Data/JobRecord.cs`). A `JobRecord` needs nothing else to run or resume — no recipe/workbook lookup, no
+(`Job/JobRecord.cs`). A `JobRecord` needs nothing else to run or resume — no recipe/workbook lookup, no
 transient-only fields to reconstruct after a restart.
 
-**Persistence**: `IJobsRepository`/`JobsRepository` (`Abstractions/IJobsRepository.cs`,
-`Services/JobsRepository.cs`) persist `JobRecord`s to the shared `Data.db` (see **Data.db** below), buffered via
-`BufferedRepository<TKey,TValue>` (`Services/BufferedRepository.cs`) — a small generic base class: callers
+**Persistence**: `IJobsRepository`/`JobsRepository` (`Persistence/IJobsRepository.cs`,
+`Persistence/JobsRepository.cs`) persist `JobRecord`s to the shared `Data.db` (see **Data.db** below), buffered via
+`BufferedRepository<TKey,TValue>` (`Persistence/BufferedRepository.cs`) — a small generic base class: callers
 `Enqueue(key, value)` (coalesced, last-write-wins per key), a background `PeriodicTimer` (~1s) atomically drains the
 dirty dictionary (`Interlocked.Exchange`) and calls the abstract `UpsertBatchAsync` once per tick in one transaction,
 then raises `Flushed` with the batch. `JobsRepository` is the only subclass today; `IRequestsRepository`/
@@ -452,7 +449,7 @@ a genuinely new job) — resuming mid-phase never deletes the in-progress output
 request** (assigned by the `for` loop in `Service.CreateAsync`) — not a GUID, not self-generated by anything. There
 is no dedicated "request" row/type beyond `RequestRecord` (see **Data.db**) — `Service.ListGroupsAsync` (internal)
 groups `IJobsRepository.GetAllAsync()`'s flat result by `RequestId` on every call; `Summary`
-(`Models/Data/Summary.cs`) itself carries no `RequestId` field — `IService.ListActiveAsync`/`ListCompletedAsync`
+(`Summary.cs`) itself carries no `RequestId` field — `IService.ListActiveAsync`/`ListCompletedAsync`
 return `IReadOnlyDictionary<string, Summary>` keyed by `RequestId` instead, so the id lives only as the dictionary
 key. `Service.DeriveStatus` (internal static) aggregates a group's `JobRecord.Status` values into one request-level
 `Status`: any `Running`/`Pending` → `Running`; else any `Paused` → `Paused`; else all `Cancelled` → `Cancelled`;
@@ -470,7 +467,7 @@ only surface is request/recipe-scoped: `CreateAsync`, `StopAsync`/`PauseAsync`/`
 still active), and `DeleteAllCompletedAsync`. There is no single-request query method — a client looks up one
 request by indexing the `ListActiveAsync`/`ListCompletedAsync` result dictionary by `requestId`.
 
-**Progress model** (`Models/Data/Progress.cs`) is 2 records now (`RequestProgress`, `RowProgress`) — **there is no
+**Progress model** (`Progress/Progress.cs`) is 2 records now (`RequestProgress`, `RowProgress`) — **there is no
 separate `JobProgress` DTO**; `JobRecord` itself (a job's full current-state row, see **Data model** above) doubles
 as the job-scoped progress payload published via `IEventBus.Publish(JobRecord)`, since a job's current state *is*
 its progress:
@@ -559,12 +556,12 @@ subscribes to `LogNotifier.OnLogEntry` and buffers log lines in an **append-only
 coalesced/dropped — every line matters) and drains the whole queue every ~1s tick as a `log/entries` notification.
 
 `Service.ToSummaryAsync`/`ToJobSummary` populate `Summary.Logs`/`JobSummary.Logs` by reading the `.log` file straight
-off disk on every call, via `ILogFileReader`/`LogFileReader` (`Services/LogFileReader.cs` — a regex parser matching
+off disk on every call, via `ILogFileReader`/`LogFileReader` (`Progress/LogFileReader.cs` — a regex parser matching
 `FileLogFormatter`'s line shape) and filtering by scope-path prefix. Deliberately **not** cached in RAM.
 
 ### Input mapping
 
-`SlideGenerator.Recipe`'s `Recipe` (`Models/Recipe.cs`) is a **flat list of `Mapping`s** — there is no
+`SlideGenerator.Recipe`'s `Recipe` (`Mappings/Recipe.cs`) is a **flat list of `Mapping`s** — there is no
 graph/`Node`/`Edge`/id-lookup anymore:
 
 ```csharp
@@ -589,7 +586,7 @@ that share the same template and instructions — the old graph's only real expr
 list, no ids). `Service.BuildJobs` flattens `Mappings.SelectMany(m => m.Sources.Select(...))` — one
 `JobSpecification` per (mapping × source) pair, with every value already resolved (`s.Workbook.BookPath`,
 `m.TemplatePresentation.PresentationPath`, etc.) — there is no id left to look up against anything at job-run or
-resume time. `TextInstruction`/`ImageInstruction`/`ImageEdits`/`RowFilter` (in `Models/Components/`) are unchanged
+resume time. `TextInstruction`/`ImageInstruction`/`ImageEdits`/`RowFilter` (in `Mappings/`) are unchanged
 from before — they were always the legitimate "render/execution config" part, never the part that was over-engineered.
 `RecipeRepository`'s import path (`RecipeRepository.Package.cs`) normalizes a deserialized `Recipe` with a possibly
 `null` `Mappings` (e.g. an archive whose `recipe.json` is `"{}"`, or crafted maliciously) to `[]` rather than letting
@@ -670,51 +667,55 @@ directly (see `tests/SlideGenerator.Generator.Tests/Unit/`):
 
 Two coexisting conventions, by module:
 
-**Feature-folder** (`Utilities`/`Settings`/`Cloud`/`Document`/`Logging`/`Image`/`Summarization`) — folders named
-after a business feature/concept, each folder free to mix interfaces, implementations, models, and even multiple
-small related classes in one file (the old "1 file = 1 class" rule doesn't apply within a feature folder — e.g.
-`SlideGenerator.Document/Workbook/IWorkbook.cs` holds both `IReadOnlyWorkbook` and `IWorkbook`). Root-level loose
-files are fine for cross-feature helpers that don't belong to any one folder (e.g.
-`SlideGenerator.Logging/Utilities.cs`, used by both `ConsoleLogFormatter` and everything under `FileLogging/`) or
-for infra so widely shared that moving it into a feature folder would be pure namespace churn for no benefit (e.g.
+**Feature-folder** (all 9 non-host modules) — folders named after a business feature/concept, each folder free to
+mix interfaces, implementations, models, and even multiple small related classes in one file (the old "1 file = 1
+class" rule doesn't apply within a feature folder — e.g. `SlideGenerator.Document/Workbooks/Workbook.cs` holds both
+the `IReadOnlyWorkbook`/`IWorkbook` interfaces and the `SfWorkbook` implementation). Folder names are plural when
+the folder's own name would otherwise collide with a type living inside it (e.g. `Recipe/Mappings/` — a
+`Mapping.cs` inside a `Mapping/` folder would be a namespace/type name collision, CS0118). Root-level loose files
+are fine for cross-feature helpers that don't belong to any one folder (e.g. `SlideGenerator.Logging/Utilities.cs`,
+used by both `ConsoleLogFormatter` and everything under `FileLogging/`) or for infra so widely shared that moving
+it into a feature folder would be pure namespace churn for no benefit (e.g.
 `SlideGenerator.Settings/Rules/NameAndPaths.cs` stayed at its old `Rules/` location — see **Solution Layout**
 above). Examples of the convention in practice:
 
 ```
 SlideGenerator.Document/
-├── Workbook/      — IWorkbookProvider + SfWorkbookProvider, IWorkbook/IWorksheet + Sf* impls, identifiers
-├── Slide/         — IPresentationProvider + SfPresentationProvider, ISlide/IShape/... + Sf* impls, identifiers
-├── Template/      — ITextComposer + TextComposer, ITemplateEngine + MustacheEngine
+├── Workbooks/     — IWorkbookProvider + WorkbookOpener, IWorkbook/IWorksheet + Sf* impls, identifiers
+├── Slides/        — IPresentationProvider + PresentationOpener, ISlide/IShape/... + Sf* impls, identifiers
+├── Template/      — ITextComposer + TextComposer, ITemplateEngine + TemplateEngine (Mustache-based)
 └── Registration.cs
 
 SlideGenerator.Image/
-├── FaceDetection/ — IFaceDetector, YuNet (OpenCV adapter), FaceDetectorPool, Face
+├── FaceDetection/ — IFaceDetector, YuNet (OpenCV adapter), YuNetPool, Face
 ├── Cropping/      — ISmartCropper/IAnchorCropper/IInterestCropper + impls, RoiOption/RoiMode/AnchorType/InterestType
-├── Loading/       — IImageLoader + VipsImageLoader, IImage/IImageInfo, VipsImage
+├── Loading/       — IImageLoader + ImageLoader, IImage/IImageInfo, VipsImage
 ├── AdapterConversions.cs — root: shared conversion helpers used by more than one feature folder above
 └── Registration.cs
+
+SlideGenerator.Recipe/
+├── Mappings/      — Recipe/Mapping/WorksheetSource records, TextInstruction, ImageInstruction+ImageEdits, RowFilter
+├── RecipeRepository.cs + .Package.cs — root: CRUD + export/import, RecipeEntry, RecipePackageRules
+└── Registration.cs
+
+SlideGenerator.Generator/
+├── Job/           — IJobRunner + JobRunner (+ JobRunner.Phases.cs partial), PreflightCleanup, JobSpecification,
+│                     JobRecord, JobPhase, Status
+├── Persistence/   — BufferedRepository<TKey,TValue>, IJobsRepository + JobsRepository, IRequestsRepository +
+│                     RequestsRepository, JobSpecificationJson (STJ options for the `*Json` columns)
+├── Progress/      — IEventBus, ILogNotifier, ILogFileReader + LogFileReader, RequestProgress/RowProgress,
+│                     RowStage, RowStatus
+├── IService.cs + Service.cs — root: the IPC-facing facade, doesn't belong to one feature sub-folder
+└── Request.cs, Summary.cs, PartialResult.cs, Registration.cs, Utilities.cs — root: shared DTOs/helpers
 ```
 
 Namespace mirrors the physical folder path 1:1 (e.g. `Image/FaceDetection/YuNet.cs` →
-`namespace SlideGenerator.Image.FaceDetection;`).
+`namespace SlideGenerator.Image.FaceDetection;`, `Generator/Job/JobRunner.cs` →
+`namespace SlideGenerator.Generator.Job;`).
 
-**Flat, role-based** (`Recipe`/`Generator`/`Stdio` — not yet migrated, see **Solution Layout** above) — the older
-layout, still `Abstractions/`/`Models/`/`Services/`/`Rules/`/`Adapters/` split by technical role rather than
-feature:
-
-```
-Abstractions/    — interfaces (domain contracts and use-case ports alike)
-Models/          — records, enums, value objects
-Rules/           — domain/business rule helpers
-Services/        — implementations (use-case and infrastructure alike — DB, HTTP, file)
-Adapters/        — anti-corruption wrappers around external libs / STJ converters
-Registration.cs  — DI entry point, at module root, namespace = bare `SlideGenerator.{Module}`
-```
-
-`SlideGenerator.Stdio` additionally has `Handlers/` (one class per IPC method group — already feature-shaped) and
-`Implementations/` (everything else: event bus, log notifier, progress coalescer, JSON-RPC bootstrap, STJ
-adapters). Sub-folders under a functional folder (e.g. `Models/Components/` in Recipe) are common where a module's
-types split by concept even within the flat layout.
+`SlideGenerator.Stdio` (the host) keeps its own shape — `Handlers/` (one class per IPC method group) and
+`Implementations/` (event bus, log notifier, progress coalescer, JSON-RPC bootstrap, STJ adapters) — which was
+already feature-shaped from the start and never needed a separate reorg pass.
 
 ### Partial classes for large single-concept services
 
