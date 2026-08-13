@@ -17,7 +17,7 @@ using NSubstitute;
 using SlideGenerator.Document.Workbooks.Components;
 using SlideGenerator.Document.Workbooks.Identifiers;
 using SlideGenerator.Generator.Job;
-using SlideGenerator.Recipe.Mappings;
+using SlideGenerator.Recipe.Models;
 using Xunit;
 
 namespace SlideGenerator.Generator.Tests.Unit;

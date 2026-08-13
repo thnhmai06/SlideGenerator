@@ -16,7 +16,7 @@ using SlideGenerator.Document.Presentations.Identifiers;
 using SlideGenerator.Document.Workbooks.Identifiers;
 using SlideGenerator.Image.Cropping;
 
-namespace SlideGenerator.Recipe.Mappings;
+namespace SlideGenerator.Recipe.Models;
 
 #region Text
 

@@ -17,7 +17,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging.Abstractions;
 using SlideGenerator.Generator.Job;
 using SlideGenerator.Generator.Persistence;
-using SlideGenerator.Recipe.Mappings;
+using SlideGenerator.Recipe.Models;
 using SlideGenerator.Settings.Database;
 using Xunit;
 

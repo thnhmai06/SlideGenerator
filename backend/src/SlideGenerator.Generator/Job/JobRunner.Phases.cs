@@ -22,7 +22,7 @@ using SlideGenerator.Document.Workbooks.Components;
 using SlideGenerator.Document.Workbooks.Identifiers;
 using SlideGenerator.Generator.Progress;
 using SlideGenerator.Image.Loading;
-using SlideGenerator.Recipe.Mappings;
+using SlideGenerator.Recipe.Models;
 using SlideGenerator.Utilities;
 
 namespace SlideGenerator.Generator.Job;

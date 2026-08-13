@@ -41,15 +41,8 @@ public interface IRequestsRepository
 ///     <c>RecipeRepository</c>'s short-lived-connection-per-operation pattern — no buffering, since a
 ///     request row is written once at creation and never updated.
 /// </summary>
-internal sealed class RequestsRepository : IRequestsRepository
+internal sealed class RequestsRepository(SqliteConnectionStringBuilder builder) : IRequestsRepository
 {
-    private readonly SqliteConnectionStringBuilder _builder;
-
-    public RequestsRepository(SqliteConnectionStringBuilder builder)
-    {
-        _builder = builder;
-    }
-
     /// <inheritdoc />
     public async Task CreateAsync(RequestRecord record, CancellationToken ct = default)
     {
@@ -121,7 +114,7 @@ internal sealed class RequestsRepository : IRequestsRepository
 
     private async Task<SqliteConnection> OpenConnectionAsync(CancellationToken ct)
     {
-        var conn = new SqliteConnection(_builder.ConnectionString);
+        var conn = new SqliteConnection(builder.ConnectionString);
         await conn.OpenAsync(ct).ConfigureAwait(false);
         return conn;
     }

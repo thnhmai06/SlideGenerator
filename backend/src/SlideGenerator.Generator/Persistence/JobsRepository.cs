@@ -19,7 +19,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using SlideGenerator.Document.Workbooks.Identifiers;
 using SlideGenerator.Generator.Job;
-using SlideGenerator.Recipe.Mappings;
+using SlideGenerator.Recipe.Models;
 
 namespace SlideGenerator.Generator.Persistence;
 
@@ -59,15 +59,9 @@ public interface IJobsRepository
 ///     (<c>UsedColumns</c>/<c>TextInstructions</c>/<c>ImageInstructions</c>) are stored as named JSON
 ///     columns — see <c>0003_CreateJobs.sql</c> (<see cref="SlideGenerator.Settings.Database.DatabaseMigrator" />) for the schema.
 /// </summary>
-internal sealed class JobsRepository : BufferedRepository<(string RequestId, int JobId), JobRecord>, IJobsRepository
+internal sealed class JobsRepository(SqliteConnectionStringBuilder builder, ILogger<JobsRepository> logger)
+    : BufferedRepository<(string RequestId, int JobId), JobRecord>(logger), IJobsRepository
 {
-    private readonly SqliteConnectionStringBuilder _builder;
-
-    public JobsRepository(SqliteConnectionStringBuilder builder, ILogger<JobsRepository> logger) : base(logger)
-    {
-        _builder = builder;
-    }
-
     /// <inheritdoc cref="IJobsRepository.Enqueue" />
     public void Enqueue(JobRecord record) => Enqueue((record.RequestId, record.JobId), record);
 
@@ -239,7 +233,7 @@ internal sealed class JobsRepository : BufferedRepository<(string RequestId, int
 
     private async Task<SqliteConnection> OpenConnectionAsync(CancellationToken ct)
     {
-        var conn = new SqliteConnection(_builder.ConnectionString);
+        var conn = new SqliteConnection(builder.ConnectionString);
         await conn.OpenAsync(ct).ConfigureAwait(false);
         return conn;
     }

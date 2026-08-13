@@ -14,7 +14,7 @@
 
 using System.Text.Json.Serialization;
 
-namespace SlideGenerator.Recipe.Mappings;
+namespace SlideGenerator.Recipe.Models;
 
 /// <summary>
 ///     Discriminator for the row-selection strategy applied to a worksheet.

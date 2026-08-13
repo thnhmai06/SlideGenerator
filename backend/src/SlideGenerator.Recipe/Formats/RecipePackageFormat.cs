@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Recipe
- * File: RecipePackageRules.cs
+ * File: RecipePackageFormat.cs
  *
  * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -12,23 +12,42 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using SlideGenerator.Document.Presentations.Identifiers;
 using SlideGenerator.Document.Workbooks.Identifiers;
 
-namespace SlideGenerator.Recipe;
+namespace SlideGenerator.Recipe.Formats;
 
 /// <summary>
 ///     Constraints applied when importing a <c>*.recipe</c> archive.
 ///     Restricts extracted file types and enforces the Zip Slip path guard.
 /// </summary>
-public static class RecipePackageRules
+public static class RecipePackageFormat
 {
     /// <summary>The package file extension.</summary>
     public const string PackageExtension = ".recipe";
 
     public static class Data
     {
-        public const string RecipeFileName = "Recipe.json";
+        public static class Recipe
+        {
+            public const string FileName = "Recipe.json";
+
+            public static readonly JsonSerializerOptions Format = BuildFormat();
+
+            private static JsonSerializerOptions BuildFormat()
+            {
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+                };
+                options.Converters.Add(new JsonStringEnumConverter());
+                options.Converters.Add(new ReadOnlySetJsonConverterFactory());
+                return options;
+            }
+        }
 
         public static class Workbooks
         {

@@ -15,7 +15,7 @@
 using SlideGenerator.Document.Presentations.Identifiers;
 using SlideGenerator.Document.Workbooks.Identifiers;
 
-namespace SlideGenerator.Recipe.Mappings;
+namespace SlideGenerator.Recipe.Models;
 
 /// <summary>
 ///     The root structure of a recipe: a flat list of <see cref="Mapping" />, each describing how

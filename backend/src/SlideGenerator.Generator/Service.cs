@@ -18,6 +18,7 @@ using SlideGenerator.Generator.Job;
 using SlideGenerator.Generator.Persistence;
 using SlideGenerator.Generator.Progress;
 using SlideGenerator.Recipe;
+using SlideGenerator.Recipe.Services;
 using SlideGenerator.Settings.Immutable;
 using SlideGenerator.Utilities;
 
@@ -327,7 +328,7 @@ internal sealed class Service(
     ///     Flattens a recipe's <c>Mappings</c> into one <see cref="JobSpecification" /> per
     ///     (worksheet source × mapping) pair — every value already resolved, no id left to look up.
     /// </summary>
-    internal static List<JobSpecification> BuildJobs(Recipe.Mappings.Recipe recipe, Request request) =>
+    internal static List<JobSpecification> BuildJobs(Recipe.Models.Recipe recipe, Request request) =>
     [
         .. recipe.Mappings.SelectMany(m => m.Sources.Select(s => new JobSpecification(
             s.Workbook.BookPath,

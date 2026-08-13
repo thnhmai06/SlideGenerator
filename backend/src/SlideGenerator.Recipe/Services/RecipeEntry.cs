@@ -12,14 +12,14 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Recipe;
+namespace SlideGenerator.Recipe.Services;
 
 /// <summary>
 ///     The mutable user-visible properties of a recipe, used for create/update operations.
 /// </summary>
 /// <param name="Name">Human-readable display name of the recipe.</param>
 /// <param name="Recipe">The recipe (a flat list of mappings).</param>
-public record RecipeInput(string Name, Mappings.Recipe Recipe);
+public record RecipeInput(string Name, Models.Recipe Recipe);
 
 /// <summary>
 ///     Lightweight projection containing the identity and metadata of a recipe entry (no mapping payload).
@@ -51,7 +51,7 @@ public interface IRecipeMetadata
 public record RecipeEntry(
     int Id,
     string Name,
-    Mappings.Recipe Recipe,
+    Models.Recipe Recipe,
     DateTimeOffset CreatedTimestamp,
     DateTimeOffset UpdatedTimestamp)
     : RecipeInput(Name, Recipe), IRecipeMetadata;

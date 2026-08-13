@@ -16,7 +16,7 @@ using FluentAssertions;
 using SlideGenerator.Document.Presentations.Identifiers;
 using SlideGenerator.Document.Workbooks.Identifiers;
 using SlideGenerator.Generator.Job;
-using SlideGenerator.Recipe.Mappings;
+using SlideGenerator.Recipe.Models;
 using Xunit;
 
 namespace SlideGenerator.Generator.Tests.Unit;
@@ -30,7 +30,7 @@ public sealed class ServiceTests
 {
     #region BuildJobs
 
-    private static Recipe.Mappings.Recipe OneMappingOneSource()
+    private static Recipe.Models.Recipe OneMappingOneSource()
     {
         var source = new WorksheetSource(
             new WorkbookIdentifier(Path.Combine(Path.GetTempPath(), "data.xlsx")),
@@ -41,7 +41,7 @@ public sealed class ServiceTests
                 new PresentationIdentifier(Path.Combine(Path.GetTempPath(), "template.pptx")),
                 new SlideIdentifier(1)),
             [], []);
-        return new Recipe.Mappings.Recipe([mapping]);
+        return new Recipe.Models.Recipe([mapping]);
     }
 
     /// <summary>Verifies that one mapping with one source produces exactly one job with resolved values.</summary>
@@ -75,7 +75,7 @@ public sealed class ServiceTests
                 new PresentationIdentifier(Path.Combine(Path.GetTempPath(), "template.pptx")),
                 new SlideIdentifier(1)),
             [], []);
-        var recipe = new Recipe.Mappings.Recipe([mapping]);
+        var recipe = new Recipe.Models.Recipe([mapping]);
         var request = new Request(1, "Test", PresentationType.Pptx, Path.GetTempPath());
 
         var jobs = Service.BuildJobs(recipe, request);
@@ -88,7 +88,7 @@ public sealed class ServiceTests
     [Fact]
     public void BuildJobs_EmptyRecipe_ProducesNoJobs()
     {
-        var recipe = new Recipe.Mappings.Recipe([]);
+        var recipe = new Recipe.Models.Recipe([]);
         var request = new Request(1, "Empty", PresentationType.Pptx, Path.GetTempPath());
 
         var jobs = Service.BuildJobs(recipe, request);

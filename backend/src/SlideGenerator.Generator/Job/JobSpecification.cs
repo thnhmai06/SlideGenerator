@@ -13,7 +13,7 @@
  */
 
 using SlideGenerator.Document.Workbooks.Identifiers;
-using SlideGenerator.Recipe.Mappings;
+using SlideGenerator.Recipe.Models;
 
 namespace SlideGenerator.Generator.Job;
 

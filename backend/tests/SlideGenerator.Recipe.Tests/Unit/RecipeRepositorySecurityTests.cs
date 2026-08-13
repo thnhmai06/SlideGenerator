@@ -15,6 +15,8 @@
 using System.IO.Compression;
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
+using SlideGenerator.Recipe.Formats;
+using SlideGenerator.Recipe.Services;
 using SlideGenerator.Settings.Database;
 using Xunit;
 
@@ -99,7 +101,7 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
         Directory.CreateDirectory(workbooksDir);
         Directory.CreateDirectory(presentationsDir);
 
-        var zipPath = Path.Combine(sandboxRoot, "no-recipe" + RecipePackageRules.PackageExtension);
+        var zipPath = Path.Combine(sandboxRoot, "no-recipe" + RecipePackageFormat.PackageExtension);
         _cleanupFiles.Add(zipPath);
 
         using (var fs = File.Create(zipPath))
@@ -153,7 +155,7 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
         const string maliciousEntryName = "Workbooks/../victim/pwned.txt";
         var maliciousPayload = "attacker-controlled-content"u8.ToArray();
 
-        var zipPath = Path.Combine(sandboxRoot, "evil" + RecipePackageRules.PackageExtension);
+        var zipPath = Path.Combine(sandboxRoot, "evil" + RecipePackageFormat.PackageExtension);
         _cleanupFiles.Add(zipPath);
 
         using (var fs = File.Create(zipPath))
@@ -218,7 +220,7 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
         Directory.CreateDirectory(victimDir);
 
         const string maliciousEntryName = "Presentations/../victim/pwned.txt";
-        var zipPath = Path.Combine(sandboxRoot, "evil2" + RecipePackageRules.PackageExtension);
+        var zipPath = Path.Combine(sandboxRoot, "evil2" + RecipePackageFormat.PackageExtension);
         _cleanupFiles.Add(zipPath);
 
         using (var fs = File.Create(zipPath))

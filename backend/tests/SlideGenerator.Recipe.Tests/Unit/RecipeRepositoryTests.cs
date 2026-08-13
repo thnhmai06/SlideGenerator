@@ -17,7 +17,9 @@ using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using SlideGenerator.Document.Presentations.Identifiers;
 using SlideGenerator.Document.Workbooks.Identifiers;
-using SlideGenerator.Recipe.Mappings;
+using SlideGenerator.Recipe.Formats;
+using SlideGenerator.Recipe.Models;
+using SlideGenerator.Recipe.Services;
 using SlideGenerator.Settings.Database;
 using Xunit;
 
@@ -56,7 +58,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
     public void Dispose() => _anchor.Dispose();
 
     /// <summary>Returns an input with an empty recipe (no mappings).</summary>
-    private static RecipeInput Input(string name) => new(name, new Mappings.Recipe([]));
+    private static RecipeInput Input(string name) => new(name, new Models.Recipe([]));
 
     /// <summary>Returns an input whose recipe contains one mapping with one worksheet source.</summary>
     private static RecipeInput InputWithMapping(string name, string wbPath, string pptPath) => new(name,
@@ -66,7 +68,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
     private static RecipeInput InputWithWorkbooks(string name, params string[] wbPaths)
     {
         var pptPath = Path.GetFullPath("template.pptx");
-        return new RecipeInput(name, new Mappings.Recipe([
+        return new RecipeInput(name, new Models.Recipe([
             new Mapping(
                 [
                     .. wbPaths.Select(p =>
@@ -76,7 +78,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
         ]));
     }
 
-    private static Mappings.Recipe RecipeWithMapping(string wbPath, string pptPath) => new([
+    private static Models.Recipe RecipeWithMapping(string wbPath, string pptPath) => new([
         new Mapping(
             [new WorksheetSource(new WorkbookIdentifier(wbPath), new WorksheetIdentifier("Sheet1"))],
             new PresentationSource(new PresentationIdentifier(pptPath), new SlideIdentifier(1)), [], [])
@@ -218,7 +220,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
     public async Task ExportAsync_ExistingRecipe_CreatesZipFile()
     {
         var metadata = await _repo.AddAsync(Input("Exported"), TestContext.Current.CancellationToken);
-        var outputPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{RecipePackageRules.PackageExtension}");
+        var outputPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{RecipePackageFormat.PackageExtension}");
 
         try
         {
@@ -236,7 +238,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
     [Fact]
     public async Task ExportAsync_NonExistentId_ThrowsInvalidOperationException()
     {
-        var outputPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{RecipePackageRules.PackageExtension}");
+        var outputPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{RecipePackageFormat.PackageExtension}");
 
         var act = async () => await _pkg.ExportAsync(9999, outputPath, TestContext.Current.CancellationToken);
 
@@ -247,7 +249,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
     public async Task ImportAsync_ValidZipFile_InsertsNewRowWithMatchingName()
     {
         var exported = await _repo.AddAsync(Input("Original"), TestContext.Current.CancellationToken);
-        var zipPath = Path.Combine(Path.GetTempPath(), $"Original{RecipePackageRules.PackageExtension}");
+        var zipPath = Path.Combine(Path.GetTempPath(), $"Original{RecipePackageFormat.PackageExtension}");
         var workbooksDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
         var presentationsDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
 
@@ -275,7 +277,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
     [Fact]
     public async Task ImportAsync_MissingGraphJson_ThrowsInvalidDataException()
     {
-        var zipPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{RecipePackageRules.PackageExtension}");
+        var zipPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{RecipePackageFormat.PackageExtension}");
         var workbooksDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
         var presentationsDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
 
@@ -304,7 +306,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
     {
         var wbPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.xlsx");
         var pptPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.pptx");
-        var zipPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{RecipePackageRules.PackageExtension}");
+        var zipPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{RecipePackageFormat.PackageExtension}");
         var workbooksDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
         var presentationsDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
         try
@@ -342,7 +344,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
     [Fact]
     public async Task ImportAsync_InvalidGraphJson_ThrowsInvalidDataException()
     {
-        var zipPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{RecipePackageRules.PackageExtension}");
+        var zipPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{RecipePackageFormat.PackageExtension}");
         var workbooksDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
         var presentationsDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
 
@@ -352,7 +354,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
             using (var archive = new ZipArchive(fs, ZipArchiveMode.Create))
             {
                 var bytes = "not valid json {{{"u8.ToArray();
-                var entry = archive.CreateEntry(RecipePackageRules.Data.RecipeFileName);
+                var entry = archive.CreateEntry(RecipePackageFormat.Data.Recipe.FileName);
                 await using var entryStream = entry.Open();
                 await entryStream.WriteAsync(bytes, TestContext.Current.CancellationToken);
             }
@@ -372,7 +374,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
     [Fact]
     public async Task ImportAsync_DisallowedExtensionInWorkbooks_FileNotExtracted()
     {
-        var zipPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{RecipePackageRules.PackageExtension}");
+        var zipPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{RecipePackageFormat.PackageExtension}");
         var workbooksDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
         var presentationsDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
 
@@ -382,7 +384,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
             using (var archive = new ZipArchive(fs, ZipArchiveMode.Create))
             {
                 var graphBytes = "{\"mappings\":[]}"u8.ToArray();
-                var graphEntry = archive.CreateEntry(RecipePackageRules.Data.RecipeFileName);
+                var graphEntry = archive.CreateEntry(RecipePackageFormat.Data.Recipe.FileName);
                 await using (var graphStream = graphEntry.Open())
                     await graphStream.WriteAsync(graphBytes, TestContext.Current.CancellationToken);
 
@@ -409,7 +411,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
     {
         var wbPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.xlsx");
         var pptPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.pptx");
-        var zipPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{RecipePackageRules.PackageExtension}");
+        var zipPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{RecipePackageFormat.PackageExtension}");
         var workbooksDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
         var presentationsDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
 
@@ -459,7 +461,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
         Directory.CreateDirectory(dir2);
         var wb1 = Path.Combine(dir1, "report.xlsx");
         var wb2 = Path.Combine(dir2, "report.xlsx");
-        var zipPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{RecipePackageRules.PackageExtension}");
+        var zipPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{RecipePackageFormat.PackageExtension}");
         var workbooksDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
         var presentationsDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
 
@@ -496,7 +498,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
     [Fact]
     public async Task ImportAsync_EntryInUnknownFolderPrefix_IsIgnoredAndImportSucceeds()
     {
-        var zipPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{RecipePackageRules.PackageExtension}");
+        var zipPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{RecipePackageFormat.PackageExtension}");
         var workbooksDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
         var presentationsDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
 
@@ -506,7 +508,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
             using (var archive = new ZipArchive(fs, ZipArchiveMode.Create))
             {
                 var graphBytes = "{\"mappings\":[]}"u8.ToArray();
-                var graphEntry = archive.CreateEntry(RecipePackageRules.Data.RecipeFileName);
+                var graphEntry = archive.CreateEntry(RecipePackageFormat.Data.Recipe.FileName);
                 await using (var graphStream = graphEntry.Open())
                     await graphStream.WriteAsync(graphBytes, TestContext.Current.CancellationToken);
 

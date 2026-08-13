@@ -15,7 +15,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace SlideGenerator.Recipe;
+namespace SlideGenerator.Recipe.Formats;
 
 /// <summary>
 ///     STJ converter that maps <see cref="IReadOnlySet{T}" /> to/from a JSON array using
@@ -36,7 +36,7 @@ internal sealed class ReadOnlySetJsonConverter<T> : JsonConverter<IReadOnlySet<T
 ///     Factory that produces <see cref="ReadOnlySetJsonConverter{T}" /> instances for any
 ///     <see cref="IReadOnlySet{T}" /> type encountered during (de)serialization.
 /// </summary>
-public sealed class ReadOnlySetJsonConverterFactory : JsonConverterFactory
+internal sealed class ReadOnlySetJsonConverterFactory : JsonConverterFactory
 {
     /// <inheritdoc />
     public override bool CanConvert(Type typeToConvert)

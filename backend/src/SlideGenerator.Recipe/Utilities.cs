@@ -25,23 +25,12 @@ public static class Utilities
     {
         /// <summary>
         ///     Opens a fresh <see cref="SqliteConnection" /> from the builder's connection string.
-        ///     The caller must dispose the returned connection (use <c>await using</c>).
+        ///     The caller must dispose of the returned connection (use <c>await using</c>).
         /// </summary>
         public async Task<SqliteConnection> OpenConnectionAsync(CancellationToken ct = default)
         {
             var conn = new SqliteConnection(builder.ConnectionString);
             await conn.OpenAsync(ct).ConfigureAwait(false);
-            return conn;
-        }
-
-        /// <summary>
-        ///     Opens a fresh <see cref="SqliteConnection" /> synchronously.
-        ///     The caller must dispose the returned connection (use <c>using</c>).
-        /// </summary>
-        public SqliteConnection OpenConnection()
-        {
-            var conn = new SqliteConnection(builder.ConnectionString);
-            conn.Open();
             return conn;
         }
     }

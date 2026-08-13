@@ -13,6 +13,7 @@
  */
 
 using SlideGenerator.Recipe;
+using SlideGenerator.Recipe.Services;
 
 namespace SlideGenerator.Stdio.Handlers;
 
@@ -44,7 +45,7 @@ public sealed class RecipeHandler(IRecipeRepository recipeRepository, IRecipePac
     /// <param name="displayName">Human-readable name.</param>
     /// <param name="graph">The recipe graph.</param>
     /// <param name="ct">Cancellation token.</param>
-    public Task<IRecipeMetadata> AddAsync(string displayName, Recipe.Mappings.Recipe graph, CancellationToken ct)
+    public Task<IRecipeMetadata> AddAsync(string displayName, Recipe.Models.Recipe graph, CancellationToken ct)
     {
         return recipeRepository.AddAsync(new RecipeInput(displayName, graph), ct);
     }
@@ -58,7 +59,7 @@ public sealed class RecipeHandler(IRecipeRepository recipeRepository, IRecipePac
     /// <param name="ct">Cancellation token.</param>
     /// <returns>The updated <see cref="IRecipeMetadata" />.</returns>
     /// <exception cref="InvalidOperationException">Thrown when the recipe is not found.</exception>
-    public Task<IRecipeMetadata> UpdateAsync(int id, string displayName, Recipe.Mappings.Recipe graph, CancellationToken ct)
+    public Task<IRecipeMetadata> UpdateAsync(int id, string displayName, Recipe.Models.Recipe graph, CancellationToken ct)
     {
         return recipeRepository.UpdateAsync(id, new RecipeInput(displayName, graph), ct);
     }

@@ -12,6 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using SlideGenerator.Recipe.Services;
 using Xunit;
 
 namespace SlideGenerator.Recipe.Tests.Integration;

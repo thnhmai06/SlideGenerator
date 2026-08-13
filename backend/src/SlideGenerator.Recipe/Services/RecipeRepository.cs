@@ -16,8 +16,9 @@ using System.Globalization;
 using System.Text.Json;
 using Dapper;
 using Microsoft.Data.Sqlite;
+using SlideGenerator.Recipe.Formats;
 
-namespace SlideGenerator.Recipe;
+namespace SlideGenerator.Recipe.Services;
 
 /// <summary>
 ///     Provides persistent storage for <see cref="RecipeEntry" /> configurations.
@@ -81,7 +82,7 @@ internal sealed class SqliteRecipeRepository(SqliteConnectionStringBuilder build
         var id = await conn.ExecuteScalarAsync<int>(new CommandDefinition(
             "INSERT INTO Recipes (Name, Recipe, CreatedTimestamp, UpdatedTimestamp) " +
             "VALUES (@name, @graph, @now, @now); SELECT last_insert_rowid();",
-            new { name = input.Name, graph = JsonSerializer.Serialize(input.Recipe, RecipeGraphJson.Options), now },
+            new { name = input.Name, graph = JsonSerializer.Serialize(input.Recipe, RecipePackageFormat.Data.Recipe.Format), now },
             cancellationToken: ct)).ConfigureAwait(false);
         var ts = DateTimeOffset.Parse(now, CultureInfo.InvariantCulture,
             DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal);
@@ -116,7 +117,7 @@ internal sealed class SqliteRecipeRepository(SqliteConnectionStringBuilder build
         await using var conn = await builder.OpenConnectionAsync(ct).ConfigureAwait(false);
         var affected = await conn.ExecuteAsync(new CommandDefinition(
             "UPDATE Recipes SET Name = @name, Recipe = @graph, UpdatedTimestamp = @now WHERE Id = @id",
-            new { name = input.Name, graph = JsonSerializer.Serialize(input.Recipe, RecipeGraphJson.Options), now, id },
+            new { name = input.Name, graph = JsonSerializer.Serialize(input.Recipe, RecipePackageFormat.Data.Recipe.Format), now, id },
             cancellationToken: ct)).ConfigureAwait(false);
         if (affected == 0) throw new InvalidOperationException($"Recipe {id} not found.");
         return await GetAsync(id, ct).ConfigureAwait(false);
@@ -150,20 +151,20 @@ internal sealed class SqliteRecipeRepository(SqliteConnectionStringBuilder build
 
     private static RecipeEntry DbReadEntry(RecipeRow row)
     {
-        Mappings.Recipe graph;
+        Models.Recipe graph;
         try
         {
-            graph = JsonSerializer.Deserialize<Mappings.Recipe>(row.Recipe, RecipeGraphJson.Options) ??
-                    new Mappings.Recipe([]);
+            graph = JsonSerializer.Deserialize<Models.Recipe>(row.Recipe, RecipePackageFormat.Data.Recipe.Format) ??
+                    new Models.Recipe([]);
         }
         catch (JsonException)
         {
-            graph = new Mappings.Recipe([]);
+            graph = new Models.Recipe([]);
         }
 
         // ponytail: missing/null "mappings" on otherwise-valid JSON is treated as an empty recipe,
         // not a crash — matches the "archive rejected? no, just empty" spirit without hiding real parse errors.
-        graph = new Mappings.Recipe(Mappings: graph.Mappings);
+        graph = new Models.Recipe(Mappings: graph.Mappings);
 
         return new RecipeEntry(
             (int)row.Id,
