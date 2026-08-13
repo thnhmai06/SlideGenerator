@@ -71,20 +71,18 @@ public interface IRecipeRepository
     /// </summary>
     /// <param name="id">The id of the recipe to export.</param>
     /// <param name="outputPath">The full path to write the output file.</param>
-    /// <param name="password">Optional password. Pass <see langword="null" /> for no encryption.</param>
     /// <param name="ct">Cancellation token.</param>
-    Task ExportAsync(int id, string outputPath, string? password, CancellationToken ct = default);
+    Task ExportAsync(int id, string outputPath, CancellationToken ct = default);
 
     /// <summary>
     ///     Imports a package file, extracts its resources, and stores the recipe in the database.
     /// </summary>
     /// <param name="filePath">The full path to the package file.</param>
-    /// <param name="password">Optional password. Pass <see langword="null" /> if the archive is not encrypted.</param>
     /// <param name="saveFolders">Target directories for extracted workbook and presentation files.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>The metadata of the newly imported recipe.</returns>
     Task<IRecipeMetadata> ImportAsync(
-        string filePath, string? password,
+        string filePath,
         (string Workbooks, string Presentations) saveFolders,
         CancellationToken ct = default);
 }

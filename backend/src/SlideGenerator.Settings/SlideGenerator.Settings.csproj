@@ -9,7 +9,6 @@
         <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.11" />
         <PackageReference Include="dbup-sqlite" Version="6.0.4" />
         <PackageReference Include="Serilog" Version="4.4.0" />
-        <PackageReference Include="YamlDotNet" Version="18.1.0" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.11" />
         <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.11" />
         <PackageReference Remove="StyleCop.Analyzers"/>

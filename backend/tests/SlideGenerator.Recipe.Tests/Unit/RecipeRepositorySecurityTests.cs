@@ -12,8 +12,8 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using System.IO.Compression;
 using FluentAssertions;
-using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.Data.Sqlite;
 using SlideGenerator.Settings.Database;
 using Xunit;
@@ -100,19 +100,16 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
         var zipPath = Path.Combine(sandboxRoot, "no-recipe" + RecipePackageRules.PackageExtension);
         _cleanupFiles.Add(zipPath);
 
-        await using (var fs = File.Create(zipPath))
-        await using (var zos = new ZipOutputStream(fs))
+        using (var fs = File.Create(zipPath))
+        using (var archive = new ZipArchive(fs, ZipArchiveMode.Create))
         {
-            zos.SetLevel(0);
-            await zos.PutNextEntryAsync(new ZipEntry("Workbooks/data.xlsx") { DateTime = DateTime.UtcNow },
-                TestContext.Current.CancellationToken);
+            var entry = archive.CreateEntry("Workbooks/data.xlsx", CompressionLevel.NoCompression);
+            await using var entryStream = entry.Open();
             var data = "placeholder"u8.ToArray();
-            zos.Write(data, 0, data.Length);
-            zos.CloseEntry();
-            zos.Finish();
+            await entryStream.WriteAsync(data, TestContext.Current.CancellationToken);
         }
 
-        var act = async () => await _repo.ImportAsync(zipPath, null, (workbooksDir, presentationsDir),
+        var act = async () => await _repo.ImportAsync(zipPath, (workbooksDir, presentationsDir),
             TestContext.Current.CancellationToken);
 
         await act.Should().ThrowAsync<InvalidDataException>();
@@ -157,21 +154,16 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
         var zipPath = Path.Combine(sandboxRoot, "evil" + RecipePackageRules.PackageExtension);
         _cleanupFiles.Add(zipPath);
 
-        await using (var fs = File.Create(zipPath))
-        await using (var zos = new ZipOutputStream(fs))
+        using (var fs = File.Create(zipPath))
+        using (var archive = new ZipArchive(fs, ZipArchiveMode.Create))
         {
-            zos.SetLevel(0);
-            await zos.PutNextEntryAsync(new ZipEntry("recipe.json") { DateTime = DateTime.UtcNow },
-                TestContext.Current.CancellationToken);
-            var recipeBytes = "{}"u8.ToArray();
-            zos.Write(recipeBytes, 0, recipeBytes.Length);
-            zos.CloseEntry();
+            var recipeEntry = archive.CreateEntry("recipe.json", CompressionLevel.NoCompression);
+            await using (var recipeStream = recipeEntry.Open())
+                await recipeStream.WriteAsync("{}"u8.ToArray(), TestContext.Current.CancellationToken);
 
-            await zos.PutNextEntryAsync(new ZipEntry(maliciousEntryName) { DateTime = DateTime.UtcNow },
-                TestContext.Current.CancellationToken);
-            zos.Write(maliciousPayload, 0, maliciousPayload.Length);
-            zos.CloseEntry();
-            zos.Finish();
+            var maliciousEntry = archive.CreateEntry(maliciousEntryName, CompressionLevel.NoCompression);
+            await using (var maliciousStream = maliciousEntry.Open())
+                await maliciousStream.WriteAsync(maliciousPayload, TestContext.Current.CancellationToken);
         }
 
         try
@@ -200,7 +192,7 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
         // in either case nothing may escape the sandbox.
         async Task Act()
         {
-            await _repo.ImportAsync(zipPath, null, (workbooksDir, presentationsDir),
+            await _repo.ImportAsync(zipPath, (workbooksDir, presentationsDir),
                 TestContext.Current.CancellationToken);
         }
     }
@@ -227,21 +219,16 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
         var zipPath = Path.Combine(sandboxRoot, "evil2" + RecipePackageRules.PackageExtension);
         _cleanupFiles.Add(zipPath);
 
-        await using (var fs = File.Create(zipPath))
-        await using (var zos = new ZipOutputStream(fs))
+        using (var fs = File.Create(zipPath))
+        using (var archive = new ZipArchive(fs, ZipArchiveMode.Create))
         {
-            zos.SetLevel(0);
-            await zos.PutNextEntryAsync(new ZipEntry("recipe.json") { DateTime = DateTime.UtcNow },
-                TestContext.Current.CancellationToken);
-            var recipeBytes = "{}"u8.ToArray();
-            zos.Write(recipeBytes, 0, recipeBytes.Length);
-            zos.CloseEntry();
+            var recipeEntry = archive.CreateEntry("recipe.json", CompressionLevel.NoCompression);
+            await using (var recipeStream = recipeEntry.Open())
+                await recipeStream.WriteAsync("{}"u8.ToArray(), TestContext.Current.CancellationToken);
 
-            await zos.PutNextEntryAsync(new ZipEntry(maliciousEntryName) { DateTime = DateTime.UtcNow },
-                TestContext.Current.CancellationToken);
-            zos.Write([.. "payload"u8], 0, 7);
-            zos.CloseEntry();
-            zos.Finish();
+            var maliciousEntry = archive.CreateEntry(maliciousEntryName, CompressionLevel.NoCompression);
+            await using (var maliciousStream = maliciousEntry.Open())
+                await maliciousStream.WriteAsync("payload"u8.ToArray(), TestContext.Current.CancellationToken);
         }
 
         try
@@ -259,7 +246,7 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
 
         async Task Act()
         {
-            await _repo.ImportAsync(zipPath, null, (workbooksDir, presentationsDir),
+            await _repo.ImportAsync(zipPath, (workbooksDir, presentationsDir),
                 TestContext.Current.CancellationToken);
         }
     }

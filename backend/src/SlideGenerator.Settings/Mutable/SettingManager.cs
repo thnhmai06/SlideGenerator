@@ -12,16 +12,15 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using SlideGenerator.Settings.Immutable;
-using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
 
 namespace SlideGenerator.Settings.Mutable;
 
 /// <summary>
 ///     Manages the loading, saving, and state of the application's <see cref="Setting" /> configuration.
-///     Persists to YAML using CamelCase naming conventions.
+///     Persists to <c>appsettings.json</c> under the <c>"Application"</c> section.
 /// </summary>
 /// <param name="logger">The logger instance.</param>
 /// <param name="filePath">
@@ -33,10 +32,12 @@ internal sealed class SettingManager(
     string? filePath = null)
     : ISettingManager
 {
+    private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
+
     /// <summary>
     ///     Gets the full file path where settings are stored.
     /// </summary>
-    private string FilePath => filePath ?? NameAndPaths.SettingsFile.GetFilePath(".yaml");
+    private string FilePath => filePath ?? NameAndPaths.SettingsFile.GetFilePath(".json");
 
     /// <inheritdoc />
     public Setting Current { get; private set; } = new();
@@ -57,11 +58,8 @@ internal sealed class SettingManager(
         {
             logger?.LogDebug("Loading settings from {Path}", L(FilePath));
             var source = await File.ReadAllTextAsync(FilePath).ConfigureAwait(false);
-            var deserializer = new DeserializerBuilder()
-                .WithNamingConvention(CamelCaseNamingConvention.Instance)
-                .IgnoreUnmatchedProperties()
-                .Build();
-            Current = deserializer.Deserialize<Setting>(source);
+            var root = JsonSerializer.Deserialize<AppSettingsRoot>(source, JsonOptions);
+            Current = root?.Application ?? new Setting();
             logger?.LogInformation("Successfully loaded settings from {Path}", L(FilePath));
         }
         catch (Exception e)
@@ -86,10 +84,7 @@ internal sealed class SettingManager(
             var folderName = Path.GetDirectoryName(FilePath);
             if (!string.IsNullOrEmpty(folderName)) Directory.CreateDirectory(folderName);
 
-            var serializer = new SerializerBuilder()
-                .WithNamingConvention(CamelCaseNamingConvention.Instance)
-                .Build();
-            var content = serializer.Serialize(Current);
+            var content = JsonSerializer.Serialize(new AppSettingsRoot(Current), JsonOptions);
             await File.WriteAllTextAsync(FilePath, content).ConfigureAwait(false);
             logger?.LogInformation("Successfully saved settings to {Path}", L(FilePath));
         }
@@ -125,4 +120,7 @@ internal sealed class SettingManager(
     {
         return s?.ReplaceLineEndings(" ") ?? "";
     }
+
+    /// <summary>The <c>appsettings.json</c> root shape: settings live under the <c>"Application"</c> key.</summary>
+    private sealed record AppSettingsRoot(Setting Application);
 }

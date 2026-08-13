@@ -183,7 +183,7 @@ public static class NameAndPaths
         /// <summary>
         ///     The default base filename for the main settings file.
         /// </summary>
-        private const string FileName = "Settings";
+        private const string FileName = "appsettings";
 
         /// <summary>
         ///     Calculates the full file path for the settings file with the specified extension.

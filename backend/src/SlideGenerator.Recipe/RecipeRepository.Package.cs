@@ -13,17 +13,16 @@
  */
 
 using System.Collections.ObjectModel;
+using System.IO.Compression;
 using System.Text;
 using System.Text.Json;
-using ICSharpCode.SharpZipLib.Core;
-using ICSharpCode.SharpZipLib.Zip;
 
 namespace SlideGenerator.Recipe;
 
 internal sealed partial class RecipeRepository
 {
     /// <inheritdoc />
-    public async Task ExportAsync(int id, string outputPath, string? password, CancellationToken ct = default)
+    public async Task ExportAsync(int id, string outputPath, CancellationToken ct = default)
     {
         outputPath = Path.GetFullPath(outputPath);
         var entry = await GetAsync(id, ct).ConfigureAwait(false);
@@ -49,36 +48,24 @@ internal sealed partial class RecipeRepository
             var exportGraph = Export_BuildGraph(entry.Recipe, workbookMapping, presentationMapping);
 
             using var outputStream = File.Create(outputPath);
-            using var zipStream = new ZipOutputStream(outputStream);
-            zipStream.SetLevel(9);
-            if (!string.IsNullOrEmpty(password))
-                zipStream.Password = password;
+            using var archive = new ZipArchive(outputStream, ZipArchiveMode.Create);
 
             // Recipe file
             var graphBytes = Encoding.UTF8.GetBytes(
                 JsonSerializer.Serialize(exportGraph, GraphSerializerOptions));
-            var graphEntry = new ZipEntry(RecipePackageRules.Data.RecipeFileName)
-            {
-                DateTime = DateTime.UtcNow,
-                Size = graphBytes.Length
-            };
-            if (!string.IsNullOrEmpty(password))
-                graphEntry.AESKeySize = 256;
-            zipStream.PutNextEntry(graphEntry);
-            zipStream.Write(graphBytes, 0, graphBytes.Length);
-            zipStream.CloseEntry();
+            var graphEntry = archive.CreateEntry(RecipePackageRules.Data.RecipeFileName, CompressionLevel.Optimal);
+            using (var entryStream = graphEntry.Open())
+                entryStream.Write(graphBytes, 0, graphBytes.Length);
 
             // Data files
-            Export_AddFilesFromMapping(zipStream, workbookMapping, password, ct);
-            Export_AddFilesFromMapping(zipStream, presentationMapping, password, ct);
-
-            zipStream.Finish();
+            Export_AddFilesFromMapping(archive, workbookMapping, ct);
+            Export_AddFilesFromMapping(archive, presentationMapping, ct);
         }, ct).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
     public async Task<IRecipeMetadata> ImportAsync(
-        string filePath, string? password,
+        string filePath,
         (string Workbooks, string Presentations) saveFolders,
         CancellationToken ct = default)
     {
@@ -92,12 +79,10 @@ internal sealed partial class RecipeRepository
         await Task.Run(() =>
         {
             using var inputStream = File.OpenRead(filePath);
-            using var zipFile = new ZipFile(inputStream);
-            if (!string.IsNullOrEmpty(password))
-                zipFile.Password = password;
+            using var archive = new ZipArchive(inputStream, ZipArchiveMode.Read);
 
             // Recipe file
-            var graphJson = Import_ReadGraphFile(zipFile)
+            var graphJson = Import_ReadGraphFile(archive)
                             ?? throw new InvalidDataException(
                                 $"Archive rejected: required entry '{RecipePackageRules.Data.RecipeFileName}' is missing.");
             try
@@ -120,7 +105,7 @@ internal sealed partial class RecipeRepository
             var (wbMapping, pptMapping) = Import_BuildPathMappings(
                 imported, workbooksDirectory, presentationsDirectory);
             imported = Import_ApplyPathMappings(imported, wbMapping, pptMapping);
-            Import_ExtractWithMappings(zipFile, wbMapping, pptMapping,
+            Import_ExtractWithMappings(archive, wbMapping, pptMapping,
                 workbooksDirectory + Path.DirectorySeparatorChar,
                 presentationsDirectory + Path.DirectorySeparatorChar,
                 ct);
@@ -216,25 +201,25 @@ internal sealed partial class RecipeRepository
     }
 
     /// <summary>
-    ///     Iterates all file entries in <paramref name="zipFile" /> and delegates each entry to
+    ///     Iterates all file entries in <paramref name="archive" /> and delegates each entry to
     ///     <see cref="Import_ExtractSingleEntry" />. Skips <c>Recipe.json</c> and directory entries.
     /// </summary>
     private static void Import_ExtractWithMappings(
-        ZipFile zipFile,
+        ZipArchive archive,
         Dictionary<string, string> workbookMapping,
         Dictionary<string, string> presentationMapping,
         string workbooksFull, string presentationsFull,
         CancellationToken ct)
     {
-        foreach (ZipEntry zipEntry in zipFile)
+        foreach (var zipEntry in archive.Entries)
         {
             ct.ThrowIfCancellationRequested();
 
-            if (!zipEntry.IsFile) continue;
-            var entryName = zipEntry.Name;
+            if (string.IsNullOrEmpty(zipEntry.Name)) continue; // directory entry
+            var entryName = zipEntry.FullName;
             if (string.Equals(entryName, RecipePackageRules.Data.RecipeFileName,
                     StringComparison.OrdinalIgnoreCase)) continue;
-            Import_ExtractSingleEntry(zipFile, zipEntry, entryName,
+            Import_ExtractSingleEntry(zipEntry, entryName,
                 workbookMapping, presentationMapping, workbooksFull, presentationsFull, ct);
         }
     }
@@ -246,7 +231,7 @@ internal sealed partial class RecipeRepository
     ///     (Zip Slip guard — throws), and the filename appears in the graph mapping (allowlist — skips).
     /// </summary>
     private static void Import_ExtractSingleEntry(
-        ZipFile zipFile, ZipEntry zipEntry, string entryName,
+        ZipArchiveEntry zipEntry, string entryName,
         Dictionary<string, string> workbookMapping,
         Dictionary<string, string> presentationMapping,
         string workbooksFull, string presentationsFull,
@@ -294,24 +279,24 @@ internal sealed partial class RecipeRepository
         Directory.CreateDirectory(safeDirPath);
         ct.ThrowIfCancellationRequested();
 
-        using var entryStream = zipFile.GetInputStream(zipEntry);
+        using var entryStream = zipEntry.Open();
         using var targetStream = File.Create(dest);
-        StreamUtils.Copy(entryStream, targetStream, new byte[4096]);
+        entryStream.CopyTo(targetStream);
     }
 
     /// <summary>
     ///     Finds and returns the UTF-8 text of the graph file entry inside
-    ///     <paramref name="zipFile" />, or <see langword="null" /> if the entry is absent.
+    ///     <paramref name="archive" />, or <see langword="null" /> if the entry is absent.
     /// </summary>
-    private static string? Import_ReadGraphFile(ZipFile zipFile)
+    private static string? Import_ReadGraphFile(ZipArchive archive)
     {
-        foreach (ZipEntry entry in zipFile)
+        foreach (var entry in archive.Entries)
         {
-            if (!entry.IsFile) continue;
-            if (!string.Equals(entry.Name, RecipePackageRules.Data.RecipeFileName, StringComparison.OrdinalIgnoreCase))
+            if (string.IsNullOrEmpty(entry.Name)) continue;
+            if (!string.Equals(entry.FullName, RecipePackageRules.Data.RecipeFileName, StringComparison.OrdinalIgnoreCase))
                 continue;
 
-            using var stream = zipFile.GetInputStream(entry);
+            using var stream = entry.Open();
             using var reader = new StreamReader(stream, Encoding.UTF8);
             return reader.ReadToEnd();
         }
@@ -374,14 +359,13 @@ internal sealed partial class RecipeRepository
     }
 
     /// <summary>
-    ///     Writes each file in <paramref name="entryMapping" /> to <paramref name="zipStream" />
+    ///     Writes each file in <paramref name="entryMapping" /> to <paramref name="archive" />
     ///     using the pre-computed entry name as the zip path. Skips files that no longer exist on
-    ///     disk. Applies AES-256 encryption when <paramref name="password" /> is non-empty.
+    ///     disk.
     /// </summary>
     private static void Export_AddFilesFromMapping(
-        ZipOutputStream zipStream,
+        ZipArchive archive,
         IReadOnlyDictionary<string, string> entryMapping,
-        string? password,
         CancellationToken ct)
     {
         foreach (var (filePath, entryName) in entryMapping)
@@ -389,18 +373,10 @@ internal sealed partial class RecipeRepository
             ct.ThrowIfCancellationRequested();
 
             if (!File.Exists(filePath)) continue;
-            var fileInfo = new FileInfo(filePath);
-            var zipEntry = new ZipEntry(entryName)
-            {
-                DateTime = fileInfo.LastWriteTimeUtc,
-                Size = fileInfo.Length
-            };
-            if (!string.IsNullOrEmpty(password))
-                zipEntry.AESKeySize = 256;
-            zipStream.PutNextEntry(zipEntry);
+            var zipEntry = archive.CreateEntry(entryName, CompressionLevel.Optimal);
             using var fileStream = File.OpenRead(filePath);
-            StreamUtils.Copy(fileStream, zipStream, new byte[4096]);
-            zipStream.CloseEntry();
+            using var entryStream = zipEntry.Open();
+            fileStream.CopyTo(entryStream);
         }
     }
 

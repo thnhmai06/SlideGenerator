@@ -12,8 +12,8 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using System.IO.Compression;
 using FluentAssertions;
-using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.Data.Sqlite;
 using SlideGenerator.Document.Presentations.Identifiers;
 using SlideGenerator.Document.Workbooks.Identifiers;
@@ -220,7 +220,7 @@ public sealed class RecipeRepositoryTests : IDisposable
 
         try
         {
-            await _repo.ExportAsync(metadata.Id, outputPath, null, TestContext.Current.CancellationToken);
+            await _repo.ExportAsync(metadata.Id, outputPath, TestContext.Current.CancellationToken);
 
             File.Exists(outputPath).Should().BeTrue();
             new FileInfo(outputPath).Length.Should().BeGreaterThan(0);
@@ -236,7 +236,7 @@ public sealed class RecipeRepositoryTests : IDisposable
     {
         var outputPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{RecipePackageRules.PackageExtension}");
 
-        var act = async () => await _repo.ExportAsync(9999, outputPath, null, TestContext.Current.CancellationToken);
+        var act = async () => await _repo.ExportAsync(9999, outputPath, TestContext.Current.CancellationToken);
 
         await act.Should().ThrowAsync<InvalidOperationException>();
     }
@@ -251,9 +251,9 @@ public sealed class RecipeRepositoryTests : IDisposable
 
         try
         {
-            await _repo.ExportAsync(exported.Id, zipPath, null, TestContext.Current.CancellationToken);
+            await _repo.ExportAsync(exported.Id, zipPath, TestContext.Current.CancellationToken);
 
-            var imported = await _repo.ImportAsync(zipPath, null, (workbooksDir, presentationsDir),
+            var imported = await _repo.ImportAsync(zipPath, (workbooksDir, presentationsDir),
                 TestContext.Current.CancellationToken);
             var entry = await _repo.GetAsync(imported.Id, TestContext.Current.CancellationToken);
 
@@ -279,13 +279,13 @@ public sealed class RecipeRepositoryTests : IDisposable
 
         try
         {
-            await using (var fs = File.Create(zipPath))
-            await using (var zos = new ZipOutputStream(fs))
+            using (var fs = File.Create(zipPath))
+            using (new ZipArchive(fs, ZipArchiveMode.Create))
             {
-                zos.Finish();
+                // empty archive
             }
 
-            var act = async () => await _repo.ImportAsync(zipPath, null, (workbooksDir, presentationsDir),
+            var act = async () => await _repo.ImportAsync(zipPath, (workbooksDir, presentationsDir),
                 TestContext.Current.CancellationToken);
 
             await act.Should().ThrowAsync<InvalidDataException>()
@@ -312,9 +312,9 @@ public sealed class RecipeRepositoryTests : IDisposable
 
             var exported = await _repo.AddAsync(InputWithMapping("OrigName", wbPath, pptPath),
                 TestContext.Current.CancellationToken);
-            await _repo.ExportAsync(exported.Id, zipPath, null, TestContext.Current.CancellationToken);
+            await _repo.ExportAsync(exported.Id, zipPath, TestContext.Current.CancellationToken);
 
-            var imported = await _repo.ImportAsync(zipPath, null, (workbooksDir, presentationsDir),
+            var imported = await _repo.ImportAsync(zipPath, (workbooksDir, presentationsDir),
                 TestContext.Current.CancellationToken);
             var entry = await _repo.GetAsync(imported.Id, TestContext.Current.CancellationToken);
 
@@ -346,18 +346,16 @@ public sealed class RecipeRepositoryTests : IDisposable
 
         try
         {
-            await using (var fs = File.Create(zipPath))
-            await using (var zos = new ZipOutputStream(fs))
+            using (var fs = File.Create(zipPath))
+            using (var archive = new ZipArchive(fs, ZipArchiveMode.Create))
             {
                 var bytes = "not valid json {{{"u8.ToArray();
-                var entry = new ZipEntry(RecipePackageRules.Data.RecipeFileName) { Size = bytes.Length };
-                await zos.PutNextEntryAsync(entry, TestContext.Current.CancellationToken);
-                zos.Write(bytes, 0, bytes.Length);
-                zos.CloseEntry();
-                zos.Finish();
+                var entry = archive.CreateEntry(RecipePackageRules.Data.RecipeFileName);
+                await using var entryStream = entry.Open();
+                await entryStream.WriteAsync(bytes, TestContext.Current.CancellationToken);
             }
 
-            var act = async () => await _repo.ImportAsync(zipPath, null, (workbooksDir, presentationsDir),
+            var act = async () => await _repo.ImportAsync(zipPath, (workbooksDir, presentationsDir),
                 TestContext.Current.CancellationToken);
 
             await act.Should().ThrowAsync<InvalidDataException>()
@@ -378,24 +376,21 @@ public sealed class RecipeRepositoryTests : IDisposable
 
         try
         {
-            await using (var fs = File.Create(zipPath))
-            await using (var zos = new ZipOutputStream(fs))
+            using (var fs = File.Create(zipPath))
+            using (var archive = new ZipArchive(fs, ZipArchiveMode.Create))
             {
                 var graphBytes = "{\"mappings\":[]}"u8.ToArray();
-                var graphEntry = new ZipEntry(RecipePackageRules.Data.RecipeFileName) { Size = graphBytes.Length };
-                await zos.PutNextEntryAsync(graphEntry, TestContext.Current.CancellationToken);
-                zos.Write(graphBytes, 0, graphBytes.Length);
-                zos.CloseEntry();
+                var graphEntry = archive.CreateEntry(RecipePackageRules.Data.RecipeFileName);
+                await using (var graphStream = graphEntry.Open())
+                    await graphStream.WriteAsync(graphBytes, TestContext.Current.CancellationToken);
 
                 var payload = new byte[] { 0xFF, 0xD8 };
-                var badEntry = new ZipEntry("Workbooks/payload.exe") { Size = payload.Length };
-                await zos.PutNextEntryAsync(badEntry, TestContext.Current.CancellationToken);
-                zos.Write(payload, 0, payload.Length);
-                zos.CloseEntry();
-                zos.Finish();
+                var badEntry = archive.CreateEntry("Workbooks/payload.exe");
+                await using (var badStream = badEntry.Open())
+                    await badStream.WriteAsync(payload, TestContext.Current.CancellationToken);
             }
 
-            await _repo.ImportAsync(zipPath, null, (workbooksDir, presentationsDir),
+            await _repo.ImportAsync(zipPath, (workbooksDir, presentationsDir),
                 TestContext.Current.CancellationToken);
 
             Directory.Exists(workbooksDir).Should().BeFalse();
@@ -423,14 +418,14 @@ public sealed class RecipeRepositoryTests : IDisposable
 
             var exported = await _repo.AddAsync(InputWithMapping("DupImport", wbPath, pptPath),
                 TestContext.Current.CancellationToken);
-            await _repo.ExportAsync(exported.Id, zipPath, null, TestContext.Current.CancellationToken);
+            await _repo.ExportAsync(exported.Id, zipPath, TestContext.Current.CancellationToken);
 
             // Pre-create a conflicting file in the target folder.
             Directory.CreateDirectory(workbooksDir);
             var conflictingPath = Path.Combine(workbooksDir, Path.GetFileName(wbPath));
             await File.WriteAllBytesAsync(conflictingPath, [0xFF], TestContext.Current.CancellationToken);
 
-            var imported = await _repo.ImportAsync(zipPath, null, (workbooksDir, presentationsDir),
+            var imported = await _repo.ImportAsync(zipPath, (workbooksDir, presentationsDir),
                 TestContext.Current.CancellationToken);
             var entry = await _repo.GetAsync(imported.Id, TestContext.Current.CancellationToken);
 
@@ -473,9 +468,9 @@ public sealed class RecipeRepositoryTests : IDisposable
 
             var exported = await _repo.AddAsync(InputWithWorkbooks("DupStem", wb1, wb2),
                 TestContext.Current.CancellationToken);
-            await _repo.ExportAsync(exported.Id, zipPath, null, TestContext.Current.CancellationToken);
+            await _repo.ExportAsync(exported.Id, zipPath, TestContext.Current.CancellationToken);
 
-            var imported = await _repo.ImportAsync(zipPath, null, (workbooksDir, presentationsDir),
+            var imported = await _repo.ImportAsync(zipPath, (workbooksDir, presentationsDir),
                 TestContext.Current.CancellationToken);
             var entry = await _repo.GetAsync(imported.Id, TestContext.Current.CancellationToken);
 
@@ -497,100 +492,6 @@ public sealed class RecipeRepositoryTests : IDisposable
     }
 
     [Fact]
-    public async Task ExportAsync_WithPassword_CanBeImportedWithSamePassword()
-    {
-        const string password = "s3cr3t!";
-        var exported = await _repo.AddAsync(Input("Encrypted"), TestContext.Current.CancellationToken);
-        var zipPath = Path.Combine(Path.GetTempPath(), $"Encrypted{RecipePackageRules.PackageExtension}");
-        var workbooksDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-        var presentationsDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-
-        try
-        {
-            await _repo.ExportAsync(exported.Id, zipPath, password, TestContext.Current.CancellationToken);
-
-            var imported = await _repo.ImportAsync(zipPath, password, (workbooksDir, presentationsDir),
-                TestContext.Current.CancellationToken);
-            var entry = await _repo.GetAsync(imported.Id, TestContext.Current.CancellationToken);
-
-            imported.Id.Should().NotBe(exported.Id);
-            entry.Name.Should().Be("Encrypted");
-        }
-        finally
-        {
-            if (File.Exists(zipPath)) File.Delete(zipPath);
-            if (Directory.Exists(workbooksDir)) Directory.Delete(workbooksDir, true);
-            if (Directory.Exists(presentationsDir)) Directory.Delete(presentationsDir, true);
-        }
-    }
-
-    [Fact]
-    public async Task ExportAsync_WithPasswordAndFileMapping_FilesEncryptedAndExtractedCorrectly()
-    {
-        const string password = "p@ssw0rd!";
-        var wbPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.xlsx");
-        var pptPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.pptx");
-        var zipPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{RecipePackageRules.PackageExtension}");
-        var workbooksDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-        var presentationsDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-
-        try
-        {
-            await File.WriteAllBytesAsync(wbPath, [0x01], TestContext.Current.CancellationToken);
-            await File.WriteAllBytesAsync(pptPath, [0x02], TestContext.Current.CancellationToken);
-
-            var exported = await _repo.AddAsync(InputWithMapping("EncryptedWithFiles", wbPath, pptPath),
-                TestContext.Current.CancellationToken);
-            await _repo.ExportAsync(exported.Id, zipPath, password, TestContext.Current.CancellationToken);
-
-            var imported = await _repo.ImportAsync(zipPath, password, (workbooksDir, presentationsDir),
-                TestContext.Current.CancellationToken);
-            var entry = await _repo.GetAsync(imported.Id, TestContext.Current.CancellationToken);
-
-            var mapping = entry.Recipe.Mappings.Single();
-            var importedWb = mapping.Sources.Single().Workbook.BookPath;
-            var importedPpt = mapping.Template.Presentation.PresentationPath;
-
-            File.Exists(importedWb).Should().BeTrue();
-            (await File.ReadAllBytesAsync(importedWb, TestContext.Current.CancellationToken))[0].Should().Be(0x01);
-            File.Exists(importedPpt).Should().BeTrue();
-            (await File.ReadAllBytesAsync(importedPpt, TestContext.Current.CancellationToken))[0].Should().Be(0x02);
-        }
-        finally
-        {
-            if (File.Exists(wbPath)) File.Delete(wbPath);
-            if (File.Exists(pptPath)) File.Delete(pptPath);
-            if (File.Exists(zipPath)) File.Delete(zipPath);
-            if (Directory.Exists(workbooksDir)) Directory.Delete(workbooksDir, true);
-            if (Directory.Exists(presentationsDir)) Directory.Delete(presentationsDir, true);
-        }
-    }
-
-    [Fact]
-    public async Task ImportAsync_WrongPassword_ThrowsException()
-    {
-        const string correctPassword = "correct";
-        var exported = await _repo.AddAsync(Input("EncryptedWrong"), TestContext.Current.CancellationToken);
-        var zipPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{RecipePackageRules.PackageExtension}");
-        var workbooksDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-        var presentationsDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-
-        try
-        {
-            await _repo.ExportAsync(exported.Id, zipPath, correctPassword, TestContext.Current.CancellationToken);
-
-            var act = async () => await _repo.ImportAsync(zipPath, "wrongpassword",
-                (workbooksDir, presentationsDir), TestContext.Current.CancellationToken);
-
-            await act.Should().ThrowAsync<Exception>();
-        }
-        finally
-        {
-            if (File.Exists(zipPath)) File.Delete(zipPath);
-        }
-    }
-
-    [Fact]
     public async Task ImportAsync_EntryInUnknownFolderPrefix_IsIgnoredAndImportSucceeds()
     {
         var zipPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{RecipePackageRules.PackageExtension}");
@@ -599,24 +500,21 @@ public sealed class RecipeRepositoryTests : IDisposable
 
         try
         {
-            await using (var fs = File.Create(zipPath))
-            await using (var zos = new ZipOutputStream(fs))
+            using (var fs = File.Create(zipPath))
+            using (var archive = new ZipArchive(fs, ZipArchiveMode.Create))
             {
                 var graphBytes = "{\"mappings\":[]}"u8.ToArray();
-                var graphEntry = new ZipEntry(RecipePackageRules.Data.RecipeFileName) { Size = graphBytes.Length };
-                await zos.PutNextEntryAsync(graphEntry, TestContext.Current.CancellationToken);
-                zos.Write(graphBytes, 0, graphBytes.Length);
-                zos.CloseEntry();
+                var graphEntry = archive.CreateEntry(RecipePackageRules.Data.RecipeFileName);
+                await using (var graphStream = graphEntry.Open())
+                    await graphStream.WriteAsync(graphBytes, TestContext.Current.CancellationToken);
 
                 var payload = new byte[] { 0x42 };
-                var unknownEntry = new ZipEntry("Secret/evil.xlsx") { Size = payload.Length };
-                await zos.PutNextEntryAsync(unknownEntry, TestContext.Current.CancellationToken);
-                zos.Write(payload, 0, payload.Length);
-                zos.CloseEntry();
-                zos.Finish();
+                var unknownEntry = archive.CreateEntry("Secret/evil.xlsx");
+                await using (var unknownStream = unknownEntry.Open())
+                    await unknownStream.WriteAsync(payload, TestContext.Current.CancellationToken);
             }
 
-            var imported = await _repo.ImportAsync(zipPath, null, (workbooksDir, presentationsDir),
+            var imported = await _repo.ImportAsync(zipPath, (workbooksDir, presentationsDir),
                 TestContext.Current.CancellationToken);
 
             imported.Id.Should().BeGreaterThan(0);

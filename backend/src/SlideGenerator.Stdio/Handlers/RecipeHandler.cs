@@ -76,17 +76,17 @@ public sealed class RecipeHandler(IRecipeRepository recipeRepository)
     /// <summary>
     ///     Exports a stored recipe as a <c>*.recipe</c> package file.
     /// </summary>
-    public Task ExportAsync(int recipeId, string outputFilePath, string? password, CancellationToken ct)
+    public Task ExportAsync(int recipeId, string outputFilePath, CancellationToken ct)
     {
-        return recipeRepository.ExportAsync(recipeId, outputFilePath, password, ct);
+        return recipeRepository.ExportAsync(recipeId, outputFilePath, ct);
     }
 
     /// <summary>
     ///     Imports a <c>*.recipe</c> package file and returns the id of the newly stored recipe.
     /// </summary>
-    public Task<IRecipeMetadata> ImportAsync(string filePath, string? password, string workbooksDirectory,
+    public Task<IRecipeMetadata> ImportAsync(string filePath, string workbooksDirectory,
         string presentationsDirectory, CancellationToken ct)
     {
-        return recipeRepository.ImportAsync(filePath, password, (workbooksDirectory, presentationsDirectory), ct);
+        return recipeRepository.ImportAsync(filePath, (workbooksDirectory, presentationsDirectory), ct);
     }
 }

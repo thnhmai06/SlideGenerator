@@ -771,7 +771,7 @@ Sub-path layout under `UserPath`:
 
 ```
 UserPath/
-├── Settings.yaml          — SettingsFile
+├── appsettings.json       — SettingsFile (JSON, "Application" section)
 ├── Instance.pid           — AppLocker
 ├── Logs/System/           — LogsFolder.SystemPath
 ├── Logs/Workflows/        — LogsFolder.WorkflowPath (per-request .log files; folder name predates the

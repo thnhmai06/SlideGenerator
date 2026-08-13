@@ -10,8 +10,8 @@ The **SlideGenerator.Settings** module handles application-wide configuration.
 
 ## Persistence
 
-- **Format**: YAML (via YamlDotNet).
-- **Location**: `%LOCALAPPDATA%/SlideGenerator/settings.yaml`.
+- **Format**: JSON (`System.Text.Json`), under the `"Application"` section.
+- **Location**: `%LOCALAPPDATA%/SlideGenerator/appsettings.json`.
 - **Reset**: Includes a default configuration provider to restore factory settings.
 
 ## Configuration Categories

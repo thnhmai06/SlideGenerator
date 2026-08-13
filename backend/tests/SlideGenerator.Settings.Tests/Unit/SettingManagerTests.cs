@@ -22,7 +22,7 @@ namespace SlideGenerator.Settings.Tests.Unit;
 
 /// <summary>
 ///     Unit tests for <see cref="SettingManager" />, verifying load/save lifecycle (including real
-///     YAML round-tripping to disk), defaults reset, and state propagation. Each test runs in
+///     JSON round-tripping to disk), defaults reset, and state propagation. Each test runs in
 ///     isolation against a unique temp file path (via the test-only <c>filePath</c> constructor
 ///     override), never touching the real user settings file.
 /// </summary>
@@ -39,7 +39,7 @@ public sealed class SettingManagerTests : IDisposable
     /// </summary>
     public SettingManagerTests()
     {
-        _testFilePath = Path.Combine(Path.GetTempPath(), $"SlideGeneratorSettingsTest_{Guid.NewGuid():N}.yaml");
+        _testFilePath = Path.Combine(Path.GetTempPath(), $"SlideGeneratorSettingsTest_{Guid.NewGuid():N}.json");
         _manager = new SettingManager(_logger, _testFilePath);
     }
 
@@ -76,7 +76,7 @@ public sealed class SettingManagerTests : IDisposable
 
     /// <summary>
     ///     Verifies that <see cref="SettingManager.Update" /> replaces <see cref="SettingManager.Current" />
-    ///     with the supplied <see cref="Setting" /> instance and persists it to disk as YAML.
+    ///     with the supplied <see cref="Setting" /> instance and persists it to disk as JSON.
     /// </summary>
     [Fact]
     public async Task Update_NewSetting_UpdatesCurrentAndPersistsToDisk()
@@ -139,7 +139,7 @@ public sealed class SettingManagerTests : IDisposable
 
     /// <summary>
     ///     Verifies that <see cref="SettingManager.Load" /> returns <see langword="true" /> when the settings file
-    ///     exists, deserializes its YAML content, and updates <see cref="SettingManager.Current" />.
+    ///     exists, deserializes its JSON content, and updates <see cref="SettingManager.Current" />.
     /// </summary>
     [Fact]
     public async Task Load_SettingsFilePresent_ReturnsTrueAndUpdatesCurrent()
