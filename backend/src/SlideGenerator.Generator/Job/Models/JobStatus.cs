@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Generator
- * File: Status.cs
+ * File: JobStatus.cs
  *
  * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -12,10 +12,10 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Generator.Job;
+namespace SlideGenerator.Generator.Job.Models;
 
 /// <summary>Identifies the execution status of a job.</summary>
-public enum Status
+public enum JobStatus : byte
 {
     /// <summary>Spawned but not yet picked up for execution by <c>JobRunner</c>.</summary>
     Pending,

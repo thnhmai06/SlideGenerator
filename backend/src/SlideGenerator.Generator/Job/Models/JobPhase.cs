@@ -12,15 +12,18 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Generator.Job;
+namespace SlideGenerator.Generator.Job.Models;
 
 /// <summary>
 ///     Identifies which of the 4 sequential phases a job is currently in. A job always progresses
-///     forward (never regresses) through these phases; <see cref="JobRecord.CurrentIndex" />
+///     forward (never regresses) through these phases; <see cref="JobSnapshot.CurrentIndex" />
 ///     tracks how far it got within the current phase.
 /// </summary>
 public enum JobPhase : byte
 {
+    /// <summary>Just get started, didn't do anything.</summary>
+    Queued,
+
     /// <summary>Opening (resume) or creating (fresh) the output presentation file.</summary>
     CreatingOutput,
 

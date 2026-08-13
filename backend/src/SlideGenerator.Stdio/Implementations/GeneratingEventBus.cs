@@ -13,6 +13,7 @@
  */
 
 using SlideGenerator.Generator.Job;
+using SlideGenerator.Generator.Job.Models;
 using SlideGenerator.Generator.Progress;
 
 namespace SlideGenerator.Stdio.Implementations;
@@ -27,8 +28,8 @@ internal sealed class GeneratingEventBus : IEventBus
     /// <summary>Publishes a <see cref="RequestProgress" /> to all current subscribers. Safe to call from any thread.</summary>
     public void Publish(RequestProgress progress) => OnRequestProgress?.Invoke(progress);
 
-    /// <summary>Publishes a <see cref="JobRecord" /> to all current subscribers. Safe to call from any thread.</summary>
-    public void Publish(JobRecord job) => OnJobProgress?.Invoke(job);
+    /// <summary>Publishes a <see cref="JobSnapshot" /> to all current subscribers. Safe to call from any thread.</summary>
+    public void Publish(JobSnapshot job) => OnJobProgress?.Invoke(job);
 
     /// <summary>Publishes a <see cref="RowProgress" /> to all current subscribers. Safe to call from any thread.</summary>
     public void Publish(RowProgress progress) => OnRowProgress?.Invoke(progress);
@@ -41,7 +42,7 @@ internal sealed class GeneratingEventBus : IEventBus
     public event Action<RequestProgress>? OnRequestProgress;
 
     /// <summary>Raised whenever a job-scoped progress event occurs. Subscribe before the first workflow starts.</summary>
-    public event Action<JobRecord>? OnJobProgress;
+    public event Action<JobSnapshot>? OnJobProgress;
 
     /// <summary>Raised whenever a row-scoped progress event occurs. Subscribe before the first workflow starts.</summary>
     public event Action<RowProgress>? OnRowProgress;

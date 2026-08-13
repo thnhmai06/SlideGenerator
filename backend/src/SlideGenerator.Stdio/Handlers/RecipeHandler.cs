@@ -66,7 +66,7 @@ public sealed class RecipeHandler(IRecipeRepository recipeRepository, IRecipePac
 
     /// <summary>
     ///     Permanently deletes a recipe entry by its id. Any in-progress generation job already has every
-    ///     value it needs resolved onto its own <c>JobRecord</c> and is unaffected by this deletion.
+    ///     value it needs resolved onto its own <c>JobSnapshot</c> and is unaffected by this deletion.
     /// </summary>
     /// <returns><see langword="true" /> if deleted; <see langword="false" /> if the id was not found.</returns>
     public Task<bool> DeleteAsync(int id, CancellationToken ct)

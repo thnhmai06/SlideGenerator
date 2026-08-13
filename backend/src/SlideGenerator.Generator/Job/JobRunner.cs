@@ -20,6 +20,7 @@ using SlideGenerator.Cloud;
 using SlideGenerator.Document.Presentations;
 using SlideGenerator.Document.Template;
 using SlideGenerator.Document.Workbooks;
+using SlideGenerator.Generator.Job.Models;
 using SlideGenerator.Generator.Persistence;
 using SlideGenerator.Generator.Progress;
 using SlideGenerator.Image.Cropping;
@@ -46,7 +47,7 @@ public interface IJobRunner
 
     /// <summary>
     ///     Registers and starts a fresh job. Runs <c>PreflightCleanup</c>, persists its initial
-    ///     <see cref="JobRecord" /> (flushed immediately, not on the next tick), then starts execution and
+    ///     <see cref="JobSnapshot" /> (flushed immediately, not on the next tick), then starts execution and
     ///     returns without waiting for it to finish.
     /// </summary>
     Task StartJobAsync(string requestId, int jobId, JobSpecification spec, string logPath, CancellationToken ct = default);
@@ -97,7 +98,7 @@ internal sealed partial class JobRunner(
             // A job that was Paused before the crash resumes as Running — closing/reopening handles on
             // pause is a known limitation (see IJobRunner remarks), so there's no "paused" state to honor.
             var running = Register(record.RequestId, record.JobId);
-            eventBus.Publish(record with { Status = Status.Running, Timestamp = DateTimeOffset.UtcNow });
+            eventBus.Publish(record with { JobStatus = JobStatus.Running, Timestamp = DateTimeOffset.UtcNow });
             running.RunTask = Task.Run(() => RunJobAsync(record, isResume: true, running), CancellationToken.None);
         }
 
@@ -120,7 +121,7 @@ internal sealed partial class JobRunner(
     {
         ApplyMaxConcurrentJobs();
 
-        var record = new JobRecord(requestId, jobId, Status.Pending, JobPhase.CreatingOutput, 0, spec,
+        var record = new JobSnapshot(requestId, jobId, JobStatus.Pending, JobPhase.CreatingOutput, 0, spec,
             DateTimeOffset.UtcNow);
         jobsRepository.Enqueue(record);
         await jobsRepository.FlushAsync(ct).ConfigureAwait(false);
@@ -135,7 +136,7 @@ internal sealed partial class JobRunner(
     {
         if (!_running.TryGetValue((requestId, jobId), out var job)) return Task.FromResult(false);
         job.Gate.Pause();
-        var record = job.LastRecord() with { Status = Status.Paused };
+        var record = job.LastRecord() with { JobStatus = JobStatus.Paused };
         Persist(record);
         eventBus.Publish(record);
         return Task.FromResult(true);
@@ -146,7 +147,7 @@ internal sealed partial class JobRunner(
     {
         if (!_running.TryGetValue((requestId, jobId), out var job)) return Task.FromResult(false);
         job.Gate.Resume();
-        var record = job.LastRecord() with { Status = Status.Running };
+        var record = job.LastRecord() with { JobStatus = JobStatus.Running };
         Persist(record);
         eventBus.Publish(record);
         return Task.FromResult(true);
@@ -185,7 +186,7 @@ internal sealed partial class JobRunner(
     ///     transitions and cleaning up on any terminal outcome. Semaphore-gated so at most
     ///     <c>Performance.MaxConcurrentJobs</c> jobs execute concurrently.
     /// </summary>
-    private async Task RunJobAsync(JobRecord initial, bool isResume, RunningJob running)
+    private async Task RunJobAsync(JobSnapshot initial, bool isResume, RunningJob running)
     {
         var requestId = initial.RequestId;
         var jobId = initial.JobId;
@@ -193,7 +194,7 @@ internal sealed partial class JobRunner(
         running.LastPhase = initial.Phase;
         running.LastIndex = initial.CurrentIndex;
 
-        eventBus.Publish(initial with { Status = Status.Running, Timestamp = DateTimeOffset.UtcNow });
+        eventBus.Publish(initial with { JobStatus = JobStatus.Running, Timestamp = DateTimeOffset.UtcNow });
 
         await _semaphore.WaitAsync(running.Cts.Token).ConfigureAwait(false);
         try
@@ -229,7 +230,7 @@ internal sealed partial class JobRunner(
         }
         catch (OperationCanceledException) when (running.Cts.IsCancellationRequested)
         {
-            var cancelled = running.LastRecord() with { Status = Status.Cancelled, Timestamp = DateTimeOffset.UtcNow };
+            var cancelled = running.LastRecord() with { JobStatus = JobStatus.Cancelled, Timestamp = DateTimeOffset.UtcNow };
             Persist(cancelled);
             eventBus.Publish(cancelled);
             CleanupJobTempFolder(requestId, jobId);
@@ -237,7 +238,7 @@ internal sealed partial class JobRunner(
         catch (Exception ex)
         {
             logger.LogError(ex, "Job {RequestId}/{JobId} failed.", requestId, jobId);
-            var errored = running.LastRecord() with { Status = Status.Error, Timestamp = DateTimeOffset.UtcNow };
+            var errored = running.LastRecord() with { JobStatus = JobStatus.Error, Timestamp = DateTimeOffset.UtcNow };
             Persist(errored);
             eventBus.Publish(errored);
             CleanupJobTempFolder(requestId, jobId);
@@ -249,9 +250,9 @@ internal sealed partial class JobRunner(
         }
     }
 
-    private void Persist(JobRecord record)
+    private void Persist(JobSnapshot snapshot)
     {
-        jobsRepository.Enqueue(record);
+        jobsRepository.Enqueue(snapshot);
     }
 
     private static string DefaultLogPath(string requestId) =>
@@ -292,7 +293,7 @@ internal sealed partial class JobRunner(
         public string RequestId { get; set; } = "";
         public int JobId { get; set; }
 
-        public JobRecord LastRecord() => new(RequestId, JobId, Status.Running, LastPhase, LastIndex, LastSpec!,
+        public JobSnapshot LastRecord() => new(RequestId, JobId, JobStatus.Running, LastPhase, LastIndex, LastSpec!,
             DateTimeOffset.UtcNow);
     }
 }

@@ -19,6 +19,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using SlideGenerator.Document.Workbooks.Identifiers;
 using SlideGenerator.Generator.Job;
+using SlideGenerator.Generator.Job.Models;
 using SlideGenerator.Recipe.Models;
 
 namespace SlideGenerator.Generator.Persistence;
@@ -30,23 +31,23 @@ namespace SlideGenerator.Generator.Persistence;
 /// </summary>
 public interface IJobsRepository
 {
-    /// <summary>Marks <paramref name="record" /> dirty for the next flush — last write for a given key wins.</summary>
-    void Enqueue(JobRecord record);
+    /// <summary>Marks <paramref name="snapshot" /> dirty for the next flush — last write for a given key wins.</summary>
+    void Enqueue(JobSnapshot snapshot);
 
     /// <summary>Flushes every dirty record to storage immediately, bypassing the ~1s tick.</summary>
     Task FlushAsync(CancellationToken ct = default);
 
     /// <summary>Raised after each successful flush with the batch that was just persisted.</summary>
-    event Action<IReadOnlyList<JobRecord>>? Flushed;
+    event Action<IReadOnlyList<JobSnapshot>>? Flushed;
 
     /// <summary>Gets every job belonging to <paramref name="requestId" />, ordered by job id.</summary>
-    Task<IReadOnlyList<JobRecord>> GetByRequestIdAsync(string requestId, CancellationToken ct = default);
+    Task<IReadOnlyList<JobSnapshot>> GetByRequestIdAsync(string requestId, CancellationToken ct = default);
 
     /// <summary>Gets every job across all requests whose status is not yet terminal (for crash recovery).</summary>
-    Task<IReadOnlyList<JobRecord>> GetNonTerminalAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<JobSnapshot>> GetNonTerminalAsync(CancellationToken ct = default);
 
     /// <summary>Gets every job row across every request, regardless of status (for request-group listing).</summary>
-    Task<IReadOnlyList<JobRecord>> GetAllAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<JobSnapshot>> GetAllAsync(CancellationToken ct = default);
 
     /// <summary>Deletes every job row belonging to <paramref name="requestId" />.</summary>
     Task DeleteByRequestIdAsync(string requestId, CancellationToken ct = default);
@@ -60,13 +61,13 @@ public interface IJobsRepository
 ///     columns — see <c>0003_CreateJobs.sql</c> (<see cref="SlideGenerator.Settings.Database.DatabaseMigrator" />) for the schema.
 /// </summary>
 internal sealed class JobsRepository(SqliteConnectionStringBuilder builder, ILogger<JobsRepository> logger)
-    : BufferedRepository<(string RequestId, int JobId), JobRecord>(logger), IJobsRepository
+    : BufferedRepository<(string RequestId, int JobId), JobSnapshot>(logger), IJobsRepository
 {
     /// <inheritdoc cref="IJobsRepository.Enqueue" />
-    public void Enqueue(JobRecord record) => Enqueue((record.RequestId, record.JobId), record);
+    public void Enqueue(JobSnapshot snapshot) => Enqueue((snapshot.RequestId, snapshot.JobId), snapshot);
 
     /// <inheritdoc />
-    protected override async Task UpsertBatchAsync(IReadOnlyList<JobRecord> batch, CancellationToken ct)
+    protected override async Task UpsertBatchAsync(IReadOnlyList<JobSnapshot> batch, CancellationToken ct)
     {
         if (batch.Count == 0) return;
 
@@ -96,7 +97,7 @@ internal sealed class JobsRepository(SqliteConnectionStringBuilder builder, ILog
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<JobRecord>> GetByRequestIdAsync(string requestId, CancellationToken ct = default)
+    public async Task<IReadOnlyList<JobSnapshot>> GetByRequestIdAsync(string requestId, CancellationToken ct = default)
     {
         await using var conn = await OpenConnectionAsync(ct).ConfigureAwait(false);
         var rows = await conn.QueryAsync<JobRow>(new CommandDefinition(
@@ -106,22 +107,22 @@ internal sealed class JobsRepository(SqliteConnectionStringBuilder builder, ILog
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<JobRecord>> GetNonTerminalAsync(CancellationToken ct = default)
+    public async Task<IReadOnlyList<JobSnapshot>> GetNonTerminalAsync(CancellationToken ct = default)
     {
         await using var conn = await OpenConnectionAsync(ct).ConfigureAwait(false);
         var rows = await conn.QueryAsync<JobRow>(new CommandDefinition(
             "SELECT * FROM Jobs WHERE Status IN (@pending, @running, @paused)",
             new
             {
-                pending = Status.Pending.ToString(),
-                running = Status.Running.ToString(),
-                paused = Status.Paused.ToString()
+                pending = JobStatus.Pending.ToString(),
+                running = JobStatus.Running.ToString(),
+                paused = JobStatus.Paused.ToString()
             }, cancellationToken: ct)).ConfigureAwait(false);
         return [.. rows.Select(FromRow)];
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<JobRecord>> GetAllAsync(CancellationToken ct = default)
+    public async Task<IReadOnlyList<JobSnapshot>> GetAllAsync(CancellationToken ct = default)
     {
         await using var conn = await OpenConnectionAsync(ct).ConfigureAwait(false);
         var rows = await conn.QueryAsync<JobRow>(new CommandDefinition(
@@ -149,7 +150,7 @@ internal sealed class JobsRepository(SqliteConnectionStringBuilder builder, ILog
         string TextInstructionsJson, string ImageInstructionsJson,
         string OutputPath, string Timestamp);
 
-    private static object ToRow(JobRecord r)
+    private static object ToRow(JobSnapshot r)
     {
         var spec = r.Specification;
         var rowFilterType = spec.RowFilter switch
@@ -168,7 +169,7 @@ internal sealed class JobsRepository(SqliteConnectionStringBuilder builder, ILog
         {
             r.RequestId,
             r.JobId,
-            Status = r.Status.ToString(),
+            Status = r.JobStatus.ToString(),
             Phase = r.Phase.ToString(),
             r.CurrentIndex,
             spec.WorkbookPath,
@@ -188,7 +189,7 @@ internal sealed class JobsRepository(SqliteConnectionStringBuilder builder, ILog
         };
     }
 
-    private static JobRecord FromRow(JobRow row)
+    private static JobSnapshot FromRow(JobRow row)
     {
         RowFilter? rowFilter = row.RowFilterType switch
         {
@@ -210,10 +211,10 @@ internal sealed class JobsRepository(SqliteConnectionStringBuilder builder, ILog
             JsonSerializer.Deserialize<IReadOnlyList<ImageInstruction>>(row.ImageInstructionsJson, JobSpecificationJson.Options) ?? [],
             row.OutputPath);
 
-        return new JobRecord(
+        return new JobSnapshot(
             row.RequestId,
             (int)row.JobId,
-            Enum.Parse<Status>(row.Status),
+            Enum.Parse<JobStatus>(row.Status),
             Enum.Parse<JobPhase>(row.Phase),
             (int)row.CurrentIndex,
             spec,

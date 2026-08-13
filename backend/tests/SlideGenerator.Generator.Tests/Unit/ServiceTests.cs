@@ -16,6 +16,7 @@ using FluentAssertions;
 using SlideGenerator.Document.Presentations.Identifiers;
 using SlideGenerator.Document.Workbooks.Identifiers;
 using SlideGenerator.Generator.Job;
+using SlideGenerator.Generator.Job.Models;
 using SlideGenerator.Recipe.Models;
 using Xunit;
 
@@ -100,8 +101,8 @@ public sealed class ServiceTests
 
     #region DeriveStatus
 
-    private static JobRecord Job(Status status) => new(
-        "req", 0, status, JobPhase.CreatingOutput, 0,
+    private static JobSnapshot Job(JobStatus jobStatus) => new(
+        "req", 0, jobStatus, JobPhase.CreatingOutput, 0,
         new JobSpecification("wb", "Sheet1", null, null, "ppt", 1, [], [], "out.pptx"),
         DateTimeOffset.UtcNow);
 
@@ -109,45 +110,45 @@ public sealed class ServiceTests
     [Fact]
     public void DeriveStatus_AnyPendingOrRunning_ReturnsRunning()
     {
-        var jobs = new[] { Job(Status.Complete), Job(Status.Pending), Job(Status.Cancelled) };
+        var jobs = new[] { Job(JobStatus.Complete), Job(JobStatus.Pending), Job(JobStatus.Cancelled) };
 
-        Service.DeriveStatus(jobs).Should().Be(Status.Running);
+        Service.DeriveStatus(jobs).Should().Be(JobStatus.Running);
     }
 
     /// <summary>No job Pending/Running but at least one Paused → Paused.</summary>
     [Fact]
     public void DeriveStatus_NoneRunningSomePaused_ReturnsPaused()
     {
-        var jobs = new[] { Job(Status.Complete), Job(Status.Paused) };
+        var jobs = new[] { Job(JobStatus.Complete), Job(JobStatus.Paused) };
 
-        Service.DeriveStatus(jobs).Should().Be(Status.Paused);
+        Service.DeriveStatus(jobs).Should().Be(JobStatus.Paused);
     }
 
     /// <summary>Every job Cancelled → Cancelled.</summary>
     [Fact]
     public void DeriveStatus_AllCancelled_ReturnsCancelled()
     {
-        var jobs = new[] { Job(Status.Cancelled), Job(Status.Cancelled) };
+        var jobs = new[] { Job(JobStatus.Cancelled), Job(JobStatus.Cancelled) };
 
-        Service.DeriveStatus(jobs).Should().Be(Status.Cancelled);
+        Service.DeriveStatus(jobs).Should().Be(JobStatus.Cancelled);
     }
 
     /// <summary>Every job Complete → Complete.</summary>
     [Fact]
     public void DeriveStatus_AllComplete_ReturnsComplete()
     {
-        var jobs = new[] { Job(Status.Complete), Job(Status.Complete) };
+        var jobs = new[] { Job(JobStatus.Complete), Job(JobStatus.Complete) };
 
-        Service.DeriveStatus(jobs).Should().Be(Status.Complete);
+        Service.DeriveStatus(jobs).Should().Be(JobStatus.Complete);
     }
 
     /// <summary>A mix of Complete and Cancelled (no Pending/Running/Paused) falls back to Complete.</summary>
     [Fact]
     public void DeriveStatus_MixedCompleteAndCancelled_ReturnsComplete()
     {
-        var jobs = new[] { Job(Status.Complete), Job(Status.Cancelled) };
+        var jobs = new[] { Job(JobStatus.Complete), Job(JobStatus.Cancelled) };
 
-        Service.DeriveStatus(jobs).Should().Be(Status.Complete);
+        Service.DeriveStatus(jobs).Should().Be(JobStatus.Complete);
     }
 
     #endregion

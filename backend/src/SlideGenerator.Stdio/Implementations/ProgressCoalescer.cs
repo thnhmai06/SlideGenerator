@@ -16,6 +16,7 @@ using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
 using SlideGenerator.Generator;
 using SlideGenerator.Generator.Job;
+using SlideGenerator.Generator.Job.Models;
 using SlideGenerator.Generator.Persistence;
 using SlideGenerator.Generator.Progress;
 using StreamJsonRpc;
@@ -106,7 +107,7 @@ internal sealed class ProgressCoalescer(IJobsRepository jobsRepository, ILogger<
 
     private void HandleLog(LogEntry entry) => _logQueue.Enqueue(entry);
 
-    private void HandleJobsFlushed(IReadOnlyList<JobRecord> batch) => _ = NotifyAsync("progress/jobs", batch);
+    private void HandleJobsFlushed(IReadOnlyList<JobSnapshot> batch) => _ = NotifyAsync("progress/jobs", batch);
 
     private void HandleExpectedJobCount(string requestId, int count) =>
         _requestStates.GetOrAdd(requestId, _ => new RequestAggregateState()).ExpectedJobCount = count;
@@ -124,14 +125,14 @@ internal sealed class ProgressCoalescer(IJobsRepository jobsRepository, ILogger<
     ///     <see cref="RequestAggregateState.ExpectedJobCount" /> (announced by <c>Service.CreateAsync</c>
     ///     before its spawn loop) rather than however many jobs have been observed so far.
     /// </summary>
-    private void TrackRequestAggregate(JobRecord job)
+    private void TrackRequestAggregate(JobSnapshot job)
     {
         jobsRepository.Enqueue(job);
 
         var state = _requestStates.GetOrAdd(job.RequestId, _ => new RequestAggregateState());
         state.KnownJobs.TryAdd(job.JobId, 0);
-        if (job.Status != Status.Pending) state.StartedJobs.TryAdd(job.JobId, 0);
-        if (job.Status is Status.Complete or Status.Cancelled or Status.Error)
+        if (job.JobStatus != JobStatus.Pending) state.StartedJobs.TryAdd(job.JobId, 0);
+        if (job.JobStatus is JobStatus.Complete or JobStatus.Cancelled or JobStatus.Error)
             state.TerminalJobs.TryAdd(job.JobId, 0);
 
         var expected = state.ExpectedJobCount ?? state.KnownJobs.Count;

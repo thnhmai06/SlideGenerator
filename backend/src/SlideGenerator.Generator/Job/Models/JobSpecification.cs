@@ -15,7 +15,7 @@
 using SlideGenerator.Document.Workbooks.Identifiers;
 using SlideGenerator.Recipe.Models;
 
-namespace SlideGenerator.Generator.Job;
+namespace SlideGenerator.Generator.Job.Models;
 
 /// <summary>
 ///     Represents a single slide-generation unit: one worksheet mapped to one template slide, with every
@@ -33,12 +33,10 @@ namespace SlideGenerator.Generator.Job;
 /// <param name="ImageInstructions">Rules for mapping worksheet columns to slide image shapes.</param>
 /// <param name="OutputPath">Absolute path to the output presentation file for this job.</param>
 public sealed record JobSpecification(
-    string WorkbookPath,
-    string WorksheetName,
+    string WorkbookPath, string WorksheetName,
     IReadOnlySet<ColumnIdentifier>? UsedColumns,
     RowFilter? RowFilter,
-    string TemplatePresentationPath,
-    int TemplateSlideIndex,
+    string TemplatePresentationPath, int TemplateSlideIndex,
     IReadOnlyList<TextInstruction> TextInstructions,
     IReadOnlyList<ImageInstruction> ImageInstructions,
     string OutputPath);

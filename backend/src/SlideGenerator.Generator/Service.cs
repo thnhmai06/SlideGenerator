@@ -15,6 +15,7 @@
 using Microsoft.Extensions.Logging;
 using SlideGenerator.Document.Presentations.Identifiers;
 using SlideGenerator.Generator.Job;
+using SlideGenerator.Generator.Job.Models;
 using SlideGenerator.Generator.Persistence;
 using SlideGenerator.Generator.Progress;
 using SlideGenerator.Recipe;
@@ -174,7 +175,7 @@ internal sealed class Service(
     public async Task<PartialResult> StopAsync(string requestId, CancellationToken ct = default)
     {
         var jobs = await jobsRepository.GetByRequestIdAsync(requestId, ct).ConfigureAwait(false);
-        return await FanOutAsync(jobs, j => j.Status is Status.Running or Status.Pending or Status.Paused,
+        return await FanOutAsync(jobs, j => j.JobStatus is JobStatus.Running or JobStatus.Pending or JobStatus.Paused,
             j => jobRunner.StopJobAsync(requestId, j.JobId)).ConfigureAwait(false);
     }
 
@@ -182,7 +183,7 @@ internal sealed class Service(
     public async Task<PartialResult> PauseAsync(string requestId, CancellationToken ct = default)
     {
         var jobs = await jobsRepository.GetByRequestIdAsync(requestId, ct).ConfigureAwait(false);
-        return await FanOutAsync(jobs, j => j.Status == Status.Running,
+        return await FanOutAsync(jobs, j => j.JobStatus == JobStatus.Running,
             j => jobRunner.PauseJobAsync(requestId, j.JobId)).ConfigureAwait(false);
     }
 
@@ -190,7 +191,7 @@ internal sealed class Service(
     public async Task<PartialResult> ResumeAsync(string requestId, CancellationToken ct = default)
     {
         var jobs = await jobsRepository.GetByRequestIdAsync(requestId, ct).ConfigureAwait(false);
-        return await FanOutAsync(jobs, j => j.Status == Status.Paused,
+        return await FanOutAsync(jobs, j => j.JobStatus == JobStatus.Paused,
             j => jobRunner.ResumeJobAsync(requestId, j.JobId)).ConfigureAwait(false);
     }
 
@@ -210,7 +211,7 @@ internal sealed class Service(
     {
         var actives = await ListActiveAsync(ct).ConfigureAwait(false);
         var count = 0;
-        foreach (var requestId in actives.Where(kv => kv.Value.Status == Status.Running).Select(kv => kv.Key))
+        foreach (var requestId in actives.Where(kv => kv.Value.JobStatus == JobStatus.Running).Select(kv => kv.Key))
             if ((await PauseAsync(requestId, ct).ConfigureAwait(false)).Succeeded > 0)
                 count++;
         return count;
@@ -220,7 +221,7 @@ internal sealed class Service(
     public async Task<IReadOnlyDictionary<string, Summary>> ListActiveAsync(CancellationToken ct = default)
     {
         var groups = await ListGroupsAsync(ct).ConfigureAwait(false);
-        var active = groups.Where(kv => DeriveStatus(kv.Value) is Status.Running or Status.Paused);
+        var active = groups.Where(kv => DeriveStatus(kv.Value) is JobStatus.Running or JobStatus.Paused);
         return await ToSummariesAsync(active, ct).ConfigureAwait(false);
     }
 
@@ -228,7 +229,7 @@ internal sealed class Service(
     public async Task<IReadOnlyDictionary<string, Summary>> ListCompletedAsync(CancellationToken ct = default)
     {
         var groups = await ListGroupsAsync(ct).ConfigureAwait(false);
-        var completed = groups.Where(kv => DeriveStatus(kv.Value) is Status.Complete or Status.Cancelled);
+        var completed = groups.Where(kv => DeriveStatus(kv.Value) is JobStatus.Complete or JobStatus.Cancelled);
         return await ToSummariesAsync(completed, ct).ConfigureAwait(false);
     }
 
@@ -242,7 +243,7 @@ internal sealed class Service(
             return false;
         }
 
-        if (DeriveStatus(jobs) is Status.Running or Status.Paused)
+        if (DeriveStatus(jobs) is JobStatus.Running or JobStatus.Paused)
             await StopAsync(requestId, ct).ConfigureAwait(false);
 
         await jobsRepository.DeleteByRequestIdAsync(requestId, ct).ConfigureAwait(false);
@@ -269,16 +270,16 @@ internal sealed class Service(
 
     #region Aggregation helpers
 
-    private async Task<IReadOnlyDictionary<string, IReadOnlyList<JobRecord>>> ListGroupsAsync(CancellationToken ct = default)
+    private async Task<IReadOnlyDictionary<string, IReadOnlyList<JobSnapshot>>> ListGroupsAsync(CancellationToken ct = default)
     {
         var all = await jobsRepository.GetAllAsync(ct).ConfigureAwait(false);
         return all
             .GroupBy(j => j.RequestId)
-            .ToDictionary(g => g.Key, IReadOnlyList<JobRecord> (g) => [.. g]);
+            .ToDictionary(g => g.Key, IReadOnlyList<JobSnapshot> (g) => [.. g]);
     }
 
     private async Task<IReadOnlyDictionary<string, Summary>> ToSummariesAsync(
-        IEnumerable<KeyValuePair<string, IReadOnlyList<JobRecord>>> groups, CancellationToken ct)
+        IEnumerable<KeyValuePair<string, IReadOnlyList<JobSnapshot>>> groups, CancellationToken ct)
     {
         var result = new Dictionary<string, Summary>();
         foreach (var (requestId, jobs) in groups)
@@ -298,14 +299,14 @@ internal sealed class Service(
     {
         var active = await jobsRepository.GetNonTerminalAsync().ConfigureAwait(false);
         var activeOutputPaths = active
-            .Where(j => j.Status is Status.Running or Status.Pending or Status.Paused)
+            .Where(j => j.JobStatus is JobStatus.Running or JobStatus.Pending or JobStatus.Paused)
             .Select(j => j.OutputPath)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
         return jobs.Select(j => j.OutputPath).FirstOrDefault(activeOutputPaths.Contains);
     }
 
     private static async Task<PartialResult> FanOutAsync(
-        IReadOnlyList<JobRecord> jobs, Func<JobRecord, bool> eligible, Func<JobRecord, Task<bool>> action)
+        IReadOnlyList<JobSnapshot> jobs, Func<JobSnapshot, bool> eligible, Func<JobSnapshot, Task<bool>> action)
     {
         var succeeded = 0;
         var skipped = 0;
@@ -350,21 +351,21 @@ internal sealed class Service(
     }
 
     /// <summary>
-    ///     Aggregates a request's job statuses into one request-level <see cref="Status" />. Any job still
-    ///     <see cref="Status.Pending" /> or <see cref="Status.Running" /> counts as the request Running
+    ///     Aggregates a request's job statuses into one request-level <see cref="JobStatus" />. Any job still
+    ///     <see cref="JobStatus.Pending" /> or <see cref="JobStatus.Running" /> counts as the request Running
     ///     (a request with only just-spawned Pending jobs is "in progress", not idle) — this is the fix
     ///     for the gap where an all-Pending request used to fall through to Complete.
     /// </summary>
-    internal static Status DeriveStatus(IReadOnlyList<JobRecord> jobs)
+    internal static JobStatus DeriveStatus(IReadOnlyList<JobSnapshot> jobs)
     {
-        if (jobs.Count == 0) return Status.Complete;
-        if (jobs.Any(j => j.Status is Status.Running or Status.Pending)) return Status.Running;
-        if (jobs.Any(j => j.Status == Status.Paused)) return Status.Paused;
-        if (jobs.All(j => j.Status == Status.Cancelled)) return Status.Cancelled;
-        return Status.Complete;
+        if (jobs.Count == 0) return JobStatus.Complete;
+        if (jobs.Any(j => j.JobStatus is JobStatus.Running or JobStatus.Pending)) return JobStatus.Running;
+        if (jobs.Any(j => j.JobStatus == JobStatus.Paused)) return JobStatus.Paused;
+        if (jobs.All(j => j.JobStatus == JobStatus.Cancelled)) return JobStatus.Cancelled;
+        return JobStatus.Complete;
     }
 
-    private async Task<Summary?> ToSummaryAsync(string requestId, IReadOnlyList<JobRecord> jobs, CancellationToken ct)
+    private async Task<Summary?> ToSummaryAsync(string requestId, IReadOnlyList<JobSnapshot> jobs, CancellationToken ct)
     {
         if (jobs.Count == 0) return null;
         var record = await requestsRepository.GetAsync(requestId, ct).ConfigureAwait(false);
@@ -372,7 +373,7 @@ internal sealed class Service(
 
         var status = DeriveStatus(jobs);
         var createdAt = record.CreatedAt;
-        var completedAt = status is Status.Complete or Status.Cancelled
+        var completedAt = status is JobStatus.Complete or JobStatus.Cancelled
             ? jobs.Max(j => j.Timestamp)
             : (DateTimeOffset?)null;
         var logEntries = logFileReader.ReadAll(record.LogPath);
@@ -382,7 +383,7 @@ internal sealed class Service(
         return new Summary
         {
             Request = record.Request,
-            Status = status,
+            JobStatus = status,
             Phase = DeriveRequestPhase(jobs),
             CreatedAt = createdAt,
             CompletedAt = completedAt,
@@ -391,16 +392,16 @@ internal sealed class Service(
         };
     }
 
-    private static JobSummary ToJobSummary(string requestId, JobRecord job, IReadOnlyList<LogEntry> logEntries)
+    private static JobSummary ToJobSummary(string requestId, JobSnapshot job, IReadOnlyList<LogEntry> logEntries)
     {
         var jobScopePrefix = $"{requestId}/{job.JobId}";
         return new JobSummary
         {
-            Status = job.Status,
+            JobStatus = job.JobStatus,
             Phase = job.Phase,
             CurrentIndex = job.CurrentIndex,
             OutputPath = job.OutputPath,
-            CompletedAt = job.Status is Status.Complete or Status.Cancelled or Status.Error ? job.Timestamp : null,
+            CompletedAt = job.JobStatus is JobStatus.Complete or JobStatus.Cancelled or JobStatus.Error ? job.Timestamp : null,
             Logs =
             [
                 .. logEntries
@@ -411,10 +412,10 @@ internal sealed class Service(
     }
 
     /// <summary>Derives the aggregate request phase purely from current job statuses — not persisted.</summary>
-    private static RequestPhase DeriveRequestPhase(IReadOnlyList<JobRecord> jobs)
+    private static RequestPhase DeriveRequestPhase(IReadOnlyList<JobSnapshot> jobs)
     {
-        if (jobs.All(j => j.Status == Status.Pending)) return RequestPhase.PreparationStarted;
-        if (jobs.All(j => j.Status is Status.Complete or Status.Cancelled or Status.Error))
+        if (jobs.All(j => j.JobStatus == JobStatus.Pending)) return RequestPhase.PreparationStarted;
+        if (jobs.All(j => j.JobStatus is JobStatus.Complete or JobStatus.Cancelled or JobStatus.Error))
             return RequestPhase.Completed;
         return RequestPhase.ProcessingStarted;
     }

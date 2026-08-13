@@ -15,6 +15,7 @@
 using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using SlideGenerator.Generator.Job.Models;
 using SlideGenerator.Image.Cropping;
 
 namespace SlideGenerator.Generator.Persistence;
@@ -29,7 +30,7 @@ namespace SlideGenerator.Generator.Persistence;
 /// </summary>
 internal static class JobSpecificationJson
 {
-    /// <summary>Shared options for serializing <see cref="Job.JobSpecification" />'s JSON columns.</summary>
+    /// <summary>Shared options for serializing <see cref="JobSpecification" />'s JSON columns.</summary>
     internal static readonly JsonSerializerOptions Options = Build();
 
     private static JsonSerializerOptions Build()

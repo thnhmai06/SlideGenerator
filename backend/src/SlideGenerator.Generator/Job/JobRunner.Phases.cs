@@ -20,6 +20,7 @@ using SlideGenerator.Document.Presentations.Components;
 using SlideGenerator.Document.Presentations.Identifiers;
 using SlideGenerator.Document.Workbooks.Components;
 using SlideGenerator.Document.Workbooks.Identifiers;
+using SlideGenerator.Generator.Job.Models;
 using SlideGenerator.Generator.Progress;
 using SlideGenerator.Image.Loading;
 using SlideGenerator.Recipe.Models;
@@ -31,10 +32,10 @@ internal sealed partial class JobRunner
 {
     /// <summary>
     ///     Runs phases A→D in order, skipping phases already completed on resume, checkpointing pause/cancel
-    ///     between rows and at every phase boundary. Returns the final <see cref="JobRecord" /> (Status =
+    ///     between rows and at every phase boundary. Returns the final <see cref="JobSnapshot" /> (Status =
     ///     Complete, Phase = Done) once every row has passed through every phase.
     /// </summary>
-    private async Task<JobRecord> RunPhasesAsync(JobRecord initial, RunningJob running, ILogger jobLogger)
+    private async Task<JobSnapshot> RunPhasesAsync(JobSnapshot initial, RunningJob running, ILogger jobLogger)
     {
         var requestId = initial.RequestId;
         var jobId = initial.JobId;
@@ -98,7 +99,7 @@ internal sealed partial class JobRunner
             }
 
             jobLogger.LogInformation("Job complete: {OutputPath}", spec.OutputPath);
-            return new JobRecord(requestId, jobId, Status.Complete, JobPhase.Done, dataRows.Count, spec,
+            return new JobSnapshot(requestId, jobId, JobStatus.Complete, JobPhase.Done, dataRows.Count, spec,
                 DateTimeOffset.UtcNow);
         }
         finally
@@ -113,7 +114,7 @@ internal sealed partial class JobRunner
     {
         running.LastPhase = phase;
         running.LastIndex = currentIndex;
-        var record = new JobRecord(requestId, jobId, Status.Running, phase, currentIndex, spec, DateTimeOffset.UtcNow);
+        var record = new JobSnapshot(requestId, jobId, JobStatus.Running, phase, currentIndex, spec, DateTimeOffset.UtcNow);
         Persist(record);
         await jobsRepository.FlushAsync(ct).ConfigureAwait(false);
     }
@@ -169,7 +170,7 @@ internal sealed partial class JobRunner
             output.Save();
 
             running.LastIndex = i + 1;
-            Persist(new JobRecord(requestId, jobId, Status.Running, JobPhase.CreatingSlides, i + 1, spec,
+            Persist(new JobSnapshot(requestId, jobId, JobStatus.Running, JobPhase.CreatingSlides, i + 1, spec,
                 DateTimeOffset.UtcNow));
         }
     }
@@ -200,7 +201,7 @@ internal sealed partial class JobRunner
 
             ReportRow(requestId, jobId, dataRow + 1, RowStatus.Done);
             running.LastIndex = i + 1;
-            Persist(new JobRecord(requestId, jobId, Status.Running, JobPhase.FillingText, i + 1, spec,
+            Persist(new JobSnapshot(requestId, jobId, JobStatus.Running, JobPhase.FillingText, i + 1, spec,
                 DateTimeOffset.UtcNow));
         }
     }
@@ -316,7 +317,7 @@ internal sealed partial class JobRunner
             ReportRow(requestId, jobId, dataRow + 1, RowStatus.Done);
 
             running.LastIndex = i + 1;
-            Persist(new JobRecord(requestId, jobId, Status.Running, JobPhase.FillingImages, i + 1, spec,
+            Persist(new JobSnapshot(requestId, jobId, JobStatus.Running, JobPhase.FillingImages, i + 1, spec,
                 DateTimeOffset.UtcNow));
         }
     }

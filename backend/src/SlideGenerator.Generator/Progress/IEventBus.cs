@@ -13,6 +13,7 @@
  */
 
 using SlideGenerator.Generator.Job;
+using SlideGenerator.Generator.Job.Models;
 
 namespace SlideGenerator.Generator.Progress
 {
@@ -38,8 +39,8 @@ namespace SlideGenerator.Generator.Progress
         /// <summary>Publishes a <see cref="RequestProgress" /> event to all registered observers.</summary>
         void Publish(RequestProgress progress);
 
-        /// <summary>Publishes a <see cref="JobRecord" /> event to all registered observers.</summary>
-        void Publish(JobRecord job);
+        /// <summary>Publishes a <see cref="JobSnapshot" /> event to all registered observers.</summary>
+        void Publish(JobSnapshot job);
 
         /// <summary>Publishes a <see cref="RowProgress" /> event to all registered observers.</summary>
         void Publish(RowProgress progress);
@@ -49,7 +50,7 @@ namespace SlideGenerator.Generator.Progress
         ///     called once before the spawn loop begins. Not itself a progress event (not persisted, not
         ///     forwarded as a notification) — purely a bookkeeping signal so a subscriber computing
         ///     <see cref="RequestPhase.ProcessingStarted" /> knows the true expected job count up front,
-        ///     instead of inferring it from however many <see cref="JobRecord" /> events have arrived so
+        ///     instead of inferring it from however many <see cref="JobSnapshot" /> events have arrived so
         ///     far (which races against the still-running spawn loop for multi-job requests).
         /// </summary>
         void AnnounceExpectedJobCount(string requestId, int count);

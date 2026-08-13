@@ -13,6 +13,7 @@
  */
 
 using SlideGenerator.Generator.Job;
+using SlideGenerator.Generator.Job.Models;
 using SlideGenerator.Generator.Progress;
 
 namespace SlideGenerator.Generator;
@@ -32,7 +33,7 @@ public sealed record Summary
     public required Request Request { get; init; }
 
     /// <summary>Gets the aggregate execution status across every job of this request (see <c>Service.DeriveStatus</c>).</summary>
-    public required Status Status { get; init; }
+    public required JobStatus JobStatus { get; init; }
 
     /// <summary>Gets the aggregate lifecycle phase of this request, or <see langword="null" /> if none recorded yet.</summary>
     public RequestPhase? Phase { get; init; }
@@ -62,7 +63,7 @@ public sealed record Summary
 public sealed record JobSummary
 {
     /// <summary>Gets the execution status of this specific job.</summary>
-    public required Status Status { get; init; }
+    public required JobStatus JobStatus { get; init; }
 
     /// <summary>Gets the current phase within the 4-phase pipeline.</summary>
     public required JobPhase Phase { get; init; }
