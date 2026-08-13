@@ -13,8 +13,8 @@
  */
 
 using FluentAssertions;
-using SlideGenerator.Document.Slide;
-using SlideGenerator.Document.Workbook;
+using SlideGenerator.Document.Slides;
+using SlideGenerator.Document.Workbooks;
 using SlideGenerator.Generator.Models.Data;
 using SlideGenerator.Generator.Models.Enum;
 using SlideGenerator.Generator.Services;

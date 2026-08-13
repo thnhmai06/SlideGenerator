@@ -13,7 +13,6 @@
  */
 
 using FluentAssertions;
-using SlideGenerator.Cloud;
 using Xunit;
 
 namespace SlideGenerator.Cloud.Tests.Unit;

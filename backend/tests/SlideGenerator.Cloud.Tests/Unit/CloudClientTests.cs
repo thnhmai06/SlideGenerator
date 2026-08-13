@@ -15,7 +15,6 @@
 using System.Net;
 using System.Net.Http.Headers;
 using FluentAssertions;
-using SlideGenerator.Cloud;
 using SlideGenerator.Cloud.Tests.Helpers;
 using Xunit;
 

@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Cloud
- * File: Client.cs
+ * File: CloudClient.cs
  *
  * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -14,7 +14,7 @@
 
 using System.Net;
 using Microsoft.Extensions.Logging;
-using SlideGenerator.Cloud.Resolver;
+using SlideGenerator.Cloud.Resolvers;
 
 namespace SlideGenerator.Cloud;
 
@@ -116,7 +116,7 @@ public interface ICloudClient
 /// </summary>
 internal sealed class CloudClient(ILogger<CloudClient>? logger = null) : ICloudClient
 {
-    private readonly IReadOnlyList<CloudResolver> _resolvers = [new GoogleDriveModule()];
+    private readonly IReadOnlyList<CloudResolver> _resolvers = [new GoogleDriveResolver()];
 
     /// <inheritdoc />
     /// <remarks>

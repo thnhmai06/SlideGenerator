@@ -12,8 +12,8 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Document.Slide;
-using SlideGenerator.Document.Workbook;
+using SlideGenerator.Document.Slides;
+using SlideGenerator.Document.Workbooks;
 
 namespace SlideGenerator.Recipe.Rules;
 
@@ -57,10 +57,10 @@ public static class RecipePackageRules
 
             /// <summary>
             ///     Allowed extensions for entries under <c>Workbooks/</c> (case-insensitive, with dot).
-            ///     Derived from all <see cref="BookType" /> values.
+            ///     Derived from all <see cref="WorkbookType" /> values.
             /// </summary>
             public static readonly IReadOnlySet<string> FileExtensions =
-                new HashSet<string>(Enum.GetValues<BookType>().Select(t => t.ToExtension()),
+                new HashSet<string>(Enum.GetValues<WorkbookType>().Select(t => t.ToExtension()),
                     StringComparer.OrdinalIgnoreCase);
         }
 

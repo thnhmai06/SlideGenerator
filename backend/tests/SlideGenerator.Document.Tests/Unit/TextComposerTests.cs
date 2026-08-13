@@ -15,7 +15,7 @@
 using System.Drawing;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
-using SlideGenerator.Document.Slide;
+using SlideGenerator.Document.Slides;
 using SlideGenerator.Document.Template;
 using Xunit;
 

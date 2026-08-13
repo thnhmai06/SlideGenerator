@@ -16,8 +16,6 @@ using FluentAssertions;
 using NSubstitute;
 using SlideGenerator.Image.Tests.Integration.Fixtures;
 using Xunit;
-
-using SlideGenerator.Image.Cropping;
 using SlideGenerator.Image.FaceDetection;
 using SlideGenerator.Image.Loading;
 namespace SlideGenerator.Image.Tests.Integration;

@@ -54,7 +54,7 @@ extension(IServiceCollection services)
         services.AddSingleton<IFaceDetector>(sp =>
         {
             var factory = sp.GetRequiredService<Func<IFaceDetector>>();
-            return new FaceDetectorPool(factory, () => (uint)Environment.ProcessorCount);
+            return new YuNetPool(() => (uint)Environment.ProcessorCount);
         });
 
         // Shared connection builder for the single Data.db (Recipes/Requests/Jobs tables).

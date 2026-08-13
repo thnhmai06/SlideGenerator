@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Document
- * File: WorkbookProvider.cs
+ * File: WorkbookOpener.cs
  *
  * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -21,7 +21,7 @@ namespace SlideGenerator.Document.Workbooks;
 ///     Defines the contract for opening Excel workbooks.
 ///     Hides the Syncfusion <c>ExcelEngine</c> lifecycle from callers.
 /// </summary>
-public interface IWorkbookProvider
+public interface IWorkbookOpener
 {
     /// <summary>
     ///     Opens a workbook in <b>read-write</b> mode asynchronously.
@@ -49,10 +49,10 @@ public interface IWorkbookProvider
 }
 
 /// <summary>
-///     Syncfusion implementation of <see cref="IWorkbookProvider" />.
+///     Syncfusion implementation of <see cref="IWorkbookOpener" />.
 ///     Wraps the singleton <see cref="ExcelEngine" /> so callers never import Syncfusion types.
 /// </summary>
-internal sealed class SfWorkbookProvider : IWorkbookProvider
+internal sealed class SfWorkbookOpener : IWorkbookOpener
 {
     private readonly ExcelEngine _engine = new();
 

@@ -13,7 +13,7 @@
  */
 
 using FluentAssertions;
-using SlideGenerator.Document.Slide;
+using SlideGenerator.Document.Slides;
 using Syncfusion.Licensing;
 using Xunit;
 
@@ -28,7 +28,7 @@ namespace SlideGenerator.Document.Tests.Integration;
 public sealed class SlideIntegrationTests
 {
     private static readonly string TemplatePath = Path.Combine("fixtures", "data", "Template.pptx");
-    private readonly SfPresentationProvider _provider = new();
+    private readonly SfPresentationOpener _opener = new();
 
     /// <summary>Registers the Syncfusion license before each test.</summary>
     public SlideIntegrationTests()
@@ -43,7 +43,7 @@ public sealed class SlideIntegrationTests
     [Fact]
     public async Task Equals_SameSlide_ReturnsTrue()
     {
-        using var pres = await _provider.OpenPresentationReadOnlyAsync(new PresentationIdentifier(TemplatePath));
+        using var pres = await _opener.OpenPresentationReadOnlyAsync(new PresentationIdentifier(TemplatePath));
         var slide = pres.Slides.First();
 
         slide.Equals(slide).Should().BeTrue();
@@ -56,7 +56,7 @@ public sealed class SlideIntegrationTests
     [Fact]
     public async Task Equals_NullOther_ReturnsFalse()
     {
-        using var pres = await _provider.OpenPresentationReadOnlyAsync(new PresentationIdentifier(TemplatePath));
+        using var pres = await _opener.OpenPresentationReadOnlyAsync(new PresentationIdentifier(TemplatePath));
         var slide = pres.Slides.First();
 
         slide.Equals(null).Should().BeFalse();
@@ -69,7 +69,7 @@ public sealed class SlideIntegrationTests
     [Fact]
     public async Task IsWriteProtected_UnprotectedPresentation_ReturnsFalse()
     {
-        using var pres = await _provider.OpenPresentationReadOnlyAsync(new PresentationIdentifier(TemplatePath));
+        using var pres = await _opener.OpenPresentationReadOnlyAsync(new PresentationIdentifier(TemplatePath));
         pres.IsWriteProtected.Should().BeFalse();
     }
 }

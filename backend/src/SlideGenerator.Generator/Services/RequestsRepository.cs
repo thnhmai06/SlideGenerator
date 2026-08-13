@@ -15,7 +15,7 @@
 using System.Globalization;
 using Dapper;
 using Microsoft.Data.Sqlite;
-using SlideGenerator.Document.Slide;
+using SlideGenerator.Document.Slides;
 using SlideGenerator.Generator.Abstractions;
 using SlideGenerator.Generator.Models.Data;
 

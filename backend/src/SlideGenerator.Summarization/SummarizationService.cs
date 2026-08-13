@@ -12,9 +12,9 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Document.Slide;
+using SlideGenerator.Document.Slides;
 using SlideGenerator.Document.Template;
-using SlideGenerator.Document.Workbook;
+using SlideGenerator.Document.Workbooks;
 using SlideGenerator.Summarization.Slide;
 using SlideGenerator.Summarization.Workbook;
 
@@ -25,8 +25,8 @@ namespace SlideGenerator.Summarization;
 ///     Extracts structural metadata, identifies placeholders, and generates visual previews.
 /// </summary>
 internal sealed class SummarizationService(
-    IWorkbookProvider workbookProvider,
-    IPresentationProvider presentationProvider,
+    IWorkbookOpener workbookOpener,
+    IPresentationOpener presentationOpener,
     ITemplateEngine templateEngine) : ISummarizationService
 {
     /// <inheritdoc />
@@ -35,7 +35,7 @@ internal sealed class SummarizationService(
         if (!File.Exists(identifier.BookPath))
             throw new FileNotFoundException("Workbook not found.", identifier.BookPath);
 
-        using var workbook = await workbookProvider.OpenWorkbookReadOnlyAsync(identifier).ConfigureAwait(false);
+        using var workbook = await workbookOpener.OpenWorkbookReadOnlyAsync(identifier).ConfigureAwait(false);
         var worksheets = new List<WorksheetSummary>();
         foreach (var worksheet in workbook.Worksheets)
         {
@@ -69,7 +69,7 @@ internal sealed class SummarizationService(
         if (!File.Exists(identifier.PresentationPath))
             throw new FileNotFoundException("Presentation not found.", identifier.PresentationPath);
 
-        using var presentation = await presentationProvider
+        using var presentation = await presentationOpener
             .OpenPresentationReadOnlyAsync(identifier).ConfigureAwait(false);
 
         var slides = new List<SlideSummary>();

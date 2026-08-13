@@ -17,9 +17,9 @@ using Microsoft.Extensions.Logging;
 using Serilog.Context;
 using Serilog.Events;
 using SlideGenerator.Cloud;
-using SlideGenerator.Document.Slide;
+using SlideGenerator.Document.Slides;
 using SlideGenerator.Document.Template;
-using SlideGenerator.Document.Workbook;
+using SlideGenerator.Document.Workbooks;
 using SlideGenerator.Generator.Abstractions;
 using SlideGenerator.Generator.Models.Data;
 using SlideGenerator.Generator.Models.Enum;
@@ -37,9 +37,9 @@ namespace SlideGenerator.Generator.Services;
 ///     implementation (ported from the removed <c>GenerateJobStep</c>/<c>InspectUrlsStep</c>).
 /// </summary>
 internal sealed partial class JobRunner(
-    IWorkbookProvider workbookProvider,
-    IPresentationProvider presentationProvider,
-    ITextComposer textComposer,
+    IWorkbookOpener workbookOpener,
+    IPresentationOpener presentationOpener,
+    TextComposer textComposer,
     ISmartCropper smartCropper,
     IImageLoader imageLoader,
     ICloudClient cloudClient,

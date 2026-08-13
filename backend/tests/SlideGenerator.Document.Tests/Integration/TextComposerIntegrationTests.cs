@@ -17,7 +17,7 @@ using CsvHelper;
 using CsvHelper.Configuration;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
-using SlideGenerator.Document.Slide;
+using SlideGenerator.Document.Slides;
 using SlideGenerator.Document.Template;
 using SlideGenerator.Document.Tests.Integration.Models;
 using Syncfusion.Licensing;

@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Image
- * File: FaceDetectorPool.cs
+ * File: YuNetPool.cs
  *
  * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -22,8 +22,8 @@ namespace SlideGenerator.Image.FaceDetection;
 ///     Acquires one detector per <see cref="DetectAsync" /> call and releases it on completion,
 ///     allowing concurrent face-detection up to the pool limit.
 /// </summary>
-public sealed class FaceDetectorPool(Func<IFaceDetector> factory, Func<uint> limitResolver)
-    : Pool<IFaceDetector>(factory, limitResolver), IFaceDetector
+public sealed class YuNetPool(Func<uint> limitResolver)
+    : Pool<IFaceDetector>(() => new YuNet(), limitResolver), IFaceDetector
 {
     /// <inheritdoc />
     public async Task<IReadOnlyList<Face>> DetectAsync(IImage image)

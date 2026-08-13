@@ -28,8 +28,8 @@ public static class Registration
 {
     /// <summary>
     ///     Registers document services and activates the Syncfusion license.
-    ///     License validation warnings are emitted by <see cref="SfWorkbookProvider" /> and
-    ///     <see cref="SfPresentationProvider" /> on first use via their injected loggers.
+    ///     License validation warnings are emitted by <see cref="SfWorkbookOpener" /> and
+    ///     <see cref="SfPresentationOpener" /> on first use via their injected loggers.
     /// </summary>
     /// <param name="services">The service collection to add services to.</param>
     /// <returns>The updated service collection.</returns>
@@ -39,11 +39,11 @@ public static class Registration
         if (!string.IsNullOrWhiteSpace(licenseKey) && licenseKey != "empty")
             SyncfusionLicenseProvider.RegisterLicense(licenseKey);
 
-        services.AddSingleton<IWorkbookProvider, SfWorkbookProvider>();
-        services.AddSingleton<IPresentationProvider, SfPresentationProvider>();
+        services.AddSingleton<IWorkbookOpener, SfWorkbookOpener>();
+        services.AddSingleton<IPresentationOpener, SfPresentationOpener>();
         services.AddSingleton<ITemplateEngine>(sp => new MustacheEngine(
             sp.GetService<ILogger<MustacheEngine>>()));
-        services.AddSingleton<ITextComposer, TextComposer>();
+        services.AddSingleton<TextComposer, TextComposer>();
 
         return services;
     }

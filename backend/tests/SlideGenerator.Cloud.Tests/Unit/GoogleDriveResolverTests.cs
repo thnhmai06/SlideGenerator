@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Cloud.Tests
- * File: GoogleDriveModuleTests.cs
+ * File: GoogleDriveResolverTests.cs
  *
  * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -14,25 +14,25 @@
 
 using System.Net;
 using FluentAssertions;
-using SlideGenerator.Cloud.Resolver;
+using SlideGenerator.Cloud.Resolvers;
 using SlideGenerator.Cloud.Tests.Helpers;
 using Xunit;
 
 namespace SlideGenerator.Cloud.Tests.Unit;
 
 /// <summary>
-///     Unit tests for <see cref="GoogleDriveModule" />, verifying URL recognition, file-ID
+///     Unit tests for <see cref="GoogleDriveResolver" />, verifying URL recognition, file-ID
 ///     extraction from various link formats, folder HTML scanning, and null-safe failure paths.
 ///     All HTTP calls are intercepted by <see cref="FakeHttpHandler" />.
 /// </summary>
-public sealed class GoogleDriveModuleTests
+public sealed class GoogleDriveResolverTests
 {
-    private readonly GoogleDriveModule _sut = new();
+    private readonly GoogleDriveResolver _sut = new();
 
     #region ResolveAsync — unsupported URI
 
     /// <summary>
-    ///     Verifies that <see cref="GoogleDriveModule.ResolveAsync" /> throws
+    ///     Verifies that <see cref="GoogleDriveResolver.ResolveAsync" /> throws
     ///     <see cref="ArgumentException" /> when called with a URI that is not a Google Drive link.
     /// </summary>
     [Fact]
@@ -53,7 +53,7 @@ public sealed class GoogleDriveModuleTests
     #region IsResolvable
 
     /// <summary>
-    ///     Verifies that <see cref="GoogleDriveModule.IsResolvable" /> returns <see langword="true" />
+    ///     Verifies that <see cref="GoogleDriveResolver.IsResolvable" /> returns <see langword="true" />
     ///     for any URI whose host ends with <c>drive.google.com</c>.
     /// </summary>
     [Fact]
@@ -67,7 +67,7 @@ public sealed class GoogleDriveModuleTests
     }
 
     /// <summary>
-    ///     Verifies that <see cref="GoogleDriveModule.IsResolvable" /> returns <see langword="false" />
+    ///     Verifies that <see cref="GoogleDriveResolver.IsResolvable" /> returns <see langword="false" />
     ///     for a URI that does not belong to Google Drive.
     /// </summary>
     [Fact]

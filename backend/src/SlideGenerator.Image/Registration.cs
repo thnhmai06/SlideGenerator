@@ -30,8 +30,6 @@ public static class Registration
         /// <summary>Registers all Image module services.</summary>
         public IServiceCollection AddImageServices()
         {
-            services.AddSingleton<Func<IFaceDetector>>(_ => () => new YuNet());
-
             services.AddSingleton<IImageLoader, VipsImageLoader>();
             services.AddSingleton<IInterestCropper, LibvipsInterestCropper>();
             services.AddSingleton<IAnchorCropper>(sp => new AnchorCropper(

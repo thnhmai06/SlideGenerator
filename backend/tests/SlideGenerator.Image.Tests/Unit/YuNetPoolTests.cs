@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Image.Tests
- * File: FaceDetectorPoolTests.cs
+ * File: YuNetPoolTests.cs
  *
  * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -18,22 +18,20 @@ using NSubstitute;
 using Xunit;
 
 // ReSharper disable AccessToDisposedClosure
-
-using SlideGenerator.Image.Cropping;
 using SlideGenerator.Image.FaceDetection;
 using SlideGenerator.Image.Loading;
 namespace SlideGenerator.Image.Tests.Unit;
 
 /// <summary>
-///     Unit tests for <see cref="FaceDetectorPool" />, verifying concurrent detection respects
+///     Unit tests for <see cref="YuNetPool" />, verifying concurrent detection respects
 ///     pool limits and that detector slots are correctly released after use or on exception.
 /// </summary>
-public sealed class FaceDetectorPoolTests
+public sealed class YuNetPoolTests
 {
     #region DetectAsync — result forwarding
 
     /// <summary>
-    ///     Verifies that <see cref="FaceDetectorPool.DetectAsync" /> returns the face list produced
+    ///     Verifies that <see cref="YuNetPool.DetectAsync" /> returns the face list produced
     ///     by the underlying detector unchanged.
     /// </summary>
     [Fact]
@@ -43,7 +41,7 @@ public sealed class FaceDetectorPoolTests
         var detector = Substitute.For<IFaceDetector>();
         detector.DetectAsync(Arg.Any<IImage>()).Returns(Task.FromResult(expected));
 
-        using var pool = new FaceDetectorPool(() => detector, () => 5);
+        using var pool = new YuNetPool(() => 5);
 
         var result = await pool.DetectAsync(CreateImage());
 
@@ -55,7 +53,7 @@ public sealed class FaceDetectorPoolTests
     #region DetectAsync — exception safety
 
     /// <summary>
-    ///     Verifies that <see cref="FaceDetectorPool.DetectAsync" /> releases the detector slot
+    ///     Verifies that <see cref="YuNetPool.DetectAsync" /> releases the detector slot
     ///     even when the underlying detector throws, so further calls do not deadlock at limit=1.
     /// </summary>
     [Fact]
@@ -68,7 +66,7 @@ public sealed class FaceDetectorPoolTests
                 ? Task.FromException<IReadOnlyList<Face>>(new InvalidOperationException("simulated"))
                 : Task.FromResult<IReadOnlyList<Face>>(Array.Empty<Face>()));
 
-        using var pool = new FaceDetectorPool(() => detector, () => 1);
+        using var pool = new YuNetPool(() => 1);
         var image = CreateImage();
 
         await FluentActions.Awaiting(() => pool.DetectAsync(image))
@@ -134,7 +132,7 @@ public sealed class FaceDetectorPoolTests
     #region DetectAsync — concurrency
 
     /// <summary>
-    ///     Verifies that concurrent calls to <see cref="FaceDetectorPool.DetectAsync" /> never
+    ///     Verifies that concurrent calls to <see cref="YuNetPool.DetectAsync" /> never
     ///     exceed the pool limit, measured by the peak number of detections in progress simultaneously.
     /// </summary>
     [Fact]
@@ -144,9 +142,7 @@ public sealed class FaceDetectorPoolTests
         const int totalCalls = 8;
         var tracker = new ConcurrencyTracker();
 
-        using var pool = new FaceDetectorPool(
-            () => CreateTrackingDetector(tracker),
-            () => limit);
+        using var pool = new YuNetPool(() => limit);
 
         var image = CreateImage();
         await Task.WhenAll(Enumerable.Range(0, totalCalls).Select(_ => pool.DetectAsync(image)));
@@ -165,9 +161,7 @@ public sealed class FaceDetectorPoolTests
         const int totalCalls = 9;
         var tracker = new ConcurrencyTracker();
 
-        using var pool = new FaceDetectorPool(
-            () => CreateTrackingDetector(tracker, 50),
-            () => limit);
+        using var pool = new YuNetPool(() => limit);
 
         var image = CreateImage();
         var results = await Task.WhenAll(

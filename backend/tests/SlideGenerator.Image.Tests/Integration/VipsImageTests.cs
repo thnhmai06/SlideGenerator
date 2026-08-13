@@ -16,9 +16,6 @@ using System.Drawing;
 using FluentAssertions;
 using Xunit;
 using NetVipsImage = NetVips.Image;
-
-using SlideGenerator.Image.Cropping;
-using SlideGenerator.Image.FaceDetection;
 using SlideGenerator.Image.Loading;
 namespace SlideGenerator.Image.Tests.Integration;
 

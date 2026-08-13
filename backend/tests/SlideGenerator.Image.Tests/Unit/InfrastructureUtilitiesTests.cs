@@ -19,8 +19,7 @@ using Xunit;
 using OpenCvSize = OpenCvSharp.Size;
 
 using SlideGenerator.Image.Cropping;
-using SlideGenerator.Image.FaceDetection;
-using SlideGenerator.Image.Loading;
+
 namespace SlideGenerator.Image.Tests.Unit;
 
 /// <summary>
@@ -89,7 +88,7 @@ public sealed class InfrastructureUtilitiesTests
     [Fact]
     public void ToVips_InvalidMode_ThrowsArgumentOutOfRangeException()
     {
-        var invalidMode = (InterestType)999;
+        const InterestType invalidMode = (InterestType)67;
 
         var act = () => invalidMode.ToVips();
 

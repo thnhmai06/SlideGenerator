@@ -19,7 +19,6 @@ using NSubstitute;
 using Xunit;
 
 using SlideGenerator.Image.Cropping;
-using SlideGenerator.Image.FaceDetection;
 using SlideGenerator.Image.Loading;
 namespace SlideGenerator.Image.Tests.Unit;
 

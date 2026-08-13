@@ -23,7 +23,7 @@ namespace SlideGenerator.Image.FaceDetection;
 /// <summary>
 ///     Provides domain rules and constants for the SlideGenerator Image processing.
 /// </summary>
-public static class Rules
+internal static class Rules
 {
     /// <summary>
     ///     The confidence threshold for face detection.

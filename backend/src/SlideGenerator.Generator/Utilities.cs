@@ -13,7 +13,7 @@
  */
 
 using SlideGenerator.Cloud;
-using SlideGenerator.Document.Workbook;
+using SlideGenerator.Document.Workbooks;
 using SlideGenerator.Settings.Config;
 using SlideGenerator.Settings.Rules;
 

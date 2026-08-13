@@ -16,7 +16,6 @@ using System.Globalization;
 using Serilog.Events;
 using Serilog.Formatting;
 
-using SlideGenerator.Logging;
 namespace SlideGenerator.Logging.FileLogging;
 
 /// <summary>

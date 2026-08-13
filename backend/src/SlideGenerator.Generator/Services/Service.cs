@@ -13,7 +13,7 @@
  */
 
 using Microsoft.Extensions.Logging;
-using SlideGenerator.Document.Slide;
+using SlideGenerator.Document.Slides;
 using SlideGenerator.Generator.Abstractions;
 using SlideGenerator.Generator.Models.Data;
 using SlideGenerator.Generator.Models.Enum;

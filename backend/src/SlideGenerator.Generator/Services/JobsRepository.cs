@@ -17,7 +17,7 @@ using System.Text.Json;
 using Dapper;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
-using SlideGenerator.Document.Workbook;
+using SlideGenerator.Document.Workbooks;
 using SlideGenerator.Generator.Abstractions;
 using SlideGenerator.Generator.Adapters;
 using SlideGenerator.Generator.Models.Data;

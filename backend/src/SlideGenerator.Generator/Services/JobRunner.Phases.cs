@@ -16,13 +16,12 @@ using System.Drawing;
 using Microsoft.Extensions.Logging;
 using Serilog.Context;
 using SlideGenerator.Cloud;
-using SlideGenerator.Document.Slide;
-using SlideGenerator.Document.Workbook;
+using SlideGenerator.Document.Slides;
+using SlideGenerator.Document.Workbooks;
 using SlideGenerator.Generator.Models.Data;
 using SlideGenerator.Generator.Models.Enum;
 using SlideGenerator.Image.Loading;
 using SlideGenerator.Recipe.Models.Components;
-using SlideGenerator.Settings.Rules;
 using SlideGenerator.Utilities;
 
 namespace SlideGenerator.Generator.Services;
@@ -41,7 +40,7 @@ internal sealed partial class JobRunner
         var spec = initial.Specification;
         var ct = running.Cts.Token;
 
-        using var workbook = await workbookProvider.OpenWorkbookReadOnlyAsync(
+        using var workbook = await workbookOpener.OpenWorkbookReadOnlyAsync(
             new WorkbookIdentifier(spec.WorkbookPath), ct).ConfigureAwait(false);
         var worksheet = workbook.GetWorksheet(spec.WorksheetName)
             ?? throw new InvalidOperationException($"Sheet '{spec.WorksheetName}' not found in '{spec.WorkbookPath}'.");
@@ -123,7 +122,7 @@ internal sealed partial class JobRunner
     private async Task<IPresentation> OpenOutputAsync(PresentationIdentifier id, ILogger logger, CancellationToken ct)
     {
         logger.LogInformation("Opening output: {OutputPath}", id.PresentationPath);
-        var presentation = await presentationProvider.OpenPresentationAsync(id, ct).ConfigureAwait(false);
+        var presentation = await presentationOpener.OpenPresentationAsync(id, ct).ConfigureAwait(false);
         if (presentation.IsWriteProtected) presentation.RemoveWriteProtection();
         return presentation;
     }
@@ -146,7 +145,7 @@ internal sealed partial class JobRunner
         PresentationIdentifier templateId, int slideIndex, ILogger logger, CancellationToken ct)
     {
         logger.LogInformation("Loading template slide: {Ppt} #{Index}", templateId.PresentationPath, slideIndex);
-        using var template = await presentationProvider.OpenPresentationReadOnlyAsync(templateId, ct)
+        using var template = await presentationOpener.OpenPresentationReadOnlyAsync(templateId, ct)
             .ConfigureAwait(false);
         var index = slideIndex - 1;
         return index < 0 || index >= template.SlidesCount ? null : template.Slides.ElementAt(index).Clone();

@@ -13,7 +13,7 @@
  */
 
 using System.Drawing;
-using SlideGenerator.Document.Slide;
+using SlideGenerator.Document.Slides;
 
 namespace SlideGenerator.Summarization.Slide;
 

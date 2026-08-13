@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Cloud
- * File: GoogleDriveModule.cs
+ * File: GoogleDriveResolver.cs
  *
  * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -15,7 +15,7 @@
 using System.Text.RegularExpressions;
 using System.Web;
 
-namespace SlideGenerator.Cloud.Resolver;
+namespace SlideGenerator.Cloud.Resolvers;
 
 /// <summary>
 ///     Resolves Google Drive sharing links to direct download URIs.
@@ -24,7 +24,7 @@ namespace SlideGenerator.Cloud.Resolver;
 ///     returns <see langword="null" /> when the folder is empty, contains only subfolders,
 ///     or is inaccessible.
 /// </summary>
-internal sealed partial class GoogleDriveModule : CloudResolver
+internal sealed partial class GoogleDriveResolver : CloudResolver
 {
     private const string EmbeddedFolderViewBase = "https://drive.google.com/embeddedfolderview?id=";
     private const string DownloadBase = "https://drive.google.com/uc?export=download&id=";
@@ -63,7 +63,7 @@ internal sealed partial class GoogleDriveModule : CloudResolver
     {
         if (!IsResolvable(uri))
             throw new ArgumentException(
-                $"URI '{uri}' is not supported by {nameof(GoogleDriveModule)}.", nameof(uri));
+                $"URI '{uri}' is not supported by {nameof(GoogleDriveResolver)}.", nameof(uri));
 
         string? fileId = null;
 

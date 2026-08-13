@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Document
- * File: PresentationProvider.cs
+ * File: PresentationOpener.cs
  *
  * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -21,7 +21,7 @@ namespace SlideGenerator.Document.Slides;
 ///     Defines the contract for opening PowerPoint presentations.
 ///     Hides the Syncfusion <c>IPresentation</c> lifecycle from callers.
 /// </summary>
-public interface IPresentationProvider
+public interface IPresentationOpener
 {
     /// <summary>
     ///     Opens a presentation in <b>read-write</b> mode asynchronously.
@@ -51,9 +51,9 @@ public interface IPresentationProvider
 }
 
 /// <summary>
-///     Implementation of <see cref="IPresentationProvider" />.
+///     Implementation of <see cref="IPresentationOpener" />.
 /// </summary>
-internal sealed class SfPresentationProvider : IPresentationProvider
+internal sealed class SfPresentationOpener : IPresentationOpener
 {
     private static SfPresentation CreatePresentationInstance(PresentationIdentifier identifier)
     {

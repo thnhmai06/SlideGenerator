@@ -12,7 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Document.Slide;
+using SlideGenerator.Document.Slides;
 
 namespace SlideGenerator.Summarization.Slide;
 
