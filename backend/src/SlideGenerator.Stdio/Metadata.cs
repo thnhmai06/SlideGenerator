@@ -13,7 +13,7 @@
  */
 
 using System.Reflection;
-using SlideGenerator.Settings.Rules;
+using SlideGenerator.Settings.Immutable;
 
 namespace SlideGenerator.Stdio;
 

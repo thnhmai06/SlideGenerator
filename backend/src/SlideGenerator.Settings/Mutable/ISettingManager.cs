@@ -12,7 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Settings.Config;
+namespace SlideGenerator.Settings.Mutable;
 
 /// <summary>
 ///     Defines the contract for managing the application settings lifecycle:

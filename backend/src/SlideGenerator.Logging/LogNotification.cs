@@ -14,7 +14,7 @@
 
 using Serilog.Events;
 
-namespace SlideGenerator.Logging.FileLogging;
+namespace SlideGenerator.Logging;
 
 /// <summary>
 ///     A single log event, captured at the point of writing, carrying the Request/Job/Row scope path it

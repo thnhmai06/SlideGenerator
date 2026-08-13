@@ -240,7 +240,7 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
 
             await zos.PutNextEntryAsync(new ZipEntry(maliciousEntryName) { DateTime = DateTime.UtcNow },
                 TestContext.Current.CancellationToken);
-            zos.Write("payload"u8.ToArray(), 0, 7);
+            zos.Write([.. "payload"u8], 0, 7);
             zos.CloseEntry();
             zos.Finish();
         }

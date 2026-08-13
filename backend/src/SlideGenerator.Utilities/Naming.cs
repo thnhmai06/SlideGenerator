@@ -18,9 +18,7 @@ public static class Naming
 {
     // Union with Windows-specific chars so sanitization is consistent across platforms.
     private static readonly char[] InvalidFileNameChars =
-        Path.GetInvalidFileNameChars()
-            .Union(['"', '<', '>', '|', ':', '*', '?', '\\', '/'])
-            .ToArray();
+        [.. Path.GetInvalidFileNameChars().Union(['"', '<', '>', '|', ':', '*', '?', '\\', '/'])];
 
     /// <summary>
     ///     Normalizes a file name by replacing invalid characters with underscores.

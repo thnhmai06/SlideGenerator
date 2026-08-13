@@ -14,7 +14,7 @@
 
 using System.Net;
 
-namespace SlideGenerator.Settings.Config;
+namespace SlideGenerator.Settings.Mutable;
 
 public sealed partial record Setting
 {

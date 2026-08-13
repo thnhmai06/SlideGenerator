@@ -14,7 +14,7 @@
 
 using Microsoft.Data.Sqlite;
 
-namespace SlideGenerator.Settings.Rules;
+namespace SlideGenerator.Settings.Immutable;
 
 /// <summary>
 ///     Defines naming conventions and constant values related to application settings.
@@ -106,7 +106,7 @@ public static class NameAndPaths
         /// <summary>
         ///     Gets the name of the system-wide mutex used for single-instance detection.
         /// </summary>
-        public static string MutexName => $"{Application.Name}-Instance";
+        public const string MutexName = $"{Application.Name}-Instance";
 
         /// <summary>
         ///     Gets the path to the single-instance PID lock file.
@@ -169,7 +169,7 @@ public static class NameAndPaths
             /// <summary>
             ///     Gets the SQLite connection string for the shared database.
             /// </summary>
-            public static string ConnectionString =>
+            public static readonly string ConnectionString =
                 new SqliteConnectionStringBuilder { DataSource = FilePath }.ConnectionString;
         }
 

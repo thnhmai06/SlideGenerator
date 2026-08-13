@@ -83,7 +83,7 @@ internal sealed class JobsRepository : BufferedRepository<(string RequestId, int
         var rows = await conn.QueryAsync<JobRow>(new CommandDefinition(
             "SELECT * FROM Jobs WHERE RequestId = @requestId ORDER BY JobId",
             new { requestId }, cancellationToken: ct)).ConfigureAwait(false);
-        return rows.Select(FromRow).ToList();
+        return [.. rows.Select(FromRow)];
     }
 
     /// <inheritdoc />
@@ -98,7 +98,7 @@ internal sealed class JobsRepository : BufferedRepository<(string RequestId, int
                 running = Status.Running.ToString(),
                 paused = Status.Paused.ToString()
             }, cancellationToken: ct)).ConfigureAwait(false);
-        return rows.Select(FromRow).ToList();
+        return [.. rows.Select(FromRow)];
     }
 
     /// <inheritdoc />
@@ -107,7 +107,7 @@ internal sealed class JobsRepository : BufferedRepository<(string RequestId, int
         await using var conn = await OpenConnectionAsync(ct).ConfigureAwait(false);
         var rows = await conn.QueryAsync<JobRow>(new CommandDefinition(
             "SELECT * FROM Jobs ORDER BY RequestId, JobId", cancellationToken: ct)).ConfigureAwait(false);
-        return rows.Select(FromRow).ToList();
+        return [.. rows.Select(FromRow)];
     }
 
     /// <inheritdoc />

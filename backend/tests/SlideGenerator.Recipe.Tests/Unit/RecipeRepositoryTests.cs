@@ -67,8 +67,10 @@ public sealed class RecipeRepositoryTests : IDisposable
         var pptPath = Path.GetFullPath("template.pptx");
         return new RecipeInput(name, new Models.Recipe([
             new Mapping(
-                wbPaths.Select(p => new WorksheetSource(new WorkbookIdentifier(p), new WorksheetIdentifier("Sheet1")))
-                    .ToList(),
+                [
+                    .. wbPaths.Select(p =>
+                        new WorksheetSource(new WorkbookIdentifier(p), new WorksheetIdentifier("Sheet1")))
+                ],
                 new PresentationIdentifier(pptPath), new SlideIdentifier(1), [], [])
         ]));
     }

@@ -16,7 +16,7 @@ using System.Globalization;
 using Serilog.Events;
 using Serilog.Formatting;
 
-namespace SlideGenerator.Logging;
+namespace SlideGenerator.Logging.Formats;
 
 /// <summary>
 ///     Formats log events for console output as compact single-line messages.

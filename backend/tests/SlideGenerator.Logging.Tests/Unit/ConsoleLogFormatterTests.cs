@@ -15,6 +15,7 @@
 using FluentAssertions;
 using Serilog.Events;
 using Serilog.Parsing;
+using SlideGenerator.Logging.Formats;
 using Xunit;
 
 namespace SlideGenerator.Logging.Tests.Unit;

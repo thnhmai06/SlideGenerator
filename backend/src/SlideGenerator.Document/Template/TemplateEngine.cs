@@ -156,7 +156,7 @@ internal sealed partial class MustacheEngine(ILogger<MustacheEngine>? logger = n
     }
 
     /// <summary>
-    ///     Intelligently parses a string value into appropriate CLR type based on format and context.
+    ///     Intelligently parses a string value into the appropriate CLR type based on format and context.
     /// </summary>
     /// <param name="value">The string value to parse.</param>
     /// <param name="isComplex">Whether this value is used in complex contexts (affects parsing strategy).</param>

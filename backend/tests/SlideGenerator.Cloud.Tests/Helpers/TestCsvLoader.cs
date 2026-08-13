@@ -38,6 +38,6 @@ internal static class TestCsvLoader
 
         using var reader = new StreamReader(path);
         using var csv = new CsvReader(reader, config);
-        return csv.GetRecords<TestCase>().ToList();
+        return [.. csv.GetRecords<TestCase>()];
     }
 }

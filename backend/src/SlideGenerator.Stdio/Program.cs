@@ -19,7 +19,8 @@ using Serilog.Events;
 using Serilog.Exceptions;
 using SlideGenerator.Logging;
 using SlideGenerator.Logging.FileLogging;
-using SlideGenerator.Settings.Rules;
+using SlideGenerator.Logging.Formats;
+using SlideGenerator.Settings.Immutable;
 using SlideGenerator.Stdio.Implementations;
 
 namespace SlideGenerator.Stdio;

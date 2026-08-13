@@ -24,8 +24,8 @@ using SlideGenerator.Generator;
 using SlideGenerator.Image;
 using SlideGenerator.Logging;
 using SlideGenerator.Recipe;
-using SlideGenerator.Settings.Config;
 using SlideGenerator.Settings;
+using SlideGenerator.Settings.Mutable;
 using SlideGenerator.Summarization;
 
 namespace SlideGenerator.Stdio;

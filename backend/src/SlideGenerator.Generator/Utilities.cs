@@ -14,8 +14,8 @@
 
 using SlideGenerator.Cloud;
 using SlideGenerator.Document.Workbooks;
-using SlideGenerator.Settings.Config;
-using SlideGenerator.Settings.Rules;
+using SlideGenerator.Settings.Immutable;
+using SlideGenerator.Settings.Mutable;
 
 namespace SlideGenerator.Generator;
 

@@ -124,12 +124,15 @@ public sealed partial class TextComposer(ITemplateEngine templateEngine)
     private static List<CoverageEntry> CalculateCoverage(
         int segStart, int segLength, IReadOnlyList<PartSpan> partSpans)
     {
-        return (from span in partSpans
+        return
+        [
+            .. from span in partSpans
             let overlapStart = Math.Max(segStart, span.GlobalStart)
             let overlapEnd = Math.Min(segStart + segLength, span.GlobalStart + span.Length)
             where overlapEnd > overlapStart
             let ratio = (double)(overlapEnd - overlapStart) / segLength
-            select new CoverageEntry(span.Source, ratio)).ToList();
+            select new CoverageEntry(span.Source, ratio)
+        ];
     }
 
     #endregion

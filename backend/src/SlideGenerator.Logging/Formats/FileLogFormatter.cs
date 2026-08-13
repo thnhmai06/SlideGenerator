@@ -16,7 +16,7 @@ using System.Globalization;
 using Serilog.Events;
 using Serilog.Formatting;
 
-namespace SlideGenerator.Logging.FileLogging;
+namespace SlideGenerator.Logging.Formats;
 
 /// <summary>
 ///     Formats log events for file output as structured single-line messages with human-readable exception detail.

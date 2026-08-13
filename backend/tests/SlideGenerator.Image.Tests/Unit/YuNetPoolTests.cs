@@ -64,7 +64,7 @@ public sealed class YuNetPoolTests
         detector.DetectAsync(Arg.Any<IImage>()).Returns(_ =>
             Interlocked.Increment(ref calls) == 1
                 ? Task.FromException<IReadOnlyList<Face>>(new InvalidOperationException("simulated"))
-                : Task.FromResult<IReadOnlyList<Face>>(Array.Empty<Face>()));
+                : Task.FromResult<IReadOnlyList<Face>>([]));
 
         using var pool = new YuNetPool(() => 1);
         var image = CreateImage();
@@ -122,7 +122,7 @@ public sealed class YuNetPoolTests
 
             await Task.Delay(workMs, TestContext.Current.CancellationToken);
             Interlocked.Decrement(ref tracker.Current);
-            return (IReadOnlyList<Face>)Array.Empty<Face>();
+            return (IReadOnlyList<Face>)[];
         }));
         return detector;
     }

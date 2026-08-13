@@ -403,7 +403,7 @@ internal sealed partial class JobRunner
     {
         try
         {
-            using var cropped = await smartCropper.CropAsync(image, targetSize, edits.RoiOptions.ToArray())
+            using var cropped = await smartCropper.CropAsync(image, targetSize, [.. edits.RoiOptions])
                 .ConfigureAwait(false);
             return cropped?.ToPng();
         }

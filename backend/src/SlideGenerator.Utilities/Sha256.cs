@@ -22,7 +22,7 @@ namespace SlideGenerator.Utilities;
 /// </summary>
 public static class Sha256
 {
-    /// <summary>The maximum number of hexadecimal characters a SHA-256 hash can produce.</summary>
+    /// <summary>The maximum number of hexadecimal characters an SHA-256 hash can produce.</summary>
     public const int MaxLength = 64;
 
     /// <summary>

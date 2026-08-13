@@ -18,7 +18,7 @@ using SlideGenerator.Generator.Abstractions;
 using SlideGenerator.Generator.Models.Data;
 using SlideGenerator.Generator.Models.Enum;
 using SlideGenerator.Recipe.Abstractions;
-using SlideGenerator.Settings.Rules;
+using SlideGenerator.Settings.Immutable;
 using SlideGenerator.Utilities;
 
 namespace SlideGenerator.Generator.Services;
@@ -188,7 +188,7 @@ internal sealed class Service(
         var all = await jobsRepository.GetAllAsync(ct).ConfigureAwait(false);
         return all
             .GroupBy(j => j.RequestId)
-            .ToDictionary(g => g.Key, IReadOnlyList<JobRecord> (g) => g.ToList());
+            .ToDictionary(g => g.Key, IReadOnlyList<JobRecord> (g) => [.. g]);
     }
 
     private async Task<IReadOnlyDictionary<string, Summary>> ToSummariesAsync(
@@ -243,7 +243,8 @@ internal sealed class Service(
     ///     (worksheet source × mapping) pair — every value already resolved, no id left to look up.
     /// </summary>
     internal static List<JobSpecification> BuildJobs(Recipe.Models.Recipe recipe, Request request) =>
-        recipe.Mappings.SelectMany(m => m.Sources.Select(s => new JobSpecification(
+    [
+        .. recipe.Mappings.SelectMany(m => m.Sources.Select(s => new JobSpecification(
             s.Workbook.BookPath,
             s.Worksheet.SheetName,
             s.UsedColumns,
@@ -253,7 +254,7 @@ internal sealed class Service(
             m.TextInstructions,
             m.ImageInstructions,
             BuildOutputPath(request, s.Workbook.BookPath, s.Worksheet.SheetName))))
-        .ToList();
+    ];
 
     private static string BuildOutputPath(Request request, string bookPath, string sheetName)
     {
@@ -299,7 +300,7 @@ internal sealed class Service(
             Phase = DeriveRequestPhase(jobs),
             CreatedAt = createdAt,
             CompletedAt = completedAt,
-            Logs = logEntries.Where(e => e.Path == requestId).ToList(),
+            Logs = [.. logEntries.Where(e => e.Path == requestId)],
             Jobs = jobSummaries
         };
     }
@@ -314,9 +315,12 @@ internal sealed class Service(
             CurrentIndex = job.CurrentIndex,
             OutputPath = job.OutputPath,
             CompletedAt = job.Status is Status.Complete or Status.Cancelled or Status.Error ? job.Timestamp : null,
-            Logs = logEntries
-                .Where(e => e.Path == jobScopePrefix || e.Path.StartsWith(jobScopePrefix + "/", StringComparison.Ordinal))
-                .ToList()
+            Logs =
+            [
+                .. logEntries
+                    .Where(e => e.Path == jobScopePrefix ||
+                                e.Path.StartsWith(jobScopePrefix + "/", StringComparison.Ordinal))
+            ]
         };
     }
 

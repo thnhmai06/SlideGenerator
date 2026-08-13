@@ -16,7 +16,7 @@ using System.Globalization;
 using Serilog.Core;
 using Serilog.Events;
 
-namespace SlideGenerator.Logging.FileLogging;
+namespace SlideGenerator.Logging.Formats;
 
 /// <summary>
 ///     Serilog sink that forwards every log event to a callback as a <see cref="LogNotification" />,

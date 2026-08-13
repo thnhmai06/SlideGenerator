@@ -13,11 +13,11 @@
  */
 
 using Microsoft.Extensions.Logging;
-using SlideGenerator.Settings.Rules;
+using SlideGenerator.Settings.Immutable;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
-namespace SlideGenerator.Settings.Config;
+namespace SlideGenerator.Settings.Mutable;
 
 /// <summary>
 ///     Manages the loading, saving, and state of the application's <see cref="Setting" /> configuration.

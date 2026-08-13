@@ -17,8 +17,8 @@ using Microsoft.Extensions.DependencyInjection;
 using SlideGenerator.Generator.Abstractions;
 using SlideGenerator.Generator.Services;
 using SlideGenerator.Image.FaceDetection;
-using SlideGenerator.Settings.Config;
-using SlideGenerator.Settings.Rules;
+using SlideGenerator.Settings.Immutable;
+using SlideGenerator.Settings.Mutable;
 
 namespace SlideGenerator.Generator;
 

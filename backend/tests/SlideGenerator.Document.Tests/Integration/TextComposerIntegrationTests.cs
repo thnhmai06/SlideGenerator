@@ -96,10 +96,11 @@ public sealed class TextComposerIntegrationTests : IDisposable
     }
 
     private static List<string> ParagraphTexts(SfIShape shape) =>
-        shape.TextBody.Paragraphs
+    [
+        .. shape.TextBody.Paragraphs
             .Select(p => p.Text)
             .Where(t => !string.IsNullOrEmpty(t))
-            .ToList();
+    ];
 
     private static IEnumerable<string> ParseDataList(string dataList)
     {

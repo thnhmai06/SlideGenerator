@@ -73,7 +73,7 @@ internal sealed partial class RecipeRepository : IRecipeRepository
             "SELECT Id, Name, Recipe, CreatedTimestamp, UpdatedTimestamp FROM Recipes ORDER BY UpdatedTimestamp DESC, CreatedTimestamp DESC, Id DESC",
             cancellationToken: ct)).ConfigureAwait(false);
 
-        return rows.Select(DbReadEntry).Cast<IRecipeMetadata>().ToList();
+        return [.. rows.Select(DbReadEntry).Cast<IRecipeMetadata>()];
     }
 
     /// <inheritdoc />

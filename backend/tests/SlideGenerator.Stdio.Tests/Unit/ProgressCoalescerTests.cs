@@ -181,13 +181,13 @@ public sealed class ProgressCoalescerTests : IAsyncDisposable
         public event Action<IReadOnlyList<JobRecord>>? Flushed;
 
         public Task<IReadOnlyList<JobRecord>> GetByRequestIdAsync(string requestId, CancellationToken ct = default) =>
-            Task.FromResult<IReadOnlyList<JobRecord>>(Enqueued.Where(j => j.RequestId == requestId).ToList());
+            Task.FromResult<IReadOnlyList<JobRecord>>([.. Enqueued.Where(j => j.RequestId == requestId)]);
 
         public Task<IReadOnlyList<JobRecord>> GetNonTerminalAsync(CancellationToken ct = default) =>
             Task.FromResult<IReadOnlyList<JobRecord>>([]);
 
         public Task<IReadOnlyList<JobRecord>> GetAllAsync(CancellationToken ct = default) =>
-            Task.FromResult<IReadOnlyList<JobRecord>>(Enqueued.ToList());
+            Task.FromResult<IReadOnlyList<JobRecord>>([.. Enqueued]);
 
         public Task DeleteByRequestIdAsync(string requestId, CancellationToken ct = default) => Task.CompletedTask;
     }

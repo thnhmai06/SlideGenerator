@@ -26,8 +26,8 @@ using SlideGenerator.Generator.Models.Enum;
 using SlideGenerator.Image.Cropping;
 using SlideGenerator.Image.Loading;
 using SlideGenerator.Logging.FileLogging;
-using SlideGenerator.Settings.Config;
-using SlideGenerator.Settings.Rules;
+using SlideGenerator.Settings.Immutable;
+using SlideGenerator.Settings.Mutable;
 
 namespace SlideGenerator.Generator.Services;
 

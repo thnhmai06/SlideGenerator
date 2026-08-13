@@ -15,7 +15,7 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using SlideGenerator.Settings.Config;
+using SlideGenerator.Settings.Mutable;
 using Xunit;
 
 namespace SlideGenerator.Settings.Tests.Unit;

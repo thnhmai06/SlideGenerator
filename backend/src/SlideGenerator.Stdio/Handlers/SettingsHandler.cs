@@ -12,7 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Settings.Config;
+using SlideGenerator.Settings.Mutable;
 
 namespace SlideGenerator.Stdio.Handlers;
 
