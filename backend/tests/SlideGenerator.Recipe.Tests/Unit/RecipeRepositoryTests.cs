@@ -19,6 +19,7 @@ using Microsoft.Data.Sqlite;
 using SlideGenerator.Document.Slides;
 using SlideGenerator.Document.Workbooks;
 using SlideGenerator.Recipe.Mappings;
+using SlideGenerator.Settings.Database;
 using Xunit;
 
 namespace SlideGenerator.Recipe.Tests.Unit;
@@ -46,6 +47,7 @@ public sealed class RecipeRepositoryTests : IDisposable
         };
         _anchor = new SqliteConnection(builder.ConnectionString);
         _anchor.Open();
+        DatabaseMigrator.Migrate(builder.ConnectionString);
         _repo = new RecipeRepository(builder);
     }
 

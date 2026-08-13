@@ -16,6 +16,7 @@ using System.Text;
 using FluentAssertions;
 using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.Data.Sqlite;
+using SlideGenerator.Settings.Database;
 using Xunit;
 
 namespace SlideGenerator.Recipe.Tests.Unit;
@@ -50,6 +51,7 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
         };
         _anchor = new SqliteConnection(builder.ConnectionString);
         _anchor.Open();
+        DatabaseMigrator.Migrate(builder.ConnectionString);
         _repo = new RecipeRepository(builder);
     }
 

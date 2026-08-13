@@ -101,7 +101,7 @@ hosted at `nuget.pkg.github.com/thnhmai06`. `backend/nuget.config` reads credent
 backend/
 ├── src/                                — 10 source modules (slnx-tracked)
 │   ├── SlideGenerator.Utilities/        — loose files, no subfolders
-│   ├── SlideGenerator.Settings/         — Config/, Rules/ (NameAndPaths stays put — see below)
+│   ├── SlideGenerator.Settings/         — Config/, Rules/, Database/ (NameAndPaths stays put — see below)
 │   ├── SlideGenerator.Cloud/            — Resolvers/, root CloudClient.cs
 │   ├── SlideGenerator.Document/         — Workbooks/, Slides/, Template/
 │   ├── SlideGenerator.Logging/          — FileLogging/, root formatters/helpers
@@ -510,8 +510,18 @@ shared by every module that needs SQLite — `Recipes` (`SlideGenerator.Recipe`'
 its own `SqliteConnectionStringBuilder(NameAndPaths.DataFolder.DataFile.ConnectionString)` singleton in its own
 module's `Registration.cs` (both `SlideGenerator.Recipe/Registration.cs` and
 `SlideGenerator.Generator/Registration.cs` do this — functionally harmless, since both point at the identical
-connection string) and runs its own `CREATE TABLE IF NOT EXISTS` in its constructor — there is no centralized schema
-bootstrap. WAL mode, short-lived-connection-per-operation (open/close per call), same pattern throughout.
+connection string). Schema creation is **centralized**: `SlideGenerator.Settings.Database.DatabaseMigrator.Migrate`
+(`src/SlideGenerator.Settings/Database/DatabaseMigrator.cs`) runs 3 embedded DbUp scripts
+(`Database/Scripts/0001_CreateRecipes.sql`/`0002_CreateRequests.sql`/`0003_CreateJobs.sql`, one `CREATE TABLE IF NOT
+EXISTS` each, `PRAGMA journal_mode=WAL;` prepended to the first) against the connection string, tracked via DbUp's
+own `SchemaVersions` table. Called once in `SlideGenerator.Stdio/Program.cs`'s `Main`, right after
+`BootstrapSystemLogger` and before `Host.CreateApplicationBuilder` (with `Directory.CreateDirectory(NameAndPaths
+.DataFolder.FolderPath)` first, since `NameAndPaths.InitializeDirectories()` — which also creates it — doesn't run
+until later, inside `StartupAsync`). None of the 3 repositories create their own tables anymore (`DbEnsureCreated`
+has been removed from all of them); DbUp's logging is forwarded to Serilog via a small `IUpgradeLog` adapter
+(`DatabaseMigrator.SerilogUpgradeLog`) since `LogToConsole()` would collide with stdout (owned by StreamJsonRpc) and
+`LogToAutodetectedLog()` doesn't exist in `dbup-core`. Short-lived-connection-per-operation (open/close per call)
+is unchanged for all 3 repositories' CRUD paths.
 
 - **`Jobs`** — every `JobSpecification` field gets its own explicit column, with one deliberate, *named* exception:
   `UsedColumnsJson`/`TextInstructionsJson`/`ImageInstructionsJson` are stored as JSON text, since they're

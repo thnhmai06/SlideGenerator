@@ -18,6 +18,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using SlideGenerator.Generator.Job;
 using SlideGenerator.Generator.Persistence;
 using SlideGenerator.Recipe.Mappings;
+using SlideGenerator.Settings.Database;
 using Xunit;
 
 namespace SlideGenerator.Generator.Tests.Unit;
@@ -42,6 +43,7 @@ public sealed class JobsRepositoryTests : IDisposable
         };
         _anchor = new SqliteConnection(builder.ConnectionString);
         _anchor.Open();
+        DatabaseMigrator.Migrate(builder.ConnectionString);
         _repo = new JobsRepository(builder, NullLogger<JobsRepository>.Instance);
     }
 
