@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Document
- * File: ColumnIdentifier.cs
+ * File: ShapeIdentifier.cs
  *
  * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -12,12 +12,12 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Document.Workbook;
+namespace SlideGenerator.Document.Slides;
 
 /// <summary>
-///     Identifies a column by its header name within an already-known worksheet context.
-///     Use alongside <see cref="WorksheetIdentifier" /> and <see cref="WorkbookIdentifier" />
+///     Identifies a shape by its name within an already-known slide context.
+///     Use alongside <see cref="SlideIdentifier" /> and <see cref="PresentationIdentifier" />
 ///     when parent context is supplied separately.
 /// </summary>
-/// <param name="ColumnName">The header name of the column.</param>
-public record ColumnIdentifier(string ColumnName);
+/// <param name="ShapeName">The unique name of the shape (e.g., "Rectangle 1").</param>
+public record ShapeIdentifier(string ShapeName);

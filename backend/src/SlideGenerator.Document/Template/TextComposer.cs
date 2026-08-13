@@ -14,9 +14,25 @@
 
 using System.Text;
 using System.Text.RegularExpressions;
-using SlideGenerator.Document.Slide;
+using SlideGenerator.Document.Slides;
 
 namespace SlideGenerator.Document.Template;
+
+/// <summary>
+///     Renders template placeholders across all paragraphs of a shape while preserving
+///     per-TextPart formatting through coverage ratio distribution.
+///     Supports cross-paragraph tags and loop expansion.
+/// </summary>
+public interface ITextComposer
+{
+    /// <summary>
+    ///     Renders all template placeholders in the given shape, replacing them with values
+    ///     from <paramref name="resolvedValue" /> while preserving the formatting of each text part.
+    /// </summary>
+    /// <param name="shape">The shape whose paragraphs will be processed.</param>
+    /// <param name="resolvedValue">A dictionary mapping placeholder names to their resolved string values.</param>
+    void Compose(IShape shape, IReadOnlyDictionary<string, string> resolvedValue);
+}
 
 /// <summary>
 ///     Renders template placeholders across all paragraphs of a shape while preserving

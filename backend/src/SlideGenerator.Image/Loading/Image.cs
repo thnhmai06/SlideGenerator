@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Image
- * File: IImage.cs
+ * File: Image.cs
  *
  * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -13,8 +13,27 @@
  */
 
 using System.Drawing;
+using NetVipsEnums = NetVips.Enums;
+using NetVipsImage = NetVips.Image;
+using Size = System.Drawing.Size;
 
 namespace SlideGenerator.Image.Loading;
+
+/// <summary>
+///     Represents metadata of an image, including its dimensions.
+/// </summary>
+public interface IImageInfo
+{
+    /// <summary>
+    ///     Gets the width of the image.
+    /// </summary>
+    uint Width { get; }
+
+    /// <summary>
+    ///     Gets the height of the image.
+    /// </summary>
+    uint Height { get; }
+}
 
 /// <summary>
 ///     Represents an abstract image that can be manipulated and queried.
@@ -52,4 +71,50 @@ public interface IImage : IDisposable, ICloneable
     /// </summary>
     /// <returns>A byte array containing the image data in PNG format.</returns>
     byte[] ToPng();
+}
+
+/// <summary>
+///     Adapter wrapping a <see cref="NetVipsImage" /> that implements <see cref="IImage" />.
+/// </summary>
+internal sealed class VipsImage(NetVipsImage core) : IImage
+{
+    internal NetVipsImage Native => core;
+
+    public IImageInfo Info => new VipsImageInfo(core);
+
+    public IImage Crop(Rectangle r)
+    {
+        return new VipsImage(core.ExtractArea(r.X, r.Y, r.Width, r.Height));
+    }
+
+    public IImage Resize(Size s)
+    {
+        return new VipsImage(core.ThumbnailImage(s.Width, s.Height, NetVipsEnums.Size.Force));
+    }
+
+    public void ToPng(string path)
+    {
+        core.WriteToFile(path);
+    }
+
+    public byte[] ToPng()
+    {
+        return core.WriteToBuffer(".png");
+    }
+
+    public void Dispose()
+    {
+        core.Dispose();
+    }
+
+    object ICloneable.Clone()
+    {
+        return new VipsImage(core.Copy());
+    }
+
+    private sealed class VipsImageInfo(NetVipsImage image) : IImageInfo
+    {
+        public uint Width => (uint)image.Width;
+        public uint Height => (uint)image.Height;
+    }
 }

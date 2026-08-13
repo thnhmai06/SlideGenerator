@@ -14,12 +14,27 @@
 
 using System.Drawing;
 using OpenCvSharp;
-using SlideGenerator.Image;
 using Point = System.Drawing.Point;
 using Size = OpenCvSharp.Size;
 
 using SlideGenerator.Image.Loading;
 namespace SlideGenerator.Image.FaceDetection;
+
+/// <summary>
+///     Provides domain rules and constants for the SlideGenerator Image processing.
+/// </summary>
+public static class Rules
+{
+    /// <summary>
+    ///     The confidence threshold for face detection.
+    /// </summary>
+    public const float FaceConfidence = 0.8f;
+
+    /// <summary>
+    ///     The expected input size for the face detection model.
+    /// </summary>
+    public static readonly System.Drawing.Size FaceInputSize = new(416, 416);
+}
 
 /// <summary>
 ///     Asynchronous wrapper for <see cref="FaceDetectorYN" />.

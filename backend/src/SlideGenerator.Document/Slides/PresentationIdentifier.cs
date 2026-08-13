@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Document
- * File: PresentationType.cs
+ * File: PresentationIdentifier.cs
  *
  * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -12,12 +12,12 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Document.Slide;
+namespace SlideGenerator.Document.Slides;
 
 /// <summary>
 ///     Specifies the supported file extensions for presentations.
 /// </summary>
-public enum PresentationType
+public enum PresentationType : byte
 {
     /// <summary>PowerPoint Template (.potx)</summary>
     Potx,
@@ -66,5 +66,31 @@ public static class PresentationTypeExtensions
             PresentationType.Ppsx => ".ppsx",
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
         };
+    }
+}
+
+/// <summary>
+///     Uniquely identifies a PowerPoint presentation file.
+/// </summary>
+/// <param name="PresentationPath">The absolute or relative path to the presentation.</param>
+/// <param name="PresentationPassword">Optional password if the presentation is encrypted.</param>
+public record PresentationIdentifier(string PresentationPath, string? PresentationPassword = null)
+{
+    /// <summary>
+    ///     Gets the normalized absolute path to the presentation.
+    /// </summary>
+    public string PresentationPath
+    {
+        get;
+        init => field = Path.IsPathRooted(value) ? Path.GetFullPath(value) : value;
+    } = PresentationPath;
+
+    /// <summary>
+    ///     Determines the type of the presentation based on its file extension.
+    /// </summary>
+    /// <returns>The <see cref="PresentationType" /> corresponding to the file extension.</returns>
+    public PresentationType GetPresentationType()
+    {
+        return PresentationTypeExtensions.FromExtension(Path.GetExtension(PresentationPath));
     }
 }

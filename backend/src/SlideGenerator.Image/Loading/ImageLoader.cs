@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Image
- * File: IImageLoader.cs
+ * File: ImageLoader.cs
  *
  * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -13,6 +13,7 @@
  */
 
 using System.Diagnostics.CodeAnalysis;
+using NetVipsImage = NetVips.Image;
 
 namespace SlideGenerator.Image.Loading;
 
@@ -41,7 +42,7 @@ public interface IImageLoader
     /// <param name="path">The file path to the image.</param>
     /// <returns>An <see cref="IImageInfo" /> instance containing metadata about the image.</returns>
     IImageInfo GetInfo(string path);
-    
+
     /// <summary>
     ///     Retrieves metadata about an image, such as its dimensions, from an in-memory buffer.
     /// </summary>
@@ -61,7 +62,7 @@ public interface IImageLoader
     ///     <c>true</c> if the metadata was successfully retrieved; otherwise, <c>false</c>.
     /// </returns>
     bool TryGetInfo(string path, [MaybeNullWhen(false)] out IImageInfo info);
-    
+
     /// <summary>
     ///     Attempts to retrieve metadata about an image from an in-memory buffer.
     /// </summary>
@@ -74,4 +75,59 @@ public interface IImageLoader
     ///     <c>true</c> if the metadata was successfully retrieved; otherwise, <c>false</c>.
     /// </returns>
     bool TryGetInfo(byte[] data, [MaybeNullWhen(false)] out IImageInfo info);
+}
+
+internal sealed class VipsImageLoader : IImageLoader
+{
+    public IImage Open(string path)
+    {
+        return new VipsImage(NetVipsImage.NewFromFile(path));
+    }
+
+    public IImage Open(byte[] data)
+    {
+        return new VipsImage(NetVipsImage.NewFromBuffer(data));
+    }
+
+    public IImageInfo GetInfo(string path)
+    {
+        using var img = NetVipsImage.NewFromFile(path);
+        return new SizeInfo((uint)img.Width, (uint)img.Height);
+    }
+
+    public IImageInfo GetInfo(byte[] data)
+    {
+        using var img = NetVipsImage.NewFromBuffer(data);
+        return new SizeInfo((uint)img.Width, (uint)img.Height);
+    }
+
+    public bool TryGetInfo(string path, [MaybeNullWhen(false)] out IImageInfo info)
+    {
+        try
+        {
+            info = GetInfo(path);
+            return true;
+        }
+        catch
+        {
+            info = null;
+            return false;
+        }
+    }
+
+    public bool TryGetInfo(byte[] data, [MaybeNullWhen(false)] out IImageInfo info)
+    {
+        try
+        {
+            info = GetInfo(data);
+            return true;
+        }
+        catch
+        {
+            info = null;
+            return false;
+        }
+    }
+
+    private sealed record SizeInfo(uint Width, uint Height) : IImageInfo;
 }

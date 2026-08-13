@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Document
- * File: IPresentation.cs
+ * File: Presentation.cs
  *
  * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -12,7 +12,10 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Document.Slide;
+using Syncfusion.Presentation;
+using SyncfusionPresentation = Syncfusion.Presentation.IPresentation;
+
+namespace SlideGenerator.Document.Slides;
 
 /// <summary>
 ///     Represents a read-only view of a PowerPoint presentation.
@@ -92,4 +95,74 @@ public interface IPresentation : IReadOnlyPresentation
     /// </summary>
     /// <param name="stream">The stream to save to.</param>
     void Save(Stream stream);
+}
+
+/// <summary>
+///     Wraps a Syncfusion IPresentation and its FileStream for proper disposal and saving.
+/// </summary>
+internal sealed class SfPresentation(
+    SyncfusionPresentation core,
+    PresentationIdentifier identifier,
+    FileStream? fileStream = null) : IPresentation
+{
+    public IEnumerable<ISlide> Slides
+    {
+        get { return core.Slides.Select(slide => new SfSlide(slide)); }
+    }
+
+    public PresentationIdentifier Identifier { get; } = identifier;
+
+    public int SlidesCount => core.Slides.Count;
+
+    public bool IsWriteProtected => core.IsWriteProtected;
+
+    /// <summary>
+    ///     Disposes of the presentation and any underlying file streams.
+    /// </summary>
+    public void Dispose()
+    {
+        core.Dispose();
+        fileStream?.Dispose();
+    }
+
+    public void RemoveSlideAt(int index)
+    {
+        core.Slides.RemoveAt(index);
+    }
+
+    public void AddSlide(IReadOnlySlide slide)
+    {
+        core.Slides.Add(((SfSlide)slide).Core, PasteOptions.SourceFormatting);
+    }
+
+    public void RemoveEncryption()
+    {
+        core.RemoveEncryption();
+    }
+
+    public void RemoveWriteProtection()
+    {
+        core.RemoveWriteProtection();
+    }
+
+    public void Save(string path)
+    {
+        core.Save(path);
+    }
+
+    public void Save(Stream stream)
+    {
+        core.Save(stream);
+    }
+
+    /// <summary>
+    ///     Saves the presentation to its original location.
+    /// </summary>
+    public void Save()
+    {
+        if (fileStream == null)
+            core.Save(Identifier.PresentationPath);
+        else
+            core.Save(fileStream);
+    }
 }

@@ -12,7 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Document.Slide;
+namespace SlideGenerator.Document.Slides;
 
 /// <summary>
 ///     Identifies a slide by its 1-based index within an already-known presentation context.

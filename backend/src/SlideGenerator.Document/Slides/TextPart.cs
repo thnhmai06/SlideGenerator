@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Document
- * File: ITextPart.cs
+ * File: TextPart.cs
  *
  * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -12,7 +12,9 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Document.Slide;
+using SyncfusionTextPart = Syncfusion.Presentation.ITextPart;
+
+namespace SlideGenerator.Document.Slides;
 
 /// <summary>
 ///     Represents a read-only view of a part of text within a paragraph.
@@ -37,4 +39,16 @@ public interface ITextPart : IReadOnlyTextPart
 
     /// <inheritdoc />
     string IReadOnlyTextPart.Text => Text;
+}
+
+internal class SfTextPart(SyncfusionTextPart core)
+    : ITextPart
+{
+    internal readonly SyncfusionTextPart Core = core;
+
+    public string Text
+    {
+        get => Core.Text;
+        set => Core.Text = value;
+    }
 }

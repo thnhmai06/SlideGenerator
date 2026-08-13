@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Document
- * File: SfWorkbookProvider.cs
+ * File: WorkbookProvider.cs
  *
  * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -15,7 +15,38 @@
 using SlideGenerator.Utilities;
 using Syncfusion.XlsIO;
 
-namespace SlideGenerator.Document.Workbook;
+namespace SlideGenerator.Document.Workbooks;
+
+/// <summary>
+///     Defines the contract for opening Excel workbooks.
+///     Hides the Syncfusion <c>ExcelEngine</c> lifecycle from callers.
+/// </summary>
+public interface IWorkbookProvider
+{
+    /// <summary>
+    ///     Opens a workbook in <b>read-write</b> mode asynchronously.
+    ///     If the file is locked by another process, waits for the lock to release via
+    ///     <see cref="System.IO.FileSystemWatcher" /> before retrying.
+    /// </summary>
+    /// <param name="identifier">The workbook to open.</param>
+    /// <param name="ct">Token to cancel the wait.</param>
+    /// <returns>A handle wrapping the opened workbook.</returns>
+    /// <exception cref="System.IO.FileNotFoundException">If the workbook file does not exist.</exception>
+    /// <exception cref="OperationCanceledException">If <paramref name="ct" /> is canceled while waiting.</exception>
+    Task<IWorkbook> OpenWorkbookAsync(WorkbookIdentifier identifier, CancellationToken ct = default);
+
+    /// <summary>
+    ///     Opens a workbook in <b>read</b> mode asynchronously.
+    ///     If the file is locked by another process, waits for the lock to release via
+    ///     <see cref="System.IO.FileSystemWatcher" /> before retrying.
+    /// </summary>
+    /// <param name="identifier">The workbook to open.</param>
+    /// <param name="ct">Token to cancel the wait.</param>
+    /// <returns>A handle wrapping the opened workbook.</returns>
+    /// <exception cref="System.IO.FileNotFoundException">If the workbook file does not exist.</exception>
+    /// <exception cref="OperationCanceledException">If <paramref name="ct" /> is canceled while waiting.</exception>
+    Task<IReadOnlyWorkbook> OpenWorkbookReadOnlyAsync(WorkbookIdentifier identifier, CancellationToken ct = default);
+}
 
 /// <summary>
 ///     Syncfusion implementation of <see cref="IWorkbookProvider" />.
@@ -31,15 +62,15 @@ internal sealed class SfWorkbookProvider : IWorkbookProvider
 
         switch (identifier.GetBookType())
         {
-            case BookType.Csv:
-            case BookType.Tsv:
+            case WorkbookType.Csv:
+            case WorkbookType.Tsv:
                 workbook = _engine.Excel.Workbooks.Open(identifier.BookPath, identifier.Separator);
                 break;
 
-            case BookType.Xls:
-            case BookType.Xlsx:
-            case BookType.Xltx:
-            case BookType.Ods:
+            case WorkbookType.Xls:
+            case WorkbookType.Xlsx:
+            case WorkbookType.Xltx:
+            case WorkbookType.Ods:
             default:
                 workbook = _engine.Excel.Workbooks.Open(
                     identifier.BookPath, ExcelParseOptions.Default,
@@ -57,18 +88,18 @@ internal sealed class SfWorkbookProvider : IWorkbookProvider
 
         switch (identifier.GetBookType())
         {
-            case BookType.Csv:
-            case BookType.Tsv:
+            case WorkbookType.Csv:
+            case WorkbookType.Tsv:
                 fileStream = new FileStream(
                     identifier.BookPath, FileMode.Open,
                     FileAccess.Read, FileShare.ReadWrite);
                 workbook = _engine.Excel.Workbooks.Open(fileStream, identifier.Separator);
                 break;
 
-            case BookType.Xls:
-            case BookType.Xlsx:
-            case BookType.Xltx:
-            case BookType.Ods:
+            case WorkbookType.Xls:
+            case WorkbookType.Xlsx:
+            case WorkbookType.Xltx:
+            case WorkbookType.Ods:
             default:
                 workbook = _engine.Excel.Workbooks.Open(
                     identifier.BookPath, ExcelParseOptions.Default,

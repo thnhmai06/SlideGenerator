@@ -21,6 +21,30 @@ using Stubble.Core.Builders;
 namespace SlideGenerator.Document.Template;
 
 /// <summary>
+///     Represents a service for handling operations related to template-based document generation.
+/// </summary>
+public interface ITemplateEngine
+{
+    /// <summary>
+    ///     Identifies and extracts all unique placeholders within a given template text.
+    ///     Placeholders are typically marked with specific syntax and are used to dynamically replace content in a template.
+    /// </summary>
+    /// <param name="templateText">The text content of the template from which to scan and extract placeholders.</param>
+    /// <returns>A set of unique placeholder identifiers present within the provided template text.</returns>
+    HashSet<string> ScanPlaceholders(string templateText);
+
+    /// <summary>
+    ///     Renders the provided template text by replacing placeholders with their corresponding resolved values.
+    ///     The replacement values are supplied through a dictionary where the key is the placeholder name
+    ///     and the value is the content to replace it with.
+    /// </summary>
+    /// <param name="templateText">The template text containing placeholders to be replaced.</param>
+    /// <param name="resolvedValue">A dictionary containing the mappings of placeholder names to their replacement values.</param>
+    /// <returns>The fully rendered text with all placeholders replaced by their respective values.</returns>
+    string Render(string templateText, IReadOnlyDictionary<string, string> resolvedValue);
+}
+
+/// <summary>
 ///     Replaces mustache-style placeholders in text using the Stubble template engine
 ///     with intelligent context-aware data parsing.
 /// </summary>

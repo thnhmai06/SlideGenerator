@@ -17,6 +17,18 @@ using System.Numerics;
 namespace SlideGenerator.Image.Cropping;
 
 /// <summary>
+///     Discriminates between the two top-level ROI strategies.
+/// </summary>
+public enum RoiMode : byte
+{
+    /// <summary>Anchor-point-based crop using geometry and optional face detection.</summary>
+    Anchor,
+
+    /// <summary>Content-aware crop using a library-specific interest strategy.</summary>
+    Interest
+}
+
+/// <summary>
 ///     Base type for ROI / crop options. Use <see cref="AnchorOption" /> for anchor-point-based
 ///     cropping or <see cref="InterestOption" /> for interest content-aware cropping.
 /// </summary>
