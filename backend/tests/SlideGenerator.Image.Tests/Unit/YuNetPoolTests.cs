@@ -101,32 +101,6 @@ public sealed class YuNetPoolTests
         return image;
     }
 
-    /// <summary>
-    ///     Creates a mock <see cref="IFaceDetector" /> that tracks concurrent calls and simulates
-    ///     detection work by delaying for <paramref name="workMs" /> milliseconds.
-    /// </summary>
-    /// <param name="tracker">Shared tracker updated while detection is in progress.</param>
-    /// <param name="workMs">How long each simulated detection takes.</param>
-    private static IFaceDetector CreateTrackingDetector(ConcurrencyTracker tracker, int workMs = 80)
-    {
-        var detector = Substitute.For<IFaceDetector>();
-        detector.DetectAsync(Arg.Any<IImage>()).Returns(_ => Task.Run(async () =>
-        {
-            var snapshot = Interlocked.Increment(ref tracker.Current);
-            int prev;
-            do
-            {
-                prev = tracker.Max;
-                if (snapshot <= prev) break;
-            } while (Interlocked.CompareExchange(ref tracker.Max, snapshot, prev) != prev);
-
-            await Task.Delay(workMs, TestContext.Current.CancellationToken);
-            Interlocked.Decrement(ref tracker.Current);
-            return (IReadOnlyList<Face>)[];
-        }));
-        return detector;
-    }
-
     #endregion
 
     #region DetectAsync — concurrency
