@@ -82,7 +82,7 @@ public sealed class SerilogFileLoggerFactoryTests : IDisposable
         logger.Should().NotBeNull();
     }
 
-    #region Inner logger behaviour — mirrors real step usage (data.Transient.LoggerFactory.CreateLogger(nameof(Step)))
+    #region Inner logger behaviour — mirrors real usage: one per-job logger whose lines carry a Request/Job/Row scope path
 
     /// <summary>Information log level is enabled by default — matches the minimum level of LoggerConfiguration.</summary>
     [Fact]
@@ -102,7 +102,7 @@ public sealed class SerilogFileLoggerFactoryTests : IDisposable
 
         using (var loggerFactory = _factory.CreateFile(filePath))
         {
-            loggerFactory.CreateLogger("Step").LogInformation("init");
+            loggerFactory.CreateLogger("SlideGenerationWorkload").LogInformation("job started");
         }
 
         File.Exists(filePath).Should().BeTrue();
@@ -110,35 +110,36 @@ public sealed class SerilogFileLoggerFactoryTests : IDisposable
 
     /// <summary>
     ///     Logged message text appears in the file after dispose flushes the sink.
-    ///     Mirrors the real step pattern: <c>data.Transient.LoggerFactory.CreateLogger(nameof(Step)).LogInformation(...)</c>.
+    ///     Mirrors the real pattern: <c>LoggingWorkload.CreateFile(logPath, ["RequestId", "JobId", "RowIndex"])</c>
+    ///     followed by a single <c>CreateLogger(nameof(SlideGenerationWorkload)).LogInformation(...)</c> per job.
     /// </summary>
     [Fact]
     public void CreateFile_ValidPath_LoggedMessageAppearsInFile()
     {
         var filePath = NewTempFilePath();
-        const string expectedMessage = "Recipe loaded with 3 node(s)";
+        const string expectedMessage = "created output presentation";
 
         using (var loggerFactory = _factory.CreateFile(filePath))
         {
-            loggerFactory.CreateLogger("LoadRecipeSummary").LogInformation(expectedMessage);
+            loggerFactory.CreateLogger("SlideGenerationWorkload").LogInformation(expectedMessage);
         }
 
-        File.ReadAllText(filePath).Should().Contain("LoadRecipeSummary").And.Contain(expectedMessage);
+        File.ReadAllText(filePath).Should().Contain("SlideGenerationWorkload").And.Contain(expectedMessage);
     }
 
     /// <summary>
     ///     The category name passed to <c>CreateLogger</c> appears in the file as the logger name field.
-    ///     Real usage: <c>CreateLogger(nameof(LoadRecipeSummary))</c> → file shows <c>LoadRecipeSummary/...</c>
+    ///     Real usage: <c>CreateLogger(nameof(SlideGenerationWorkload))</c> → file shows <c>SlideGenerationWorkload/...</c>
     /// </summary>
     [Fact]
     public void CreateFile_ValidPath_CategoryNameAppearsInFile()
     {
         var filePath = NewTempFilePath();
-        const string categoryName = "LoadRecipeSummary";
+        const string categoryName = "SlideGenerationWorkload";
 
         using (var loggerFactory = _factory.CreateFile(filePath))
         {
-            loggerFactory.CreateLogger(categoryName).LogInformation("step ran");
+            loggerFactory.CreateLogger(categoryName).LogInformation("row filled");
         }
 
         File.ReadAllText(filePath).Should().Contain(categoryName);
@@ -146,9 +147,9 @@ public sealed class SerilogFileLoggerFactoryTests : IDisposable
 
     /// <summary>
     ///     When Request/Job scope properties are pushed onto <see cref="LogContext" /> around a log call,
-    ///     the resulting scope path appears in the log line. Real usage: each Step pushes
-    ///     <c>LogContext.PushProperty("RequestId", ...)</c>/<c>PushProperty("JobId", ...)</c> around its
-    ///     <c>Run</c>/<c>RunAsync</c> body.
+    ///     the resulting scope path appears in the log line. Real usage: <c>LoggingWorkload</c> pushes
+    ///     <c>LogContext.PushProperty("RequestId", ...)</c>/<c>PushProperty("JobId", ...)</c> for the whole
+    ///     job, and the per-row loop additionally pushes <c>"RowIndex"</c>.
     /// </summary>
     [Fact]
     public void CreateFile_WithLogContextScope_ScopePathAppearsInFile()
@@ -159,16 +160,16 @@ public sealed class SerilogFileLoggerFactoryTests : IDisposable
         using (LogContext.PushProperty("RequestId", "req-1"))
         using (LogContext.PushProperty("JobId", "job-1"))
         {
-            loggerFactory.CreateLogger("AnyStep").LogInformation("step message");
+            loggerFactory.CreateLogger("SlideGenerationWorkload").LogInformation("row filled");
         }
 
-        File.ReadAllText(filePath).Should().Contain("AnyStep").And.Contain("req-1/job-1");
+        File.ReadAllText(filePath).Should().Contain("SlideGenerationWorkload").And.Contain("req-1/job-1");
     }
 
     /// <summary>
     ///     The <c>onLogEvent</c> callback is invoked once per log line written through the factory, carrying
-    ///     the rendered message and scope path — the mechanism <c>Middleware</c> uses to forward log lines
-    ///     to the frontend in real time.
+    ///     the rendered message and scope path — the mechanism <c>LoggingWorkload</c> uses to forward log
+    ///     lines to the frontend in real time via <c>ILogNotifier</c>.
     /// </summary>
     [Fact]
     public void CreateFile_WithOnLogEventCallback_InvokedForEachLogLine()
@@ -179,15 +180,15 @@ public sealed class SerilogFileLoggerFactoryTests : IDisposable
         using (var loggerFactory = _factory.CreateFile(filePath, ["RequestId"], notifications.Add))
         using (LogContext.PushProperty("RequestId", "req-1"))
         {
-            loggerFactory.CreateLogger("AnyStep").LogInformation("step message");
+            loggerFactory.CreateLogger("SlideGenerationWorkload").LogInformation("row filled");
         }
 
-        notifications.Should().ContainSingle(n => n.Message == "step message" && n.Location == "req-1");
+        notifications.Should().ContainSingle(n => n.Message == "row filled" && n.Location == "req-1");
     }
 
     /// <summary>
     ///     Multiple named loggers from the same factory all write to the same file.
-    ///     Mirrors how each step calls <c>data.Transient.LoggerFactory.CreateLogger(nameof(Step))</c> independently.
+    ///     Mirrors how different parts of the pipeline create named loggers from the one per-job factory.
     /// </summary>
     [Fact]
     public void CreateFile_ValidPath_MultipleNamedLoggers_AllMessagesInFile()
@@ -196,15 +197,15 @@ public sealed class SerilogFileLoggerFactoryTests : IDisposable
 
         using (var loggerFactory = _factory.CreateFile(filePath))
         {
-            loggerFactory.CreateLogger("LoadRecipeSummary").LogInformation("recipe loaded");
+            loggerFactory.CreateLogger("SlideGenerationWorkload").LogInformation("slides created");
             loggerFactory.CreateLogger("PreflightCleanup").LogInformation("cleanup done");
-            loggerFactory.CreateLogger("ValidateRequest").LogInformation("request valid");
+            loggerFactory.CreateLogger("ImageProcessor").LogInformation("image cropped");
         }
 
         var content = File.ReadAllText(filePath);
-        content.Should().Contain("LoadRecipeSummary").And.Contain("recipe loaded");
+        content.Should().Contain("SlideGenerationWorkload").And.Contain("slides created");
         content.Should().Contain("PreflightCleanup").And.Contain("cleanup done");
-        content.Should().Contain("ValidateRequest").And.Contain("request valid");
+        content.Should().Contain("ImageProcessor").And.Contain("image cropped");
     }
 
     /// <summary>Exception message and type appear in the file for Error-level events.</summary>
@@ -212,16 +213,16 @@ public sealed class SerilogFileLoggerFactoryTests : IDisposable
     public void CreateFile_ValidPath_LoggedExceptionAppearsInFile()
     {
         var filePath = NewTempFilePath();
-        var exception = new InvalidOperationException("Recipe 42 not found");
+        var exception = new InvalidOperationException("Presentation failed to save");
 
         using (var loggerFactory = _factory.CreateFile(filePath))
         {
-            loggerFactory.CreateLogger("LoadRecipeSummary")
-                .LogError(exception, "Step failed");
+            loggerFactory.CreateLogger("SlideGenerationWorkload")
+                .LogError(exception, "row failed");
         }
 
         var content = File.ReadAllText(filePath);
-        content.Should().Contain("Recipe 42 not found");
+        content.Should().Contain("Presentation failed to save");
         content.Should().Contain(nameof(InvalidOperationException));
     }
 
@@ -230,7 +231,7 @@ public sealed class SerilogFileLoggerFactoryTests : IDisposable
     public void CreateFile_ValidPath_DisposeDoesNotThrow()
     {
         var loggerFactory = _factory.CreateFile(NewTempFilePath());
-        loggerFactory.CreateLogger("Step").LogInformation("message");
+        loggerFactory.CreateLogger("SlideGenerationWorkload").LogInformation("message");
 
         var act = loggerFactory.Dispose;
 
