@@ -2,7 +2,7 @@
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Stdio
+ * Project: SlideGenerator.Desktop
  * File: Metadata.cs
  *
  * This file is part of this solution.
@@ -15,7 +15,7 @@
 using System.Reflection;
 using SlideGenerator.Settings.Immutable;
 
-namespace SlideGenerator.Stdio;
+namespace SlideGenerator.Desktop.Bootstrap;
 
 // Don't ask why.
 internal static class Metadata

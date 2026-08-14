@@ -2,7 +2,7 @@
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Stdio
+ * Project: SlideGenerator.Desktop
  * File: SingleInstanceLock.cs
  *
  * This file is part of this solution.
@@ -12,7 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Stdio.Implementations;
+namespace SlideGenerator.Desktop.Bootstrap;
 
 /// <summary>
 ///     Cross-platform single-instance guard. A named <see cref="Mutex" /> is the authoritative lock;

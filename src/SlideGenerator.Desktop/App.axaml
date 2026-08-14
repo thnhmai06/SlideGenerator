@@ -1,0 +1,9 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="SlideGenerator.Desktop.App"
+             xmlns:semi="https://irihi.tech/semi"
+             RequestedThemeVariant="Default">
+    <Application.Styles>
+        <semi:SemiTheme />
+    </Application.Styles>
+</Application>

@@ -2,7 +2,7 @@
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Stdio
+ * Project: SlideGenerator.Desktop
  * File: LogNotifier.cs
  *
  * This file is part of this solution.
@@ -15,11 +15,11 @@
 using SlideGenerator.Generator;
 using SlideGenerator.Generator.Progress;
 
-namespace SlideGenerator.Stdio.Implementations;
+namespace SlideGenerator.Desktop.Services.Progress;
 
 /// <summary>
 ///     A lightweight, in-process event bus for scoped log line notifications. Decouples
-///     <c>JobRunner</c> (Generator, publisher) from <see cref="ProgressCoalescer" /> (subscriber),
+///     <c>JobRunner</c> (Generator, publisher) from whichever ViewModel subscribes,
 ///     mirroring <see cref="GeneratingEventBus" />'s pattern for <c>IEventBus</c>.
 /// </summary>
 internal sealed class LogNotifier : ILogNotifier

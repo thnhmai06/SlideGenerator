@@ -2,7 +2,7 @@
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Stdio
+ * Project: SlideGenerator.Desktop
  * File: GeneratingEventBus.cs
  *
  * This file is part of this solution.
@@ -15,12 +15,11 @@
 using SlideGenerator.Generator.Jobs.Models;
 using SlideGenerator.Generator.Progress;
 
-namespace SlideGenerator.Stdio.Implementations;
+namespace SlideGenerator.Desktop.Services.Progress;
 
 /// <summary>
 ///     A lightweight, in-process event bus for Request/Job/Row progress notifications.
-///     Decouples publishers in <c>SlideGenerator.Generator</c> from <see cref="ProgressCoalescer" />
-///     (subscriber) without depending on WorkflowCore-internal lifecycle hooks.
+///     Decouples publishers in <c>SlideGenerator.Generator</c> from whichever ViewModel subscribes.
 /// </summary>
 internal sealed class GeneratingEventBus : IEventBus
 {

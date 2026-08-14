@@ -752,7 +752,7 @@ bypass this core behavior. What **is** safe to unit test directly:
 
 ### Folder structure
 
-Two coexisting conventions, by module:
+Three coexisting conventions, by module:
 
 **Feature-folder** (all 10 non-host modules) — folders named after a business feature/concept, each folder free to mix
 interfaces, implementations, models, and even multiple small related classes in one file (the old "1 file = 1 class"
@@ -814,9 +814,45 @@ Namespace mirrors the physical folder path 1:1 (e.g. `Image/FaceDetection/YuNet.
 `Generator/Job/Workload/SlideGenerationWorkload.cs` → `namespace SlideGenerator.Generator.Job.Workload;`,
 `Generator/Job/Models/JobSnapshot.cs` → `namespace SlideGenerator.Generator.Job.Models;`).
 
-`SlideGenerator.Stdio` (the host) keeps its own shape — `Handlers/` (one class per IPC method group) and
-`Implementations/` (event bus, log notifier, progress coalescer, JSON-RPC bootstrap, STJ adapters) — which was already
-feature-shaped from the start and never needed a separate reorg pass.
+**MVVM feature-folder** (`SlideGenerator.Desktop` only, the Avalonia host) — a different shape from the 10 domain
+modules above, because it's UI code (Views/ViewModels/Models) rather than service code (interfaces/implementations).
+Target convention (folders are created on demand, when a feature/piece is actually built — no placeholder/empty
+folders committed ahead of time, per **Simplicity First** in Basic Rules):
+
+```
+SlideGenerator.Desktop/
+├── App.axaml / App.axaml.cs      — Avalonia application object: builds the Host/DI container, shows Shell
+├── Program.cs                    — entry point: single-instance guard, system logging, DB migration, Velopack
+├── appsettings.json
+├── Bootstrap/                    — process-startup infra, used only from Program.cs (SingleInstanceLock,
+│                                    Metadata, UpdateChecker) — distinct from Services/ (UI-facing, ViewModel-
+│                                    consumed) and Infrastructure/ (data access)
+├── Shell/                        — MainWindow.axaml(.cs) + MainWindowViewModel.cs (app chrome/navigation host,
+│                                    not a feature)
+├── Features/                     — one folder per business feature, added when that feature is actually built:
+│   └── <FeatureName>/
+│       ├── Views/                — <FeatureName>*.axaml(.cs)
+│       ├── ViewModels/           — <FeatureName>*ViewModel.cs (CommunityToolkit.Mvvm: [ObservableProperty]/[RelayCommand])
+│       ├── Models/                — feature-local view models/DTOs (not domain-module types — those are
+│       │                            referenced directly from SlideGenerator.Generator/Recipe/Settings/etc.)
+│       └── Resources/             — feature-scoped .resx, if the feature has strings not shared elsewhere
+├── Components/                   — reusable cross-feature Avalonia controls (e.g. JobCard, LoadingIndicator),
+│                                    added when a second feature needs to share one
+├── Services/                     — UI-facing, ViewModel-consumed cross-cutting services:
+│   ├── Progress/                 — GeneratingEventBus, LogNotifier (implement SlideGenerator.Generator's
+│   │                                IEventBus/ILogNotifier — ViewModels subscribe directly, no IPC layer)
+│   ├── Localization/             — Resources.resx (default/en) + Resources.{culture}.resx, ResourceManager-based
+│   └── (Dialogs/, Navigation/, ... — added when a ViewModel actually needs one)
+├── Infrastructure/               — non-UI cross-cutting infra beyond the domain modules (added on demand;
+│                                    most persistence/HTTP already lives in the domain modules themselves)
+├── Resources/                    — global XAML resource dictionaries (Styles/, Themes/, Icons/, Fonts/) —
+│                                    added once real theming beyond the default Semi.Avalonia theme is needed
+└── Assets/                       — appicon.ico, Images/, ...
+```
+
+Namespace mirrors the physical folder path, same as the 10 domain modules (e.g. `Shell/MainWindow.axaml.cs` →
+`namespace SlideGenerator.Desktop.Shell;`, `Services/Progress/LogNotifier.cs` →
+`namespace SlideGenerator.Desktop.Services.Progress;`).
 
 ### Partial classes for large single-concept services
 

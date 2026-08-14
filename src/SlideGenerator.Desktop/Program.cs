@@ -2,7 +2,7 @@
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Stdio
+ * Project: SlideGenerator.Desktop
  * File: Program.cs
  *
  * This file is part of this solution.
@@ -12,24 +12,26 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using System.Text;
+using Avalonia;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Events;
 using Serilog.Exceptions;
+using SlideGenerator.Desktop.Bootstrap;
 using SlideGenerator.Logging.Formats;
 using SlideGenerator.Settings.Database;
 using SlideGenerator.Settings.Immutable;
-using SlideGenerator.Stdio.Implementations;
+using Velopack;
 
-namespace SlideGenerator.Stdio;
+namespace SlideGenerator.Desktop;
 
 /// <summary>
-///     Application entry point for the JSON-RPC 2.0 IPC sidecar.
-///     Bootstraps the host, wires all services and method routes via StreamJsonRpc,
-///     then blocks until the client closes the connection.
+///     Application entry point for the Avalonia desktop client.
+///     Bootstraps single-instance guard, system logging, DB migration, and Velopack before
+///     handing control to the Avalonia classic desktop lifetime.
 /// </summary>
-internal static partial class Program
+internal static class Program
 {
     public static readonly DateTime StartupTime = DateTime.UtcNow;
     private static string? _logFilePath;
@@ -38,9 +40,14 @@ internal static partial class Program
         new SingleInstanceLock(NameAndPaths.AppLocker.MutexName, NameAndPaths.AppLocker.PidPath));
 
     /// <summary>Application entry point.</summary>
-    /// <param name="args">Command-line arguments passed by the Tauri sidecar launcher.</param>
-    public static async Task<int> Main(string[] args)
+    /// <param name="args">Command-line arguments.</param>
+    [STAThread]
+    public static void Main(string[] args)
     {
+        // Must run before anything else — handles Velopack's install/uninstall/update hooks and may exit the
+        // process immediately without returning.
+        VelopackApp.Build().Run();
+
         ConfigureEncoding();
 
         var bootstrapConfiguration = new ConfigurationBuilder()
@@ -57,45 +64,39 @@ internal static partial class Program
         DatabaseMigrator.Migrate(NameAndPaths.DataFolder.DataFile.ConnectionString);
 
         PrintMetadata();
+        RegisterExceptionHandlers();
 
         try
         {
             Log.Information("Application starting... (PID: {ProcessId})", Environment.ProcessId);
-            RegisterExceptionHandlers();
-
-            var builder = Host.CreateApplicationBuilder(args);
-            ConfigureServices(builder.Services);
-            using var host = builder.Build();
-
-            RegisterCtrlCHandler(host);
-            await host.StartAsync().ConfigureAwait(false);
-
-            await StartupAsync(host, JsonRpcBootstrap.BuildJsonSerializerOptions()).ConfigureAwait(false);
-            await host.StopAsync().ConfigureAwait(false);
+            BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
         }
         catch (Exception ex)
         {
             Log.Fatal(ex, "Fatal exception in Main");
 #if DEBUG
             throw;
-#else
-            return 1;
 #endif
         }
         finally
         {
             if (InstanceLock.IsValueCreated) InstanceLock.Value.Dispose();
             Log.Information("Goodbye!");
-            await Log.CloseAndFlushAsync().ConfigureAwait(false);
+            Log.CloseAndFlush();
         }
+    }
 
-        return 0;
+    /// <summary>Configures the Avalonia application builder.</summary>
+    private static AppBuilder BuildAvaloniaApp()
+    {
+        return AppBuilder.Configure<App>()
+            .UsePlatformDetect()
+            .WithInterFont()
+            .LogToTrace();
     }
 
     /// <summary>
     ///     Ensures only one instance of the application runs at a time.
-    ///     A named <see cref="Mutex" /> is the authoritative lock; a PID file records the owner's process ID
-    ///     so a second instance can display it before exiting.
     ///     Exits immediately without creating a log file if another instance is detected.
     /// </summary>
     private static void EnsureSingleInstance()
@@ -107,9 +108,17 @@ internal static partial class Program
         Environment.Exit(1);
     }
 
+    /// <summary>Configures stderr to use UTF-8 so Serilog console output is transmitted correctly.</summary>
+    private static void ConfigureEncoding()
+    {
+        Console.SetError(new StreamWriter(
+            Console.OpenStandardError(),
+            new UTF8Encoding(false),
+            leaveOpen: true) { AutoFlush = true });
+    }
+
     /// <summary>
     ///     Configures the global Serilog logger (file + stderr sinks) for pre-DI logging.
-    ///     Must be called before <see cref="ConfigureServices" />.
     /// </summary>
     private static void BootstrapSystemLogger(IConfiguration configuration)
     {
@@ -129,5 +138,37 @@ internal static partial class Program
             .CreateLogger();
 
         Log.Logger = serilogLogger;
+    }
+
+    /// <summary>Prints the ASCII art banner and build metadata to the system log.</summary>
+    private static void PrintMetadata()
+    {
+        Log.Information('\n' + NameAndPaths.Application.NameArt);
+        Log.Information(Metadata.Line);
+        Log.Information(Metadata.Version);
+        Log.Information(Metadata.Description);
+        Log.Information(Metadata.Line);
+        Log.Information(Metadata.License);
+        Log.Information(Metadata.Repository);
+        Log.Information(Metadata.Line);
+    }
+
+    /// <summary>Registers process-wide unhandled exception and task exception handlers.</summary>
+    private static void RegisterExceptionHandlers()
+    {
+        AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+        {
+            if (e.ExceptionObject is Exception ex)
+                Log.Fatal(ex, "Unhandled AppDomain exception. IsTerminating: {IsTerminating}",
+                    e.IsTerminating);
+        };
+
+        TaskScheduler.UnobservedTaskException += (_, e) =>
+        {
+            Log.Fatal(e.Exception, "Unobserved Task exception.");
+#if !DEBUG
+            e.SetObserved();
+#endif
+        };
     }
 }

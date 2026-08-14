@@ -38,12 +38,16 @@ public static class NameAndPaths
                 Application.Name));
 
     /// <summary>
-    ///     Gets whether the application is running in portable mode (<c>--portable</c> flag).
+    ///     Gets whether the application was built in portable mode (<c>-p:Portable=true</c> at build time).
     ///     When <see langword="true" />, all user data is stored relative to the executable directory.
     /// </summary>
     private static bool IsPortable()
     {
-        return Environment.GetCommandLineArgs().Contains("--portable", StringComparer.OrdinalIgnoreCase);
+#if PORTABLE
+        return true;
+#else
+        return false;
+#endif
     }
 
     /// <summary>
@@ -86,7 +90,7 @@ public static class NameAndPaths
             """;
 
         /// <summary>The application deployment type.</summary>
-        public const string Type = "Backend sidecar";
+        public const string Type = "Desktop application";
 
         /// <summary>The official application repository URL.</summary>
         public const string Repository = "https://github.com/thnhmai06/SlideGenerator";

@@ -1,0 +1,7 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="SlideGenerator.Desktop.Shell.MainWindow"
+        Title="SlideGenerator"
+        Width="960" Height="600">
+    <TextBlock Margin="16" Text="SlideGenerator Desktop — placeholder window." />
+</Window>

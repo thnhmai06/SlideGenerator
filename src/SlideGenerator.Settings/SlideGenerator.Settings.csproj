@@ -5,6 +5,14 @@
         <Nullable>enable</Nullable>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
+
+    <!-- ponytail: mirrors SlideGenerator.Desktop.csproj's Portable property — NameAndPaths.IsPortable() is
+         #if PORTABLE, and this project (which contains NameAndPaths.cs) compiles as its own assembly, so it
+         needs the same constant defined when the solution is built with -p:Portable=true. -->
+    <PropertyGroup Condition="'$(Portable)'=='true'">
+        <DefineConstants>$(DefineConstants);PORTABLE</DefineConstants>
+    </PropertyGroup>
+
     <ItemGroup>
         <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.11"/>
         <PackageReference Include="dbup-sqlite" Version="6.0.4"/>

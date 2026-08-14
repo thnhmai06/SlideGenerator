@@ -1,19 +1,28 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <Version>2.0.0</Version>
-        <OutputType>Exe</OutputType>
+        <OutputType>WinExe</OutputType>
         <TargetFramework>net10.0</TargetFramework>
+        <RuntimeIdentifiers>win-x64;osx-x64;osx-arm64;linux-x64</RuntimeIdentifiers>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <IsPackable>false</IsPackable>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <WarningsAsErrors>CS1591</WarningsAsErrors>
         <ApplicationIcon>Assets\appicon.ico</ApplicationIcon>
-        <PackageId>SlideGenerator.Stdio</PackageId>
+        <PackageId>SlideGenerator.Desktop</PackageId>
+        <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    </PropertyGroup>
+
+    <!-- ponytail: -p:Portable=true flips NameAndPaths.IsPortable() to compile-time true via the PORTABLE
+         constant (see SlideGenerator.Settings.csproj, which defines the same constant so the check compiles
+         in that project's own assembly). Two separate builds (installer vs portable), no runtime flag. -->
+    <PropertyGroup Condition="'$(Portable)'=='true'">
+        <DefineConstants>$(DefineConstants);PORTABLE</DefineConstants>
     </PropertyGroup>
 
     <ItemGroup>
-        <InternalsVisibleTo Include="SlideGenerator.Stdio.Tests"/>
+        <InternalsVisibleTo Include="SlideGenerator.Desktop.Tests"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -26,13 +35,19 @@
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="Avalonia" Version="12.1.1"/>
+        <PackageReference Include="Avalonia.Desktop" Version="12.1.1"/>
+        <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.1"/>
+        <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.3" Condition="'$(Configuration)'=='Debug'"/>
+        <PackageReference Include="Semi.Avalonia" Version="12.1.0.1"/>
+        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2"/>
+        <PackageReference Include="Velopack" Version="1.2.0"/>
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.11"/>
         <PackageReference Include="Serilog" Version="4.4.0"/>
         <PackageReference Include="Serilog.Exceptions" Version="8.4.0"/>
         <PackageReference Include="Serilog.Extensions.Logging" Version="10.0.0"/>
         <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1"/>
         <PackageReference Include="Serilog.Sinks.File" Version="7.0.0"/>
-        <PackageReference Include="StreamJsonRpc" Version="2.25.29"/>
         <PackageReference Update="StyleCop.Analyzers" Version="1.1.118"/>
     </ItemGroup>
 

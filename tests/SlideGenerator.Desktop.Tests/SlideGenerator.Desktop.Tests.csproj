@@ -14,15 +14,11 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="FluentAssertions" Version="8.*"/>
-        <PackageReference Include="StreamJsonRpc" Version="2.25.29"/>
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.11"/>
-        <PackageReference Remove="coverlet.collector" />
+        <PackageReference Include="NSubstitute" Version="6.2.0"/>
+        <PackageReference Include="FluentAssertions" Version="8.10.0"/>
+        <PackageReference Remove="coverlet.collector"/>
     </ItemGroup>
     <ItemGroup>
-        <ProjectReference Include="../../src/SlideGenerator.Stdio/SlideGenerator.Stdio.csproj"/>
-        <ProjectReference Include="../../src/SlideGenerator.Generator/SlideGenerator.Generator.csproj"/>
-        <ProjectReference Include="../../src/SlideGenerator.Document/SlideGenerator.Document.csproj"/>
-        <ProjectReference Include="../../src/SlideGenerator.Recipe/SlideGenerator.Recipe.csproj"/>
+        <ProjectReference Include="../../src/SlideGenerator.Desktop/SlideGenerator.Desktop.csproj"/>
     </ItemGroup>
 </Project>
