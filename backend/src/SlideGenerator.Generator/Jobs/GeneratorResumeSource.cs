@@ -12,15 +12,15 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Generator.Job.Models;
-using SlideGenerator.Generator.Job.Workload;
+using SlideGenerator.Generator.Jobs.Models;
+using SlideGenerator.Generator.Jobs.Workloads;
 using SlideGenerator.Generator.Persistence;
 using SlideGenerator.Generator.Progress;
 using SlideGenerator.Jobs.Engine;
 using SlideGenerator.Logging.FileLogging;
 using SlideGenerator.Settings.Immutable;
 
-namespace SlideGenerator.Generator.Job;
+namespace SlideGenerator.Generator.Jobs;
 
 /// <summary>
 ///     Finds jobs left non-terminal by a crash and rebuilds everything <see cref="IJobEngine{TKey,TState}" />

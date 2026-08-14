@@ -15,7 +15,7 @@
 using SlideGenerator.Document.Workbooks.Identifiers;
 using SlideGenerator.Recipe.Models;
 
-namespace SlideGenerator.Generator.Job.Models;
+namespace SlideGenerator.Generator.Jobs.Models;
 
 /// <summary>
 ///     Represents a single slide-generation unit: one worksheet mapped to one template slide, with every

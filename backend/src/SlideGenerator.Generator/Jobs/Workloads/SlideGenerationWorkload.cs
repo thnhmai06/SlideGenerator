@@ -23,7 +23,7 @@ using SlideGenerator.Document.Template;
 using SlideGenerator.Document.Workbooks;
 using SlideGenerator.Document.Workbooks.Components;
 using SlideGenerator.Document.Workbooks.Identifiers;
-using SlideGenerator.Generator.Job.Models;
+using SlideGenerator.Generator.Jobs.Models;
 using SlideGenerator.Generator.Progress;
 using SlideGenerator.Image.Cropping;
 using SlideGenerator.Image.Loading;
@@ -32,7 +32,7 @@ using SlideGenerator.Recipe.Models;
 using SlideGenerator.Settings.Mutable;
 using SlideGenerator.Utilities;
 
-namespace SlideGenerator.Generator.Job.Workload;
+namespace SlideGenerator.Generator.Jobs.Workloads;
 
 /// <summary>
 ///     The 4-phase slide-generation job (create/open output → create slides → fill text → fill images), as
@@ -66,7 +66,8 @@ internal sealed class SlideGenerationWorkload(
         using var workbook = await workbookOpener.OpenWorkbookReadOnlyAsync(
             new WorkbookIdentifier(spec.WorkbookPath), ct).ConfigureAwait(false);
         var worksheet = workbook.GetWorksheet(spec.WorksheetName)
-            ?? throw new InvalidOperationException($"Sheet '{spec.WorksheetName}' not found in '{spec.WorkbookPath}'.");
+                        ?? throw new InvalidOperationException(
+                            $"Sheet '{spec.WorksheetName}' not found in '{spec.WorkbookPath}'.");
 
         var headerToIndex = Utilities.BuildHeaderToIndexMap(worksheet);
         var dataCount = worksheet.RowCount - 1;
@@ -80,9 +81,9 @@ internal sealed class SlideGenerationWorkload(
         try
         {
             var templateSlide = await LoadTemplateSlideAsync(templateId, spec.TemplateSlideIndex, jobLogger, ct)
-                .ConfigureAwait(false)
-                ?? throw new InvalidOperationException(
-                    $"Template slide #{spec.TemplateSlideIndex} not found in '{spec.TemplatePresentationPath}'.");
+                                    .ConfigureAwait(false)
+                                ?? throw new InvalidOperationException(
+                                    $"Template slide #{spec.TemplateSlideIndex} not found in '{spec.TemplatePresentationPath}'.");
             var templateShapesByIdentifier = templateSlide.Shapes.ToDictionary(s => s.Identifier);
 
             var phase = initial.Phase;
@@ -115,7 +116,7 @@ internal sealed class SlideGenerationWorkload(
                 var inspected = await InspectSourcesAsync(spec, worksheet, headerToIndex, dataRows, jobLogger, ct)
                     .ConfigureAwait(false);
                 await RunFillingImagesAsync(requestId, jobId, spec, worksheet, headerToIndex,
-                    templateShapesByIdentifier, output, currentIndex, dataRows, inspected, context, jobLogger, ct)
+                        templateShapesByIdentifier, output, currentIndex, dataRows, inspected, context, jobLogger, ct)
                     .ConfigureAwait(false);
             }
 
@@ -133,13 +134,15 @@ internal sealed class SlideGenerationWorkload(
         IJobContext<JobSnapshot> context, string requestId, int jobId, JobSpecification spec, JobPhase phase,
         int currentIndex, CancellationToken ct)
     {
-        var record = new JobSnapshot(requestId, jobId, JobStatus.Running, phase, currentIndex, spec, DateTimeOffset.UtcNow);
+        var record = new JobSnapshot(requestId, jobId, JobStatus.Running, phase, currentIndex, spec,
+            DateTimeOffset.UtcNow);
         await context.ReportAsync(record, durable: true, ct).ConfigureAwait(false);
     }
 
     #region Phase A — output
 
-    private async Task<IPresentation> OpenOutputAsync(PresentationIdentifier id, ILogger jobLogger, CancellationToken ct)
+    private async Task<IPresentation> OpenOutputAsync(PresentationIdentifier id, ILogger jobLogger,
+        CancellationToken ct)
     {
         jobLogger.LogInformation("Opening output: {OutputPath}", id.PresentationPath);
         var presentation = await presentationOpener.OpenPresentationAsync(id, ct).ConfigureAwait(false);
@@ -188,7 +191,8 @@ internal sealed class SlideGenerationWorkload(
             output.Save();
 
             await context.ReportAsync(
-                new JobSnapshot(requestId, jobId, JobStatus.Running, JobPhase.CreatingSlides, i + 1, spec, DateTimeOffset.UtcNow),
+                new JobSnapshot(requestId, jobId, JobStatus.Running, JobPhase.CreatingSlides, i + 1, spec,
+                    DateTimeOffset.UtcNow),
                 durable: false, ct).ConfigureAwait(false);
         }
     }
@@ -219,7 +223,8 @@ internal sealed class SlideGenerationWorkload(
 
             ReportRow(requestId, jobId, dataRow + 1, RowStatus.Done);
             await context.ReportAsync(
-                new JobSnapshot(requestId, jobId, JobStatus.Running, JobPhase.FillingText, i + 1, spec, DateTimeOffset.UtcNow),
+                new JobSnapshot(requestId, jobId, JobStatus.Running, JobPhase.FillingText, i + 1, spec,
+                    DateTimeOffset.UtcNow),
                 durable: false, ct).ConfigureAwait(false);
         }
     }
@@ -281,11 +286,12 @@ internal sealed class SlideGenerationWorkload(
         var urlStr = source.Contains("://") ? source : "https://" + source;
         if (!Uri.TryCreate(urlStr, UriKind.Absolute, out var parsedUri)) return null;
 
-        using var httpClient = httpClientFactory.CreateHttpClientWithSetting(settingProvider);
+        var httpClient = httpClientFactory.CreateHttpClientWithSetting(settingProvider);
         var info = await Utilities.ExecuteWithBackoffAsync(
             settingProvider.Current.Network.Retry.MaxRetries,
             TimeSpan.FromSeconds(settingProvider.Current.Network.Retry.MaxRetryDelay),
             () => cloudClient.InspectAsync(parsedUri, httpClient, ct), ct).ConfigureAwait(false);
+
         return info != null && info.IsImage() ? info : null;
     }
 
@@ -320,8 +326,10 @@ internal sealed class SlideGenerationWorkload(
                     if (!shapesByIdentifier.TryGetValue(shapeIdentifier, out var targetShape)) continue;
 
                     var targetSize = new Size(
-                        System.Math.Max(1, (int)System.Math.Round(templateShape.Bounds.Width, MidpointRounding.AwayFromZero)),
-                        System.Math.Max(1, (int)System.Math.Round(templateShape.Bounds.Height, MidpointRounding.AwayFromZero)));
+                        System.Math.Max(1,
+                            (int)System.Math.Round(templateShape.Bounds.Width, MidpointRounding.AwayFromZero)),
+                        System.Math.Max(1,
+                            (int)System.Math.Round(templateShape.Bounds.Height, MidpointRounding.AwayFromZero)));
 
                     inspected.TryGetValue(source, out var contentInfo);
                     var imageData = await ResolveShapeImageAsync(source, instruction, targetSize, contentInfo,
@@ -335,7 +343,8 @@ internal sealed class SlideGenerationWorkload(
             ReportRow(requestId, jobId, dataRow + 1, RowStatus.Done);
 
             await context.ReportAsync(
-                new JobSnapshot(requestId, jobId, JobStatus.Running, JobPhase.FillingImages, i + 1, spec, DateTimeOffset.UtcNow),
+                new JobSnapshot(requestId, jobId, JobStatus.Running, JobPhase.FillingImages, i + 1, spec,
+                    DateTimeOffset.UtcNow),
                 durable: false, ct).ConfigureAwait(false);
         }
     }
@@ -347,7 +356,7 @@ internal sealed class SlideGenerationWorkload(
         if (!string.IsNullOrWhiteSpace(source))
         {
             if (File.Exists(source))
-                return await EditImageFromPathAsync(source, targetSize, instruction.ImageEditInstruction, rowIndex, jobLogger, ct)
+                return await EditImageFromPathAsync(source, targetSize, instruction.ImageEditInstruction, jobLogger, ct)
                     .ConfigureAwait(false);
 
             if (inspected != null)
@@ -356,7 +365,7 @@ internal sealed class SlideGenerationWorkload(
                     .ConfigureAwait(false);
                 if (bytes != null)
                 {
-                    var edited = await EditImageFromBytesAsync(bytes, targetSize, instruction.ImageEditInstruction, rowIndex,
+                    var edited = await EditImageFromBytesAsync(bytes, targetSize, instruction.ImageEditInstruction,
                         jobLogger, ct).ConfigureAwait(false);
                     if (edited != null) return edited;
                 }
@@ -364,7 +373,7 @@ internal sealed class SlideGenerationWorkload(
         }
 
         if (instruction.FallbackImagePath is { } fallback && File.Exists(fallback))
-            return await EditImageFromPathAsync(fallback, targetSize, instruction.ImageEditInstruction, rowIndex, jobLogger, ct)
+            return await EditImageFromPathAsync(fallback, targetSize, instruction.ImageEditInstruction, jobLogger, ct)
                 .ConfigureAwait(false);
 
         return null;
@@ -403,22 +412,22 @@ internal sealed class SlideGenerationWorkload(
     }
 
     private async Task<byte[]?> EditImageFromPathAsync(
-        string path, Size targetSize, ImageEditInstruction editInstruction, int rowIndex, ILogger jobLogger, CancellationToken ct)
+        string path, Size targetSize, ImageEditInstruction editInstruction, ILogger jobLogger, CancellationToken ct)
     {
         using var image = imageLoader.Open(path);
-        return await CropToPngAsync(image, targetSize, editInstruction, path, jobLogger, ct).ConfigureAwait(false);
+        return await CropToPngAsync(image, targetSize, editInstruction, path, jobLogger).ConfigureAwait(false);
     }
 
     private async Task<byte[]?> EditImageFromBytesAsync(
-        byte[] data, Size targetSize, ImageEditInstruction editInstruction, int rowIndex, ILogger jobLogger, CancellationToken ct)
+        byte[] data, Size targetSize, ImageEditInstruction editInstruction, ILogger jobLogger, CancellationToken ct)
     {
         using var image = imageLoader.Open(data);
-        return await CropToPngAsync(image, targetSize, editInstruction, "<in-memory>", jobLogger, ct).ConfigureAwait(false);
+        return await CropToPngAsync(image, targetSize, editInstruction, "<in-memory>", jobLogger)
+            .ConfigureAwait(false);
     }
 
     private async Task<byte[]?> CropToPngAsync(
-        IImage image, Size targetSize, ImageEditInstruction editInstruction, string sourceLabel, ILogger jobLogger,
-        CancellationToken ct)
+        IImage image, Size targetSize, ImageEditInstruction editInstruction, string sourceLabel, ILogger jobLogger)
     {
         try
         {

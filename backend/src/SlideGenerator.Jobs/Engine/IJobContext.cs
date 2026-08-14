@@ -19,16 +19,16 @@ public interface IJobContext<in TState>
 {
     /// <summary>
     ///     <see langword="true" /> if this run is resuming a job found non-terminal at startup (crash
-    ///     recovery), rather than a fresh start. Workloads that run one-time setup (e.g. clearing a
-    ///     partially-written output file) must skip it when this is <see langword="true" />.
+    ///     recovery), rather than a fresh start. Workloads that run one-time setup (e.g., clearing a
+    ///     partially written output file) must skip it when this is <see langword="true" />.
     /// </summary>
     bool IsResume { get; }
 
     /// <summary>
     ///     Publishes an intermediate state. When <paramref name="durable" /> is <see langword="true" />,
     ///     the returned task completes only once the consumer's persistence has durably applied the state
-    ///     (not merely buffered) — use this at points where a crash between the write and a later buffered
-    ///     flush would lose meaningful progress (e.g. a phase transition). Buffered
+    ///     (not merely buffered) — use this at points where a crash between the writer and a later buffered
+    ///     flush would lose meaningful progress (e.g., a phase transition). Buffered
     ///     (<paramref name="durable" /> = <see langword="false" />) reports may be coalesced by the consumer.
     /// </summary>
     Task ReportAsync(TState state, bool durable = false, CancellationToken ct = default);

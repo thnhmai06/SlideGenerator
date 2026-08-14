@@ -15,7 +15,7 @@
 using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using SlideGenerator.Generator.Job.Models;
+using SlideGenerator.Generator.Jobs.Models;
 using SlideGenerator.Image.Cropping;
 
 namespace SlideGenerator.Generator.Persistence;

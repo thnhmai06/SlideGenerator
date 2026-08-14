@@ -18,8 +18,7 @@ using Dapper;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using SlideGenerator.Document.Workbooks.Identifiers;
-using SlideGenerator.Generator.Job;
-using SlideGenerator.Generator.Job.Models;
+using SlideGenerator.Generator.Jobs.Models;
 using SlideGenerator.Recipe.Models;
 
 namespace SlideGenerator.Generator.Persistence;

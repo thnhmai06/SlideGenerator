@@ -15,12 +15,12 @@
 using Microsoft.Extensions.Logging;
 using Serilog.Context;
 using Serilog.Events;
-using SlideGenerator.Generator.Job.Models;
+using SlideGenerator.Generator.Jobs.Models;
 using SlideGenerator.Generator.Progress;
 using SlideGenerator.Jobs.Engine;
 using SlideGenerator.Logging.FileLogging;
 
-namespace SlideGenerator.Generator.Job.Workload;
+namespace SlideGenerator.Generator.Jobs.Workloads;
 
 /// <summary>
 ///     A per-job logger, threaded from <see cref="LoggingWorkload" /> (which owns the file-backed

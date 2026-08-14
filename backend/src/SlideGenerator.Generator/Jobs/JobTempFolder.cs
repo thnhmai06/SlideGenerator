@@ -14,7 +14,7 @@
 
 using SlideGenerator.Settings.Immutable;
 
-namespace SlideGenerator.Generator.Job;
+namespace SlideGenerator.Generator.Jobs;
 
 /// <summary>
 ///     Per-job download cache folder: <c>%TEMP%\SlideGenerator\{requestId}\{jobId}\</c>. Kept isolated per

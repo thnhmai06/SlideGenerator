@@ -12,14 +12,14 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Generator.Job.Models;
-using SlideGenerator.Generator.Job.Workload;
+using SlideGenerator.Generator.Jobs.Models;
+using SlideGenerator.Generator.Jobs.Workloads;
 using SlideGenerator.Generator.Persistence;
 using SlideGenerator.Generator.Progress;
 using SlideGenerator.Jobs.Engine;
 using SlideGenerator.Logging.FileLogging;
 
-namespace SlideGenerator.Generator.Job;
+namespace SlideGenerator.Generator.Jobs;
 
 /// <summary>
 ///     Runs jobs by delegating to <see cref="IJobEngine{TKey,TState}" /> (the generic scheduler/lifecycle
@@ -39,7 +39,7 @@ public interface IJobRunner
 
     /// <summary>
     ///     Registers and starts a fresh job. Persists its initial <see cref="JobSnapshot" /> (flushed
-    ///     immediately, not on the next tick — so it is visible to conflict checks on newly-created
+    ///     immediately, not on the next tick — so it is visible to conflict checks on newly created
     ///     requests right away) before starting execution, then returns without waiting for it to finish.
     /// </summary>
     Task StartJobAsync(string requestId, int jobId, JobSpecification spec, string logPath, CancellationToken ct = default);

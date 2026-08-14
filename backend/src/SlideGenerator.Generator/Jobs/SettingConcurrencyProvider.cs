@@ -15,7 +15,7 @@
 using SlideGenerator.Jobs.Engine;
 using SlideGenerator.Settings.Mutable;
 
-namespace SlideGenerator.Generator.Job;
+namespace SlideGenerator.Generator.Jobs;
 
 /// <summary>Reads <c>Performance.MaxConcurrentJobs</c> for the generic job engine, re-read on every access.</summary>
 internal sealed class SettingConcurrencyProvider(ISettingProvider settingProvider) : IJobConcurrencyProvider

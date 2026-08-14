@@ -45,7 +45,7 @@ internal static class Utilities
         ///     skipped. This module has no notion of what the scope means; callers supply the property names.
         /// </summary>
         /// <param name="propertyNames">The ordered property names to look up and join.</param>
-        public string BuildScopePath(IReadOnlyList<string> propertyNames)
+        public string BuildScopePath(IReadOnlyCollection<string> propertyNames)
         {
             var parts = propertyNames.Select(logEvent.GetScalarValue).Where(v => v != null);
             return string.Join('/', parts);

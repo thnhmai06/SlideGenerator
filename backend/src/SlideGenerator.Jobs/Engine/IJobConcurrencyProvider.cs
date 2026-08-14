@@ -16,7 +16,7 @@ namespace SlideGenerator.Jobs.Engine;
 
 /// <summary>
 ///     Supplies the current job concurrency limit. Re-read by the engine on every job start, so a change
-///     applies to newly-started jobs without a restart — jobs already waiting are unaffected (see
+///     applies to newly started jobs without a restart — jobs already waiting are unaffected (see
 ///     <see cref="IJobEngine{TKey,TState}" /> remarks on semaphore swap-not-resize).
 /// </summary>
 public interface IJobConcurrencyProvider

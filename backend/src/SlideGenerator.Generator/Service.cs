@@ -14,8 +14,8 @@
 
 using Microsoft.Extensions.Logging;
 using SlideGenerator.Document.Presentations.Identifiers;
-using SlideGenerator.Generator.Job;
-using SlideGenerator.Generator.Job.Models;
+using SlideGenerator.Generator.Jobs;
+using SlideGenerator.Generator.Jobs.Models;
 using SlideGenerator.Generator.Persistence;
 using SlideGenerator.Generator.Progress;
 using SlideGenerator.Recipe;

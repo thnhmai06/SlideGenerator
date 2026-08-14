@@ -14,7 +14,7 @@
 
 using Microsoft.Extensions.Logging;
 
-namespace SlideGenerator.Generator.Job;
+namespace SlideGenerator.Generator.Jobs;
 
 /// <summary>
 ///     Runs first when a fresh (non-resumed) job starts, to overwrite any prior output file left by an
@@ -30,11 +30,10 @@ internal static class PreflightCleanup
         {
             var dir = Path.GetDirectoryName(outputPath);
             if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
-            if (File.Exists(outputPath))
-            {
-                File.Delete(outputPath);
-                logger.LogInformation("Removed prior output file '{OutputPath}'", outputPath);
-            }
+            if (!File.Exists(outputPath)) return;
+            
+            File.Delete(outputPath);
+            logger.LogInformation("Removed prior output file '{OutputPath}'", outputPath);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

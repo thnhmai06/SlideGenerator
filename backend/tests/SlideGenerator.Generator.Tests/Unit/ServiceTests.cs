@@ -15,8 +15,7 @@
 using FluentAssertions;
 using SlideGenerator.Document.Presentations.Identifiers;
 using SlideGenerator.Document.Workbooks.Identifiers;
-using SlideGenerator.Generator.Job;
-using SlideGenerator.Generator.Job.Models;
+using SlideGenerator.Generator.Jobs.Models;
 using SlideGenerator.Recipe.Models;
 using Xunit;
 

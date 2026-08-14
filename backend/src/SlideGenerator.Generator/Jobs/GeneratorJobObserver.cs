@@ -13,12 +13,12 @@
  */
 
 using Microsoft.Extensions.Logging;
-using SlideGenerator.Generator.Job.Models;
+using SlideGenerator.Generator.Jobs.Models;
 using SlideGenerator.Generator.Persistence;
 using SlideGenerator.Generator.Progress;
 using SlideGenerator.Jobs.Engine;
 
-namespace SlideGenerator.Generator.Job;
+namespace SlideGenerator.Generator.Jobs;
 
 /// <summary>
 ///     Maps <see cref="IJobEngine{TKey,TState}" />'s generic lifecycle callbacks onto

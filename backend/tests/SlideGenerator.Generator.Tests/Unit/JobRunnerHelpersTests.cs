@@ -16,7 +16,7 @@ using FluentAssertions;
 using NSubstitute;
 using SlideGenerator.Document.Workbooks.Components;
 using SlideGenerator.Document.Workbooks.Identifiers;
-using SlideGenerator.Generator.Job.Workload;
+using SlideGenerator.Generator.Jobs.Workloads;
 using SlideGenerator.Recipe.Models;
 using Xunit;
 

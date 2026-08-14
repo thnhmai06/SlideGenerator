@@ -15,8 +15,7 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
 using SlideGenerator.Generator;
-using SlideGenerator.Generator.Job;
-using SlideGenerator.Generator.Job.Models;
+using SlideGenerator.Generator.Jobs.Models;
 using SlideGenerator.Generator.Persistence;
 using SlideGenerator.Generator.Progress;
 using StreamJsonRpc;

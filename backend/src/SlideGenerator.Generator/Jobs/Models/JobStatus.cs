@@ -12,7 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Generator.Job.Models;
+namespace SlideGenerator.Generator.Jobs.Models;
 
 /// <summary>Identifies the execution status of a job.</summary>
 public enum JobStatus : byte

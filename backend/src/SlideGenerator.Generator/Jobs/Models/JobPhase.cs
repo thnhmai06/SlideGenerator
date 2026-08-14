@@ -12,7 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Generator.Job.Models;
+namespace SlideGenerator.Generator.Jobs.Models;
 
 /// <summary>
 ///     Identifies which of the 4 sequential phases a job is currently in. A job always progresses
