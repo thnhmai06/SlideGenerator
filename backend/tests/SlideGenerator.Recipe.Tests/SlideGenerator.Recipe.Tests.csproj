@@ -26,4 +26,15 @@
         <ProjectReference Include="../../src/SlideGenerator.Document/SlideGenerator.Document.csproj"/>
         <ProjectReference Include="../../src/SlideGenerator.Settings/SlideGenerator.Settings.csproj"/>
     </ItemGroup>
+
+    <ItemGroup>
+        <None Include="..\fixtures\data\Template.pptx">
+            <Link>fixtures\data\Template.pptx</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Include="..\fixtures\data\Data.xlsx">
+            <Link>fixtures\data\Data.xlsx</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
 </Project>
