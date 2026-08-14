@@ -33,7 +33,7 @@ public sealed class RecipeHandler(IRecipeRepository recipeRepository, IRecipePac
     /// <summary>
     ///     Returns a single recipe entry by its id, or <see langword="null" /> if not found.
     /// </summary>
-    public Task<RecipeEntry?> QueryAsync(int id, CancellationToken ct)
+    public Task<RecipeEntry> QueryAsync(int id, CancellationToken ct)
     {
         return recipeRepository.GetAsync(id, ct);
     }
