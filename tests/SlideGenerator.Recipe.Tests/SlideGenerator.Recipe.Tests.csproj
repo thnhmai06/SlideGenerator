@@ -16,10 +16,7 @@
         </PackageReference>
         <PackageReference Include="FluentAssertions" Version="8.10.0"/>
         <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.11"/>
-        <PackageReference Update="coverlet.collector" Version="10.0.1">
-            <PrivateAssets>all</PrivateAssets>
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>
+        <PackageReference Remove="coverlet.collector" />
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="../../src/SlideGenerator.Recipe/SlideGenerator.Recipe.csproj"/>
