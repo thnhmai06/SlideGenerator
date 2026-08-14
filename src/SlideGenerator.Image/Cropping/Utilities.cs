@@ -62,6 +62,13 @@ public static class Utilities
         Size sourceSize, Size cropSize,
         Point? anchorPoint = null, Vector2? pivot = null)
     {
+        if (sourceSize.Width <= 0 || sourceSize.Height <= 0)
+            throw new ArgumentOutOfRangeException(nameof(sourceSize),
+                "The source size must have positive width and height.");
+        if (cropSize.Width <= 0 || cropSize.Height <= 0)
+            throw new ArgumentOutOfRangeException(nameof(cropSize),
+                "The crop size must have positive width and height.");
+
         anchorPoint ??= sourceSize.CenterPoint();
         pivot ??= new Vector2(0.5f, 0.5f);
 
@@ -162,6 +169,13 @@ public static class Utilities
         /// </summary>
         public Size GetMaxAspectSize(Size ratioSize)
         {
+            if (original.Width <= 0 || original.Height <= 0)
+                throw new ArgumentOutOfRangeException(nameof(original),
+                    "The original size must have positive width and height.");
+            if (ratioSize.Width <= 0 || ratioSize.Height <= 0)
+                throw new ArgumentOutOfRangeException(nameof(ratioSize),
+                    "The ratio size must have positive width and height.");
+
             var originalAspect = original.Width / (double)original.Height;
             var ratioAspect = ratioSize.Width / (double)ratioSize.Height;
 

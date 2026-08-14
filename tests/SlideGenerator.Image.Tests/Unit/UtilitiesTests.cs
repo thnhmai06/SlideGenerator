@@ -29,7 +29,7 @@ public sealed class UtilitiesTests
     #region ToPoint
 
     /// <summary>
-    ///     Verifies that positive half-values round away from zero (i.e. up).
+    ///     Verifies that positive half-values round away from zero (i.e., up).
     /// </summary>
     [Fact]
     public void ToPoint_PositiveHalfValues_RoundsAwayFromZero()
@@ -38,7 +38,7 @@ public sealed class UtilitiesTests
     }
 
     /// <summary>
-    ///     Verifies that negative half-values round away from zero (i.e. down toward negative infinity).
+    ///     Verifies that negative half-values round away from zero (i.e., down toward negative infinity).
     /// </summary>
     [Fact]
     public void ToPoint_NegativeHalfValues_RoundsAwayFromZero()
@@ -78,7 +78,7 @@ public sealed class UtilitiesTests
     }
 
     /// <summary>
-    ///     Verifies that when every selector returns null the centroid is null.
+    ///     Verifies that when every selector returns null, the centroid is null.
     /// </summary>
     [Fact]
     public void Centroid_AllSelectorsReturnNull_ReturnsNull()
@@ -209,18 +209,16 @@ public sealed class UtilitiesTests
     }
 
     /// <summary>
-    ///     Documents current behaviour when crop size is zero: returns a zero-dimension rectangle
-    ///     without throwing. This silently produces an invalid input for VipsImage.Crop. // BUG?
+    ///     Verifies that a zero crop size is rejected, since the aspect ratio of an empty crop is
+    ///     undefined and would otherwise produce an invalid rectangle for <c>VipsImage.Crop</c>.
     /// </summary>
     [Fact]
-    public void CalculateAnchoredRectangle_ZeroCropSize_ReturnsZeroSizeRectWithoutThrowing()
+    public void CalculateAnchoredRectangle_ZeroCropSize_ThrowsArgumentOutOfRangeException()
     {
-        // No guard on zero crop — returns zero-sized rect; libvips will throw downstream // BUG?
         var act = () => Cropping.Utilities.CalculateAnchoredRectangle(new Size(300, 200), new Size(0, 0));
 
-        act.Should().NotThrow();
-        act().Width.Should().Be(0);
-        act().Height.Should().Be(0);
+        act.Should().Throw<ArgumentOutOfRangeException>()
+            .Which.ParamName.Should().Be("cropSize");
     }
 
     #endregion
@@ -483,32 +481,29 @@ public sealed class UtilitiesTests
     }
 
     /// <summary>
-    ///     Documents current behaviour when original height is zero: returns Size(0,0) without
-    ///     throwing, producing an unusable result. // BUG?
+    ///     Verifies that a zero original height is rejected, since it would otherwise make the aspect
+    ///     ratio division by zero and silently produce a <see cref="Size" /> of <c>(0, 0)</c>.
     /// </summary>
     [Fact]
-    public void GetMaxAspectSize_ZeroOriginalHeight_ReturnsSilentlyWrongResultWithoutThrowing()
+    public void GetMaxAspectSize_ZeroOriginalHeight_ThrowsArgumentOutOfRangeException()
     {
-        // original.Height=0 → Infinity/Infinity arithmetic → (0,0) // BUG?
         var act = () => new Size(100, 0).GetMaxAspectSize(new Size(16, 9));
 
-        act.Should().NotThrow();
-        act().Width.Should().Be(0);
-        act().Height.Should().Be(0);
+        act.Should().Throw<ArgumentOutOfRangeException>()
+            .Which.ParamName.Should().Be("original");
     }
 
     /// <summary>
-    ///     Documents current behaviour when ratio height is zero: returns a width-only size
-    ///     without throwing, silently discarding the height. // BUG?
+    ///     Verifies that a zero ratio height is rejected, since it would otherwise make the aspect
+    ///     ratio division by zero and silently discard the result's height.
     /// </summary>
     [Fact]
-    public void GetMaxAspectSize_ZeroRatioHeight_ReturnsSilentlyWrongResultWithoutThrowing()
+    public void GetMaxAspectSize_ZeroRatioHeight_ThrowsArgumentOutOfRangeException()
     {
-        // ratioAspect = Infinity → height rounded to 0 // BUG?
         var act = () => new Size(100, 100).GetMaxAspectSize(new Size(16, 0));
 
-        act.Should().NotThrow();
-        act().Height.Should().Be(0);
+        act.Should().Throw<ArgumentOutOfRangeException>()
+            .Which.ParamName.Should().Be("ratioSize");
     }
 
     #endregion
