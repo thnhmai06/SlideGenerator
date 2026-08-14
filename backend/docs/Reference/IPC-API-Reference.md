@@ -16,15 +16,15 @@ Framing is NDJSON (`NewLineDelimitedMessageHandler`); serialization uses STJ (`S
 
 ### Generator — active workflows
 
-| Method                       | Handler                                  | Description                              |
-|------------------------------|------------------------------------------|------------------------------------------|
-| `generator.active.start`     | `GeneratingActiveHandler.StartAsync`     | Starts a new generation workflow.        |
-| `generator.active.cancel`    | `GeneratingActiveHandler.CancelAsync`    | Cancels a single running workflow.       |
-| `generator.active.pause`     | `GeneratingActiveHandler.PauseAsync`     | Suspends a single running workflow.      |
-| `generator.active.resume`    | `GeneratingActiveHandler.ResumeAsync`    | Resumes a suspended workflow.            |
-| `generator.active.cancelAll` | `GeneratingActiveHandler.CancelAllAsync` | Cancels every running workflow.          |
-| `generator.active.pauseAll`  | `GeneratingActiveHandler.PauseAllAsync`  | Suspends every running workflow.         |
-| `generator.active.list`      | `GeneratingActiveHandler.ListAsync`      | Lists every active workflow.             |
+| Method                       | Handler                                  | Description                         |
+|------------------------------|------------------------------------------|-------------------------------------|
+| `generator.active.start`     | `GeneratingActiveHandler.StartAsync`     | Starts a new generation workflow.   |
+| `generator.active.cancel`    | `GeneratingActiveHandler.CancelAsync`    | Cancels a single running workflow.  |
+| `generator.active.pause`     | `GeneratingActiveHandler.PauseAsync`     | Suspends a single running workflow. |
+| `generator.active.resume`    | `GeneratingActiveHandler.ResumeAsync`    | Resumes a suspended workflow.       |
+| `generator.active.cancelAll` | `GeneratingActiveHandler.CancelAllAsync` | Cancels every running workflow.     |
+| `generator.active.pauseAll`  | `GeneratingActiveHandler.PauseAllAsync`  | Suspends every running workflow.    |
+| `generator.active.list`      | `GeneratingActiveHandler.ListAsync`      | Lists every active workflow.        |
 
 ### Generator — completed workflows
 
@@ -69,8 +69,8 @@ Framing is NDJSON (`NewLineDelimitedMessageHandler`); serialization uses STJ (`S
 
 Progress is scoped to Request/Job/Row and coalesced (current-state, last-write-wins) rather than streamed as raw
 lifecycle events. `ProgressCoalescer` buffers dirty state and log lines separately, then at most once per second
-forwards each non-empty batch. **Every notification's `params` is a single positional array** — i.e. `params[0]` is
-the batch list — not a named-object parameter, since the payload is a `List<T>`, not a DTO with properties.
+forwards each non-empty batch. **Every notification's `params` is a single positional array** — i.e. `params[0]` is the
+batch list — not a named-object parameter, since the payload is a `List<T>`, not a DTO with properties.
 
 ### `progress/request`
 
@@ -135,10 +135,10 @@ above. Array of:
 }
 ```
 
-`path` is the Request/Job/Row scope path this line was written under (trailing segments omitted when not
-applicable — e.g. a job-level line is just `"requestId/jobId"`), not a physical file path. `level` is a 3-letter
-abbreviation (`"VRB"`/`"DBG"`/`"INF"`/`"WRN"`/`"ERR"`/`"FTL"`) matching what's written to the on-disk log file — not
-the full Serilog level name.
+`path` is the Request/Job/Row scope path this line was written under (trailing segments omitted when not applicable —
+e.g. a job-level line is just `"requestId/jobId"`), not a physical file path. `level` is a 3-letter abbreviation
+(`"VRB"`/`"DBG"`/`"INF"`/`"WRN"`/`"ERR"`/`"FTL"`) matching what's written to the on-disk log file — not the full Serilog
+level name.
 
 ---
 

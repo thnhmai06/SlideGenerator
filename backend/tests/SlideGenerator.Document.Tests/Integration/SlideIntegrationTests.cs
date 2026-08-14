@@ -38,7 +38,8 @@ public sealed class SlideIntegrationTests
     }
 
     /// <summary>
-    ///     Verifies that <see cref="Domain.Abstractions.Slide.IReadOnlySlide.Equals(Domain.Abstractions.Slide.IReadOnlySlide)" />
+    ///     Verifies that
+    ///     <see cref="Domain.Abstractions.Slide.IReadOnlySlide.Equals(Domain.Abstractions.Slide.IReadOnlySlide)" />
     ///     returns <see langword="true" /> when the same slide is compared with itself (deterministic equality).
     /// </summary>
     [Fact]
@@ -51,7 +52,8 @@ public sealed class SlideIntegrationTests
     }
 
     /// <summary>
-    ///     Verifies that <see cref="Domain.Abstractions.Slide.IReadOnlySlide.Equals(Domain.Abstractions.Slide.IReadOnlySlide)" />
+    ///     Verifies that
+    ///     <see cref="Domain.Abstractions.Slide.IReadOnlySlide.Equals(Domain.Abstractions.Slide.IReadOnlySlide)" />
     ///     returns <see langword="false" /> when compared against <see langword="null" />.
     /// </summary>
     [Fact]

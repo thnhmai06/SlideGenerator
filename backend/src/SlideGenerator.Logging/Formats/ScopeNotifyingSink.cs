@@ -25,7 +25,9 @@ namespace SlideGenerator.Logging.Formats;
 /// </summary>
 /// <param name="scopePropertyNames">Ordered property names to join into <see cref="LogNotification.Location" />.</param>
 /// <param name="onLogEvent">Callback invoked for every emitted event.</param>
-internal sealed class ScopeNotifyingSink(IReadOnlyCollection<string> scopePropertyNames, Action<LogNotification> onLogEvent)
+internal sealed class ScopeNotifyingSink(
+    IReadOnlyCollection<string> scopePropertyNames,
+    Action<LogNotification> onLogEvent)
     : ILogEventSink
 {
     /// <inheritdoc />

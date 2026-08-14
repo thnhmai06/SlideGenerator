@@ -82,7 +82,10 @@ internal sealed class SfSlide(Syncfusion.Presentation.ISlide core) : ISlide
         return ms.ToArray();
     }
 
-    public ISlide Clone() => new SfSlide(Core.Clone());
+    public ISlide Clone()
+    {
+        return new SfSlide(Core.Clone());
+    }
 
     public bool Equals(IReadOnlySlide? other)
     {
@@ -102,6 +105,7 @@ internal sealed class SfSlide(Syncfusion.Presentation.ISlide core) : ISlide
             foreach (var p in s.TextBody.Paragraphs)
                 sb.Append(p.Text ?? "");
         }
+
         var thisHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(sb.ToString())));
 
         // other Hash
@@ -114,6 +118,7 @@ internal sealed class SfSlide(Syncfusion.Presentation.ISlide core) : ISlide
             foreach (var p in s.TextBody.Paragraphs)
                 sb.Append(p.Text ?? "");
         }
+
         var otherHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(sb.ToString())));
 
         return thisHash == otherHash;

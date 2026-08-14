@@ -33,18 +33,24 @@ internal sealed class GeneratorJobObserver(
     ILogger<GeneratorJobObserver> logger) : IJobObserver<JobKey, JobSnapshot>
 {
     /// <inheritdoc />
-    public Task OnProgressAsync(JobKey key, JobSnapshot state, bool durable, CancellationToken ct) =>
-        PersistAndPublishAsync(state with { JobStatus = JobStatus.Running }, durable, ct);
+    public Task OnProgressAsync(JobKey key, JobSnapshot state, bool durable, CancellationToken ct)
+    {
+        return PersistAndPublishAsync(state with { JobStatus = JobStatus.Running }, durable, ct);
+    }
 
     /// <inheritdoc />
-    public Task OnPausedAsync(JobKey key, JobSnapshot state, CancellationToken ct) =>
-        PersistAndPublishAsync(state with { JobStatus = JobStatus.Paused, Timestamp = DateTimeOffset.UtcNow },
-            durable: false, ct);
+    public Task OnPausedAsync(JobKey key, JobSnapshot state, CancellationToken ct)
+    {
+        return PersistAndPublishAsync(state with { JobStatus = JobStatus.Paused, Timestamp = DateTimeOffset.UtcNow },
+            false, ct);
+    }
 
     /// <inheritdoc />
-    public Task OnResumedAsync(JobKey key, JobSnapshot state, CancellationToken ct) =>
-        PersistAndPublishAsync(state with { JobStatus = JobStatus.Running, Timestamp = DateTimeOffset.UtcNow },
-            durable: false, ct);
+    public Task OnResumedAsync(JobKey key, JobSnapshot state, CancellationToken ct)
+    {
+        return PersistAndPublishAsync(state with { JobStatus = JobStatus.Running, Timestamp = DateTimeOffset.UtcNow },
+            false, ct);
+    }
 
     /// <inheritdoc />
     public async Task OnTerminalAsync(JobKey key, JobTerminalResult<JobSnapshot> result, CancellationToken ct)
@@ -60,7 +66,7 @@ internal sealed class GeneratorJobObserver(
             logger.LogError(result.Exception, "Job {RequestId}/{JobId} failed.", key.RequestId, key.JobId);
 
         await PersistAndPublishAsync(result.State with { JobStatus = status, Timestamp = DateTimeOffset.UtcNow },
-            durable: true, ct).ConfigureAwait(false);
+            true, ct).ConfigureAwait(false);
         CleanupJobTempFolder(key.RequestId, key.JobId);
     }
 
@@ -77,7 +83,7 @@ internal sealed class GeneratorJobObserver(
         var dir = JobTempFolder.GetPath(requestId, jobId);
         try
         {
-            if (Directory.Exists(dir)) Directory.Delete(dir, recursive: true);
+            if (Directory.Exists(dir)) Directory.Delete(dir, true);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

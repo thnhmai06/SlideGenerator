@@ -14,9 +14,9 @@
 
 using System.Drawing;
 using System.Numerics;
-
 using SlideGenerator.Image.FaceDetection;
 using SlideGenerator.Image.Loading;
+
 namespace SlideGenerator.Image.Cropping;
 
 /// <summary>

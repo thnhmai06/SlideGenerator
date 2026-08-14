@@ -15,6 +15,7 @@
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging.Abstractions;
+using SlideGenerator.Document.Workbooks.Identifiers;
 using SlideGenerator.Generator.Jobs.Models;
 using SlideGenerator.Generator.Persistence;
 using SlideGenerator.Recipe.Models;
@@ -47,18 +48,25 @@ public sealed class JobsRepositoryTests : IDisposable
         _repo = new JobsRepository(builder, NullLogger<JobsRepository>.Instance);
     }
 
-    public void Dispose() => _anchor.Dispose();
+    public void Dispose()
+    {
+        _anchor.Dispose();
+    }
 
-    private static JobSpecification Spec(RowFilter? rowFilter = null) => new(
-        "wb.xlsx", "Sheet1", null, rowFilter, "template.pptx", 1,
-        [new TextInstruction(new HashSet<string> { "{{Name}}" }, [new("Name")])],
-        [], "out.pptx");
+    private static JobSpecification Spec(RowFilter? rowFilter = null)
+    {
+        return new JobSpecification(
+            "wb.xlsx", "Sheet1", null, rowFilter, "template.pptx", 1,
+            [new TextInstruction(new HashSet<string> { "{{Name}}" }, [new ColumnIdentifier("Name")])],
+            [], "out.pptx");
+    }
 
     /// <summary>Verifies that a freshly enqueued and flushed job round-trips its resume state exactly.</summary>
     [Fact]
     public async Task EnqueueThenFlush_ThenGetByRequestId_RoundTripsJobSnapshot()
     {
-        var record = new JobSnapshot("req1", 0, JobStatus.Running, JobPhase.FillingText, 3, Spec(), DateTimeOffset.UtcNow);
+        var record = new JobSnapshot("req1", 0, JobStatus.Running, JobPhase.FillingText, 3, Spec(),
+            DateTimeOffset.UtcNow);
         _repo.Enqueue(record);
         await _repo.FlushAsync(TestContext.Current.CancellationToken);
 
@@ -106,7 +114,8 @@ public sealed class JobsRepositoryTests : IDisposable
     public async Task GetNonTerminalAsync_ExcludesCompleteAndCancelled()
     {
         _repo.Enqueue(new JobSnapshot("req4", 0, JobStatus.Complete, JobPhase.Done, 5, Spec(), DateTimeOffset.UtcNow));
-        _repo.Enqueue(new JobSnapshot("req4", 1, JobStatus.Running, JobPhase.FillingText, 1, Spec(), DateTimeOffset.UtcNow));
+        _repo.Enqueue(new JobSnapshot("req4", 1, JobStatus.Running, JobPhase.FillingText, 1, Spec(),
+            DateTimeOffset.UtcNow));
         await _repo.FlushAsync(TestContext.Current.CancellationToken);
 
         var nonTerminal = await _repo.GetNonTerminalAsync(TestContext.Current.CancellationToken);

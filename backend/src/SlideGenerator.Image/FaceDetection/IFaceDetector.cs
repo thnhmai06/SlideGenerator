@@ -13,6 +13,7 @@
  */
 
 using SlideGenerator.Image.Loading;
+
 namespace SlideGenerator.Image.FaceDetection;
 
 /// <summary>

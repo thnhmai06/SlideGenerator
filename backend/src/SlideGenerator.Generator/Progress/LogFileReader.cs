@@ -39,9 +39,6 @@ public interface ILogFileReader
 /// </summary>
 internal sealed partial class LogFileReader : ILogFileReader
 {
-    [GeneratedRegex(@"^\[(?<ts>[^\]]+)\] \[(?<logger>[^/\]]*)/(?<path>[^\]]*)\] (?<level>\w{3}): (?<msg>.*)$")]
-    private static partial Regex LinePattern();
-
     /// <inheritdoc />
     public IReadOnlyList<LogEntry> ReadAll(string logPath)
     {
@@ -72,4 +69,7 @@ internal sealed partial class LogFileReader : ILogFileReader
 
         return entries;
     }
+
+    [GeneratedRegex(@"^\[(?<ts>[^\]]+)\] \[(?<logger>[^/\]]*)/(?<path>[^\]]*)\] (?<level>\w{3}): (?<msg>.*)$")]
+    private static partial Regex LinePattern();
 }

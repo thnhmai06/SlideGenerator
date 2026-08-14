@@ -40,10 +40,10 @@ internal sealed class ProgressCoalescer(IJobsRepository jobsRepository, ILogger<
 
     private readonly ConcurrentQueue<LogEntry> _logQueue = new();
     private readonly ConcurrentDictionary<string, RequestAggregateState> _requestStates = new();
+    private GeneratingEventBus? _bus;
+    private CancellationTokenSource? _cts;
 
     private JsonRpc? _jsonRpc;
-    private CancellationTokenSource? _cts;
-    private GeneratingEventBus? _bus;
     private LogNotifier? _logNotifier;
 
     /// <summary>
@@ -100,16 +100,30 @@ internal sealed class ProgressCoalescer(IJobsRepository jobsRepository, ILogger<
 
     #region Event handlers
 
-    private void HandleRequest(RequestProgress progress) => _ = NotifyAsync("progress/request", [progress]);
+    private void HandleRequest(RequestProgress progress)
+    {
+        _ = NotifyAsync("progress/request", [progress]);
+    }
 
-    private void HandleRow(RowProgress progress) => _ = NotifyAsync("progress/rows", [progress]);
+    private void HandleRow(RowProgress progress)
+    {
+        _ = NotifyAsync("progress/rows", [progress]);
+    }
 
-    private void HandleLog(LogEntry entry) => _logQueue.Enqueue(entry);
+    private void HandleLog(LogEntry entry)
+    {
+        _logQueue.Enqueue(entry);
+    }
 
-    private void HandleJobsFlushed(IReadOnlyList<JobSnapshot> batch) => _ = NotifyAsync("progress/jobs", batch);
+    private void HandleJobsFlushed(IReadOnlyList<JobSnapshot> batch)
+    {
+        _ = NotifyAsync("progress/jobs", batch);
+    }
 
-    private void HandleExpectedJobCount(string requestId, int count) =>
+    private void HandleExpectedJobCount(string requestId, int count)
+    {
         _requestStates.GetOrAdd(requestId, _ => new RequestAggregateState()).ExpectedJobCount = count;
+    }
 
     #endregion
 
@@ -162,12 +176,12 @@ internal sealed class ProgressCoalescer(IJobsRepository jobsRepository, ILogger<
 
     private sealed class RequestAggregateState
     {
-        public int? ExpectedJobCount;
         public readonly ConcurrentDictionary<int, byte> KnownJobs = new();
         public readonly ConcurrentDictionary<int, byte> StartedJobs = new();
         public readonly ConcurrentDictionary<int, byte> TerminalJobs = new();
-        public bool ProcessingStartedSent;
         public bool CompletedSent;
+        public int? ExpectedJobCount;
+        public bool ProcessingStartedSent;
     }
 
     #endregion

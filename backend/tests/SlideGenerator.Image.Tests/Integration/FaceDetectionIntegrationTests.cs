@@ -14,10 +14,11 @@
 
 using FluentAssertions;
 using NSubstitute;
-using SlideGenerator.Image.Tests.Integration.Fixtures;
-using Xunit;
 using SlideGenerator.Image.FaceDetection;
 using SlideGenerator.Image.Loading;
+using SlideGenerator.Image.Tests.Integration.Fixtures;
+using Xunit;
+
 namespace SlideGenerator.Image.Tests.Integration;
 
 /// <summary>

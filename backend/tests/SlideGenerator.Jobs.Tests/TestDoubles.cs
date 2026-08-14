@@ -24,16 +24,29 @@ internal sealed record TestState(int Step);
 ///     on a test-controlled gate before checkpointing — giving tests a deterministic point to pause/inspect
 ///     without racing the workload's own execution.
 /// </summary>
-internal sealed class ScriptedWorkload(int stepCount, TestState finalState, int throwAtStep = -1, Exception? exception = null)
+internal sealed class ScriptedWorkload(
+    int stepCount,
+    TestState finalState,
+    int throwAtStep = -1,
+    Exception? exception = null)
     : IJobWorkload<TestState>
 {
     /// <summary>Signaled right after step <c>i</c>'s <see cref="IJobContext{TState}.ReportAsync" /> call returns.</summary>
     public IReadOnlyList<TaskCompletionSource> Reported { get; } =
-        [.. Enumerable.Range(0, stepCount).Select(_ => new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously))];
+    [
+        .. Enumerable.Range(0, stepCount)
+            .Select(_ => new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously))
+    ];
 
-    /// <summary>The test completes step <c>i</c>'s entry to let the workload proceed into <see cref="IJobContext{TState}.CheckpointAsync" />.</summary>
+    /// <summary>
+    ///     The test completes step <c>i</c>'s entry to let the workload proceed into
+    ///     <see cref="IJobContext{TState}.CheckpointAsync" />.
+    /// </summary>
     public IReadOnlyList<TaskCompletionSource> Release { get; } =
-        [.. Enumerable.Range(0, stepCount).Select(_ => new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously))];
+    [
+        .. Enumerable.Range(0, stepCount)
+            .Select(_ => new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously))
+    ];
 
     public bool RanToCompletion { get; private set; }
 
@@ -42,7 +55,7 @@ internal sealed class ScriptedWorkload(int stepCount, TestState finalState, int 
         for (var i = 0; i < stepCount; i++)
         {
             var stepState = state with { Step = i + 1 };
-            await context.ReportAsync(stepState, durable: false, ct).ConfigureAwait(false);
+            await context.ReportAsync(stepState, false, ct).ConfigureAwait(false);
             Reported[i].TrySetResult();
             await Release[i].Task.ConfigureAwait(false);
             await context.CheckpointAsync(ct).ConfigureAwait(false);
@@ -54,11 +67,16 @@ internal sealed class ScriptedWorkload(int stepCount, TestState finalState, int 
     }
 }
 
-/// <summary>A workload whose body never runs any await point before throwing/returning — used for trivial start/duplicate tests.</summary>
+/// <summary>
+///     A workload whose body never runs any await point before throwing/returning — used for trivial start/duplicate
+///     tests.
+/// </summary>
 internal sealed class ImmediateWorkload(Func<TestState, TestState> transform) : IJobWorkload<TestState>
 {
-    public Task<TestState> RunAsync(TestState state, IJobContext<TestState> context, CancellationToken ct) =>
-        Task.FromResult(transform(state));
+    public Task<TestState> RunAsync(TestState state, IJobContext<TestState> context, CancellationToken ct)
+    {
+        return Task.FromResult(transform(state));
+    }
 }
 
 /// <summary>A workload that must never actually run — used to assert a job never left the concurrency queue.</summary>
@@ -85,19 +103,31 @@ internal sealed class RecordingObserver : IJobObserver<string, TestState>
 
     public Task OnProgressAsync(string key, TestState state, bool durable, CancellationToken ct)
     {
-        lock (_lock) Progress.Add((key, state, durable));
+        lock (_lock)
+        {
+            Progress.Add((key, state, durable));
+        }
+
         return Task.CompletedTask;
     }
 
     public Task OnPausedAsync(string key, TestState state, CancellationToken ct)
     {
-        lock (_lock) Paused.Add((key, state));
+        lock (_lock)
+        {
+            Paused.Add((key, state));
+        }
+
         return Task.CompletedTask;
     }
 
     public Task OnResumedAsync(string key, TestState state, CancellationToken ct)
     {
-        lock (_lock) Resumed.Add((key, state));
+        lock (_lock)
+        {
+            Resumed.Add((key, state));
+        }
+
         return Task.CompletedTask;
     }
 
@@ -108,14 +138,18 @@ internal sealed class RecordingObserver : IJobObserver<string, TestState>
     }
 
     /// <summary>Waits for <paramref name="key" />'s terminal outcome. Safe to call before or after it happens.</summary>
-    public Task<JobTerminalResult<TestState>> WaitTerminalAsync(string key) => GetOrAddTcs(key).Task;
+    public Task<JobTerminalResult<TestState>> WaitTerminalAsync(string key)
+    {
+        return GetOrAddTcs(key).Task;
+    }
 
     private TaskCompletionSource<JobTerminalResult<TestState>> GetOrAddTcs(string key)
     {
         lock (_lock)
         {
             if (_terminal.TryGetValue(key, out var tcs)) return tcs;
-            tcs = new TaskCompletionSource<JobTerminalResult<TestState>>(TaskCreationOptions.RunContinuationsAsynchronously);
+            tcs = new TaskCompletionSource<JobTerminalResult<TestState>>(TaskCreationOptions
+                .RunContinuationsAsynchronously);
             _terminal[key] = tcs;
             return tcs;
         }
@@ -132,6 +166,8 @@ internal sealed class FakeConcurrencyProvider(int initial) : IJobConcurrencyProv
 internal sealed class FakeResumeSource(IReadOnlyList<PendingJob<string, TestState>> pending)
     : IJobResumeSource<string, TestState>
 {
-    public Task<IReadOnlyList<PendingJob<string, TestState>>> GetPendingJobsAsync(CancellationToken ct) =>
-        Task.FromResult(pending);
+    public Task<IReadOnlyList<PendingJob<string, TestState>>> GetPendingJobsAsync(CancellationToken ct)
+    {
+        return Task.FromResult(pending);
+    }
 }

@@ -31,7 +31,7 @@ internal static class PreflightCleanup
             var dir = Path.GetDirectoryName(outputPath);
             if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
             if (!File.Exists(outputPath)) return;
-            
+
             File.Delete(outputPath);
             logger.LogInformation("Removed prior output file '{OutputPath}'", outputPath);
         }

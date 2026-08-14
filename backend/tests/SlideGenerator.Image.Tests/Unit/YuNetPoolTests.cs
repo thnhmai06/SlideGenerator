@@ -12,14 +12,14 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+// ReSharper disable AccessToDisposedClosure
 using System.Drawing;
+using SlideGenerator.Image.FaceDetection;
 using FluentAssertions;
+using SlideGenerator.Image.Loading;
 using NSubstitute;
 using Xunit;
 
-// ReSharper disable AccessToDisposedClosure
-using SlideGenerator.Image.FaceDetection;
-using SlideGenerator.Image.Loading;
 namespace SlideGenerator.Image.Tests.Unit;
 
 /// <summary>

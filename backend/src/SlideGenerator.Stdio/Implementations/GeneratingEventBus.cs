@@ -25,17 +25,28 @@ namespace SlideGenerator.Stdio.Implementations;
 internal sealed class GeneratingEventBus : IEventBus
 {
     /// <summary>Publishes a <see cref="RequestProgress" /> to all current subscribers. Safe to call from any thread.</summary>
-    public void Publish(RequestProgress progress) => OnRequestProgress?.Invoke(progress);
+    public void Publish(RequestProgress progress)
+    {
+        OnRequestProgress?.Invoke(progress);
+    }
 
     /// <summary>Publishes a <see cref="JobSnapshot" /> to all current subscribers. Safe to call from any thread.</summary>
-    public void Publish(JobSnapshot job) => OnJobProgress?.Invoke(job);
+    public void Publish(JobSnapshot job)
+    {
+        OnJobProgress?.Invoke(job);
+    }
 
     /// <summary>Publishes a <see cref="RowProgress" /> to all current subscribers. Safe to call from any thread.</summary>
-    public void Publish(RowProgress progress) => OnRowProgress?.Invoke(progress);
+    public void Publish(RowProgress progress)
+    {
+        OnRowProgress?.Invoke(progress);
+    }
 
     /// <inheritdoc />
-    public void AnnounceExpectedJobCount(string requestId, int count) =>
+    public void AnnounceExpectedJobCount(string requestId, int count)
+    {
         OnExpectedJobCount?.Invoke(requestId, count);
+    }
 
     /// <summary>Raised whenever a request-scoped progress event occurs. Subscribe before the first workflow starts.</summary>
     public event Action<RequestProgress>? OnRequestProgress;

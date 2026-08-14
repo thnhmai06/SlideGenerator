@@ -18,7 +18,6 @@ using SlideGenerator.Generator.Jobs;
 using SlideGenerator.Generator.Jobs.Models;
 using SlideGenerator.Generator.Persistence;
 using SlideGenerator.Generator.Progress;
-using SlideGenerator.Recipe;
 using SlideGenerator.Recipe.Services;
 using SlideGenerator.Settings.Immutable;
 using SlideGenerator.Utilities;
@@ -127,10 +126,16 @@ internal sealed class Service(
     : IService
 {
     /// <inheritdoc />
-    public Task InitializeAsync(CancellationToken ct = default) => jobRunner.InitializeAsync(ct);
+    public Task InitializeAsync(CancellationToken ct = default)
+    {
+        return jobRunner.InitializeAsync(ct);
+    }
 
     /// <inheritdoc />
-    public Task ShutdownAsync(CancellationToken ct = default) => jobRunner.ShutdownAsync(ct);
+    public Task ShutdownAsync(CancellationToken ct = default)
+    {
+        return jobRunner.ShutdownAsync(ct);
+    }
 
     /// <inheritdoc />
     public async Task<string> CreateAsync(Request request, CancellationToken ct = default)
@@ -268,9 +273,17 @@ internal sealed class Service(
         return deleted;
     }
 
+    private static string ResolveWorkflowLogPath(Request request)
+    {
+        var fileName = Naming.SanitizeFileName(request.Name);
+        if (string.IsNullOrWhiteSpace(fileName)) fileName = "workflow";
+        return Path.Combine(NameAndPaths.LogsFolder.WorkflowPath, $"{fileName}.log");
+    }
+
     #region Aggregation helpers
 
-    private async Task<IReadOnlyDictionary<string, IReadOnlyList<JobSnapshot>>> ListGroupsAsync(CancellationToken ct = default)
+    private async Task<IReadOnlyDictionary<string, IReadOnlyList<JobSnapshot>>> ListGroupsAsync(
+        CancellationToken ct = default)
     {
         var all = await jobsRepository.GetAllAsync(ct).ConfigureAwait(false);
         return all
@@ -329,19 +342,22 @@ internal sealed class Service(
     ///     Flattens a recipe's <c>Mappings</c> into one <see cref="JobSpecification" /> per
     ///     (worksheet source × mapping) pair — every value already resolved, no id left to look up.
     /// </summary>
-    internal static List<JobSpecification> BuildJobs(Recipe.Models.Recipe recipe, Request request) =>
-    [
-        .. recipe.Mappings.SelectMany(m => m.Sources.Select(s => new JobSpecification(
-            s.Workbook.BookPath,
-            s.Worksheet.SheetName,
-            s.UsedColumns,
-            s.RowFilter,
-            m.Template.Presentation.PresentationPath,
-            m.Template.Slide.SlideIndex,
-            m.TextInstructions,
-            m.ImageInstructions,
-            BuildOutputPath(request, s.Workbook.BookPath, s.Worksheet.SheetName))))
-    ];
+    internal static List<JobSpecification> BuildJobs(Recipe.Models.Recipe recipe, Request request)
+    {
+        return
+        [
+            .. recipe.Mappings.SelectMany(m => m.Sources.Select(s => new JobSpecification(
+                s.Workbook.BookPath,
+                s.Worksheet.SheetName,
+                s.UsedColumns,
+                s.RowFilter,
+                m.Template.Presentation.PresentationPath,
+                m.Template.Slide.SlideIndex,
+                m.TextInstructions,
+                m.ImageInstructions,
+                BuildOutputPath(request, s.Workbook.BookPath, s.Worksheet.SheetName))))
+        ];
+    }
 
     private static string BuildOutputPath(Request request, string bookPath, string sheetName)
     {
@@ -401,7 +417,9 @@ internal sealed class Service(
             Phase = job.Phase,
             CurrentIndex = job.CurrentIndex,
             OutputPath = job.OutputPath,
-            CompletedAt = job.JobStatus is JobStatus.Complete or JobStatus.Cancelled or JobStatus.Error ? job.Timestamp : null,
+            CompletedAt = job.JobStatus is JobStatus.Complete or JobStatus.Cancelled or JobStatus.Error
+                ? job.Timestamp
+                : null,
             Logs =
             [
                 .. logEntries
@@ -421,11 +439,4 @@ internal sealed class Service(
     }
 
     #endregion
-
-    private static string ResolveWorkflowLogPath(Request request)
-    {
-        var fileName = Naming.SanitizeFileName(request.Name);
-        if (string.IsNullOrWhiteSpace(fileName)) fileName = "workflow";
-        return Path.Combine(NameAndPaths.LogsFolder.WorkflowPath, $"{fileName}.log");
-    }
 }

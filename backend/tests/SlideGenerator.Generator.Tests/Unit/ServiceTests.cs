@@ -100,10 +100,13 @@ public sealed class ServiceTests
 
     #region DeriveStatus
 
-    private static JobSnapshot Job(JobStatus jobStatus) => new(
-        "req", 0, jobStatus, JobPhase.CreatingOutput, 0,
-        new JobSpecification("wb", "Sheet1", null, null, "ppt", 1, [], [], "out.pptx"),
-        DateTimeOffset.UtcNow);
+    private static JobSnapshot Job(JobStatus jobStatus)
+    {
+        return new JobSnapshot(
+            "req", 0, jobStatus, JobPhase.CreatingOutput, 0,
+            new JobSpecification("wb", "Sheet1", null, null, "ppt", 1, [], [], "out.pptx"),
+            DateTimeOffset.UtcNow);
+    }
 
     /// <summary>Any job Pending or Running → the whole request is Running.</summary>
     [Fact]

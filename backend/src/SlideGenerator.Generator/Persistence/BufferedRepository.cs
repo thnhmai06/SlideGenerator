@@ -27,11 +27,11 @@ namespace SlideGenerator.Generator.Persistence;
 internal abstract class BufferedRepository<TKey, TValue> : IAsyncDisposable where TKey : notnull
 {
     private const uint FlushIntervalSeconds = 1;
+    private readonly CancellationTokenSource _cts = new();
 
     private readonly ILogger _logger;
-    private ConcurrentDictionary<TKey, TValue> _dirty = new();
-    private readonly CancellationTokenSource _cts = new();
     private readonly Task _loop;
+    private ConcurrentDictionary<TKey, TValue> _dirty = new();
 
     protected BufferedRepository(ILogger logger)
     {
@@ -39,8 +39,36 @@ internal abstract class BufferedRepository<TKey, TValue> : IAsyncDisposable wher
         _loop = RunFlushLoopAsync(_cts.Token);
     }
 
+    /// <summary>Cancels the flush loop and flushes one last time, so nothing accumulated since the previous tick is dropped.</summary>
+    public async ValueTask DisposeAsync()
+    {
+        await _cts.CancelAsync().ConfigureAwait(false);
+        try
+        {
+            await _loop.ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected.
+        }
+
+        try
+        {
+            await FlushAsync(CancellationToken.None).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Final flush on dispose failed.");
+        }
+
+        _cts.Dispose();
+    }
+
     /// <summary>Marks <paramref name="value" /> dirty under <paramref name="key" /> — last write wins.</summary>
-    public void Enqueue(TKey key, TValue value) => _dirty[key] = value;
+    public void Enqueue(TKey key, TValue value)
+    {
+        _dirty[key] = value;
+    }
 
     /// <summary>Rose after each successful flush with the batch that was just persisted.</summary>
     public event Action<IReadOnlyList<TValue>>? Flushed;
@@ -80,30 +108,5 @@ internal abstract class BufferedRepository<TKey, TValue> : IAsyncDisposable wher
         {
             // Expected on DisposeAsync.
         }
-    }
-
-    /// <summary>Cancels the flush loop and flushes one last time, so nothing accumulated since the previous tick is dropped.</summary>
-    public async ValueTask DisposeAsync()
-    {
-        await _cts.CancelAsync().ConfigureAwait(false);
-        try
-        {
-            await _loop.ConfigureAwait(false);
-        }
-        catch (OperationCanceledException)
-        {
-            // Expected.
-        }
-
-        try
-        {
-            await FlushAsync(CancellationToken.None).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Final flush on dispose failed.");
-        }
-
-        _cts.Dispose();
     }
 }

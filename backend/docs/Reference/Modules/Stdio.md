@@ -8,8 +8,8 @@ Tauri frontend and wires every other module through DI.
 - Bootstrap the .NET host, configuration, and system logger.
 - Build the DI container with every `Add*Services()` extension.
 - Construct a `JsonRpc` instance over `stdin` (incoming) / `stdout` (outgoing) and register all RPC methods.
-- Attach the `ProgressCoalescer` so Request/Job/Row progress and log lines are coalesced, persisted to `Studio.db`,
-  and batched into `progress/request`/`progress/jobs`/`progress/rows`/`log/entries` notifications (≥1s apart).
+- Attach the `ProgressCoalescer` so Request/Job/Row progress and log lines are coalesced, persisted to `Studio.db`, and
+  batched into `progress/request`/`progress/jobs`/`progress/rows`/`log/entries` notifications (≥1s apart).
 
 ## Layout
 
@@ -57,8 +57,8 @@ See [IPC API Reference](../IPC-API-Reference.md) for the full table.
 
 ## Notifications
 
-Emitted via `JsonRpc.NotifyAsync(method, payload)` — **not** `NotifyWithParameterObjectAsync`, which marshals a
-single argument by reflecting over its public properties and would serialize a `List<T>` batch as an empty `{}`
+Emitted via `JsonRpc.NotifyAsync(method, payload)` — **not** `NotifyWithParameterObjectAsync`, which marshals a single
+argument by reflecting over its public properties and would serialize a `List<T>` batch as an empty `{}`
 instead of an array. Each notification's `params` is therefore a single positional array (`params[0]`), batched by
 `ProgressCoalescer` at most once per second:
 

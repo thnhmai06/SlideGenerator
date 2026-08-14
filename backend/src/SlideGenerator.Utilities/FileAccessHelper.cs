@@ -43,6 +43,8 @@ public static class FileAccessHelper
 
     /// <summary>Returns <see langword="true" /> if <paramref name="ex" /> represents a Windows file-lock error.</summary>
     public static bool IsFileLockedException(IOException ex)
-        // 0x80070020 = sharing violation, 0x80070021 = lock violation
-        => ex.HResult is unchecked((int)0x80070020) or unchecked((int)0x80070021);
+    // 0x80070020 = sharing violation, 0x80070021 = lock violation
+    {
+    return ex.HResult is unchecked((int)0x80070020) or unchecked((int)0x80070021);
+    }
 }

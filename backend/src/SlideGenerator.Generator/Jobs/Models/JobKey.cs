@@ -15,4 +15,5 @@
 // A job's identity within IJobEngine<TKey,TState>: the request it belongs to, plus its ordinal
 // position within that request. Aliased project-wide so every Engine/Workload/Observer type using
 // it doesn't repeat the tuple shape.
+
 global using JobKey = (string RequestId, int JobId);

@@ -23,11 +23,16 @@ public sealed class PauseGate
 {
     private TaskCompletionSource<bool>? _pauseSignal;
 
-    public void Pause() =>
+    public void Pause()
+    {
         Interlocked.CompareExchange(ref _pauseSignal,
             new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously), null);
+    }
 
-    public void Resume() => Interlocked.Exchange(ref _pauseSignal, null)?.TrySetResult(true);
+    public void Resume()
+    {
+        Interlocked.Exchange(ref _pauseSignal, null)?.TrySetResult(true);
+    }
 
     public async Task CheckpointAsync(CancellationToken ct)
     {

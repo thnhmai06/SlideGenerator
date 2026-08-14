@@ -28,6 +28,29 @@ namespace SlideGenerator.Generator.Tests.Unit;
 /// </summary>
 public sealed class JobRunnerHelpersTests
 {
+    #region BuildHeaderToIndexMap
+
+    /// <summary>
+    ///     Verifies that the header map assigns a 0-based list index to each non-empty column name.
+    /// </summary>
+    [Fact]
+    public void BuildHeaderMap_MapsColumnNameTo0BasedIndex()
+    {
+        var worksheet = Substitute.For<IReadOnlyWorksheet>();
+        worksheet.GetRow(1).Returns(new List<string> { "A", "B", "C" });
+
+        var result = Utilities.BuildHeaderToIndexMap(worksheet);
+
+        result.Should().BeEquivalentTo(new Dictionary<ColumnIdentifier, int>
+        {
+            [new ColumnIdentifier("A")] = 0,
+            [new ColumnIdentifier("B")] = 1,
+            [new ColumnIdentifier("C")] = 2
+        });
+    }
+
+    #endregion
+
     #region RowFilter.GetIndices
 
     /// <summary>
@@ -80,29 +103,6 @@ public sealed class JobRunnerHelpersTests
 
     #endregion
 
-    #region BuildHeaderToIndexMap
-
-    /// <summary>
-    ///     Verifies that the header map assigns a 0-based list index to each non-empty column name.
-    /// </summary>
-    [Fact]
-    public void BuildHeaderMap_MapsColumnNameTo0BasedIndex()
-    {
-        var worksheet = Substitute.For<IReadOnlyWorksheet>();
-        worksheet.GetRow(1).Returns(new List<string> { "A", "B", "C" });
-
-        var result = Utilities.BuildHeaderToIndexMap(worksheet);
-
-        result.Should().BeEquivalentTo(new Dictionary<ColumnIdentifier, int>
-        {
-            [new ColumnIdentifier("A")] = 0,
-            [new ColumnIdentifier("B")] = 1,
-            [new ColumnIdentifier("C")] = 2
-        });
-    }
-
-    #endregion
-
     #region BuildTextValues
 
     /// <summary>
@@ -111,7 +111,8 @@ public sealed class JobRunnerHelpersTests
     [Fact]
     public void BuildTextValues_UsesFirstNonEmptyColumn()
     {
-        var rowValues = new Dictionary<ColumnIdentifier, string> { [new ColumnIdentifier("ColA")] = "", [new ColumnIdentifier("ColB")] = "X" };
+        var rowValues = new Dictionary<ColumnIdentifier, string>
+            { [new ColumnIdentifier("ColA")] = "", [new ColumnIdentifier("ColB")] = "X" };
         var instructions = new List<TextInstruction>
         {
             new(
@@ -134,7 +135,8 @@ public sealed class JobRunnerHelpersTests
     [Fact]
     public void BuildTextValues_UsesEmptyStringWhenNoColumnHasValue()
     {
-        var rowValues = new Dictionary<ColumnIdentifier, string> { [new ColumnIdentifier("ColA")] = "", [new ColumnIdentifier("ColB")] = "" };
+        var rowValues = new Dictionary<ColumnIdentifier, string>
+            { [new ColumnIdentifier("ColA")] = "", [new ColumnIdentifier("ColB")] = "" };
         var instructions = new List<TextInstruction>
         {
             new(
@@ -157,7 +159,8 @@ public sealed class JobRunnerHelpersTests
     [Fact]
     public void BuildTextValues_MergesAllInstructions()
     {
-        var rowValues = new Dictionary<ColumnIdentifier, string> { [new ColumnIdentifier("Name")] = "Alice", [new ColumnIdentifier("Role")] = "Manager" };
+        var rowValues = new Dictionary<ColumnIdentifier, string>
+            { [new ColumnIdentifier("Name")] = "Alice", [new ColumnIdentifier("Role")] = "Manager" };
         var instructions = new List<TextInstruction>
         {
             new(new HashSet<string> { "Name" }, new List<ColumnIdentifier> { new("Name") }),

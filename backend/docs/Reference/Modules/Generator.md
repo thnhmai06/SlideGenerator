@@ -65,8 +65,8 @@ The workflow state is the `GeneratingContext` class.
 
 Registered in `AddGeneratorServices` — `Middleware` (`Infrastructure/Middleware/Middleware.cs`) is the only step
 middleware. It lazily initializes `JobContext.Transient.LoggerFactory` before each step, supplying the module's
-Request/Job/Row scope property names and a callback that forwards every log line to `ILogNotifier`. There is no
-separate progress-publishing middleware — step-level "progress" is no longer a concept; see **Progress** below.
+Request/Job/Row scope property names and a callback that forwards every log line to `ILogNotifier`. There is no separate
+progress-publishing middleware — step-level "progress" is no longer a concept; see **Progress** below.
 
 ## Progress
 
@@ -82,10 +82,10 @@ Progress is 3 separate scoped records (`RequestProgress`/`JobProgress`/`RowProgr
   per-step-execution helper exposing `ReportRow(...)`/`SeedRows(...)`.
 
 `IEventBus` (`Application/Abstractions/IEventBus.cs`) is implemented by the Stdio module's `GeneratingEventBus`
-(`dep-interface-ownership`: Generator owns the interface as publisher, Stdio owns the implementation as the module
-that actually forwards to JSON-RPC). `IStudioRepository`/`StudioRepository` persist current-state Progress
-(UPSERT) to a `Studio.db` SQLite database, so `Service.ListActiveAsync`/`ListCompletedAsync` can answer with full
-current Row/Phase/Status even for a client that only just started polling. `Summary`/`JobSummary`/`RowSummary`
+(`dep-interface-ownership`: Generator owns the interface as publisher, Stdio owns the implementation as the module that
+actually forwards to JSON-RPC). `IStudioRepository`/`StudioRepository` persist current-state Progress (UPSERT) to a
+`Studio.db` SQLite database, so `Service.ListActiveAsync`/`ListCompletedAsync` can answer with full current
+Row/Phase/Status even for a client that only just started polling. `Summary`/`JobSummary`/`RowSummary`
 (`Domain/Models/Data/Summary.cs`) also each carry a `Logs: IReadOnlyList<LogEntry>`, populated on every call by
 `ILogFileReader`/`LogFileReader` reading the job's `.log` file straight off disk and filtering by scope path
 (deliberately not RAM-cached — see the Logging module doc).

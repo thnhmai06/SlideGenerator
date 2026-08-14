@@ -24,6 +24,8 @@ namespace SlideGenerator.Generator.Jobs;
 /// </summary>
 internal static class JobTempFolder
 {
-    internal static string GetPath(string requestId, int jobId) =>
-        Path.Combine(NameAndPaths.TempFolder.RootPath, requestId, jobId.ToString());
+    internal static string GetPath(string requestId, int jobId)
+    {
+        return Path.Combine(NameAndPaths.TempFolder.RootPath, requestId, jobId.ToString());
+    }
 }

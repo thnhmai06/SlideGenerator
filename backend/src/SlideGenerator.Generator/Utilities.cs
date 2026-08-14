@@ -17,23 +17,12 @@ using SlideGenerator.Document.Workbooks.Components;
 using SlideGenerator.Document.Workbooks.Identifiers;
 using SlideGenerator.Settings.Immutable;
 using SlideGenerator.Settings.Mutable;
+using Math = SlideGenerator.Utilities.Math;
 
 namespace SlideGenerator.Generator;
 
 internal static class Utilities
 {
-    /// <summary>Case-insensitive equality on <see cref="ColumnIdentifier.ColumnName" />.</summary>
-    private sealed class ColumnIdentifierComparer : IEqualityComparer<ColumnIdentifier>
-    {
-        public static readonly ColumnIdentifierComparer Instance = new();
-
-        public bool Equals(ColumnIdentifier? x, ColumnIdentifier? y) =>
-            string.Equals(x?.ColumnName, y?.ColumnName, StringComparison.OrdinalIgnoreCase);
-
-        public int GetHashCode(ColumnIdentifier obj) =>
-            StringComparer.OrdinalIgnoreCase.GetHashCode(obj.ColumnName);
-    }
-
     /// <summary>
     ///     Creates a fresh <see cref="HttpClient" /> from <paramref name="httpClientFactory" /> (cheap — the
     ///     underlying <see cref="HttpMessageHandler" /> is pooled/reused by the factory) configured with the
@@ -64,7 +53,7 @@ internal static class Utilities
         Func<int, CancellationToken, Task>? delay = null) where T : class?
     {
         delay ??= (attempt, innerCt) =>
-            Task.Delay(SlideGenerator.Utilities.Math.ComputeBackoffDelay(attempt, maxRetryDelay), innerCt);
+            Task.Delay(Math.ComputeBackoffDelay(attempt, maxRetryDelay), innerCt);
 
         for (var attempt = 0; attempt <= maxRetries; attempt++)
         {
@@ -90,9 +79,14 @@ internal static class Utilities
         return null;
     }
 
-    /// <summary>Whether <paramref name="inspected" />'s known content length exceeds <paramref name="maxDownloadBytes" /> (0 = unlimited).</summary>
-    internal static bool ExceedsMaxDownloadBytes(ContentInfo? inspected, uint maxDownloadBytes) =>
-        maxDownloadBytes > 0 && inspected?.Length is { } length && length > maxDownloadBytes;
+    /// <summary>
+    ///     Whether <paramref name="inspected" />'s known content length exceeds <paramref name="maxDownloadBytes" /> (0 =
+    ///     unlimited).
+    /// </summary>
+    internal static bool ExceedsMaxDownloadBytes(ContentInfo? inspected, uint maxDownloadBytes)
+    {
+        return maxDownloadBytes > 0 && inspected?.Length is { } length && length > maxDownloadBytes;
+    }
 
     /// <summary>
     ///     Returns the trimmed value of the first non-empty column in <paramref name="columns" />,
@@ -130,5 +124,21 @@ internal static class Utilities
         }
 
         return result;
+    }
+
+    /// <summary>Case-insensitive equality on <see cref="ColumnIdentifier.ColumnName" />.</summary>
+    private sealed class ColumnIdentifierComparer : IEqualityComparer<ColumnIdentifier>
+    {
+        public static readonly ColumnIdentifierComparer Instance = new();
+
+        public bool Equals(ColumnIdentifier? x, ColumnIdentifier? y)
+        {
+            return string.Equals(x?.ColumnName, y?.ColumnName, StringComparison.OrdinalIgnoreCase);
+        }
+
+        public int GetHashCode(ColumnIdentifier obj)
+        {
+            return StringComparer.OrdinalIgnoreCase.GetHashCode(obj.ColumnName);
+        }
     }
 }

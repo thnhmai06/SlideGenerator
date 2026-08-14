@@ -35,7 +35,7 @@ Every module MUST follow this consistent layout:
 
 ## 4. Async/Await Patterns
 
-- **ConfigureAwait(false)**: Mandatory for all library/module code.
+- **ConfigureAwait (false)**: Mandatory for all library/module code.
 - **CancellationToken**: Must be propagated through every async method call.
 - **Task Overloads**: Always provide `Async` suffix for methods returning `Task`.
 

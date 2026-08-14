@@ -12,7 +12,6 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Recipe;
 using SlideGenerator.Recipe.Services;
 
 namespace SlideGenerator.Stdio.Handlers;
@@ -59,7 +58,8 @@ public sealed class RecipeHandler(IRecipeRepository recipeRepository, IRecipePac
     /// <param name="ct">Cancellation token.</param>
     /// <returns>The updated <see cref="IRecipeMetadata" />.</returns>
     /// <exception cref="InvalidOperationException">Thrown when the recipe is not found.</exception>
-    public Task<IRecipeMetadata> UpdateAsync(int id, string displayName, Recipe.Models.Recipe graph, CancellationToken ct)
+    public Task<IRecipeMetadata> UpdateAsync(int id, string displayName, Recipe.Models.Recipe graph,
+        CancellationToken ct)
     {
         return recipeRepository.UpdateAsync(id, new RecipeInput(displayName, graph), ct);
     }

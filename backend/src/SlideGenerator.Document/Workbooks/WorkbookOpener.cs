@@ -59,6 +59,45 @@ internal sealed class SfWorkbookOpener : IWorkbookOpener
 {
     private readonly ExcelEngine _engine = new();
 
+    /// <inheritdoc />
+    public async Task<IWorkbook> OpenWorkbookAsync(WorkbookIdentifier identifier, CancellationToken ct = default)
+    {
+        while (true)
+        {
+            ct.ThrowIfCancellationRequested();
+            try
+            {
+                return CreateWorkbookInstance(identifier);
+            }
+            catch (IOException ex) when (FileAccessHelper.IsFileLockedException(ex))
+            {
+                _ = ex;
+            }
+
+            await FileAccessHelper.WaitForFileChangeAsync(identifier.BookPath, ct).ConfigureAwait(false);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyWorkbook> OpenWorkbookReadOnlyAsync(WorkbookIdentifier identifier,
+        CancellationToken ct = default)
+    {
+        while (true)
+        {
+            ct.ThrowIfCancellationRequested();
+            try
+            {
+                return CreateWorkbookReadOnlyInstance(identifier);
+            }
+            catch (IOException ex) when (FileAccessHelper.IsFileLockedException(ex))
+            {
+                _ = ex;
+            }
+
+            await FileAccessHelper.WaitForFileChangeAsync(identifier.BookPath, ct).ConfigureAwait(false);
+        }
+    }
+
     private SfWorkbook CreateWorkbookInstance(WorkbookIdentifier identifier)
     {
         Syncfusion.XlsIO.IWorkbook workbook;
@@ -111,44 +150,5 @@ internal sealed class SfWorkbookOpener : IWorkbookOpener
         }
 
         return new SfWorkbook(workbook, identifier, fileStream);
-    }
-
-    /// <inheritdoc />
-    public async Task<IWorkbook> OpenWorkbookAsync(WorkbookIdentifier identifier, CancellationToken ct = default)
-    {
-        while (true)
-        {
-            ct.ThrowIfCancellationRequested();
-            try
-            {
-                return CreateWorkbookInstance(identifier);
-            }
-            catch (IOException ex) when (FileAccessHelper.IsFileLockedException(ex))
-            {
-                _ = ex;
-            }
-
-            await FileAccessHelper.WaitForFileChangeAsync(identifier.BookPath, ct).ConfigureAwait(false);
-        }
-    }
-
-    /// <inheritdoc />
-    public async Task<IReadOnlyWorkbook> OpenWorkbookReadOnlyAsync(WorkbookIdentifier identifier,
-        CancellationToken ct = default)
-    {
-        while (true)
-        {
-            ct.ThrowIfCancellationRequested();
-            try
-            {
-                return CreateWorkbookReadOnlyInstance(identifier);
-            }
-            catch (IOException ex) when (FileAccessHelper.IsFileLockedException(ex))
-            {
-                _ = ex;
-            }
-
-            await FileAccessHelper.WaitForFileChangeAsync(identifier.BookPath, ct).ConfigureAwait(false);
-        }
     }
 }

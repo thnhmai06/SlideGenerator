@@ -25,17 +25,6 @@ namespace SlideGenerator.Generator.Tests.Unit;
 /// </summary>
 public sealed class BufferedRepositoryTests
 {
-    private sealed class FakeRepository() : BufferedRepository<string, int>(NullLogger.Instance)
-    {
-        public readonly List<IReadOnlyList<int>> UpsertedBatches = [];
-
-        protected override Task UpsertBatchAsync(IReadOnlyList<int> batch, CancellationToken ct)
-        {
-            UpsertedBatches.Add(batch);
-            return Task.CompletedTask;
-        }
-    }
-
     /// <summary>Verifies that an explicit <c>FlushAsync</c> with nothing enqueued does not call <c>UpsertBatchAsync</c>.</summary>
     [Fact]
     public async Task FlushAsync_NothingEnqueued_DoesNotUpsert()
@@ -100,5 +89,16 @@ public sealed class BufferedRepositoryTests
         await repo.FlushAsync(TestContext.Current.CancellationToken);
 
         repo.UpsertedBatches.Should().ContainSingle();
+    }
+
+    private sealed class FakeRepository() : BufferedRepository<string, int>(NullLogger.Instance)
+    {
+        public readonly List<IReadOnlyList<int>> UpsertedBatches = [];
+
+        protected override Task UpsertBatchAsync(IReadOnlyList<int> batch, CancellationToken ct)
+        {
+            UpsertedBatches.Add(batch);
+            return Task.CompletedTask;
+        }
     }
 }

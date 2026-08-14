@@ -5,24 +5,36 @@
   "description": "Persisted by SlideGenerator.Settings.Mutable.SettingManager at %LOCALAPPDATA%/SlideGenerator/Data/UserSettings.json.",
   "type": "object",
   "properties": {
-    "Application": { "$ref": "#/$defs/Setting" }
+    "Application": {
+      "$ref": "#/$defs/Setting"
+    }
   },
-  "required": ["Application"],
+  "required": [
+    "Application"
+  ],
   "additionalProperties": false,
   "$defs": {
     "Setting": {
       "type": "object",
       "properties": {
-        "Network": { "$ref": "#/$defs/NetworkSetting" },
-        "Performance": { "$ref": "#/$defs/PerformanceSetting" }
+        "Network": {
+          "$ref": "#/$defs/NetworkSetting"
+        },
+        "Performance": {
+          "$ref": "#/$defs/PerformanceSetting"
+        }
       },
       "additionalProperties": false
     },
     "NetworkSetting": {
       "type": "object",
       "properties": {
-        "Proxy": { "$ref": "#/$defs/Proxy" },
-        "Retry": { "$ref": "#/$defs/RetrySetting" },
+        "Proxy": {
+          "$ref": "#/$defs/Proxy"
+        },
+        "Retry": {
+          "$ref": "#/$defs/RetrySetting"
+        },
         "MaxDownloadBytes": {
           "type": "integer",
           "minimum": 0,
@@ -36,24 +48,50 @@
     "Proxy": {
       "type": "object",
       "properties": {
-        "UseProxy": { "type": "boolean", "default": false },
-        "Domain": { "type": "string", "default": "" },
-        "Password": { "type": "string", "default": "" },
+        "UseProxy": {
+          "type": "boolean",
+          "default": false
+        },
+        "Domain": {
+          "type": "string",
+          "default": ""
+        },
+        "Password": {
+          "type": "string",
+          "default": ""
+        },
         "ProxyAddress": {
           "type": "string",
           "default": "",
           "description": "e.g. http://proxy:8080"
         },
-        "Username": { "type": "string", "default": "" }
+        "Username": {
+          "type": "string",
+          "default": ""
+        }
       },
       "additionalProperties": false
     },
     "RetrySetting": {
       "type": "object",
       "properties": {
-        "MaxRetries": { "type": "integer", "minimum": 0, "default": 3 },
-        "Timeout": { "type": "integer", "minimum": 0, "default": 30, "description": "Seconds." },
-        "MaxRetryDelay": { "type": "integer", "minimum": 0, "default": 16, "description": "Seconds." }
+        "MaxRetries": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 3
+        },
+        "Timeout": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 30,
+          "description": "Seconds."
+        },
+        "MaxRetryDelay": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 16,
+          "description": "Seconds."
+        }
       },
       "additionalProperties": false
     },

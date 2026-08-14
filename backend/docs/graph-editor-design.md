@@ -79,5 +79,5 @@ Không chứa `Sheets` hoặc `Slide` — thông tin đó nằm trong edges (Wor
 
 ## Naming Note
 
-Tránh type tên `Graph` trong namespace `...Models.Graph` → `Models.Graph.Graph` gây resolution friction.
-Dùng `RecipeGraph`.
+Tránh type tên `Graph` trong namespace `...Models.Graph` → `Models.Graph.Graph` gây resolution friction. Dùng
+`RecipeGraph`.

@@ -47,11 +47,34 @@ public static class DatabaseMigrator
     /// <summary>Forwards DbUp's log output to the ambient Serilog logger.</summary>
     private sealed class SerilogUpgradeLog : IUpgradeLog
     {
-        public void LogTrace(string format, params object[] args) => Log.Verbose(format, args);
-        public void LogDebug(string format, params object[] args) => Log.Debug(format, args);
-        public void LogInformation(string format, params object[] args) => Log.Information(format, args);
-        public void LogWarning(string format, params object[] args) => Log.Warning(format, args);
-        public void LogError(string format, params object[] args) => Log.Error(format, args);
-        public void LogError(Exception ex, string format, params object[] args) => Log.Error(ex, format, args);
+        public void LogTrace(string format, params object[] args)
+        {
+            Log.Verbose(format, args);
+        }
+
+        public void LogDebug(string format, params object[] args)
+        {
+            Log.Debug(format, args);
+        }
+
+        public void LogInformation(string format, params object[] args)
+        {
+            Log.Information(format, args);
+        }
+
+        public void LogWarning(string format, params object[] args)
+        {
+            Log.Warning(format, args);
+        }
+
+        public void LogError(string format, params object[] args)
+        {
+            Log.Error(format, args);
+        }
+
+        public void LogError(Exception ex, string format, params object[] args)
+        {
+            Log.Error(ex, format, args);
+        }
     }
 }

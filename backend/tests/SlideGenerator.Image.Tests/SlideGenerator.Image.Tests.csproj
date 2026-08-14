@@ -8,20 +8,20 @@
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Remove="StyleCop.Analyzers"/>
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.8.1" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.8.1"/>
         <PackageReference Include="xunit.v3" Version="3.2.2"/>
         <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.11" />
-        <PackageReference Include="NSubstitute" Version="6.2.0" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.11"/>
+        <PackageReference Include="NSubstitute" Version="6.2.0"/>
         <PackageReference Include="FluentAssertions" Version="8.10.0"/>
-        <PackageReference Include="OpenCvSharp4" Version="4.13.0.20260602" />
+        <PackageReference Include="OpenCvSharp4" Version="4.13.0.20260602"/>
         <PackageReference Include="NetVips" Version="3.2.0"/>
         <PackageReference Update="coverlet.collector" Version="10.0.1">
-          <PrivateAssets>all</PrivateAssets>
-          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
     </ItemGroup>
 

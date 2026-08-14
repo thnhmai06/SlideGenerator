@@ -50,4 +50,4 @@ ensuring that changes to source assets are eventually reflected in new workflows
 ## Implementation (GateLocker)
 
 Uses a `ConcurrentDictionary` of `GateState` objects, each containing a `LinkedList` of `TaskCompletionSource` waiters
-to ensure O(1) removal and fair FIFO scheduling.
+to ensure O (1) removal and fair FIFO scheduling.

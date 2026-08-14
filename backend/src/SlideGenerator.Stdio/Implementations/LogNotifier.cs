@@ -25,7 +25,10 @@ namespace SlideGenerator.Stdio.Implementations;
 internal sealed class LogNotifier : ILogNotifier
 {
     /// <summary>Publishes a <see cref="LogEntry" /> to all current subscribers. Safe to call from any thread.</summary>
-    public void Publish(LogEntry entry) => OnLogEntry?.Invoke(entry);
+    public void Publish(LogEntry entry)
+    {
+        OnLogEntry?.Invoke(entry);
+    }
 
     /// <summary>Raised whenever a log line is written through a workflow-scoped file logger.</summary>
     public event Action<LogEntry>? OnLogEntry;

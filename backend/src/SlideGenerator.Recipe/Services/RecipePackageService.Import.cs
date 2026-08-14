@@ -74,7 +74,7 @@ internal sealed partial class RecipePackageService
                              $"Archive rejected: '{RecipePackageFormat.Data.Recipe.FileName}' deserialize as null.");
             // ReSharper disable once NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract
             // recipe.Mappings can be null on runtime when "mappings":null
-            return new Models.Recipe(Mappings: recipe.Mappings ?? []);
+            return new Models.Recipe(recipe.Mappings ?? []);
         }
         catch (JsonException ex)
         {
@@ -107,7 +107,8 @@ internal sealed partial class RecipePackageService
             {
                 var filename = Path.GetFileName(source.Workbook.BookPath);
                 if (!string.IsNullOrEmpty(filename) && !workbookMapping.ContainsKey(filename))
-                    workbookMapping[filename] = ResolveImportTargetPath(filename, workbooksDirectory, usedWorkbookPaths);
+                    workbookMapping[filename] =
+                        ResolveImportTargetPath(filename, workbooksDirectory, usedWorkbookPaths);
             }
 
             var presentationFilename = Path.GetFileName(mapping.Template.Presentation.PresentationPath);
@@ -166,7 +167,7 @@ internal sealed partial class RecipePackageService
                 : m.Template;
             return m with { Sources = sources, Template = template };
         }).ToList();
-        return new Models.Recipe(Mappings: rewritten);
+        return new Models.Recipe(rewritten);
     }
 
     /// <summary>

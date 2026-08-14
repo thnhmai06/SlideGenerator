@@ -32,8 +32,10 @@ namespace SlideGenerator.Generator.Jobs.Models;
 /// <param name="Specification">Everything needed to run or resume this job, fully resolved.</param>
 /// <param name="Timestamp">UTC timestamp of the last state change.</param>
 public sealed record JobSnapshot(
-    string RequestId, int JobId,
-    JobStatus JobStatus, JobPhase Phase,
+    string RequestId,
+    int JobId,
+    JobStatus JobStatus,
+    JobPhase Phase,
     int CurrentIndex,
     JobSpecification Specification,
     DateTimeOffset Timestamp)

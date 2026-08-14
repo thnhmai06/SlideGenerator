@@ -14,10 +14,10 @@
 
 using System.Drawing;
 using OpenCvSharp;
+using SlideGenerator.Image.Loading;
 using Point = System.Drawing.Point;
 using Size = OpenCvSharp.Size;
 
-using SlideGenerator.Image.Loading;
 namespace SlideGenerator.Image.FaceDetection;
 
 /// <summary>

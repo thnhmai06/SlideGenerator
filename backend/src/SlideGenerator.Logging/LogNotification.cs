@@ -29,7 +29,8 @@ public sealed record LogNotification
 
     /// <summary>
     ///     Gets the scope path this event belongs to: <c>"&lt;requestId&gt;"</c>,
-    ///     <c>"&lt;requestId&gt;/&lt;jobId&gt;"</c>, or <c>"&lt;requestId&gt;/&lt;jobId&gt;/&lt;rowIndex&gt;"</c>. TODO: fix comment
+    ///     <c>"&lt;requestId&gt;/&lt;jobId&gt;"</c>, or <c>"&lt;requestId&gt;/&lt;jobId&gt;/&lt;rowIndex&gt;"</c>. TODO: fix
+    ///     comment
     /// </summary>
     public required string Location { get; init; }
 

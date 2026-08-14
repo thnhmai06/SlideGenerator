@@ -14,8 +14,8 @@
 
 using System.Drawing;
 using FluentAssertions;
-using Xunit;
 using SlideGenerator.Image.FaceDetection;
+using Xunit;
 
 namespace SlideGenerator.Image.Tests.Unit;
 

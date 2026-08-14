@@ -37,17 +37,16 @@ namespace SlideGenerator.Stdio.Tests.Unit;
 /// </summary>
 public sealed class ProgressCoalescerTests : IAsyncDisposable
 {
+    public readonly List<string> LoggedWarnings = [];
     private readonly GeneratingEventBus _bus = new();
-    private readonly LogNotifier _logNotifier = new();
-    private readonly FakeJobsRepository _repository = new();
-    private readonly ProgressCoalescer _coalescer;
-    private readonly JsonRpc _serverRpc;
     private readonly JsonRpc _clientRpc;
+    private readonly ProgressCoalescer _coalescer;
+    private readonly LogNotifier _logNotifier = new();
 
     private readonly List<JobSnapshot> _receivedJobs = [];
     private readonly List<RequestProgress> _receivedRequests = [];
-
-    public readonly List<string> LoggedWarnings = [];
+    private readonly FakeJobsRepository _repository = new();
+    private readonly JsonRpc _serverRpc;
 
     public ProgressCoalescerTests()
     {
@@ -75,6 +74,9 @@ public sealed class ProgressCoalescerTests : IAsyncDisposable
         _coalescer.Attach(_bus, _logNotifier, _serverRpc);
     }
 
+    private static JobSpecification DummySpec =>
+        new("wb.xlsx", "Sheet1", null, null, "template.pptx", 1, [], [], "out.pptx");
+
     public async ValueTask DisposeAsync()
     {
         await _coalescer.DetachAsync();
@@ -82,10 +84,11 @@ public sealed class ProgressCoalescerTests : IAsyncDisposable
         _clientRpc.Dispose();
     }
 
-    private static JobSpecification DummySpec => new("wb.xlsx", "Sheet1", null, null, "template.pptx", 1, [], [], "out.pptx");
-
-    private static JobSnapshot Job(string requestId, int jobId, JobStatus jobStatus) =>
-        new(requestId, jobId, jobStatus, JobPhase.CreatingOutput, 0, DummySpec, DateTimeOffset.UtcNow);
+    private static JobSnapshot Job(string requestId, int jobId, JobStatus jobStatus)
+    {
+        return new JobSnapshot(requestId, jobId, jobStatus, JobPhase.CreatingOutput, 0, DummySpec,
+            DateTimeOffset.UtcNow);
+    }
 
     /// <summary>
     ///     Waits (polling) until <paramref name="predicate" /> is true or the timeout elapses.
@@ -134,9 +137,11 @@ public sealed class ProgressCoalescerTests : IAsyncDisposable
         _bus.Publish(Job(requestId, 2, JobStatus.Pending));
         _bus.Publish(Job(requestId, 1, JobStatus.Running));
 
-        await WaitUntilAsync(() => _receivedJobs.Any(j => j.JobId == 1 && j.JobStatus == JobStatus.Running), TimeSpan.FromSeconds(3));
+        await WaitUntilAsync(() => _receivedJobs.Any(j => j.JobId == 1 && j.JobStatus == JobStatus.Running),
+            TimeSpan.FromSeconds(3));
 
-        _receivedRequests.Should().NotContain(r => r.RequestId == requestId && r.Phase == RequestPhase.ProcessingStarted);
+        _receivedRequests.Should()
+            .NotContain(r => r.RequestId == requestId && r.Phase == RequestPhase.ProcessingStarted);
 
         _bus.Publish(Job(requestId, 2, JobStatus.Running));
 
@@ -150,8 +155,15 @@ public sealed class ProgressCoalescerTests : IAsyncDisposable
     /// <summary>Captures Warning+ log messages so an assertion failure can show why a notify/flush failed.</summary>
     private sealed class CapturingLogger<T>(List<string> sink) : ILogger<T>
     {
-        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
-        public bool IsEnabled(LogLevel logLevel) => true;
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull
+        {
+            return null;
+        }
+
+        public bool IsEnabled(LogLevel logLevel)
+        {
+            return true;
+        }
 
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception,
             Func<TState, Exception?, string> formatter)
@@ -176,19 +188,31 @@ public sealed class ProgressCoalescerTests : IAsyncDisposable
             Flushed?.Invoke([snapshot]);
         }
 
-        public Task FlushAsync(CancellationToken ct = default) => Task.CompletedTask;
+        public Task FlushAsync(CancellationToken ct = default)
+        {
+            return Task.CompletedTask;
+        }
 
         public event Action<IReadOnlyList<JobSnapshot>>? Flushed;
 
-        public Task<IReadOnlyList<JobSnapshot>> GetByRequestIdAsync(string requestId, CancellationToken ct = default) =>
-            Task.FromResult<IReadOnlyList<JobSnapshot>>([.. Enqueued.Where(j => j.RequestId == requestId)]);
+        public Task<IReadOnlyList<JobSnapshot>> GetByRequestIdAsync(string requestId, CancellationToken ct = default)
+        {
+            return Task.FromResult<IReadOnlyList<JobSnapshot>>([.. Enqueued.Where(j => j.RequestId == requestId)]);
+        }
 
-        public Task<IReadOnlyList<JobSnapshot>> GetNonTerminalAsync(CancellationToken ct = default) =>
-            Task.FromResult<IReadOnlyList<JobSnapshot>>([]);
+        public Task<IReadOnlyList<JobSnapshot>> GetNonTerminalAsync(CancellationToken ct = default)
+        {
+            return Task.FromResult<IReadOnlyList<JobSnapshot>>([]);
+        }
 
-        public Task<IReadOnlyList<JobSnapshot>> GetAllAsync(CancellationToken ct = default) =>
-            Task.FromResult<IReadOnlyList<JobSnapshot>>([.. Enqueued]);
+        public Task<IReadOnlyList<JobSnapshot>> GetAllAsync(CancellationToken ct = default)
+        {
+            return Task.FromResult<IReadOnlyList<JobSnapshot>>([.. Enqueued]);
+        }
 
-        public Task DeleteByRequestIdAsync(string requestId, CancellationToken ct = default) => Task.CompletedTask;
+        public Task DeleteByRequestIdAsync(string requestId, CancellationToken ct = default)
+        {
+            return Task.CompletedTask;
+        }
     }
 }

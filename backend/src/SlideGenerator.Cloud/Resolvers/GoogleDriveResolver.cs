@@ -34,7 +34,9 @@ internal sealed partial class GoogleDriveResolver : CloudResolver
     ///     Matches any URI whose host ends with <c>drive.google.com</c> (case-insensitive).
     /// </remarks>
     public override bool IsResolvable(Uri uri)
-        => uri.Host.EndsWith("drive.google.com", StringComparison.OrdinalIgnoreCase);
+    {
+        return uri.Host.EndsWith("drive.google.com", StringComparison.OrdinalIgnoreCase);
+    }
 
     /// <inheritdoc />
     /// <remarks>

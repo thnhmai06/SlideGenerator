@@ -31,16 +31,21 @@ public sealed class JobEngineTests
     private static readonly TimeSpan ShortTimeout = TimeSpan.FromSeconds(3);
     private static readonly TimeSpan NoProgressWindow = TimeSpan.FromMilliseconds(250);
 
-    private static (JobEngine<string, TestState> Engine, RecordingObserver Observer, FakeConcurrencyProvider Concurrency)
+    private static (JobEngine<string, TestState> Engine, RecordingObserver Observer, FakeConcurrencyProvider Concurrency
+        )
         CreateEngine(int maxConcurrent = 5)
     {
         var concurrency = new FakeConcurrencyProvider(maxConcurrent);
         var observer = new RecordingObserver();
-        var engine = new JobEngine<string, TestState>(concurrency, observer, NullLogger<JobEngine<string, TestState>>.Instance);
+        var engine =
+            new JobEngine<string, TestState>(concurrency, observer, NullLogger<JobEngine<string, TestState>>.Instance);
         return (engine, observer, concurrency);
     }
 
-    /// <summary>Returns <see langword="true"/> if <paramref name="task"/> completes within <paramref name="timeout"/>, without throwing on timeout.</summary>
+    /// <summary>
+    ///     Returns <see langword="true" /> if <paramref name="task" /> completes within <paramref name="timeout" />,
+    ///     without throwing on timeout.
+    /// </summary>
     private static async Task<bool> CompletesWithinAsync(Task task, TimeSpan timeout)
     {
         var winner = await Task.WhenAny(task, Task.Delay(timeout));
@@ -52,7 +57,7 @@ public sealed class JobEngineTests
     public async Task Pause_BlocksAtNextCheckpoint_ButNotMidStep()
     {
         var (engine, observer, _) = CreateEngine();
-        var workload = new ScriptedWorkload(stepCount: 2, finalState: new TestState(99));
+        var workload = new ScriptedWorkload(2, new TestState(99));
 
         await engine.StartJobAsync("job", new TestState(0), workload);
         await workload.Reported[0].Task.WaitAsync(ShortTimeout);
@@ -76,7 +81,7 @@ public sealed class JobEngineTests
     public async Task Stop_UnblocksAPausedJob_DoesNotDeadlock()
     {
         var (engine, observer, _) = CreateEngine();
-        var workload = new ScriptedWorkload(stepCount: 2, finalState: new TestState(99));
+        var workload = new ScriptedWorkload(2, new TestState(99));
 
         await engine.StartJobAsync("job", new TestState(0), workload);
         await workload.Reported[0].Task.WaitAsync(ShortTimeout);
@@ -95,9 +100,9 @@ public sealed class JobEngineTests
     [Fact]
     public async Task Stop_BeforeSemaphoreAcquired_NeverRunsTheWorkload()
     {
-        var (engine, observer, _) = CreateEngine(maxConcurrent: 1);
+        var (engine, observer, _) = CreateEngine(1);
 
-        var blocker = new ScriptedWorkload(stepCount: 1, finalState: new TestState(1));
+        var blocker = new ScriptedWorkload(1, new TestState(1));
         await engine.StartJobAsync("blocker", new TestState(0), blocker);
         await blocker.Reported[0].Task.WaitAsync(ShortTimeout); // blocker now holds the only slot
 
@@ -118,7 +123,7 @@ public sealed class JobEngineTests
     public async Task Shutdown_WithAPausedJob_DoesNotHang()
     {
         var (engine, observer, _) = CreateEngine();
-        var workload = new ScriptedWorkload(stepCount: 2, finalState: new TestState(99));
+        var workload = new ScriptedWorkload(2, new TestState(99));
 
         await engine.StartJobAsync("job", new TestState(0), workload);
         await workload.Reported[0].Task.WaitAsync(ShortTimeout);
@@ -137,7 +142,7 @@ public sealed class JobEngineTests
     [Fact]
     public async Task ConcurrencyCap_LimitsParallelJobs()
     {
-        var (engine, observer, _) = CreateEngine(maxConcurrent: 1);
+        var (engine, observer, _) = CreateEngine(1);
         var a = new ScriptedWorkload(1, new TestState(1));
         var b = new ScriptedWorkload(1, new TestState(1));
 
@@ -155,11 +160,14 @@ public sealed class JobEngineTests
         await observer.WaitTerminalAsync("b").WaitAsync(ShortTimeout);
     }
 
-    /// <summary>Raising the limit mid-run swaps in a new semaphore instance rather than resizing the shared one — a job started after the swap is independent of jobs still holding the old one.</summary>
+    /// <summary>
+    ///     Raising the limit mid-run swaps in a new semaphore instance rather than resizing the shared one — a job
+    ///     started after the swap is independent of jobs still holding the old one.
+    /// </summary>
     [Fact]
     public async Task ConcurrencyLimit_SwapDoesNotAffectAlreadyRunningJobs()
     {
-        var (engine, observer, concurrency) = CreateEngine(maxConcurrent: 1);
+        var (engine, observer, concurrency) = CreateEngine(1);
         var a = new ScriptedWorkload(1, new TestState(1));
 
         await engine.StartJobAsync("a", new TestState(0), a);
@@ -205,13 +213,16 @@ public sealed class JobEngineTests
         await observer.WaitTerminalAsync("b").WaitAsync(ShortTimeout);
     }
 
-    /// <summary>On normal completion, the terminal state must be the workload's own return value — not whatever it last reported.</summary>
+    /// <summary>
+    ///     On normal completion, the terminal state must be the workload's own return value — not whatever it last
+    ///     reported.
+    /// </summary>
     [Fact]
     public async Task Terminal_OnCompleted_UsesTheWorkloadsReturnValue_NotTheLastReportedState()
     {
         var (engine, observer, _) = CreateEngine();
         var returnedState = new TestState(999); // deliberately different from what gets reported mid-run
-        var workload = new ScriptedWorkload(stepCount: 1, finalState: returnedState);
+        var workload = new ScriptedWorkload(1, returnedState);
 
         await engine.StartJobAsync("job", new TestState(0), workload);
         await workload.Reported[0].Task.WaitAsync(ShortTimeout);
@@ -228,7 +239,7 @@ public sealed class JobEngineTests
     {
         var (engine, observer, _) = CreateEngine();
         var exception = new InvalidOperationException("boom");
-        var workload = new ScriptedWorkload(stepCount: 2, finalState: new TestState(999), throwAtStep: 1, exception: exception);
+        var workload = new ScriptedWorkload(2, new TestState(999), 1, exception);
 
         await engine.StartJobAsync("job", new TestState(0), workload);
         await workload.Reported[0].Task.WaitAsync(ShortTimeout);
@@ -243,7 +254,10 @@ public sealed class JobEngineTests
         result.State.Should().NotBe(new TestState(0));
     }
 
-    /// <summary>Starting a job with a key that's already registered is a caller bug — must throw, not silently ignore/overwrite.</summary>
+    /// <summary>
+    ///     Starting a job with a key that's already registered is a caller bug — must throw, not silently
+    ///     ignore/overwrite.
+    /// </summary>
     [Fact]
     public async Task StartJobAsync_DuplicateKey_ThrowsInvalidOperationException()
     {

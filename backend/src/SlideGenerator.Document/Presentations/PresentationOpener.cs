@@ -58,21 +58,6 @@ public interface IPresentationOpener
 /// </summary>
 internal sealed class SfPresentationOpener : IPresentationOpener
 {
-    private static SfPresentation CreatePresentationInstance(PresentationIdentifier identifier)
-    {
-        var presentation = Presentation.Open(identifier.PresentationPath, identifier.PresentationPassword);
-        return new SfPresentation(presentation, identifier);
-    }
-
-    private static SfPresentation CreatePresentationReadOnlyInstance(PresentationIdentifier identifier)
-    {
-        var fileStream =
-            new FileStream(identifier.PresentationPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-        var presentation = Presentation.Open(fileStream, identifier.PresentationPassword);
-
-        return new SfPresentation(presentation, identifier, fileStream);
-    }
-
     /// <inheritdoc />
     public async Task<IPresentation> OpenPresentationAsync(PresentationIdentifier identifier,
         CancellationToken ct = default)
@@ -111,5 +96,20 @@ internal sealed class SfPresentationOpener : IPresentationOpener
 
             await FileAccessHelper.WaitForFileChangeAsync(identifier.PresentationPath, ct).ConfigureAwait(false);
         }
+    }
+
+    private static SfPresentation CreatePresentationInstance(PresentationIdentifier identifier)
+    {
+        var presentation = Presentation.Open(identifier.PresentationPath, identifier.PresentationPassword);
+        return new SfPresentation(presentation, identifier);
+    }
+
+    private static SfPresentation CreatePresentationReadOnlyInstance(PresentationIdentifier identifier)
+    {
+        var fileStream =
+            new FileStream(identifier.PresentationPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        var presentation = Presentation.Open(fileStream, identifier.PresentationPassword);
+
+        return new SfPresentation(presentation, identifier, fileStream);
     }
 }

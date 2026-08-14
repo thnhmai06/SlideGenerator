@@ -306,15 +306,20 @@ internal sealed class CloudClient(ILogger<CloudClient>? logger = null) : ICloudC
         return string.IsNullOrEmpty(extFromUrl) ? null : extFromUrl;
     }
 
-    /// <summary>Returns the first registered module that can handle <paramref name="uri" />,
-    /// or <see langword="null" /> when none matches.</summary>
+    /// <summary>
+    ///     Returns the first registered module that can handle <paramref name="uri" />,
+    ///     or <see langword="null" /> when none matches.
+    /// </summary>
     private CloudResolver? FindResolver(Uri uri)
     {
         return _resolvers.FirstOrDefault(module => module.IsResolvable(uri));
     }
 
     /// <summary>Creates a new <see cref="HttpClient" /> with auto-redirect enabled (the default).</summary>
-    private static HttpClient DefaultClient() => new(new HttpClientHandler { AllowAutoRedirect = true });
+    private static HttpClient DefaultClient()
+    {
+        return new HttpClient(new HttpClientHandler { AllowAutoRedirect = true });
+    }
 
     #endregion
 }

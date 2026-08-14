@@ -42,9 +42,13 @@ public interface IJobRunner
     ///     immediately, not on the next tick — so it is visible to conflict checks on newly created
     ///     requests right away) before starting execution, then returns without waiting for it to finish.
     /// </summary>
-    Task StartJobAsync(string requestId, int jobId, JobSpecification spec, string logPath, CancellationToken ct = default);
+    Task StartJobAsync(string requestId, int jobId, JobSpecification spec, string logPath,
+        CancellationToken ct = default);
 
-    /// <summary>Pauses a running job at its next row/phase checkpoint. Returns <see langword="false" /> if not currently running.</summary>
+    /// <summary>
+    ///     Pauses a running job at its next row/phase checkpoint. Returns <see langword="false" /> if not currently
+    ///     running.
+    /// </summary>
     Task<bool> PauseJobAsync(string requestId, int jobId);
 
     /// <summary>Resumes a paused job. Returns <see langword="false" /> if not currently paused.</summary>
@@ -64,7 +68,10 @@ internal sealed class JobRunner(
     IJobsRepository jobsRepository) : IJobRunner
 {
     /// <inheritdoc />
-    public Task InitializeAsync(CancellationToken ct = default) => engine.InitializeAsync(resumeSource, ct);
+    public Task InitializeAsync(CancellationToken ct = default)
+    {
+        return engine.InitializeAsync(resumeSource, ct);
+    }
 
     /// <inheritdoc />
     public async Task ShutdownAsync(CancellationToken ct = default)
@@ -89,11 +96,20 @@ internal sealed class JobRunner(
     }
 
     /// <inheritdoc />
-    public Task<bool> PauseJobAsync(string requestId, int jobId) => engine.PauseAsync((requestId, jobId));
+    public Task<bool> PauseJobAsync(string requestId, int jobId)
+    {
+        return engine.PauseAsync((requestId, jobId));
+    }
 
     /// <inheritdoc />
-    public Task<bool> ResumeJobAsync(string requestId, int jobId) => engine.ResumeAsync((requestId, jobId));
+    public Task<bool> ResumeJobAsync(string requestId, int jobId)
+    {
+        return engine.ResumeAsync((requestId, jobId));
+    }
 
     /// <inheritdoc />
-    public Task<bool> StopJobAsync(string requestId, int jobId) => engine.StopAsync((requestId, jobId));
+    public Task<bool> StopJobAsync(string requestId, int jobId)
+    {
+        return engine.StopAsync((requestId, jobId));
+    }
 }

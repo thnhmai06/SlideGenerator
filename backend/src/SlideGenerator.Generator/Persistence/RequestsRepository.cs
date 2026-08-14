@@ -70,7 +70,7 @@ internal sealed class RequestsRepository(SqliteConnectionStringBuilder builder) 
     {
         await using var conn = await OpenConnectionAsync(ct).ConfigureAwait(false);
         var row = await conn.QuerySingleOrDefaultAsync<RequestRow>(new CommandDefinition(
-            "SELECT * FROM Requests WHERE RequestId = @requestId", new { requestId }, cancellationToken: ct))
+                "SELECT * FROM Requests WHERE RequestId = @requestId", new { requestId }, cancellationToken: ct))
             .ConfigureAwait(false);
         return row is null ? null : FromRow(row);
     }
@@ -80,35 +80,9 @@ internal sealed class RequestsRepository(SqliteConnectionStringBuilder builder) 
     {
         await using var conn = await OpenConnectionAsync(ct).ConfigureAwait(false);
         await conn.ExecuteAsync(new CommandDefinition(
-            "DELETE FROM Requests WHERE RequestId = @requestId", new { requestId }, cancellationToken: ct))
+                "DELETE FROM Requests WHERE RequestId = @requestId", new { requestId }, cancellationToken: ct))
             .ConfigureAwait(false);
     }
-
-    #region Row mapping
-
-    private sealed record RequestRow(
-        string RequestId, long RecipeId, string Name, string OutputType, string SaveFolder,
-        long AllowLocalPaths, string LogPath, string CreatedAt);
-
-    private static RequestRecord FromRow(RequestRow row) => new(
-        row.RequestId,
-        new Request(
-            (int)row.RecipeId,
-            row.Name,
-            Enum.Parse<PresentationType>(row.OutputType),
-            row.SaveFolder,
-            row.AllowLocalPaths != 0),
-        row.LogPath,
-        DbParseUtc(row.CreatedAt));
-
-    private static string DbFormatUtc(DateTimeOffset value) =>
-        value.UtcDateTime.ToString("yyyy-MM-ddTHH:mm:ss.fffZ", CultureInfo.InvariantCulture);
-
-    private static DateTimeOffset DbParseUtc(string value) =>
-        DateTimeOffset.Parse(value, CultureInfo.InvariantCulture,
-            DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal);
-
-    #endregion
 
     #region Connection / schema
 
@@ -117,6 +91,45 @@ internal sealed class RequestsRepository(SqliteConnectionStringBuilder builder) 
         var conn = new SqliteConnection(builder.ConnectionString);
         await conn.OpenAsync(ct).ConfigureAwait(false);
         return conn;
+    }
+
+    #endregion
+
+    #region Row mapping
+
+    private sealed record RequestRow(
+        string RequestId,
+        long RecipeId,
+        string Name,
+        string OutputType,
+        string SaveFolder,
+        long AllowLocalPaths,
+        string LogPath,
+        string CreatedAt);
+
+    private static RequestRecord FromRow(RequestRow row)
+    {
+        return new RequestRecord(
+            row.RequestId,
+            new Request(
+                (int)row.RecipeId,
+                row.Name,
+                Enum.Parse<PresentationType>(row.OutputType),
+                row.SaveFolder,
+                row.AllowLocalPaths != 0),
+            row.LogPath,
+            DbParseUtc(row.CreatedAt));
+    }
+
+    private static string DbFormatUtc(DateTimeOffset value)
+    {
+        return value.UtcDateTime.ToString("yyyy-MM-ddTHH:mm:ss.fffZ", CultureInfo.InvariantCulture);
+    }
+
+    private static DateTimeOffset DbParseUtc(string value)
+    {
+        return DateTimeOffset.Parse(value, CultureInfo.InvariantCulture,
+            DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal);
     }
 
     #endregion

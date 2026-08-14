@@ -82,7 +82,11 @@ internal sealed class SqliteRecipeRepository(SqliteConnectionStringBuilder build
         var id = await conn.ExecuteScalarAsync<int>(new CommandDefinition(
             "INSERT INTO Recipes (Name, Recipe, CreatedTimestamp, UpdatedTimestamp) " +
             "VALUES (@name, @graph, @now, @now); SELECT last_insert_rowid();",
-            new { name = input.Name, graph = JsonSerializer.Serialize(input.Recipe, RecipePackageFormat.Data.Recipe.Format), now },
+            new
+            {
+                name = input.Name,
+                graph = JsonSerializer.Serialize(input.Recipe, RecipePackageFormat.Data.Recipe.Format), now
+            },
             cancellationToken: ct)).ConfigureAwait(false);
         var ts = DateTimeOffset.Parse(now, CultureInfo.InvariantCulture,
             DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal);
@@ -117,7 +121,11 @@ internal sealed class SqliteRecipeRepository(SqliteConnectionStringBuilder build
         await using var conn = await builder.OpenConnectionAsync(ct).ConfigureAwait(false);
         var affected = await conn.ExecuteAsync(new CommandDefinition(
             "UPDATE Recipes SET Name = @name, Recipe = @graph, UpdatedTimestamp = @now WHERE Id = @id",
-            new { name = input.Name, graph = JsonSerializer.Serialize(input.Recipe, RecipePackageFormat.Data.Recipe.Format), now, id },
+            new
+            {
+                name = input.Name,
+                graph = JsonSerializer.Serialize(input.Recipe, RecipePackageFormat.Data.Recipe.Format), now, id
+            },
             cancellationToken: ct)).ConfigureAwait(false);
         if (affected == 0) throw new InvalidOperationException($"Recipe {id} not found.");
         return await GetAsync(id, ct).ConfigureAwait(false);
@@ -141,7 +149,10 @@ internal sealed class SqliteRecipeRepository(SqliteConnectionStringBuilder build
             CultureInfo.InvariantCulture);
     }
 
-    /// <summary>Raw row shape returned by Dapper for the <c>Recipes</c> table (SQLite INTEGER columns bind as <see cref="long" />).</summary>
+    /// <summary>
+    ///     Raw row shape returned by Dapper for the <c>Recipes</c> table (SQLite INTEGER columns bind as
+    ///     <see cref="long" />).
+    /// </summary>
     private sealed record RecipeRow(
         long Id,
         string Name,
@@ -164,7 +175,7 @@ internal sealed class SqliteRecipeRepository(SqliteConnectionStringBuilder build
 
         // ponytail: missing/null "mappings" on otherwise-valid JSON is treated as an empty recipe,
         // not a crash — matches the "archive rejected? no, just empty" spirit without hiding real parse errors.
-        graph = new Models.Recipe(Mappings: graph.Mappings);
+        graph = new Models.Recipe(graph.Mappings);
 
         return new RecipeEntry(
             (int)row.Id,

@@ -14,8 +14,8 @@
 
 using System.Drawing;
 using Microsoft.Extensions.Logging;
-
 using SlideGenerator.Image.Loading;
+
 namespace SlideGenerator.Image.Cropping;
 
 /// <summary>

@@ -16,11 +16,11 @@ using System.Drawing;
 using System.Numerics;
 using FluentAssertions;
 using NSubstitute;
-using Xunit;
-
 using SlideGenerator.Image.Cropping;
 using SlideGenerator.Image.FaceDetection;
 using SlideGenerator.Image.Loading;
+using Xunit;
+
 namespace SlideGenerator.Image.Tests.Unit;
 
 /// <summary>

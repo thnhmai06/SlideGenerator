@@ -32,8 +32,8 @@ namespace SlideGenerator.Recipe.Tests.Unit;
 public sealed class SqliteRecipeRepositoryTests : IDisposable
 {
     private readonly SqliteConnection _anchor;
-    private readonly SqliteRecipeRepository _repo;
     private readonly RecipePackageService _pkg;
+    private readonly SqliteRecipeRepository _repo;
 
     /// <summary>
     ///     Sets up a shared-cache in-memory SQLite database. The anchor connection keeps the
@@ -55,14 +55,23 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
     }
 
     /// <inheritdoc />
-    public void Dispose() => _anchor.Dispose();
+    public void Dispose()
+    {
+        _anchor.Dispose();
+    }
 
     /// <summary>Returns an input with an empty recipe (no mappings).</summary>
-    private static RecipeInput Input(string name) => new(name, new Models.Recipe([]));
+    private static RecipeInput Input(string name)
+    {
+        return new RecipeInput(name, new Models.Recipe([]));
+    }
 
     /// <summary>Returns an input whose recipe contains one mapping with one worksheet source.</summary>
-    private static RecipeInput InputWithMapping(string name, string wbPath, string pptPath) => new(name,
-        RecipeWithMapping(wbPath, pptPath));
+    private static RecipeInput InputWithMapping(string name, string wbPath, string pptPath)
+    {
+        return new RecipeInput(name,
+            RecipeWithMapping(wbPath, pptPath));
+    }
 
     /// <summary>Returns an input whose recipe contains one mapping referencing several workbooks.</summary>
     private static RecipeInput InputWithWorkbooks(string name, params string[] wbPaths)
@@ -78,11 +87,14 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
         ]));
     }
 
-    private static Models.Recipe RecipeWithMapping(string wbPath, string pptPath) => new([
-        new Mapping(
-            [new WorksheetSource(new WorkbookIdentifier(wbPath), new WorksheetIdentifier("Sheet1"))],
-            new PresentationSource(new PresentationIdentifier(pptPath), new SlideIdentifier(1)), [], [])
-    ]);
+    private static Models.Recipe RecipeWithMapping(string wbPath, string pptPath)
+    {
+        return new Models.Recipe([
+            new Mapping(
+                [new WorksheetSource(new WorkbookIdentifier(wbPath), new WorksheetIdentifier("Sheet1"))],
+                new PresentationSource(new PresentationIdentifier(pptPath), new SlideIdentifier(1)), [], [])
+        ]);
+    }
 
     #region AddAsync / GetAsync / ListAsync / UpdateAsync / DeleteAsync
 
@@ -386,12 +398,16 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
                 var graphBytes = "{\"mappings\":[]}"u8.ToArray();
                 var graphEntry = archive.CreateEntry(RecipePackageFormat.Data.Recipe.FileName);
                 await using (var graphStream = graphEntry.Open())
+                {
                     await graphStream.WriteAsync(graphBytes, TestContext.Current.CancellationToken);
+                }
 
                 var payload = new byte[] { 0xFF, 0xD8 };
                 var badEntry = archive.CreateEntry("Workbooks/payload.exe");
                 await using (var badStream = badEntry.Open())
+                {
                     await badStream.WriteAsync(payload, TestContext.Current.CancellationToken);
+                }
             }
 
             await _pkg.ImportAsync(zipPath, (workbooksDir, presentationsDir),
@@ -510,12 +526,16 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
                 var graphBytes = "{\"mappings\":[]}"u8.ToArray();
                 var graphEntry = archive.CreateEntry(RecipePackageFormat.Data.Recipe.FileName);
                 await using (var graphStream = graphEntry.Open())
+                {
                     await graphStream.WriteAsync(graphBytes, TestContext.Current.CancellationToken);
+                }
 
                 var payload = new byte[] { 0x42 };
                 var unknownEntry = archive.CreateEntry("Secret/evil.xlsx");
                 await using (var unknownStream = unknownEntry.Open())
+                {
                     await unknownStream.WriteAsync(payload, TestContext.Current.CancellationToken);
+                }
             }
 
             var imported = await _pkg.ImportAsync(zipPath, (workbooksDir, presentationsDir),

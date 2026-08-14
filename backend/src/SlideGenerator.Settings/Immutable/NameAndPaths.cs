@@ -162,15 +162,15 @@ public static class NameAndPaths
             private const string FileName = "Data";
 
             /// <summary>
-            ///     Gets the full path to the shared SQLite database.
-            /// </summary>
-            public static string FilePath => Path.Combine(FolderPath, $"{FileName}.db");
-
-            /// <summary>
             ///     Gets the SQLite connection string for the shared database.
             /// </summary>
             public static readonly string ConnectionString =
                 new SqliteConnectionStringBuilder { DataSource = FilePath }.ConnectionString;
+
+            /// <summary>
+            ///     Gets the full path to the shared SQLite database.
+            /// </summary>
+            public static string FilePath => Path.Combine(FolderPath, $"{FileName}.db");
         }
 
         /// <summary>

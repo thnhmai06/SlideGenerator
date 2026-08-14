@@ -28,8 +28,10 @@ namespace SlideGenerator.Recipe.Tests.Unit;
 ///     <c>RecipeRepositoryTests</c>. These tests demonstrate:
 ///     <list type="bullet">
 ///         <item>Zip Slip (CWE-22 path traversal) when an attacker crafts entries that escape the target directory.</item>
-///         <item>A field-less <c>recipe.json</c> (<c>"{}"</c>) must not crash the import with a
-///         <see cref="NullReferenceException" /> — it is treated as an empty recipe.</item>
+///         <item>
+///             A field-less <c>recipe.json</c> (<c>"{}"</c>) must not crash the import with a
+///             <see cref="NullReferenceException" /> — it is treated as an empty recipe.
+///         </item>
 ///     </list>
 /// </summary>
 public sealed class RecipeRepositorySecurityTests : IDisposable
@@ -37,8 +39,8 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
     private readonly SqliteConnection _anchor;
     private readonly List<string> _cleanupDirs = [];
     private readonly List<string> _cleanupFiles = [];
-    private readonly SqliteRecipeRepository _repo;
     private readonly RecipePackageService _pkg;
+    private readonly SqliteRecipeRepository _repo;
 
     /// <summary>
     ///     Sets up a shared-cache in-memory SQLite database with an anchor connection.
@@ -163,11 +165,15 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
         {
             var recipeEntry = archive.CreateEntry("recipe.json", CompressionLevel.NoCompression);
             await using (var recipeStream = recipeEntry.Open())
+            {
                 await recipeStream.WriteAsync("{}"u8.ToArray(), TestContext.Current.CancellationToken);
+            }
 
             var maliciousEntry = archive.CreateEntry(maliciousEntryName, CompressionLevel.NoCompression);
             await using (var maliciousStream = maliciousEntry.Open())
+            {
                 await maliciousStream.WriteAsync(maliciousPayload, TestContext.Current.CancellationToken);
+            }
         }
 
         try
@@ -228,11 +234,15 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
         {
             var recipeEntry = archive.CreateEntry("recipe.json", CompressionLevel.NoCompression);
             await using (var recipeStream = recipeEntry.Open())
+            {
                 await recipeStream.WriteAsync("{}"u8.ToArray(), TestContext.Current.CancellationToken);
+            }
 
             var maliciousEntry = archive.CreateEntry(maliciousEntryName, CompressionLevel.NoCompression);
             await using (var maliciousStream = maliciousEntry.Open())
+            {
                 await maliciousStream.WriteAsync("payload"u8.ToArray(), TestContext.Current.CancellationToken);
+            }
         }
 
         try

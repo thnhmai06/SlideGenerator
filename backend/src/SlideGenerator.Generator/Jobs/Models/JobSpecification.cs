@@ -33,10 +33,12 @@ namespace SlideGenerator.Generator.Jobs.Models;
 /// <param name="ImageInstructions">Rules for mapping worksheet columns to slide image shapes.</param>
 /// <param name="OutputPath">Absolute path to the output presentation file for this job.</param>
 public sealed record JobSpecification(
-    string WorkbookPath, string WorksheetName,
+    string WorkbookPath,
+    string WorksheetName,
     IReadOnlySet<ColumnIdentifier>? UsedColumns,
     RowFilter? RowFilter,
-    string TemplatePresentationPath, int TemplateSlideIndex,
+    string TemplatePresentationPath,
+    int TemplateSlideIndex,
     IReadOnlyList<TextInstruction> TextInstructions,
     IReadOnlyList<ImageInstruction> ImageInstructions,
     string OutputPath);

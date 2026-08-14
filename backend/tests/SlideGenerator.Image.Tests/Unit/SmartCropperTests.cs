@@ -16,10 +16,10 @@ using System.Drawing;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
-using Xunit;
-
 using SlideGenerator.Image.Cropping;
 using SlideGenerator.Image.Loading;
+using Xunit;
+
 namespace SlideGenerator.Image.Tests.Unit;
 
 /// <summary>

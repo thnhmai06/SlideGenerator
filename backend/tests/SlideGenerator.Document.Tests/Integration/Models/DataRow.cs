@@ -51,24 +51,13 @@ public sealed class DataRow : IXunitSerializable
         {
             var invalid = Path.GetInvalidFileNameChars();
             return $"{Sanitize(Provider)}_{Sanitize(Type)}";
-            string Sanitize(string s) => string.Concat(s.Select(c => invalid.Contains(c) ? '_' : c));
+
+            string Sanitize(string s)
+            {
+                return string.Concat(s.Select(c => invalid.Contains(c) ? '_' : c));
+            }
         }
     }
-
-    /// <summary>
-    ///     Builds the resolved-values dictionary passed to <c>TextComposer.Compose</c>.
-    ///     All six CSV columns are included verbatim.
-    /// </summary>
-    public IReadOnlyDictionary<string, string> ToResolvedValues() =>
-        new Dictionary<string, string>
-        {
-            ["Provider"]       = Provider,
-            ["Type"]           = Type,
-            ["ShouldDownload"] = ShouldDownload,
-            ["Url"]            = Url,
-            ["DataJson"]       = DataJson,
-            ["DataList"]       = DataList,
-        };
 
     /// <inheritdoc />
     public void Serialize(IXunitSerializationInfo info)
@@ -84,14 +73,34 @@ public sealed class DataRow : IXunitSerializable
     /// <inheritdoc />
     public void Deserialize(IXunitSerializationInfo info)
     {
-        Provider       = info.GetValue<string>(nameof(Provider))       ?? string.Empty;
-        Type           = info.GetValue<string>(nameof(Type))           ?? string.Empty;
+        Provider = info.GetValue<string>(nameof(Provider)) ?? string.Empty;
+        Type = info.GetValue<string>(nameof(Type)) ?? string.Empty;
         ShouldDownload = info.GetValue<string>(nameof(ShouldDownload)) ?? string.Empty;
-        Url            = info.GetValue<string>(nameof(Url))            ?? string.Empty;
-        DataJson       = info.GetValue<string>(nameof(DataJson))       ?? string.Empty;
-        DataList       = info.GetValue<string>(nameof(DataList))       ?? string.Empty;
+        Url = info.GetValue<string>(nameof(Url)) ?? string.Empty;
+        DataJson = info.GetValue<string>(nameof(DataJson)) ?? string.Empty;
+        DataList = info.GetValue<string>(nameof(DataList)) ?? string.Empty;
+    }
+
+    /// <summary>
+    ///     Builds the resolved-values dictionary passed to <c>TextComposer.Compose</c>.
+    ///     All six CSV columns are included verbatim.
+    /// </summary>
+    public IReadOnlyDictionary<string, string> ToResolvedValues()
+    {
+        return new Dictionary<string, string>
+        {
+            ["Provider"] = Provider,
+            ["Type"] = Type,
+            ["ShouldDownload"] = ShouldDownload,
+            ["Url"] = Url,
+            ["DataJson"] = DataJson,
+            ["DataList"] = DataList
+        };
     }
 
     /// <inheritdoc />
-    public override string ToString() => $"{Provider} / {Type}";
+    public override string ToString()
+    {
+        return $"{Provider} / {Type}";
+    }
 }

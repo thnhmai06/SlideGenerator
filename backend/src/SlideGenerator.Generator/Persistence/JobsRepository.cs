@@ -57,42 +57,16 @@ public interface IJobsRepository
 ///     the only table in the shared database that changes on every row/phase transition. Every field of
 ///     <see cref="JobSpecification" /> gets an explicit column; only the free-form nested lists
 ///     (<c>UsedColumns</c>/<c>TextInstructions</c>/<c>ImageInstructions</c>) are stored as named JSON
-///     columns — see <c>0003_CreateJobs.sql</c> (<see cref="SlideGenerator.Settings.Database.DatabaseMigrator" />) for the schema.
+///     columns — see <c>0003_CreateJobs.sql</c> (<see cref="SlideGenerator.Settings.Database.DatabaseMigrator" />) for the
+///     schema.
 /// </summary>
 internal sealed class JobsRepository(SqliteConnectionStringBuilder builder, ILogger<JobsRepository> logger)
     : BufferedRepository<(string RequestId, int JobId), JobSnapshot>(logger), IJobsRepository
 {
     /// <inheritdoc cref="IJobsRepository.Enqueue" />
-    public void Enqueue(JobSnapshot snapshot) => Enqueue((snapshot.RequestId, snapshot.JobId), snapshot);
-
-    /// <inheritdoc />
-    protected override async Task UpsertBatchAsync(IReadOnlyList<JobSnapshot> batch, CancellationToken ct)
+    public void Enqueue(JobSnapshot snapshot)
     {
-        if (batch.Count == 0) return;
-
-        await using var conn = await OpenConnectionAsync(ct).ConfigureAwait(false);
-        await using var tx = await conn.BeginTransactionAsync(ct).ConfigureAwait(false);
-        await conn.ExecuteAsync(new CommandDefinition(
-            """
-            INSERT INTO Jobs (
-                RequestId, JobId, Status, Phase, CurrentIndex,
-                WorkbookPath, WorksheetName, UsedColumnsJson,
-                RowFilterType, RowFilterStart, RowFilterEnd, RowFilterPartitionIndex, RowFilterPartitionCount,
-                TemplatePresentationPath, TemplateSlideIndex, TextInstructionsJson, ImageInstructionsJson,
-                OutputPath, Timestamp
-            ) VALUES (
-                @RequestId, @JobId, @Status, @Phase, @CurrentIndex,
-                @WorkbookPath, @WorksheetName, @UsedColumnsJson,
-                @RowFilterType, @RowFilterStart, @RowFilterEnd, @RowFilterPartitionIndex, @RowFilterPartitionCount,
-                @TemplatePresentationPath, @TemplateSlideIndex, @TextInstructionsJson, @ImageInstructionsJson,
-                @OutputPath, @Timestamp
-            )
-            ON CONFLICT(RequestId, JobId) DO UPDATE SET
-                Status = excluded.Status, Phase = excluded.Phase, CurrentIndex = excluded.CurrentIndex,
-                OutputPath = excluded.OutputPath, Timestamp = excluded.Timestamp
-            """,
-            batch.Select(ToRow), tx, cancellationToken: ct)).ConfigureAwait(false);
-        await tx.CommitAsync(ct).ConfigureAwait(false);
+        Enqueue((snapshot.RequestId, snapshot.JobId), snapshot);
     }
 
     /// <inheritdoc />
@@ -134,27 +108,80 @@ internal sealed class JobsRepository(SqliteConnectionStringBuilder builder, ILog
     {
         await using var conn = await OpenConnectionAsync(ct).ConfigureAwait(false);
         await conn.ExecuteAsync(new CommandDefinition(
-            "DELETE FROM Jobs WHERE RequestId = @requestId", new { requestId }, cancellationToken: ct))
+                "DELETE FROM Jobs WHERE RequestId = @requestId", new { requestId }, cancellationToken: ct))
             .ConfigureAwait(false);
     }
+
+    /// <inheritdoc />
+    protected override async Task UpsertBatchAsync(IReadOnlyList<JobSnapshot> batch, CancellationToken ct)
+    {
+        if (batch.Count == 0) return;
+
+        await using var conn = await OpenConnectionAsync(ct).ConfigureAwait(false);
+        await using var tx = await conn.BeginTransactionAsync(ct).ConfigureAwait(false);
+        await conn.ExecuteAsync(new CommandDefinition(
+            """
+            INSERT INTO Jobs (
+                RequestId, JobId, Status, Phase, CurrentIndex,
+                WorkbookPath, WorksheetName, UsedColumnsJson,
+                RowFilterType, RowFilterStart, RowFilterEnd, RowFilterPartitionIndex, RowFilterPartitionCount,
+                TemplatePresentationPath, TemplateSlideIndex, TextInstructionsJson, ImageInstructionsJson,
+                OutputPath, Timestamp
+            ) VALUES (
+                @RequestId, @JobId, @Status, @Phase, @CurrentIndex,
+                @WorkbookPath, @WorksheetName, @UsedColumnsJson,
+                @RowFilterType, @RowFilterStart, @RowFilterEnd, @RowFilterPartitionIndex, @RowFilterPartitionCount,
+                @TemplatePresentationPath, @TemplateSlideIndex, @TextInstructionsJson, @ImageInstructionsJson,
+                @OutputPath, @Timestamp
+            )
+            ON CONFLICT(RequestId, JobId) DO UPDATE SET
+                Status = excluded.Status, Phase = excluded.Phase, CurrentIndex = excluded.CurrentIndex,
+                OutputPath = excluded.OutputPath, Timestamp = excluded.Timestamp
+            """,
+            batch.Select(ToRow), tx, cancellationToken: ct)).ConfigureAwait(false);
+        await tx.CommitAsync(ct).ConfigureAwait(false);
+    }
+
+    #region Connection / schema
+
+    private async Task<SqliteConnection> OpenConnectionAsync(CancellationToken ct)
+    {
+        var conn = new SqliteConnection(builder.ConnectionString);
+        await conn.OpenAsync(ct).ConfigureAwait(false);
+        return conn;
+    }
+
+    #endregion
 
     #region Row mapping
 
     private sealed record JobRow(
-        string RequestId, long JobId, string Status, string Phase, long CurrentIndex,
-        string WorkbookPath, string WorksheetName, string? UsedColumnsJson,
-        string? RowFilterType, long? RowFilterStart, long? RowFilterEnd,
-        long? RowFilterPartitionIndex, long? RowFilterPartitionCount,
-        string TemplatePresentationPath, long TemplateSlideIndex,
-        string TextInstructionsJson, string ImageInstructionsJson,
-        string OutputPath, string Timestamp);
+        string RequestId,
+        long JobId,
+        string Status,
+        string Phase,
+        long CurrentIndex,
+        string WorkbookPath,
+        string WorksheetName,
+        string? UsedColumnsJson,
+        string? RowFilterType,
+        long? RowFilterStart,
+        long? RowFilterEnd,
+        long? RowFilterPartitionIndex,
+        long? RowFilterPartitionCount,
+        string TemplatePresentationPath,
+        long TemplateSlideIndex,
+        string TextInstructionsJson,
+        string ImageInstructionsJson,
+        string OutputPath,
+        string Timestamp);
 
     private static object ToRow(JobSnapshot r)
     {
         var spec = r.Specification;
         var rowFilterType = spec.RowFilter switch
         {
-            null or AllRowFilter => (string?)null,
+            null or AllRowFilter => null,
             IndexRangeFilter => "IndexRange",
             PartitionBlockFilter => "PartitionBlock",
             _ => throw new NotSupportedException($"Unsupported RowFilter type: {spec.RowFilter.GetType().Name}")
@@ -173,7 +200,9 @@ internal sealed class JobsRepository(SqliteConnectionStringBuilder builder, ILog
             r.CurrentIndex,
             spec.WorkbookPath,
             spec.WorksheetName,
-            UsedColumnsJson = spec.UsedColumns is null ? null : JsonSerializer.Serialize(spec.UsedColumns, JobSpecificationJson.Options),
+            UsedColumnsJson = spec.UsedColumns is null
+                ? null
+                : JsonSerializer.Serialize(spec.UsedColumns, JobSpecificationJson.Options),
             RowFilterType = rowFilterType,
             RowFilterStart = start,
             RowFilterEnd = end,
@@ -193,7 +222,8 @@ internal sealed class JobsRepository(SqliteConnectionStringBuilder builder, ILog
         RowFilter? rowFilter = row.RowFilterType switch
         {
             "IndexRange" => new IndexRangeFilter((int)row.RowFilterStart!.Value, (int)row.RowFilterEnd!.Value),
-            "PartitionBlock" => new PartitionBlockFilter((int)row.RowFilterPartitionIndex!.Value, (int)row.RowFilterPartitionCount!.Value),
+            "PartitionBlock" => new PartitionBlockFilter((int)row.RowFilterPartitionIndex!.Value,
+                (int)row.RowFilterPartitionCount!.Value),
             _ => null
         };
 
@@ -202,12 +232,15 @@ internal sealed class JobsRepository(SqliteConnectionStringBuilder builder, ILog
             row.WorksheetName,
             row.UsedColumnsJson is null
                 ? null
-                : JsonSerializer.Deserialize<IReadOnlySet<ColumnIdentifier>>(row.UsedColumnsJson, JobSpecificationJson.Options),
+                : JsonSerializer.Deserialize<IReadOnlySet<ColumnIdentifier>>(row.UsedColumnsJson,
+                    JobSpecificationJson.Options),
             rowFilter,
             row.TemplatePresentationPath,
             (int)row.TemplateSlideIndex,
-            JsonSerializer.Deserialize<IReadOnlyList<TextInstruction>>(row.TextInstructionsJson, JobSpecificationJson.Options) ?? [],
-            JsonSerializer.Deserialize<IReadOnlyList<ImageInstruction>>(row.ImageInstructionsJson, JobSpecificationJson.Options) ?? [],
+            JsonSerializer.Deserialize<IReadOnlyList<TextInstruction>>(row.TextInstructionsJson,
+                JobSpecificationJson.Options) ?? [],
+            JsonSerializer.Deserialize<IReadOnlyList<ImageInstruction>>(row.ImageInstructionsJson,
+                JobSpecificationJson.Options) ?? [],
             row.OutputPath);
 
         return new JobSnapshot(
@@ -220,22 +253,15 @@ internal sealed class JobsRepository(SqliteConnectionStringBuilder builder, ILog
             DbParseUtc(row.Timestamp));
     }
 
-    private static string DbFormatUtc(DateTimeOffset value) =>
-        value.UtcDateTime.ToString("yyyy-MM-ddTHH:mm:ss.fffZ", CultureInfo.InvariantCulture);
-
-    private static DateTimeOffset DbParseUtc(string value) =>
-        DateTimeOffset.Parse(value, CultureInfo.InvariantCulture,
-            DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal);
-
-    #endregion
-
-    #region Connection / schema
-
-    private async Task<SqliteConnection> OpenConnectionAsync(CancellationToken ct)
+    private static string DbFormatUtc(DateTimeOffset value)
     {
-        var conn = new SqliteConnection(builder.ConnectionString);
-        await conn.OpenAsync(ct).ConfigureAwait(false);
-        return conn;
+        return value.UtcDateTime.ToString("yyyy-MM-ddTHH:mm:ss.fffZ", CultureInfo.InvariantCulture);
+    }
+
+    private static DateTimeOffset DbParseUtc(string value)
+    {
+        return DateTimeOffset.Parse(value, CultureInfo.InvariantCulture,
+            DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal);
     }
 
     #endregion

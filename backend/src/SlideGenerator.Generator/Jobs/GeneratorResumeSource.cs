@@ -51,6 +51,8 @@ internal sealed class GeneratorResumeSource(
         return result;
     }
 
-    private static string DefaultLogPath(string requestId) =>
-        Path.Combine(NameAndPaths.LogsFolder.WorkflowPath, $"{requestId}.log");
+    private static string DefaultLogPath(string requestId)
+    {
+        return Path.Combine(NameAndPaths.LogsFolder.WorkflowPath, $"{requestId}.log");
+    }
 }

@@ -15,10 +15,9 @@
 using System.Drawing;
 using FluentAssertions;
 using NetVips;
+using SlideGenerator.Image.Cropping;
 using Xunit;
 using OpenCvSize = OpenCvSharp.Size;
-
-using SlideGenerator.Image.Cropping;
 
 namespace SlideGenerator.Image.Tests.Unit;
 

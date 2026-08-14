@@ -66,8 +66,8 @@ public sealed class JobEngine<TKey, TState>(
     ILogger<JobEngine<TKey, TState>> logger) : IJobEngine<TKey, TState> where TKey : notnull
 {
     private readonly ConcurrentDictionary<TKey, RunningJob> _running = new();
-    private SemaphoreSlim _semaphore = new(1, 1);
     private int _currentLimit = 1;
+    private SemaphoreSlim _semaphore = new(1, 1);
 
     /// <inheritdoc />
     public async Task InitializeAsync(IJobResumeSource<TKey, TState> resumeSource, CancellationToken ct = default)
@@ -79,7 +79,7 @@ public sealed class JobEngine<TKey, TState>(
         {
             var running = Register(job.Key, job.State);
             running.RunTask = Task.Run(
-                () => RunJobAsync(job.Key, job.State, job.Workload, isResume: true, running), CancellationToken.None);
+                () => RunJobAsync(job.Key, job.State, job.Workload, true, running), CancellationToken.None);
         }
 
         logger.LogInformation("JobEngine initialized. Resumed {Count} pending job(s).", pending.Count);
@@ -107,7 +107,7 @@ public sealed class JobEngine<TKey, TState>(
 
         var running = Register(key, initialState);
         running.RunTask = Task.Run(
-            () => RunJobAsync(key, initialState, workload, isResume: false, running), CancellationToken.None);
+            () => RunJobAsync(key, initialState, workload, false, running), CancellationToken.None);
         return Task.CompletedTask;
     }
 
@@ -172,7 +172,7 @@ public sealed class JobEngine<TKey, TState>(
     {
         var ct = running.Cts.Token;
 
-        await observer.OnProgressAsync(key, initialState, durable: true, ct: CancellationToken.None)
+        await observer.OnProgressAsync(key, initialState, true, CancellationToken.None)
             .ConfigureAwait(false);
 
         // Captured once, up front: if a later StartJobAsync/InitializeAsync swaps _semaphore while this
@@ -223,16 +223,25 @@ public sealed class JobEngine<TKey, TState>(
 
         public void SetLastState(TState state)
         {
-            lock (_lock) _lastState = state;
+            lock (_lock)
+            {
+                _lastState = state;
+            }
         }
 
         public TState GetLastState()
         {
-            lock (_lock) return _lastState;
+            lock (_lock)
+            {
+                return _lastState;
+            }
         }
     }
 
-    /// <summary>Bridges a running job's <see cref="RunningJob" />/<see cref="IJobObserver{TKey,TState}" /> to the <see cref="IJobContext{TState}" /> a workload sees.</summary>
+    /// <summary>
+    ///     Bridges a running job's <see cref="RunningJob" />/<see cref="IJobObserver{TKey,TState}" /> to the
+    ///     <see cref="IJobContext{TState}" /> a workload sees.
+    /// </summary>
     private sealed class JobContext(bool isResume, RunningJob running, IJobObserver<TKey, TState> observer, TKey key)
         : IJobContext<TState>
     {
@@ -244,6 +253,9 @@ public sealed class JobEngine<TKey, TState>(
             await observer.OnProgressAsync(key, state, durable, ct).ConfigureAwait(false);
         }
 
-        public Task CheckpointAsync(CancellationToken ct) => running.Gate.CheckpointAsync(ct);
+        public Task CheckpointAsync(CancellationToken ct)
+        {
+            return running.Gate.CheckpointAsync(ct);
+        }
     }
 }

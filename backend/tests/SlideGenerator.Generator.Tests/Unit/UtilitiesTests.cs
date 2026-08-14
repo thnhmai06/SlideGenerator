@@ -33,6 +33,7 @@ public sealed class UtilitiesTests
     public async Task ExecuteWithBackoffAsync_SucceedsFirstTry_ReturnsResultWithoutDelay()
     {
         var delayCalls = 0;
+
         Task Delay(int _, CancellationToken _2)
         {
             delayCalls++;
@@ -51,6 +52,7 @@ public sealed class UtilitiesTests
     public async Task ExecuteWithBackoffAsync_FailsThenSucceeds_RetriesUntilResult()
     {
         var calls = 0;
+
         Task<string?> Action()
         {
             calls++;
@@ -69,6 +71,7 @@ public sealed class UtilitiesTests
     public async Task ExecuteWithBackoffAsync_ExhaustsRetries_ReturnsNull()
     {
         var calls = 0;
+
         Task<string?> Action()
         {
             calls++;
@@ -87,6 +90,7 @@ public sealed class UtilitiesTests
     public async Task ExecuteWithBackoffAsync_FinalAttemptThrows_ExceptionPropagates()
     {
         var calls = 0;
+
         Task<string?> Action()
         {
             calls++;

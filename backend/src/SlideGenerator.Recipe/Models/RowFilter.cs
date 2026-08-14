@@ -40,7 +40,10 @@ public enum RowFilterMode : byte
 [JsonDerivedType(typeof(PartitionBlockFilter), nameof(RowFilterMode.PartitionBlock))]
 public abstract record RowFilter
 {
-    /// <summary>Gets the strategy discriminator — ignored by STJ since the <c>mode</c> discriminator already encodes this value.</summary>
+    /// <summary>
+    ///     Gets the strategy discriminator — ignored by STJ since the <c>mode</c> discriminator already encodes this
+    ///     value.
+    /// </summary>
     [JsonIgnore]
     public abstract RowFilterMode Mode { get; }
 
@@ -64,7 +67,10 @@ public sealed record AllRowFilter : RowFilter
     public override RowFilterMode Mode => RowFilterMode.All;
 
     /// <inheritdoc />
-    public override IEnumerable<int> GetIndices(int dataCount) => Enumerable.Range(1, dataCount);
+    public override IEnumerable<int> GetIndices(int dataCount)
+    {
+        return Enumerable.Range(1, dataCount);
+    }
 }
 
 /// <summary>
@@ -79,7 +85,10 @@ public sealed record IndexRangeFilter(int Start, int End) : RowFilter
     public override RowFilterMode Mode => RowFilterMode.IndexRange;
 
     /// <inheritdoc />
-    public override IEnumerable<int> GetIndices(int dataCount) => Enumerable.Range(Start, End - Start + 1);
+    public override IEnumerable<int> GetIndices(int dataCount)
+    {
+        return Enumerable.Range(Start, End - Start + 1);
+    }
 }
 
 /// <summary>
@@ -102,12 +111,20 @@ public sealed record PartitionBlockFilter(int PartitionIndex, int PartitionCount
     public override RowFilterMode Mode => RowFilterMode.PartitionBlock;
 
     /// <summary>Resolves the inclusive start row (0-based) for the given total row count.</summary>
-    public int GetStart(int totalRows) => totalRows * PartitionIndex / PartitionCount;
+    public int GetStart(int totalRows)
+    {
+        return totalRows * PartitionIndex / PartitionCount;
+    }
 
     /// <summary>Resolves the exclusive end row (0-based) for the given total row count.</summary>
-    public int GetEnd(int totalRows) => totalRows * (PartitionIndex + 1) / PartitionCount;
+    public int GetEnd(int totalRows)
+    {
+        return totalRows * (PartitionIndex + 1) / PartitionCount;
+    }
 
     /// <inheritdoc />
     public override IEnumerable<int> GetIndices(int dataCount)
-        => Enumerable.Range(GetStart(dataCount) + 1, GetEnd(dataCount) - GetStart(dataCount));
+    {
+        return Enumerable.Range(GetStart(dataCount) + 1, GetEnd(dataCount) - GetStart(dataCount));
+    }
 }

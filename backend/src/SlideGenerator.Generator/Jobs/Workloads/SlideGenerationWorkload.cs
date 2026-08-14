@@ -31,6 +31,7 @@ using SlideGenerator.Jobs.Engine;
 using SlideGenerator.Recipe.Models;
 using SlideGenerator.Settings.Mutable;
 using SlideGenerator.Utilities;
+using Math = System.Math;
 
 namespace SlideGenerator.Generator.Jobs.Workloads;
 
@@ -136,45 +137,8 @@ internal sealed class SlideGenerationWorkload(
     {
         var record = new JobSnapshot(requestId, jobId, JobStatus.Running, phase, currentIndex, spec,
             DateTimeOffset.UtcNow);
-        await context.ReportAsync(record, durable: true, ct).ConfigureAwait(false);
+        await context.ReportAsync(record, true, ct).ConfigureAwait(false);
     }
-
-    #region Phase A — output
-
-    private async Task<IPresentation> OpenOutputAsync(PresentationIdentifier id, ILogger jobLogger,
-        CancellationToken ct)
-    {
-        jobLogger.LogInformation("Opening output: {OutputPath}", id.PresentationPath);
-        var presentation = await presentationOpener.OpenPresentationAsync(id, ct).ConfigureAwait(false);
-        if (presentation.IsWriteProtected) presentation.RemoveWriteProtection();
-        return presentation;
-    }
-
-    private async Task<IPresentation> CreateOutputAsync(
-        JobSpecification spec, PresentationIdentifier templateId, ILogger jobLogger, CancellationToken ct)
-    {
-        jobLogger.LogInformation("Creating output: {OutputPath}", spec.OutputPath);
-        var dir = Path.GetDirectoryName(spec.OutputPath);
-        if (dir != null) Directory.CreateDirectory(dir);
-        File.Copy(templateId.PresentationPath, spec.OutputPath, overwrite: true);
-
-        var presentation = await OpenOutputAsync(new PresentationIdentifier(spec.OutputPath), jobLogger, ct)
-            .ConfigureAwait(false);
-        for (var i = presentation.SlidesCount - 1; i >= 0; i--) presentation.RemoveSlideAt(i);
-        return presentation;
-    }
-
-    private async Task<ISlide?> LoadTemplateSlideAsync(
-        PresentationIdentifier templateId, int slideIndex, ILogger jobLogger, CancellationToken ct)
-    {
-        jobLogger.LogInformation("Loading template slide: {Ppt} #{Index}", templateId.PresentationPath, slideIndex);
-        using var template = await presentationOpener.OpenPresentationReadOnlyAsync(templateId, ct)
-            .ConfigureAwait(false);
-        var index = slideIndex - 1;
-        return index < 0 || index >= template.SlidesCount ? null : template.Slides.ElementAt(index).Clone();
-    }
-
-    #endregion
 
     #region Phase B — slides
 
@@ -193,8 +157,45 @@ internal sealed class SlideGenerationWorkload(
             await context.ReportAsync(
                 new JobSnapshot(requestId, jobId, JobStatus.Running, JobPhase.CreatingSlides, i + 1, spec,
                     DateTimeOffset.UtcNow),
-                durable: false, ct).ConfigureAwait(false);
+                false, ct).ConfigureAwait(false);
         }
+    }
+
+    #endregion
+
+    #region Phase A — output
+
+    private async Task<IPresentation> OpenOutputAsync(PresentationIdentifier id, ILogger jobLogger,
+        CancellationToken ct)
+    {
+        jobLogger.LogInformation("Opening output: {OutputPath}", id.PresentationPath);
+        var presentation = await presentationOpener.OpenPresentationAsync(id, ct).ConfigureAwait(false);
+        if (presentation.IsWriteProtected) presentation.RemoveWriteProtection();
+        return presentation;
+    }
+
+    private async Task<IPresentation> CreateOutputAsync(
+        JobSpecification spec, PresentationIdentifier templateId, ILogger jobLogger, CancellationToken ct)
+    {
+        jobLogger.LogInformation("Creating output: {OutputPath}", spec.OutputPath);
+        var dir = Path.GetDirectoryName(spec.OutputPath);
+        if (dir != null) Directory.CreateDirectory(dir);
+        File.Copy(templateId.PresentationPath, spec.OutputPath, true);
+
+        var presentation = await OpenOutputAsync(new PresentationIdentifier(spec.OutputPath), jobLogger, ct)
+            .ConfigureAwait(false);
+        for (var i = presentation.SlidesCount - 1; i >= 0; i--) presentation.RemoveSlideAt(i);
+        return presentation;
+    }
+
+    private async Task<ISlide?> LoadTemplateSlideAsync(
+        PresentationIdentifier templateId, int slideIndex, ILogger jobLogger, CancellationToken ct)
+    {
+        jobLogger.LogInformation("Loading template slide: {Ppt} #{Index}", templateId.PresentationPath, slideIndex);
+        using var template = await presentationOpener.OpenPresentationReadOnlyAsync(templateId, ct)
+            .ConfigureAwait(false);
+        var index = slideIndex - 1;
+        return index < 0 || index >= template.SlidesCount ? null : template.Slides.ElementAt(index).Clone();
     }
 
     #endregion
@@ -225,7 +226,7 @@ internal sealed class SlideGenerationWorkload(
             await context.ReportAsync(
                 new JobSnapshot(requestId, jobId, JobStatus.Running, JobPhase.FillingText, i + 1, spec,
                     DateTimeOffset.UtcNow),
-                durable: false, ct).ConfigureAwait(false);
+                false, ct).ConfigureAwait(false);
         }
     }
 
@@ -326,10 +327,10 @@ internal sealed class SlideGenerationWorkload(
                     if (!shapesByIdentifier.TryGetValue(shapeIdentifier, out var targetShape)) continue;
 
                     var targetSize = new Size(
-                        System.Math.Max(1,
-                            (int)System.Math.Round(templateShape.Bounds.Width, MidpointRounding.AwayFromZero)),
-                        System.Math.Max(1,
-                            (int)System.Math.Round(templateShape.Bounds.Height, MidpointRounding.AwayFromZero)));
+                        Math.Max(1,
+                            (int)Math.Round(templateShape.Bounds.Width, MidpointRounding.AwayFromZero)),
+                        Math.Max(1,
+                            (int)Math.Round(templateShape.Bounds.Height, MidpointRounding.AwayFromZero)));
 
                     inspected.TryGetValue(source, out var contentInfo);
                     var imageData = await ResolveShapeImageAsync(source, instruction, targetSize, contentInfo,
@@ -345,7 +346,7 @@ internal sealed class SlideGenerationWorkload(
             await context.ReportAsync(
                 new JobSnapshot(requestId, jobId, JobStatus.Running, JobPhase.FillingImages, i + 1, spec,
                     DateTimeOffset.UtcNow),
-                durable: false, ct).ConfigureAwait(false);
+                false, ct).ConfigureAwait(false);
         }
     }
 
@@ -458,7 +459,8 @@ internal sealed class SlideGenerationWorkload(
     }
 
     private void ReportRow(string requestId, int jobId, int rowIndex, RowStatus status,
-        RowStage stage = RowStage.None, string? note = null) =>
+        RowStage stage = RowStage.None, string? note = null)
+    {
         eventBus.Publish(new RowProgress
         {
             RequestId = requestId,
@@ -469,6 +471,7 @@ internal sealed class SlideGenerationWorkload(
             Note = note,
             Timestamp = DateTimeOffset.UtcNow
         });
+    }
 
     #endregion
 }

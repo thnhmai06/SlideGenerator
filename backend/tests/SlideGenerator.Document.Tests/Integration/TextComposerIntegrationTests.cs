@@ -12,6 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using System.Collections;
 using System.Globalization;
 using CsvHelper;
 using CsvHelper.Configuration;
@@ -43,7 +44,7 @@ namespace SlideGenerator.Document.Tests.Integration;
 public sealed class TextComposerIntegrationTests : IDisposable
 {
     private static readonly string TemplatePath = Path.Combine("fixtures", "data", "Template.pptx");
-    private static readonly string DataCsvPath  = Path.Combine("fixtures", "data", "Data.csv");
+    private static readonly string DataCsvPath = Path.Combine("fixtures", "data", "Data.csv");
     private static readonly string OutputSubDir = Path.Combine("fixtures", "output");
 
     private readonly TextComposer _composer = new(new MustacheEngine(NullLogger<MustacheEngine>.Instance));
@@ -57,64 +58,30 @@ public sealed class TextComposerIntegrationTests : IDisposable
     }
 
     /// <inheritdoc />
-    public void Dispose() => _presentation.Dispose();
+    public void Dispose()
+    {
+        _presentation.Dispose();
+    }
 
     #region Data loading
 
     /// <summary>Loads all rows from <c>Data.csv</c> as <see cref="DataRow" /> instances.</summary>
     public static TheoryData<DataRow> LoadCases()
     {
-        var path   = Path.Combine(AppContext.BaseDirectory, DataCsvPath);
+        var path = Path.Combine(AppContext.BaseDirectory, DataCsvPath);
         var config = new CsvConfiguration(CultureInfo.InvariantCulture)
         {
             HasHeaderRecord = true,
-            TrimOptions     = TrimOptions.Trim,
+            TrimOptions = TrimOptions.Trim
         };
 
         using var reader = new StreamReader(path);
-        using var csv    = new CsvReader(reader, config);
+        using var csv = new CsvReader(reader, config);
 
         var data = new TheoryData<DataRow>();
         foreach (var row in csv.GetRecords<DataRow>())
             data.Add(row);
         return data;
-    }
-
-    #endregion
-
-    #region Helpers
-
-    private static IEnumerable<SfIShape> AllShapes(System.Collections.IEnumerable shapes)
-    {
-        foreach (SfIShape shape in shapes)
-        {
-            yield return shape;
-            if (shape is not IGroupShape group) continue;
-            foreach (var child in AllShapes(group.Shapes))
-                yield return child;
-        }
-    }
-
-    private static List<string> ParagraphTexts(SfIShape shape) =>
-    [
-        .. shape.TextBody.Paragraphs
-            .Select(p => p.Text)
-            .Where(t => !string.IsNullOrEmpty(t))
-    ];
-
-    private static IEnumerable<string> ParseDataList(string dataList)
-    {
-        var inner = dataList.Trim().TrimStart('{').TrimEnd('}');
-        return inner.Split(',').Select(s => s.Trim()).Where(s => s.Length > 0);
-    }
-
-    private void SaveOutput(string fileName)
-    {
-        var outputDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, OutputSubDir));
-        Directory.CreateDirectory(outputDir);
-        var filePath = Path.Combine(outputDir, $"{fileName}.pptx");
-        _presentation.Save(filePath);
-        TestContext.Current.SendDiagnosticMessage($"Output saved: {filePath}");
     }
 
     #endregion
@@ -131,7 +98,7 @@ public sealed class TextComposerIntegrationTests : IDisposable
         // No unreplaced Mustache tokens
         foreach (var shape in allShapes)
             shape.TextBody?.Text.Should().NotContain("{{",
-                because: "all Mustache tokens must be resolved");
+                "all Mustache tokens must be resolved");
 
         // Locate the two composed shapes by their resulting text content
         var infoShape = allShapes.FirstOrDefault(s => s.TextBody?.Text.Contains("Provider: ") == true);
@@ -179,18 +146,56 @@ public sealed class TextComposerIntegrationTests : IDisposable
         var values = row.ToResolvedValues();
 
         foreach (var slide in _presentation.Slides)
+        foreach (var sfShape in AllShapes(slide.Shapes))
         {
-            foreach (var sfShape in AllShapes(slide.Shapes))
-            {
-                if (sfShape.TextBody?.Text?.Contains("{{") != true) continue;
-                _composer.Compose(new SfShape(sfShape), values);
-            }
+            if (sfShape.TextBody?.Text?.Contains("{{") != true) continue;
+            _composer.Compose(new SfShape(sfShape), values);
         }
 
         foreach (var slide in _presentation.Slides)
             AssertSlideComposition(slide, row);
 
         SaveOutput(row.SafeFileName);
+    }
+
+    #endregion
+
+    #region Helpers
+
+    private static IEnumerable<SfIShape> AllShapes(IEnumerable shapes)
+    {
+        foreach (SfIShape shape in shapes)
+        {
+            yield return shape;
+            if (shape is not IGroupShape group) continue;
+            foreach (var child in AllShapes(group.Shapes))
+                yield return child;
+        }
+    }
+
+    private static List<string> ParagraphTexts(SfIShape shape)
+    {
+        return
+        [
+            .. shape.TextBody.Paragraphs
+                .Select(p => p.Text)
+                .Where(t => !string.IsNullOrEmpty(t))
+        ];
+    }
+
+    private static IEnumerable<string> ParseDataList(string dataList)
+    {
+        var inner = dataList.Trim().TrimStart('{').TrimEnd('}');
+        return inner.Split(',').Select(s => s.Trim()).Where(s => s.Length > 0);
+    }
+
+    private void SaveOutput(string fileName)
+    {
+        var outputDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, OutputSubDir));
+        Directory.CreateDirectory(outputDir);
+        var filePath = Path.Combine(outputDir, $"{fileName}.pptx");
+        _presentation.Save(filePath);
+        TestContext.Current.SendDiagnosticMessage($"Output saved: {filePath}");
     }
 
     #endregion

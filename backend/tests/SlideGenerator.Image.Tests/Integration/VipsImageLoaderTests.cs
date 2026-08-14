@@ -14,9 +14,10 @@
 
 using FluentAssertions;
 using NetVips;
+using SlideGenerator.Image.Loading;
 using Xunit;
 using NetVipsImage = NetVips.Image;
-using SlideGenerator.Image.Loading;
+
 namespace SlideGenerator.Image.Tests.Integration;
 
 /// <summary>

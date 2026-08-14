@@ -15,10 +15,9 @@
 using System.Drawing;
 using System.Numerics;
 using FluentAssertions;
+using SlideGenerator.Image.Cropping;
 using SlideGenerator.Image.Tests.Integration.Fixtures;
 using Xunit;
-
-using SlideGenerator.Image.Cropping;
 
 namespace SlideGenerator.Image.Tests.Integration;
 

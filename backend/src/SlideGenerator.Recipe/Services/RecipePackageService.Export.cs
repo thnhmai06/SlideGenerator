@@ -152,7 +152,7 @@ internal sealed partial class RecipePackageService
                 : m.Template;
             return m with { Sources = sources, Template = template };
         }).ToList();
-        return new Models.Recipe(Mappings: rewritten);
+        return new Models.Recipe(rewritten);
     }
 
     /// <summary>

@@ -13,10 +13,10 @@
  */
 
 using System.Drawing;
+using SlideGenerator.Image.Loading;
 using NetVipsEnums = NetVips.Enums;
 using NetVipsImage = NetVips.Image;
 
-using SlideGenerator.Image.Loading;
 namespace SlideGenerator.Image.Cropping;
 
 /// <summary>

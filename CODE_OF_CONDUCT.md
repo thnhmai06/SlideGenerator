@@ -74,6 +74,7 @@ resolution.
 ## Addressing and Repairing Harm
 
 *
+
 *[NOTE: The remedies and repairs outlined below are suggestions based on best practices in code of conduct enforcement. If your community has its own established enforcement process, be sure to edit this section to describe your own policies.]
 **
 

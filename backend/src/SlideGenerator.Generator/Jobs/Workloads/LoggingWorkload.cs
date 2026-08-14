@@ -65,27 +65,36 @@ internal sealed class LoggingWorkload(
         return await inner.RunAsync(state, new ScopedContext(context, jobLogger), ct).ConfigureAwait(false);
     }
 
-    private static string ToLevelAbbreviation(LogEventLevel level) => level switch
+    private static string ToLevelAbbreviation(LogEventLevel level)
     {
-        LogEventLevel.Verbose => "VRB",
-        LogEventLevel.Debug => "DBG",
-        LogEventLevel.Information => "INF",
-        LogEventLevel.Warning => "WRN",
-        LogEventLevel.Error => "ERR",
-        LogEventLevel.Fatal => "FTL",
-        _ => "???"
-    };
+        return level switch
+        {
+            LogEventLevel.Verbose => "VRB",
+            LogEventLevel.Debug => "DBG",
+            LogEventLevel.Information => "INF",
+            LogEventLevel.Warning => "WRN",
+            LogEventLevel.Error => "ERR",
+            LogEventLevel.Fatal => "FTL",
+            _ => "???"
+        };
+    }
 
-    /// <summary>Forwards everything to <paramref name="inner"/> unchanged, only adding <see cref="Logger"/>.</summary>
+    /// <summary>Forwards everything to <paramref name="inner" /> unchanged, only adding <see cref="Logger" />.</summary>
     private sealed class ScopedContext(IJobContext<JobSnapshot> inner, ILogger logger)
         : IJobContext<JobSnapshot>, IScopedLoggerContext
     {
-        public ILogger Logger { get; } = logger;
         public bool IsResume => inner.IsResume;
 
-        public Task ReportAsync(JobSnapshot state, bool durable = false, CancellationToken ct = default) =>
-            inner.ReportAsync(state, durable, ct);
+        public Task ReportAsync(JobSnapshot state, bool durable = false, CancellationToken ct = default)
+        {
+            return inner.ReportAsync(state, durable, ct);
+        }
 
-        public Task CheckpointAsync(CancellationToken ct) => inner.CheckpointAsync(ct);
+        public Task CheckpointAsync(CancellationToken ct)
+        {
+            return inner.CheckpointAsync(ct);
+        }
+
+        public ILogger Logger { get; } = logger;
     }
 }
