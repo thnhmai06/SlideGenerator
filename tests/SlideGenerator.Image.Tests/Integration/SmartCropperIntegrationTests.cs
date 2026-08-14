@@ -22,7 +22,7 @@ using Xunit;
 namespace SlideGenerator.Image.Tests.Integration;
 
 /// <summary>
-///     Integration tests for <see cref="SlideGenerator.Image.Services.SmartCropper" />
+///     Integration tests for <see cref="SlideGenerator.Image.Cropping.SmartCropper" />
 ///     using real images and fully wired croppers.
 ///     Tests verify the fallback chain semantics end-to-end.
 ///     Tests are skipped when the local image cache is empty.

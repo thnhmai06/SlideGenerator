@@ -62,7 +62,7 @@ public sealed class VipsImageTests
 
     /// <summary>
     ///     Verifies that <see cref="VipsImage.Resize" /> returns a new image with exactly the
-    ///     requested dimensions (Force mode ignores aspect ratio).
+    ///     requested dimensions (Force mode ignores the aspect ratio).
     /// </summary>
     [Theory]
     [InlineData(200, 150)]

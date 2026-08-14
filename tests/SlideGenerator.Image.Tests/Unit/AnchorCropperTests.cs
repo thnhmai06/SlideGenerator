@@ -201,9 +201,9 @@ public sealed class AnchorCropperTests
 
     #region Resize aspect-ratio preservation
 
-    /// <summary>
+/// <summary>
     ///     Verifies that <see cref="IImage.Resize" /> receives a size computed by
-    ///     <see cref="Application.Utilities.GetMaxAspectSize" /> rather than the raw target size,
+    ///     <see cref="SlideGenerator.Image.Cropping.Utilities.GetMaxAspectSize" /> rather than the raw target size,
     ///     preserving the target aspect ratio within the cropped region.
     /// </summary>
     [Fact]

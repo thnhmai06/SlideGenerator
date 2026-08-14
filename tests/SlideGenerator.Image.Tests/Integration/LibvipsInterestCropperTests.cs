@@ -129,7 +129,7 @@ public sealed class LibvipsInterestCropperTests
     ///     Verifies that <see cref="LibvipsInterestCropper.Crop" /> with <see cref="InterestType.All" />
     ///     returns an image that fits within the target dimensions.
     ///     Unlike other modes, <c>All</c> scales to avoid losing content rather than cropping to an
-    ///     exact size, so neither dimension exceeds the target but the result may be smaller.
+    ///     exact size, so neither dimension exceeds the target, but the result may be smaller.
     /// </summary>
     [Fact]
     public void Crop_VipsImage_AllMode_ReturnsFitsWithinTargetSize()
@@ -139,7 +139,7 @@ public sealed class LibvipsInterestCropperTests
 
         using var result = _cropper.Crop(src, target, InterestType.All)!;
 
-        // All mode preserves the full field of view — output fits within target, not necessarily exact
+        // All modes preserve the full field of view — output fits within target, not necessarily exact
         result.Info.Width.Should().BeLessThanOrEqualTo((uint)(target.Width * 2),
             "All mode scales to preserve content; result width stays in a reasonable range");
         result.Info.Height.Should().BeLessThanOrEqualTo((uint)(target.Height * 2),
@@ -170,7 +170,7 @@ public sealed class LibvipsInterestCropperTests
     }
 
     /// <summary>
-    ///     Verifies that the buffer fallback path calls <see cref="IImage.ToPng()" /> to obtain
+    ///     Verifies that the buffer fallback path calls <see cref="IImage.ToPng()" /> to get
     ///     the image bytes.
     /// </summary>
     [Fact]

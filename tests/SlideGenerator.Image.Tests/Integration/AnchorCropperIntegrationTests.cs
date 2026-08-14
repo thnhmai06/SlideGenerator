@@ -22,8 +22,8 @@ using Xunit;
 namespace SlideGenerator.Image.Tests.Integration;
 
 /// <summary>
-///     Integration tests for <see cref="SlideGenerator.Image.Services.AnchorCropper" />
-///     using real images and a real <see cref="SlideGenerator.Image.Adapters.YuNet" />
+///     Integration tests for <see cref="SlideGenerator.Image.Cropping.AnchorCropper" />
+///     using real images and a real <see cref="SlideGenerator.Image.FaceDetection.YuNet" />
 ///     face detector. Tests are skipped when the local image cache is empty.
 /// </summary>
 [Collection("FaceIntegration")]

@@ -20,7 +20,7 @@ using SlideGenerator.Image.Loading;
 namespace SlideGenerator.Image.Tests.Integration.Fixtures;
 
 /// <summary>
-///     xUnit v3 collection fixture providing fully-wired, real implementations of
+///     xUnit v3 collection fixture providing fully wired, real implementations of
 ///     <see cref="IFaceDetector" />, <see cref="IImageLoader" />, <see cref="IAnchorCropper" />,
 ///     <see cref="IInterestCropper" />, and <see cref="ISmartCropper" />.
 /// </summary>

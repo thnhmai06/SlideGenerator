@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Image.Tests
- * File: InfrastructureUtilitiesTests.cs
+ * File: AdapterConversionsTests.cs
  *
  * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -26,7 +26,7 @@ namespace SlideGenerator.Image.Tests.Unit;
 ///     the <see cref="InterestType" />-to-libvips and <see cref="Size" />-to-OpenCV mapping methods.
 ///     These tests exercise only enum/struct conversions and require no native I/O.
 /// </summary>
-public sealed class InfrastructureUtilitiesTests
+public sealed class AdapterConversionsTests
 {
     #region ToVips
 
@@ -81,7 +81,7 @@ public sealed class InfrastructureUtilitiesTests
     }
 
     /// <summary>
-    ///     Verifies that an unrecognised <see cref="InterestType" /> value (cast from an integer
+    ///     Verifies that an unrecognized <see cref="InterestType" /> value (cast from an integer
     ///     not defined in the enum) throws <see cref="ArgumentOutOfRangeException" />.
     /// </summary>
     [Fact]

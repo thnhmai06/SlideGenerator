@@ -22,7 +22,7 @@ using Xunit;
 namespace SlideGenerator.Image.Tests.Integration;
 
 /// <summary>
-///     Integration tests for <see cref="SlideGenerator.Image.Adapters.YuNet" /> face
+///     Integration tests for <see cref="SlideGenerator.Image.FaceDetection.YuNet" /> face
 ///     detection using real images downloaded from HuggingFace.
 ///     Tests are skipped when the local image cache is empty (no network available).
 /// </summary>
@@ -129,8 +129,8 @@ public sealed class FaceDetectionIntegrationTests(FaceDatasetFixture dataset, Im
     #region Robustness — degenerate inputs
 
     /// <summary>
-    ///     Verifies that <see cref="IFaceDetector.DetectAsync" /> returns an empty list without
-    ///     throwing when the image's <see cref="SlideGenerator.Image.Models.IImage.ToPng()" />
+///     Verifies that <see cref="IFaceDetector.DetectAsync" /> returns an empty list without
+    ///     throwing when the image's <see cref="SlideGenerator.Image.Loading.IImage.ToPng()" />
     ///     returns an empty byte array.
     /// </summary>
     [Fact]
