@@ -16,9 +16,9 @@
         </PackageReference>
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.11"/>
         <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.11"/>
-        <PackageReference Include="Syncfusion.XlsIO.NET" Version="*"/>
-        <PackageReference Include="Syncfusion.Presentation.NET" Version="*"/>
-        <PackageReference Include="Syncfusion.PresentationRenderer.NET" Version="*"/>
+        <PackageReference Include="Syncfusion.XlsIO.NET" Version="34.2.3" />
+        <PackageReference Include="Syncfusion.Presentation.NET" Version="34.2.3" />
+        <PackageReference Include="Syncfusion.PresentationRenderer.NET" Version="34.2.3" />
         <PackageReference Include="Stubble.Core" Version="1.10.8"/>
         <PackageReference Remove="StyleCop.Analyzers"/>
     </ItemGroup>
