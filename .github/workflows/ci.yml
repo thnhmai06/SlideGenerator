@@ -1,0 +1,128 @@
+name: "CI"
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "Directory.Build.props"
+      - "Directory.Packages.props"
+      - "global.json"
+      - "nuget.config"
+      - "*.slnx"
+      - "Taskfile.yml"
+      - ".github/workflows/ci.yml"
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "Directory.Build.props"
+      - "Directory.Packages.props"
+      - "global.json"
+      - "nuget.config"
+      - "*.slnx"
+      - "Taskfile.yml"
+      - ".github/workflows/ci.yml"
+  release:
+    types: [ published ]
+
+permissions:
+  contents: read
+  actions: read
+  packages: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  SYNCFUSION_LICENSE_KEY: ${{ secrets.SYNCFUSION_LICENSE_KEY || 'empty' }}
+  GITHUB_USERNAME: ${{ github.actor }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
+
+jobs:
+  ci:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: windows-x64
+            runner: windows-latest
+          - name: windows-arm64
+            runner: windows-11-arm
+          - name: linux-x64
+            runner: ubuntu-24.04
+          - name: linux-arm64
+            runner: ubuntu-24.04-arm
+          - name: macos-x64
+            runner: macos-26-intel
+          - name: macos-arm64
+            runner: macos-26
+
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v5
+        with:
+          path: ${{ github.workspace }}/.nuget/packages
+          key: nuget-${{ matrix.name }}-${{ hashFiles('**/*.csproj', 'global.json', 'nuget.config') }}
+          restore-keys: nuget-${{ matrix.name }}-
+
+      - name: Restore
+        run: dotnet restore SlideGenerator.slnx
+
+      - name: Build
+        run: dotnet build SlideGenerator.slnx --no-restore
+
+      - name: Run tests
+        run: |
+          $rc = 0
+          Get-ChildItem -Path tests -Filter *.csproj -Recurse | Sort-Object Name | ForEach-Object {
+            $name = $_.BaseName
+            Write-Host "::group::$name"
+            dotnet test $_.FullName --logger "trx;LogFilePrefix=$name" --results-directory "TestResults/$name"
+            if ($LASTEXITCODE -ne 0) { $rc = $LASTEXITCODE }
+            Write-Host "::endgroup::"
+          }
+          exit $rc
+
+      - name: Collect test outputs
+        if: always()
+        run: |
+          Get-ChildItem -Path tests -Filter *.pptx -Recurse -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -replace '\\','/' -match '/fixtures/output/' } |
+            ForEach-Object {
+              $rel = ($_.FullName -replace '\\','/') -replace '^.*/tests/', ''
+              $proj = $rel.Split('/')[0]
+              $dest = "TestResults/$proj/output"
+              New-Item -ItemType Directory -Force -Path $dest | Out-Null
+              Copy-Item $_.FullName -Destination $dest
+            }
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results-${{ matrix.name }}
+          path: TestResults
+          if-no-files-found: warn
+          overwrite: true
+          retention-days: 14
