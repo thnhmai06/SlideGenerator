@@ -90,13 +90,19 @@ public sealed class SlideGenerationWorkloadIntegrationTests : IDisposable
     /// <remarks>
     ///     Skips when <c>faces/single/f_0.jpg</c> hasn't been downloaded yet (it is not committed; the Image
     ///     tests' <c>FaceDatasetFixture</c> downloads it into <c>tests/fixtures/faces</c>), so the build can
-    ///     succeed before any download has happened.
+    ///     succeed before any download has happened. Also skips when <c>SYNCFUSION_LICENSE_KEY</c> is unset —
+    ///     unlicensed Syncfusion stamps a watermark shape that crashes the workload, so the test cannot run
+    ///     meaningfully (CI sets the env var to <c>'empty'</c> when the secret is absent).
     /// </remarks>
     [Fact(DisplayName = "INTEGRATION: full 4-phase job generation against real fixtures")]
     public async Task RunAsync_RealFixtures_ProducesCompletedOutputWithComposedTextAndImage()
     {
         if (!File.Exists(FallbackImagePath))
             Assert.Skip("faces fixtures not downloaded — run the SlideGenerator.Image.Tests integration tests first");
+
+        var licenseKey = Environment.GetEnvironmentVariable("SYNCFUSION_LICENSE_KEY");
+        if (string.IsNullOrWhiteSpace(licenseKey) || licenseKey == "empty")
+            Assert.Skip("SYNCFUSION_LICENSE_KEY not set — add the secret to run this integration test");
 
         var services = new ServiceCollection();
         services.AddDocumentServices();
