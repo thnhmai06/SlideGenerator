@@ -22,8 +22,12 @@ namespace SlideGenerator.Image.FaceDetection;
 ///     Acquires one detector per <see cref="DetectAsync" /> call and releases it on completion,
 ///     allowing concurrent face-detection up to the pool limit.
 /// </summary>
-public sealed class YuNetPool(Func<uint> limitResolver)
-    : Pool<IFaceDetector>(() => new YuNet(), limitResolver), IFaceDetector
+/// <param name="limitResolver">Returns the current maximum number of pooled detectors.</param>
+/// <param name="detectorFactory">
+///     Creates a new pooled detector instance. Defaults to <see cref="YuNet" />; overridable for testing.
+/// </param>
+public sealed class YuNetPool(Func<uint> limitResolver, Func<IFaceDetector>? detectorFactory = null)
+    : Pool<IFaceDetector>(detectorFactory ?? (() => new YuNet()), limitResolver), IFaceDetector
 {
     /// <inheritdoc />
     public async Task<IReadOnlyList<Face>> DetectAsync(IImage image)

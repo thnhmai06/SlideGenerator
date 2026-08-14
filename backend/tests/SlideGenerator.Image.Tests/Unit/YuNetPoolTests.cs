@@ -41,7 +41,7 @@ public sealed class YuNetPoolTests
         var detector = Substitute.For<IFaceDetector>();
         detector.DetectAsync(Arg.Any<IImage>()).Returns(Task.FromResult(expected));
 
-        using var pool = new YuNetPool(() => 5);
+        using var pool = new YuNetPool(() => 5, () => detector);
 
         var result = await pool.DetectAsync(CreateImage());
 
@@ -66,7 +66,7 @@ public sealed class YuNetPoolTests
                 ? Task.FromException<IReadOnlyList<Face>>(new InvalidOperationException("simulated"))
                 : Task.FromResult<IReadOnlyList<Face>>([]));
 
-        using var pool = new YuNetPool(() => 1);
+        using var pool = new YuNetPool(() => 1, () => detector);
         var image = CreateImage();
 
         await FluentActions.Awaiting(() => pool.DetectAsync(image))
