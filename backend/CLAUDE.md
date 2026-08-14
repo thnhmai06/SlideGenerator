@@ -99,24 +99,26 @@ hosted at `nuget.pkg.github.com/thnhmai06`. `backend/nuget.config` reads credent
 
 ```
 backend/
-├── src/                                — 10 source modules (slnx-tracked)
+├── src/                                — 11 source modules (slnx-tracked)
 │   ├── SlideGenerator.Utilities/        — loose files, no subfolders
 │   ├── SlideGenerator.Settings/         — Config/, Rules/, Database/ (NameAndPaths stays put — see below)
 │   ├── SlideGenerator.Cloud/            — Resolvers/, root CloudClient.cs
 │   ├── SlideGenerator.Document/         — Workbooks/, Slides/, Template/
 │   ├── SlideGenerator.Logging/          — FileLogging/, root formatters/helpers
 │   ├── SlideGenerator.Image/            — FaceDetection/, Cropping/, Loading/
+│   ├── SlideGenerator.Jobs/             — Engine/ (generic Job Engine — see Job Execution below)
 │   ├── SlideGenerator.Summarization/    — Workbook/, Slide/, root service
 │   ├── SlideGenerator.Recipe/           — Mappings/, root RecipeRepository+entry+package rules
 │   ├── SlideGenerator.Generator/        — Job/, Persistence/, Progress/, root Service+DTOs
 │   └── SlideGenerator.Stdio/            — Handlers/, Implementations/ (already 1 feature = 1 IPC method group)
-└── tests/                              — 9 test projects (mirrors src, standalone)
+└── tests/                              — 10 test projects (mirrors src, standalone)
     ├── SlideGenerator.Utilities.Tests/
     ├── SlideGenerator.Cloud.Tests/
     ├── SlideGenerator.Settings.Tests/
     ├── SlideGenerator.Document.Tests/
     ├── SlideGenerator.Logging.Tests/
     ├── SlideGenerator.Image.Tests/
+    ├── SlideGenerator.Jobs.Tests/
     ├── SlideGenerator.Recipe.Tests/
     ├── SlideGenerator.Generator.Tests/
     └── SlideGenerator.Stdio.Tests/
@@ -129,10 +131,15 @@ rewriting most of the same files). `SlideGenerator.Stdio`'s `Handlers/`/`Impleme
 feature-shaped (one handler class per IPC method group) from the start, so it never needed a separate reorg pass.
 
 **WorkflowCore has been removed entirely** (package, all `Steps/`/`Workflows/`/`Middleware/` folders, the
-`Workflows.db` SQLite store) — job execution is now plain `Task`-based C# in `SlideGenerator.Generator`'s
-`JobRunner` (see **Job Execution (JobRunner)** below, which replaces the old **Workflow System (WorkflowCore)**
-section). `SlideGenerator.Recipe`'s `Node`/`Edge` graph model has also been removed — a recipe is now a flat
-`Recipe(Mappings)` list (see **Job Execution (JobRunner) → Input mapping** below).
+`Workflows.db` SQLite store) — job execution is now plain `Task`-based C# in a generic **Job Engine**
+(`SlideGenerator.Jobs`) driving a slide-generation-specific **Job Workload** (`SlideGenerator.Generator`) — see
+**Job Execution (Job Engine + Workload)** below, which replaces the old **Workflow System (WorkflowCore)**
+section. `SlideGenerator.Generator`'s `JobRunner` is now a thin adapter over `SlideGenerator.Jobs`'s
+`IJobEngine<TKey,TState>`, not the executor itself — the split (added after the initial WorkflowCore-removal
+rewrite) exists so the concurrency/pause/resume/crash-resume machinery is reusable for job types other than
+slide generation, without that machinery knowing anything about `JobSnapshot`/phases/Syncfusion.
+`SlideGenerator.Recipe`'s `Node`/`Edge` graph model has also been removed — a recipe is now a flat
+`Recipe(Mappings)` list (see **Job Execution (Job Engine + Workload) → Input mapping** below).
 
 `SlideGenerator.Cryptography` module has been removed (its `Sha256` helper moved into
 `SlideGenerator.Utilities/Sha256.cs`). `SlideGenerator.Coordinator` has also been removed — its 3 `GateType`
@@ -164,8 +171,11 @@ Foundation Modules
 ├── SlideGenerator.Logging       - Serilog: IFileLoggerFactory (FileLogging/), ConsoleLogFormatter
 ├── SlideGenerator.Document      - Syncfusion Excel/PowerPoint abstractions (Workbook/, Slide/) + Mustache
 │                                   template engine (Template/)
-└── SlideGenerator.Image         - NetVips-based image loading (Loading/); ROI cropping (Cropping/) + face
-                                    detection via OpenCV YuNet (FaceDetection/)
+├── SlideGenerator.Image         - NetVips-based image loading (Loading/); ROI cropping (Cropping/) + face
+│                                   detection via OpenCV YuNet (FaceDetection/)
+└── SlideGenerator.Jobs          - Generic Job Engine (Engine/): IJobEngine<TKey,TState> runs any
+                                    IJobWorkload<TState> — concurrency/pause/resume/stop/crash-resume, with
+                                    zero knowledge of what a job does (no dependency on any other module)
 
 Domain Modules
 ├── SlideGenerator.Settings      - YAML-based configuration; ISettingProvider (Config/)
@@ -174,8 +184,9 @@ Domain Modules
                                     flat list of Mappings — no graph/Node/Edge (see Job Execution below)
 
 Application
-└── SlideGenerator.Generator     - JobRunner: runs each Job's 4-phase pipeline directly on Task.Run, no external
-                                    workflow engine; spawn phase (Service.CreateAsync) is plain code too
+└── SlideGenerator.Generator     - JobRunner: thin adapter over SlideGenerator.Jobs's IJobEngine, driving
+                                    SlideGenerationWorkload (the 4-phase pipeline, in Job/Workload/); spawn
+                                    phase (Service.CreateAsync) is plain code too
 
 Host
 └── SlideGenerator.Stdio         - JSON-RPC 2.0 IPC sidecar (StreamJsonRpc over stdin/stdout)
@@ -196,6 +207,7 @@ Host
 | Document              | `AddDocumentServices()`                                                                                |
 | Image                 | `AddImageServices()`                                                                                   |
 | Logging               | `AddLoggingServices()`                                                                                 |
+| Jobs                  | `AddJobEngine<TKey,TState>()` — generic, called from `AddGeneratorServices()`, not from `Program.Services.cs` |
 | Summarization         | `AddSummarizationServices()`                                                                           |
 | Recipe                | `AddRecipeServices()`                                                                                  |
 | Generator             | `AddGeneratorServices()`                                                                               |
@@ -242,12 +254,12 @@ jsonRpc.AddLocalRpcMethod(method, handler, new JsonRpcMethodAttribute("settings.
 
 ### Progress notifications
 
-Progress is scoped to 3 levels — Request/Job/Row (see **Progress model** under **Job Execution (JobRunner)** below).
+Progress is scoped to 3 levels — Request/Job/Row (see **Progress model** under **Job Execution (Job Engine + Workload)** below).
 Only the `Jobs` table is actually persisted and buffered now — `Requests` is write-once (inserted directly by
 `Service.CreateAsync`, never updated) and `Rows`/per-row progress is **never persisted at all**, only forwarded live.
 `ProgressCoalescer` (`Implementations/ProgressCoalescer.cs`) does not own its own buffer for Jobs — `IJobsRepository`
 (`SlideGenerator.Generator`) already buffers/flushes internally via `BufferedRepository<TKey,TValue>` (coalesced,
-last-write-wins, ~1s `PeriodicTimer` tick, see **Job Execution (JobRunner) → Persistence** below); `ProgressCoalescer`
+last-write-wins, ~1s `PeriodicTimer` tick, see **Job Execution (Job Engine + Workload) → Persistence** below); `ProgressCoalescer`
 just subscribes to `IJobsRepository.Flushed` and relays each batch as `progress/jobs`. `RequestProgress`/`RowProgress`
 are forwarded immediately, un-buffered, straight off `GeneratingEventBus`. Log lines remain buffered here in a
 `ConcurrentQueue` (append-only, never coalesced — every line matters) with the coalescer's own 1s flush loop, since
@@ -320,35 +332,46 @@ must not depend on `SlideGenerator.Stdio` and the equivalent options in `SlideGe
 Notifications emitted by the sidecar: `progress/request`, `progress/jobs`, `progress/rows`, `log/entries` — `progress/jobs`
 is batched at up to 1/s (piggybacking on `IJobsRepository`'s flush tick), `log/entries` is separately batched at up to
 1/s; `progress/request`/`progress/rows` are sent immediately, one notification per event (never buffered). Every
-payload is a single positional array argument (`params[0]`), a list of `RequestProgress`/`JobRecord`/`RowProgress`/
-`LogEntry` respectively — not a named-object param. There is no separate `JobProgress` DTO — `JobRecord` (a job's
-full current-state row) doubles as the job-scoped progress payload (see **Job Execution (JobRunner) → Progress
-model** below).
+payload is a single positional array argument (`params[0]`), a list of `RequestProgress`/`JobSnapshot`/`RowProgress`/
+`LogEntry` respectively — not a named-object param. There is no separate `JobProgress` DTO — `JobSnapshot` (a job's
+full current-state row) doubles as the job-scoped progress payload (see **Job Execution (Job Engine + Workload) →
+Progress model** below).
 
 ## Concurrency: MaxConcurrentJobs
 
 There is no per-operation concurrency gate anywhere in the pipeline (downloading, image editing, and presentation
-saving run uncontended within a job). The **sole** concurrency/RAM control is at the job level, now owned entirely
-by `JobRunner` (`SlideGenerator.Generator/Job/JobRunner.cs`) via a plain `SemaphoreSlim` field — no external
-workflow engine involved.
+saving run uncontended within a job). The **sole** concurrency/RAM control is at the job level, owned by the
+generic `JobEngine<TKey,TState>` (`SlideGenerator.Jobs/Engine/JobEngine.cs`) via a plain `SemaphoreSlim` field —
+no external workflow engine involved, and the engine itself has no idea this limit has anything to do with slide
+generation specifically.
 
-`JobRunner.ApplyMaxConcurrentJobs()` (private) does `_semaphore = new SemaphoreSlim(value, value)` — it **swaps in a
-new semaphore instance** rather than mutating the old one, so jobs already waiting on the previous instance are
-unaffected by a resize; only newly-queued waits (i.e. jobs started after the resize) see the new limit. Called once
-in `InitializeAsync` (startup) and again at the start of every `StartJobAsync` call, reading
-`settingProvider.Current.Performance.MaxConcurrentJobs` fresh each time — so a `settings.performance.update` takes
-effect for the *next* job spawned, no restart needed (existing running jobs are unaffected either way, since they
-already acquired their semaphore slot). `Setting.PerformanceSetting.MaxConcurrentJobs` (default 5) is the **only**
-field left on `PerformanceSetting` — the old `MaxParallelDownloadImage`/`MaxParallelEditImage`/
+`JobEngine.ApplyConcurrencyLimit()` (private) reads `IJobConcurrencyProvider.MaxConcurrentJobs` and does
+`_semaphore = new SemaphoreSlim(value, value)` — but **only when `value` actually changed** since the last apply
+(tracked via a private `_currentLimit` field). Swapping unconditionally on every call (the original, pre-split
+behavior) would give each newly-started job its own private, uncontended semaphore instead of sharing the pool
+with jobs already running — silently defeating the limit for any two jobs that don't happen to start in the
+same tick. When the value does change, a **new semaphore instance** is swapped in rather than mutating the old
+one, so jobs already waiting on the previous instance are unaffected by the change; only newly-queued waits see
+the new limit. `RunJobAsync` captures `_semaphore` into a local **once**, before `WaitAsync`, and reuses that
+same local for the matching `Release()` — reading the mutable field again at release time could otherwise
+release a slot on a semaphore the job never acquired from (`SemaphoreFullException`) if a swap happened while it
+was running. `ApplyConcurrencyLimit()` is called once in `InitializeAsync` (startup) and again at the start of
+every `StartJobAsync` call. In `SlideGenerator.Generator`, `IJobConcurrencyProvider` is implemented by
+`SettingConcurrencyProvider` (`Job/SettingConcurrencyProvider.cs`), which reads
+`settingProvider.Current.Performance.MaxConcurrentJobs` fresh on every property access — so a
+`settings.performance.update` takes effect for the *next* job spawned, no restart needed (existing running jobs
+are unaffected either way, since they already acquired their semaphore slot). `Setting.PerformanceSetting.MaxConcurrentJobs`
+(default 5) is the **only** field left on `PerformanceSetting` — the old `MaxParallelDownloadImage`/`MaxParallelEditImage`/
 `MaxParallelEditPresentation`/`MaxParallelReadWorkbook`/`MaxParallelReadPresentation` fields and the whole
 hardware/network probing system that calibrated them (`SettingProbe`, `SettingTuner`, `SettingCalibrator`,
 `ISettingCalibrator`, the `settings.performance.calibrate` IPC method) were deleted along with the old gates — there
 is nothing left to calibrate.
 
-This cap only throttles job *execution* (`RunJobAsync` awaits `_semaphore.WaitAsync` after publishing `Status.Running`
-but before doing any real work) — it never delays *accepting* a new generation request, since `Service.CreateAsync`'s
-spawn phase (recipe read, job-list computation, `StartJobAsync` calls) is plain C# code that returns immediately per
-job, not itself gated (see **Job Execution (JobRunner)** below).
+This cap only throttles job *execution* (`JobEngine.RunJobAsync` awaits the semaphore after publishing the
+"starting execution" progress tick but before doing any real work) — it never delays *accepting* a new
+generation request, since `Service.CreateAsync`'s spawn phase (recipe read, job-list computation,
+`StartJobAsync` calls) is plain C# code that returns immediately per job, not itself gated (see **Job Execution
+(Job Engine + Workload)** below).
 
 `SlideGenerator.Image`'s `FaceDetectorPool` (a separate concern — pools actual `IFaceDetector`/OpenCV instances, not a
 throughput gate) is unrelated to `MaxConcurrentJobs`; it is bounded by a static `Environment.ProcessorCount` limit
@@ -359,7 +382,7 @@ throughput gate) is unrelated to `MaxConcurrentJobs`; it is bounded by a static 
 `SlideGenerator.Image` (`Loading/`) uses **NetVips** (`IImage`, implemented by `VipsImage`) as the primary in-memory
 image type, loaded via `IImageLoader.Open(path|byte[])`. Convert to/from `byte[]` only at the system boundary — the
 crop pipeline is fully in-memory end to end and the result is written straight into `IShape.ImageData`, never to a
-disk file (see `JobRunner.Phases.cs` → `CropToPngAsync`).
+disk file (see `SlideGenerationWorkload.cs` → `CropToPngAsync`).
 
 - `IImageLoader.Open(string path)` / `Open(byte[] data)` → `IImage`
 - `ISmartCropper.CropAsync(IImage, Size targetSize, IReadOnlyList<RoiOption> roiOptions)` → `IImage?` — tries each
@@ -370,20 +393,38 @@ disk file (see `JobRunner.Phases.cs` → `CropToPngAsync`).
   `FaceDetectorPool` (bounded by `Environment.ProcessorCount`, see **Concurrency** above)
 - Always use `using`/`await using` for `IImage` disposal.
 
-## Job Execution (JobRunner)
+## Job Execution (Job Engine + Workload)
 
-**One `Job` = one in-process `Task`, tracked in an in-memory registry.** `JobRunner`
-(`SlideGenerator.Generator/Job/JobRunner.cs`, implements `IJobRunner`) replaces WorkflowCore entirely — there is
-no external workflow engine, no separate persistence engine for job state. Each job runs its 4 phases sequentially,
-in order, inside one `Task.Run`:
+**One `Job` = one in-process `Task`, tracked in an in-memory registry.** Job execution is split across two
+layers, added after the initial WorkflowCore-removal rewrite settled on the flat `Task.Run`-based design:
+
+- **`SlideGenerator.Jobs`** (`Engine/`) — a fully generic, domain-free **Job Engine**. `IJobEngine<TKey,TState>`
+  (`JobEngine<TKey,TState>`) owns the in-memory running-job registry, the concurrency semaphore, pause/cancel
+  checkpointing (`PauseGate`), and crash-resume orchestration. It never inspects `TState` — every transition is
+  just forwarded to a consumer-supplied `IJobObserver<TKey,TState>`. It has **zero** project references — not
+  even to `SlideGenerator.Settings` (the concurrency limit comes from an injected `IJobConcurrencyProvider`,
+  not `ISettingProvider` directly).
+- **`SlideGenerator.Generator`** (`Job/`) — the slide-generation-specific **Job Workload**:
+  `SlideGenerationWorkload : IJobWorkload<JobSnapshot>` (the former 4-phase pipeline logic, in
+  `Job/Workload/SlideGenerationWorkload.cs`), wrapped in `LoggingWorkload` (a pure decorator that opens the
+  per-job file-log scope, `Job/Workload/LoggingWorkload.cs`), glued to the engine via
+  `GeneratorJobObserver : IJobObserver<JobKey, JobSnapshot>` (persist/publish) and
+  `GeneratorResumeSource : IJobResumeSource<JobKey, JobSnapshot>` (crash-resume). `JobKey` is a project-wide
+  `global using` alias for `(string RequestId, int JobId)` (`Job/JobKey.cs`). `JobRunner`
+  (`Job/JobRunner.cs`, implements `IJobRunner`) is now just a thin adapter forwarding
+  `InitializeAsync`/`ShutdownAsync`/`StartJobAsync`/`PauseJobAsync`/`ResumeJobAsync`/`StopJobAsync` onto the
+  matching `IJobEngine<JobKey, JobSnapshot>` calls — its public contract is unchanged from before the split, so
+  `Service.cs`/`Program.Startup.cs`/`ServiceTests.cs` (which mocks `IJobRunner`) never needed to change.
+
+Each job runs its 4 phases sequentially, in order, inside `SlideGenerationWorkload.RunAsync`:
 
 ```
 CreatingOutput → CreatingSlides → FillingText → FillingImages (→ Done)
 ```
 
-`JobPhase` (`Job/JobPhase.cs`) has these 5 values (`Done` is the terminal value stamped onto the final
-`JobRecord`, never actually "run"). Phase bodies live in `JobRunner.Phases.cs` (a `partial class` split of
-`JobRunner`), each in its own `#region`:
+`JobPhase` (`Job/Models/JobPhase.cs`) has these 5 values (`Done` is the terminal value stamped onto the final
+`JobSnapshot`, never actually "run"). Phase bodies live in `SlideGenerationWorkload.cs`, each in its own
+`#region`:
 
 - **Phase A — output** (`OpenOutputAsync`/`CreateOutputAsync`/`LoadTemplateSlideAsync`): creates the output
   `.pptx` (copies the template file, strips its slides) if it doesn't exist yet, or reopens it as-is on resume.
@@ -401,57 +442,79 @@ There is no `ForEach`/barrier orchestration and no separate "spawn phase workflo
 (`Service.cs`) reads the recipe, computes the job list (`Service.BuildJobs`, internal static — a plain
 `Recipe.Mappings`-to-`List<JobSpecification>` flattening, see **Input mapping** below), and loops
 `jobRunner.StartJobAsync(requestId, jobId, spec, logPath, ct)` once per job — all plain async C# code.
-`StartJobAsync` runs `PreflightCleanup` synchronously, persists the job's initial `Pending` `JobRecord` (flushed
-immediately, not on the next 1s tick — see **Persistence** below), registers it in the in-memory `_running`
-dictionary, then fires `Task.Run(RunJobAsync)` and returns without waiting. Multiple active requests for the
-**same recipe** are allowed to run concurrently — there is no recipe-level guard (deleting/updating a recipe
-definition doesn't need one either: every `JobRecord` already carries its own fully-resolved `JobSpecification`,
-snapshotted from the recipe at spawn time — see **Input mapping**). Instead, `Service.CreateAsync` guards at the
-**output-path** level via the private `FindConflictingOutputPathAsync` (not exposed on `IService`): after computing
-the new request's job list, it checks every already-active (running/pending/paused) job across all requests for an
-`OutputPath` collision and throws if one is found.
+`JobRunner.StartJobAsync` persists the job's initial `Pending` `JobSnapshot` synchronously (flushed immediately,
+not on the next 1s tick — visible to `FindConflictingOutputPathAsync`'s conflict check right away, see
+**Persistence** below), then wraps `SlideGenerationWorkload` in a `LoggingWorkload` and calls
+`IJobEngine.StartJobAsync`, which registers the job and fires it on `Task.Run` without waiting. Multiple active
+requests for the **same recipe** are allowed to run concurrently — there is no recipe-level guard
+(deleting/updating a recipe definition doesn't need one either: every `JobSnapshot` already carries its own
+fully-resolved `JobSpecification`, snapshotted from the recipe at spawn time — see **Input mapping**). Instead,
+`Service.CreateAsync` guards at the **output-path** level via the private `FindConflictingOutputPathAsync` (not
+exposed on `IService`): after computing the new request's job list, it checks every already-active
+(running/pending/paused) job across all requests for an `OutputPath` collision and throws if one is found.
 
-**Pause/cancel checkpointing**: `PauseGate` (a small class in `JobRunner.cs`, not DI-registered — one instance per
-`RunningJob`) wraps a swappable `TaskCompletionSource<bool>`. `Pause()`/`Resume()` toggle the signal; every phase
-loop body calls `await running.Gate.CheckpointAsync(ct)` **before each row**, plus phase transitions naturally fall
-between checkpoints too — so pause/cancel granularity is "between rows," never mid-row. `StopJobAsync` cancels the
-job's own `CancellationTokenSource` and also calls `Gate.Resume()` so a paused job unblocks immediately to observe
-the cancellation rather than sitting blocked on the pause signal forever.
+**Pause/cancel checkpointing**: `PauseGate` (`SlideGenerator.Jobs/Engine/PauseGate.cs`, engine-owned — one
+instance per running job, not DI-registered) wraps a swappable `TaskCompletionSource<bool>`. `Pause()`/`Resume()`
+toggle the signal; the workload calls `await context.CheckpointAsync(ct)` (forwarded straight to the gate)
+**before each row**, plus phase transitions naturally fall between checkpoints too — so pause/cancel granularity
+is "between rows," never mid-row (cooperative, not preemptive — a checkpoint can never interrupt a step already
+in flight). `IJobEngine.StopAsync` cancels the job's own `CancellationTokenSource` and also calls `Gate.Resume()`
+so a paused job unblocks immediately to observe the cancellation rather than sitting blocked on the pause signal
+forever; `ShutdownAsync` does the same for every running job before awaiting them all to unwind.
 
-**Data model** (`Job/`): there is no `JobContext`/`TransientContext` split anymore — `JobSpecification`
+**State ownership**: `IJobWorkload<TState>.RunAsync` is the only place that creates a new `TState`. On normal
+completion, its **return value** — not whatever it last reported — is the terminal state passed to
+`IJobObserver.OnTerminalAsync`. On cancel/fault (the run threw, so there is no return value), the terminal state
+is the last one the workload passed to `IJobContext.ReportAsync`, which the engine caches per running job
+(never the initial state, never reconstructed after the fact).
+
+**Data model** (`Job/Models/`): there is no `JobContext`/`TransientContext` split — `JobSpecification`
 (fully resolved: `WorkbookPath`, `WorksheetName`, `UsedColumns`, `RowFilter`, `TemplatePresentationPath`,
 `TemplateSlideIndex`, `TextInstructions`, `ImageInstructions`, `OutputPath`) plus 4 scalars
-(`Status`/`Phase`/`CurrentIndex`/`Timestamp`) fully describe a job's state in one record, `JobRecord`
-(`Job/JobRecord.cs`). A `JobRecord` needs nothing else to run or resume — no recipe/workbook lookup, no
-transient-only fields to reconstruct after a restart.
+(`JobStatus`/`Phase`/`CurrentIndex`/`Timestamp`) fully describe a job's state in one record, `JobSnapshot`
+(`Job/Models/JobSnapshot.cs`). A `JobSnapshot` needs nothing else to run or resume — no recipe/workbook lookup,
+no transient-only fields to reconstruct after a restart. This is also exactly the `TState` used everywhere
+`IJobEngine<TKey,TState>` is instantiated for slide generation (`TKey` = `JobKey` = `(string RequestId, int
+JobId)`).
 
 **Persistence**: `IJobsRepository`/`JobsRepository` (`Persistence/IJobsRepository.cs`,
-`Persistence/JobsRepository.cs`) persist `JobRecord`s to the shared `Data.db` (see **Data.db** below), buffered via
-`BufferedRepository<TKey,TValue>` (`Persistence/BufferedRepository.cs`) — a small generic base class: callers
+`Persistence/JobsRepository.cs`) persist `JobSnapshot`s to the shared `Data.db` (see **Data.db** below), buffered
+via `BufferedRepository<TKey,TValue>` (`Persistence/BufferedRepository.cs`) — a small generic base class: callers
 `Enqueue(key, value)` (coalesced, last-write-wins per key), a background `PeriodicTimer` (~1s) atomically drains the
 dirty dictionary (`Interlocked.Exchange`) and calls the abstract `UpsertBatchAsync` once per tick in one transaction,
 then raises `Flushed` with the batch. `JobsRepository` is the only subclass today; `IRequestsRepository`/
 `RequestsRepository` deliberately does **not** inherit it (a request row is written once at creation and never
-updated, so buffering would add nothing — see **Data.db** below).
+updated, so buffering would add nothing — see **Data.db** below). `SlideGenerator.Jobs` itself knows nothing
+about SQLite/buffering — all of this lives behind `GeneratorJobObserver`, which the engine calls into via the
+generic `IJobObserver<TKey,TState>.OnProgressAsync(key, state, durable, ct)` — `durable` distinguishes a
+coalesced per-row write from one that must be flushed before the workload's phase transition proceeds (e.g. so
+a crash right after a phase boundary resumes from the right phase, not a stale one).
 
-**Crash-resume**: `JobRunner.InitializeAsync` (called once at startup, before the JSON-RPC connection opens) queries
-`IJobsRepository.GetNonTerminalAsync()` — any row still `Pending`/`Running`/`Paused` when the process starts is by
-definition a crash leftover — and resumes each one directly from its stored `JobRecord` (`Phase`+`CurrentIndex` say
-exactly where to pick up; `JobSpecification` says exactly what to do — no recipe/workbook lookup needed at all,
-unlike the old WorkflowCore design). A job that was `Paused` before the crash resumes as plain `Running` — there is
-no persisted concept of "why it was paused" to restore, and closing/reopening file handles on pause was never
-implemented (see the "known limitation" remark on `IJobRunner`) so there's nothing to reopen either; the client can
-re-pause it if it wants. `PreflightCleanup` is **not** re-run on resume (it only runs once, from `StartJobAsync`, on
-a genuinely new job) — resuming mid-phase never deletes the in-progress output file.
+**Crash-resume**: `JobRunner.InitializeAsync` (called once at startup, before the JSON-RPC connection opens)
+calls `IJobEngine.InitializeAsync(resumeSource, ct)`, which schedules every job `GeneratorResumeSource` returns
+and returns immediately — it does **not** wait for any of them to finish. `GeneratorResumeSource` queries
+`IJobsRepository.GetNonTerminalAsync()` — any row still `Pending`/`Running`/`Paused` when the process starts is
+by definition a crash leftover (`Phase`+`CurrentIndex` say exactly where to pick up; `JobSpecification` says
+exactly what to do — no recipe/workbook lookup needed at all) — and for each one looks up the owning
+`RequestRecord.LogPath` via `IRequestsRepository`, so the resumed run logs to the **same** file the original run
+used (fixed as part of building `GeneratorResumeSource`, since it's the class that owns resume reconstruction —
+before the split, resume always fell back to a synthetic `{requestId}.log` path regardless of what the request
+actually used). A job that was `Paused` before the crash resumes as plain `Running` — there is no persisted
+concept of "why it was paused" to restore, and closing/reopening file handles on pause was never implemented
+(see the "known limitation" remark on `IJobRunner`) so there's nothing to reopen either; the client can re-pause
+it if it wants. `PreflightCleanup` is **not** re-run on resume — `SlideGenerationWorkload` checks
+`context.IsResume` (set by the engine depending on whether the run came from `StartJobAsync` or the resume
+path) instead of a constructor/method parameter.
 
-**Request/job identity**: a client-facing `requestId` (`Guid.NewGuid().ToString()`, minted once in
-`Service.CreateAsync`) groups N `JobRecord`s; `JobId` is a **plain `int`, 0-based ordinal position within the
+**Request/job identity**: unchanged from before the split — a client-facing `requestId`
+(`Guid.NewGuid().ToString()`, minted once in `Service.CreateAsync`) groups N `JobSnapshot`s; `JobId` is a
+**plain `int`, 0-based ordinal position within the
 request** (assigned by the `for` loop in `Service.CreateAsync`) — not a GUID, not self-generated by anything. There
 is no dedicated "request" row/type beyond `RequestRecord` (see **Data.db**) — `Service.ListGroupsAsync` (internal)
 groups `IJobsRepository.GetAllAsync()`'s flat result by `RequestId` on every call; `Summary`
 (`Summary.cs`) itself carries no `RequestId` field — `IService.ListActiveAsync`/`ListCompletedAsync`
 return `IReadOnlyDictionary<string, Summary>` keyed by `RequestId` instead, so the id lives only as the dictionary
-key. `Service.DeriveStatus` (internal static) aggregates a group's `JobRecord.Status` values into one request-level
+key. `Service.DeriveStatus` (internal static) aggregates a group's `JobSnapshot.JobStatus` values into one request-level
 `Status`: any `Running`/`Pending` → `Running`; else any `Paused` → `Paused`; else all `Cancelled` → `Cancelled`;
 else → `Complete`. `Summary` is two-level: request-level fields (`Request`, aggregate `Status`, `Phase`
 (`RequestPhase?`, computed — see **Progress model** below), `CreatedAt`/`CompletedAt`, request-scoped `Logs`) plus
@@ -468,9 +531,9 @@ still active), and `DeleteAllCompletedAsync`. There is no single-request query m
 request by indexing the `ListActiveAsync`/`ListCompletedAsync` result dictionary by `requestId`.
 
 **Progress model** (`Progress/Progress.cs`) is 2 records now (`RequestProgress`, `RowProgress`) — **there is no
-separate `JobProgress` DTO**; `JobRecord` itself (a job's full current-state row, see **Data model** above) doubles
-as the job-scoped progress payload published via `IEventBus.Publish(JobRecord)`, since a job's current state *is*
-its progress:
+separate `JobProgress` DTO**; `JobSnapshot` itself (a job's full current-state row, see **Data model** above)
+doubles as the job-scoped progress payload published via `IEventBus.Publish(JobSnapshot)`, since a job's current
+state *is* its progress:
 
 - `RequestProgress` — `RequestId`, `Phase` (`RequestPhase`: `PreparationStarted` | `ProcessingStarted` | `Completed`,
   monotonically increasing), `Timestamp`. Published by `Service.CreateAsync` (`PreparationStarted`, right before the
@@ -478,19 +541,22 @@ its progress:
   (see **Data.db** below), purely a live notification.
 - `RowProgress` — `RequestId`, `JobId`, `RowIndex` (1-based), `Status` (`RowStatus`: `Waiting`/`Processing`/`Done`/
   `Error`), `Stage` (`RowStage`: `None`/`Downloading`/`CroppingImage`/`SavingOutput`), `Note` (free text — e.g. the
-  URL being downloaded, or a row's failure message), `Timestamp`. Published exclusively via `JobRunner.ReportRow`
-  (a private helper in `JobRunner.Phases.cs`, one call per row/image, like a logger call) — also **never
-  persisted**, forwarded live only. The per-row loop bodies don't wrap individual rows in try/catch to report
-  `RowStatus.Error` and continue — any exception during a row propagates up through `RunPhasesAsync` and fails the
-  whole job (caught in `JobRunner.RunJobAsync`'s outer try/catch, which publishes `Status.Error` on the job).
+  URL being downloaded, or a row's failure message), `Timestamp`. Published exclusively via
+  `SlideGenerationWorkload.ReportRow` (a private helper, one call per row/image, like a logger call, straight
+  onto the injected `IEventBus` — unrelated to `IJobContext.ReportAsync`, which only ever carries a
+  `JobSnapshot`) — also **never persisted**, forwarded live only. The per-row loop bodies don't wrap individual
+  rows in try/catch to report `RowStatus.Error` and continue — any exception during a row propagates up through
+  `RunAsync` and fails the whole job (caught by `JobEngine.RunJobAsync`'s outer try/catch, which reports
+  `JobOutcome.Faulted` to `IJobObserver.OnTerminalAsync`; `GeneratorJobObserver` maps that to `JobStatus.Error`).
 
-`Service.CreateAsync` publishes the job's initial `Pending` `JobRecord` indirectly (via `StartJobAsync` →
-`Enqueue`/immediate `FlushAsync`, not through `IEventBus`) — the transitions actually published via `IEventBus` are:
-`JobRunner.RunJobAsync` (`Running` right before acquiring the semaphore, then `Complete`/`Cancelled`/`Error` on
-exit), and `JobRunner.PauseJobAsync`/`ResumeJobAsync` (`Paused`/`Running`).
+`Service.CreateAsync` publishes the job's initial `Pending` `JobSnapshot` indirectly (via `JobRunner.StartJobAsync`
+→ `IJobsRepository.Enqueue`/immediate `FlushAsync`, not through `IEventBus`) — the transitions actually published
+via `IEventBus` are all routed through `GeneratorJobObserver`: `OnProgressAsync` (`Running` — including the tick
+published right before the engine acquires a concurrency slot, so a queued job still shows as running), and
+`OnPausedAsync`/`OnResumedAsync`/`OnTerminalAsync` (`Paused`/`Running`/`Complete`|`Cancelled`|`Error`).
 
 **`RequestPhase` aggregation** lives entirely in `ProgressCoalescer` (Stdio), not `Service` — a per-request
-`RequestAggregateState` (`ExpectedJobCount`/`KnownJobs`/`StartedJobs`/`TerminalJobs`) tracks every `JobRecord` it
+`RequestAggregateState` (`ExpectedJobCount`/`KnownJobs`/`StartedJobs`/`TerminalJobs`) tracks every `JobSnapshot` it
 sees via `TrackRequestAggregate` (which also does double duty: it's the handler that `Enqueue`s the job into
 `IJobsRepository` for persistence). `ExpectedJobCount` comes from `IEventBus.AnnounceExpectedJobCount(requestId,
 jobs.Count)`, called by `Service.CreateAsync` right before its spawn loop — using it (rather than however many jobs
@@ -499,7 +565,7 @@ been spawned yet, since the spawn loop `await`s each `StartJobAsync` sequentiall
 every announced job has left `Pending`; `Completed` fires once every announced job has reached a terminal `Status`.
 This aggregate state is in-memory only, purely for live notification timing — `RequestPhase` itself is **never**
 persisted; `Summary.Phase` is instead recomputed on every `ListActiveAsync`/`ListCompletedAsync` call by
-`Service`'s own `DeriveRequestPhase` (a much simpler, stateless function operating on the current `JobRecord.Status`
+`Service`'s own `DeriveRequestPhase` (a much simpler, stateless function operating on the current `JobSnapshot.JobStatus`
 values already fetched from `Data.db` — no in-memory dependency on the coalescer's transition history).
 
 ### Data.db — the shared SQLite database
@@ -549,16 +615,19 @@ of ambient `LogContext.PushProperty` names to join into each event's scope path 
 of what a scope means, so it doesn't hardcode `RequestId`/`JobId`/`RowIndex` anywhere) and `onLogEvent` (an
 `Action<LogNotification>` invoked once per log line, wired alongside the file sink via `ScopeNotifyingSink`).
 `FileLogFormatter` writes the same scope path into the on-disk line so it can be parsed back out later.
-`LogNotification.Level` is `Serilog.Events.LogEventLevel` (not a string) — `JobRunner.RunJobAsync` converts it to
-the file's 3-letter abbreviation (`"INF"`/`"WRN"`/…) at the point it builds the `LogEntry` handed to
-`ILogNotifier.Publish` (this conversion used to live in the now-deleted `Middleware.cs` — there is no step
-middleware anymore, `JobRunner.RunJobAsync` does the lazy `ILoggerFactory` init inline at the top of its `try`
-block, once per job, using the same `??=`-free-but-equivalent one-shot pattern via a local `using` instead of a
-persisted field).
+`LogNotification.Level` is `Serilog.Events.LogEventLevel` (not a string) — `LoggingWorkload.RunAsync` converts it
+to the file's 3-letter abbreviation (`"INF"`/`"WRN"`/…) at the point it builds the `LogEntry` handed to
+`ILogNotifier.Publish` (this conversion used to live in the now-deleted `Middleware.cs`, then in
+`JobRunner.RunJobAsync` before the Engine/Workload split; there is no step middleware anymore —
+`LoggingWorkload.RunAsync`, the pure decorator wrapping `SlideGenerationWorkload`, does the lazy `ILoggerFactory`
+init inline once per job, via a local `using` scoped to that one call).
 
-`JobRunner.RunJobAsync` pushes `RequestId`/`JobId` onto `LogContext` for the duration of the whole job (and each
-phase's per-row loop additionally pushes `RowIndex` for the duration of that row), so every log line written
-anywhere during that scope automatically carries the right path.
+`LoggingWorkload.RunAsync` pushes `RequestId`/`JobId` onto `LogContext` for the duration of the whole job (and
+each phase's per-row loop inside `SlideGenerationWorkload` additionally pushes `RowIndex` for the duration of
+that row), so every log line written anywhere during that scope automatically carries the right path. The
+per-job `ILogger` itself is threaded from `LoggingWorkload` down to `SlideGenerationWorkload` via a small
+`IScopedLoggerContext` (`Logger` property) that `LoggingWorkload` wraps `IJobContext<JobSnapshot>` in —
+`SlideGenerator.Jobs`'s generic `IJobContext<TState>` contract itself has no notion of logging at all.
 
 `ILogNotifier`/`LogNotifier` (`SlideGenerator.Stdio/Implementations/LogNotifier.cs`) mirror `IEventBus`/
 `GeneratingEventBus`'s `dep-interface-ownership` pattern exactly, for the one log-line event. `ProgressCoalescer`
@@ -655,21 +724,25 @@ Example: `SlideGenerator.Generator.Tests` must explicitly reference `Microsoft.D
 
 ### What NOT to unit test
 
-`JobRunner`'s phase bodies (`RunPhasesAsync` and everything it calls in `JobRunner.Phases.cs`) require a Syncfusion
-license + real `.xlsx`/`.pptx` files, plus real NetVips/OpenCV image work — they belong to integration tests, not
-unit tests: opening a workbook/template/output presentation, face detection and image crop from a real file,
-appending real slides. Do not create unit stubs that bypass this core behavior. What **is** safe to unit test
-directly (see `tests/SlideGenerator.Generator.Tests/Unit/`):
+`SlideGenerationWorkload`'s phase bodies (`RunAsync` and everything it calls, in
+`Job/Workload/SlideGenerationWorkload.cs`) require a Syncfusion license + real `.xlsx`/`.pptx` files, plus real
+NetVips/OpenCV image work — they belong to integration tests, not unit tests: opening a workbook/template/output
+presentation, face detection and image crop from a real file, appending real slides. Do not create unit stubs
+that bypass this core behavior. What **is** safe to unit test directly:
 
-- `PreflightCleanup` — plain `File`/`Directory` I/O, no Syncfusion (`PreflightCleanupTests.cs`)
-- Pure helper functions lifted out of `JobRunner.Phases.cs` (e.g. `BuildRowTextValues`) — no I/O
-  (`JobRunnerHelpersTests.cs`)
+- `PreflightCleanup` — plain `File`/`Directory` I/O, no Syncfusion (`tests/SlideGenerator.Generator.Tests/Unit/PreflightCleanupTests.cs`)
+- Pure helper functions lifted out of `SlideGenerationWorkload.cs` (e.g. `BuildRowTextValues`) — no I/O
+  (`tests/SlideGenerator.Generator.Tests/Unit/JobRunnerHelpersTests.cs`)
 - `BufferedRepository<TKey,TValue>` — the buffer/flush mechanics are I/O-free and deterministic given a fake
-  `UpsertBatchAsync` (`BufferedRepositoryTests.cs`)
+  `UpsertBatchAsync` (`tests/SlideGenerator.Generator.Tests/Unit/BufferedRepositoryTests.cs`)
 - `JobsRepository`'s row mapping/schema against a real (temp-file) SQLite DB — Dapper + SQLite round-trips don't
-  need Syncfusion (`JobsRepositoryTests.cs`)
+  need Syncfusion (`tests/SlideGenerator.Generator.Tests/Unit/JobsRepositoryTests.cs`)
 - `Service`'s aggregation logic (`DeriveStatus`, `BuildJobs`, `FanOutAsync`) against mocked
-  `IJobRunner`/`IJobsRepository`/`IRequestsRepository` (`ServiceTests.cs`)
+  `IJobRunner`/`IJobsRepository`/`IRequestsRepository` (`tests/SlideGenerator.Generator.Tests/Unit/ServiceTests.cs`)
+- `JobEngine<TKey,TState>` itself — fully domain-free and deterministically testable with a fake
+  `IJobWorkload<TState>`/`IJobObserver<TKey,TState>` (no Syncfusion, no real I/O at all): pause/checkpoint
+  cooperation, stop unblocking a paused job, concurrency-cap sharing and swap-not-resize, non-blocking
+  `InitializeAsync`, and terminal-state ownership rules (`tests/SlideGenerator.Jobs.Tests/JobEngineTests.cs`)
 
 ## Development Patterns
 
@@ -677,7 +750,7 @@ directly (see `tests/SlideGenerator.Generator.Tests/Unit/`):
 
 Two coexisting conventions, by module:
 
-**Feature-folder** (all 9 non-host modules) — folders named after a business feature/concept, each folder free to
+**Feature-folder** (all 10 non-host modules) — folders named after a business feature/concept, each folder free to
 mix interfaces, implementations, models, and even multiple small related classes in one file (the old "1 file = 1
 class" rule doesn't apply within a feature folder — e.g. `SlideGenerator.Document/Workbooks/Workbook.cs` holds both
 the `IReadOnlyWorkbook`/`IWorkbook` interfaces and the `SfWorkbook` implementation). Folder names are plural when
@@ -708,9 +781,22 @@ SlideGenerator.Recipe/
 ├── RecipeRepository.cs + .Package.cs — root: CRUD + export/import, RecipeEntry, RecipePackageRules
 └── Registration.cs
 
+SlideGenerator.Jobs/                    — foundation module, zero project references
+├── Engine/        — IJobEngine + JobEngine<TKey,TState>, IJobWorkload, IJobContext, IJobObserver,
+│                     IJobResumeSource + PendingJob, IJobConcurrencyProvider, JobOutcome, JobTerminalResult,
+│                     PauseGate
+└── Registration.cs
+
 SlideGenerator.Generator/
-├── Job/           — IJobRunner + JobRunner (+ JobRunner.Phases.cs partial), PreflightCleanup, JobSpecification,
-│                     JobRecord, JobPhase, Status
+├── Job/
+│   ├── Models/        — JobSnapshot, JobSpecification, JobPhase, JobStatus
+│   ├── Workload/       — SlideGenerationWorkload (the 4-phase pipeline, IJobWorkload<JobSnapshot>),
+│   │                     LoggingWorkload (pure decorator: per-job file-log scope) + IScopedLoggerContext
+│   ├── JobRunner.cs    — IJobRunner + JobRunner, now a thin adapter over IJobEngine<JobKey,JobSnapshot>
+│   ├── GeneratorJobObserver.cs, GeneratorResumeSource.cs — engine↔persistence/progress glue
+│   ├── JobKey.cs        — global using alias for (string RequestId, int JobId)
+│   ├── JobTempFolder.cs, SettingConcurrencyProvider.cs — small shared helpers
+│   └── PreflightCleanup.cs
 ├── Persistence/   — BufferedRepository<TKey,TValue>, IJobsRepository + JobsRepository, IRequestsRepository +
 │                     RequestsRepository, JobSpecificationJson (STJ options for the `*Json` columns)
 ├── Progress/      — IEventBus, ILogNotifier, ILogFileReader + LogFileReader, RequestProgress/RowProgress,
@@ -720,8 +806,9 @@ SlideGenerator.Generator/
 ```
 
 Namespace mirrors the physical folder path 1:1 (e.g. `Image/FaceDetection/YuNet.cs` →
-`namespace SlideGenerator.Image.FaceDetection;`, `Generator/Job/JobRunner.cs` →
-`namespace SlideGenerator.Generator.Job;`).
+`namespace SlideGenerator.Image.FaceDetection;`, `Jobs/Engine/JobEngine.cs` → `namespace SlideGenerator.Jobs.Engine;`,
+`Generator/Job/Workload/SlideGenerationWorkload.cs` → `namespace SlideGenerator.Generator.Job.Workload;`,
+`Generator/Job/Models/JobSnapshot.cs` → `namespace SlideGenerator.Generator.Job.Models;`).
 
 `SlideGenerator.Stdio` (the host) keeps its own shape — `Handlers/` (one class per IPC method group) and
 `Implementations/` (event bus, log notifier, progress coalescer, JSON-RPC bootstrap, STJ adapters) — which was
@@ -729,11 +816,13 @@ already feature-shaped from the start and never needed a separate reorg pass.
 
 ### Partial classes for large single-concept services
 
-`JobRunner` (`SlideGenerator.Generator`) is a `partial class` split across `JobRunner.cs` (lifecycle: init/shutdown/
-start/pause/resume/stop, the in-memory `_running` registry, `PauseGate`) and `JobRunner.Phases.cs` (the 4-phase
-pipeline body, one `#region` per phase) — same pattern the old `GenerateJobStep.*.cs` partials used, kept because
-one job-execution concept genuinely needs more code than fits comfortably in one file, not because of any
-WorkflowCore-specific convention (which no longer exists — see **Job Execution (JobRunner)** above).
+`RecipePackageService` (`SlideGenerator.Recipe`) is a `partial class` split across `RecipePackageService.cs`
+(shared state/helpers), `.Export.cs`, and `.Import.cs` — kept because one export/import concept genuinely needs
+more code than fits comfortably in one file, not because of any special convention. `JobRunner`
+(`SlideGenerator.Generator`) used to follow this same pattern (`JobRunner.cs` + `JobRunner.Phases.cs`, one
+`#region` per phase) before the Engine/Workload split (see **Job Execution (Job Engine + Workload)** above)
+moved the 4-phase pipeline body out into `SlideGenerationWorkload.cs` — a single, plain (non-partial) file.
+`JobRunner` itself shrank down to a thin adapter over `IJobEngine<TKey,TState>` and no longer needs splitting.
 
 ### Coding Style
 
@@ -777,12 +866,13 @@ UserPath/
 │                             WorkflowCore removal, kept as-is — not worth the rename churn)
 └── Data/
     ├── Data.db            — DataFolder.DataFile (single shared SQLite DB: Recipes/Requests/Jobs tables —
-    │                         see Job Execution (JobRunner) → Data.db above)
+    │                         see Job Execution (Job Engine + Workload) → Data.db above)
     └── UserSettings.json  — DataFolder.SettingsFile (JSON, "Application" section)
 
 TempFolder.RootPath (%TEMP%\SlideGenerator) — per-job download cache, outside UserPath. Structured as
-{RootPath}/{requestId}/{jobId}/{hash(url)}{ext} (see JobRunner.JobTempFolder) — deleted wholesale by JobRunner
-once that specific job reaches a terminal (non-Paused) state; no shared/cross-job cache anymore.
+{RootPath}/{requestId}/{jobId}/{hash(url)}{ext} (see JobTempFolder.GetPath, Generator/Job/JobTempFolder.cs) —
+deleted wholesale by GeneratorJobObserver.OnTerminalAsync once that specific job reaches a terminal (non-Paused)
+outcome; no shared/cross-job cache anymore.
 ```
 
 ### Resource injection (`cs/resource-injection`)
@@ -807,8 +897,10 @@ for this; replicate the pattern in any new service that logs file paths from ext
 
 - [ ] Each module has root `Registration.cs` with DI setup
 - [ ] Module dependencies flow downward only
-- [ ] `JobRunner` phase bodies checkpoint (`PauseGate.CheckpointAsync` + `ct.ThrowIfCancellationRequested()`)
+- [ ] `SlideGenerationWorkload` phase bodies checkpoint (`context.CheckpointAsync` + `ct.ThrowIfCancellationRequested()`)
   before every row, never mid-row
+- [ ] `SlideGenerator.Jobs` (`Engine/`) stays domain-free — no reference to `JobSnapshot`/`JobStatus`/Syncfusion/
+  `Settings`/SQLite, and no project references to any other module
 - [ ] Async code uses `ConfigureAwait(false)`
 - [ ] `record` for data, `sealed` for logic by default
 - [ ] Image handling uses `IImage`/NetVips; byte arrays only at boundaries

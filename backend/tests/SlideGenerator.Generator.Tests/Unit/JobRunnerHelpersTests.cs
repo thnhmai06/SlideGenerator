@@ -16,14 +16,15 @@ using FluentAssertions;
 using NSubstitute;
 using SlideGenerator.Document.Workbooks.Components;
 using SlideGenerator.Document.Workbooks.Identifiers;
-using SlideGenerator.Generator.Job;
+using SlideGenerator.Generator.Job.Workload;
 using SlideGenerator.Recipe.Models;
 using Xunit;
 
 namespace SlideGenerator.Generator.Tests.Unit;
 
 /// <summary>
-///     Unit tests for the internal helper methods of <see cref="JobRunner" />.
+///     Unit tests for the internal helper methods of <see cref="SlideGenerationWorkload" /> (formerly on
+///     <c>JobRunner</c>, before the Engine/Workload split).
 /// </summary>
 public sealed class JobRunnerHelpersTests
 {
@@ -122,7 +123,7 @@ public sealed class JobRunnerHelpersTests
                 })
         };
 
-        var result = JobRunner.BuildRowTextValues(rowValues, instructions);
+        var result = SlideGenerationWorkload.BuildRowTextValues(rowValues, instructions);
 
         result.Should().ContainKey("Placeholder").WhoseValue.Should().Be("X");
     }
@@ -145,7 +146,7 @@ public sealed class JobRunnerHelpersTests
                 })
         };
 
-        var result = JobRunner.BuildRowTextValues(rowValues, instructions);
+        var result = SlideGenerationWorkload.BuildRowTextValues(rowValues, instructions);
 
         result.Should().ContainKey("Placeholder").WhoseValue.Should().Be("");
     }
@@ -163,7 +164,7 @@ public sealed class JobRunnerHelpersTests
             new(new HashSet<string> { "Role" }, new List<ColumnIdentifier> { new("Role") })
         };
 
-        var result = JobRunner.BuildRowTextValues(rowValues, instructions);
+        var result = SlideGenerationWorkload.BuildRowTextValues(rowValues, instructions);
 
         result.Should().ContainKey("Name").WhoseValue.Should().Be("Alice");
         result.Should().ContainKey("Role").WhoseValue.Should().Be("Manager");

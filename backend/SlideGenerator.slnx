@@ -5,6 +5,7 @@
         <Project Path="src/SlideGenerator.Logging/SlideGenerator.Logging.csproj" />
         <Project Path="src/SlideGenerator.Document/SlideGenerator.Document.csproj" />
         <Project Path="src/SlideGenerator.Image/SlideGenerator.Image.csproj" />
+        <Project Path="src/SlideGenerator.Jobs/SlideGenerator.Jobs.csproj" />
     </Folder>
     <Folder Name="/Sources/Domain/">
         <Project Path="src/SlideGenerator.Settings/SlideGenerator.Settings.csproj" />
@@ -24,6 +25,7 @@
         <Project Path="tests/SlideGenerator.Logging.Tests/SlideGenerator.Logging.Tests.csproj" />
         <Project Path="tests/SlideGenerator.Document.Tests/SlideGenerator.Document.Tests.csproj" />
         <Project Path="tests/SlideGenerator.Image.Tests/SlideGenerator.Image.Tests.csproj" />
+        <Project Path="tests/SlideGenerator.Jobs.Tests/SlideGenerator.Jobs.Tests.csproj" />
     </Folder>
     <Folder Name="/Tests/Domain/">
         <Project Path="tests/SlideGenerator.Settings.Tests/SlideGenerator.Settings.Tests.csproj" />

@@ -15,9 +15,13 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.DependencyInjection;
 using SlideGenerator.Generator.Job;
+using SlideGenerator.Generator.Job.Models;
+using SlideGenerator.Generator.Job.Workload;
 using SlideGenerator.Generator.Persistence;
 using SlideGenerator.Generator.Progress;
 using SlideGenerator.Image.FaceDetection;
+using SlideGenerator.Jobs;
+using SlideGenerator.Jobs.Engine;
 using SlideGenerator.Settings.Immutable;
 using SlideGenerator.Settings.Mutable;
 
@@ -67,7 +71,12 @@ extension(IServiceCollection services)
         // Reads the per-request workflow log file back into scoped LogEntry records for Summary.Logs.
         services.AddSingleton<ILogFileReader, LogFileReader>();
 
-        // Job execution — replaces WorkflowCore entirely.
+        // Job execution — generic Job Engine (SlideGenerator.Jobs) driving the slide-generation workload.
+        services.AddSingleton<IJobConcurrencyProvider, SettingConcurrencyProvider>();
+        services.AddSingleton<SlideGenerationWorkload>();
+        services.AddSingleton<IJobObserver<JobKey, JobSnapshot>, GeneratorJobObserver>();
+        services.AddSingleton<IJobResumeSource<JobKey, JobSnapshot>, GeneratorResumeSource>();
+        services.AddJobEngine<JobKey, JobSnapshot>();
         services.AddSingleton<IJobRunner, JobRunner>();
 
         // Service facade — Ipc depends on this, not on IJobRunner directly.
