@@ -57,7 +57,10 @@
             <Link>fixtures\data\Data.xlsx</Link>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Include="..\fixtures\faces\single\f_0.jpg">
+        <!-- The faces fixture is not committed; it is downloaded into tests/fixtures/faces by the Image
+             tests' FaceDatasetFixture. Make the copy conditional so a build that runs before any download
+             (e.g. CI) doesn't fail with MSB3030 — the integration test skips when the file is absent. -->
+        <None Include="..\fixtures\faces\single\f_0.jpg" Condition="Exists('..\fixtures\faces\single\f_0.jpg')">
             <Link>fixtures\faces\single\f_0.jpg</Link>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>

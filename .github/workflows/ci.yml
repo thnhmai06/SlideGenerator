@@ -89,6 +89,26 @@ jobs:
       - name: Restore
         run: dotnet restore SlideGenerator.slnx
 
+      - name: Fetch face fixtures
+        # Generator.Tests copies tests/fixtures/faces/single/f_0.jpg at build time (conditional on the file
+        # existing — see SlideGenerator.Generator.Tests.csproj), and its integration test uses it as the
+        # fallback crop image. The faces are not committed; FaceDatasetFixture (Image.Tests) downloads them
+        # at test time, which is too late for the Generator build. Seed just f_0.jpg here (same source and
+        # row index the fixture uses). Best-effort: if the network is down the Generator integration test
+        # simply skips, same as before.
+        run: |
+          $dir = "tests/fixtures/faces/single"
+          New-Item -ItemType Directory -Force -Path $dir | Out-Null
+          $dest = Join-Path $dir "f_0.jpg"
+          if (Test-Path $dest) { exit 0 }
+          try {
+            $rows = Invoke-RestMethod "https://datasets-server.huggingface.co/rows?dataset=eurecom-ds%2Fceleba-hq&config=default&split=train&offset=0&length=1"
+            Invoke-WebRequest $rows.rows[0].row.image.src -OutFile $dest
+          } catch {
+            Write-Host "::warning::Face fixture download skipped; Generator integration test will skip"
+            exit 0
+          }
+
       - name: Build
         run: dotnet build SlideGenerator.slnx --no-restore
 

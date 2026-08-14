@@ -87,9 +87,17 @@ public sealed class SlideGenerationWorkloadIntegrationTests : IDisposable
     ///     network/OpenCV involved). Asserts the job reaches <see cref="JobStatus.Complete" /> and the
     ///     output <c>.pptx</c> genuinely contains composed text and a real (non-degenerate) cropped image.
     /// </summary>
+    /// <remarks>
+    ///     Skips when <c>faces/single/f_0.jpg</c> hasn't been downloaded yet (it is not committed; the Image
+    ///     tests' <c>FaceDatasetFixture</c> downloads it into <c>tests/fixtures/faces</c>), so the build can
+    ///     succeed before any download has happened.
+    /// </remarks>
     [Fact(DisplayName = "INTEGRATION: full 4-phase job generation against real fixtures")]
     public async Task RunAsync_RealFixtures_ProducesCompletedOutputWithComposedTextAndImage()
     {
+        if (!File.Exists(FallbackImagePath))
+            Assert.Skip("faces fixtures not downloaded — run the SlideGenerator.Image.Tests integration tests first");
+
         var services = new ServiceCollection();
         services.AddDocumentServices();
         services.AddImageServices();
@@ -155,7 +163,7 @@ public sealed class SlideGenerationWorkloadIntegrationTests : IDisposable
 
         var pictureShape = shapes.FirstOrDefault(s => s.Identifier == new ShapeIdentifier("Picture 7"));
         pictureShape.Should().NotBeNull("the grouped image shape must be reachable by identifier");
-        pictureShape!.ImageData.Should().NotBeNullOrEmpty("the fallback image must have been cropped and assigned");
+        pictureShape.ImageData.Should().NotBeNullOrEmpty("the fallback image must have been cropped and assigned");
         pictureShape.Bounds.Width.Should().BeGreaterThan(50,
             "Bounds must report real pixel dimensions, not the near-zero value from the old EMU/points unit bug");
     }
