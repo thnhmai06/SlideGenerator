@@ -38,6 +38,7 @@ public static class Registration
                 sp.GetRequiredService<IAnchorCropper>(),
                 sp.GetRequiredService<IInterestCropper>(),
                 sp.GetService<ILogger<SmartCropper>>()));
+            services.AddSingleton<IFaceDetector>(new YuNetPool(() => (uint)Environment.ProcessorCount));
             return services;
         }
     }

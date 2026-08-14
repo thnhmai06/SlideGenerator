@@ -55,13 +55,6 @@ public static class Registration
                     };
                 });
 
-            // Face-detection pool — bounded by logical CPU count (CPU-bound native OpenCV work)
-            services.AddSingleton<IFaceDetector>(sp =>
-            {
-                var factory = sp.GetRequiredService<Func<IFaceDetector>>();
-                return new YuNetPool(() => (uint)Environment.ProcessorCount);
-            });
-
             // Shared connection builder for the single Data.db (Recipes/Requests/Jobs tables).
             services.AddSingleton(new SqliteConnectionStringBuilder(NameAndPaths.DataFolder.DataFile.ConnectionString));
 
