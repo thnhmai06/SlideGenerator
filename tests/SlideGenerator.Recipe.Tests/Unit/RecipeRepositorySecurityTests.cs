@@ -40,7 +40,6 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
     private readonly List<string> _cleanupDirs = [];
     private readonly List<string> _cleanupFiles = [];
     private readonly RecipePackageService _pkg;
-    private readonly SqliteRecipeRepository _repo;
 
     /// <summary>
     ///     Sets up a shared-cache in-memory SQLite database with an anchor connection.
@@ -56,8 +55,8 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
         _anchor = new SqliteConnection(builder.ConnectionString);
         _anchor.Open();
         DatabaseMigrator.Migrate(builder.ConnectionString);
-        _repo = new SqliteRecipeRepository(builder);
-        _pkg = new RecipePackageService(_repo);
+        var repo = new SqliteRecipeRepository(builder);
+        _pkg = new RecipePackageService(repo);
     }
 
     /// <inheritdoc />
@@ -85,7 +84,7 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
             }
     }
 
-    #region Edge — missing recipe.json
+    #region Edge case — missing recipe.json
 
     /// <summary>
     ///     Verifies that <see cref="SqliteRecipeRepository.ImportAsync" /> rejects archives that do not
@@ -106,11 +105,11 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
         var zipPath = Path.Combine(sandboxRoot, "no-recipe" + RecipePackageFormat.PackageExtension);
         _cleanupFiles.Add(zipPath);
 
-        using (var fs = File.Create(zipPath))
-        using (var archive = new ZipArchive(fs, ZipArchiveMode.Create))
+        await using (var fs = File.Create(zipPath))
+        await using (var archive = new ZipArchive(fs, ZipArchiveMode.Create))
         {
             var entry = archive.CreateEntry("Workbooks/data.xlsx", CompressionLevel.NoCompression);
-            await using var entryStream = entry.Open();
+            await using var entryStream = await entry.OpenAsync(TestContext.Current.CancellationToken);
             var data = "placeholder"u8.ToArray();
             await entryStream.WriteAsync(data, TestContext.Current.CancellationToken);
         }
@@ -160,17 +159,17 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
         var zipPath = Path.Combine(sandboxRoot, "evil" + RecipePackageFormat.PackageExtension);
         _cleanupFiles.Add(zipPath);
 
-        using (var fs = File.Create(zipPath))
-        using (var archive = new ZipArchive(fs, ZipArchiveMode.Create))
+        await using (var fs = File.Create(zipPath))
+        await using (var archive = new ZipArchive(fs, ZipArchiveMode.Create))
         {
             var recipeEntry = archive.CreateEntry("recipe.json", CompressionLevel.NoCompression);
-            await using (var recipeStream = recipeEntry.Open())
+            await using (var recipeStream = await recipeEntry.OpenAsync(TestContext.Current.CancellationToken))
             {
                 await recipeStream.WriteAsync("{}"u8.ToArray(), TestContext.Current.CancellationToken);
             }
 
             var maliciousEntry = archive.CreateEntry(maliciousEntryName, CompressionLevel.NoCompression);
-            await using (var maliciousStream = maliciousEntry.Open())
+            await using (var maliciousStream = await maliciousEntry.OpenAsync(TestContext.Current.CancellationToken))
             {
                 await maliciousStream.WriteAsync(maliciousPayload, TestContext.Current.CancellationToken);
             }
@@ -196,7 +195,6 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
             : [];
         foreach (var w in writtenUnderWorkbooks)
             Path.GetFullPath(w).Should().StartWith(Path.GetFullPath(workbooksDir));
-        return;
 
         // Act — ImportAsync must reject the malicious entry. Either throws or silently skips —
         // in either case nothing may escape the sandbox.
@@ -229,17 +227,17 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
         var zipPath = Path.Combine(sandboxRoot, "evil2" + RecipePackageFormat.PackageExtension);
         _cleanupFiles.Add(zipPath);
 
-        using (var fs = File.Create(zipPath))
-        using (var archive = new ZipArchive(fs, ZipArchiveMode.Create))
+        await using (var fs = File.Create(zipPath))
+        await using (var archive = new ZipArchive(fs, ZipArchiveMode.Create))
         {
             var recipeEntry = archive.CreateEntry("recipe.json", CompressionLevel.NoCompression);
-            await using (var recipeStream = recipeEntry.Open())
+            await using (var recipeStream = await recipeEntry.OpenAsync(TestContext.Current.CancellationToken))
             {
                 await recipeStream.WriteAsync("{}"u8.ToArray(), TestContext.Current.CancellationToken);
             }
 
             var maliciousEntry = archive.CreateEntry(maliciousEntryName, CompressionLevel.NoCompression);
-            await using (var maliciousStream = maliciousEntry.Open())
+            await using (var maliciousStream = await maliciousEntry.OpenAsync(TestContext.Current.CancellationToken))
             {
                 await maliciousStream.WriteAsync("payload"u8.ToArray(), TestContext.Current.CancellationToken);
             }
@@ -256,7 +254,6 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
 
         File.Exists(Path.Combine(victimDir, "pwned.txt")).Should().BeFalse(
             "ImportAsync must sanitize Presentations entries the same way as Workbooks entries");
-        return;
 
         async Task Act()
         {

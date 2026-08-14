@@ -98,6 +98,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
 
     #region AddAsync / GetAsync / ListAsync / UpdateAsync / DeleteAsync
 
+    /// <summary>Adding a valid entry returns metadata carrying a positive, database-assigned id.</summary>
     [Fact]
     public async Task AddAsync_ValidEntry_ReturnsMetadataWithPositiveId()
     {
@@ -107,6 +108,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
         metadata.Name.Should().Be("My Recipe");
     }
 
+    /// <summary>Each new entry receives an id strictly larger than the previous one.</summary>
     [Fact]
     public async Task AddAsync_MultipleEntries_IdsAreIncreasing()
     {
@@ -116,8 +118,9 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
         m2.Id.Should().BeGreaterThan(m1.Id);
     }
 
+    /// <summary>A recipe with one mapping survives the add/get round trip with its mapping count and paths intact.</summary>
     [Fact]
-    public async Task AddAsync_WithMapping_GraphRoundTripsMappingCount()
+    public async Task AddAsync_WithMapping_RoundTripsMappingCount()
     {
         var wbPath = Path.GetFullPath("dummy.xlsx");
         var pptPath = Path.GetFullPath("dummy.pptx");
@@ -131,6 +134,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
         entry.Recipe.Mappings[0].Template.Presentation.PresentationPath.Should().Be(pptPath);
     }
 
+    /// <summary>A recipe with no mappings persists an empty mapping list, not null.</summary>
     [Fact]
     public async Task AddAsync_WithEmptyRecipe_PersistsEmptyMappingList()
     {
@@ -141,6 +145,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
         entry.Recipe.Mappings.Should().BeEmpty();
     }
 
+    /// <summary>Reading an id that was never inserted throws InvalidOperationException.</summary>
     [Fact]
     public async Task GetAsync_NonExistentId_ThrowsInvalidOperationException()
     {
@@ -149,6 +154,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
         await act.Should().ThrowAsync<InvalidOperationException>();
     }
 
+    /// <summary>Reading back an inserted entry returns the same id and name it was saved with.</summary>
     [Fact]
     public async Task GetAsync_ExistingId_ReturnsCorrectNameAndId()
     {
@@ -160,6 +166,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
         entry.Name.Should().Be("TestName");
     }
 
+    /// <summary>Listing against an empty database returns an empty result.</summary>
     [Fact]
     public async Task ListAsync_EmptyDatabase_ReturnsEmptyList()
     {
@@ -168,6 +175,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
         list.Should().BeEmpty();
     }
 
+    /// <summary>Listing returns one metadata entry per inserted recipe.</summary>
     [Fact]
     public async Task ListAsync_MultipleEntries_ReturnsAllMetadata()
     {
@@ -181,6 +189,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
         list.Select(e => e.Name).Should().Contain(["Alpha", "Beta", "Gamma"]);
     }
 
+    /// <summary>Updating an id that was never inserted throws InvalidOperationException.</summary>
     [Fact]
     public async Task UpdateAsync_NonExistentId_ThrowsInvalidOperationException()
     {
@@ -189,6 +198,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
         await act.Should().ThrowAsync<InvalidOperationException>();
     }
 
+    /// <summary>Updating an existing entry overwrites its name and its mapping list.</summary>
     [Fact]
     public async Task UpdateAsync_ExistingId_OverwritesNameAndMappings()
     {
@@ -204,6 +214,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
         entry.Recipe.Mappings.Should().HaveCount(1);
     }
 
+    /// <summary>Deleting an id that was never inserted returns false and leaves the store untouched.</summary>
     [Fact]
     public async Task DeleteAsync_NonExistentId_ReturnsFalse()
     {
@@ -212,6 +223,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
         deleted.Should().BeFalse();
     }
 
+    /// <summary>Deleting an existing entry removes its row so a later read fails.</summary>
     [Fact]
     public async Task DeleteAsync_ExistingId_RemovesRow()
     {
@@ -228,6 +240,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
 
     #region ExportAsync / ImportAsync
 
+    /// <summary>Exporting an existing recipe produces a non-empty .zip file on disk.</summary>
     [Fact]
     public async Task ExportAsync_ExistingRecipe_CreatesZipFile()
     {
@@ -247,6 +260,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
         }
     }
 
+    /// <summary>Exporting an id that was never inserted throws InvalidOperationException.</summary>
     [Fact]
     public async Task ExportAsync_NonExistentId_ThrowsInvalidOperationException()
     {
@@ -257,6 +271,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
         await act.Should().ThrowAsync<InvalidOperationException>();
     }
 
+    /// <summary>Importing a valid export inserts a fresh row that keeps the original recipe's name.</summary>
     [Fact]
     public async Task ImportAsync_ValidZipFile_InsertsNewRowWithMatchingName()
     {
@@ -286,8 +301,9 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
         }
     }
 
+    /// <summary>An archive without a Recipe.json entry is rejected with InvalidDataException.</summary>
     [Fact]
-    public async Task ImportAsync_MissingGraphJson_ThrowsInvalidDataException()
+    public async Task ImportAsync_MissingRecipeJson_ThrowsInvalidDataException()
     {
         var zipPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{RecipePackageFormat.PackageExtension}");
         var workbooksDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
@@ -295,8 +311,8 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
 
         try
         {
-            using (var fs = File.Create(zipPath))
-            using (new ZipArchive(fs, ZipArchiveMode.Create))
+            await using (var fs = File.Create(zipPath))
+            await using (new ZipArchive(fs, ZipArchiveMode.Create))
             {
                 // empty archive
             }
@@ -313,8 +329,12 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
         }
     }
 
+    /// <summary>
+    ///     Importing a recipe whose workbook/presentation paths are rewritten to the extracted
+    ///     target directories, so the imported copy points at the extracted files.
+    /// </summary>
     [Fact]
-    public async Task ImportAsync_GraphWithFilePaths_RoundTripsPathsToExtractedDirectories()
+    public async Task ImportAsync_RecipeWithFilePaths_RoundTripsPathsToExtractedDirectories()
     {
         var wbPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.xlsx");
         var pptPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.pptx");
@@ -353,8 +373,9 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
         }
     }
 
+    /// <summary>A Recipe.json holding invalid JSON is rejected with InvalidDataException.</summary>
     [Fact]
-    public async Task ImportAsync_InvalidGraphJson_ThrowsInvalidDataException()
+    public async Task ImportAsync_InvalidRecipeJson_ThrowsInvalidDataException()
     {
         var zipPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{RecipePackageFormat.PackageExtension}");
         var workbooksDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
@@ -362,12 +383,12 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
 
         try
         {
-            using (var fs = File.Create(zipPath))
-            using (var archive = new ZipArchive(fs, ZipArchiveMode.Create))
+            await using (var fs = File.Create(zipPath))
+            await using (var archive = new ZipArchive(fs, ZipArchiveMode.Create))
             {
                 var bytes = "not valid json {{{"u8.ToArray();
                 var entry = archive.CreateEntry(RecipePackageFormat.Data.Recipe.FileName);
-                await using var entryStream = entry.Open();
+                await using var entryStream = await entry.OpenAsync();
                 await entryStream.WriteAsync(bytes, TestContext.Current.CancellationToken);
             }
 
@@ -383,6 +404,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
         }
     }
 
+    /// <summary>An archive smuggling a disallowed extension inside Workbooks/ is refused without extracting anything.</summary>
     [Fact]
     public async Task ImportAsync_DisallowedExtensionInWorkbooks_FileNotExtracted()
     {
@@ -392,19 +414,19 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
 
         try
         {
-            using (var fs = File.Create(zipPath))
-            using (var archive = new ZipArchive(fs, ZipArchiveMode.Create))
+            await using (var fs = File.Create(zipPath))
+            await using (var archive = new ZipArchive(fs, ZipArchiveMode.Create))
             {
-                var graphBytes = "{\"mappings\":[]}"u8.ToArray();
-                var graphEntry = archive.CreateEntry(RecipePackageFormat.Data.Recipe.FileName);
-                await using (var graphStream = graphEntry.Open())
+                var recipeBytes = "{\"mappings\":[]}"u8.ToArray();
+                var recipeEntry = archive.CreateEntry(RecipePackageFormat.Data.Recipe.FileName);
+                await using (var recipeStream = await recipeEntry.OpenAsync())
                 {
-                    await graphStream.WriteAsync(graphBytes, TestContext.Current.CancellationToken);
+                    await recipeStream.WriteAsync(recipeBytes, TestContext.Current.CancellationToken);
                 }
 
                 var payload = new byte[] { 0xFF, 0xD8 };
                 var badEntry = archive.CreateEntry("Workbooks/payload.exe");
-                await using (var badStream = badEntry.Open())
+                await using (var badStream = await badEntry.OpenAsync())
                 {
                     await badStream.WriteAsync(payload, TestContext.Current.CancellationToken);
                 }
@@ -422,6 +444,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
         }
     }
 
+    /// <summary>A workbook that already exists in the target folder gets a deduplicated copy instead of being overwritten.</summary>
     [Fact]
     public async Task ImportAsync_WorkbookFileAlreadyExistsInTargetFolder_DeduplicatesExtractedFile()
     {
@@ -468,6 +491,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
         }
     }
 
+    /// <summary>Two workbooks sharing the same file name are both extracted as distinct files on import.</summary>
     [Fact]
     public async Task ExportAsync_DuplicateStemWorkbooks_BothFilesExtractedAfterImport()
     {
@@ -511,6 +535,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
         }
     }
 
+    /// <summary>Archive entries outside the known Workbooks/ or Presentations/ folders are ignored and the import still succeeds.</summary>
     [Fact]
     public async Task ImportAsync_EntryInUnknownFolderPrefix_IsIgnoredAndImportSucceeds()
     {
@@ -520,19 +545,19 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
 
         try
         {
-            using (var fs = File.Create(zipPath))
-            using (var archive = new ZipArchive(fs, ZipArchiveMode.Create))
+            await using (var fs = File.Create(zipPath))
+            await using (var archive = new ZipArchive(fs, ZipArchiveMode.Create))
             {
-                var graphBytes = "{\"mappings\":[]}"u8.ToArray();
-                var graphEntry = archive.CreateEntry(RecipePackageFormat.Data.Recipe.FileName);
-                await using (var graphStream = graphEntry.Open())
+                var recipeBytes = "{\"mappings\":[]}"u8.ToArray();
+                var recipeEntry = archive.CreateEntry(RecipePackageFormat.Data.Recipe.FileName);
+                await using (var recipeStream = await recipeEntry.OpenAsync())
                 {
-                    await graphStream.WriteAsync(graphBytes, TestContext.Current.CancellationToken);
+                    await recipeStream.WriteAsync(recipeBytes, TestContext.Current.CancellationToken);
                 }
 
                 var payload = new byte[] { 0x42 };
                 var unknownEntry = archive.CreateEntry("Secret/evil.xlsx");
-                await using (var unknownStream = unknownEntry.Open())
+                await using (var unknownStream = await unknownEntry.OpenAsync())
                 {
                     await unknownStream.WriteAsync(payload, TestContext.Current.CancellationToken);
                 }
