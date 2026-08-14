@@ -28,9 +28,9 @@ public sealed record LogNotification
     public required DateTimeOffset Timestamp { get; init; }
 
     /// <summary>
-    ///     Gets the scope path this event belongs to: <c>"&lt;requestId&gt;"</c>,
-    ///     <c>"&lt;requestId&gt;/&lt;jobId&gt;"</c>, or <c>"&lt;requestId&gt;/&lt;jobId&gt;/&lt;rowIndex&gt;"</c>. TODO: fix
-    ///     comment
+    ///     Gets the dotted scope path this event was written under, with one segment per scope level —
+    ///     e.g. <c>"&lt;requestId&gt;"</c>, <c>"&lt;requestId&gt;/&lt;jobId&gt;"</c>, or
+    ///     <c>"&lt;requestId&gt;/&lt;jobId&gt;/&lt;rowIndex&gt;"</c>.
     /// </summary>
     public required string Location { get; init; }
 
