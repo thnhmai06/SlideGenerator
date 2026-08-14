@@ -27,8 +27,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Syncfusion.Presentation.NET" Version="*"/>
-        <PackageReference Include="Syncfusion.PresentationRenderer.NET" Version="*"/>
+        <PackageReference Include="Syncfusion.Presentation.NET" Version="34.2.3" />
+        <PackageReference Include="Syncfusion.PresentationRenderer.NET" Version="34.2.3" />
         <PackageReference Include="CsvHelper" Version="33.*"/>
     </ItemGroup>
 
