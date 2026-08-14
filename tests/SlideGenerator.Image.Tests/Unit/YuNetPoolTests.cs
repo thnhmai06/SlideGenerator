@@ -92,7 +92,44 @@ public sealed class YuNetPoolTests
     }
 
     /// <summary>
-    ///     Creates a mock <see cref="IImage" /> for use as detector input.
+    ///     An <see cref="IFaceDetector" /> that records peak concurrent <see cref="DetectAsync" />
+    ///     invocations on a shared <see cref="ConcurrencyTracker" /> and holds each call open briefly so
+    ///     overlapping calls actually overlap, giving the pool's concurrency limit something to enforce.
+    /// </summary>
+    private sealed class TrackingDetector(ConcurrencyTracker tracker) : IFaceDetector
+    {
+        public void Dispose()
+        {
+        }
+
+        public async Task<IReadOnlyList<Face>> DetectAsync(IImage image)
+        {
+            var current = Interlocked.Increment(ref tracker.Current);
+            UpdateMax(current);
+            try
+            {
+                await Task.Delay(25, TestContext.Current.CancellationToken).ConfigureAwait(false);
+                return [];
+            }
+            finally
+            {
+                Interlocked.Decrement(ref tracker.Current);
+            }
+        }
+
+        private void UpdateMax(int current)
+        {
+            while (true)
+            {
+                var observed = tracker.Max;
+                if (current <= observed) return;
+                if (Interlocked.CompareExchange(ref tracker.Max, current, observed) == observed) return;
+            }
+        }
+    }
+
+    /// <summary>
+    ///     Creates a mock <see cref="IImage" /> for use as a detector input.
     /// </summary>
     private static IImage CreateImage()
     {
@@ -116,12 +153,14 @@ public sealed class YuNetPoolTests
         const int totalCalls = 8;
         var tracker = new ConcurrencyTracker();
 
-        using var pool = new YuNetPool(() => limit);
+        using var pool = new YuNetPool(() => limit, () => new TrackingDetector(tracker));
 
         var image = CreateImage();
         await Task.WhenAll(Enumerable.Range(0, totalCalls).Select(_ => pool.DetectAsync(image)));
 
         tracker.Max.Should().BeLessThanOrEqualTo(limit);
+        tracker.Max.Should().BeGreaterThan(0,
+            "the calls must overlap to actually exercise the pool limit — otherwise this test measures nothing");
     }
 
     /// <summary>
@@ -135,7 +174,7 @@ public sealed class YuNetPoolTests
         const int totalCalls = 9;
         var tracker = new ConcurrencyTracker();
 
-        using var pool = new YuNetPool(() => limit);
+        using var pool = new YuNetPool(() => limit, () => new TrackingDetector(tracker));
 
         var image = CreateImage();
         var results = await Task.WhenAll(
@@ -143,6 +182,8 @@ public sealed class YuNetPoolTests
 
         results.Should().HaveCount(totalCalls);
         tracker.Max.Should().BeLessThanOrEqualTo(limit);
+        tracker.Max.Should().BeGreaterThan(0,
+            "the calls must overlap to actually exercise the pool limit — otherwise this test measures nothing");
     }
 
     #endregion
