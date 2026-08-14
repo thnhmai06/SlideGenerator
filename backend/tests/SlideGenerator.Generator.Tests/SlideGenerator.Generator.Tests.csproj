@@ -34,5 +34,32 @@
         <ProjectReference Include="../../src/SlideGenerator.Image/SlideGenerator.Image.csproj"/>
         <ProjectReference Include="..\..\src\SlideGenerator.Summarizer\SlideGenerator.Summarizer.csproj"/>
         <ProjectReference Include="../../src/SlideGenerator.Recipe/SlideGenerator.Recipe.csproj"/>
+        <ProjectReference Include="../../src/SlideGenerator.Jobs/SlideGenerator.Jobs.csproj"/>
+    </ItemGroup>
+
+    <!-- Needed for the SlideGenerationWorkload integration test: Document's SfWorkbookOpener/SfPresentationOpener
+         load Syncfusion at runtime, and Microsoft.Extensions.Http.IHttpClientFactory is referenced by the
+         workload's constructor. Neither package flows transitively through a ProjectReference (see
+         CLAUDE.md's NuGet-transitivity pitfall — Directory.Build.props sets PrivateAssets="all" on all
+         ProjectReference items), so both must be declared explicitly here. -->
+    <ItemGroup>
+        <PackageReference Include="Syncfusion.XlsIO.NET" Version="34.2.3" />
+        <PackageReference Include="Syncfusion.Presentation.NET" Version="34.2.3" />
+        <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.11"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="..\fixtures\data\Template.pptx">
+            <Link>fixtures\data\Template.pptx</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Include="..\fixtures\data\Data.xlsx">
+            <Link>fixtures\data\Data.xlsx</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Include="..\fixtures\faces\single\f_0.jpg">
+            <Link>fixtures\faces\single\f_0.jpg</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 </Project>
