@@ -37,11 +37,11 @@ namespace SlideGenerator.Image.Tests.Integration.Fixtures;
 ///         <list type="bullet">
 ///             <item>Cache full → tests run, no network call.</item>
 ///             <item>
-///                 Cache partial → missing images are fetched; if the network is unavailable the fixture
+///                 Cache partial → missing images are fetched; if the network is unavailable, the fixture
 ///                 continues with what is already cached, and individual tests call
 ///                 <see cref="Assert.Skip" /> when their required category is empty.
 ///             </item>
-///             <item>Cache empty + no network → all integration tests are skipped.</item>
+///             <item>Caches empty + no network → all integration tests are skipped.</item>
 ///         </list>
 ///     </para>
 /// </remarks>
@@ -79,8 +79,29 @@ public sealed class FaceDatasetFixture : IAsyncLifetime
 
     #region Directories
 
-    private static readonly string FixturesRoot =
-        Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "fixtures", "faces"));
+    private static readonly string FixturesRoot = ResolveFixturesRoot();
+
+    /// <summary>
+    ///     Walks up from the test output directory to the repository root and returns the source-tree
+    ///     <c>tests/fixtures/faces</c> folder, so downloaded images persist across runs and are shared
+    ///     with other test projects (e.g. <c>SlideGenerator.Generator.Tests</c> copies
+    ///     <c>faces/single/f_0.jpg</c> from here). Falls back to an output-local folder when the source
+    ///     tree cannot be located.
+    /// </summary>
+    private static string ResolveFixturesRoot()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir is not null)
+        {
+            var fixtures = Path.Combine(dir.FullName, "tests", "fixtures");
+            if (Directory.Exists(fixtures))
+                return Path.GetFullPath(Path.Combine(fixtures, "faces"));
+
+            dir = dir.Parent;
+        }
+
+        return Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "fixtures", "faces"));
+    }
 
     /// <summary>Local directory for single-portrait images.</summary>
     public string SingleDir { get; } = Path.Combine(FixturesRoot, "single");
