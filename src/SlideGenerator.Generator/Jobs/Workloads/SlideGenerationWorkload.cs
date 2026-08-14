@@ -197,7 +197,7 @@ internal sealed class SlideGenerationWorkload(
 
     /// <summary>
     ///     Opens the template presentation and clones the requested slide out of it. Returns the opened
-    ///     presentation alongside the clone — callers must keep it alive (not dispose it) for as long as the
+    ///     presentation alongside the clone — callers must keep it alive (not dispose of it) for as long as the
     ///     clone (or a further clone of it) may still be added to another presentation; see the caller in
     ///     <see cref="RunAsync" /> for why.
     /// </summary>
@@ -255,7 +255,7 @@ internal sealed class SlideGenerationWorkload(
         foreach (var instruction in instructions)
         {
             var value = instruction.Columns
-                .Select(col => rowValues.GetValueOrDefault(col))
+                .Select(rowValues.GetValueOrDefault)
                 .FirstOrDefault(v => !string.IsNullOrEmpty(v)) ?? "";
             foreach (var placeholder in instruction.Placeholders) result[placeholder] = value;
         }
@@ -371,7 +371,7 @@ internal sealed class SlideGenerationWorkload(
         if (!string.IsNullOrWhiteSpace(source))
         {
             if (File.Exists(source))
-                return await EditImageFromPathAsync(source, targetSize, instruction.ImageEditInstruction, jobLogger, ct)
+                return await EditImageFromPathAsync(source, targetSize, instruction.ImageEditInstruction, jobLogger)
                     .ConfigureAwait(false);
 
             if (inspected != null)
@@ -381,14 +381,14 @@ internal sealed class SlideGenerationWorkload(
                 if (bytes != null)
                 {
                     var edited = await EditImageFromBytesAsync(bytes, targetSize, instruction.ImageEditInstruction,
-                        jobLogger, ct).ConfigureAwait(false);
+                        jobLogger).ConfigureAwait(false);
                     if (edited != null) return edited;
                 }
             }
         }
 
         if (instruction.FallbackImagePath is { } fallback && File.Exists(fallback))
-            return await EditImageFromPathAsync(fallback, targetSize, instruction.ImageEditInstruction, jobLogger, ct)
+            return await EditImageFromPathAsync(fallback, targetSize, instruction.ImageEditInstruction, jobLogger)
                 .ConfigureAwait(false);
 
         return null;
@@ -427,14 +427,14 @@ internal sealed class SlideGenerationWorkload(
     }
 
     private async Task<byte[]?> EditImageFromPathAsync(
-        string path, Size targetSize, ImageEditInstruction editInstruction, ILogger jobLogger, CancellationToken ct)
+        string path, Size targetSize, ImageEditInstruction editInstruction, ILogger jobLogger)
     {
         using var image = imageLoader.Open(path);
         return await CropToPngAsync(image, targetSize, editInstruction, path, jobLogger).ConfigureAwait(false);
     }
 
     private async Task<byte[]?> EditImageFromBytesAsync(
-        byte[] data, Size targetSize, ImageEditInstruction editInstruction, ILogger jobLogger, CancellationToken ct)
+        byte[] data, Size targetSize, ImageEditInstruction editInstruction, ILogger jobLogger)
     {
         using var image = imageLoader.Open(data);
         return await CropToPngAsync(image, targetSize, editInstruction, "<in-memory>", jobLogger)
