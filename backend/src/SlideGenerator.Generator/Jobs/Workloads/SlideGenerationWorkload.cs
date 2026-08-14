@@ -81,10 +81,17 @@ internal sealed class SlideGenerationWorkload(
             : await OpenOutputAsync(new PresentationIdentifier(spec.OutputPath), jobLogger, ct).ConfigureAwait(false);
         try
         {
-            var templateSlide = await LoadTemplateSlideAsync(templateId, spec.TemplateSlideIndex, jobLogger, ct)
-                                    .ConfigureAwait(false)
-                                ?? throw new InvalidOperationException(
-                                    $"Template slide #{spec.TemplateSlideIndex} not found in '{spec.TemplatePresentationPath}'.");
+            var (templatePresentation, templateSlide) = await LoadTemplateSlideAsync(
+                    templateId, spec.TemplateSlideIndex, jobLogger, ct)
+                .ConfigureAwait(false);
+            // Kept alive for the rest of this method: Syncfusion's ISlide.Clone() doesn't fully detach from
+            // its source presentation (still resolves layout/master through it), so AddSlide()-ing a clone
+            // of templateSlide (see RunCreatingSlidesAsync) throws NullReferenceException once the source
+            // that produced it has been disposed.
+            using var templatePresentationHandle = templatePresentation;
+            if (templateSlide is null)
+                throw new InvalidOperationException(
+                    $"Template slide #{spec.TemplateSlideIndex} not found in '{spec.TemplatePresentationPath}'.");
             var templateShapesByIdentifier = templateSlide.Shapes.ToDictionary(s => s.Identifier);
 
             var phase = initial.Phase;
@@ -188,14 +195,21 @@ internal sealed class SlideGenerationWorkload(
         return presentation;
     }
 
-    private async Task<ISlide?> LoadTemplateSlideAsync(
+    /// <summary>
+    ///     Opens the template presentation and clones the requested slide out of it. Returns the opened
+    ///     presentation alongside the clone — callers must keep it alive (not dispose it) for as long as the
+    ///     clone (or a further clone of it) may still be added to another presentation; see the caller in
+    ///     <see cref="RunAsync" /> for why.
+    /// </summary>
+    private async Task<(IReadOnlyPresentation Template, ISlide? Slide)> LoadTemplateSlideAsync(
         PresentationIdentifier templateId, int slideIndex, ILogger jobLogger, CancellationToken ct)
     {
         jobLogger.LogInformation("Loading template slide: {Ppt} #{Index}", templateId.PresentationPath, slideIndex);
-        using var template = await presentationOpener.OpenPresentationReadOnlyAsync(templateId, ct)
+        var template = await presentationOpener.OpenPresentationReadOnlyAsync(templateId, ct)
             .ConfigureAwait(false);
         var index = slideIndex - 1;
-        return index < 0 || index >= template.SlidesCount ? null : template.Slides.ElementAt(index).Clone();
+        var slide = index < 0 || index >= template.SlidesCount ? null : template.Slides.ElementAt(index).Clone();
+        return (template, slide);
     }
 
     #endregion
