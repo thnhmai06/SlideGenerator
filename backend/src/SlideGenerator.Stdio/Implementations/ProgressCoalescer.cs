@@ -70,7 +70,7 @@ internal sealed class ProgressCoalescer(IJobsRepository jobsRepository, ILogger<
 
     /// <summary>
     ///     Detaches this coalescer, flushes the log queue one last time, then stops the flush loop. Call
-    ///     during graceful shutdown before the host is stopped. <see cref="IJobsRepository" /> flushes
+    ///     during a graceful shutdown before the host is stopped. <see cref="IJobsRepository" /> flushes
     ///     itself independently (see <c>JobRunner.ShutdownAsync</c>) — nothing to do for Jobs here.
     /// </summary>
     public async Task DetachAsync()
