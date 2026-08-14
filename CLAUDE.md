@@ -92,13 +92,12 @@ SDK: .NET 10.0 (`global.json` pins to `latestMajor`, allows prerelease). The sol
 `SYNCFUSION_LICENSE_KEY` before running the Stdio sidecar.
 
 **GitHub Packages**: `SlideGenerator.Image` depends on per-platform `SlideGenerator.OpenCvSharp4.runtime.*` packages
-hosted at `nuget.pkg.github.com/thnhmai06`. `backend/nuget.config` reads credentials from `%GITHUB_USERNAME%` and
+hosted at `nuget.pkg.github.com/thnhmai06`. `nuget.config` reads credentials from `%GITHUB_USERNAME%` and
 `%GITHUB_TOKEN%` env vars — set these before restoring.
 
 ## Solution Layout
 
 ```
-backend/
 ├── src/                                — 11 source modules (slnx-tracked)
 │   ├── SlideGenerator.Utilities/        — loose files, no subfolders
 │   ├── SlideGenerator.Settings/         — Config/, Rules/, Database/ (NameAndPaths stays put — see below)
@@ -842,7 +841,7 @@ moved the 4-phase pipeline body out into `SlideGenerationWorkload.cs` — a sing
 
 ## Security Patterns (CodeQL)
 
-CodeQL config lives at `.github/codeql/codeql-config.yml` and excludes `backend/tests/**` — test fixtures use deliberate
+CodeQL config lives at `.github/codeql/codeql-config.yml` and excludes `tests/**` — test fixtures use deliberate
 hardcoded paths and are not production code.
 
 ### Path injection (`cs/path-injection`)
