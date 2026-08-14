@@ -93,17 +93,20 @@ public interface IShape : IReadOnlyShape
 
 internal sealed class SfShape(Syncfusion.Presentation.IShape core) : IShape
 {
-    private const float EmuPerPixel = 9525.0f;
+    // Syncfusion's IShape.Left/Top/Width/Height are points (1 pt = 1/72 in), not EMU — verified by
+    // comparing a shape's reported Left against its raw OOXML <a:off>/<a:chOff> EMU value (EMU / 12700 =
+    // points). Convert points → pixels at 96 DPI (1 in = 96 px), the unit IReadOnlyShape.Bounds documents.
+    private const float PixelsPerPoint = 96.0f / 72.0f;
 
     public string Name => core.ShapeName;
     public ShapeIdentifier Identifier => new(Name);
     public string DisplayText => core.TextBody?.Text ?? string.Empty;
 
     public RectangleF Bounds => new(
-        (float)core.Left / EmuPerPixel,
-        (float)core.Top / EmuPerPixel,
-        (float)core.Width / EmuPerPixel,
-        (float)core.Height / EmuPerPixel);
+        (float)core.Left * PixelsPerPoint,
+        (float)core.Top * PixelsPerPoint,
+        (float)core.Width * PixelsPerPoint,
+        (float)core.Height * PixelsPerPoint);
 
     public IEnumerable<IParagraph> Paragraph =>
         core.TextBody.Paragraphs.Select(paragraph => new SfParagraph(paragraph));
