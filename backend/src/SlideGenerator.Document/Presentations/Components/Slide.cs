@@ -66,10 +66,29 @@ internal sealed class SfSlide(Syncfusion.Presentation.ISlide core) : ISlide
 {
     internal Syncfusion.Presentation.ISlide Core { get; } = core;
 
-    public IEnumerable<IShape> Shapes
-        => Core.Shapes
-            .OfType<Syncfusion.Presentation.IShape>()
-            .Select(shape => new SfShape(shape));
+    public IEnumerable<IShape> Shapes => FlattenShapes(Core.Shapes);
+
+    /// <summary>
+    ///     Recursively walks <paramref name="items" />, descending into every <see cref="IGroupShape" /> so
+    ///     grouped shapes are visible by <see cref="ShapeIdentifier" /> like any top-level shape — a shape
+    ///     placed inside a PowerPoint group (a common authoring pattern, e.g. an image + caption) would
+    ///     otherwise never be matched by <c>TextInstruction</c>/<c>ImageInstruction</c>. Syncfusion already
+    ///     reports a grouped child's <c>Left</c>/<c>Top</c> in slide-absolute coordinates (verified against
+    ///     the group's own coordinates), so no manual transform composition is needed here.
+    /// </summary>
+    private static IEnumerable<IShape> FlattenShapes(System.Collections.IEnumerable items)
+    {
+        foreach (var item in items)
+            switch (item)
+            {
+                case IGroupShape group:
+                    foreach (var nested in FlattenShapes(group.Shapes)) yield return nested;
+                    break;
+                case Syncfusion.Presentation.IShape shape:
+                    yield return new SfShape(shape);
+                    break;
+            }
+    }
 
     public SlideIdentifier Identifier => new(Core.SlideNumber);
 
