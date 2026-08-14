@@ -31,24 +31,23 @@ public static class NameAndPaths
     ///     Returns <see cref="BasePath" /> when running in portable mode.
     /// </summary>
     private static string UserPath =>
-        IsPortable()
+        Portable
             ? BasePath
             : Path.GetFullPath(Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), // %LOCALAPPDATA%
                 Application.Name));
 
-    /// <summary>
+    ///<summary>
     ///     Gets whether the application was built in portable mode (<c>-p:Portable=true</c> at build time).
     ///     When <see langword="true" />, all user data is stored relative to the executable directory.
     /// </summary>
-    private static bool IsPortable()
-    {
+    public const bool Portable =
 #if PORTABLE
-        return true;
+        true;
 #else
-        return false;
+        false;
 #endif
-    }
+
 
     /// <summary>
     ///     Ensures that all required application directories (data, logs, assets) exist on the disk.
@@ -75,31 +74,6 @@ public static class NameAndPaths
     {
         /// <summary>The official application name.</summary>
         public const string Name = "SlideGenerator";
-
-        /// <summary>The ASCII art representation of the application name.</summary>
-        public const string NameArt =
-            """
-              /$$$$$$  /$$ /$$       /$$            /$$$$$$                                                     /$$                        
-             /$$__  $$| $$|__/      | $$           /$$__  $$                                                   | $$                        
-            | $$  \__/| $$ /$$  /$$$$$$$  /$$$$$$ | $$  \__/  /$$$$$$  /$$$$$$$   /$$$$$$   /$$$$$$  /$$$$$$  /$$$$$$    /$$$$$$   /$$$$$$ 
-            |  $$$$$$ | $$| $$ /$$__  $$ /$$__  $$| $$ /$$$$ /$$__  $$| $$__  $$ /$$__  $$ /$$__  $$|____  $$|_  $$_/   /$$__  $$ /$$__  $$
-             \____  $$| $$| $$| $$  | $$| $$$$$$$$| $$|_  $$| $$$$$$$$| $$  \ $$| $$$$$$$$| $$  \__/ /$$$$$$$  | $$    | $$  \ $$| $$  \__/
-             /$$  \ $$| $$| $$| $$  | $$| $$_____/| $$  \ $$| $$_____/| $$  | $$| $$_____/| $$      /$$__  $$  | $$ /$$| $$  | $$| $$      
-            |  $$$$$$/| $$| $$|  $$$$$$$|  $$$$$$$|  $$$$$$/|  $$$$$$$| $$  | $$|  $$$$$$$| $$     |  $$$$$$$  |  $$$$/|  $$$$$$/| $$      
-             \______/ |__/|__/ \_______/ \_______/ \______/  \_______/|__/  |__/ \_______/|__/      \_______/   \___/   \______/ |__/      
-            """;
-
-        /// <summary>The application deployment type.</summary>
-        public const string Type = "Desktop application";
-
-        /// <summary>The official application repository URL.</summary>
-        public const string Repository = "https://github.com/thnhmai06/SlideGenerator";
-
-        /// <summary>The official application author.</summary>
-        public const string Author = "Thành Mai (thnhmai06)";
-
-        /// <summary>The license under which the application is distributed.</summary>
-        public const string License = "Apache-2.0";
     }
 
     /// <summary>

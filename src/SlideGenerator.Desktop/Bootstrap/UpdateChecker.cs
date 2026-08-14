@@ -13,7 +13,6 @@
  */
 
 using Serilog;
-using SlideGenerator.Settings.Immutable;
 using Velopack;
 using Velopack.Sources;
 
@@ -29,7 +28,7 @@ internal static class UpdateChecker
     /// <summary>Checks for updates and logs the outcome. No-op (logs and returns) when not running as an installed app.</summary>
     public static async Task CheckForUpdatesAsync()
     {
-        var manager = new UpdateManager(new GithubSource(NameAndPaths.Application.Repository, null, false));
+        var manager = new UpdateManager(new GithubSource(Metadata.Value.Repository, null, false));
         if (!manager.IsInstalled)
         {
             Log.Debug("Skipping update check: not running as an installed Velopack app.");

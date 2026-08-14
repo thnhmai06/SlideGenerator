@@ -12,6 +12,10 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using System.Globalization;
+using System.Reflection;
+using System.Runtime;
+using System.Runtime.InteropServices;
 using System.Text;
 using Avalonia;
 using Microsoft.Extensions.Configuration;
@@ -143,14 +147,93 @@ internal static class Program
     /// <summary>Prints the ASCII art banner and build metadata to the system log.</summary>
     private static void PrintMetadata()
     {
-        Log.Information('\n' + NameAndPaths.Application.NameArt);
-        Log.Information(Metadata.Line);
-        Log.Information(Metadata.Version);
-        Log.Information(Metadata.Description);
-        Log.Information(Metadata.Line);
-        Log.Information(Metadata.License);
-        Log.Information(Metadata.Repository);
-        Log.Information(Metadata.Line);
+        var assembly = typeof(Program).Assembly;
+        var version =
+            assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+            ?? assembly.GetName().Version?.ToString()
+            ?? "unknown";
+        var gcInfo = GC.GetGCMemoryInfo();
+        var appDrive = new DriveInfo(Path.GetPathRoot(AppContext.BaseDirectory)!);
+
+        PrintLine();
+        PrintArt(Metadata.Print.NameArt);
+
+        Log.Information($"{NameAndPaths.Application.Name} v{version} ({Metadata.Print.Portable})");
+        Log.Information(Metadata.Print.Description);
+
+        PrintLine();
+
+        Log.Information(Metadata.Print.License);
+        Log.Information(Metadata.Print.Repository);
+
+        PrintLine();
+
+        Log.Information("System Information");
+        PrintKeyValue("Machine", Environment.MachineName);
+        PrintKeyValue("OS", RuntimeInformation.OSDescription);
+        PrintKeyValue("OS Version", Environment.OSVersion.Version);
+        PrintKeyValue("OS Architecture", RuntimeInformation.OSArchitecture);
+        PrintKeyValue("Runtime", RuntimeInformation.FrameworkDescription);
+        PrintKeyValue("Runtime Identifier", RuntimeInformation.RuntimeIdentifier);
+        PrintKeyValue("CLR", Environment.Version);
+        PrintKeyValue("Process Architecture", RuntimeInformation.ProcessArchitecture);
+        PrintKeyValue("Process ID", Environment.ProcessId);
+        PrintKeyValue("Process Name",
+            Environment.ProcessPath is { } path
+                ? Path.GetFileNameWithoutExtension(path)
+                : "Unknown");
+        PrintKeyValue("Logical CPUs", Environment.ProcessorCount);
+        PrintKeyValue("64-bit OS", Environment.Is64BitOperatingSystem);
+        PrintKeyValue("64-bit Process", Environment.Is64BitProcess);
+
+        Log.Information("GC");
+        PrintKeyValue("Server GC", GCSettings.IsServerGC);
+        PrintKeyValue("Latency Mode", GCSettings.LatencyMode);
+        PrintKeyValue(
+            "Memory Limit",
+            $"{gcInfo.TotalAvailableMemoryBytes / 1024d / 1024 / 1024:F2} GiB");
+        PrintKeyValue(
+            "Heap Size",
+            $"{gcInfo.HeapSizeBytes / 1024d / 1024:F2} MiB");
+
+        Log.Information("Localization");
+        PrintKeyValue("Time Zone", TimeZoneInfo.Local.DisplayName);
+        PrintKeyValue("Time Zone ID", TimeZoneInfo.Local.Id);
+        PrintKeyValue("Culture", CultureInfo.CurrentCulture.Name);
+        PrintKeyValue("UI Culture", CultureInfo.CurrentUICulture.Name);
+
+        Log.Information("Storage");
+        PrintKeyValue("Application Drive", appDrive.Name);
+        PrintKeyValue("Drive Format", appDrive.DriveFormat);
+        PrintKeyValue(
+            "Total Space",
+            $"{appDrive.TotalSize / 1024d / 1024 / 1024:F2} GiB");
+        PrintKeyValue(
+            "Free Space",
+            $"{appDrive.AvailableFreeSpace / 1024d / 1024 / 1024:F2} GiB");
+
+        Log.Information("Paths");
+        PrintKeyValue("Working Directory", Environment.CurrentDirectory);
+        PrintKeyValue("Base Directory", AppContext.BaseDirectory);
+        PrintKeyValue("Command Line", Environment.CommandLine);
+
+        PrintLine();
+        return;
+
+        static void PrintKeyValue(string key, object? value)
+        {
+            Log.Information($"\t{key,-22}: {value}");
+        }
+
+        static void PrintLine()
+        {
+            Log.Information("────────────────────────────────────────────────────────");
+        }
+    }
+
+    private static void PrintArt(string art)
+    {
+        foreach (var line in art.Split('\n')) Log.Information(line.TrimEnd('\r'));
     }
 
     /// <summary>Registers process-wide unhandled exception and task exception handlers.</summary>

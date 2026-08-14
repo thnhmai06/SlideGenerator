@@ -19,7 +19,6 @@ using SlideGenerator.Generator.Jobs.Models;
 using SlideGenerator.Generator.Jobs.Workloads;
 using SlideGenerator.Generator.Persistence;
 using SlideGenerator.Generator.Progress;
-using SlideGenerator.Image.FaceDetection;
 using SlideGenerator.Jobs;
 using SlideGenerator.Jobs.Engine;
 using SlideGenerator.Settings.Immutable;
@@ -40,10 +39,7 @@ public static class Registration
         public IServiceCollection AddGeneratorServices()
         {
             services.AddLogging();
-
-            // Named HttpClient for inspect/download calls — proxy is applied on the pooled handler, re-read
-            // from ISettingProvider whenever the factory recycles it; per-call timeout is set by callers via
-            // Utilities.CreateHttpClientWithSetting (a fresh client is created at the point of use, never shared).
+            
             services.AddHttpClient(NameAndPaths.Application.Name)
                 .ConfigurePrimaryHttpMessageHandler(sp =>
                 {

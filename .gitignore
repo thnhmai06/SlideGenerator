@@ -519,3 +519,5 @@ FodyWeavers.xsd
 
 # Test fixture images — downloaded locally, not committed
 tests/fixtures/faces/
+
+.idea
