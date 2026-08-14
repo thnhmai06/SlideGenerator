@@ -90,7 +90,7 @@ public sealed class SettingManagerTests : IDisposable
 
         _manager.Current.Should().Be(newSetting);
         File.Exists(_testFilePath).Should().BeTrue();
-        (await File.ReadAllTextAsync(_testFilePath)).Should().NotBeNullOrWhiteSpace();
+        (await File.ReadAllTextAsync(_testFilePath, TestContext.Current.CancellationToken)).Should().NotBeNullOrWhiteSpace();
     }
 
     #endregion
@@ -114,7 +114,7 @@ public sealed class SettingManagerTests : IDisposable
 
         await _manager.Update(setting);
 
-        var content = await File.ReadAllTextAsync(_testFilePath);
+        var content = await File.ReadAllTextAsync(_testFilePath, TestContext.Current.CancellationToken);
         content.Should().Contain("plain-text");
     }
 

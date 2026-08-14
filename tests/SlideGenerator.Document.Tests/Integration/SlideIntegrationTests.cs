@@ -45,7 +45,8 @@ public sealed class SlideIntegrationTests
     [Fact]
     public async Task Equals_SameSlide_ReturnsTrue()
     {
-        using var pres = await _opener.OpenPresentationReadOnlyAsync(new PresentationIdentifier(TemplatePath));
+        using var pres = await _opener.OpenPresentationReadOnlyAsync(
+                new PresentationIdentifier(TemplatePath), TestContext.Current.CancellationToken);
         var slide = pres.Slides.First();
 
         slide.Equals(slide).Should().BeTrue();
@@ -59,7 +60,7 @@ public sealed class SlideIntegrationTests
     [Fact]
     public async Task Equals_NullOther_ReturnsFalse()
     {
-        using var pres = await _opener.OpenPresentationReadOnlyAsync(new PresentationIdentifier(TemplatePath));
+        using var pres = await _opener.OpenPresentationReadOnlyAsync(new PresentationIdentifier(TemplatePath), TestContext.Current.CancellationToken);
         var slide = pres.Slides.First();
 
         slide.Equals(null).Should().BeFalse();
@@ -72,7 +73,7 @@ public sealed class SlideIntegrationTests
     [Fact]
     public async Task IsWriteProtected_UnprotectedPresentation_ReturnsFalse()
     {
-        using var pres = await _opener.OpenPresentationReadOnlyAsync(new PresentationIdentifier(TemplatePath));
+        using var pres = await _opener.OpenPresentationReadOnlyAsync(new PresentationIdentifier(TemplatePath), TestContext.Current.CancellationToken);
         pres.IsWriteProtected.Should().BeFalse();
     }
 }

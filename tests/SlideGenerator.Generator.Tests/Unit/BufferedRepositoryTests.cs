@@ -36,7 +36,7 @@ public sealed class BufferedRepositoryTests
         repo.UpsertedBatches.Should().BeEmpty();
     }
 
-    /// <summary>Verifies that enqueued values are persisted as a single batch on flush.</summary>
+    /// <summary>Verifies that enqueued values are persisted as a single batch on flushes.</summary>
     [Fact]
     public async Task FlushAsync_MultipleKeysEnqueued_UpsertsOneBatch()
     {
@@ -50,7 +50,7 @@ public sealed class BufferedRepositoryTests
         repo.UpsertedBatches[0].Should().BeEquivalentTo([1, 2]);
     }
 
-    /// <summary>Verifies that the last write for a given key wins — coalescing, not appending.</summary>
+    /// <summary>Verifies that the last writer for a given key wins — coalescing, not appending.</summary>
     [Fact]
     public async Task Enqueue_SameKeyTwice_LastWriteWins()
     {

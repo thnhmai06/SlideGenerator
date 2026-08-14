@@ -507,6 +507,7 @@ internal sealed class FakeShape : IShape
     /// <inheritdoc />
     public string Name => "FakeShape";
 
+    /// <inheritdoc />
     public ShapeIdentifier Identifier => new(Name);
 
     /// <inheritdoc />
@@ -515,6 +516,7 @@ internal sealed class FakeShape : IShape
     /// <inheritdoc />
     public RectangleF Bounds => RectangleF.Empty;
 
+    /// <inheritdoc />
     public byte[]? ImageData { get; set; }
 
     /// <inheritdoc />

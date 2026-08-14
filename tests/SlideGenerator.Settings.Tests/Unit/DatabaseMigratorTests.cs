@@ -20,7 +20,7 @@ using Xunit;
 namespace SlideGenerator.Settings.Tests.Unit;
 
 /// <summary>
-///     Integration tests for <see cref="DatabaseMigrator" />, verifying it creates the <c>Recipes</c>/
+///     Unit tests for <see cref="DatabaseMigrator" />, verifying it creates the <c>Recipes</c>/
 ///     <c>Requests</c>/<c>Jobs</c> tables against a real temp-file SQLite database and is idempotent
 ///     on a second run.
 /// </summary>

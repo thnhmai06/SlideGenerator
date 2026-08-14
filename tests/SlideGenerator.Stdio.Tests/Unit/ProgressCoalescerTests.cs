@@ -37,7 +37,7 @@ namespace SlideGenerator.Stdio.Tests.Unit;
 /// </summary>
 public sealed class ProgressCoalescerTests : IAsyncDisposable
 {
-    public readonly List<string> LoggedWarnings = [];
+    private readonly List<string> _loggedWarnings = [];
     private readonly GeneratingEventBus _bus = new();
     private readonly JsonRpc _clientRpc;
     private readonly ProgressCoalescer _coalescer;
@@ -48,9 +48,13 @@ public sealed class ProgressCoalescerTests : IAsyncDisposable
     private readonly FakeJobsRepository _repository = new();
     private readonly JsonRpc _serverRpc;
 
+    /// <summary>
+    ///     Wires the coalescer to an in-memory duplex stream pair and registers the notification
+    ///     handlers that capture the payloads this test asserts on.
+    /// </summary>
     public ProgressCoalescerTests()
     {
-        _coalescer = new ProgressCoalescer(_repository, new CapturingLogger<ProgressCoalescer>(LoggedWarnings));
+        _coalescer = new ProgressCoalescer(_repository, new CapturingLogger<ProgressCoalescer>(_loggedWarnings));
 
         var jsonOptions = JsonRpcBootstrap.BuildJsonSerializerOptions();
         var (serverStream, clientStream) = FullDuplexStream.CreatePair();
@@ -60,7 +64,7 @@ public sealed class ProgressCoalescerTests : IAsyncDisposable
         _clientRpc = new JsonRpc(new NewLineDelimitedMessageHandler(
             clientStream, clientStream, new SystemTextJsonFormatter { JsonSerializerOptions = jsonOptions }));
 
-        // Registered against JsonElement (not a strongly-typed List<T>) because the batch size varies per
+        // Registered against JsonElement (not a strongly typed List<T>) because the batch size varies per
         // flush — StreamJsonRpc's positional-parameter binding can't match a variable-arity JSON array to
         // a fixed-arity delegate signature. Deserializing manually still exercises the exact same
         // SystemTextJsonFormatter/JsonSerializerOptions production uses.
@@ -77,6 +81,7 @@ public sealed class ProgressCoalescerTests : IAsyncDisposable
     private static JobSpecification DummySpec =>
         new("wb.xlsx", "Sheet1", null, null, "template.pptx", 1, [], [], "out.pptx");
 
+    /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
         await _coalescer.DetachAsync();
@@ -120,7 +125,7 @@ public sealed class ProgressCoalescerTests : IAsyncDisposable
 
         await WaitUntilAsync(() => _receivedJobs.Count > 0, TimeSpan.FromSeconds(3));
         _receivedJobs.Should().ContainSingle(j => j.JobId == 1 && j.JobStatus == JobStatus.Running,
-            "logged warnings: " + string.Join(" | ", LoggedWarnings));
+            "logged warnings: " + string.Join(" | ", _loggedWarnings));
     }
 
     /// <summary>
@@ -137,7 +142,7 @@ public sealed class ProgressCoalescerTests : IAsyncDisposable
         _bus.Publish(Job(requestId, 2, JobStatus.Pending));
         _bus.Publish(Job(requestId, 1, JobStatus.Running));
 
-        await WaitUntilAsync(() => _receivedJobs.Any(j => j.JobId == 1 && j.JobStatus == JobStatus.Running),
+        await WaitUntilAsync(() => _receivedJobs.Any(j => j is { JobId: 1, JobStatus: JobStatus.Running }),
             TimeSpan.FromSeconds(3));
 
         _receivedRequests.Should()

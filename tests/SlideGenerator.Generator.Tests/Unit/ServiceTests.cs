@@ -126,7 +126,7 @@ public sealed class ServiceTests
         Service.DeriveStatus(jobs).Should().Be(JobStatus.Paused);
     }
 
-    /// <summary>Every job Cancelled → Cancelled.</summary>
+    /// <summary>Every job Canceled → Canceled.</summary>
     [Fact]
     public void DeriveStatus_AllCancelled_ReturnsCancelled()
     {
@@ -144,7 +144,7 @@ public sealed class ServiceTests
         Service.DeriveStatus(jobs).Should().Be(JobStatus.Complete);
     }
 
-    /// <summary>A mix of Complete and Cancelled (no Pending/Running/Paused) falls back to Complete.</summary>
+    /// <summary>A mix of Complete and Canceled (no Pending/Running/Paused) falls back to Complete.</summary>
     [Fact]
     public void DeriveStatus_MixedCompleteAndCancelled_ReturnsComplete()
     {

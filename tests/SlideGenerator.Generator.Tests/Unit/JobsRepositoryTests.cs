@@ -34,6 +34,10 @@ public sealed class JobsRepositoryTests : IDisposable
     private readonly SqliteConnection _anchor;
     private readonly JobsRepository _repo;
 
+    /// <summary>
+    ///     Sets up a shared-cache in-memory SQLite database. The anchor connection keeps the
+    ///     in-memory database alive across all short-lived per-operation connections.
+    /// </summary>
     public JobsRepositoryTests()
     {
         var builder = new SqliteConnectionStringBuilder
@@ -48,6 +52,7 @@ public sealed class JobsRepositoryTests : IDisposable
         _repo = new JobsRepository(builder, NullLogger<JobsRepository>.Instance);
     }
 
+    /// <inheritdoc />
     public void Dispose()
     {
         _anchor.Dispose();
@@ -109,7 +114,7 @@ public sealed class JobsRepositoryTests : IDisposable
             .Which.Should().BeEquivalentTo(new PartitionBlockFilter(1, 3));
     }
 
-    /// <summary>Verifies that <c>GetNonTerminalAsync</c> excludes Complete/Cancelled jobs.</summary>
+    /// <summary>Verifies that <c>GetNonTerminalAsync</c> excludes Complete/Canceled jobs.</summary>
     [Fact]
     public async Task GetNonTerminalAsync_ExcludesCompleteAndCancelled()
     {
