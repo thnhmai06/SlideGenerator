@@ -36,7 +36,7 @@ public sealed class GoogleDriveResolverTests
     ///     <see cref="ArgumentException" /> when called with a URI that is not a Google Drive link.
     /// </summary>
     [Fact]
-    public async Task ResolveUriAsync_NonSupportedUri_ThrowsArgumentException()
+    public async Task ResolveAsync_NonSupportedUri_ThrowsArgumentException()
     {
         var ct = TestContext.Current.CancellationToken;
         var nonDriveUri = new Uri("https://photos.google.com/album/XYZ");
@@ -89,7 +89,7 @@ public sealed class GoogleDriveResolverTests
     ///     <c>uc?export=download&amp;id={id}</c> download URI without any HTTP request.
     /// </summary>
     [Fact]
-    public async Task ResolveUriAsync_FileUrl_ReturnsDownloadUri()
+    public async Task ResolveAsync_FileUrl_ReturnsDownloadUri()
     {
         var ct = TestContext.Current.CancellationToken;
         var fileUri = new Uri("https://drive.google.com/file/d/XYZ789/view?usp=sharing");
@@ -106,7 +106,7 @@ public sealed class GoogleDriveResolverTests
     ///     Verifies that a <c>uc?id={id}</c> style URL resolves to the corresponding download URI.
     /// </summary>
     [Fact]
-    public async Task ResolveUriAsync_UcUrlWithIdParam_ReturnsDownloadUri()
+    public async Task ResolveAsync_UcUrlWithIdParam_ReturnsDownloadUri()
     {
         var ct = TestContext.Current.CancellationToken;
         var ucUri = new Uri("https://drive.google.com/uc?id=ABCDEF&export=view");
@@ -128,7 +128,7 @@ public sealed class GoogleDriveResolverTests
     ///     embedded folder view HTML.
     /// </summary>
     [Fact]
-    public async Task ResolveUriAsync_FolderUrlWithFileInHtml_ReturnsFirstFileDownloadUri()
+    public async Task ResolveAsync_FolderUrlWithFileInHtml_ReturnsFirstFileDownloadUri()
     {
         var ct = TestContext.Current.CancellationToken;
         const string folderId = "FOLDERID123";
@@ -153,7 +153,7 @@ public sealed class GoogleDriveResolverTests
     ///     HTML contains no <c>/file/d/</c> links (folder contains only subfolders or is empty).
     /// </summary>
     [Fact]
-    public async Task ResolveUriAsync_FolderUrlWithNoFileInHtml_ReturnsNull()
+    public async Task ResolveAsync_FolderUrlWithNoFileInHtml_ReturnsNull()
     {
         var ct = TestContext.Current.CancellationToken;
         const string folderId = "EMPTYFOLDERID";
@@ -176,7 +176,7 @@ public sealed class GoogleDriveResolverTests
     ///     embedded folder view fails (permission denied, network error, etc.).
     /// </summary>
     [Fact]
-    public async Task ResolveUriAsync_FolderUrlHttpError_ReturnsNull()
+    public async Task ResolveAsync_FolderUrlHttpError_ReturnsNull()
     {
         var ct = TestContext.Current.CancellationToken;
         var folderUri = new Uri("https://drive.google.com/drive/folders/RESTRICTED");

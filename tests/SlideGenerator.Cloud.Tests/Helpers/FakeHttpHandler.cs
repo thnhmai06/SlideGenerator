@@ -16,7 +16,7 @@ namespace SlideGenerator.Cloud.Tests.Helpers;
 
 /// <summary>
 ///     A test double for <see cref="HttpMessageHandler" /> that delegates each request to a
-///     caller-supplied factory function.  <c>response.RequestMessage</c> is automatically set
+///     caller-supplied factory function. <c>response.RequestMessage</c> is automatically set
 ///     to the outgoing request when the factory does not populate it, so that
 ///     <c>response.RequestMessage.RequestUri</c> always reflects the request URI.
 /// </summary>

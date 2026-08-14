@@ -64,7 +64,7 @@ public sealed class CloudClientTests : IDisposable
 
     /// <summary>
     ///     Verifies that the byte-array overload of <see cref="CloudClient.DownloadAsync" /> returns
-    ///     the response body directly in memory, without touching disk.
+    ///     the response body directly in memory, without touching the disk.
     /// </summary>
     [Fact]
     public async Task DownloadAsync_ByteArrayOverload_ReturnsContentBytes()
