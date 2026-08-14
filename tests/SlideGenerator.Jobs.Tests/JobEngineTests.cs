@@ -52,15 +52,15 @@ public sealed class JobEngineTests
         return winner == task;
     }
 
-    /// <summary>Pause must block a workload at its next checkpoint, but never interrupt a step already in flight.</summary>
+    /// <summary>Pause must block a workload at its next checkpoint but never interrupt a step already in flight.</summary>
     [Fact]
     public async Task Pause_BlocksAtNextCheckpoint_ButNotMidStep()
     {
         var (engine, observer, _) = CreateEngine();
         var workload = new ScriptedWorkload(2, new TestState(99));
 
-        await engine.StartJobAsync("job", new TestState(0), workload);
-        await workload.Reported[0].Task.WaitAsync(ShortTimeout);
+        await engine.StartJobAsync("job", new TestState(0), workload, TestContext.Current.CancellationToken);
+        await workload.Reported[0].Task.WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
 
         (await engine.PauseAsync("job")).Should().BeTrue();
         workload.Release[0].SetResult(); // let the workload proceed into CheckpointAsync — should now block
@@ -69,10 +69,11 @@ public sealed class JobEngineTests
             .BeFalse("pause should block the workload before it reaches step 1");
 
         (await engine.ResumeAsync("job")).Should().BeTrue();
-        await workload.Reported[1].Task.WaitAsync(ShortTimeout);
+        await workload.Reported[1].Task.WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
 
         workload.Release[1].SetResult();
-        var result = await observer.WaitTerminalAsync("job").WaitAsync(ShortTimeout);
+        var result = await observer.WaitTerminalAsync("job")
+            .WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
         result.Outcome.Should().Be(JobOutcome.Completed);
     }
 
@@ -83,8 +84,8 @@ public sealed class JobEngineTests
         var (engine, observer, _) = CreateEngine();
         var workload = new ScriptedWorkload(2, new TestState(99));
 
-        await engine.StartJobAsync("job", new TestState(0), workload);
-        await workload.Reported[0].Task.WaitAsync(ShortTimeout);
+        await engine.StartJobAsync("job", new TestState(0), workload, TestContext.Current.CancellationToken);
+        await workload.Reported[0].Task.WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
 
         await engine.PauseAsync("job");
         workload.Release[0].SetResult();
@@ -92,30 +93,33 @@ public sealed class JobEngineTests
 
         (await engine.StopAsync("job")).Should().BeTrue();
 
-        var result = await observer.WaitTerminalAsync("job").WaitAsync(ShortTimeout);
+        var result = await observer.WaitTerminalAsync("job")
+            .WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
         result.Outcome.Should().Be(JobOutcome.Cancelled);
     }
 
-    /// <summary>A job stopped while still queued for a concurrency slot must end Cancelled without ever running its workload.</summary>
+    /// <summary>A job stopped while still queued for a concurrency slot must end Canceled without ever running its workload.</summary>
     [Fact]
     public async Task Stop_BeforeSemaphoreAcquired_NeverRunsTheWorkload()
     {
         var (engine, observer, _) = CreateEngine(1);
 
         var blocker = new ScriptedWorkload(1, new TestState(1));
-        await engine.StartJobAsync("blocker", new TestState(0), blocker);
-        await blocker.Reported[0].Task.WaitAsync(ShortTimeout); // blocker now holds the only slot
+        await engine.StartJobAsync("blocker", new TestState(0), blocker, TestContext.Current.CancellationToken);
+        await blocker.Reported[0].Task
+            .WaitAsync(ShortTimeout, TestContext.Current.CancellationToken); // blocker now holds the only slot
 
         var queued = new UnreachableWorkload();
-        await engine.StartJobAsync("queued", new TestState(0), queued);
+        await engine.StartJobAsync("queued", new TestState(0), queued, TestContext.Current.CancellationToken);
         (await engine.StopAsync("queued")).Should().BeTrue();
 
-        var result = await observer.WaitTerminalAsync("queued").WaitAsync(ShortTimeout);
+        var result = await observer.WaitTerminalAsync("queued")
+            .WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
         result.Outcome.Should().Be(JobOutcome.Cancelled);
         queued.WasCalled.Should().BeFalse();
 
         blocker.Release[0].SetResult();
-        await observer.WaitTerminalAsync("blocker").WaitAsync(ShortTimeout);
+        await observer.WaitTerminalAsync("blocker").WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
     }
 
     /// <summary>Shutting down while a job is paused must still complete, unblocking the pause rather than hanging forever.</summary>
@@ -125,16 +129,18 @@ public sealed class JobEngineTests
         var (engine, observer, _) = CreateEngine();
         var workload = new ScriptedWorkload(2, new TestState(99));
 
-        await engine.StartJobAsync("job", new TestState(0), workload);
-        await workload.Reported[0].Task.WaitAsync(ShortTimeout);
+        await engine.StartJobAsync("job", new TestState(0), workload, TestContext.Current.CancellationToken);
+        await workload.Reported[0].Task.WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
 
         await engine.PauseAsync("job");
         workload.Release[0].SetResult();
         (await CompletesWithinAsync(workload.Reported[1].Task, NoProgressWindow)).Should().BeFalse();
 
-        await engine.ShutdownAsync().WaitAsync(ShortTimeout);
+        await engine.ShutdownAsync(TestContext.Current.CancellationToken)
+            .WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
 
-        var result = await observer.WaitTerminalAsync("job").WaitAsync(ShortTimeout);
+        var result = await observer.WaitTerminalAsync("job")
+            .WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
         result.Outcome.Should().Be(JobOutcome.Cancelled);
     }
 
@@ -146,18 +152,18 @@ public sealed class JobEngineTests
         var a = new ScriptedWorkload(1, new TestState(1));
         var b = new ScriptedWorkload(1, new TestState(1));
 
-        await engine.StartJobAsync("a", new TestState(0), a);
-        await a.Reported[0].Task.WaitAsync(ShortTimeout);
+        await engine.StartJobAsync("a", new TestState(0), a, TestContext.Current.CancellationToken);
+        await a.Reported[0].Task.WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
 
-        await engine.StartJobAsync("b", new TestState(0), b);
+        await engine.StartJobAsync("b", new TestState(0), b, TestContext.Current.CancellationToken);
         (await CompletesWithinAsync(b.Reported[0].Task, NoProgressWindow)).Should().BeFalse("b must wait for a's slot");
 
         a.Release[0].SetResult();
-        await observer.WaitTerminalAsync("a").WaitAsync(ShortTimeout);
-        await b.Reported[0].Task.WaitAsync(ShortTimeout);
+        await observer.WaitTerminalAsync("a").WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
+        await b.Reported[0].Task.WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
 
         b.Release[0].SetResult();
-        await observer.WaitTerminalAsync("b").WaitAsync(ShortTimeout);
+        await observer.WaitTerminalAsync("b").WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
     }
 
     /// <summary>
@@ -170,18 +176,25 @@ public sealed class JobEngineTests
         var (engine, observer, concurrency) = CreateEngine(1);
         var a = new ScriptedWorkload(1, new TestState(1));
 
-        await engine.StartJobAsync("a", new TestState(0), a);
-        await a.Reported[0].Task.WaitAsync(ShortTimeout); // a holds the only slot on the original semaphore
+        await engine.StartJobAsync("a", new TestState(0), a, TestContext.Current.CancellationToken);
+        await a.Reported[0].Task
+            .WaitAsync(ShortTimeout,
+                TestContext.Current.CancellationToken); // a holds the only slot on the original semaphore
 
         concurrency.MaxConcurrentJobs = 5; // takes effect only on the next StartJobAsync/InitializeAsync
         var b = new ScriptedWorkload(1, new TestState(1));
-        await engine.StartJobAsync("b", new TestState(0), b); // swaps in a fresh semaphore(5)
-        await b.Reported[0].Task.WaitAsync(ShortTimeout); // b runs immediately despite a still holding its own slot
+        await engine.StartJobAsync("b", new TestState(0), b,
+            TestContext.Current.CancellationToken); // swaps in a fresh semaphore(5)
+        await b.Reported[0].Task
+            .WaitAsync(ShortTimeout,
+                TestContext.Current.CancellationToken); // b runs immediately despite a still holding its own slot
 
         a.Release[0].SetResult();
         b.Release[0].SetResult();
-        (await observer.WaitTerminalAsync("a").WaitAsync(ShortTimeout)).Outcome.Should().Be(JobOutcome.Completed);
-        (await observer.WaitTerminalAsync("b").WaitAsync(ShortTimeout)).Outcome.Should().Be(JobOutcome.Completed);
+        (await observer.WaitTerminalAsync("a").WaitAsync(ShortTimeout, TestContext.Current.CancellationToken)).Outcome
+            .Should().Be(JobOutcome.Completed);
+        (await observer.WaitTerminalAsync("b").WaitAsync(ShortTimeout, TestContext.Current.CancellationToken)).Outcome
+            .Should().Be(JobOutcome.Completed);
     }
 
     /// <summary>InitializeAsync must only schedule resumed jobs and return — never wait for them to finish.</summary>
@@ -199,18 +212,19 @@ public sealed class JobEngineTests
 
         // If InitializeAsync incorrectly awaited job completion, this would time out: neither job is
         // released yet, so they cannot possibly finish before this call returns.
-        await engine.InitializeAsync(new FakeResumeSource(pending)).WaitAsync(ShortTimeout);
+        await engine.InitializeAsync(new FakeResumeSource(pending), TestContext.Current.CancellationToken)
+            .WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
 
-        await workloadA.Reported[0].Task.WaitAsync(ShortTimeout);
-        await workloadB.Reported[0].Task.WaitAsync(ShortTimeout);
+        await workloadA.Reported[0].Task.WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
+        await workloadB.Reported[0].Task.WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
 
         observer.Progress.Should().Contain(p => p.Key == "a" && p.Durable);
         observer.Progress.Should().Contain(p => p.Key == "b" && p.Durable);
 
         workloadA.Release[0].SetResult();
         workloadB.Release[0].SetResult();
-        await observer.WaitTerminalAsync("a").WaitAsync(ShortTimeout);
-        await observer.WaitTerminalAsync("b").WaitAsync(ShortTimeout);
+        await observer.WaitTerminalAsync("a").WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
+        await observer.WaitTerminalAsync("b").WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
     }
 
     /// <summary>
@@ -224,11 +238,12 @@ public sealed class JobEngineTests
         var returnedState = new TestState(999); // deliberately different from what gets reported mid-run
         var workload = new ScriptedWorkload(1, returnedState);
 
-        await engine.StartJobAsync("job", new TestState(0), workload);
-        await workload.Reported[0].Task.WaitAsync(ShortTimeout);
+        await engine.StartJobAsync("job", new TestState(0), workload, TestContext.Current.CancellationToken);
+        await workload.Reported[0].Task.WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
         workload.Release[0].SetResult();
 
-        var result = await observer.WaitTerminalAsync("job").WaitAsync(ShortTimeout);
+        var result = await observer.WaitTerminalAsync("job")
+            .WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
         result.Outcome.Should().Be(JobOutcome.Completed);
         result.State.Should().Be(returnedState);
     }
@@ -241,13 +256,15 @@ public sealed class JobEngineTests
         var exception = new InvalidOperationException("boom");
         var workload = new ScriptedWorkload(2, new TestState(999), 1, exception);
 
-        await engine.StartJobAsync("job", new TestState(0), workload);
-        await workload.Reported[0].Task.WaitAsync(ShortTimeout);
+        await engine.StartJobAsync("job", new TestState(0), workload, TestContext.Current.CancellationToken);
+        await workload.Reported[0].Task.WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
         workload.Release[0].SetResult();
-        await workload.Reported[1].Task.WaitAsync(ShortTimeout); // last state reported before the throw
+        await workload.Reported[1].Task
+            .WaitAsync(ShortTimeout, TestContext.Current.CancellationToken); // last state reported before the throw
         workload.Release[1].SetResult();
 
-        var result = await observer.WaitTerminalAsync("job").WaitAsync(ShortTimeout);
+        var result = await observer.WaitTerminalAsync("job")
+            .WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
         result.Outcome.Should().Be(JobOutcome.Faulted);
         result.Exception.Should().BeSameAs(exception);
         result.State.Should().Be(new TestState(2));
@@ -265,7 +282,7 @@ public sealed class JobEngineTests
         var workload1 = new ScriptedWorkload(1, new TestState(1));
         var workload2 = new UnreachableWorkload();
 
-        await engine.StartJobAsync("job", new TestState(0), workload1);
+        await engine.StartJobAsync("job", new TestState(0), workload1, TestContext.Current.CancellationToken);
 
         var act = async () => await engine.StartJobAsync("job", new TestState(0), workload2);
         await act.Should().ThrowAsync<InvalidOperationException>();

@@ -48,13 +48,11 @@ internal sealed class ScriptedWorkload(
             .Select(_ => new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously))
     ];
 
-    public bool RanToCompletion { get; private set; }
-
     public async Task<TestState> RunAsync(TestState state, IJobContext<TestState> context, CancellationToken ct)
     {
         for (var i = 0; i < stepCount; i++)
         {
-            var stepState = state with { Step = i + 1 };
+            var stepState = new TestState(Step: i + 1);
             await context.ReportAsync(stepState, false, ct).ConfigureAwait(false);
             Reported[i].TrySetResult();
             await Release[i].Task.ConfigureAwait(false);
@@ -62,7 +60,6 @@ internal sealed class ScriptedWorkload(
             if (i == throwAtStep) throw exception!;
         }
 
-        RanToCompletion = true;
         return finalState;
     }
 }
