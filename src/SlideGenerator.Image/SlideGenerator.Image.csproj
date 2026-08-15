@@ -97,14 +97,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Remove="Binary/Credits.json"/>
-        <EmbeddedResource Include="Binary/Credits.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </EmbeddedResource>
-        <None Remove="Binary/YuNet.onnx"/>
-        <EmbeddedResource Include="Binary/YuNet.onnx">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </EmbeddedResource>
+        <None Update="ML/YuNet.onnx" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always"/>
     </ItemGroup>
 
 </Project>
