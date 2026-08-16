@@ -34,7 +34,7 @@
 	"dependencies": {
 		"@microsoft/signalr": "^10.0.0",
 		"electron-log": "^5.4.3",
-		"electron-updater": "^6.7.3",
+		"electron-updater": "^6.8.9",
 		"react": "^19.2.3",
 		"react-dom": "^19.2.3"
 	},
@@ -44,18 +44,18 @@
 		"@testing-library/user-event": "^14.6.1",
 		"@types/react": "^19.2.8",
 		"@types/react-dom": "^19.2.3",
-		"@vitejs/plugin-react": "^5.1.2",
-		"concurrently": "^9.2.1",
-		"electron": "^40.0.0",
-		"electron-builder": "^26.4.0",
+		"@vitejs/plugin-react": "^5.2.0",
+		"concurrently": "^9.2.4",
+		"electron": "^41.10.3",
+		"electron-builder": "^26.15.3",
 		"jsdom": "^27.4.0",
 		"msw": "^2.12.7",
 		"prettier": "^3.8.0",
 		"typescript": "^5.9.3",
-		"vite": "^7.3.1",
+		"vite": "^8.2.1",
 		"vite-plugin-electron": "^0.29.0",
 		"vite-plugin-electron-renderer": "^0.14.6",
-		"vitest": "^4.0.17",
+		"vitest": "^4.1.10",
 		"wait-on": "^9.0.3"
 	},
 	"build": {
