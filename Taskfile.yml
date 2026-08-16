@@ -3,7 +3,6 @@ version: "3"
 vars:
   BACKEND_SOLUTION: SlideGenerator.slnx
   BACKEND_RESULTS_DIR: '{{.BACKEND_RESULTS_DIR | default "TestResults"}}'
-  BACKEND_TEST_LOG_PREFIX: '{{.BACKEND_TEST_LOG_PREFIX | default "backend-tests"}}'
   BACKEND_RUN_PROJECT: src/SlideGenerator.Stdio/SlideGenerator.Stdio.csproj
 
 env:
@@ -39,7 +38,7 @@ tasks:
     deps:
       - restore
     cmds:
-      - dotnet test {{.BACKEND_SOLUTION}} --no-restore --logger "trx;LogFilePrefix={{.BACKEND_TEST_LOG_PREFIX}}" --results-directory {{.BACKEND_RESULTS_DIR}}
+      - dotnet test {{.BACKEND_SOLUTION}} --no-restore --report-trx --results-directory {{.BACKEND_RESULTS_DIR}}
 
   apply-copyright:
     desc: Apply backend copyright headers.

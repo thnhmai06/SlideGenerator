@@ -118,7 +118,7 @@ jobs:
           Get-ChildItem -Path tests -Filter *.csproj -Recurse | Sort-Object Name | ForEach-Object {
             $name = $_.BaseName
             Write-Host "::group::$name"
-            dotnet test $_.FullName --logger "trx;LogFilePrefix=$name" --results-directory "TestResults/$name"
+            dotnet test $_.FullName --report-trx --report-trx-filename "$name.trx" --results-directory "TestResults/$name"
             if ($LASTEXITCODE -ne 0) { $rc = $LASTEXITCODE }
             Write-Host "::endgroup::"
           }
