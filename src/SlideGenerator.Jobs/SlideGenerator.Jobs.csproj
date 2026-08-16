@@ -8,6 +8,7 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.11"/>
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.11"/>
+        <PackageReference Update="StyleCop.Analyzers" Version="1.1.118" />
     </ItemGroup>
     <ItemGroup>
         <InternalsVisibleTo Include="SlideGenerator.Jobs.Tests"/>
