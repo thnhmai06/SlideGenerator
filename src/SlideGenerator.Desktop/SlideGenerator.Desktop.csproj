@@ -11,8 +11,12 @@
         <WarningsAsErrors>CS1591</WarningsAsErrors>
         <ApplicationIcon>Assets\appicon.ico</ApplicationIcon>
         <PackageId>SlideGenerator.Desktop</PackageId>
-        <SelfContained>true</SelfContained>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+        <!--
+            Self-contained deployment is enabled only when publishing.
+            Keeping this disabled by default allows test projects to reference this project
+            without requiring them to be self-contained as well.
+        -->
     </PropertyGroup>
     
     <PropertyGroup Condition="'$(Portable)'=='true'">

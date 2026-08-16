@@ -388,7 +388,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
             {
                 var bytes = "not valid json {{{"u8.ToArray();
                 var entry = archive.CreateEntry(RecipePackageFormat.Data.Recipe.FileName);
-                await using var entryStream = await entry.OpenAsync();
+                await using var entryStream = await entry.OpenAsync(TestContext.Current.CancellationToken);
                 await entryStream.WriteAsync(bytes, TestContext.Current.CancellationToken);
             }
 
@@ -419,14 +419,14 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
             {
                 var recipeBytes = "{\"mappings\":[]}"u8.ToArray();
                 var recipeEntry = archive.CreateEntry(RecipePackageFormat.Data.Recipe.FileName);
-                await using (var recipeStream = await recipeEntry.OpenAsync())
+                await using (var recipeStream = await recipeEntry.OpenAsync(TestContext.Current.CancellationToken))
                 {
                     await recipeStream.WriteAsync(recipeBytes, TestContext.Current.CancellationToken);
                 }
 
                 var payload = new byte[] { 0xFF, 0xD8 };
                 var badEntry = archive.CreateEntry("Workbooks/payload.exe");
-                await using (var badStream = await badEntry.OpenAsync())
+                await using (var badStream = await badEntry.OpenAsync(TestContext.Current.CancellationToken))
                 {
                     await badStream.WriteAsync(payload, TestContext.Current.CancellationToken);
                 }
@@ -535,7 +535,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
         }
     }
 
-    /// <summary>Archive entries outside the known Workbooks/ or Presentations/ folders are ignored and the import still succeeds.</summary>
+    /// <summary>Archive entries outside the known Workbooks/ or Presentations/ folders are ignored, and the import still succeeds.</summary>
     [Fact]
     public async Task ImportAsync_EntryInUnknownFolderPrefix_IsIgnoredAndImportSucceeds()
     {
@@ -550,14 +550,14 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
             {
                 var recipeBytes = "{\"mappings\":[]}"u8.ToArray();
                 var recipeEntry = archive.CreateEntry(RecipePackageFormat.Data.Recipe.FileName);
-                await using (var recipeStream = await recipeEntry.OpenAsync())
+                await using (var recipeStream = await recipeEntry.OpenAsync(TestContext.Current.CancellationToken))
                 {
                     await recipeStream.WriteAsync(recipeBytes, TestContext.Current.CancellationToken);
                 }
 
                 var payload = new byte[] { 0x42 };
                 var unknownEntry = archive.CreateEntry("Secret/evil.xlsx");
-                await using (var unknownStream = await unknownEntry.OpenAsync())
+                await using (var unknownStream = await unknownEntry.OpenAsync(TestContext.Current.CancellationToken))
                 {
                     await unknownStream.WriteAsync(payload, TestContext.Current.CancellationToken);
                 }
