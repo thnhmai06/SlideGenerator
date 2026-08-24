@@ -19,6 +19,9 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Microsoft.Extensions.DependencyInjection;
 using SlideGenerator.Desktop.Features.Recipes.ViewModels;
 using SlideGenerator.Desktop.Features.Recipes.Views;
+using SlideGenerator.Desktop.Features.RecipeEditor.ViewModels;
+using SlideGenerator.Desktop.Features.RecipeEditor.Views;
+using SlideGenerator.Recipe.Models;
 
 namespace SlideGenerator.Desktop.Services.Dialogs;
 
@@ -37,6 +40,12 @@ public interface IDialogService
     ///     run, or <see langword="null" /> if they canceled.
     /// </summary>
     Task<string?> ShowRunDialogAsync(int recipeId, string recipeName);
+
+    /// <summary>
+    ///     Shows the template picker dialog (pick a presentation, then one of its slides). Returns the picked
+    ///     template, or <see langword="null" /> if the user canceled.
+    /// </summary>
+    Task<PresentationSource?> ShowTemplatePickerAsync();
 }
 
 /// <inheritdoc cref="IDialogService" />
@@ -62,5 +71,16 @@ public sealed class DialogService(IServiceProvider serviceProvider) : IDialogSer
         var dialog = new RunDialogView { DataContext = viewModel };
         var started = await dialog.ShowDialog<bool>(Owner).ConfigureAwait(false);
         return started ? viewModel.CreatedRequestId : null;
+    }
+
+    /// <inheritdoc />
+    public async Task<PresentationSource?> ShowTemplatePickerAsync()
+    {
+        if (Owner is null) return null;
+
+        var viewModel = serviceProvider.GetRequiredService<TemplatePickerViewModel>();
+        var dialog = new TemplatePickerView { DataContext = viewModel };
+        var picked = await dialog.ShowDialog<bool>(Owner).ConfigureAwait(false);
+        return picked ? viewModel.Result : null;
     }
 }

@@ -83,7 +83,7 @@ public sealed class RecipeEditorViewModelTests
     public async Task InitializeAsync_SingleMapping_HidesNavigatorAndLoadsPanels()
     {
         var cache = CreateSummaryCache(["name"], ["Name"]);
-        var vm = new RecipeEditorViewModel(cache, Substitute.For<IFilePicker>());
+        var vm = new RecipeEditorViewModel(cache, Substitute.For<IFilePicker>(), Substitute.For<IDialogService>());
         var recipe = new RecipeModel([CreateMapping(new SlideIdentifier(1))]);
 
         await vm.InitializeAsync(recipe);
@@ -97,7 +97,7 @@ public sealed class RecipeEditorViewModelTests
     public async Task InitializeAsync_TwoMappings_ShowsNavigator()
     {
         var cache = CreateSummaryCache([], []);
-        var vm = new RecipeEditorViewModel(cache, Substitute.For<IFilePicker>());
+        var vm = new RecipeEditorViewModel(cache, Substitute.For<IFilePicker>(), Substitute.For<IDialogService>());
         var recipe = new RecipeModel([CreateMapping(new SlideIdentifier(1)), CreateMapping(new SlideIdentifier(2))]);
 
         await vm.InitializeAsync(recipe);
@@ -112,7 +112,7 @@ public sealed class RecipeEditorViewModelTests
         // "Name" auto-binds as Suggested (normalized match) until touched; confirming it via SetColumn must
         // survive switching to the other mapping and back, or the user's confirmation silently reverts.
         var cache = CreateSummaryCache(["name"], ["Name"]);
-        var vm = new RecipeEditorViewModel(cache, Substitute.For<IFilePicker>());
+        var vm = new RecipeEditorViewModel(cache, Substitute.For<IFilePicker>(), Substitute.For<IDialogService>());
         var recipe = new RecipeModel([CreateMapping(new SlideIdentifier(1)), CreateMapping(new SlideIdentifier(2))]);
         await vm.InitializeAsync(recipe);
 
@@ -132,7 +132,7 @@ public sealed class RecipeEditorViewModelTests
     public async Task SelectSessionAsync_SwitchingAway_ProjectsEditsOntoPreviousMapping()
     {
         var cache = CreateSummaryCache(["name"], ["Name"]);
-        var vm = new RecipeEditorViewModel(cache, Substitute.For<IFilePicker>());
+        var vm = new RecipeEditorViewModel(cache, Substitute.For<IFilePicker>(), Substitute.For<IDialogService>());
         var recipe = new RecipeModel([CreateMapping(new SlideIdentifier(1)), CreateMapping(new SlideIdentifier(2))]);
         await vm.InitializeAsync(recipe);
 
@@ -153,7 +153,7 @@ public sealed class RecipeEditorViewModelTests
         // _loadedSession guard, the next SelectSessionAsync would wrongly project A's edited text binding
         // onto B's mapping.
         var cache = CreateSummaryCache(["name"], ["Name"]);
-        var vm = new RecipeEditorViewModel(cache, Substitute.For<IFilePicker>());
+        var vm = new RecipeEditorViewModel(cache, Substitute.For<IFilePicker>(), Substitute.For<IDialogService>());
         var recipe = new RecipeModel([CreateMapping(new SlideIdentifier(1)), CreateMapping(new SlideIdentifier(99))]);
         await vm.InitializeAsync(recipe);
 
@@ -169,7 +169,7 @@ public sealed class RecipeEditorViewModelTests
     public async Task SelectSessionAsync_JustSwitchingMappings_DoesNotMarkDirty()
     {
         var cache = CreateSummaryCache([], []);
-        var vm = new RecipeEditorViewModel(cache, Substitute.For<IFilePicker>());
+        var vm = new RecipeEditorViewModel(cache, Substitute.For<IFilePicker>(), Substitute.For<IDialogService>());
         var recipe = new RecipeModel([CreateMapping(new SlideIdentifier(1)), CreateMapping(new SlideIdentifier(2))]);
         await vm.InitializeAsync(recipe);
 
@@ -182,7 +182,7 @@ public sealed class RecipeEditorViewModelTests
     public async Task ToRecipe_ReflectsProjectedEditsAcrossAllSessions()
     {
         var cache = CreateSummaryCache(["name"], ["Name"]);
-        var vm = new RecipeEditorViewModel(cache, Substitute.For<IFilePicker>());
+        var vm = new RecipeEditorViewModel(cache, Substitute.For<IFilePicker>(), Substitute.For<IDialogService>());
         var recipe = new RecipeModel([CreateMapping(new SlideIdentifier(1))]);
         await vm.InitializeAsync(recipe);
 
@@ -195,10 +195,48 @@ public sealed class RecipeEditorViewModelTests
     }
 
     [Fact]
+    public async Task AddMappingCommand_TemplatePicked_AppendsAndSelectsNewMapping()
+    {
+        var newPresentation = new PresentationIdentifier("new.pptx");
+        var newSlide = new SlideIdentifier(1);
+        var template = new PresentationSource(newPresentation, newSlide);
+
+        var cache = CreateSummaryCache([], []);
+        var newSlideSummary = new SlideSummary(newPresentation, newSlide, [], [], null, new SizeF(100, 100));
+        cache.GetPresentationAsync(newPresentation, Arg.Any<bool>(), Arg.Any<CancellationToken>())
+            .Returns(new PresentationSummary(newPresentation.PresentationPath, [newSlideSummary]));
+
+        var dialogService = Substitute.For<IDialogService>();
+        dialogService.ShowTemplatePickerAsync().Returns(template);
+
+        var vm = new RecipeEditorViewModel(cache, Substitute.For<IFilePicker>(), dialogService);
+        await vm.InitializeAsync(new RecipeModel([]));
+
+        await vm.AddMappingCommand.ExecuteAsync(null);
+
+        var session = vm.Sessions.Should().ContainSingle().Subject;
+        vm.SelectedSession.Should().BeSameAs(session);
+        session.Mapping.Template.Should().Be(template);
+    }
+
+    [Fact]
+    public async Task AddMappingCommand_DialogCancelled_DoesNotAddMapping()
+    {
+        var dialogService = Substitute.For<IDialogService>();
+        dialogService.ShowTemplatePickerAsync().Returns((PresentationSource?)null);
+        var vm = new RecipeEditorViewModel(CreateSummaryCache([], []), Substitute.For<IFilePicker>(), dialogService);
+        await vm.InitializeAsync(new RecipeModel([]));
+
+        await vm.AddMappingCommand.ExecuteAsync(null);
+
+        vm.Sessions.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task RemoveMappingCommand_RemovesSessionAndSelectsNeighbor()
     {
         var cache = CreateSummaryCache([], []);
-        var vm = new RecipeEditorViewModel(cache, Substitute.For<IFilePicker>());
+        var vm = new RecipeEditorViewModel(cache, Substitute.For<IFilePicker>(), Substitute.For<IDialogService>());
         var recipe = new RecipeModel([CreateMapping(new SlideIdentifier(1)), CreateMapping(new SlideIdentifier(2))]);
         await vm.InitializeAsync(recipe);
 
@@ -213,7 +251,7 @@ public sealed class RecipeEditorViewModelTests
     public async Task MoveMappingDownCommand_SwapsOrder()
     {
         var cache = CreateSummaryCache([], []);
-        var vm = new RecipeEditorViewModel(cache, Substitute.For<IFilePicker>());
+        var vm = new RecipeEditorViewModel(cache, Substitute.For<IFilePicker>(), Substitute.For<IDialogService>());
         var recipe = new RecipeModel([CreateMapping(new SlideIdentifier(1)), CreateMapping(new SlideIdentifier(2))]);
         await vm.InitializeAsync(recipe);
 
@@ -228,7 +266,7 @@ public sealed class RecipeEditorViewModelTests
     {
         var picker = Substitute.For<IFilePicker>();
         picker.PickFileAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<FilePickerFileType>?>()).Returns("chosen.png");
-        var vm = new RecipeEditorViewModel(CreateSummaryCache([], []), picker);
+        var vm = new RecipeEditorViewModel(CreateSummaryCache([], []), picker, Substitute.For<IDialogService>());
         var shape = new ShapeSummary(new SlideIdentifier(1), new ShapeIdentifier("Avatar"), new RectangleF(0, 0, 10, 10));
         var overlay = new ShapeOverlayViewModel(shape, new BindingDisplay("Avatar", BindingDisplayState.Unassigned, null, []),
             new ImageEditInstruction([]), null);
@@ -243,7 +281,7 @@ public sealed class RecipeEditorViewModelTests
     {
         var picker = Substitute.For<IFilePicker>();
         picker.PickFileAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<FilePickerFileType>?>()).Returns((string?)null);
-        var vm = new RecipeEditorViewModel(CreateSummaryCache([], []), picker);
+        var vm = new RecipeEditorViewModel(CreateSummaryCache([], []), picker, Substitute.For<IDialogService>());
         var shape = new ShapeSummary(new SlideIdentifier(1), new ShapeIdentifier("Avatar"), new RectangleF(0, 0, 10, 10));
         var overlay = new ShapeOverlayViewModel(shape, new BindingDisplay("Avatar", BindingDisplayState.Unassigned, null, []),
             new ImageEditInstruction([]), null);

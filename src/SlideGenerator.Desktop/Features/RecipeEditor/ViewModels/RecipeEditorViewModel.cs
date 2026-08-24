@@ -36,6 +36,7 @@ public sealed partial class RecipeEditorViewModel : ObservableObject
 {
     private readonly ISummaryCache _summaryCache;
     private readonly IFilePicker _filePicker;
+    private readonly IDialogService _dialogService;
 
     // The session whose mapping is actually reflected in the three panels right now. Distinct from
     // SelectedSession, which is set *before* LoadMappingAsync runs — if the load bails early (template slide
@@ -67,10 +68,11 @@ public sealed partial class RecipeEditorViewModel : ObservableObject
     public WorksheetSourcesViewModel Sources { get; }
 
     /// <summary>Constructs the editor, wiring the three child panels it coordinates.</summary>
-    public RecipeEditorViewModel(ISummaryCache summaryCache, IFilePicker filePicker)
+    public RecipeEditorViewModel(ISummaryCache summaryCache, IFilePicker filePicker, IDialogService dialogService)
     {
         _summaryCache = summaryCache;
         _filePicker = filePicker;
+        _dialogService = dialogService;
         Canvas = new SlideCanvasViewModel();
         TextBindings = new TextBindingsViewModel();
         Sources = new WorksheetSourcesViewModel(filePicker, summaryCache);
@@ -96,6 +98,18 @@ public sealed partial class RecipeEditorViewModel : ObservableObject
     {
         ProjectCurrentSessionEdits();
         return Recipe with { Mappings = Sessions.Select(s => s.Mapping).ToList() };
+    }
+
+    /// <summary>Opens the template picker; on a pick, appends a new mapping (no sources/instructions yet) and selects it.</summary>
+    [RelayCommand]
+    private async Task AddMappingAsync()
+    {
+        var template = await _dialogService.ShowTemplatePickerAsync().ConfigureAwait(true);
+        if (template is null) return;
+
+        var session = new MappingEditSession(new Mapping([], template, [], []));
+        Sessions.Add(session);
+        await SelectSessionAsync(session).ConfigureAwait(true);
     }
 
     /// <summary>Removes a mapping from the recipe. If it was selected, selects a neighboring mapping (or none, if it was the last one).</summary>

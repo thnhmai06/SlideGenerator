@@ -38,6 +38,22 @@ public sealed class SlideIntegrationTests
     }
 
     /// <summary>
+    ///     Verifies that <see cref="Domain.Abstractions.Slide.IReadOnlySlide.GetPreview" /> returns PNG bytes for a
+    ///     real presentation without throwing — regression test for a <see cref="NullReferenceException" /> that
+    ///     <c>FontSettings.GetFont</c> threw during layout when the presentation's font-fallback/substitution and
+    ///     <c>PresentationRenderer</c> were left unconfigured (see <c>SfPresentationOpener.ConfigureFontFallback</c>).
+    /// </summary>
+    [Fact]
+    public async Task GetPreview_RealPresentation_ReturnsPngBytesWithoutThrowing()
+    {
+        using var pres = await _opener.OpenPresentationReadOnlyAsync(
+            new PresentationIdentifier(TemplatePath), TestContext.Current.CancellationToken);
+        var slide = pres.Slides.First();
+        var bytes = slide.GetPreview();
+        bytes.Should().NotBeNull();
+    }
+
+    /// <summary>
     ///     Verifies that
     ///     <see cref="Domain.Abstractions.Slide.IReadOnlySlide.Equals(Domain.Abstractions.Slide.IReadOnlySlide)" />
     ///     returns <see langword="true" /> when the same slide is compared with itself (deterministic equality).

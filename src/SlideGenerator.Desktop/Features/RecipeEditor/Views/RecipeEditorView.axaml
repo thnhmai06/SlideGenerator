@@ -4,14 +4,19 @@
              xmlns:views="clr-namespace:SlideGenerator.Desktop.Features.RecipeEditor.Views"
              x:Class="SlideGenerator.Desktop.Features.RecipeEditor.Views.RecipeEditorView"
              x:DataType="vm:RecipeEditorViewModel">
-    <Grid>
-        <!-- No mapping to show yet (brand-new recipe, or a mapping still loading) -->
-        <TextBlock Classes="muted body" Text="Recipe chưa có mapping nào."
-                   HorizontalAlignment="Center" VerticalAlignment="Center"
-                   IsVisible="{Binding SelectedSession, Converter={x:Static ObjectConverters.IsNull}}"/>
+    <Grid RowDefinitions="Auto,*">
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="{StaticResource PaddingPanel}">
+            <Button Grid.Column="1" Content="+ Thêm mapping" Command="{Binding AddMappingCommand}"/>
+        </Grid>
 
-        <Grid ColumnDefinitions="Auto,2*,1*"
-              IsVisible="{Binding SelectedSession, Converter={x:Static ObjectConverters.IsNotNull}}">
+        <Grid Grid.Row="1">
+            <!-- No mapping to show yet (brand-new recipe, or a mapping still loading) -->
+            <TextBlock Classes="muted body" Text="Recipe chưa có mapping nào."
+                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                       IsVisible="{Binding SelectedSession, Converter={x:Static ObjectConverters.IsNull}}"/>
+
+            <Grid ColumnDefinitions="Auto,2*,1*"
+                  IsVisible="{Binding SelectedSession, Converter={x:Static ObjectConverters.IsNotNull}}">
             <!-- Mapping navigator: only meaningful once there's more than one mapping to pick between -->
             <Border Grid.Column="0" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0"
                     IsVisible="{Binding ShowMappingNavigator}" Width="180">
@@ -70,10 +75,11 @@
                     </Border>
                 </StackPanel>
             </ScrollViewer>
-        </Grid>
+            </Grid>
 
-        <Border IsVisible="{Binding IsLoading}" Background="{DynamicResource SurfaceBackgroundBrush}" Opacity="0.6">
-            <TextBlock Text="..." HorizontalAlignment="Center" VerticalAlignment="Center"/>
-        </Border>
+            <Border IsVisible="{Binding IsLoading}" Background="{DynamicResource SurfaceBackgroundBrush}" Opacity="0.6">
+                <TextBlock Text="..." HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+        </Grid>
     </Grid>
 </UserControl>

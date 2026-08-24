@@ -62,6 +62,8 @@ public static class Registration
         services.AddSingleton<ISummaryCache, SummaryCache>();
         // Transient — a fresh instance per editor session, same reasoning as RunDialogViewModel.
         services.AddTransient<RecipeEditorViewModel>();
+        // Transient — a fresh instance per template-picker invocation, same reasoning as RunDialogViewModel.
+        services.AddTransient<TemplatePickerViewModel>();
 
         return services;
     }

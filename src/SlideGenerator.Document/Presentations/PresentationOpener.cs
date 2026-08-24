@@ -101,6 +101,7 @@ internal sealed class SfPresentationOpener : IPresentationOpener
     private static SfPresentation CreatePresentationInstance(PresentationIdentifier identifier)
     {
         var presentation = Presentation.Open(identifier.PresentationPath, identifier.PresentationPassword);
+        ConfigureFontFallback(presentation);
         return new SfPresentation(presentation, identifier);
     }
 
@@ -109,7 +110,19 @@ internal sealed class SfPresentationOpener : IPresentationOpener
         var fileStream =
             new FileStream(identifier.PresentationPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
         var presentation = Presentation.Open(fileStream, identifier.PresentationPassword);
+        ConfigureFontFallback(presentation);
 
         return new SfPresentation(presentation, identifier, fileStream);
+    }
+
+    // Without a fallback/substitute font, resolving a font missing on this machine (or a script the
+    // template's declared font can't render) throws a NullReferenceException deep inside
+    // FontSettings.GetFont during text layout — surfaces as a crash from ISlide.GetPreview()'s
+    // PresentationRenderer.ConvertToImage call, not from anything obviously font-related.
+    private static void ConfigureFontFallback(Syncfusion.Presentation.IPresentation presentation)
+    {
+        presentation.PresentationRenderer = new global::Syncfusion.PresentationRenderer.PresentationRenderer();
+        presentation.FontSettings.FallbackFonts.InitializeDefault();
+        presentation.FontSettings.SubstituteFont += (_, args) => args.AlternateFontName = "Arial";
     }
 }
