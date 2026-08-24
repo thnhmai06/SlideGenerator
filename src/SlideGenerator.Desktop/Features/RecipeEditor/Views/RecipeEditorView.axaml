@@ -1,0 +1,44 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:SlideGenerator.Desktop.Features.RecipeEditor.ViewModels"
+             xmlns:views="clr-namespace:SlideGenerator.Desktop.Features.RecipeEditor.Views"
+             x:Class="SlideGenerator.Desktop.Features.RecipeEditor.Views.RecipeEditorView"
+             x:DataType="vm:RecipeEditorViewModel">
+    <Grid>
+        <!-- No mapping to show yet (brand-new recipe, or a mapping still loading) -->
+        <TextBlock Classes="muted body" Text="Recipe chưa có mapping nào."
+                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                   IsVisible="{Binding SelectedSession, Converter={x:Static ObjectConverters.IsNull}}"/>
+
+        <Grid ColumnDefinitions="Auto,2*,1*"
+              IsVisible="{Binding SelectedSession, Converter={x:Static ObjectConverters.IsNotNull}}">
+            <!-- Mapping navigator: only meaningful once there's more than one mapping to pick between -->
+            <Border Grid.Column="0" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0"
+                    IsVisible="{Binding ShowMappingNavigator}" Width="180">
+                <ListBox x:Name="NavigatorList" ItemsSource="{Binding Sessions}"
+                         SelectionChanged="OnNavigatorSelectionChanged">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:MappingEditSession">
+                            <TextBlock Classes="body" Text="{Binding Label}"/>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Border>
+
+            <!-- Canvas -->
+            <views:SlideCanvasView Grid.Column="1" DataContext="{Binding Canvas}"/>
+
+            <!-- Text bindings + worksheet sources -->
+            <ScrollViewer Grid.Column="2">
+                <StackPanel Margin="{StaticResource PaddingPanel}" Spacing="{StaticResource Space3}">
+                    <views:TextBindingsView DataContext="{Binding TextBindings}"/>
+                    <views:WorksheetSourcesView DataContext="{Binding Sources}"/>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+
+        <Border IsVisible="{Binding IsLoading}" Background="{DynamicResource SurfaceBackgroundBrush}" Opacity="0.6">
+            <TextBlock Text="..." HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Border>
+    </Grid>
+</UserControl>

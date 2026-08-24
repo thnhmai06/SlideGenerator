@@ -80,6 +80,43 @@ public sealed class SlideCanvasViewModelTests
     }
 
     [Fact]
+    public void ToImageInstructions_ExistingRoiAndFallback_RoundTripsUntouchedByColumnReassignment()
+    {
+        // No inspector edits ImageEditInstruction/FallbackImagePath yet (P4.4 continuation) — projecting the
+        // canvas back to instructions must not silently drop them just because the column was reconfirmed.
+        var shapeId = new ShapeIdentifier("Avatar");
+        var shape = new ShapeSummary(Slide, shapeId, new RectangleF(0, 0, 10, 10));
+        var slide = new SlideSummary(Presentation, Slide, [], [shape], null, new SizeF(100, 100));
+        var editInstruction = new ImageEditInstruction([]);
+        var instructions = new List<ImageInstruction>
+        {
+            new(new HashSet<ShapeIdentifier> { shapeId }, [new ColumnIdentifier("PhotoUrl")], editInstruction, "fallback.png")
+        };
+
+        var vm = new SlideCanvasViewModel();
+        vm.Load(slide, instructions, []);
+
+        var result = vm.ToImageInstructions();
+
+        var projected = result.Should().ContainSingle().Subject;
+        projected.Shapes.Should().ContainSingle().Which.Should().Be(shapeId);
+        projected.Columns.Should().ContainSingle().Which.ColumnName.Should().Be("PhotoUrl");
+        projected.ImageEditInstruction.Should().BeSameAs(editInstruction);
+        projected.FallbackImagePath.Should().Be("fallback.png");
+    }
+
+    [Fact]
+    public void ToImageInstructions_OverlayWithNoColumn_IsExcluded()
+    {
+        var slide = new SlideSummary(Presentation, Slide, [], [new ShapeSummary(Slide, new ShapeIdentifier("Logo"), new RectangleF(0, 0, 10, 10))], null, new SizeF(100, 100));
+
+        var vm = new SlideCanvasViewModel();
+        vm.Load(slide, [], []);
+
+        vm.ToImageInstructions().Should().BeEmpty();
+    }
+
+    [Fact]
     public void Load_ReplacesPreviousOverlays()
     {
         var slide1 = new SlideSummary(Presentation, Slide, [], [new ShapeSummary(Slide, new ShapeIdentifier("A"), new RectangleF(0, 0, 10, 10))], null, new SizeF(100, 100));

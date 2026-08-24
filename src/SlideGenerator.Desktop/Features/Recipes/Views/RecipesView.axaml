@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:SlideGenerator.Desktop.Features.Recipes.ViewModels"
              xmlns:loc="clr-namespace:SlideGenerator.Desktop.Services.Localization"
+             xmlns:editor="clr-namespace:SlideGenerator.Desktop.Features.RecipeEditor.Views"
              x:Class="SlideGenerator.Desktop.Features.Recipes.Views.RecipesView"
              x:DataType="vm:RecipesViewModel">
     <Grid RowDefinitions="Auto,*" Background="{DynamicResource SurfaceBackgroundBrush}">
@@ -92,14 +93,15 @@
                     </StackPanel>
                 </ScrollViewer>
 
-                <!-- Editor overlay (placeholder until P4) -->
-                <Border IsVisible="{Binding IsEditorOpen}" Background="{DynamicResource SurfaceBackgroundBrush}">
-                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="{StaticResource Space2}">
-                        <TextBlock Classes="h2" Text="{Binding EditorTitle}" HorizontalAlignment="Center"/>
-                        <TextBlock Classes="muted body" Text="{loc:Tr RecipesEditorPlaceholder}" HorizontalAlignment="Center"/>
-                        <Button Content="{loc:Tr RecipesBack}" Command="{Binding CloseEditorCommand}" HorizontalAlignment="Center"/>
-                    </StackPanel>
-                </Border>
+                <!-- Editor overlay -->
+                <Grid RowDefinitions="Auto,*" IsVisible="{Binding IsEditorOpen}" Background="{DynamicResource SurfaceBackgroundBrush}">
+                    <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Margin="{StaticResource PaddingPanel}">
+                        <Button Grid.Column="0" Content="{loc:Tr RecipesBack}" Command="{Binding CloseEditorCommand}"/>
+                        <TextBlock Grid.Column="1" Classes="h2" Text="{Binding EditorTitle}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Grid>
+                    <editor:RecipeEditorView Grid.Row="1" DataContext="{Binding Editor}"/>
+                </Grid>
             </Grid>
         </Grid>
     </Grid>

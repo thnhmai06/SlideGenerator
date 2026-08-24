@@ -28,7 +28,7 @@ namespace SlideGenerator.Desktop.Features.RecipeEditor.ViewModels;
 /// </summary>
 public sealed partial class TextBindingsViewModel : ObservableObject
 {
-    private readonly HashSet<string> _touched = [];
+    private HashSet<string> _touched = [];
 
     /// <summary>Gets the current placeholder rows.</summary>
     public ObservableCollection<TextBindingRowViewModel> Rows { get; } = [];
@@ -38,16 +38,20 @@ public sealed partial class TextBindingsViewModel : ObservableObject
         BindingDisplayResolver.Summarize(Rows.Select(r => r.Binding).ToList());
 
     /// <summary>Loads one row per placeholder, deriving its <see cref="BindingDisplay" /> from any existing
-    ///     <see cref="TextInstruction" /> and, failing that, an auto-bind suggestion against <paramref name="allColumns" />.</summary>
-    public void Load(IReadOnlyList<string> placeholders, IReadOnlyList<TextInstruction> textInstructions, IReadOnlyList<string> allColumns)
+    ///     <see cref="TextInstruction" /> and, failing that, an auto-bind suggestion against <paramref name="allColumns" />.
+    ///     <paramref name="touched" />, when given, is the caller-owned touched set to read/mutate — pass the
+    ///     same set back in across mapping switches so a confirmed Normalized binding doesn't revert to
+    ///     Suggested; omit it for a fresh, this-load-only set.</summary>
+    public void Load(IReadOnlyList<string> placeholders, IReadOnlyList<TextInstruction> textInstructions,
+        IReadOnlyList<string> allColumns, HashSet<string>? touched = null)
     {
-        _touched.Clear();
+        _touched = touched ?? [];
         Rows.Clear();
         foreach (var placeholder in placeholders)
         {
             var instruction = textInstructions.FirstOrDefault(i => i.Placeholders.Contains(placeholder));
             var existingColumn = instruction?.Columns.FirstOrDefault()?.ColumnName;
-            var binding = BindingDisplayResolver.Resolve(placeholder, existingColumn, allColumns, touched: false);
+            var binding = BindingDisplayResolver.Resolve(placeholder, existingColumn, allColumns, _touched.Contains(placeholder));
             Rows.Add(new TextBindingRowViewModel(placeholder, binding, allColumns));
         }
 

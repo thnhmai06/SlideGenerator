@@ -16,11 +16,14 @@ using System.Collections.ObjectModel;
 using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.DependencyInjection;
+using SlideGenerator.Desktop.Features.RecipeEditor.ViewModels;
 using SlideGenerator.Desktop.Services.Dialogs;
 using SlideGenerator.Generator;
 using SlideGenerator.Recipe.Formats;
 using SlideGenerator.Recipe.Services;
 using SlideGenerator.Settings.Immutable;
+using RecipeModel = SlideGenerator.Recipe.Models.Recipe;
 
 namespace SlideGenerator.Desktop.Features.Recipes.ViewModels;
 
@@ -37,6 +40,7 @@ public sealed partial class RecipesViewModel : ObservableObject
     private readonly IRecipePackageService _packageService;
     private readonly IRecipeRepository _repository;
     private readonly IService _service;
+    private readonly IServiceProvider _serviceProvider;
     private readonly List<RecipeListItemViewModel> _all = [];
 
     [ObservableProperty] private string _searchText = "";
@@ -46,6 +50,7 @@ public sealed partial class RecipesViewModel : ObservableObject
     [ObservableProperty] private bool _isEditorOpen;
     [ObservableProperty] private string _editorTitle = "";
     [ObservableProperty] private bool _isLoadingRecentRuns;
+    [ObservableProperty] private RecipeEditorViewModel? _editor;
 
     /// <summary>Gets the recipes matching <see cref="SearchText" />, most recently updated first.</summary>
     public ObservableCollection<RecipeListItemViewModel> FilteredRecipes { get; } = [];
@@ -64,13 +69,14 @@ public sealed partial class RecipesViewModel : ObservableObject
 
     /// <summary>Constructs the ViewModel and starts the initial load.</summary>
     public RecipesViewModel(IRecipeRepository repository, IRecipePackageService packageService, IService service,
-        IDialogService dialogService, IFilePicker filePicker)
+        IDialogService dialogService, IFilePicker filePicker, IServiceProvider serviceProvider)
     {
         _repository = repository;
         _packageService = packageService;
         _service = service;
         _dialogService = dialogService;
         _filePicker = filePicker;
+        _serviceProvider = serviceProvider;
         _ = LoadAsync();
     }
 
@@ -170,6 +176,15 @@ public sealed partial class RecipesViewModel : ObservableObject
     {
         EditorTitle = item.Name;
         IsEditorOpen = true;
+        _ = OpenEditorAsync(item.Id);
+    }
+
+    private async Task OpenEditorAsync(int recipeId)
+    {
+        var entry = await _repository.GetAsync(recipeId).ConfigureAwait(true);
+        var editor = _serviceProvider.GetRequiredService<RecipeEditorViewModel>();
+        await editor.InitializeAsync(entry.Recipe).ConfigureAwait(true);
+        Editor = editor;
     }
 
     private void OnRunStarted(string requestId)
@@ -194,12 +209,21 @@ public sealed partial class RecipesViewModel : ObservableObject
     {
         EditorTitle = "Recipe mới";
         IsEditorOpen = true;
+        _ = OpenNewEditorAsync();
+    }
+
+    private async Task OpenNewEditorAsync()
+    {
+        var editor = _serviceProvider.GetRequiredService<RecipeEditorViewModel>();
+        await editor.InitializeAsync(new RecipeModel([])).ConfigureAwait(true);
+        Editor = editor;
     }
 
     [RelayCommand]
     private void CloseEditor()
     {
         IsEditorOpen = false;
+        Editor = null;
         _ = LoadAsync();
     }
 

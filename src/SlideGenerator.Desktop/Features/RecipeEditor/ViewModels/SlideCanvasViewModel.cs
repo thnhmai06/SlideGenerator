@@ -18,6 +18,8 @@ using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SlideGenerator.Desktop.Features.RecipeEditor.Models;
+using SlideGenerator.Document.Presentations.Identifiers;
+using SlideGenerator.Document.Workbooks.Identifiers;
 using SlideGenerator.Recipe.Models;
 using SlideGenerator.Summarizer.Presentations;
 
@@ -63,13 +65,29 @@ public sealed partial class SlideCanvasViewModel : ObservableObject
             var existingColumn = instruction?.Columns.FirstOrDefault()?.ColumnName;
             var touched = touchedShapeNames?.Contains(shape.Shape.ShapeName) ?? false;
             var binding = BindingDisplayResolver.Resolve(shape.Shape.ShapeName, existingColumn, availableColumns, touched);
+            var editInstruction = instruction?.ImageEditInstruction ?? new ImageEditInstruction([]);
 
-            var overlay = new ShapeOverlayViewModel(shape, binding)
+            var overlay = new ShapeOverlayViewModel(shape, binding, editInstruction, instruction?.FallbackImagePath)
             {
                 ScreenBounds = SlideCanvasGeometry.ScaleBounds(SlideSize, CanvasSize, shape.Bounds)
             };
             Overlays.Add(overlay);
         }
+    }
+
+    /// <summary>Projects every overlay with a column into the flat <see cref="ImageInstruction" /> list a
+    ///     <c>Mapping</c> needs, preserving each shape's existing <see cref="ImageEditInstruction" />/fallback
+    ///     path (see <see cref="ShapeOverlayViewModel" />) since no inspector edits them yet.</summary>
+    public IReadOnlyList<ImageInstruction> ToImageInstructions()
+    {
+        return Overlays
+            .Where(o => o.Binding.Column is not null)
+            .Select(o => new ImageInstruction(
+                new HashSet<ShapeIdentifier> { o.Shape.Shape },
+                [new ColumnIdentifier(o.Binding.Column!)],
+                o.EditInstruction,
+                o.FallbackImagePath))
+            .ToList();
     }
 
     partial void OnCanvasSizeChanged(global::Avalonia.Size value)

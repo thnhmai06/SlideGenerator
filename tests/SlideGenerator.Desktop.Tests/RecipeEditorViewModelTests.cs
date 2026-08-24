@@ -1,0 +1,146 @@
+/*
+ * Copyright (C) 2026 Thành Mai (thnhmai06)
+ *
+ * Solution: SlideGenerator
+ * Project: SlideGenerator.Desktop.Tests
+ * File: RecipeEditorViewModelTests.cs
+ *
+ * This file is part of this solution.
+ * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
+ *
+ * Licensed under the Apache License 2.0.
+ * See the LICENSE file in the project root for full license information.
+ */
+
+using System.Drawing;
+using FluentAssertions;
+using NSubstitute;
+using SlideGenerator.Desktop.Features.RecipeEditor.Models;
+using SlideGenerator.Desktop.Features.RecipeEditor.Services;
+using SlideGenerator.Desktop.Features.RecipeEditor.ViewModels;
+using SlideGenerator.Desktop.Services.Dialogs;
+using SlideGenerator.Document.Presentations.Identifiers;
+using SlideGenerator.Document.Workbooks.Identifiers;
+using SlideGenerator.Recipe.Models;
+using SlideGenerator.Summarizer.Presentations;
+using SlideGenerator.Summarizer.Workbooks;
+using Xunit;
+using RecipeModel = SlideGenerator.Recipe.Models.Recipe;
+
+namespace SlideGenerator.Desktop.Tests;
+
+/// <summary>
+///     Unit tests for <see cref="RecipeEditorViewModel" />'s coordination of the canvas/text-bindings/sources
+///     panels — column flattening across worksheets, touched-state surviving a mapping switch, and edits being
+///     projected back onto the mapping before navigating away.
+/// </summary>
+public sealed class RecipeEditorViewModelTests
+{
+    private static readonly WorkbookIdentifier Workbook = new("book.xlsx");
+    private static readonly WorksheetIdentifier Worksheet = new("Sheet1");
+    private static readonly PresentationIdentifier Presentation = new("template.pptx");
+
+    private static Mapping CreateMapping(SlideIdentifier slide, IReadOnlyList<TextInstruction>? textInstructions = null)
+    {
+        return new Mapping(
+            [new WorksheetSource(Workbook, Worksheet)],
+            new PresentationSource(Presentation, slide),
+            textInstructions ?? [],
+            []);
+    }
+
+    private static ISummaryCache CreateSummaryCache(IReadOnlyList<string> placeholders, IReadOnlyList<string> headers)
+    {
+        var cache = Substitute.For<ISummaryCache>();
+        var slide1 = new SlideSummary(Presentation, new SlideIdentifier(1), placeholders, [], null, new SizeF(100, 100));
+        var slide2 = new SlideSummary(Presentation, new SlideIdentifier(2), placeholders, [], null, new SizeF(100, 100));
+        cache.GetPresentationAsync(Presentation, Arg.Any<bool>(), Arg.Any<CancellationToken>())
+            .Returns(new PresentationSummary(Presentation.PresentationPath, [slide1, slide2]));
+
+        var worksheetSummary = new WorksheetSummary(Workbook, Worksheet, headers.Count, new WorksheetPreview(headers, []));
+        cache.GetWorkbookAsync(Workbook, Arg.Any<bool>(), Arg.Any<CancellationToken>())
+            .Returns(new WorkbookSummary(Workbook.BookPath, "book", [worksheetSummary]));
+
+        return cache;
+    }
+
+    [Fact]
+    public void FlattenAvailableColumns_MultipleWorksheets_UnionsAndDedupesHeaders()
+    {
+        var summaries = new[]
+        {
+            new WorksheetSummary(Workbook, Worksheet, 1, new WorksheetPreview(["Name", "Photo"], [])),
+            new WorksheetSummary(Workbook, new WorksheetIdentifier("Sheet2"), 1, new WorksheetPreview(["Photo", "Bio"], []))
+        };
+
+        var columns = RecipeEditorViewModel.FlattenAvailableColumns(summaries);
+
+        columns.Should().BeEquivalentTo(["Name", "Photo", "Bio"]);
+    }
+
+    [Fact]
+    public async Task InitializeAsync_SingleMapping_HidesNavigatorAndLoadsPanels()
+    {
+        var cache = CreateSummaryCache(["name"], ["Name"]);
+        var vm = new RecipeEditorViewModel(cache, Substitute.For<IFilePicker>());
+        var recipe = new RecipeModel([CreateMapping(new SlideIdentifier(1))]);
+
+        await vm.InitializeAsync(recipe);
+
+        vm.ShowMappingNavigator.Should().BeFalse();
+        vm.SelectedSession.Should().NotBeNull();
+        vm.TextBindings.Rows.Should().ContainSingle(r => r.Placeholder == "name");
+    }
+
+    [Fact]
+    public async Task InitializeAsync_TwoMappings_ShowsNavigator()
+    {
+        var cache = CreateSummaryCache([], []);
+        var vm = new RecipeEditorViewModel(cache, Substitute.For<IFilePicker>());
+        var recipe = new RecipeModel([CreateMapping(new SlideIdentifier(1)), CreateMapping(new SlideIdentifier(2))]);
+
+        await vm.InitializeAsync(recipe);
+
+        vm.ShowMappingNavigator.Should().BeTrue();
+        vm.Sessions.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public async Task SelectSessionAsync_SwitchAwayAndBack_TouchedColumnStaysAssignedNotSuggested()
+    {
+        // "Name" auto-binds as Suggested (normalized match) until touched; confirming it via SetColumn must
+        // survive switching to the other mapping and back, or the user's confirmation silently reverts.
+        var cache = CreateSummaryCache(["name"], ["Name"]);
+        var vm = new RecipeEditorViewModel(cache, Substitute.For<IFilePicker>());
+        var recipe = new RecipeModel([CreateMapping(new SlideIdentifier(1)), CreateMapping(new SlideIdentifier(2))]);
+        await vm.InitializeAsync(recipe);
+
+        var row = vm.TextBindings.Rows.Should().ContainSingle().Subject;
+        row.Binding.State.Should().Be(BindingDisplayState.Suggested);
+        vm.TextBindings.SetColumn(row, "Name");
+
+        await vm.SelectSessionAsync(vm.Sessions[1]);
+        await vm.SelectSessionAsync(vm.Sessions[0]);
+
+        var reloadedRow = vm.TextBindings.Rows.Should().ContainSingle().Subject;
+        reloadedRow.Binding.State.Should().Be(BindingDisplayState.Assigned);
+        reloadedRow.Binding.Column.Should().Be("Name");
+    }
+
+    [Fact]
+    public async Task SelectSessionAsync_SwitchingAway_ProjectsEditsOntoPreviousMapping()
+    {
+        var cache = CreateSummaryCache(["name"], ["Name"]);
+        var vm = new RecipeEditorViewModel(cache, Substitute.For<IFilePicker>());
+        var recipe = new RecipeModel([CreateMapping(new SlideIdentifier(1)), CreateMapping(new SlideIdentifier(2))]);
+        await vm.InitializeAsync(recipe);
+
+        var row = vm.TextBindings.Rows.Should().ContainSingle().Subject;
+        vm.TextBindings.SetColumn(row, "Name");
+
+        await vm.SelectSessionAsync(vm.Sessions[1]);
+
+        vm.Sessions[0].Mapping.TextInstructions.Should().ContainSingle(
+            i => i.Placeholders.Contains("name") && i.Columns.Single().ColumnName == "Name");
+    }
+}
