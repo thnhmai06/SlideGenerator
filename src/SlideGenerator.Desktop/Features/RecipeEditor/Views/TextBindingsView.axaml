@@ -1,0 +1,34 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:SlideGenerator.Desktop.Features.RecipeEditor.ViewModels"
+             xmlns:models="clr-namespace:SlideGenerator.Desktop.Features.RecipeEditor.Models"
+             xmlns:conv="clr-namespace:SlideGenerator.Desktop.Converters"
+             x:Class="SlideGenerator.Desktop.Features.RecipeEditor.Views.TextBindingsView"
+             x:DataType="vm:TextBindingsViewModel">
+    <StackPanel Spacing="{StaticResource Space2}">
+        <TextBlock Classes="h2" Text="CHỮ"/>
+
+        <ItemsControl ItemsSource="{Binding Rows}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:TextBindingRowViewModel">
+                    <Border Classes="hairline-row">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <TextBlock Grid.Column="0" Classes="mono" VerticalAlignment="Center" Margin="0,0,8,0">
+                                <Run Text="{}{{"/><Run Text="{Binding Placeholder}"/><Run Text="}}"/>
+                            </TextBlock>
+                            <ComboBox Grid.Column="1" ItemsSource="{Binding DropdownOptions}"
+                                      SelectedItem="{Binding Binding.Column, Mode=OneWay}"
+                                      PlaceholderText="chưa gán"
+                                      Classes.suggested="{Binding Binding.State, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:BindingDisplayState.Suggested}}"
+                                      Classes.needs-selection="{Binding Binding.State, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:BindingDisplayState.NeedsSelection}}"
+                                      SelectionChanged="OnColumnSelectionChanged"
+                                      HorizontalAlignment="Stretch"/>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <TextBlock Classes="muted" FontSize="{StaticResource FontSizeSm}" Text="{Binding Summary, Converter={x:Static conv:BindingSummaryConverter.Instance}}"/>
+    </StackPanel>
+</UserControl>

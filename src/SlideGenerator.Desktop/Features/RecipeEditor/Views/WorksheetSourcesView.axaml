@@ -1,0 +1,66 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:SlideGenerator.Desktop.Features.RecipeEditor.ViewModels"
+             xmlns:conv="clr-namespace:SlideGenerator.Desktop.Converters"
+             x:Class="SlideGenerator.Desktop.Features.RecipeEditor.Views.WorksheetSourcesView"
+             x:DataType="vm:WorksheetSourcesViewModel">
+    <StackPanel Spacing="{StaticResource Space2}">
+        <TextBlock Classes="h2" Text="NGUỒN"/>
+
+        <ItemsControl ItemsSource="{Binding Sources}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:WorksheetSourceRowViewModel">
+                    <Border Classes="hairline-row">
+                        <StackPanel Spacing="{StaticResource Space2}">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Grid.Column="0" Classes="body" FontWeight="SemiBold">
+                                    <Run Text="{Binding Worksheet.SheetName}"/>
+                                    <Run Text=" · "/>
+                                    <Run Text="{Binding RowCount}"/>
+                                    <Run Text=" dòng"/>
+                                </TextBlock>
+                                <Button Grid.Column="1" Content="Xoá" Click="OnRemoveClick"/>
+                            </Grid>
+
+                            <!-- No GroupName set on purpose — Avalonia groups RadioButtons implicitly by
+                                 shared parent panel, so each repeated row's radios stay independent from
+                                 every other row's; a literal GroupName here would collide across rows. -->
+                            <ItemsControl ItemsSource="{Binding Columns}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:ColumnCheckboxViewModel">
+                                        <CheckBox Content="{Binding Name}" IsChecked="{Binding IsChecked}" Margin="0,0,12,0"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space3}"
+                                        DataContext="{Binding RowFilter}" x:DataType="vm:RowFilterEditorViewModel">
+                                <RadioButton Content="Tất cả"
+                                             IsChecked="{Binding Mode, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static vm:RowFilterEditorMode.All}}"/>
+                                <RadioButton Content="Khoảng dòng"
+                                             IsChecked="{Binding Mode, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static vm:RowFilterEditorMode.IndexRange}}"/>
+                                <NumericUpDown Value="{Binding Start, Mode=TwoWay}" Minimum="1" Width="90"
+                                               IsVisible="{Binding Mode, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static vm:RowFilterEditorMode.IndexRange}}"/>
+                                <NumericUpDown Value="{Binding End, Mode=TwoWay}" Minimum="1" Width="90"
+                                               IsVisible="{Binding Mode, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static vm:RowFilterEditorMode.IndexRange}}"/>
+                                <RadioButton Content="Chia khối"
+                                             IsChecked="{Binding Mode, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static vm:RowFilterEditorMode.PartitionBlock}}"/>
+                                <NumericUpDown Value="{Binding PartitionIndex, Mode=TwoWay}" Minimum="0" Width="90"
+                                               IsVisible="{Binding Mode, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static vm:RowFilterEditorMode.PartitionBlock}}"/>
+                                <NumericUpDown Value="{Binding PartitionCount, Mode=TwoWay}" Minimum="1" Width="90"
+                                               IsVisible="{Binding Mode, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static vm:RowFilterEditorMode.PartitionBlock}}"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <Button Content="+ Thêm worksheet" Command="{Binding AddCommand}"/>
+    </StackPanel>
+</UserControl>
