@@ -521,3 +521,5 @@ FodyWeavers.xsd
 tests/fixtures/faces/
 
 .idea
+# P-1 UX validation scratch (throwaway, delete after decisions recorded)
+.preview/

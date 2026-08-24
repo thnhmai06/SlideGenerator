@@ -56,3 +56,36 @@ public sealed record RequestRecord(
     Request Request,
     string LogPath,
     DateTimeOffset CreatedAt);
+
+/// <summary>
+///     Discriminates why a <see cref="PlannedJob" />'s output path is unusable, if at all. Returned by
+///     <see cref="IService.PreviewAsync" /> so a caller can show every conflict before submitting, using the
+///     exact same conflict definition <see cref="IService.CreateAsync" /> enforces at submit time.
+/// </summary>
+public enum ConflictKind
+{
+    /// <summary>No conflict — this output path is free to write to.</summary>
+    None,
+
+    /// <summary>Another job computed from the same request would write to this same output path.</summary>
+    DuplicateWithinRequest,
+
+    /// <summary>A job of a different, currently active (running, pending, or paused) request already claims this output path.</summary>
+    ConflictsWithActiveRequest
+}
+
+/// <summary>
+///     One job <see cref="IService.CreateAsync" /> would spawn for a <see cref="Request" />, as computed by
+///     <see cref="IService.PreviewAsync" /> — lets a run confirmation dialog show the full fan-out (one job
+///     per worksheet source × mapping, see <c>Service.BuildJobs</c>) and every output-path conflict before
+///     the request is actually submitted.
+/// </summary>
+/// <param name="OutputPath">Absolute path this job would write its output presentation to.</param>
+/// <param name="WorkbookPath">Absolute path to the source workbook this job reads from.</param>
+/// <param name="WorksheetName">Name of the source worksheet within <see cref="WorkbookPath" />.</param>
+/// <param name="ConflictKind">Why <see cref="OutputPath" /> is unusable, or <see cref="Generator.ConflictKind.None" /> if it is not.</param>
+public sealed record PlannedJob(
+    string OutputPath,
+    string WorkbookPath,
+    string WorksheetName,
+    ConflictKind ConflictKind);

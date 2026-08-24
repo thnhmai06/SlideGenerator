@@ -1,0 +1,139 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Type ramp — usage: <TextBlock Classes="h1">…</TextBlock> -->
+    <Style Selector="TextBlock.h1">
+        <Setter Property="FontFamily" Value="{StaticResource FontSans}"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSize2xl}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="LetterSpacing" Value="-0.2"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+    </Style>
+
+    <Style Selector="TextBlock.h2">
+        <Setter Property="FontFamily" Value="{StaticResource FontSans}"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSizeXl}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+    </Style>
+
+    <Style Selector="TextBlock.body">
+        <Setter Property="FontFamily" Value="{StaticResource FontSans}"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSizeBase}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+    </Style>
+
+    <Style Selector="TextBlock.muted">
+        <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}"/>
+    </Style>
+
+    <!-- Data text — file paths, column names, {{placeholder}} tags, log lines, row indices. -->
+    <Style Selector="TextBlock.mono">
+        <Setter Property="FontFamily" Value="{StaticResource FontMono}"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSizeSm}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+    </Style>
+
+    <!-- Hairline row divider — used instead of floating cards throughout (Recipes list, Runs list, job rows). -->
+    <Style Selector="Border.hairline-row">
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        <Setter Property="Padding" Value="{StaticResource PaddingControl}"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="{DynamicResource MotionMicro}"/>
+            </Transitions>
+        </Setter>
+    </Style>
+
+    <Style Selector="Border.hairline-row:pointerover">
+        <Setter Property="Background" Value="{DynamicResource SurfaceMutedBrush}"/>
+    </Style>
+
+    <!-- Filter chip — Runs status filter (All/Running/Paused/Done/Cancelled). -->
+    <Style Selector="ToggleButton.chip">
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusControl}"/>
+        <Setter Property="Padding" Value="10,4"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSizeSm}"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="{DynamicResource MotionMicro}"/>
+                <BrushTransition Property="BorderBrush" Duration="{DynamicResource MotionMicro}"/>
+            </Transitions>
+        </Setter>
+    </Style>
+
+    <Style Selector="ToggleButton.chip:checked">
+        <Setter Property="Background" Value="{DynamicResource AccentMutedBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+    </Style>
+
+    <!-- Press feedback — every interactive control gets a tactile 100ms scale, per plan §4.5. -->
+    <Style Selector="Button, ToggleButton">
+        <Setter Property="RenderTransform" Value="none"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <TransformOperationsTransition Property="RenderTransform" Duration="{DynamicResource MotionMicro}"
+                                                Easing="QuadraticEaseOut"/>
+            </Transitions>
+        </Setter>
+    </Style>
+
+    <Style Selector="Button:pressed, ToggleButton:pressed">
+        <Setter Property="RenderTransform" Value="scale(0.97)"/>
+    </Style>
+
+    <!-- Sidebar navigation item — see ShellView.axaml. -->
+    <Style Selector="Button.nav-item">
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="Padding" Value="{StaticResource PaddingControl}"/>
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusControl}"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="{DynamicResource MotionMicro}"/>
+            </Transitions>
+        </Setter>
+    </Style>
+
+    <Style Selector="Button.nav-item:pointerover">
+        <Setter Property="Background" Value="{DynamicResource SurfaceMutedBrush}"/>
+    </Style>
+
+    <Style Selector="Button.nav-item.active">
+        <Setter Property="Background" Value="{DynamicResource AccentMutedBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+
+    <!-- Recipe editor slide canvas — image shape overlay (plan §5.2 canvas states). -->
+    <Style Selector="Rectangle.shape-overlay">
+        <Setter Property="StrokeThickness" Value="2"/>
+        <Setter Property="Fill" Value="Transparent"/>
+    </Style>
+
+    <Style Selector="Rectangle.shape-overlay.assigned">
+        <Setter Property="Stroke" Value="{DynamicResource AccentBrush}"/>
+    </Style>
+
+    <Style Selector="Rectangle.shape-overlay.suggested">
+        <Setter Property="Stroke" Value="{DynamicResource AccentBrush}"/>
+        <Setter Property="Fill" Value="{DynamicResource AccentMutedBrush}"/>
+        <Setter Property="Opacity" Value="0.5"/>
+    </Style>
+
+    <Style Selector="Rectangle.shape-overlay.needs-selection">
+        <Setter Property="Stroke" Value="{DynamicResource WarningBrush}"/>
+        <Setter Property="StrokeDashArray" Value="4,3"/>
+    </Style>
+
+    <Style Selector="Rectangle.shape-overlay.unassigned">
+        <Setter Property="Stroke" Value="{DynamicResource BorderStrongBrush}"/>
+        <Setter Property="StrokeDashArray" Value="4,3"/>
+    </Style>
+</Styles>

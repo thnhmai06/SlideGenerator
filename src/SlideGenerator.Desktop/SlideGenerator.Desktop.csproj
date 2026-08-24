@@ -37,6 +37,14 @@
     </ItemGroup>
 
     <ItemGroup>
+        <!-- Loadable via avares:// (brand imagery, JetBrains Mono NL for data/path text — see Resources/Tokens.axaml;
+             appicon.ico is EmbeddedResource above for the exe/taskbar icon, and also needed here for Window.Icon) -->
+        <AvaloniaResource Include="Assets\Brand\**"/>
+        <AvaloniaResource Include="Assets\Fonts\JetBrainsMono-Variable.ttf"/>
+        <AvaloniaResource Include="Assets\appicon.ico"/>
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="Avalonia" Version="12.1.1"/>
         <PackageReference Include="Avalonia.Desktop" Version="12.1.1"/>
         <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.1"/>

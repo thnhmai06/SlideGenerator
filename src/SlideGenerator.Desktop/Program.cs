@@ -93,10 +93,16 @@ internal static class Program
     /// <summary>Configures the Avalonia application builder.</summary>
     private static AppBuilder BuildAvaloniaApp()
     {
-        return AppBuilder.Configure<App>()
+        var builder = AppBuilder.Configure<App>()
             .UsePlatformDetect()
             .WithInterFont()
             .LogToTrace();
+#if DEBUG
+        // Starts the devtools listener the standalone "avdt" tool connects to (port 29414). Paired with
+        // App.axaml.cs's this.AttachDeveloperTools() call, which wires the in-process F12 overlay.
+        builder = builder.WithDeveloperTools();
+#endif
+        return builder;
     }
 
     /// <summary>

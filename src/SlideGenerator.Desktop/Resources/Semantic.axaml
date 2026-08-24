@@ -1,0 +1,48 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceInclude Source="avares://SlideGenerator.Desktop/Resources/Primitives.axaml"/>
+    </ResourceDictionary.MergedDictionaries>
+
+    <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Light">
+            <SolidColorBrush x:Key="SurfaceBackgroundBrush" Color="{StaticResource NeutralLight50}"/>
+            <SolidColorBrush x:Key="SurfaceBrush" Color="#FFFFFF"/>
+            <SolidColorBrush x:Key="SurfaceMutedBrush" Color="{StaticResource NeutralLight100}"/>
+
+            <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource NeutralLight900}"/>
+            <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource NeutralLight600}"/>
+            <SolidColorBrush x:Key="TextMutedBrush" Color="{StaticResource NeutralLight500}"/>
+            <SolidColorBrush x:Key="TextOnAccentBrush" Color="#FFFFFF"/>
+
+            <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource NeutralLight200}"/>
+            <SolidColorBrush x:Key="BorderStrongBrush" Color="{StaticResource NeutralLight500}"/>
+
+            <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource BrandRoyal}"/>
+            <SolidColorBrush x:Key="AccentMutedBrush" Color="#B8C9EC"/>
+            <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessLight}"/>
+            <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningLight}"/>
+            <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DangerLight}"/>
+        </ResourceDictionary>
+
+        <ResourceDictionary x:Key="Dark">
+            <SolidColorBrush x:Key="SurfaceBackgroundBrush" Color="{StaticResource NeutralDark900}"/>
+            <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource NeutralDark800}"/>
+            <SolidColorBrush x:Key="SurfaceMutedBrush" Color="{StaticResource NeutralDark700}"/>
+
+            <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource NeutralDark50}"/>
+            <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource NeutralDark200}"/>
+            <SolidColorBrush x:Key="TextMutedBrush" Color="{StaticResource NeutralDark400}"/>
+            <SolidColorBrush x:Key="TextOnAccentBrush" Color="#FFFFFF"/>
+
+            <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource NeutralDark600}"/>
+            <SolidColorBrush x:Key="BorderStrongBrush" Color="{StaticResource NeutralDark400}"/>
+
+            <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource BrandDodger}"/>
+            <SolidColorBrush x:Key="AccentMutedBrush" Color="#2A4E85"/>
+            <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessDark}"/>
+            <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningDark}"/>
+            <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DangerDark}"/>
+        </ResourceDictionary>
+    </ResourceDictionary.ThemeDictionaries>
+</ResourceDictionary>

@@ -28,4 +28,9 @@ public sealed partial record Setting
     ///     Gets the configuration settings related to job execution and parallelism.
     /// </summary>
     public PerformanceSetting Performance { get; init; } = new();
+
+    /// <summary>
+    ///     Gets the configuration settings related to theme, language, and motion.
+    /// </summary>
+    public AppearanceSetting Appearance { get; init; } = new();
 }

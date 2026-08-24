@@ -66,4 +66,58 @@
     <data name="AppTitle" xml:space="preserve">
     <value>SlideGenerator</value>
   </data>
+  <data name="NavRecipes" xml:space="preserve">
+    <value>Recipe</value>
+  </data>
+  <data name="NavRuns" xml:space="preserve">
+    <value>Lượt chạy</value>
+  </data>
+  <data name="NavSettings" xml:space="preserve">
+    <value>Cài đặt</value>
+  </data>
+  <data name="RunsFilterAll" xml:space="preserve">
+    <value>Tất cả</value>
+  </data>
+  <data name="RunsFilterRunning" xml:space="preserve">
+    <value>Đang chạy</value>
+  </data>
+  <data name="RunsFilterPaused" xml:space="preserve">
+    <value>Tạm dừng</value>
+  </data>
+  <data name="RunsFilterDone" xml:space="preserve">
+    <value>Xong</value>
+  </data>
+  <data name="RunsFilterCancelled" xml:space="preserve">
+    <value>Đã huỷ</value>
+  </data>
+  <data name="RunsSearchPlaceholder" xml:space="preserve">
+    <value>Tìm...</value>
+  </data>
+  <data name="RunsPause" xml:space="preserve">
+    <value>Tạm dừng</value>
+  </data>
+  <data name="RunsResume" xml:space="preserve">
+    <value>Tiếp tục</value>
+  </data>
+  <data name="RunsStop" xml:space="preserve">
+    <value>Dừng</value>
+  </data>
+  <data name="RunsOpenFolder" xml:space="preserve">
+    <value>Mở thư mục</value>
+  </data>
+  <data name="RunsDelete" xml:space="preserve">
+    <value>Xoá</value>
+  </data>
+  <data name="RunsEmptyTitle" xml:space="preserve">
+    <value>Chưa có lượt chạy nào</value>
+  </data>
+  <data name="RunsEmptyBody" xml:space="preserve">
+    <value>Chạy một recipe từ trang Recipes để thấy nó ở đây.</value>
+  </data>
+  <data name="RunsNoSelectionHint" xml:space="preserve">
+    <value>Chọn một lượt chạy để xem chi tiết.</value>
+  </data>
+  <data name="RunsLogsHeader" xml:space="preserve">
+    <value>Nhật ký</value>
+  </data>
 </root>

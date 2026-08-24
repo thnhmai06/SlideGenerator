@@ -66,4 +66,106 @@
     <data name="AppTitle" xml:space="preserve">
     <value>SlideGenerator</value>
   </data>
+  <data name="NavRecipes" xml:space="preserve">
+    <value>Recipes</value>
+  </data>
+  <data name="NavRuns" xml:space="preserve">
+    <value>Runs</value>
+  </data>
+  <data name="NavSettings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="RunsFilterAll" xml:space="preserve">
+    <value>All</value>
+  </data>
+  <data name="RunsFilterRunning" xml:space="preserve">
+    <value>Running</value>
+  </data>
+  <data name="RunsFilterPaused" xml:space="preserve">
+    <value>Paused</value>
+  </data>
+  <data name="RunsFilterDone" xml:space="preserve">
+    <value>Done</value>
+  </data>
+  <data name="RunsFilterCancelled" xml:space="preserve">
+    <value>Cancelled</value>
+  </data>
+  <data name="RunsSearchPlaceholder" xml:space="preserve">
+    <value>Search...</value>
+  </data>
+  <data name="RunsPause" xml:space="preserve">
+    <value>Pause</value>
+  </data>
+  <data name="RunsResume" xml:space="preserve">
+    <value>Resume</value>
+  </data>
+  <data name="RunsStop" xml:space="preserve">
+    <value>Stop</value>
+  </data>
+  <data name="RunsOpenFolder" xml:space="preserve">
+    <value>Open folder</value>
+  </data>
+  <data name="RunsDelete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="RunsEmptyTitle" xml:space="preserve">
+    <value>No runs yet</value>
+  </data>
+  <data name="RunsEmptyBody" xml:space="preserve">
+    <value>Run a recipe from the Recipes page to see it here.</value>
+  </data>
+  <data name="RunsNoSelectionHint" xml:space="preserve">
+    <value>Select a run to see its details.</value>
+  </data>
+  <data name="RunsLogsHeader" xml:space="preserve">
+    <value>Log</value>
+  </data>
+  <data name="RecipesEmptyTitle" xml:space="preserve">
+    <value>No recipes yet</value>
+  </data>
+  <data name="RecipesEmptyBody" xml:space="preserve">
+    <value>Create your first recipe to start generating presentations.</value>
+  </data>
+  <data name="RecipesNew" xml:space="preserve">
+    <value>New recipe</value>
+  </data>
+  <data name="RecipesImport" xml:space="preserve">
+    <value>Import</value>
+  </data>
+  <data name="RecipesSearchPlaceholder" xml:space="preserve">
+    <value>Search...</value>
+  </data>
+  <data name="RecipesRun" xml:space="preserve">
+    <value>Run</value>
+  </data>
+  <data name="RecipesEdit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="RecipesDuplicate" xml:space="preserve">
+    <value>Duplicate</value>
+  </data>
+  <data name="RecipesExport" xml:space="preserve">
+    <value>Export</value>
+  </data>
+  <data name="RecipesDelete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="RecipesRecentRuns" xml:space="preserve">
+    <value>Recent runs</value>
+  </data>
+  <data name="RecipesViewAllRuns" xml:space="preserve">
+    <value>View all in Runs</value>
+  </data>
+  <data name="RecipesNoRecentRuns" xml:space="preserve">
+    <value>Not run yet.</value>
+  </data>
+  <data name="RecipesEditorPlaceholder" xml:space="preserve">
+    <value>Not built at this stage</value>
+  </data>
+  <data name="RecipesBack" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="RecipesNoSelectionHint" xml:space="preserve">
+    <value>Select a recipe to see its details.</value>
+  </data>
 </root>

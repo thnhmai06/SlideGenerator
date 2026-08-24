@@ -1,0 +1,123 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:SlideGenerator.Desktop.Features.Runs.ViewModels"
+             xmlns:models="clr-namespace:SlideGenerator.Desktop.Features.Runs.Models"
+             xmlns:conv="clr-namespace:SlideGenerator.Desktop.Converters"
+             xmlns:loc="clr-namespace:SlideGenerator.Desktop.Services.Localization"
+             xmlns:jobs="clr-namespace:SlideGenerator.Generator.Jobs.Models;assembly=SlideGenerator.Generator"
+             xmlns:gen="clr-namespace:SlideGenerator.Generator;assembly=SlideGenerator.Generator"
+             x:Class="SlideGenerator.Desktop.Features.Runs.Views.RunsView"
+             x:DataType="vm:RunsViewModel">
+    <Grid RowDefinitions="Auto,*" Background="{DynamicResource SurfaceBackgroundBrush}">
+        <!-- Header: filter chips + search -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="{StaticResource PaddingPage}">
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="{StaticResource Space2}">
+                <ToggleButton Classes="chip" Content="{loc:Tr RunsFilterAll}"
+                              IsChecked="{Binding Filter, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:RunStatusFilter.All}}"/>
+                <ToggleButton Classes="chip" Content="{loc:Tr RunsFilterRunning}"
+                              IsChecked="{Binding Filter, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:RunStatusFilter.Running}}"/>
+                <ToggleButton Classes="chip" Content="{loc:Tr RunsFilterPaused}"
+                              IsChecked="{Binding Filter, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:RunStatusFilter.Paused}}"/>
+                <ToggleButton Classes="chip" Content="{loc:Tr RunsFilterDone}"
+                              IsChecked="{Binding Filter, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:RunStatusFilter.Done}}"/>
+                <ToggleButton Classes="chip" Content="{loc:Tr RunsFilterCancelled}"
+                              IsChecked="{Binding Filter, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:RunStatusFilter.Cancelled}}"/>
+            </StackPanel>
+            <TextBox Grid.Column="1" Width="200" PlaceholderText="{loc:Tr RunsSearchPlaceholder}" Text="{Binding SearchText}"/>
+        </Grid>
+
+        <!-- Body -->
+        <Grid Grid.Row="1" ColumnDefinitions="320,*">
+            <!-- Master list -->
+            <Border Grid.Column="0" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,1,0">
+                <Grid>
+                    <!-- Empty state -->
+                    <StackPanel IsVisible="{Binding !HasResults}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                Spacing="{StaticResource Space2}" Margin="24">
+                        <TextBlock Classes="h2" Text="{loc:Tr RunsEmptyTitle}" HorizontalAlignment="Center"/>
+                        <TextBlock Classes="muted body" Text="{loc:Tr RunsEmptyBody}" HorizontalAlignment="Center"
+                                   TextWrapping="Wrap" TextAlignment="Center"/>
+                    </StackPanel>
+
+                    <ListBox ItemsSource="{Binding FilteredRequests}" SelectedItem="{Binding SelectedRequest}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:RequestRunViewModel">
+                                <Border Classes="hairline-row">
+                                    <StackPanel Spacing="{StaticResource Space1}">
+                                        <TextBlock Classes="body" Text="{Binding Name}" FontWeight="SemiBold"/>
+                                        <TextBlock Classes="muted" FontSize="{StaticResource FontSizeSm}">
+                                            <Run Text="{Binding Jobs.Count}"/>
+                                            <Run Text=" job · "/>
+                                            <Run Text="{Binding Status}"/>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </Border>
+
+            <!-- Detail -->
+            <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto" IsVisible="{Binding SelectedRequest, Converter={x:Static ObjectConverters.IsNotNull}}">
+                <StackPanel Grid.Row="0" Margin="{StaticResource PaddingPanel}" Spacing="{StaticResource Space2}">
+                    <TextBlock Classes="h2" Text="{Binding SelectedRequest.Name}"/>
+                    <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space2}">
+                        <Button Content="{loc:Tr RunsPause}" Command="{Binding SelectedRequest.PauseCommand}"/>
+                        <Button Content="{loc:Tr RunsResume}" Command="{Binding SelectedRequest.ResumeCommand}"/>
+                        <Button Content="{loc:Tr RunsStop}" Command="{Binding SelectedRequest.StopCommand}"/>
+                        <Button Content="{loc:Tr RunsOpenFolder}" Command="{Binding SelectedRequest.OpenFolderCommand}"/>
+                        <Button Content="{loc:Tr RunsDelete}" Command="{Binding SelectedRequest.DeleteCommand}"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <ScrollViewer Grid.Row="1">
+                    <ItemsControl ItemsSource="{Binding SelectedRequest.Jobs}" Margin="{StaticResource PaddingPanel}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:JobRunViewModel">
+                                <Border Classes="hairline-row">
+                                    <Grid ColumnDefinitions="80,*,Auto" ColumnSpacing="{StaticResource Space3}">
+                                        <ProgressBar Grid.Column="0" Height="4" VerticalAlignment="Center"
+                                                     IsIndeterminate="{Binding JobStatus, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static jobs:JobStatus.Running}}"/>
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Classes="body">
+                                                <Run Text="{Binding Phase}"/>
+                                                <Run Text=" · dòng "/>
+                                                <Run Text="{Binding CurrentIndex}"/>
+                                            </TextBlock>
+                                            <TextBlock Classes="mono muted" Text="{Binding OutputPath}"/>
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="2" Classes="muted" Text="{Binding JobStatus}" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+
+                <Border Grid.Row="2" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
+                        MaxHeight="200">
+                    <ScrollViewer>
+                        <ItemsControl ItemsSource="{Binding SelectedRequest.Logs}" Margin="{StaticResource PaddingPanel}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="gen:LogEntry">
+                                    <TextBlock Classes="mono" FontSize="{StaticResource FontSizeXs}">
+                                        <Run Text="{Binding Timestamp}"/>
+                                        <Run Text=" "/>
+                                        <Run Text="{Binding Level}"/>
+                                        <Run Text=" "/>
+                                        <Run Text="{Binding Info}"/>
+                                    </TextBlock>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Border>
+            </Grid>
+
+            <TextBlock Grid.Column="1" Classes="muted body" Text="{loc:Tr RunsNoSelectionHint}"
+                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                       IsVisible="{Binding SelectedRequest, Converter={x:Static ObjectConverters.IsNull}}"/>
+        </Grid>
+    </Grid>
+</UserControl>

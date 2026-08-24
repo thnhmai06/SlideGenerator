@@ -141,7 +141,8 @@ internal sealed class SummarizationService(
                 .Select(shape => new ShapeSummary(slideId, new ShapeIdentifier(shape.Name), shape.Bounds))
                 .ToList();
 
-            slides.Add(new SlideSummary(identifier, slideId, placeholders, imageShapes, slidePreviewBytes));
+            slides.Add(new SlideSummary(identifier, slideId, placeholders, imageShapes, slidePreviewBytes,
+                slide.SlideSize));
         }
 
         return new PresentationSummary(identifier.PresentationPath, slides);

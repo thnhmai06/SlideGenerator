@@ -12,6 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using System.Drawing;
 using SlideGenerator.Document.Presentations.Identifiers;
 
 namespace SlideGenerator.Summarizer.Presentations;
@@ -21,4 +22,5 @@ public sealed record SlideSummary(
     SlideIdentifier Slide,
     IReadOnlyList<string> Placeholders,
     IReadOnlyList<ShapeSummary> ImageShapes,
-    byte[]? Preview);
+    byte[]? Preview,
+    SizeF SlideSize);

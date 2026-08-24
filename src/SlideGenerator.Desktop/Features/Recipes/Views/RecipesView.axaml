@@ -1,0 +1,106 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:SlideGenerator.Desktop.Features.Recipes.ViewModels"
+             xmlns:loc="clr-namespace:SlideGenerator.Desktop.Services.Localization"
+             x:Class="SlideGenerator.Desktop.Features.Recipes.Views.RecipesView"
+             x:DataType="vm:RecipesViewModel">
+    <Grid RowDefinitions="Auto,*" Background="{DynamicResource SurfaceBackgroundBrush}">
+        <!-- Header: search + New/Import -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" Margin="{StaticResource PaddingPage}">
+            <TextBox Grid.Column="0" Width="240" HorizontalAlignment="Left"
+                      PlaceholderText="{loc:Tr RecipesSearchPlaceholder}" Text="{Binding SearchText}"/>
+            <Button Grid.Column="1" Content="{loc:Tr RecipesImport}" Command="{Binding ImportCommand}" Margin="8,0,0,0"/>
+            <Button Grid.Column="2" Content="{loc:Tr RecipesNew}" Command="{Binding NewCommand}" Margin="8,0,0,0"/>
+        </Grid>
+
+        <!-- Body -->
+        <Grid Grid.Row="1" ColumnDefinitions="320,*">
+            <!-- Master list -->
+            <Border Grid.Column="0" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,1,0">
+                <Grid>
+                    <!-- Empty state -->
+                    <StackPanel IsVisible="{Binding !HasResults}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                Spacing="{StaticResource Space2}" Margin="24">
+                        <TextBlock Classes="h2" Text="{loc:Tr RecipesEmptyTitle}" HorizontalAlignment="Center"/>
+                        <TextBlock Classes="muted body" Text="{loc:Tr RecipesEmptyBody}" HorizontalAlignment="Center"
+                                   TextWrapping="Wrap" TextAlignment="Center"/>
+                    </StackPanel>
+
+                    <ListBox ItemsSource="{Binding FilteredRecipes}" SelectedItem="{Binding SelectedRecipe}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:RecipeListItemViewModel">
+                                <Border Classes="hairline-row">
+                                    <Border.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="{loc:Tr RecipesEdit}" Command="{Binding EditCommand}"/>
+                                            <MenuItem Header="{loc:Tr RecipesDuplicate}" Command="{Binding DuplicateCommand}"/>
+                                            <MenuItem Header="{loc:Tr RecipesExport}" Command="{Binding ExportCommand}"/>
+                                            <Separator/>
+                                            <MenuItem Header="{loc:Tr RecipesDelete}" Command="{Binding DeleteCommand}"/>
+                                        </ContextMenu>
+                                    </Border.ContextMenu>
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Grid.Column="0" Spacing="{StaticResource Space1}">
+                                            <TextBlock Classes="body" Text="{Binding Name}" FontWeight="SemiBold"/>
+                                            <TextBlock Classes="muted" FontSize="{StaticResource FontSizeSm}">
+                                                <Run Text="sửa lần cuối "/>
+                                                <Run Text="{Binding UpdatedTimestamp}"/>
+                                            </TextBlock>
+                                        </StackPanel>
+                                        <Button Grid.Column="1" Content="{loc:Tr RecipesRun}" Command="{Binding RunCommand}"
+                                                VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </Border>
+
+            <!-- Detail / editor -->
+            <Grid Grid.Column="1">
+                <TextBlock Classes="muted body" Text="{loc:Tr RecipesNoSelectionHint}"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                           IsVisible="{Binding SelectedRecipe, Converter={x:Static ObjectConverters.IsNull}}"/>
+
+                <ScrollViewer IsVisible="{Binding SelectedRecipe, Converter={x:Static ObjectConverters.IsNotNull}}">
+                    <StackPanel Margin="{StaticResource PaddingPanel}" Spacing="{StaticResource Space3}">
+                        <TextBlock Classes="h2" Text="{Binding SelectedRecipe.Name}"/>
+                        <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space2}">
+                            <Button Content="{loc:Tr RecipesRun}" Command="{Binding SelectedRecipe.RunCommand}"/>
+                            <Button Content="{loc:Tr RecipesEdit}" Command="{Binding SelectedRecipe.EditCommand}"/>
+                            <Button Content="{loc:Tr RecipesDuplicate}" Command="{Binding SelectedRecipe.DuplicateCommand}"/>
+                            <Button Content="{loc:Tr RecipesExport}" Command="{Binding SelectedRecipe.ExportCommand}"/>
+                            <Button Content="{loc:Tr RecipesDelete}" Command="{Binding SelectedRecipe.DeleteCommand}"/>
+                        </StackPanel>
+
+                        <TextBlock Classes="h2" Text="{loc:Tr RecipesRecentRuns}"/>
+                        <TextBlock Classes="muted" Text="..." IsVisible="{Binding IsLoadingRecentRuns}"/>
+                        <TextBlock Classes="muted" Text="{loc:Tr RecipesNoRecentRuns}" IsVisible="{Binding !HasRecentRuns}"/>
+                        <ItemsControl ItemsSource="{Binding RecentRuns}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:RecentRunViewModel">
+                                    <Border Classes="hairline-row">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Grid.Column="0" Classes="body" Text="{Binding Name}"/>
+                                            <TextBlock Grid.Column="1" Classes="muted" Text="{Binding Status}"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- Editor overlay (placeholder until P4) -->
+                <Border IsVisible="{Binding IsEditorOpen}" Background="{DynamicResource SurfaceBackgroundBrush}">
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="{StaticResource Space2}">
+                        <TextBlock Classes="h2" Text="{Binding EditorTitle}" HorizontalAlignment="Center"/>
+                        <TextBlock Classes="muted body" Text="{loc:Tr RecipesEditorPlaceholder}" HorizontalAlignment="Center"/>
+                        <Button Content="{loc:Tr RecipesBack}" Command="{Binding CloseEditorCommand}" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Grid>
+    </Grid>
+</UserControl>

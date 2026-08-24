@@ -65,6 +65,10 @@ public static class NameAndPaths
 
         // Data
         Directory.CreateDirectory(DataFolder.FolderPath);
+
+        // Imported recipe resources
+        Directory.CreateDirectory(ImportedFolder.WorkbooksPath);
+        Directory.CreateDirectory(ImportedFolder.PresentationsPath);
     }
 
     /// <summary>
@@ -118,6 +122,19 @@ public static class NameAndPaths
         ///     Gets the root directory (under the OS temp folder) where cached downloads are stored.
         /// </summary>
         public static string RootPath => Path.Combine(Path.GetTempPath(), Application.Name);
+    }
+
+    /// <summary>
+    ///     Provides the destination folders <c>IRecipePackageService.ImportAsync</c> extracts a <c>.recipe</c>
+    ///     package's workbook/presentation resources into.
+    /// </summary>
+    public static class ImportedFolder
+    {
+        /// <summary>Gets the folder imported workbook files are extracted into.</summary>
+        public static string WorkbooksPath => Path.Combine(UserPath, "Imported", "Workbooks");
+
+        /// <summary>Gets the folder imported presentation files are extracted into.</summary>
+        public static string PresentationsPath => Path.Combine(UserPath, "Imported", "Presentations");
     }
 
     /// <summary>

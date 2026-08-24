@@ -12,6 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
@@ -23,6 +24,9 @@ using Serilog.Events;
 using Serilog.Exceptions;
 using SlideGenerator.Cloud;
 using SlideGenerator.Desktop.Bootstrap;
+using SlideGenerator.Desktop.Services.Localization;
+using SlideGenerator.Desktop.Services.Progress;
+using SlideGenerator.Desktop.Services.Theme;
 using SlideGenerator.Desktop.Shell;
 using SlideGenerator.Document;
 using SlideGenerator.Generator;
@@ -38,17 +42,31 @@ using SlideGenerator.Utilities;
 namespace SlideGenerator.Desktop;
 
 /// <summary>
-///     Avalonia application object. Builds the generic host (DI container for all domain modules),
-///     starts it, then shows the (placeholder, for now) main window.
+///     Avalonia application object. Builds the generic host (DI container for all domain modules), shows the
+///     main window immediately, then runs startup work asynchronously without blocking the UI thread.
 /// </summary>
 public sealed class App : Application
 {
+    /// <summary>
+    ///     Minimum time the splash screen, once shown, stays visible — long enough for its lockup animation
+    ///     (<see cref="Shell.SplashView" />, <c>MotionBrand</c> = 400ms) to finish even if startup work
+    ///     completes sooner.
+    /// </summary>
+    private static readonly TimeSpan MinimumSplashDuration = TimeSpan.FromMilliseconds(420);
+
+    /// <summary>
+    ///     If startup work finishes within this window, the splash is skipped entirely — showing it only to
+    ///     immediately replace it reads as a flash, not a screen (see the plan's Startup section).
+    /// </summary>
+    private static readonly TimeSpan SplashSkipThreshold = TimeSpan.FromMilliseconds(400);
+
     private IHost? _host;
 
     /// <inheritdoc />
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
+        DataTemplates.Add(new ViewLocator());
     }
 
     /// <inheritdoc />
@@ -63,18 +81,55 @@ public sealed class App : Application
             ConfigureServices(builder.Services);
             _host = builder.Build();
 
-            _host.StartAsync().GetAwaiter().GetResult();
-            InitializeAsync(_host.Services).GetAwaiter().GetResult();
-
-            desktop.MainWindow = new MainWindow();
+            var mainWindowViewModel = _host.Services.GetRequiredService<MainWindowViewModel>();
+            var window = new MainWindow { DataContext = mainWindowViewModel };
+            desktop.MainWindow = window;
             desktop.ShutdownRequested += (_, _) => ShutdownAsync(_host).GetAwaiter().GetResult();
 
-#if DEBUG
-            this.AttachDeveloperTools();
-#endif
+            // Fire-and-forget by design — OnFrameworkInitializationCompleted cannot be async, and awaiting
+            // here would reintroduce the exact UI-thread block this rewrite removes. Every awaited step below
+            // resumes back on the UI thread (Avalonia's SynchronizationContext), so DispatcherTimer-based
+            // services (IProgressHub) constructed partway through remain UI-thread-affine. A fire-and-forget
+            // Task's exception is otherwise swallowed silently (window would stay blank forever with no log
+            // line at all) — catch and log explicitly instead of letting that happen.
+            _ = StartupAsync(_host, mainWindowViewModel).ContinueWith(
+                t => Log.Fatal(t.Exception, "Startup failed"),
+                CancellationToken.None, TaskContinuationOptions.OnlyOnFaulted, TaskScheduler.Default);
+
+            // Developer tools are attached via Program.cs's AppBuilder.WithDeveloperTools() instead of
+            // this.AttachDeveloperTools() here — the two are the same underlying mechanism, and calling
+            // both throws "Developer tools have already been attached."
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    private static async Task StartupAsync(IHost host, MainWindowViewModel mainWindowViewModel)
+    {
+        // Every await in this method (and everything it calls) must stay on the UI thread — ConfigureAwait(true)
+        // throughout, never (false) — because IProgressHub's DispatcherTimer is constructed partway through
+        // and every Avalonia call after that point (theme, CurrentContent) needs UI-thread affinity.
+        await host.StartAsync().ConfigureAwait(true);
+
+        var sw = Stopwatch.StartNew();
+        var initTask = InitializeAsync(host.Services);
+        var wonRace = await Task.WhenAny(initTask, Task.Delay(SplashSkipThreshold)).ConfigureAwait(true) == initTask;
+
+        if (!wonRace)
+        {
+            // Startup is taking a while — show the splash and let its lockup animation play in full, even if
+            // init finishes before the animation would (an abrupt cut mid-transform looks broken).
+            mainWindowViewModel.CurrentContent = host.Services.GetRequiredService<SplashViewModel>();
+            await initTask.ConfigureAwait(true);
+            var remaining = MinimumSplashDuration - sw.Elapsed;
+            if (remaining > TimeSpan.Zero) await Task.Delay(remaining).ConfigureAwait(true);
+        }
+        else
+        {
+            await initTask.ConfigureAwait(true); // propagate any exception; already resolved
+        }
+
+        mainWindowViewModel.CurrentContent = host.Services.GetRequiredService<ShellViewModel>();
     }
 
     private static void ConfigureServices(IServiceCollection services)
@@ -124,15 +179,24 @@ public sealed class App : Application
                 Log.Warning("Could not create 'latest.log' hard link: {Message}", ex.Message);
             }
 
+        // Must resolve (construct + subscribe) before IService.InitializeAsync() — crash-resumed jobs are
+        // scheduled immediately by JobRunner.InitializeAsync and their first progress events would be lost
+        // by a subscriber attached any later. See IProgressHub's remarks.
+        services.GetRequiredService<IProgressHub>();
+
         var settingManager = services.GetRequiredService<ISettingManager>();
         Log.Information("Loading settings...");
-        await settingManager.Load().ConfigureAwait(false);
+        await settingManager.Load().ConfigureAwait(true);
+
+        services.GetRequiredService<IThemeService>().ApplyFromSettings();
+        services.GetRequiredService<ILocalizationService>().SetLanguage(settingManager.Current.Appearance.Language);
 
         var service = services.GetRequiredService<IService>();
         Log.Information("Starting job runner...");
-        await service.InitializeAsync().ConfigureAwait(false);
+        await service.InitializeAsync().ConfigureAwait(true);
 
-        await UpdateChecker.CheckForUpdatesAsync().ConfigureAwait(false);
+        // Fire-and-forget — an update check must never hold up startup or the splash screen.
+        _ = UpdateChecker.CheckForUpdatesAsync();
 
         Log.Information("Setup completed!");
     }

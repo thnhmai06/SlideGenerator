@@ -1,7 +1,17 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:shell="clr-namespace:SlideGenerator.Desktop.Shell"
         x:Class="SlideGenerator.Desktop.Shell.MainWindow"
+        x:DataType="shell:MainWindowViewModel"
         Title="SlideGenerator"
-        Width="960" Height="600">
-    <TextBlock Margin="16" Text="SlideGenerator Desktop — placeholder window." />
+        Icon="avares://SlideGenerator.Desktop/Assets/appicon.ico"
+        Width="1280" Height="800" MinWidth="1024" MinHeight="640"
+        Background="{DynamicResource SurfaceBackgroundBrush}">
+    <TransitioningContentControl Content="{Binding CurrentContent}"
+                                  HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
+        <TransitioningContentControl.PageTransition>
+            <!-- CrossFade.Duration is a plain CLR property, not bindable — cannot reference MotionUi here. -->
+            <CrossFade Duration="0:0:0.15"/>
+        </TransitioningContentControl.PageTransition>
+    </TransitioningContentControl>
 </Window>

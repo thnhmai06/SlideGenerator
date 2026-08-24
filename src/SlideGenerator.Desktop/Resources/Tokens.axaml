@@ -1,0 +1,50 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="using:System">
+
+    <!-- Typography — Inter (WithInterFont() in Program.cs registers it as "Inter") for UI, JetBrains Mono NL
+         for anything that IS data: file paths, column names, {{placeholder}} tags, row indices, log lines. -->
+    <FontFamily x:Key="FontSans">Inter</FontFamily>
+    <FontFamily x:Key="FontMono">avares://SlideGenerator.Desktop/Assets/Fonts/JetBrainsMono-Variable.ttf#JetBrains Mono</FontFamily>
+
+    <sys:Double x:Key="FontSizeXs">11</sys:Double>
+    <sys:Double x:Key="FontSizeSm">12</sys:Double>
+    <sys:Double x:Key="FontSizeBase">13</sys:Double>
+    <sys:Double x:Key="FontSizeMd">15</sys:Double>
+    <sys:Double x:Key="FontSizeLg">18</sys:Double>
+    <sys:Double x:Key="FontSizeXl">22</sys:Double>
+    <sys:Double x:Key="FontSize2xl">28</sys:Double>
+
+    <!-- Spacing — 4/8 rhythm. sys:Double, valid ONLY for double-typed properties (StackPanel.Spacing,
+         WrapPanel item spacing). Using one of these for Margin/Padding (Thickness-typed) throws
+         InvalidCastException at runtime with no compile-time warning — StaticResource assigns the resolved
+         object directly, no TypeConverter runs. For Margin/Padding use a Thickness token below, or a
+         literal number ("8") which DOES go through Avalonia's string→Thickness converter. -->
+    <sys:Double x:Key="Space0">0</sys:Double>
+    <sys:Double x:Key="Space1">4</sys:Double>
+    <sys:Double x:Key="Space2">8</sys:Double>
+    <sys:Double x:Key="Space3">12</sys:Double>
+    <sys:Double x:Key="Space4">16</sys:Double>
+    <sys:Double x:Key="Space5">20</sys:Double>
+    <sys:Double x:Key="Space6">24</sys:Double>
+    <sys:Double x:Key="Space8">32</sys:Double>
+    <sys:Double x:Key="Space10">40</sys:Double>
+    <sys:Double x:Key="Space12">48</sys:Double>
+
+    <Thickness x:Key="PaddingPage">24,16</Thickness>
+    <Thickness x:Key="PaddingPanel">20</Thickness>
+    <Thickness x:Key="PaddingControl">12,8</Thickness>
+
+    <!-- Radius — exactly two values app-wide (shape lock, see plan §1). -->
+    <CornerRadius x:Key="RadiusControl">4</CornerRadius>
+    <CornerRadius x:Key="RadiusPanel">6</CornerRadius>
+
+    <!-- Motion — one duration scale, bound via DynamicResource so Appearance.ReducedMotion can zero every
+         animation in the app at once (see App.axaml.cs ApplyReducedMotion). Never hardcode a literal
+         Duration in a Style; always reference one of these four. -->
+    <sys:TimeSpan x:Key="MotionMicro">0:0:0.1</sys:TimeSpan>
+    <sys:TimeSpan x:Key="MotionUi">0:0:0.15</sys:TimeSpan>
+    <sys:TimeSpan x:Key="MotionState">0:0:0.2</sys:TimeSpan>
+    <sys:TimeSpan x:Key="MotionBrand">0:0:0.4</sys:TimeSpan>
+    <sys:TimeSpan x:Key="MotionZero">0:0:0</sys:TimeSpan>
+</ResourceDictionary>

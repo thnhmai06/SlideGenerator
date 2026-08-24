@@ -12,6 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using System.Drawing;
 using System.Security.Cryptography;
 using System.Text;
 using SlideGenerator.Document.Presentations.Identifiers;
@@ -34,6 +35,13 @@ public interface IReadOnlySlide : IEquatable<IReadOnlySlide>
     ///     Gets the identifier of the slide.
     /// </summary>
     SlideIdentifier Identifier { get; }
+
+    /// <summary>
+    ///     Gets the slide size in pixels at 96 DPI — the same unit as <see cref="IReadOnlyShape.Bounds" />, so
+    ///     a shape's bounds can be scaled directly against a slide preview image without a separate unit
+    ///     conversion.
+    /// </summary>
+    SizeF SlideSize { get; }
 
     /// <summary>
     ///     Gets a preview image of the slide as a byte array.
@@ -64,9 +72,20 @@ public interface ISlide : IReadOnlySlide
 
 internal sealed class SfSlide(Syncfusion.Presentation.ISlide core) : ISlide
 {
+    // Same conversion as SfShape.PixelsPerPoint (Shape.cs) — Syncfusion's ISlideSize.Width/Height are points,
+    // verified against the Syncfusion.Presentation.NET 34.2.3 XML doc ("Gets the width, in points. Read-only.").
+    // ISlideSize is exposed via IBaseSlide (inherited by ISlide), not IPresentation itself — every slide in a
+    // deck reports the same size (OOXML has one presentation-wide <p:sldSz>), so reading it off any one slide
+    // is equivalent to a presentation-level property.
+    private const float PixelsPerPoint = 96.0f / 72.0f;
+
     internal Syncfusion.Presentation.ISlide Core { get; } = core;
 
     public IEnumerable<IShape> Shapes => FlattenShapes(Core.Shapes);
+
+    public SizeF SlideSize => new(
+        (float)Core.SlideSize.Width * PixelsPerPoint,
+        (float)Core.SlideSize.Height * PixelsPerPoint);
 
     /// <summary>
     ///     Recursively walks <paramref name="items" />, descending into every <see cref="IGroupShape" /> so

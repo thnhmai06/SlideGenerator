@@ -44,10 +44,20 @@ public interface IService
     Task ShutdownAsync(CancellationToken ct = default);
 
     /// <summary>
+    ///     Computes the job list <see cref="CreateAsync" /> would spawn for <paramref name="request" />,
+    ///     without spawning anything — lets a caller (e.g. a run confirmation dialog) show exactly what will
+    ///     be created and flag every output-path conflict <see cref="CreateAsync" /> would otherwise reject
+    ///     at submit time, using the identical conflict definition. Does not itself throw on conflicts —
+    ///     conflicts are reported per job via <see cref="PlannedJob.ConflictKind" /> instead.
+    /// </summary>
+    Task<IReadOnlyList<PlannedJob>> PreviewAsync(Request request, CancellationToken ct = default);
+
+    /// <summary>
     ///     Starts a new slide-generation request for the given <paramref name="request" /> — spawns one
     ///     job per computed job specification. Multiple active requests for the same recipe are
-    ///     allowed; throws only if a computed job's output path collides with one already claimed by
-    ///     another active (running or paused) request's job.
+    ///     allowed; throws if two of the request's own jobs would write to the same output path, or if a
+    ///     computed job's output path collides with one already claimed by another active (running or
+    ///     paused) request's job.
     /// </summary>
     /// <returns>The generated request id grouping every job spawned for it.</returns>
     Task<string> CreateAsync(Request request, CancellationToken ct = default);
@@ -85,12 +95,21 @@ public interface IService
     /// <summary>
     ///     Returns summaries of all currently active (running or paused) requests, keyed by request id.
     /// </summary>
-    Task<IReadOnlyDictionary<string, Summary>> ListActiveAsync(CancellationToken ct = default);
+    /// <param name="includeLogs">
+    ///     When <see langword="false" />, <see cref="Summary.Logs" />/<see cref="JobSummary.Logs" /> are
+    ///     empty and no request's log file is read from disk — pass <see langword="false" /> when only the
+    ///     list itself is needed (e.g. rendering a list of requests), since every group would otherwise pay
+    ///     for a full read-and-parse of its <c>.log</c> file even though the list view never shows it.
+    /// </param>
+    /// <param name="ct"></param>
+    Task<IReadOnlyDictionary<string, Summary>> ListActiveAsync(bool includeLogs = true, CancellationToken ct = default);
 
     /// <summary>
     ///     Returns summaries of all completed, canceled, or errored requests, keyed by request id.
     /// </summary>
-    Task<IReadOnlyDictionary<string, Summary>> ListCompletedAsync(CancellationToken ct = default);
+    /// <param name="includeLogs">See <see cref="ListActiveAsync" />.</param>
+    /// <param name="ct"></param>
+    Task<IReadOnlyDictionary<string, Summary>> ListCompletedAsync(bool includeLogs = true, CancellationToken ct = default);
 
     /// <summary>
     ///     Permanently deletes every job belonging to a request. If the request is still
@@ -138,6 +157,24 @@ internal sealed class Service(
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlyList<PlannedJob>> PreviewAsync(Request request, CancellationToken ct = default)
+    {
+        var entry = await recipeRepository.GetAsync(request.RecipeId, ct).ConfigureAwait(false)
+                    ?? throw new InvalidOperationException($"Recipe {request.RecipeId} not found.");
+
+        var jobs = BuildJobs(entry.Recipe, request);
+        var duplicatePaths = FindDuplicateOutputPath(jobs);
+        var activeOutputPaths = await GetActiveOutputPathsAsync().ConfigureAwait(false);
+
+        return jobs
+            .Select(j => new PlannedJob(j.OutputPath, j.WorkbookPath, j.WorksheetName,
+                duplicatePaths.Contains(j.OutputPath) ? ConflictKind.DuplicateWithinRequest
+                : activeOutputPaths.Contains(j.OutputPath) ? ConflictKind.ConflictsWithActiveRequest
+                : ConflictKind.None))
+            .ToList();
+    }
+
+    /// <inheritdoc />
     public async Task<string> CreateAsync(Request request, CancellationToken ct = default)
     {
         using var scope = logger.BeginScope("Start/{RecipeId}/{RequestName}", request.RecipeId, request.Name);
@@ -148,6 +185,11 @@ internal sealed class Service(
         var requestId = Guid.NewGuid().ToString();
         var logPath = ResolveWorkflowLogPath(request);
         var jobs = BuildJobs(entry.Recipe, request);
+
+        var duplicatePaths = FindDuplicateOutputPath(jobs);
+        if (duplicatePaths.Count > 0)
+            throw new InvalidOperationException(
+                $"Output path '{duplicatePaths.First()}' is used by more than one mapping in this recipe.");
 
         var conflictingPath = await FindConflictingOutputPathAsync(jobs).ConfigureAwait(false);
         if (conflictingPath is not null)
@@ -203,7 +245,7 @@ internal sealed class Service(
     /// <inheritdoc />
     public async Task<int> StopAllAsync(CancellationToken ct = default)
     {
-        var actives = await ListActiveAsync(ct).ConfigureAwait(false);
+        var actives = await ListActiveAsync(includeLogs: false, ct).ConfigureAwait(false);
         var count = 0;
         foreach (var requestId in actives.Keys)
             if ((await StopAsync(requestId, ct).ConfigureAwait(false)).Succeeded > 0)
@@ -214,7 +256,7 @@ internal sealed class Service(
     /// <inheritdoc />
     public async Task<int> PauseAllAsync(CancellationToken ct = default)
     {
-        var actives = await ListActiveAsync(ct).ConfigureAwait(false);
+        var actives = await ListActiveAsync(includeLogs: false, ct).ConfigureAwait(false);
         var count = 0;
         foreach (var requestId in actives.Where(kv => kv.Value.JobStatus == JobStatus.Running).Select(kv => kv.Key))
             if ((await PauseAsync(requestId, ct).ConfigureAwait(false)).Succeeded > 0)
@@ -223,19 +265,21 @@ internal sealed class Service(
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyDictionary<string, Summary>> ListActiveAsync(CancellationToken ct = default)
+    public async Task<IReadOnlyDictionary<string, Summary>> ListActiveAsync(bool includeLogs = true,
+        CancellationToken ct = default)
     {
         var groups = await ListGroupsAsync(ct).ConfigureAwait(false);
         var active = groups.Where(kv => DeriveStatus(kv.Value) is JobStatus.Running or JobStatus.Paused);
-        return await ToSummariesAsync(active, ct).ConfigureAwait(false);
+        return await ToSummariesAsync(active, includeLogs, ct).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyDictionary<string, Summary>> ListCompletedAsync(CancellationToken ct = default)
+    public async Task<IReadOnlyDictionary<string, Summary>> ListCompletedAsync(bool includeLogs = true,
+        CancellationToken ct = default)
     {
         var groups = await ListGroupsAsync(ct).ConfigureAwait(false);
         var completed = groups.Where(kv => DeriveStatus(kv.Value) is JobStatus.Complete or JobStatus.Cancelled);
-        return await ToSummariesAsync(completed, ct).ConfigureAwait(false);
+        return await ToSummariesAsync(completed, includeLogs, ct).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -260,7 +304,7 @@ internal sealed class Service(
     /// <inheritdoc />
     public async Task<int> DeleteAllCompletedAsync(CancellationToken ct = default)
     {
-        var completed = await ListCompletedAsync(ct).ConfigureAwait(false);
+        var completed = await ListCompletedAsync(includeLogs: false, ct).ConfigureAwait(false);
         var deleted = 0;
         foreach (var requestId in completed.Keys)
         {
@@ -292,16 +336,44 @@ internal sealed class Service(
     }
 
     private async Task<IReadOnlyDictionary<string, Summary>> ToSummariesAsync(
-        IEnumerable<KeyValuePair<string, IReadOnlyList<JobSnapshot>>> groups, CancellationToken ct)
+        IEnumerable<KeyValuePair<string, IReadOnlyList<JobSnapshot>>> groups, bool includeLogs, CancellationToken ct)
     {
         var result = new Dictionary<string, Summary>();
         foreach (var (requestId, jobs) in groups)
         {
-            var summary = await ToSummaryAsync(requestId, jobs, ct).ConfigureAwait(false);
+            var summary = await ToSummaryAsync(requestId, jobs, includeLogs, ct).ConfigureAwait(false);
             if (summary != null) result[requestId] = summary;
         }
 
         return result;
+    }
+
+    /// <summary>
+    ///     Returns every output path in <paramref name="jobs" /> that is claimed by more than one job — i.e.
+    ///     two Mappings sharing the same worksheet (see <see cref="BuildJobs" />). Empty when no job's output
+    ///     path collides with another job's within the same request.
+    /// </summary>
+    internal static IReadOnlySet<string> FindDuplicateOutputPath(IReadOnlyList<JobSpecification> jobs)
+    {
+        return jobs
+            .GroupBy(j => j.OutputPath, StringComparer.OrdinalIgnoreCase)
+            .Where(g => g.Count() > 1)
+            .Select(g => g.Key)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    ///     Returns the output paths claimed by every job of another active (running, pending, or paused)
+    ///     request — shared by <see cref="FindConflictingOutputPathAsync" /> and <see cref="PreviewAsync" />
+    ///     so both use the exact same conflict definition.
+    /// </summary>
+    private async Task<IReadOnlySet<string>> GetActiveOutputPathsAsync()
+    {
+        var active = await jobsRepository.GetNonTerminalAsync().ConfigureAwait(false);
+        return active
+            .Where(j => j.JobStatus is JobStatus.Running or JobStatus.Pending or JobStatus.Paused)
+            .Select(j => j.OutputPath)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
     }
 
     /// <summary>
@@ -310,11 +382,7 @@ internal sealed class Service(
     /// </summary>
     private async Task<string?> FindConflictingOutputPathAsync(IReadOnlyList<JobSpecification> jobs)
     {
-        var active = await jobsRepository.GetNonTerminalAsync().ConfigureAwait(false);
-        var activeOutputPaths = active
-            .Where(j => j.JobStatus is JobStatus.Running or JobStatus.Pending or JobStatus.Paused)
-            .Select(j => j.OutputPath)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var activeOutputPaths = await GetActiveOutputPathsAsync().ConfigureAwait(false);
         return jobs.Select(j => j.OutputPath).FirstOrDefault(activeOutputPaths.Contains);
     }
 
@@ -381,7 +449,8 @@ internal sealed class Service(
         return JobStatus.Complete;
     }
 
-    private async Task<Summary?> ToSummaryAsync(string requestId, IReadOnlyList<JobSnapshot> jobs, CancellationToken ct)
+    private async Task<Summary?> ToSummaryAsync(string requestId, IReadOnlyList<JobSnapshot> jobs, bool includeLogs,
+        CancellationToken ct)
     {
         if (jobs.Count == 0) return null;
         var record = await requestsRepository.GetAsync(requestId, ct).ConfigureAwait(false);
@@ -392,7 +461,9 @@ internal sealed class Service(
         var completedAt = status is JobStatus.Complete or JobStatus.Cancelled
             ? jobs.Max(j => j.Timestamp)
             : (DateTimeOffset?)null;
-        var logEntries = logFileReader.ReadAll(record.LogPath);
+        // Reading and regex-parsing a request's whole .log file is the expensive part of building a Summary —
+        // skip it entirely for list views, which never display log content anyway (see IService.ListActiveAsync).
+        IReadOnlyList<LogEntry> logEntries = includeLogs ? logFileReader.ReadAll(record.LogPath) : [];
 
         var jobSummaries = jobs.ToDictionary(j => j.JobId, j => ToJobSummary(requestId, j, logEntries));
 

@@ -1,0 +1,10 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:shell="clr-namespace:SlideGenerator.Desktop.Shell"
+             x:Class="SlideGenerator.Desktop.Shell.PlaceholderPageView"
+             x:DataType="shell:PlaceholderPageViewModel">
+    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="{StaticResource Space2}">
+        <TextBlock Classes="h2" Text="{Binding Title}" HorizontalAlignment="Center"/>
+        <TextBlock Classes="muted body" Text="Chưa xây dựng ở giai đoạn này" HorizontalAlignment="Center"/>
+    </StackPanel>
+</UserControl>

@@ -1,0 +1,44 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:shell="clr-namespace:SlideGenerator.Desktop.Shell"
+             xmlns:loc="clr-namespace:SlideGenerator.Desktop.Services.Localization"
+             x:Class="SlideGenerator.Desktop.Shell.ShellView"
+             x:DataType="shell:ShellViewModel">
+    <Grid ColumnDefinitions="200,*" Background="{DynamicResource SurfaceBackgroundBrush}">
+        <!-- Sidebar -->
+        <Border Grid.Column="0" Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0">
+            <Grid RowDefinitions="Auto,*,Auto">
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="{StaticResource PaddingPanel}"
+                            Spacing="{StaticResource Space2}">
+                    <Image Source="avares://SlideGenerator.Desktop/Assets/Brand/app-icon.png" Width="24" Height="24"/>
+                    <TextBlock Classes="h2" Text="SlideGenerator" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <StackPanel Grid.Row="1" Margin="8" Spacing="{StaticResource Space1}">
+                    <Button Classes="nav-item" Classes.active="{Binding IsRecipesActive}"
+                            Content="{loc:Tr NavRecipes}"
+                            Command="{Binding NavigateCommand}" CommandParameter="{x:Static shell:ShellDestination.Recipes}"/>
+                    <Button Classes="nav-item" Classes.active="{Binding IsRunsActive}"
+                            Content="{loc:Tr NavRuns}"
+                            Command="{Binding NavigateCommand}" CommandParameter="{x:Static shell:ShellDestination.Runs}"/>
+                </StackPanel>
+
+                <StackPanel Grid.Row="2" Margin="8">
+                    <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0" Margin="8,0,8,8"/>
+                    <Button Classes="nav-item" Classes.active="{Binding IsSettingsActive}"
+                            Content="{loc:Tr NavSettings}"
+                            Command="{Binding NavigateCommand}" CommandParameter="{x:Static shell:ShellDestination.Settings}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Page content -->
+        <TransitioningContentControl Grid.Column="1" Content="{Binding CurrentPage}">
+            <TransitioningContentControl.PageTransition>
+                <!-- CrossFade.Duration is a plain CLR property, not bindable — cannot reference MotionUi here. -->
+                <CrossFade Duration="0:0:0.15"/>
+            </TransitioningContentControl.PageTransition>
+        </TransitioningContentControl>
+    </Grid>
+</UserControl>

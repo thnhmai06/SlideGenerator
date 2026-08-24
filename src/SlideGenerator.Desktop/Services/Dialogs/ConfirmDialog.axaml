@@ -1,0 +1,17 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="SlideGenerator.Desktop.Services.Dialogs.ConfirmDialog"
+        x:Name="Root"
+        Width="380" SizeToContent="Height"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource SurfaceBrush}">
+    <StackPanel Margin="{StaticResource PaddingPanel}" Spacing="{StaticResource Space4}">
+        <TextBlock Classes="body" Text="{Binding #Root.Message}" TextWrapping="Wrap"/>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="{StaticResource Space2}">
+            <Button Content="{Binding #Root.CancelLabel}" Click="OnCancel"/>
+            <Button Content="{Binding #Root.ConfirmLabel}" Click="OnConfirm"
+                    Background="{DynamicResource AccentBrush}" Foreground="{DynamicResource TextOnAccentBrush}"/>
+        </StackPanel>
+    </StackPanel>
+</Window>

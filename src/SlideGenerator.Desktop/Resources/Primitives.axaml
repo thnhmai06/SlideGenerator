@@ -1,0 +1,32 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Raw brand colors sampled from assets/logo/*.png — never referenced directly from views, only from Semantic.axaml. -->
+    <Color x:Key="BrandNavy">#111B61</Color>
+    <Color x:Key="BrandRoyal">#003399</Color>
+    <Color x:Key="BrandDodger">#1E90FF</Color>
+    <Color x:Key="BrandSteel">#005299</Color>
+
+    <!-- Neutral ramp, tinted toward navy rather than a stock Slate/Zinc scale. -->
+    <Color x:Key="NeutralLight50">#F7F8FB</Color>
+    <Color x:Key="NeutralLight100">#EDF0F6</Color>
+    <Color x:Key="NeutralLight200">#DFE3ED</Color>
+    <Color x:Key="NeutralLight500">#6D7490</Color>
+    <Color x:Key="NeutralLight600">#454C6B</Color>
+    <Color x:Key="NeutralLight900">#0E1330</Color>
+
+    <Color x:Key="NeutralDark900">#0B0E1C</Color>
+    <Color x:Key="NeutralDark800">#131730</Color>
+    <Color x:Key="NeutralDark700">#1A1F3D</Color>
+    <Color x:Key="NeutralDark600">#242A4C</Color>
+    <Color x:Key="NeutralDark400">#767E9C</Color>
+    <Color x:Key="NeutralDark200">#A7AFC9</Color>
+    <Color x:Key="NeutralDark50">#EEF1F8</Color>
+
+    <!-- Status colors, one per semantic role, tuned separately for each theme in Semantic.axaml. -->
+    <Color x:Key="SuccessLight">#0F7B4F</Color>
+    <Color x:Key="SuccessDark">#3DBE86</Color>
+    <Color x:Key="WarningLight">#9A6400</Color>
+    <Color x:Key="WarningDark">#E0A030</Color>
+    <Color x:Key="DangerLight">#B3261E</Color>
+    <Color x:Key="DangerDark">#F2685E</Color>
+</ResourceDictionary>

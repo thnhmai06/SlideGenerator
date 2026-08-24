@@ -1,0 +1,72 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:SlideGenerator.Desktop.Features.Recipes.ViewModels"
+        xmlns:conv="clr-namespace:SlideGenerator.Desktop.Converters"
+        xmlns:gen="clr-namespace:SlideGenerator.Generator;assembly=SlideGenerator.Generator"
+        xmlns:pres="clr-namespace:SlideGenerator.Document.Presentations.Identifiers;assembly=SlideGenerator.Document"
+        x:Class="SlideGenerator.Desktop.Features.Recipes.Views.RunDialogView"
+        x:DataType="vm:RunDialogViewModel"
+        Title="Chạy recipe"
+        Width="480" SizeToContent="Height" CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource SurfaceBrush}">
+    <StackPanel Margin="{StaticResource PaddingPanel}" Spacing="{StaticResource Space4}">
+        <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="{StaticResource Space3}"
+              RowSpacing="{StaticResource Space2}">
+            <TextBlock Grid.Row="0" Grid.Column="0" Classes="body" Text="Tên" VerticalAlignment="Center"/>
+            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Name}"/>
+
+            <TextBlock Grid.Row="1" Grid.Column="0" Classes="body" Text="Định dạng" VerticalAlignment="Center"/>
+            <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="{StaticResource Space3}">
+                <RadioButton GroupName="OutputType" Content=".pptx"
+                             IsChecked="{Binding OutputType, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static pres:PresentationType.Pptx}}"/>
+                <RadioButton GroupName="OutputType" Content=".potx"
+                             IsChecked="{Binding OutputType, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static pres:PresentationType.Potx}}"/>
+                <RadioButton GroupName="OutputType" Content=".ppsx"
+                             IsChecked="{Binding OutputType, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static pres:PresentationType.Ppsx}}"/>
+            </StackPanel>
+
+            <TextBlock Grid.Row="2" Grid.Column="0" Classes="body" Text="Lưu vào" VerticalAlignment="Center"/>
+            <Grid Grid.Row="2" Grid.Column="1" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource Space2}">
+                <TextBox Grid.Column="0" Text="{Binding SaveFolder}"/>
+                <Button Grid.Column="1" Content="Chọn..." Command="{Binding PickFolderCommand}"/>
+            </Grid>
+        </Grid>
+
+        <Expander Header="Nâng cao">
+            <CheckBox Content="Cho phép đường dẫn cục bộ" IsChecked="{Binding AllowLocalPaths}"/>
+        </Expander>
+
+        <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0" Padding="0,12,0,0">
+            <StackPanel Spacing="{StaticResource Space2}">
+                <TextBlock Classes="muted body" IsVisible="{Binding !IsPreviewLoading}">
+                    <Run Text="Sẽ tạo"/>
+                    <Run Text="{Binding PlannedJobs.Count}"/>
+                    <Run Text="file"/>
+                </TextBlock>
+                <TextBlock Classes="muted body" Text="Đang tính..." IsVisible="{Binding IsPreviewLoading}"/>
+                <TextBlock Classes="body" Foreground="{DynamicResource DangerBrush}" Text="{Binding ErrorMessage}"
+                           IsVisible="{Binding ErrorMessage, Converter={x:Static ObjectConverters.IsNotNull}}"
+                           TextWrapping="Wrap"/>
+                <ItemsControl ItemsSource="{Binding PlannedJobs}" MaxHeight="160">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="gen:PlannedJob">
+                            <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space2}">
+                                <TextBlock Classes="mono" FontSize="{StaticResource FontSizeXs}" Text="{Binding OutputPath}"/>
+                                <TextBlock Text="⚠ trùng đường dẫn" Foreground="{DynamicResource DangerBrush}"
+                                           FontSize="{StaticResource FontSizeXs}"
+                                           IsVisible="{Binding ConflictKind, Converter={x:Static conv:EnumNotEqualsConverter.Instance}, ConverterParameter={x:Static gen:ConflictKind.None}}"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Border>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="{StaticResource Space2}">
+            <Button Content="Huỷ" Command="{Binding CancelCommand}"/>
+            <Button Content="Bắt đầu" Command="{Binding StartCommand}"
+                    Background="{DynamicResource AccentBrush}" Foreground="{DynamicResource TextOnAccentBrush}"/>
+        </StackPanel>
+    </StackPanel>
+</Window>

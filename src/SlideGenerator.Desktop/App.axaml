@@ -3,7 +3,18 @@
              x:Class="SlideGenerator.Desktop.App"
              xmlns:semi="https://irihi.tech/semi"
              RequestedThemeVariant="Default">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://SlideGenerator.Desktop/Resources/Primitives.axaml"/>
+                <ResourceInclude Source="avares://SlideGenerator.Desktop/Resources/Semantic.axaml"/>
+                <ResourceInclude Source="avares://SlideGenerator.Desktop/Resources/Tokens.axaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+
     <Application.Styles>
         <semi:SemiTheme />
+        <StyleInclude Source="avares://SlideGenerator.Desktop/Resources/Controls.axaml"/>
     </Application.Styles>
 </Application>

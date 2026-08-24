@@ -1,0 +1,38 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:SlideGenerator.Desktop.Features.RecipeEditor.ViewModels"
+             xmlns:models="clr-namespace:SlideGenerator.Desktop.Features.RecipeEditor.Models"
+             xmlns:conv="clr-namespace:SlideGenerator.Desktop.Converters"
+             x:Class="SlideGenerator.Desktop.Features.RecipeEditor.Views.SlideCanvasView"
+             x:DataType="vm:SlideCanvasViewModel">
+    <Grid x:Name="RootPanel" ClipToBounds="True">
+        <Image Source="{Binding Preview}" Stretch="Uniform"/>
+
+        <ItemsControl ItemsSource="{Binding Overlays}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Canvas/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:ShapeOverlayViewModel">
+                    <Grid Canvas.Left="{Binding ScreenBounds.X}"
+                          Canvas.Top="{Binding ScreenBounds.Y}"
+                          Width="{Binding ScreenBounds.Width}"
+                          Height="{Binding ScreenBounds.Height}"
+                          PointerPressed="OnOverlayPointerPressed">
+                        <Rectangle Classes="shape-overlay"
+                                   Classes.assigned="{Binding Binding.State, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:BindingDisplayState.Assigned}}"
+                                   Classes.suggested="{Binding Binding.State, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:BindingDisplayState.Suggested}}"
+                                   Classes.needs-selection="{Binding Binding.State, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:BindingDisplayState.NeedsSelection}}"
+                                   Classes.unassigned="{Binding Binding.State, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:BindingDisplayState.Unassigned}}"/>
+                        <TextBlock Classes="mono" FontSize="{StaticResource FontSizeXs}" Text="{Binding Binding.Column}"
+                                   IsVisible="{Binding Binding.Column, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                   VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="2"
+                                   Background="{DynamicResource SurfaceBrush}"/>
+                    </Grid>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </Grid>
+</UserControl>
