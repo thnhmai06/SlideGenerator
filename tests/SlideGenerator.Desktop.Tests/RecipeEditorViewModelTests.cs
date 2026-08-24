@@ -143,4 +143,82 @@ public sealed class RecipeEditorViewModelTests
         vm.Sessions[0].Mapping.TextInstructions.Should().ContainSingle(
             i => i.Placeholders.Contains("name") && i.Columns.Single().ColumnName == "Name");
     }
+
+    [Fact]
+    public async Task SelectSessionAsync_TargetSlideMissing_DoesNotProjectStaleContentOntoNewSession()
+    {
+        // Session B's template slide (99) doesn't exist in the fake presentation (only 1 and 2 do), so
+        // LoadMappingAsync bails before touching the panels — they still show A's content. Without the
+        // _loadedSession guard, the next SelectSessionAsync would wrongly project A's edited text binding
+        // onto B's mapping.
+        var cache = CreateSummaryCache(["name"], ["Name"]);
+        var vm = new RecipeEditorViewModel(cache, Substitute.For<IFilePicker>());
+        var recipe = new RecipeModel([CreateMapping(new SlideIdentifier(1)), CreateMapping(new SlideIdentifier(99))]);
+        await vm.InitializeAsync(recipe);
+
+        var row = vm.TextBindings.Rows.Should().ContainSingle().Subject;
+        vm.TextBindings.SetColumn(row, "Name");
+
+        await vm.SelectSessionAsync(vm.Sessions[1]);
+
+        vm.Sessions[1].Mapping.TextInstructions.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task SelectSessionAsync_JustSwitchingMappings_DoesNotMarkDirty()
+    {
+        var cache = CreateSummaryCache([], []);
+        var vm = new RecipeEditorViewModel(cache, Substitute.For<IFilePicker>());
+        var recipe = new RecipeModel([CreateMapping(new SlideIdentifier(1)), CreateMapping(new SlideIdentifier(2))]);
+        await vm.InitializeAsync(recipe);
+
+        await vm.SelectSessionAsync(vm.Sessions[1]);
+
+        vm.IsDirty.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task ToRecipe_ReflectsProjectedEditsAcrossAllSessions()
+    {
+        var cache = CreateSummaryCache(["name"], ["Name"]);
+        var vm = new RecipeEditorViewModel(cache, Substitute.For<IFilePicker>());
+        var recipe = new RecipeModel([CreateMapping(new SlideIdentifier(1))]);
+        await vm.InitializeAsync(recipe);
+
+        var row = vm.TextBindings.Rows.Should().ContainSingle().Subject;
+        vm.TextBindings.SetColumn(row, "Name");
+
+        var result = vm.ToRecipe();
+
+        result.Mappings.Should().ContainSingle().Which.TextInstructions.Should().ContainSingle();
+    }
+
+    [Fact]
+    public async Task RemoveMappingCommand_RemovesSessionAndSelectsNeighbor()
+    {
+        var cache = CreateSummaryCache([], []);
+        var vm = new RecipeEditorViewModel(cache, Substitute.For<IFilePicker>());
+        var recipe = new RecipeModel([CreateMapping(new SlideIdentifier(1)), CreateMapping(new SlideIdentifier(2))]);
+        await vm.InitializeAsync(recipe);
+
+        var removed = vm.Sessions[0];
+        vm.RemoveMappingCommand.Execute(removed);
+
+        vm.Sessions.Should().ContainSingle();
+        vm.Sessions.Should().NotContain(removed);
+    }
+
+    [Fact]
+    public async Task MoveMappingDownCommand_SwapsOrder()
+    {
+        var cache = CreateSummaryCache([], []);
+        var vm = new RecipeEditorViewModel(cache, Substitute.For<IFilePicker>());
+        var recipe = new RecipeModel([CreateMapping(new SlideIdentifier(1)), CreateMapping(new SlideIdentifier(2))]);
+        await vm.InitializeAsync(recipe);
+
+        var first = vm.Sessions[0];
+        vm.MoveMappingDownCommand.Execute(first);
+
+        vm.Sessions[1].Should().BeSameAs(first);
+    }
 }

@@ -16,10 +16,16 @@
             <Border Grid.Column="0" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0"
                     IsVisible="{Binding ShowMappingNavigator}" Width="180">
                 <ListBox x:Name="NavigatorList" ItemsSource="{Binding Sessions}"
+                         SelectedItem="{Binding SelectedSession, Mode=OneWay}"
                          SelectionChanged="OnNavigatorSelectionChanged">
                     <ListBox.ItemTemplate>
                         <DataTemplate x:DataType="vm:MappingEditSession">
-                            <TextBlock Classes="body" Text="{Binding Label}"/>
+                            <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+                                <TextBlock Grid.Column="0" Classes="body" Text="{Binding Label}" VerticalAlignment="Center"/>
+                                <Button Grid.Column="1" Content="Lên" Click="OnMoveUpClick"/>
+                                <Button Grid.Column="2" Content="Xuống" Click="OnMoveDownClick"/>
+                                <Button Grid.Column="3" Content="Xoá" Click="OnRemoveMappingClick"/>
+                            </Grid>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>

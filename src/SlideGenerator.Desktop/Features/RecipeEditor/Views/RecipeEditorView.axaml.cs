@@ -12,7 +12,9 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 using SlideGenerator.Desktop.Features.RecipeEditor.ViewModels;
 
 namespace SlideGenerator.Desktop.Features.RecipeEditor.Views;
@@ -34,5 +36,23 @@ public sealed partial class RecipeEditorView : UserControl
         if (DataContext is not RecipeEditorViewModel vm) return;
 
         vm.SelectSessionCommand.Execute(session);
+    }
+
+    private void OnMoveUpClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is StyledElement { DataContext: MappingEditSession session } && DataContext is RecipeEditorViewModel vm)
+            vm.MoveMappingUpCommand.Execute(session);
+    }
+
+    private void OnMoveDownClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is StyledElement { DataContext: MappingEditSession session } && DataContext is RecipeEditorViewModel vm)
+            vm.MoveMappingDownCommand.Execute(session);
+    }
+
+    private void OnRemoveMappingClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is StyledElement { DataContext: MappingEditSession session } && DataContext is RecipeEditorViewModel vm)
+            vm.RemoveMappingCommand.Execute(session);
     }
 }
