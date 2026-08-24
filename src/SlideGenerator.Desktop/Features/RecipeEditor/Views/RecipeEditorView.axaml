@@ -34,11 +34,40 @@
             <!-- Canvas -->
             <views:SlideCanvasView Grid.Column="1" DataContext="{Binding Canvas}"/>
 
-            <!-- Text bindings + worksheet sources -->
+            <!-- Text bindings + worksheet sources + selected-shape inspector -->
             <ScrollViewer Grid.Column="2">
                 <StackPanel Margin="{StaticResource PaddingPanel}" Spacing="{StaticResource Space3}">
                     <views:TextBindingsView DataContext="{Binding TextBindings}"/>
                     <views:WorksheetSourcesView DataContext="{Binding Sources}"/>
+
+                    <!-- Inspector: ROI try-order + fallback image for the shape selected on the canvas -->
+                    <Border Classes="hairline-row" IsVisible="{Binding Canvas.SelectedOverlay, Converter={x:Static ObjectConverters.IsNotNull}}">
+                        <StackPanel x:Name="InspectorPanel" Spacing="{StaticResource Space2}"
+                                    DataContext="{Binding Canvas.SelectedOverlay}" x:DataType="vm:ShapeOverlayViewModel">
+                            <TextBlock Classes="h2" Text="INSPECTOR"/>
+                            <TextBlock Classes="muted" Text="{Binding Shape.Shape.ShapeName}"/>
+
+                            <TextBlock Classes="body" Text="Thứ tự ROI"/>
+                            <ItemsControl ItemsSource="{Binding RoiOptions}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+                                            <TextBlock Grid.Column="0" Classes="mono" Text="{Binding Mode}" VerticalAlignment="Center"/>
+                                            <Button Grid.Column="1" Content="Lên" Click="OnRoiMoveUpClick"/>
+                                            <Button Grid.Column="2" Content="Xuống" Click="OnRoiMoveDownClick"/>
+                                            <Button Grid.Column="3" Content="Xoá" Click="OnRoiRemoveClick"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Grid.Column="0" Classes="body" Text="{Binding FallbackImagePath}"
+                                           TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                <Button Grid.Column="1" Content="Chọn ảnh dự phòng..." Click="OnPickFallbackImageClick"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
             </ScrollViewer>
         </Grid>

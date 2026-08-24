@@ -35,6 +35,7 @@ namespace SlideGenerator.Desktop.Features.RecipeEditor.ViewModels;
 public sealed partial class RecipeEditorViewModel : ObservableObject
 {
     private readonly ISummaryCache _summaryCache;
+    private readonly IFilePicker _filePicker;
 
     // The session whose mapping is actually reflected in the three panels right now. Distinct from
     // SelectedSession, which is set *before* LoadMappingAsync runs — if the load bails early (template slide
@@ -69,6 +70,7 @@ public sealed partial class RecipeEditorViewModel : ObservableObject
     public RecipeEditorViewModel(ISummaryCache summaryCache, IFilePicker filePicker)
     {
         _summaryCache = summaryCache;
+        _filePicker = filePicker;
         Canvas = new SlideCanvasViewModel();
         TextBindings = new TextBindingsViewModel();
         Sources = new WorksheetSourcesViewModel(filePicker, summaryCache);
@@ -126,6 +128,15 @@ public sealed partial class RecipeEditorViewModel : ObservableObject
     {
         var index = Sessions.IndexOf(session);
         if (index >= 0 && index < Sessions.Count - 1) Sessions.Move(index, index + 1);
+    }
+
+    /// <summary>Opens a file picker and sets the shape's fallback image path — the image used when the row's own source is missing or invalid.</summary>
+    [RelayCommand]
+    private async Task PickFallbackImageAsync(ShapeOverlayViewModel overlay)
+    {
+        var path = await _filePicker.PickFileAsync("Chọn ảnh mặc định",
+            [new Avalonia.Platform.Storage.FilePickerFileType("Ảnh") { Patterns = ["*.png", "*.jpg", "*.jpeg"] }]).ConfigureAwait(true);
+        if (path is not null) overlay.FallbackImagePath = path;
     }
 
     /// <summary>Commits in-flight edits from the previously selected session, then loads <paramref name="session" />'s mapping into the three panels.</summary>

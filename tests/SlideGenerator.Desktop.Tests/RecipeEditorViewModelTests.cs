@@ -13,6 +13,7 @@
  */
 
 using System.Drawing;
+using Avalonia.Platform.Storage;
 using FluentAssertions;
 using NSubstitute;
 using SlideGenerator.Desktop.Features.RecipeEditor.Models;
@@ -220,5 +221,35 @@ public sealed class RecipeEditorViewModelTests
         vm.MoveMappingDownCommand.Execute(first);
 
         vm.Sessions[1].Should().BeSameAs(first);
+    }
+
+    [Fact]
+    public async Task PickFallbackImageCommand_PathChosen_SetsOverlayFallbackImagePath()
+    {
+        var picker = Substitute.For<IFilePicker>();
+        picker.PickFileAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<FilePickerFileType>?>()).Returns("chosen.png");
+        var vm = new RecipeEditorViewModel(CreateSummaryCache([], []), picker);
+        var shape = new ShapeSummary(new SlideIdentifier(1), new ShapeIdentifier("Avatar"), new RectangleF(0, 0, 10, 10));
+        var overlay = new ShapeOverlayViewModel(shape, new BindingDisplay("Avatar", BindingDisplayState.Unassigned, null, []),
+            new ImageEditInstruction([]), null);
+
+        await vm.PickFallbackImageCommand.ExecuteAsync(overlay);
+
+        overlay.FallbackImagePath.Should().Be("chosen.png");
+    }
+
+    [Fact]
+    public async Task PickFallbackImageCommand_Cancelled_LeavesFallbackImagePathUnchanged()
+    {
+        var picker = Substitute.For<IFilePicker>();
+        picker.PickFileAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<FilePickerFileType>?>()).Returns((string?)null);
+        var vm = new RecipeEditorViewModel(CreateSummaryCache([], []), picker);
+        var shape = new ShapeSummary(new SlideIdentifier(1), new ShapeIdentifier("Avatar"), new RectangleF(0, 0, 10, 10));
+        var overlay = new ShapeOverlayViewModel(shape, new BindingDisplay("Avatar", BindingDisplayState.Unassigned, null, []),
+            new ImageEditInstruction([]), null);
+
+        await vm.PickFallbackImageCommand.ExecuteAsync(overlay);
+
+        overlay.FallbackImagePath.Should().BeNull();
     }
 }

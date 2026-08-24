@@ -18,6 +18,7 @@ using SlideGenerator.Desktop.Features.RecipeEditor.Models;
 using SlideGenerator.Desktop.Features.RecipeEditor.ViewModels;
 using SlideGenerator.Document.Presentations.Identifiers;
 using SlideGenerator.Document.Workbooks.Identifiers;
+using SlideGenerator.Image.Cropping;
 using SlideGenerator.Recipe.Models;
 using SlideGenerator.Summarizer.Presentations;
 using Xunit;
@@ -82,12 +83,12 @@ public sealed class SlideCanvasViewModelTests
     [Fact]
     public void ToImageInstructions_ExistingRoiAndFallback_RoundTripsUntouchedByColumnReassignment()
     {
-        // No inspector edits ImageEditInstruction/FallbackImagePath yet (P4.4 continuation) — projecting the
-        // canvas back to instructions must not silently drop them just because the column was reconfirmed.
+        // No inspector edits the ROI chain in this test — projecting the canvas back to instructions must not
+        // silently drop the existing RoiOptions/fallback just because the column was reconfirmed.
         var shapeId = new ShapeIdentifier("Avatar");
         var shape = new ShapeSummary(Slide, shapeId, new RectangleF(0, 0, 10, 10));
         var slide = new SlideSummary(Presentation, Slide, [], [shape], null, new SizeF(100, 100));
-        var editInstruction = new ImageEditInstruction([]);
+        var editInstruction = new ImageEditInstruction([new InterestOption { Type = InterestType.Attention }]);
         var instructions = new List<ImageInstruction>
         {
             new(new HashSet<ShapeIdentifier> { shapeId }, [new ColumnIdentifier("PhotoUrl")], editInstruction, "fallback.png")
@@ -101,7 +102,7 @@ public sealed class SlideCanvasViewModelTests
         var projected = result.Should().ContainSingle().Subject;
         projected.Shapes.Should().ContainSingle().Which.Should().Be(shapeId);
         projected.Columns.Should().ContainSingle().Which.ColumnName.Should().Be("PhotoUrl");
-        projected.ImageEditInstruction.Should().BeSameAs(editInstruction);
+        projected.ImageEditInstruction.RoiOptions.Should().BeEquivalentTo(editInstruction.RoiOptions);
         projected.FallbackImagePath.Should().Be("fallback.png");
     }
 

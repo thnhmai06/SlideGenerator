@@ -16,6 +16,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using SlideGenerator.Desktop.Features.RecipeEditor.ViewModels;
+using SlideGenerator.Image.Cropping;
 
 namespace SlideGenerator.Desktop.Features.RecipeEditor.Views;
 
@@ -54,5 +55,31 @@ public sealed partial class RecipeEditorView : UserControl
     {
         if (sender is StyledElement { DataContext: MappingEditSession session } && DataContext is RecipeEditorViewModel vm)
             vm.RemoveMappingCommand.Execute(session);
+    }
+
+    private void OnRoiMoveUpClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is StyledElement { DataContext: RoiOption option } && InspectorPanel.DataContext is ShapeOverlayViewModel overlay)
+            overlay.MoveRoiUpCommand.Execute(option);
+    }
+
+    private void OnRoiMoveDownClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is StyledElement { DataContext: RoiOption option } && InspectorPanel.DataContext is ShapeOverlayViewModel overlay)
+            overlay.MoveRoiDownCommand.Execute(option);
+    }
+
+    private void OnRoiRemoveClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is StyledElement { DataContext: RoiOption option } && InspectorPanel.DataContext is ShapeOverlayViewModel overlay)
+            overlay.RemoveRoiCommand.Execute(option);
+    }
+
+    private void OnPickFallbackImageClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not RecipeEditorViewModel vm) return;
+        if (InspectorPanel.DataContext is not ShapeOverlayViewModel overlay) return;
+
+        vm.PickFallbackImageCommand.Execute(overlay);
     }
 }
