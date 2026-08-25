@@ -1,0 +1,115 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:SlideGenerator.Desktop.Features.Settings.ViewModels"
+             xmlns:loc="clr-namespace:SlideGenerator.Desktop.Services.Localization"
+             xmlns:conv="clr-namespace:SlideGenerator.Desktop.Converters"
+             xmlns:settings="clr-namespace:SlideGenerator.Settings.Mutable;assembly=SlideGenerator.Settings"
+             x:Class="SlideGenerator.Desktop.Features.Settings.Views.SettingsView"
+             x:DataType="vm:SettingsViewModel">
+    <ScrollViewer>
+        <StackPanel Margin="{StaticResource PaddingPanel}" Spacing="{StaticResource Space4}" MaxWidth="640">
+
+            <!-- Giao diện -->
+            <StackPanel Spacing="{StaticResource Space2}">
+                <TextBlock Classes="h1" Text="{loc:Tr SettingsAppearance}"/>
+
+                <TextBlock Classes="body" Text="{loc:Tr SettingsTheme}"/>
+                <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space3}">
+                    <RadioButton GroupName="Theme" Content="{loc:Tr SettingsThemeSystem}"
+                                 IsChecked="{Binding Theme, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static settings:ThemeMode.System}}"/>
+                    <RadioButton GroupName="Theme" Content="{loc:Tr SettingsThemeLight}"
+                                 IsChecked="{Binding Theme, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static settings:ThemeMode.Light}}"/>
+                    <RadioButton GroupName="Theme" Content="{loc:Tr SettingsThemeDark}"
+                                 IsChecked="{Binding Theme, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static settings:ThemeMode.Dark}}"/>
+                </StackPanel>
+
+                <TextBlock Classes="body" Text="{loc:Tr SettingsLanguage}"/>
+                <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space3}">
+                    <RadioButton GroupName="Language" Content="{loc:Tr SettingsLanguageVietnamese}"
+                                 IsChecked="{Binding Language, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter=vi}"/>
+                    <RadioButton GroupName="Language" Content="{loc:Tr SettingsLanguageEnglish}"
+                                 IsChecked="{Binding Language, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter=en}"/>
+                </StackPanel>
+
+                <CheckBox Content="{loc:Tr SettingsReducedMotion}" IsChecked="{Binding ReducedMotion}"/>
+            </StackPanel>
+
+            <Border Classes="hairline-row"/>
+
+            <!-- Hiệu năng -->
+            <StackPanel Spacing="{StaticResource Space2}">
+                <TextBlock Classes="h1" Text="{loc:Tr SettingsPerformance}"/>
+
+                <TextBlock Classes="body" Text="{loc:Tr SettingsMaxConcurrentJobs}"/>
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource Space2}">
+                    <Slider Grid.Column="0" Minimum="1" Maximum="16" TickFrequency="1" IsSnapToTickEnabled="True"
+                            Value="{Binding MaxConcurrentJobs}"/>
+                    <TextBlock Grid.Column="1" Classes="mono" Text="{Binding MaxConcurrentJobs}" VerticalAlignment="Center"/>
+                </Grid>
+                <TextBlock Classes="muted" FontSize="{StaticResource FontSizeSm}" TextWrapping="Wrap"
+                           Text="{loc:Tr SettingsMaxConcurrentJobsHint}"/>
+                <Button Content="{loc:Tr SettingsResetDefaults}" Command="{Binding ResetPerformanceCommand}"/>
+            </StackPanel>
+
+            <Border Classes="hairline-row"/>
+
+            <!-- Mạng -->
+            <StackPanel Spacing="{StaticResource Space2}">
+                <TextBlock Classes="h1" Text="{loc:Tr SettingsNetwork}"/>
+
+                <TextBlock Classes="h2" Text="{loc:Tr SettingsProxy}"/>
+                <CheckBox Content="{loc:Tr SettingsProxyEnable}" IsChecked="{Binding UseProxy}"/>
+                <StackPanel Spacing="{StaticResource Space2}" IsVisible="{Binding UseProxy}">
+                    <TextBlock Classes="muted" Text="{loc:Tr SettingsProxyAddress}"/>
+                    <TextBox Text="{Binding ProxyAddress}"/>
+                    <TextBlock Classes="muted" Text="{loc:Tr SettingsProxyUsername}"/>
+                    <TextBox Text="{Binding ProxyUsername}"/>
+                    <TextBlock Classes="muted" Text="{loc:Tr SettingsProxyPassword}"/>
+                    <TextBox Text="{Binding ProxyPassword}" PasswordChar="*"/>
+                    <TextBlock Classes="muted" Text="{loc:Tr SettingsProxyDomain}"/>
+                    <TextBox Text="{Binding ProxyDomain}"/>
+                </StackPanel>
+
+                <TextBlock Classes="h2" Text="{loc:Tr SettingsRetry}"/>
+                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="{StaticResource Space2}">
+                    <StackPanel Grid.Column="0" Spacing="{StaticResource Space1}">
+                        <TextBlock Classes="muted" Text="{loc:Tr SettingsMaxRetries}"/>
+                        <TextBox Text="{Binding MaxRetries}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Spacing="{StaticResource Space1}">
+                        <TextBlock Classes="muted" Text="{loc:Tr SettingsRetryTimeout}"/>
+                        <TextBox Text="{Binding RetryTimeoutSeconds}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Spacing="{StaticResource Space1}">
+                        <TextBlock Classes="muted" Text="{loc:Tr SettingsMaxRetryDelay}"/>
+                        <TextBox Text="{Binding MaxRetryDelaySeconds}"/>
+                    </StackPanel>
+                </Grid>
+
+                <TextBlock Classes="muted" Text="{loc:Tr SettingsMaxDownloadMb}"/>
+                <TextBox Text="{Binding MaxDownloadMegabytes}"/>
+            </StackPanel>
+
+            <Border Classes="hairline-row"/>
+
+            <!-- Giới thiệu -->
+            <StackPanel Spacing="{StaticResource Space2}">
+                <TextBlock Classes="h2" Text="{loc:Tr SettingsAbout}"/>
+                <TextBlock Classes="body">
+                    <Run Text="{loc:Tr SettingsVersion}"/><Run Text=": "/><Run Text="{Binding Version}"/>
+                </TextBlock>
+                <TextBlock Classes="muted" Text="{Binding LicenseText}" TextWrapping="Wrap"/>
+                <TextBlock Classes="body">
+                    <Run Text="{loc:Tr SettingsRepository}"/><Run Text=": "/><Run Text="{Binding RepositoryUrl}"/>
+                </TextBlock>
+                <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space2}">
+                    <Button Content="{loc:Tr SettingsCheckUpdate}" Command="{Binding CheckForUpdateCommand}"
+                            IsEnabled="{Binding !IsCheckingForUpdate}"/>
+                    <TextBlock Classes="muted" VerticalAlignment="Center" Text="{Binding UpdateStatusMessage}"
+                               IsVisible="{Binding UpdateStatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                </StackPanel>
+            </StackPanel>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

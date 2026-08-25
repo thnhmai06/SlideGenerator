@@ -30,5 +30,8 @@
         <ProjectReference Include="../../src/SlideGenerator.Recipe/SlideGenerator.Recipe.csproj"/>
         <ProjectReference Include="../../src/SlideGenerator.Summarizer/SlideGenerator.Summarizer.csproj"/>
         <ProjectReference Include="../../src/SlideGenerator.Image/SlideGenerator.Image.csproj"/>
+        <!-- Not transitive via Desktop (see note above) — needed directly for Setting/ISettingManager/ThemeMode
+             in SettingsViewModelTests.cs. -->
+        <ProjectReference Include="../../src/SlideGenerator.Settings/SlideGenerator.Settings.csproj"/>
     </ItemGroup>
 </Project>

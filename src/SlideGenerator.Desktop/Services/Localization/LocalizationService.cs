@@ -84,7 +84,9 @@ public sealed class LocalizationService : ILocalizationService
             : new CultureInfo(languageCode);
         CultureInfo.CurrentUICulture = _currentCulture;
         // Null property name is the INotifyPropertyChanged convention for "every property changed" —
-        // the only way to refresh every indexer ([key]) binding in the app from one call.
+        // the only way to refresh every indexer ([key]) binding in the app from one call. In practice this
+        // does not actually refresh already-rendered Avalonia compiled-binding indexer bindings — see
+        // TrExtension's doc comment for the known gap this exposed.
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null));
     }
 }

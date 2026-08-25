@@ -168,4 +168,91 @@
   <data name="RecipesNoSelectionHint" xml:space="preserve">
     <value>Select a recipe to see its details.</value>
   </data>
+  <data name="SettingsAppearance" xml:space="preserve">
+    <value>Appearance</value>
+  </data>
+  <data name="SettingsTheme" xml:space="preserve">
+    <value>Theme</value>
+  </data>
+  <data name="SettingsThemeSystem" xml:space="preserve">
+    <value>Follow system</value>
+  </data>
+  <data name="SettingsThemeLight" xml:space="preserve">
+    <value>Light</value>
+  </data>
+  <data name="SettingsThemeDark" xml:space="preserve">
+    <value>Dark</value>
+  </data>
+  <data name="SettingsLanguage" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="SettingsLanguageVietnamese" xml:space="preserve">
+    <value>Vietnamese</value>
+  </data>
+  <data name="SettingsLanguageEnglish" xml:space="preserve">
+    <value>English</value>
+  </data>
+  <data name="SettingsReducedMotion" xml:space="preserve">
+    <value>Reduce motion</value>
+  </data>
+  <data name="SettingsPerformance" xml:space="preserve">
+    <value>Performance</value>
+  </data>
+  <data name="SettingsMaxConcurrentJobs" xml:space="preserve">
+    <value>Max concurrent jobs</value>
+  </data>
+  <data name="SettingsMaxConcurrentJobsHint" xml:space="preserve">
+    <value>Higher values generate faster but use more RAM — each running job keeps a workbook/presentation open in memory.</value>
+  </data>
+  <data name="SettingsResetDefaults" xml:space="preserve">
+    <value>Restore default</value>
+  </data>
+  <data name="SettingsNetwork" xml:space="preserve">
+    <value>Network</value>
+  </data>
+  <data name="SettingsProxy" xml:space="preserve">
+    <value>Proxy</value>
+  </data>
+  <data name="SettingsProxyEnable" xml:space="preserve">
+    <value>Use a proxy</value>
+  </data>
+  <data name="SettingsProxyAddress" xml:space="preserve">
+    <value>Address</value>
+  </data>
+  <data name="SettingsProxyUsername" xml:space="preserve">
+    <value>Username</value>
+  </data>
+  <data name="SettingsProxyPassword" xml:space="preserve">
+    <value>Password</value>
+  </data>
+  <data name="SettingsProxyDomain" xml:space="preserve">
+    <value>Domain</value>
+  </data>
+  <data name="SettingsRetry" xml:space="preserve">
+    <value>Retry</value>
+  </data>
+  <data name="SettingsMaxRetries" xml:space="preserve">
+    <value>Max attempts</value>
+  </data>
+  <data name="SettingsRetryTimeout" xml:space="preserve">
+    <value>Timeout (seconds)</value>
+  </data>
+  <data name="SettingsMaxRetryDelay" xml:space="preserve">
+    <value>Max backoff (seconds)</value>
+  </data>
+  <data name="SettingsMaxDownloadMb" xml:space="preserve">
+    <value>Max download size (MB)</value>
+  </data>
+  <data name="SettingsAbout" xml:space="preserve">
+    <value>About</value>
+  </data>
+  <data name="SettingsVersion" xml:space="preserve">
+    <value>Version</value>
+  </data>
+  <data name="SettingsRepository" xml:space="preserve">
+    <value>Repository</value>
+  </data>
+  <data name="SettingsCheckUpdate" xml:space="preserve">
+    <value>Check for updates</value>
+  </data>
 </root>

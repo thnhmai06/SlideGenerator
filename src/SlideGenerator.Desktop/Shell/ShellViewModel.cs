@@ -17,6 +17,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using SlideGenerator.Desktop.Features.Recipes.ViewModels;
 using SlideGenerator.Desktop.Features.Runs.ViewModels;
+using SlideGenerator.Desktop.Features.Settings.ViewModels;
 
 namespace SlideGenerator.Desktop.Shell;
 
@@ -86,6 +87,8 @@ public sealed partial class ShellViewModel : ObservableObject
                 var recipes = _serviceProvider.GetRequiredService<RecipesViewModel>();
                 recipes.RunStarted += OnRunStartedFromRecipes;
                 return recipes;
+            case ShellDestination.Settings:
+                return _serviceProvider.GetRequiredService<SettingsViewModel>();
             default:
                 return new PlaceholderPageViewModel(destination.ToString());
         }

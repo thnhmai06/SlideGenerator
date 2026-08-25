@@ -12,6 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using System.Reflection;
 using SlideGenerator.Settings.Immutable;
 
 namespace SlideGenerator.Desktop.Bootstrap;
@@ -55,5 +56,18 @@ internal static class Metadata
 
         /// <summary>The license under which the application is distributed.</summary>
         public const string License = "Apache-2.0";
+
+        /// <summary>The running assembly's informational version (falls back to the assembly version, then
+        ///     <c>"unknown"</c>) — same lookup <c>Program.PrintMetadata</c> uses for the startup log line.</summary>
+        public static string Version
+        {
+            get
+            {
+                var assembly = typeof(Metadata).Assembly;
+                return assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+                       ?? assembly.GetName().Version?.ToString()
+                       ?? "unknown";
+            }
+        }
     }
 }

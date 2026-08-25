@@ -17,6 +17,7 @@ using SlideGenerator.Desktop.Features.Recipes.ViewModels;
 using SlideGenerator.Desktop.Features.RecipeEditor.Services;
 using SlideGenerator.Desktop.Features.RecipeEditor.ViewModels;
 using SlideGenerator.Desktop.Features.Runs.ViewModels;
+using SlideGenerator.Desktop.Features.Settings.ViewModels;
 using SlideGenerator.Desktop.Services.Dialogs;
 using SlideGenerator.Desktop.Services.Localization;
 using SlideGenerator.Desktop.Services.Progress;
@@ -56,6 +57,7 @@ public static class Registration
         services.AddSingleton<ShellViewModel>();
         services.AddSingleton<RunsViewModel>();
         services.AddSingleton<RecipesViewModel>();
+        services.AddSingleton<SettingsViewModel>();
         // Transient — a fresh instance per Run dialog invocation, unlike page ViewModels which are cached.
         services.AddTransient<RunDialogViewModel>();
 
