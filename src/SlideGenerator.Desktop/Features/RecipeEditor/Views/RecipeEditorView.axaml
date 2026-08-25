@@ -2,10 +2,13 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:SlideGenerator.Desktop.Features.RecipeEditor.ViewModels"
              xmlns:views="clr-namespace:SlideGenerator.Desktop.Features.RecipeEditor.Views"
+             xmlns:models="clr-namespace:SlideGenerator.Desktop.Features.RecipeEditor.Models"
              xmlns:conv="clr-namespace:SlideGenerator.Desktop.Converters"
              x:Class="SlideGenerator.Desktop.Features.RecipeEditor.Views.RecipeEditorView"
              x:DataType="vm:RecipeEditorViewModel">
-    <Grid RowDefinitions="Auto,*">
+    <Grid>
+    <!-- Advanced (plan §5.2.b) -->
+    <Grid RowDefinitions="Auto,*" IsVisible="{Binding !IsGuided}">
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="{StaticResource PaddingPanel}">
             <TextBlock Grid.Column="0" Classes="muted" FontSize="{StaticResource FontSizeSm}" VerticalAlignment="Center"
                        Text="{Binding CombinedSummary, Converter={x:Static conv:BindingSummaryConverter.Instance}}"/>
@@ -84,5 +87,63 @@
                 <TextBlock Text="..." HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </Border>
         </Grid>
+    </Grid>
+
+    <!-- Guided (plan §5.2.a) — same panels as Advanced, one step's worth shown at a time. No internal
+         vocabulary ("Mapping"/"Instruction"/"Source") appears here, only step titles. -->
+    <Grid RowDefinitions="Auto,*,Auto" Margin="{StaticResource PaddingPanel}" RowSpacing="{StaticResource Space3}"
+          IsVisible="{Binding IsGuided}">
+        <TextBlock Grid.Row="0" Classes="h1" Text="{Binding GuidedStepTitle}"/>
+
+        <ScrollViewer Grid.Row="1">
+            <StackPanel Spacing="{StaticResource Space3}">
+                <!-- ① Mẫu slide -->
+                <StackPanel Spacing="{StaticResource Space2}"
+                            IsVisible="{Binding GuidedStep, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:GuidedStep.Template}}">
+                    <Button Content="Chọn mẫu slide..." Command="{Binding AddMappingCommand}" IsVisible="{Binding !HasTemplate}"/>
+                    <Border IsVisible="{Binding HasTemplate}">
+                        <views:SlideCanvasView Height="320" DataContext="{Binding Canvas}"/>
+                    </Border>
+                </StackPanel>
+
+                <!-- ② Dữ liệu -->
+                <StackPanel IsVisible="{Binding GuidedStep, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:GuidedStep.Data}}">
+                    <views:WorksheetSourcesView DataContext="{Binding Sources}"/>
+                </StackPanel>
+
+                <!-- ③ Ghép — luôn chia hai nhóm con "Văn bản"/"Ảnh", không trộn chung một danh sách -->
+                <StackPanel Spacing="{StaticResource Space3}"
+                            IsVisible="{Binding GuidedStep, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:GuidedStep.Binding}}">
+                    <TextBlock Classes="h2" Text="Văn bản"/>
+                    <views:TextBindingsView DataContext="{Binding TextBindings}"/>
+                    <TextBlock Classes="h2" Text="Ảnh"/>
+                    <views:SlideCanvasView Height="320" DataContext="{Binding Canvas}"/>
+                </StackPanel>
+
+                <!-- ④ Xem lại -->
+                <StackPanel Spacing="{StaticResource Space3}"
+                            IsVisible="{Binding GuidedStep, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:GuidedStep.Review}}">
+                    <TextBlock Classes="body">
+                        <Run Text="Sẽ tạo "/><Run Text="{Binding GuidedFileCount}"/><Run Text=" file"/>
+                    </TextBlock>
+                    <TextBlock Classes="muted" FontSize="{StaticResource FontSizeSm}"
+                               Text="{Binding CombinedSummary, Converter={x:Static conv:BindingSummaryConverter.Instance}}"/>
+                    <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space2}">
+                        <Button Content="Lưu recipe" Command="{Binding SaveCommand}"/>
+                        <Button Content="Lưu và chạy" Command="{Binding SaveAndRunCommand}"
+                                Background="{DynamicResource AccentBrush}" Foreground="{DynamicResource TextOnAccentBrush}"/>
+                    </StackPanel>
+                    <Button Content="Cần nhiều mẫu slide, lọc dòng, hoặc ảnh dự phòng? Mở chế độ nâng cao."
+                            Command="{Binding SwitchToAdvancedCommand}"/>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+
+        <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto">
+            <Button Grid.Column="0" Content="Quay lại" Command="{Binding PreviousGuidedStepCommand}"/>
+            <Button Grid.Column="2" Content="Tiếp theo" Command="{Binding NextGuidedStepCommand}"
+                    IsVisible="{Binding GuidedStep, Converter={x:Static conv:EnumNotEqualsConverter.Instance}, ConverterParameter={x:Static models:GuidedStep.Review}}"/>
+        </Grid>
+    </Grid>
     </Grid>
 </UserControl>

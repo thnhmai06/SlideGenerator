@@ -235,10 +235,10 @@ public sealed class RecipeEditorViewModelTests
     }
 
     [Fact]
-    public async Task SaveCommand_UnresolvedAmbiguousBinding_CannotExecute()
+    public async Task SaveCommand_UnresolvedAmbiguousBinding_CanStillExecute()
     {
-        // "Name" placeholder against a "FullName" column is a partial-match Ambiguous binding — never
-        // auto-assigned, so it must block Save until the user picks a candidate.
+        // Saving a draft with an unresolved Ambiguous binding is fine — only SaveAndRunCommand blocks on this
+        // (plan §5.2: the rule names "Lưu và chạy" specifically, not plain "Lưu").
         var cache = CreateSummaryCache(["Name"], ["FullName"]);
         var vm = new RecipeEditorViewModel(cache, Substitute.For<IFilePicker>(), Substitute.For<IDialogService>(), Substitute.For<IRecipeRepository>());
         var recipe = new RecipeModel([CreateMapping(new SlideIdentifier(1))]);
@@ -246,7 +246,55 @@ public sealed class RecipeEditorViewModelTests
         vm.Name = "Recipe A";
 
         vm.HasUnresolvedBindings.Should().BeTrue();
-        vm.SaveCommand.CanExecute(null).Should().BeFalse();
+        vm.SaveCommand.CanExecute(null).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task SaveAndRunCommand_UnresolvedAmbiguousBinding_CannotExecute()
+    {
+        var cache = CreateSummaryCache(["Name"], ["FullName"]);
+        var vm = new RecipeEditorViewModel(cache, Substitute.For<IFilePicker>(), Substitute.For<IDialogService>(), Substitute.For<IRecipeRepository>());
+        var recipe = new RecipeModel([CreateMapping(new SlideIdentifier(1))]);
+        await vm.InitializeAsync(recipe);
+        vm.Name = "Recipe A";
+
+        vm.SaveAndRunCommand.CanExecute(null).Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task SaveAndRunCommand_ResolvedBindingWithName_CanExecute()
+    {
+        var cache = CreateSummaryCache(["name"], ["Name"]);
+        var vm = new RecipeEditorViewModel(cache, Substitute.For<IFilePicker>(), Substitute.For<IDialogService>(), Substitute.For<IRecipeRepository>());
+        var recipe = new RecipeModel([CreateMapping(new SlideIdentifier(1))]);
+        await vm.InitializeAsync(recipe);
+        vm.Name = "Recipe A";
+
+        vm.SaveAndRunCommand.CanExecute(null).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task SaveAndRunAsync_Dirty_SavesThenOpensRunDialog()
+    {
+        var repository = Substitute.For<IRecipeRepository>();
+        var savedMetadata = new RecipeEntry(9, "Recipe A", new RecipeModel([]), DateTimeOffset.UtcNow, DateTimeOffset.UtcNow);
+        repository.AddAsync(Arg.Any<RecipeInput>()).Returns(savedMetadata);
+        var dialogService = Substitute.For<IDialogService>();
+        dialogService.ShowRunDialogAsync(9, "Recipe A").Returns("req-1");
+
+        var cache = CreateSummaryCache(["name"], ["Name"]);
+        var vm = new RecipeEditorViewModel(cache, Substitute.For<IFilePicker>(), dialogService, repository);
+        var recipe = new RecipeModel([CreateMapping(new SlideIdentifier(1))]);
+        await vm.InitializeAsync(recipe);
+        vm.Name = "Recipe A";
+
+        string? startedRequestId = null;
+        vm.RunStarted += id => startedRequestId = id;
+        await vm.SaveAndRunCommand.ExecuteAsync(null);
+
+        await repository.Received(1).AddAsync(Arg.Any<RecipeInput>());
+        await dialogService.Received(1).ShowRunDialogAsync(9, "Recipe A");
+        startedRequestId.Should().Be("req-1");
     }
 
     [Fact]
@@ -285,6 +333,70 @@ public sealed class RecipeEditorViewModelTests
 
         await repository.Received(1).UpdateAsync(7, Arg.Any<RecipeInput>());
         await repository.DidNotReceive().AddAsync(Arg.Any<RecipeInput>());
+    }
+
+    [Fact]
+    public async Task InitializeAsync_NoId_StartsGuided()
+    {
+        var vm = new RecipeEditorViewModel(CreateSummaryCache([], []), Substitute.For<IFilePicker>(), Substitute.For<IDialogService>(), Substitute.For<IRecipeRepository>());
+
+        await vm.InitializeAsync(new RecipeModel([]));
+
+        vm.IsGuided.Should().BeTrue();
+        vm.GuidedStep.Should().Be(GuidedStep.Template);
+    }
+
+    [Fact]
+    public async Task InitializeAsync_HasId_StartsAdvanced()
+    {
+        var vm = new RecipeEditorViewModel(CreateSummaryCache([], []), Substitute.For<IFilePicker>(), Substitute.For<IDialogService>(), Substitute.For<IRecipeRepository>());
+
+        await vm.InitializeAsync(5, "Existing", new RecipeModel([]));
+
+        vm.IsGuided.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task NextGuidedStepCommand_NoTemplateYet_CannotExecute()
+    {
+        var vm = new RecipeEditorViewModel(CreateSummaryCache([], []), Substitute.For<IFilePicker>(), Substitute.For<IDialogService>(), Substitute.For<IRecipeRepository>());
+        await vm.InitializeAsync(new RecipeModel([]));
+
+        vm.NextGuidedStepCommand.CanExecute(null).Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task NextGuidedStepCommand_TemplatePicked_AdvancesToData()
+    {
+        var cache = CreateSummaryCache([], []);
+        var vm = new RecipeEditorViewModel(cache, Substitute.For<IFilePicker>(), Substitute.For<IDialogService>(), Substitute.For<IRecipeRepository>());
+        var recipe = new RecipeModel([CreateMapping(new SlideIdentifier(1))]);
+        await vm.InitializeAsync(recipe);
+
+        vm.NextGuidedStepCommand.CanExecute(null).Should().BeTrue();
+        vm.NextGuidedStepCommand.Execute(null);
+
+        vm.GuidedStep.Should().Be(GuidedStep.Data);
+    }
+
+    [Fact]
+    public async Task PreviousGuidedStepCommand_AtFirstStep_CannotExecute()
+    {
+        var vm = new RecipeEditorViewModel(CreateSummaryCache([], []), Substitute.For<IFilePicker>(), Substitute.For<IDialogService>(), Substitute.For<IRecipeRepository>());
+        await vm.InitializeAsync(new RecipeModel([]));
+
+        vm.PreviousGuidedStepCommand.CanExecute(null).Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task SwitchToAdvancedCommand_SetsIsGuidedFalse()
+    {
+        var vm = new RecipeEditorViewModel(CreateSummaryCache([], []), Substitute.For<IFilePicker>(), Substitute.For<IDialogService>(), Substitute.For<IRecipeRepository>());
+        await vm.InitializeAsync(new RecipeModel([]));
+
+        vm.SwitchToAdvancedCommand.Execute(null);
+
+        vm.IsGuided.Should().BeFalse();
     }
 
     [Fact]

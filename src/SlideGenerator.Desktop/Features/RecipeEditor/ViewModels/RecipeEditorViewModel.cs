@@ -15,6 +15,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using SlideGenerator.Desktop.Features.RecipeEditor.Models;
 using SlideGenerator.Desktop.Features.RecipeEditor.Services;
 using SlideGenerator.Desktop.Services.Dialogs;
 using SlideGenerator.Recipe.Models;
@@ -57,8 +58,18 @@ public sealed partial class RecipeEditorViewModel : ObservableObject
     [ObservableProperty] private bool _isDirty;
     [ObservableProperty] private bool _isLoading;
 
-    /// <summary>Raised after <see cref="SaveCommand" /> persists successfully — the recipe list should refresh.</summary>
+    /// <summary>Gets or sets whether the page shows the 4-step Guided flow or the full Advanced layout (plan
+    ///     §5.2.a) — one <see cref="RecipeModel" />, one ViewModel, one <c>IsGuided</c> flag that only changes
+    ///     which panels <c>RecipeEditorView</c> arranges on screen.</summary>
+    [ObservableProperty] private bool _isGuided;
+
+    [ObservableProperty] private GuidedStep _guidedStep = GuidedStep.Template;
+
+    /// <summary>Raised after <see cref="SaveCommand" />/<see cref="SaveAndRunCommand" /> persists successfully — the recipe list should refresh.</summary>
     public event Action? Saved;
+
+    /// <summary>Raised after <see cref="SaveAndRunCommand" /> actually starts a run — the host page should navigate to Runs.</summary>
+    public event Action<string>? RunStarted;
 
     /// <summary>Gets the combined <see cref="Models.BindingDisplayState" /> counts across both text placeholders and
     ///     image shapes — the Advanced-mode warning strip's summary (plan §5.2: "một dải cảnh báo trong Advanced").</summary>
@@ -73,8 +84,28 @@ public sealed partial class RecipeEditorViewModel : ObservableObject
         }
     }
 
-    /// <summary>Gets whether any binding still needs the user to pick from Ambiguous candidates — blocks <see cref="SaveCommand" />.</summary>
+    /// <summary>Gets whether any binding still needs the user to pick from Ambiguous candidates — blocks
+    ///     <see cref="SaveAndRunCommand" /> (plan §5.2: "Không cho Lưu và chạy khi còn mục Ambiguous chưa quyết"
+    ///     — plain <see cref="SaveCommand" /> is unaffected, saving a draft with unresolved bindings is fine).</summary>
     public bool HasUnresolvedBindings => CombinedSummary.NeedsSelection > 0;
+
+    /// <summary>Gets whether Guided step ① has a template picked yet.</summary>
+    public bool HasTemplate => Sessions.Count > 0;
+
+    /// <summary>Gets the file count Guided step ④ shows ("sẽ tạo N file") — in Guided there's always exactly one
+    ///     mapping, so this is just its worksheet-source count (mirrors <c>Service.BuildJobs</c>'s
+    ///     mapping×source flattening for the single-mapping case).</summary>
+    public int GuidedFileCount => Sources.Sources.Count;
+
+    /// <summary>Gets the current Guided step's user-facing title — no internal vocabulary (plan §5.2.a).</summary>
+    public string GuidedStepTitle => GuidedStep switch
+    {
+        GuidedStep.Template => "① Mẫu slide",
+        GuidedStep.Data => "② Dữ liệu",
+        GuidedStep.Binding => "③ Ghép",
+        GuidedStep.Review => "④ Xem lại",
+        _ => ""
+    };
 
     /// <summary>Gets one edit session per mapping in <see cref="Recipe" />, in order.</summary>
     public ObservableCollection<MappingEditSession> Sessions { get; } = [];
@@ -105,17 +136,25 @@ public sealed partial class RecipeEditorViewModel : ObservableObject
         Canvas = new SlideCanvasViewModel();
         TextBindings = new TextBindingsViewModel();
         Sources = new WorksheetSourcesViewModel(filePicker, summaryCache);
-        Sessions.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ShowMappingNavigator));
+        Sessions.CollectionChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(ShowMappingNavigator));
+            OnPropertyChanged(nameof(HasTemplate));
+            RefreshCommandStates();
+        };
         Canvas.Changed += OnChildChanged;
         TextBindings.Changed += OnChildChanged;
         Sources.Changed += OnChildChanged;
     }
 
     /// <summary>Loads a brand-new, unsaved recipe into the editor — <see cref="Id" /> stays <see langword="null" />
-    ///     until the first successful <see cref="SaveCommand" />.</summary>
+    ///     until the first successful <see cref="SaveCommand" />, and the editor starts in Guided mode (plan
+    ///     §5.2.a: "Guided (mặc định khi tạo recipe mới)").</summary>
     public Task InitializeAsync(RecipeModel recipe) => InitializeAsync(null, "", recipe);
 
-    /// <summary>Loads the given recipe into the editor, selecting its first mapping (if any), and clears the dirty flag.</summary>
+    /// <summary>Loads the given recipe into the editor, selecting its first mapping (if any), and clears the dirty
+    ///     flag. Starts in Advanced mode when <paramref name="id" /> is already saved (plan §5.2.a: "Recipe đã có
+    ///     sẵn khi mở từ Recipes list thì vào thẳng Advanced"), Guided otherwise.</summary>
     public async Task InitializeAsync(int? id, string name, RecipeModel recipe)
     {
         _isInitializing = true;
@@ -125,6 +164,8 @@ public sealed partial class RecipeEditorViewModel : ObservableObject
             Name = name;
             Recipe = recipe;
             IsDirty = false;
+            IsGuided = id is null;
+            GuidedStep = GuidedStep.Template;
             _loadedSession = null;
 
             Sessions.Clear();
@@ -138,7 +179,7 @@ public sealed partial class RecipeEditorViewModel : ObservableObject
             _isInitializing = false;
         }
 
-        SaveCommand.NotifyCanExecuteChanged();
+        RefreshCommandStates();
     }
 
     private void OnChildChanged()
@@ -146,13 +187,24 @@ public sealed partial class RecipeEditorViewModel : ObservableObject
         MarkDirty();
         OnPropertyChanged(nameof(CombinedSummary));
         OnPropertyChanged(nameof(HasUnresolvedBindings));
-        SaveCommand.NotifyCanExecuteChanged();
+        OnPropertyChanged(nameof(GuidedFileCount));
     }
 
     private void MarkDirty()
     {
         IsDirty = true;
+        RefreshCommandStates();
+    }
+
+    /// <summary>Re-evaluates every command whose <c>CanExecute</c> depends on dirty/binding/step state — cheaper
+    ///     to call unconditionally from every mutation point than to track exactly which commands each one
+    ///     could affect.</summary>
+    private void RefreshCommandStates()
+    {
         SaveCommand.NotifyCanExecuteChanged();
+        SaveAndRunCommand.NotifyCanExecuteChanged();
+        NextGuidedStepCommand.NotifyCanExecuteChanged();
+        PreviousGuidedStepCommand.NotifyCanExecuteChanged();
     }
 
     /// <summary>Marks the recipe dirty after an edit dispatched directly by view code-behind rather than through
@@ -169,13 +221,40 @@ public sealed partial class RecipeEditorViewModel : ObservableObject
         MarkDirty();
     }
 
-    private bool CanSave() => IsDirty && !HasUnresolvedBindings && !string.IsNullOrWhiteSpace(Name);
+    partial void OnGuidedStepChanged(GuidedStep value)
+    {
+        OnPropertyChanged(nameof(GuidedStepTitle));
+        RefreshCommandStates();
+    }
+
+    private bool CanSave() => IsDirty && !string.IsNullOrWhiteSpace(Name);
 
     /// <summary>Persists the recipe — inserts on first save (<see cref="Id" /> still <see langword="null" />),
-    ///     updates thereafter. Disabled while dirty tracking says there's nothing to save, a binding still needs
-    ///     the user to resolve an Ambiguous match, or <see cref="Name" /> is blank.</summary>
+    ///     updates thereafter. Disabled while dirty tracking says there's nothing to save, or <see cref="Name" />
+    ///     is blank (plan §5.2: "Lưu: thủ công bằng nút Lưu. Nút bật khi dirty" — no Ambiguous condition here,
+    ///     that only gates <see cref="SaveAndRunCommand" />).</summary>
     [RelayCommand(CanExecute = nameof(CanSave))]
     private async Task SaveAsync()
+    {
+        await PersistAsync().ConfigureAwait(true);
+    }
+
+    private bool CanSaveAndRun() => HasTemplate && !HasUnresolvedBindings && !string.IsNullOrWhiteSpace(Name);
+
+    /// <summary>Guided step ④'s "Lưu và chạy" — saves first if dirty, then opens the same run dialog the
+    ///     Recipes list uses. Blocked while any binding still needs an Ambiguous pick (plan §5.2: "Không cho
+    ///     Lưu và chạy khi còn mục Ambiguous chưa quyết").</summary>
+    [RelayCommand(CanExecute = nameof(CanSaveAndRun))]
+    private async Task SaveAndRunAsync()
+    {
+        if (IsDirty) await PersistAsync().ConfigureAwait(true);
+        if (Id is null) return;
+
+        var requestId = await _dialogService.ShowRunDialogAsync(Id.Value, Name).ConfigureAwait(true);
+        if (requestId is not null) RunStarted?.Invoke(requestId);
+    }
+
+    private async Task PersistAsync()
     {
         var input = new RecipeInput(Name, ToRecipe());
         var metadata = Id is null
@@ -184,8 +263,51 @@ public sealed partial class RecipeEditorViewModel : ObservableObject
 
         Id = metadata.Id;
         IsDirty = false;
-        SaveCommand.NotifyCanExecuteChanged();
+        RefreshCommandStates();
         Saved?.Invoke();
+    }
+
+    private bool CanGoToNextGuidedStep() => GuidedStep switch
+    {
+        GuidedStep.Template => HasTemplate,
+        GuidedStep.Data => Sources.Sources.Count > 0,
+        GuidedStep.Binding => true,
+        _ => false
+    };
+
+    /// <summary>Advances Guided mode to the next step — each step's prerequisite is enforced by
+    ///     <see cref="CanGoToNextGuidedStep" />, not by this method.</summary>
+    [RelayCommand(CanExecute = nameof(CanGoToNextGuidedStep))]
+    private void NextGuidedStep()
+    {
+        GuidedStep = GuidedStep switch
+        {
+            GuidedStep.Template => GuidedStep.Data,
+            GuidedStep.Data => GuidedStep.Binding,
+            GuidedStep.Binding => GuidedStep.Review,
+            _ => GuidedStep
+        };
+    }
+
+    private bool CanGoToPreviousGuidedStep() => GuidedStep != GuidedStep.Template;
+
+    [RelayCommand(CanExecute = nameof(CanGoToPreviousGuidedStep))]
+    private void PreviousGuidedStep()
+    {
+        GuidedStep = GuidedStep switch
+        {
+            GuidedStep.Data => GuidedStep.Template,
+            GuidedStep.Binding => GuidedStep.Data,
+            GuidedStep.Review => GuidedStep.Binding,
+            _ => GuidedStep
+        };
+    }
+
+    /// <summary>Guided step ④'s "Mở chế độ nâng cao" link — stays on the same recipe, just switches template.</summary>
+    [RelayCommand]
+    private void SwitchToAdvanced()
+    {
+        IsGuided = false;
     }
 
     /// <summary>Projects in-flight edits, then rebuilds <see cref="Recipe" /> from every session's current mapping — the read path a save needs, since edits live on <see cref="Sessions" /> until pulled.</summary>

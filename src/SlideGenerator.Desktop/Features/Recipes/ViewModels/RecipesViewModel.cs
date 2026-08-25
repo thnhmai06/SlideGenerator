@@ -182,12 +182,17 @@ public sealed partial class RecipesViewModel : ObservableObject
         var entry = await _repository.GetAsync(recipeId).ConfigureAwait(true);
         var editor = _serviceProvider.GetRequiredService<RecipeEditorViewModel>();
         editor.Saved += OnEditorSaved;
+        editor.RunStarted += OnRunStarted;
         await editor.InitializeAsync(entry.Id, entry.Name, entry.Recipe).ConfigureAwait(true);
         Editor = editor;
     }
 
     private void OnRunStarted(string requestId)
     {
+        // No-op when the run started from a list row (no editor open) — closes the editor when it started
+        // from Guided step ④'s "Lưu và chạy" instead, since the Shell is about to navigate to Runs anyway.
+        IsEditorOpen = false;
+        Editor = null;
         RunStarted?.Invoke(requestId);
     }
 
@@ -214,6 +219,7 @@ public sealed partial class RecipesViewModel : ObservableObject
     {
         var editor = _serviceProvider.GetRequiredService<RecipeEditorViewModel>();
         editor.Saved += OnEditorSaved;
+        editor.RunStarted += OnRunStarted;
         await editor.InitializeAsync(new RecipeModel([])).ConfigureAwait(true);
         Editor = editor;
     }
