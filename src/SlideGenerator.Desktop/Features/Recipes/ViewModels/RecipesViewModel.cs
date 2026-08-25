@@ -48,7 +48,6 @@ public sealed partial class RecipesViewModel : ObservableObject
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private string? _errorMessage;
     [ObservableProperty] private bool _isEditorOpen;
-    [ObservableProperty] private string _editorTitle = "";
     [ObservableProperty] private bool _isLoadingRecentRuns;
     [ObservableProperty] private RecipeEditorViewModel? _editor;
 
@@ -174,7 +173,6 @@ public sealed partial class RecipesViewModel : ObservableObject
 
     private void OnEditRequested(RecipeListItemViewModel item)
     {
-        EditorTitle = item.Name;
         IsEditorOpen = true;
         _ = OpenEditorAsync(item.Id);
     }
@@ -183,7 +181,8 @@ public sealed partial class RecipesViewModel : ObservableObject
     {
         var entry = await _repository.GetAsync(recipeId).ConfigureAwait(true);
         var editor = _serviceProvider.GetRequiredService<RecipeEditorViewModel>();
-        await editor.InitializeAsync(entry.Recipe).ConfigureAwait(true);
+        editor.Saved += OnEditorSaved;
+        await editor.InitializeAsync(entry.Id, entry.Name, entry.Recipe).ConfigureAwait(true);
         Editor = editor;
     }
 
@@ -207,7 +206,6 @@ public sealed partial class RecipesViewModel : ObservableObject
     [RelayCommand]
     private void New()
     {
-        EditorTitle = "Recipe mới";
         IsEditorOpen = true;
         _ = OpenNewEditorAsync();
     }
@@ -215,13 +213,29 @@ public sealed partial class RecipesViewModel : ObservableObject
     private async Task OpenNewEditorAsync()
     {
         var editor = _serviceProvider.GetRequiredService<RecipeEditorViewModel>();
+        editor.Saved += OnEditorSaved;
         await editor.InitializeAsync(new RecipeModel([])).ConfigureAwait(true);
         Editor = editor;
     }
 
-    [RelayCommand]
-    private void CloseEditor()
+    private void OnEditorSaved()
     {
+        _ = LoadAsync();
+    }
+
+    /// <summary>Closes the editor — asks for confirmation first if there are unsaved edits (plan §5.2: "Rời
+    ///     editor lúc dirty → dialog xác nhận").</summary>
+    [RelayCommand]
+    private async Task CloseEditorAsync()
+    {
+        if (Editor is { IsDirty: true })
+        {
+            var confirmed = await _dialogService.ConfirmAsync(
+                "Có thay đổi chưa lưu", "Rời trang sẽ mất các thay đổi chưa lưu. Bạn có chắc muốn rời trang?",
+                "Rời trang", "Ở lại").ConfigureAwait(true);
+            if (!confirmed) return;
+        }
+
         IsEditorOpen = false;
         Editor = null;
         _ = LoadAsync();

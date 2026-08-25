@@ -118,6 +118,24 @@ public sealed class SlideCanvasViewModelTests
     }
 
     [Fact]
+    public void SetOverlayColumn_MarksTouchedAndAssigns()
+    {
+        var shapeId = new ShapeIdentifier("Logo");
+        var slide = new SlideSummary(Presentation, Slide, [], [new ShapeSummary(Slide, shapeId, new RectangleF(0, 0, 10, 10))], null, new SizeF(100, 100));
+        var touched = new HashSet<string>();
+
+        var vm = new SlideCanvasViewModel();
+        vm.Load(slide, [], ["PhotoUrl"], touched);
+        var overlay = vm.Overlays.Should().ContainSingle().Subject;
+
+        vm.SetOverlayColumn(overlay, "PhotoUrl");
+
+        overlay.Binding.State.Should().Be(BindingDisplayState.Assigned);
+        overlay.Binding.Column.Should().Be("PhotoUrl");
+        touched.Should().Contain("Logo");
+    }
+
+    [Fact]
     public void Load_ReplacesPreviousOverlays()
     {
         var slide1 = new SlideSummary(Presentation, Slide, [], [new ShapeSummary(Slide, new ShapeIdentifier("A"), new RectangleF(0, 0, 10, 10))], null, new SizeF(100, 100));

@@ -14,6 +14,7 @@
 
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using SlideGenerator.Desktop.Features.RecipeEditor.ViewModels;
 
@@ -41,5 +42,17 @@ public sealed partial class SlideCanvasView : UserControl
     {
         if (sender is StyledElement { DataContext: ShapeOverlayViewModel overlay } && DataContext is SlideCanvasViewModel vm)
             vm.SelectCommand.Execute(overlay);
+    }
+
+    private void OnOverlayDoubleTapped(object? sender, TappedEventArgs e)
+    {
+        if (sender is Control control) FlyoutBase.ShowAttachedFlyout(control);
+    }
+
+    private void OnOverlayColumnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (sender is ComboBox { SelectedItem: string column, DataContext: ShapeOverlayViewModel overlay } &&
+            DataContext is SlideCanvasViewModel vm)
+            vm.SetOverlayColumn(overlay, column);
     }
 }

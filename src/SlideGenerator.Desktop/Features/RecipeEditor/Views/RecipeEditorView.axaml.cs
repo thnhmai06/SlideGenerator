@@ -59,20 +59,32 @@ public sealed partial class RecipeEditorView : UserControl
 
     private void OnRoiMoveUpClick(object? sender, RoutedEventArgs e)
     {
-        if (sender is StyledElement { DataContext: RoiOption option } && InspectorPanel.DataContext is ShapeOverlayViewModel overlay)
+        if (sender is StyledElement { DataContext: RoiOption option } && InspectorPanel.DataContext is ShapeOverlayViewModel overlay &&
+            DataContext is RecipeEditorViewModel vm)
+        {
             overlay.MoveRoiUpCommand.Execute(option);
+            vm.NotifyEdited();
+        }
     }
 
     private void OnRoiMoveDownClick(object? sender, RoutedEventArgs e)
     {
-        if (sender is StyledElement { DataContext: RoiOption option } && InspectorPanel.DataContext is ShapeOverlayViewModel overlay)
+        if (sender is StyledElement { DataContext: RoiOption option } && InspectorPanel.DataContext is ShapeOverlayViewModel overlay &&
+            DataContext is RecipeEditorViewModel vm)
+        {
             overlay.MoveRoiDownCommand.Execute(option);
+            vm.NotifyEdited();
+        }
     }
 
     private void OnRoiRemoveClick(object? sender, RoutedEventArgs e)
     {
-        if (sender is StyledElement { DataContext: RoiOption option } && InspectorPanel.DataContext is ShapeOverlayViewModel overlay)
+        if (sender is StyledElement { DataContext: RoiOption option } && InspectorPanel.DataContext is ShapeOverlayViewModel overlay &&
+            DataContext is RecipeEditorViewModel vm)
+        {
             overlay.RemoveRoiCommand.Execute(option);
+            vm.NotifyEdited();
+        }
     }
 
     private void OnPickFallbackImageClick(object? sender, RoutedEventArgs e)

@@ -35,7 +35,7 @@ public sealed class ShapeOverlayViewModelTests
     {
         var shape = new ShapeSummary(new SlideIdentifier(1), new ShapeIdentifier("Avatar"), new RectangleF(0, 0, 10, 10));
         var binding = new BindingDisplay("Avatar", BindingDisplayState.Unassigned, null, []);
-        return new ShapeOverlayViewModel(shape, binding, new ImageEditInstruction(roiOptions), null);
+        return new ShapeOverlayViewModel(shape, binding, new ImageEditInstruction(roiOptions), null, []);
     }
 
     [Fact]

@@ -30,6 +30,10 @@ namespace SlideGenerator.Desktop.Features.RecipeEditor.ViewModels;
 /// </summary>
 public sealed partial class WorksheetSourcesViewModel(IFilePicker filePicker, ISummaryCache summaryCache) : ObservableObject
 {
+    /// <summary>Raised when a source is added or removed (not by <see cref="Load" />) — the coordinator marks
+    ///     the recipe dirty on this.</summary>
+    public event Action? Changed;
+
     /// <summary>Gets the current source rows.</summary>
     public ObservableCollection<WorksheetSourceRowViewModel> Sources { get; } = [];
 
@@ -60,11 +64,13 @@ public sealed partial class WorksheetSourcesViewModel(IFilePicker filePicker, IS
         if (firstSheet is null) return; // empty workbook — nothing to add
 
         Sources.Add(new WorksheetSourceRowViewModel(firstSheet, new WorksheetSource(workbook, firstSheet.Worksheet)));
+        Changed?.Invoke();
     }
 
     [RelayCommand]
     private void Remove(WorksheetSourceRowViewModel row)
     {
         Sources.Remove(row);
+        Changed?.Invoke();
     }
 }

@@ -32,10 +32,13 @@ namespace SlideGenerator.Desktop.Features.RecipeEditor.ViewModels;
 ///     the record from the live <see cref="RoiOptions" /> list each time <see cref="SlideCanvasViewModel.ToImageInstructions" />
 ///     reads it.</summary>
 public sealed partial class ShapeOverlayViewModel(ShapeSummary shape, BindingDisplay binding,
-    ImageEditInstruction editInstruction, string? fallbackImagePath) : ObservableObject
+    ImageEditInstruction editInstruction, string? fallbackImagePath, IReadOnlyList<string> allColumns) : ObservableObject
 {
     /// <summary>Gets the underlying shape (slide/name/bounds in slide pixel space).</summary>
     public ShapeSummary Shape { get; } = shape;
+
+    /// <summary>Gets every column visible to this mapping's worksheet sources, for the double-click quick-assign dropdown.</summary>
+    public IReadOnlyList<string> AllColumns { get; } = allColumns;
 
     /// <summary>Gets the shape's ROI fallback chain, in try-order — reorderable/removable by the inspector.</summary>
     public ObservableCollection<RoiOption> RoiOptions { get; } = new(editInstruction.RoiOptions);

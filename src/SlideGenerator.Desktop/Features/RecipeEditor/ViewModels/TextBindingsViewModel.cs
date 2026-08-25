@@ -30,6 +30,10 @@ public sealed partial class TextBindingsViewModel : ObservableObject
 {
     private HashSet<string> _touched = [];
 
+    /// <summary>Raised when a row's column is set by the user (not by <see cref="Load" />) — the coordinator
+    ///     marks the recipe dirty on this.</summary>
+    public event Action? Changed;
+
     /// <summary>Gets the current placeholder rows.</summary>
     public ObservableCollection<TextBindingRowViewModel> Rows { get; } = [];
 
@@ -64,6 +68,7 @@ public sealed partial class TextBindingsViewModel : ObservableObject
         _touched.Add(row.Placeholder);
         row.Binding = new BindingDisplay(row.Placeholder, BindingDisplayState.Assigned, column, []);
         OnPropertyChanged(nameof(Summary));
+        Changed?.Invoke();
     }
 
     /// <summary>Projects every row with a column into the flat <see cref="TextInstruction" /> list a <c>Mapping</c> needs.</summary>

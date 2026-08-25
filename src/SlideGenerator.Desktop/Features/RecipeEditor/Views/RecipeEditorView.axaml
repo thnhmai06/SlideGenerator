@@ -2,10 +2,13 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:SlideGenerator.Desktop.Features.RecipeEditor.ViewModels"
              xmlns:views="clr-namespace:SlideGenerator.Desktop.Features.RecipeEditor.Views"
+             xmlns:conv="clr-namespace:SlideGenerator.Desktop.Converters"
              x:Class="SlideGenerator.Desktop.Features.RecipeEditor.Views.RecipeEditorView"
              x:DataType="vm:RecipeEditorViewModel">
     <Grid RowDefinitions="Auto,*">
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="{StaticResource PaddingPanel}">
+            <TextBlock Grid.Column="0" Classes="muted" FontSize="{StaticResource FontSizeSm}" VerticalAlignment="Center"
+                       Text="{Binding CombinedSummary, Converter={x:Static conv:BindingSummaryConverter.Instance}}"/>
             <Button Grid.Column="1" Content="+ Thêm mapping" Command="{Binding AddMappingCommand}"/>
         </Grid>
 

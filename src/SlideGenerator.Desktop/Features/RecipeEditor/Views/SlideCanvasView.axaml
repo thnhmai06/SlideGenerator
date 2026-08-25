@@ -20,7 +20,17 @@
                           Canvas.Top="{Binding ScreenBounds.Y}"
                           Width="{Binding ScreenBounds.Width}"
                           Height="{Binding ScreenBounds.Height}"
-                          PointerPressed="OnOverlayPointerPressed">
+                          PointerPressed="OnOverlayPointerPressed"
+                          DoubleTapped="OnOverlayDoubleTapped">
+                        <FlyoutBase.AttachedFlyout>
+                            <Flyout Placement="Bottom">
+                                <ComboBox ItemsSource="{Binding AllColumns}"
+                                          SelectedItem="{Binding Binding.Column, Mode=OneWay}"
+                                          PlaceholderText="chưa gán"
+                                          SelectionChanged="OnOverlayColumnSelectionChanged"
+                                          Width="180"/>
+                            </Flyout>
+                        </FlyoutBase.AttachedFlyout>
                         <Rectangle Classes="shape-overlay"
                                    Classes.assigned="{Binding Binding.State, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:BindingDisplayState.Assigned}}"
                                    Classes.suggested="{Binding Binding.State, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:BindingDisplayState.Suggested}}"

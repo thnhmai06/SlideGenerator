@@ -18,6 +18,7 @@ using CommunityToolkit.Mvvm.Input;
 using SlideGenerator.Desktop.Features.RecipeEditor.Services;
 using SlideGenerator.Desktop.Services.Dialogs;
 using SlideGenerator.Recipe.Models;
+using SlideGenerator.Recipe.Services;
 using SlideGenerator.Summarizer.Workbooks;
 using RecipeModel = SlideGenerator.Recipe.Models.Recipe;
 
@@ -37,6 +38,7 @@ public sealed partial class RecipeEditorViewModel : ObservableObject
     private readonly ISummaryCache _summaryCache;
     private readonly IFilePicker _filePicker;
     private readonly IDialogService _dialogService;
+    private readonly IRecipeRepository _recipeRepository;
 
     // The session whose mapping is actually reflected in the three panels right now. Distinct from
     // SelectedSession, which is set *before* LoadMappingAsync runs — if the load bails early (template slide
@@ -44,10 +46,35 @@ public sealed partial class RecipeEditorViewModel : ObservableObject
     // must not mistake that stale content for the new session's edits.
     private MappingEditSession? _loadedSession;
 
+    // True for the duration of InitializeAsync — OnNameChanged must not mark the recipe dirty just because
+    // InitializeAsync is setting Name to the recipe's already-saved value.
+    private bool _isInitializing;
+
+    [ObservableProperty] private int? _id;
+    [ObservableProperty] private string _name = "";
     [ObservableProperty] private RecipeModel _recipe = new([]);
     [ObservableProperty] private MappingEditSession? _selectedSession;
     [ObservableProperty] private bool _isDirty;
     [ObservableProperty] private bool _isLoading;
+
+    /// <summary>Raised after <see cref="SaveCommand" /> persists successfully — the recipe list should refresh.</summary>
+    public event Action? Saved;
+
+    /// <summary>Gets the combined <see cref="Models.BindingDisplayState" /> counts across both text placeholders and
+    ///     image shapes — the Advanced-mode warning strip's summary (plan §5.2: "một dải cảnh báo trong Advanced").</summary>
+    public (int Assigned, int Suggested, int NeedsSelection, int Unassigned) CombinedSummary
+    {
+        get
+        {
+            var text = TextBindings.Summary;
+            var image = Canvas.Summary;
+            return (text.Assigned + image.Assigned, text.Suggested + image.Suggested,
+                text.NeedsSelection + image.NeedsSelection, text.Unassigned + image.Unassigned);
+        }
+    }
+
+    /// <summary>Gets whether any binding still needs the user to pick from Ambiguous candidates — blocks <see cref="SaveCommand" />.</summary>
+    public bool HasUnresolvedBindings => CombinedSummary.NeedsSelection > 0;
 
     /// <summary>Gets one edit session per mapping in <see cref="Recipe" />, in order.</summary>
     public ObservableCollection<MappingEditSession> Sessions { get; } = [];
@@ -68,29 +95,97 @@ public sealed partial class RecipeEditorViewModel : ObservableObject
     public WorksheetSourcesViewModel Sources { get; }
 
     /// <summary>Constructs the editor, wiring the three child panels it coordinates.</summary>
-    public RecipeEditorViewModel(ISummaryCache summaryCache, IFilePicker filePicker, IDialogService dialogService)
+    public RecipeEditorViewModel(ISummaryCache summaryCache, IFilePicker filePicker, IDialogService dialogService,
+        IRecipeRepository recipeRepository)
     {
         _summaryCache = summaryCache;
         _filePicker = filePicker;
         _dialogService = dialogService;
+        _recipeRepository = recipeRepository;
         Canvas = new SlideCanvasViewModel();
         TextBindings = new TextBindingsViewModel();
         Sources = new WorksheetSourcesViewModel(filePicker, summaryCache);
         Sessions.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ShowMappingNavigator));
+        Canvas.Changed += OnChildChanged;
+        TextBindings.Changed += OnChildChanged;
+        Sources.Changed += OnChildChanged;
     }
 
+    /// <summary>Loads a brand-new, unsaved recipe into the editor — <see cref="Id" /> stays <see langword="null" />
+    ///     until the first successful <see cref="SaveCommand" />.</summary>
+    public Task InitializeAsync(RecipeModel recipe) => InitializeAsync(null, "", recipe);
+
     /// <summary>Loads the given recipe into the editor, selecting its first mapping (if any), and clears the dirty flag.</summary>
-    public async Task InitializeAsync(RecipeModel recipe)
+    public async Task InitializeAsync(int? id, string name, RecipeModel recipe)
     {
-        Recipe = recipe;
+        _isInitializing = true;
+        try
+        {
+            Id = id;
+            Name = name;
+            Recipe = recipe;
+            IsDirty = false;
+            _loadedSession = null;
+
+            Sessions.Clear();
+            foreach (var mapping in recipe.Mappings) Sessions.Add(new MappingEditSession(mapping));
+
+            SelectedSession = null;
+            if (Sessions.Count > 0) await SelectSessionAsync(Sessions[0]).ConfigureAwait(true);
+        }
+        finally
+        {
+            _isInitializing = false;
+        }
+
+        SaveCommand.NotifyCanExecuteChanged();
+    }
+
+    private void OnChildChanged()
+    {
+        MarkDirty();
+        OnPropertyChanged(nameof(CombinedSummary));
+        OnPropertyChanged(nameof(HasUnresolvedBindings));
+        SaveCommand.NotifyCanExecuteChanged();
+    }
+
+    private void MarkDirty()
+    {
+        IsDirty = true;
+        SaveCommand.NotifyCanExecuteChanged();
+    }
+
+    /// <summary>Marks the recipe dirty after an edit dispatched directly by view code-behind rather than through
+    ///     one of this ViewModel's own commands — the inspector's ROI reorder/remove buttons (P4.4) operate
+    ///     straight on <see cref="ShapeOverlayViewModel" />, which has no dirty-tracking hook of its own.</summary>
+    public void NotifyEdited()
+    {
+        MarkDirty();
+    }
+
+    partial void OnNameChanged(string value)
+    {
+        if (_isInitializing) return;
+        MarkDirty();
+    }
+
+    private bool CanSave() => IsDirty && !HasUnresolvedBindings && !string.IsNullOrWhiteSpace(Name);
+
+    /// <summary>Persists the recipe — inserts on first save (<see cref="Id" /> still <see langword="null" />),
+    ///     updates thereafter. Disabled while dirty tracking says there's nothing to save, a binding still needs
+    ///     the user to resolve an Ambiguous match, or <see cref="Name" /> is blank.</summary>
+    [RelayCommand(CanExecute = nameof(CanSave))]
+    private async Task SaveAsync()
+    {
+        var input = new RecipeInput(Name, ToRecipe());
+        var metadata = Id is null
+            ? await _recipeRepository.AddAsync(input).ConfigureAwait(true)
+            : await _recipeRepository.UpdateAsync(Id.Value, input).ConfigureAwait(true);
+
+        Id = metadata.Id;
         IsDirty = false;
-        _loadedSession = null;
-
-        Sessions.Clear();
-        foreach (var mapping in recipe.Mappings) Sessions.Add(new MappingEditSession(mapping));
-
-        SelectedSession = null;
-        if (Sessions.Count > 0) await SelectSessionAsync(Sessions[0]).ConfigureAwait(true);
+        SaveCommand.NotifyCanExecuteChanged();
+        Saved?.Invoke();
     }
 
     /// <summary>Projects in-flight edits, then rebuilds <see cref="Recipe" /> from every session's current mapping — the read path a save needs, since edits live on <see cref="Sessions" /> until pulled.</summary>
@@ -109,6 +204,7 @@ public sealed partial class RecipeEditorViewModel : ObservableObject
 
         var session = new MappingEditSession(new Mapping([], template, [], []));
         Sessions.Add(session);
+        MarkDirty();
         await SelectSessionAsync(session).ConfigureAwait(true);
     }
 
@@ -120,6 +216,7 @@ public sealed partial class RecipeEditorViewModel : ObservableObject
         if (index < 0) return;
 
         Sessions.RemoveAt(index);
+        MarkDirty();
         if (ReferenceEquals(_loadedSession, session)) _loadedSession = null;
         if (!ReferenceEquals(SelectedSession, session)) return;
 
@@ -133,7 +230,9 @@ public sealed partial class RecipeEditorViewModel : ObservableObject
     private void MoveMappingUp(MappingEditSession session)
     {
         var index = Sessions.IndexOf(session);
-        if (index > 0) Sessions.Move(index, index - 1);
+        if (index <= 0) return;
+        Sessions.Move(index, index - 1);
+        MarkDirty();
     }
 
     /// <summary>Moves a mapping one position later in the navigator order.</summary>
@@ -141,7 +240,9 @@ public sealed partial class RecipeEditorViewModel : ObservableObject
     private void MoveMappingDown(MappingEditSession session)
     {
         var index = Sessions.IndexOf(session);
-        if (index >= 0 && index < Sessions.Count - 1) Sessions.Move(index, index + 1);
+        if (index < 0 || index >= Sessions.Count - 1) return;
+        Sessions.Move(index, index + 1);
+        MarkDirty();
     }
 
     /// <summary>Opens a file picker and sets the shape's fallback image path — the image used when the row's own source is missing or invalid.</summary>
@@ -150,7 +251,9 @@ public sealed partial class RecipeEditorViewModel : ObservableObject
     {
         var path = await _filePicker.PickFileAsync("Chọn ảnh mặc định",
             [new Avalonia.Platform.Storage.FilePickerFileType("Ảnh") { Patterns = ["*.png", "*.jpg", "*.jpeg"] }]).ConfigureAwait(true);
-        if (path is not null) overlay.FallbackImagePath = path;
+        if (path is null) return;
+        overlay.FallbackImagePath = path;
+        MarkDirty();
     }
 
     /// <summary>Commits in-flight edits from the previously selected session, then loads <paramref name="session" />'s mapping into the three panels.</summary>

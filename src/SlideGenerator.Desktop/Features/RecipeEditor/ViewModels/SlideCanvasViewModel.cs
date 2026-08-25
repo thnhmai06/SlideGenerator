@@ -35,25 +35,38 @@ namespace SlideGenerator.Desktop.Features.RecipeEditor.ViewModels;
 /// </summary>
 public sealed partial class SlideCanvasViewModel : ObservableObject
 {
+    private HashSet<string> _touched = [];
+
     [ObservableProperty] private Bitmap? _preview;
     [ObservableProperty] private SizeF _slideSize;
     [ObservableProperty] private global::Avalonia.Size _canvasSize;
     [ObservableProperty] private ShapeOverlayViewModel? _selectedOverlay;
 
+    /// <summary>Raised when an overlay's column is set via <see cref="SetOverlayColumn" /> (not by <see cref="Load" />)
+    ///     — the coordinator marks the recipe dirty on this.</summary>
+    public event Action? Changed;
+
     /// <summary>Gets the image-shape overlays for the currently loaded slide.</summary>
     public ObservableCollection<ShapeOverlayViewModel> Overlays { get; } = [];
+
+    /// <summary>Gets the count of each <see cref="BindingDisplayState" /> across <see cref="Overlays" /> — the
+    ///     image-shape half of the Advanced warning strip's summary (text half: <see cref="TextBindingsViewModel.Summary" />).</summary>
+    public (int Assigned, int Suggested, int NeedsSelection, int Unassigned) Summary =>
+        BindingDisplayResolver.Summarize(Overlays.Select(o => o.Binding).ToList());
 
     /// <summary>
     ///     Loads a slide's preview and shape overlays. Each shape's state comes from
     ///     <see cref="BindingDisplayResolver" />: a real binding in <paramref name="imageInstructions" /> wins
     ///     as Assigned; otherwise <paramref name="availableColumns" /> (every column visible to this mapping's
     ///     worksheet sources) feeds the same auto-bind suggestion used for text placeholders.
-    ///     <paramref name="touchedShapeNames" /> holds shapes the user has already confirmed/changed via the
-    ///     canvas's double-click dropdown (not yet wired — defaults to none touched).
+    ///     <paramref name="touchedShapeNames" />, when given, is the caller-owned touched set to read/mutate —
+    ///     pass the same set back in across mapping switches so a confirmed Normalized binding doesn't revert to
+    ///     Suggested; omit it for a fresh, this-load-only set.
     /// </summary>
     public void Load(SlideSummary slide, IReadOnlyList<ImageInstruction> imageInstructions,
-        IReadOnlyList<string> availableColumns, IReadOnlySet<string>? touchedShapeNames = null)
+        IReadOnlyList<string> availableColumns, HashSet<string>? touchedShapeNames = null)
     {
+        _touched = touchedShapeNames ?? [];
         Preview?.Dispose();
         Preview = slide.Preview is { Length: > 0 } bytes ? new Bitmap(new MemoryStream(bytes)) : null;
         SlideSize = slide.SlideSize;
@@ -63,16 +76,28 @@ public sealed partial class SlideCanvasViewModel : ObservableObject
         {
             var instruction = imageInstructions.FirstOrDefault(i => i.Shapes.Contains(shape.Shape));
             var existingColumn = instruction?.Columns.FirstOrDefault()?.ColumnName;
-            var touched = touchedShapeNames?.Contains(shape.Shape.ShapeName) ?? false;
+            var touched = _touched.Contains(shape.Shape.ShapeName);
             var binding = BindingDisplayResolver.Resolve(shape.Shape.ShapeName, existingColumn, availableColumns, touched);
             var editInstruction = instruction?.ImageEditInstruction ?? new ImageEditInstruction([]);
 
-            var overlay = new ShapeOverlayViewModel(shape, binding, editInstruction, instruction?.FallbackImagePath)
+            var overlay = new ShapeOverlayViewModel(shape, binding, editInstruction, instruction?.FallbackImagePath, availableColumns)
             {
                 ScreenBounds = SlideCanvasGeometry.ScaleBounds(SlideSize, CanvasSize, shape.Bounds)
             };
             Overlays.Add(overlay);
         }
+
+        OnPropertyChanged(nameof(Summary));
+    }
+
+    /// <summary>Sets (or overrides) an overlay's column via the canvas double-click quick-assign dropdown,
+    ///     marking it touched so a Suggested state never reappears for it.</summary>
+    public void SetOverlayColumn(ShapeOverlayViewModel overlay, string column)
+    {
+        _touched.Add(overlay.Shape.Shape.ShapeName);
+        overlay.Binding = new BindingDisplay(overlay.Shape.Shape.ShapeName, BindingDisplayState.Assigned, column, []);
+        OnPropertyChanged(nameof(Summary));
+        Changed?.Invoke();
     }
 
     /// <summary>Projects every overlay with a column into the flat <see cref="ImageInstruction" /> list a

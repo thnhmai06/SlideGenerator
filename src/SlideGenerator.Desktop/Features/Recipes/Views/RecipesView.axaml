@@ -95,10 +95,11 @@
 
                 <!-- Editor overlay -->
                 <Grid RowDefinitions="Auto,*" IsVisible="{Binding IsEditorOpen}" Background="{DynamicResource SurfaceBackgroundBrush}">
-                    <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Margin="{StaticResource PaddingPanel}">
+                    <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="{StaticResource PaddingPanel}" ColumnSpacing="{StaticResource Space2}">
                         <Button Grid.Column="0" Content="{loc:Tr RecipesBack}" Command="{Binding CloseEditorCommand}"/>
-                        <TextBlock Grid.Column="1" Classes="h2" Text="{Binding EditorTitle}"
-                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="1" Classes="h2" Text="{Binding Editor.Name}"
+                                 PlaceholderText="Tên recipe" HorizontalAlignment="Stretch" VerticalAlignment="Center"/>
+                        <Button Grid.Column="2" Content="Lưu" Command="{Binding Editor.SaveCommand}"/>
                     </Grid>
                     <editor:RecipeEditorView Grid.Row="1" DataContext="{Binding Editor}"/>
                 </Grid>
