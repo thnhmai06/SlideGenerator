@@ -49,7 +49,7 @@
         </Border>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="{StaticResource Space2}">
-            <Button Content="Huỷ" Command="{Binding CancelCommand}"/>
+            <Button Content="Huỷ" Command="{Binding CancelCommand}" HotKey="Escape"/>
             <Button Content="Chọn" Command="{Binding ConfirmCommand}"
                     Background="{DynamicResource AccentBrush}" Foreground="{DynamicResource TextOnAccentBrush}"/>
         </StackPanel>

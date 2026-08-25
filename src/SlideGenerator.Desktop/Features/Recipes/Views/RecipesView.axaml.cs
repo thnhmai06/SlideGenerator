@@ -13,6 +13,7 @@
  */
 
 using Avalonia.Controls;
+using SlideGenerator.Desktop.Features.Recipes.ViewModels;
 
 namespace SlideGenerator.Desktop.Features.Recipes.Views;
 
@@ -23,5 +24,11 @@ public sealed partial class RecipesView : UserControl
     public RecipesView()
     {
         InitializeComponent();
+        DataContextChanged += OnDataContextChanged;
+    }
+
+    private void OnDataContextChanged(object? sender, EventArgs e)
+    {
+        if (DataContext is RecipesViewModel vm) vm.FocusSearchRequested += () => SearchBox.Focus();
     }
 }

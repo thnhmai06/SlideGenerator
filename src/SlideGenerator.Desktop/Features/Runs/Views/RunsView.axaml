@@ -40,6 +40,9 @@
                     </StackPanel>
 
                     <ListBox ItemsSource="{Binding FilteredRequests}" SelectedItem="{Binding SelectedRequest}">
+                        <ListBox.KeyBindings>
+                            <KeyBinding Gesture="Delete" Command="{Binding SelectedRequest.DeleteCommand}"/>
+                        </ListBox.KeyBindings>
                         <ListBox.ItemTemplate>
                             <DataTemplate x:DataType="vm:RequestRunViewModel">
                                 <Border Classes="hairline-row">

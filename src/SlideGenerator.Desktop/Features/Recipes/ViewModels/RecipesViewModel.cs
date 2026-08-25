@@ -66,6 +66,11 @@ public sealed partial class RecipesViewModel : ObservableObject
     /// <summary>Raised when a run was just started from this page — the Shell navigates to Runs on this.</summary>
     public event Action<string>? RunStarted;
 
+    /// <summary>Raised when Ctrl+F is pressed — the view focuses the search box (Ctrl+F has no meaningful
+    ///     ViewModel-side effect on its own, this only exists so the shortcut is bindable via
+    ///     <c>UserControl.KeyBindings</c> like every other keyboard shortcut in this view).</summary>
+    public event Action? FocusSearchRequested;
+
     /// <summary>Constructs the ViewModel and starts the initial load.</summary>
     public RecipesViewModel(IRecipeRepository repository, IRecipePackageService packageService, IService service,
         IDialogService dialogService, IFilePicker filePicker, IServiceProvider serviceProvider)
@@ -206,6 +211,12 @@ public sealed partial class RecipesViewModel : ObservableObject
     {
         _all.Add(CreateItem(metadata));
         ApplyFilter();
+    }
+
+    [RelayCommand]
+    private void FocusSearch()
+    {
+        FocusSearchRequested?.Invoke();
     }
 
     [RelayCommand]

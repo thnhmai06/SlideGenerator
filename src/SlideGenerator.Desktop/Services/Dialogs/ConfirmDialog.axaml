@@ -9,7 +9,7 @@
     <StackPanel Margin="{StaticResource PaddingPanel}" Spacing="{StaticResource Space4}">
         <TextBlock Classes="body" Text="{Binding #Root.Message}" TextWrapping="Wrap"/>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="{StaticResource Space2}">
-            <Button Content="{Binding #Root.CancelLabel}" Click="OnCancel"/>
+            <Button Content="{Binding #Root.CancelLabel}" Click="OnCancel" HotKey="Escape"/>
             <Button Content="{Binding #Root.ConfirmLabel}" Click="OnConfirm"
                     Background="{DynamicResource AccentBrush}" Foreground="{DynamicResource TextOnAccentBrush}"/>
         </StackPanel>
