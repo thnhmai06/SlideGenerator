@@ -202,7 +202,7 @@
     <value>Max concurrent jobs</value>
   </data>
   <data name="SettingsMaxConcurrentJobsHint" xml:space="preserve">
-    <value>Higher values generate faster but use more RAM — each running job keeps a workbook/presentation open in memory.</value>
+    <value>Higher values generate faster but use more RAM: each running job keeps a workbook/presentation open in memory.</value>
   </data>
   <data name="SettingsResetDefaults" xml:space="preserve">
     <value>Restore default</value>

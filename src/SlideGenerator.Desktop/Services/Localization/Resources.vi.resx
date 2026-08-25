@@ -154,7 +154,7 @@
     <value>Số job chạy song song tối đa</value>
   </data>
   <data name="SettingsMaxConcurrentJobsHint" xml:space="preserve">
-    <value>Giá trị càng cao chạy càng nhanh nhưng tốn RAM hơn — mỗi job đang chạy giữ một workbook/presentation trong bộ nhớ.</value>
+    <value>Giá trị càng cao chạy càng nhanh nhưng tốn RAM hơn: mỗi job đang chạy giữ một workbook/presentation trong bộ nhớ.</value>
   </data>
   <data name="SettingsResetDefaults" xml:space="preserve">
     <value>Khôi phục mặc định</value>

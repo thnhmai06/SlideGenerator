@@ -114,7 +114,12 @@ public sealed partial class SettingsViewModel : ObservableObject
         _ = PersistAsync();
     }
 
-    partial void OnReducedMotionChanged(bool value) => Persist();
+    partial void OnReducedMotionChanged(bool value)
+    {
+        if (_isLoading) return;
+        Persist();
+        _themeService.ApplyFromSettings();
+    }
     partial void OnMaxConcurrentJobsChanged(uint value) => Persist();
     partial void OnUseProxyChanged(bool value) => Persist();
     partial void OnProxyAddressChanged(string value) => Persist();
@@ -176,9 +181,9 @@ public sealed partial class SettingsViewModel : ObservableObject
             var result = await UpdateChecker.CheckForUpdatesAsync().ConfigureAwait(true);
             UpdateStatusMessage = result switch
             {
-                UpdateCheckResult.NotInstalled => "Không áp dụng — ứng dụng không chạy dưới dạng bản cài đặt.",
+                UpdateCheckResult.NotInstalled => "Không áp dụng. Ứng dụng không chạy dưới dạng bản cài đặt.",
                 UpdateCheckResult.UpToDate => "Đã là bản mới nhất.",
-                UpdateCheckResult.UpdateDownloaded => "Đã tải bản cập nhật — khởi động lại để áp dụng.",
+                UpdateCheckResult.UpdateDownloaded => "Đã tải bản cập nhật. Khởi động lại để áp dụng.",
                 UpdateCheckResult.Failed => "Kiểm tra cập nhật thất bại. Thử lại sau.",
                 _ => null
             };
