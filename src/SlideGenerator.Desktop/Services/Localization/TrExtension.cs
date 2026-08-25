@@ -15,30 +15,32 @@
 using System;
 using Avalonia.Data;
 using Avalonia.Markup.Xaml;
+using SlideGenerator.Desktop.Converters;
 
 namespace SlideGenerator.Desktop.Services.Localization;
 
 /// <summary>
 ///     XAML markup extension for localized text: <c>Text="{loc:Tr AppTitle}"</c>. Binds to
-///     <see cref="LocalizationService.Instance" />'s indexer rather than resolving a static string once, so
-///     every use updates live when <see cref="ILocalizationService.SetLanguage" /> is called - a plain
-///     <c>{x:Static}</c> lookup could not do this since <c>.resx</c> access has no change notification of its
-///     own.
+///     <see cref="LocalizationService.Instance" />'s <see cref="ILocalizationService.Revision" /> property and
+///     runs the actual resource lookup through <see cref="LocalizedTextConverter" /> (parameterized with
+///     <see cref="Key" />) rather than resolving a static string once, so every use updates live when
+///     <see cref="ILocalizationService.SetLanguage" /> is called - a plain <c>{x:Static}</c> lookup could not
+///     do this since <c>.resx</c> access has no change notification of its own.
 ///     <para>
-///     Known gap (found during P5 Settings smoke-testing): this live refresh does not actually work in the
-///     compiled-binding pipeline this app uses (<c>x:DataType</c> everywhere) - an indexer <see cref="Binding" />
-///     against a plain <see cref="System.ComponentModel.INotifyPropertyChanged" /> source never re-fires no
-///     matter what <see cref="System.ComponentModel.PropertyChangedEventArgs.PropertyName" />
-///     <see cref="LocalizationService.SetLanguage" /> raises (tried both <see langword="null" /> and
-///     <see cref="string.Empty" />), even though the indexer itself always returns the correct string for the
-///     culture in effect. Returning a raw <see cref="IObservable{T}" /> from <see cref="ProvideValue" /> instead
-///     (bypassing this accessor entirely) was tried and made it worse - the compiled-XAML setter cast the
-///     value directly rather than binding it, crashing every view with a <c>{loc:Tr}</c> use at construction.
-///     Reverted to this known-safe (if not live-refreshing) form. The saved language preference persists
-///     correctly and takes effect on next launch; it does not update already-rendered text until then.
-///     Fixing this properly needs a <see cref="Avalonia.Data.BindingBase" /> subclass wired through its
-///     protected <c>CreateInstance</c>, which is a real (if narrow) piece of work - flagged for a follow-up
-///     pass rather than attempted again here.
+///     History (found during P5 Settings smoke-testing, this app's compiled-binding pipeline uses
+///     <c>x:DataType</c> everywhere): the original design bound directly to an indexer
+///     (<c>new Binding("[key]")</c>) against <see cref="LocalizationService" />'s <c>this[string]</c>. That
+///     never live-refreshed no matter what <see cref="System.ComponentModel.PropertyChangedEventArgs.PropertyName" />
+///     <see cref="LocalizationService.SetLanguage" /> raised. Returning a raw <see cref="IObservable{T}" />
+///     from <see cref="ProvideValue" /> instead (bypassing <see cref="Binding" /> entirely) was tried next and
+///     made it worse - the compiled-XAML setter cast the value directly rather than binding it, crashing every
+///     view with a <c>{loc:Tr}</c> use at construction. The fix that actually works: bind to an ordinary named
+///     property (<see cref="ILocalizationService.Revision" />, an <see langword="int" /> counter incremented
+///     once per <see cref="ILocalizationService.SetLanguage" /> call) instead of an indexer path - this app's
+///     pipeline already refreshes plain named-property bindings correctly everywhere else, the indexer path
+///     specifically was the untested case. A <see cref="Binding.Converter" /> then ignores the bound
+///     <see cref="ILocalizationService.Revision" /> value and re-looks-up <see cref="Key" /> against
+///     <see cref="LocalizationService.Instance" /> on every change notification.
 ///     </para>
 /// </summary>
 public sealed class TrExtension(string key) : MarkupExtension
@@ -49,10 +51,12 @@ public sealed class TrExtension(string key) : MarkupExtension
     /// <inheritdoc />
     public override object ProvideValue(IServiceProvider serviceProvider)
     {
-        return new Binding($"[{Key}]")
+        return new Binding(nameof(ILocalizationService.Revision))
         {
             Source = LocalizationService.Instance,
-            Mode = BindingMode.OneWay
+            Mode = BindingMode.OneWay,
+            Converter = LocalizedTextConverter.Instance,
+            ConverterParameter = Key
         };
     }
 }

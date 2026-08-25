@@ -21,8 +21,10 @@ namespace SlideGenerator.Desktop.Services.Localization;
 /// <summary>
 ///     Provides culture-aware string lookup that can change at runtime without an app restart. <c>.resx</c>
 ///     files (<c>Resources.resx</c>/<c>Resources.vi.resx</c>) are static and never raise change notifications
-///     on their own — this service wraps them behind an indexer so <see cref="TrExtension" /> can bind to it
-///     and refresh every bound view once <see cref="SetLanguage" /> is called.
+///     on their own — <see cref="TrExtension" /> binds to <see cref="Revision" /> (a plain named property)
+///     purely to trigger a re-lookup of the indexer through a converter once <see cref="SetLanguage" /> is
+///     called; binding to the indexer directly does not live-refresh in this app's compiled-binding pipeline
+///     (see <see cref="TrExtension" />'s doc comment).
 /// </summary>
 public interface ILocalizationService : INotifyPropertyChanged
 {
@@ -31,6 +33,12 @@ public interface ILocalizationService : INotifyPropertyChanged
 
     /// <summary>Gets the culture currently in effect.</summary>
     CultureInfo CurrentCulture { get; }
+
+    /// <summary>Gets a counter incremented once per <see cref="SetLanguage" /> call — <see cref="TrExtension" />
+    ///     binds to this plain named property instead of the <c>[key]</c> indexer (see its own doc comment for
+    ///     why), since an ordinary property-changed notification is the one refresh mechanism already known to
+    ///     work through this app's compiled-binding pipeline.</summary>
+    int Revision { get; }
 
     /// <summary>
     ///     Switches the active language and notifies every indexer binding to refresh.
@@ -53,6 +61,7 @@ public sealed class LocalizationService : ILocalizationService
         new("SlideGenerator.Desktop.Services.Localization.Resources", typeof(LocalizationService).Assembly);
 
     private CultureInfo _currentCulture = CultureInfo.CurrentUICulture;
+    private int _revision;
 
     /// <summary>
     ///     Gets the process-wide instance, set once by the constructor since this service is registered as a
@@ -77,16 +86,19 @@ public sealed class LocalizationService : ILocalizationService
     public CultureInfo CurrentCulture => _currentCulture;
 
     /// <inheritdoc />
+    public int Revision => _revision;
+
+    /// <inheritdoc />
     public void SetLanguage(string languageCode)
     {
         _currentCulture = string.IsNullOrWhiteSpace(languageCode)
             ? CultureInfo.CurrentUICulture
             : new CultureInfo(languageCode);
         CultureInfo.CurrentUICulture = _currentCulture;
-        // Null property name is the INotifyPropertyChanged convention for "every property changed" —
-        // the only way to refresh every indexer ([key]) binding in the app from one call. In practice this
-        // does not actually refresh already-rendered Avalonia compiled-binding indexer bindings — see
-        // TrExtension's doc comment for the known gap this exposed.
+        _revision++;
+        // Null property name still covers the (non-live-refreshing) indexer binding for any lingering
+        // direct [key] usages; Revision is the one TrExtension actually relies on to live-refresh.
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Revision)));
     }
 }
