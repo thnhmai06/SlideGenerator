@@ -13,13 +13,12 @@
  */
 
 using Avalonia;
-using Avalonia.Animation;
 using Avalonia.Controls;
 using SlideGenerator.Desktop.Services.Theme;
 
 namespace SlideGenerator.Desktop.Shell;
 
-/// <summary>Sidebar + page host for <see cref="ShellViewModel" />.</summary>
+/// <summary>Toolbar + page host for <see cref="ShellViewModel" />.</summary>
 public sealed partial class ShellView : UserControl
 {
     /// <summary>Constructs the view and loads its XAML.</summary>
@@ -27,8 +26,7 @@ public sealed partial class ShellView : UserControl
     {
         InitializeComponent();
 
-        // Built in code, not XAML — see MainWindow's constructor comment for why (CrossFade.Duration is a
-        // plain CLR property, cannot bind to {DynamicResource MotionUi}).
-        PageHost.PageTransition = new CrossFade(ThemeService.GetMotionResource(Application.Current!, "MotionUi"));
+        // Built in code, not XAML — see MainWindow's constructor comment for why.
+        PageHost.PageTransition = ThemeService.BuildPageTransition(Application.Current!);
     }
 }

@@ -3,7 +3,7 @@
         xmlns:shell="clr-namespace:SlideGenerator.Desktop.Shell"
         x:Class="SlideGenerator.Desktop.Shell.MainWindow"
         x:DataType="shell:MainWindowViewModel"
-        Title="SlideGenerator"
+        Title="{Binding WindowTitle}"
         Icon="avares://SlideGenerator.Desktop/Assets/appicon.ico"
         Width="1280" Height="800" MinWidth="1024" MinHeight="640"
         Background="{DynamicResource SurfaceBackgroundBrush}"

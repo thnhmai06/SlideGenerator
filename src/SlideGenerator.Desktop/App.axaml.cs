@@ -24,6 +24,7 @@ using Serilog.Events;
 using Serilog.Exceptions;
 using SlideGenerator.Cloud;
 using SlideGenerator.Desktop.Bootstrap;
+using SlideGenerator.Desktop.Components;
 using SlideGenerator.Desktop.Services.Localization;
 using SlideGenerator.Desktop.Services.Progress;
 using SlideGenerator.Desktop.Services.Theme;
@@ -47,13 +48,6 @@ namespace SlideGenerator.Desktop;
 /// </summary>
 public sealed class App : Application
 {
-    /// <summary>
-    ///     Minimum time the splash screen, once shown, stays visible — long enough for its lockup animation
-    ///     (<see cref="Shell.SplashView" />, <c>MotionBrand</c> = 400ms) to finish even if startup work
-    ///     completes sooner.
-    /// </summary>
-    private static readonly TimeSpan MinimumSplashDuration = TimeSpan.FromMilliseconds(420);
-
     /// <summary>
     ///     If startup work finishes within this window, the splash is skipped entirely — showing it only to
     ///     immediately replace it reads as a flash, not a screen (see the plan's Startup section).
@@ -121,7 +115,12 @@ public sealed class App : Application
             // init finishes before the animation would (an abrupt cut mid-transform looks broken).
             mainWindowViewModel.CurrentContent = host.Services.GetRequiredService<SplashViewModel>();
             await initTask.ConfigureAwait(true);
-            var remaining = MinimumSplashDuration - sw.Elapsed;
+            // ApplyFromSettings() already ran inside InitializeAsync above, so MotionBrand already reflects
+            // ReducedMotion — sizing the floor off BrandLockup's own total keeps the two in sync without
+            // duplicating its hold-before/animate/hold-after math here.
+            var motionBrand = ThemeService.GetMotionResource(Application.Current!, "MotionBrand");
+            var minimumSplashDuration = BrandLockup.GetTotalDuration(motionBrand);
+            var remaining = minimumSplashDuration - sw.Elapsed;
             if (remaining > TimeSpan.Zero) await Task.Delay(remaining).ConfigureAwait(true);
         }
         else

@@ -13,14 +13,13 @@
  */
 
 using Avalonia.Controls;
-using Avalonia.Threading;
 
 namespace SlideGenerator.Desktop.Shell;
 
 /// <summary>The startup lockup animation — see <see cref="SplashViewModel" /> for why it has no state.</summary>
 public sealed partial class SplashView : UserControl
 {
-    /// <summary>Constructs the view, loads its XAML, and arms the entrance transition.</summary>
+    /// <summary>Constructs the view, loads its XAML, and arms the entrance animation.</summary>
     public SplashView()
     {
         InitializeComponent();
@@ -30,14 +29,6 @@ public sealed partial class SplashView : UserControl
     private void OnLoaded(object? sender, EventArgs e)
     {
         Loaded -= OnLoaded;
-        // Toggling the class in the same tick as Loaded can land on the same layout pass as the initial
-        // (pre-transition) values, so the Transitions declared in SplashView.axaml would have nothing to
-        // animate from. Posting at Loaded priority defers one pass, guaranteeing the "before" state has
-        // actually rendered once before the "after" state is applied.
-        Dispatcher.UIThread.Post(() =>
-        {
-            MarkImage.Classes.Add("revealed");
-            WordImage.Classes.Add("revealed");
-        }, DispatcherPriority.Loaded);
+        _ = Lockup.PlayAsync();
     }
 }

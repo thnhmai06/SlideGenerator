@@ -90,6 +90,9 @@
   <data name="ShellCloseTooltip" xml:space="preserve">
     <value>Close</value>
   </data>
+  <data name="ShellActiveJobsTitleSuffix" xml:space="preserve">
+    <value> — {0} job running</value>
+  </data>
   <data name="RunsFilterAll" xml:space="preserve">
     <value>All</value>
   </data>

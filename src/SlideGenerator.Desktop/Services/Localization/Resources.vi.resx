@@ -90,6 +90,9 @@
   <data name="ShellCloseTooltip" xml:space="preserve">
     <value>Đóng</value>
   </data>
+  <data name="ShellActiveJobsTitleSuffix" xml:space="preserve">
+    <value> — {0} job đang chạy</value>
+  </data>
   <data name="RunsFilterAll" xml:space="preserve">
     <value>Tất cả</value>
   </data>

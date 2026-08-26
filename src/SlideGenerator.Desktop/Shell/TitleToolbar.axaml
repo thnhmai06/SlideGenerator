@@ -49,7 +49,7 @@
                 <Button Classes="Tertiary" Width="36" Height="36" Padding="0"
                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                         Content="&#9680;" ToolTip.Tip="{loc:Tr ShellThemeToggleTooltip}"
-                        Command="{Binding ToggleThemeCommand}"
+                        Click="OnThemeToggleClick"
                         chrome:WindowDecorationProperties.ElementRole="User"/>
                 <Button Classes="Tertiary" Width="36" Height="36" Padding="0"
                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center"

@@ -1,55 +1,8 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:components="clr-namespace:SlideGenerator.Desktop.Components"
              x:Class="SlideGenerator.Desktop.Shell.SplashView">
-    <UserControl.Styles>
-        <!-- Transitions, not Style.Animations/KeyFrame — Avalonia has no built-in Animator for RenderTransform
-             inside a KeyFrame ("No animator registered for the property RenderTransform"), but Transitions
-             support it natively via TransformOperationsTransition (same mechanism Controls.axaml already uses
-             for button press feedback). The entrance plays once, driven by toggling the "revealed" class from
-             code-behind on Loaded (see SplashView.axaml.cs) rather than by attaching/detaching a pseudo-class.
-             Reduced motion (Setting.Appearance.ReducedMotion) sets App-level MotionBrand to 0 via
-             App.axaml.cs ApplyReducedMotion — the transition then completes instantly, landing directly on
-             its end-state with no visible motion. -->
-        <Style Selector="Image.splash-mark">
-            <Setter Property="RenderTransform" Value="none"/>
-            <Setter Property="Transitions">
-                <Transitions>
-                    <TransformOperationsTransition Property="RenderTransform" Duration="{DynamicResource MotionBrand}"
-                                                    Easing="CubicEaseOut"/>
-                </Transitions>
-            </Setter>
-        </Style>
-        <Style Selector="Image.splash-mark.revealed">
-            <Setter Property="RenderTransform" Value="translateX(-64px)"/>
-        </Style>
-
-        <Style Selector="Image.splash-word">
-            <Setter Property="Opacity" Value="0"/>
-            <Setter Property="RenderTransform" Value="translateX(-16px)"/>
-            <Setter Property="Transitions">
-                <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="{DynamicResource MotionBrand}"
-                                       Easing="CubicEaseOut"/>
-                    <TransformOperationsTransition Property="RenderTransform" Duration="{DynamicResource MotionBrand}"
-                                                    Easing="CubicEaseOut"/>
-                </Transitions>
-            </Setter>
-        </Style>
-        <Style Selector="Image.splash-word.revealed">
-            <Setter Property="Opacity" Value="1"/>
-            <Setter Property="RenderTransform" Value="none"/>
-        </Style>
-    </UserControl.Styles>
-
     <Grid Background="{DynamicResource SurfaceBackgroundBrush}">
-        <!-- Mark drawn after (on top of) wordmark, so it visually "reveals" the wordmark as it slides left. -->
-        <Panel HorizontalAlignment="Center" VerticalAlignment="Center" Width="260" Height="56">
-            <Image x:Name="WordImage" Classes="splash-word"
-                   Source="avares://SlideGenerator.Desktop/Assets/Brand/app-name.png"
-                   Height="34" HorizontalAlignment="Left" Margin="72,0,0,0" RenderTransformOrigin="0,0.5"/>
-            <Image x:Name="MarkImage" Classes="splash-mark"
-                   Source="avares://SlideGenerator.Desktop/Assets/Brand/app-icon.png"
-                   Height="56" HorizontalAlignment="Left" RenderTransformOrigin="0,0.5"/>
-        </Panel>
+        <components:BrandLockup x:Name="Lockup" HorizontalAlignment="Center" VerticalAlignment="Center"/>
     </Grid>
 </UserControl>

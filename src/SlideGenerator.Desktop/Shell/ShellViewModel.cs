@@ -12,6 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
@@ -55,9 +56,20 @@ public sealed partial class ShellViewModel : ObservableObject
         Navigate(ShellDestination.Recipes);
     }
 
-    /// <summary>Cycles <c>Appearance.Theme</c> System → Light → Dark → System, applying it immediately.</summary>
+    /// <summary>Cycles <c>Appearance.Theme</c> System → Light → Dark → System, switching instantly (no reveal).</summary>
     [RelayCommand]
-    private async Task ToggleTheme()
+    private Task ToggleTheme()
+    {
+        return ToggleThemeAsync(null);
+    }
+
+    /// <summary>
+    ///     Same cycle as <see cref="ToggleThemeCommand" />, but reveals the switch as a circle expanding from
+    ///     <paramref name="origin" /> — <see cref="TitleToolbar" />'s theme button calls this directly (not
+    ///     through the command) since the origin is a view-layer concept (the button's own on-screen position)
+    ///     that doesn't belong on this ViewModel as state.
+    /// </summary>
+    public Task ToggleThemeAsync(Point? origin)
     {
         var next = _settingManager.Current.Appearance.Theme switch
         {
@@ -65,7 +77,9 @@ public sealed partial class ShellViewModel : ObservableObject
             ThemeMode.Light => ThemeMode.Dark,
             _ => ThemeMode.System
         };
-        await _themeService.SetThemeAsync(next).ConfigureAwait(true);
+        return origin is { } o
+            ? _themeService.SetThemeAnimatedAsync(next, o)
+            : _themeService.SetThemeAsync(next);
     }
 
     /// <summary>Gets whether <see cref="ShellDestination.Recipes" /> is the active destination.</summary>
