@@ -35,9 +35,19 @@
     <Thickness x:Key="PaddingPanel">20</Thickness>
     <Thickness x:Key="PaddingControl">12,8</Thickness>
 
-    <!-- Radius — exactly two values app-wide (shape lock, see plan §1). -->
-    <CornerRadius x:Key="RadiusControl">4</CornerRadius>
-    <CornerRadius x:Key="RadiusPanel">6</CornerRadius>
+    <!-- Thickness variants of the Space* scale above, for Margin/Padding literals that need a specific side
+         pattern a plain number can't express (e.g. Margin="{StaticResource ThicknessRight2}" = "0,0,8,0"). -->
+    <Thickness x:Key="Thickness1">4</Thickness>
+    <Thickness x:Key="Thickness2">8</Thickness>
+    <Thickness x:Key="Thickness3">12</Thickness>
+    <Thickness x:Key="Thickness4">16</Thickness>
+    <Thickness x:Key="Thickness6">24</Thickness>
+
+    <!-- Radius — shape lock, see plan §1. RadiusFull is for pill-shaped chips/nav (999 reads as "always fully
+         rounded" regardless of the control's height, unlike a fixed large number). -->
+    <CornerRadius x:Key="RadiusControl">6</CornerRadius>
+    <CornerRadius x:Key="RadiusPanel">10</CornerRadius>
+    <CornerRadius x:Key="RadiusFull">999</CornerRadius>
 
     <!-- Motion — one duration scale, bound via DynamicResource so Appearance.ReducedMotion can zero every
          animation in the app at once (see App.axaml.cs ApplyReducedMotion). Never hardcode a literal

@@ -7,11 +7,8 @@
         Icon="avares://SlideGenerator.Desktop/Assets/appicon.ico"
         Width="1280" Height="800" MinWidth="1024" MinHeight="640"
         Background="{DynamicResource SurfaceBackgroundBrush}">
-    <TransitioningContentControl Content="{Binding CurrentContent}"
-                                  HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
-        <TransitioningContentControl.PageTransition>
-            <!-- CrossFade.Duration is a plain CLR property, not bindable — cannot reference MotionUi here. -->
-            <CrossFade Duration="0:0:0.15"/>
-        </TransitioningContentControl.PageTransition>
-    </TransitioningContentControl>
+    <!-- PageTransition is assigned in code-behind (CrossFade.Duration is a plain CLR property, not bindable —
+         a XAML-literal Duration would not respect Appearance.ReducedMotion). -->
+    <TransitioningContentControl x:Name="ContentHost" Content="{Binding CurrentContent}"
+                                  HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
 </Window>

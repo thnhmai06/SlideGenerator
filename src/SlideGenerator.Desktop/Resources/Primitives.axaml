@@ -10,7 +10,10 @@
     <Color x:Key="NeutralLight50">#F7F8FB</Color>
     <Color x:Key="NeutralLight100">#EDF0F6</Color>
     <Color x:Key="NeutralLight200">#DFE3ED</Color>
-    <Color x:Key="NeutralLight500">#6D7490</Color>
+    <!-- Darkened from #6D7490 — that shade cleared WCAG AA (4.5:1) against SurfaceBrush but not against
+         SurfaceBackgroundBrush (4.35:1) or SurfaceMutedBrush (4.04:1), both of which TextMutedBrush is
+         actually rendered on (DesignSystemTests.ThemeBrushPairs_MeetWcagAaContrast_InBothVariants). -->
+    <Color x:Key="NeutralLight500">#5F6685</Color>
     <Color x:Key="NeutralLight600">#454C6B</Color>
     <Color x:Key="NeutralLight900">#0E1330</Color>
 
@@ -18,7 +21,8 @@
     <Color x:Key="NeutralDark800">#131730</Color>
     <Color x:Key="NeutralDark700">#1A1F3D</Color>
     <Color x:Key="NeutralDark600">#242A4C</Color>
-    <Color x:Key="NeutralDark400">#767E9C</Color>
+    <!-- Lightened from #767E9C — same WCAG AA gap as NeutralLight500 above, mirrored for dark surfaces. -->
+    <Color x:Key="NeutralDark400">#8790AD</Color>
     <Color x:Key="NeutralDark200">#A7AFC9</Color>
     <Color x:Key="NeutralDark50">#EEF1F8</Color>
 

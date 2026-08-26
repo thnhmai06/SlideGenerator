@@ -19,10 +19,23 @@
             <SolidColorBrush x:Key="BorderStrongBrush" Color="{StaticResource NeutralLight500}"/>
 
             <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource BrandRoyal}"/>
+            <SolidColorBrush x:Key="AccentHoverBrush" Color="#0044BB"/>
+            <SolidColorBrush x:Key="AccentPressedBrush" Color="#002266"/>
             <SolidColorBrush x:Key="AccentMutedBrush" Color="#B8C9EC"/>
             <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessLight}"/>
             <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningLight}"/>
             <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DangerLight}"/>
+
+            <!-- Elevation ramp — dark values live in the Dark dictionary below; shadows read poorly on dark
+                 surfaces so those lean on higher alpha rather than just "the same shadow, darker". -->
+            <BoxShadows x:Key="Elevation1">0 1 2 0 #14000000</BoxShadows>
+            <BoxShadows x:Key="Elevation2">0 4 12 -2 #1F000000</BoxShadows>
+            <BoxShadows x:Key="Elevation3">0 12 32 -4 #29000000</BoxShadows>
+
+            <!-- BoxShadows' string parser doesn't accept a nested {DynamicResource} for just the color, so the
+                 keyboard-focus ring is its own precomposed per-theme resource instead of AccentBrush + a
+                 literal spread. -->
+            <BoxShadows x:Key="FocusRingShadow">0 0 0 3 #4D003399</BoxShadows>
         </ResourceDictionary>
 
         <ResourceDictionary x:Key="Dark">
@@ -33,16 +46,25 @@
             <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource NeutralDark50}"/>
             <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource NeutralDark200}"/>
             <SolidColorBrush x:Key="TextMutedBrush" Color="{StaticResource NeutralDark400}"/>
-            <SolidColorBrush x:Key="TextOnAccentBrush" Color="#FFFFFF"/>
+            <!-- White-on-BrandDodger is only 3.24:1 (fails WCAG AA) — BrandDodger is a light, saturated blue,
+                 so a dark foreground reads better here than white (DesignSystemTests.ThemeBrushPairs_...). -->
+            <SolidColorBrush x:Key="TextOnAccentBrush" Color="{StaticResource NeutralDark900}"/>
 
             <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource NeutralDark600}"/>
             <SolidColorBrush x:Key="BorderStrongBrush" Color="{StaticResource NeutralDark400}"/>
 
             <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource BrandDodger}"/>
+            <SolidColorBrush x:Key="AccentHoverBrush" Color="#4DA6FF"/>
+            <SolidColorBrush x:Key="AccentPressedBrush" Color="#0F7ADB"/>
             <SolidColorBrush x:Key="AccentMutedBrush" Color="#2A4E85"/>
             <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessDark}"/>
             <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningDark}"/>
             <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DangerDark}"/>
+
+            <BoxShadows x:Key="Elevation1">0 1 2 0 #40000000</BoxShadows>
+            <BoxShadows x:Key="Elevation2">0 4 12 -2 #59000000</BoxShadows>
+            <BoxShadows x:Key="Elevation3">0 12 32 -4 #73000000</BoxShadows>
+            <BoxShadows x:Key="FocusRingShadow">0 0 0 3 #4D1E90FF</BoxShadows>
         </ResourceDictionary>
     </ResourceDictionary.ThemeDictionaries>
 </ResourceDictionary>

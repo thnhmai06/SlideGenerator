@@ -12,7 +12,10 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using Avalonia;
+using Avalonia.Animation;
 using Avalonia.Controls;
+using SlideGenerator.Desktop.Services.Theme;
 
 namespace SlideGenerator.Desktop.Shell;
 
@@ -23,5 +26,9 @@ public sealed partial class ShellView : UserControl
     public ShellView()
     {
         InitializeComponent();
+
+        // Built in code, not XAML — see MainWindow's constructor comment for why (CrossFade.Duration is a
+        // plain CLR property, cannot bind to {DynamicResource MotionUi}).
+        PageHost.PageTransition = new CrossFade(ThemeService.GetMotionResource(Application.Current!, "MotionUi"));
     }
 }

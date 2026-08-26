@@ -33,12 +33,7 @@
             </Grid>
         </Border>
 
-        <!-- Page content -->
-        <TransitioningContentControl Grid.Column="1" Content="{Binding CurrentPage}">
-            <TransitioningContentControl.PageTransition>
-                <!-- CrossFade.Duration is a plain CLR property, not bindable — cannot reference MotionUi here. -->
-                <CrossFade Duration="0:0:0.15"/>
-            </TransitioningContentControl.PageTransition>
-        </TransitioningContentControl>
+        <!-- Page content — PageTransition assigned in code-behind, see its comment. -->
+        <TransitioningContentControl Grid.Column="1" x:Name="PageHost" Content="{Binding CurrentPage}"/>
     </Grid>
 </UserControl>
