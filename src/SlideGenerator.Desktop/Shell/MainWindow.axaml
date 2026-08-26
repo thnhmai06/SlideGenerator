@@ -6,8 +6,20 @@
         Title="SlideGenerator"
         Icon="avares://SlideGenerator.Desktop/Assets/appicon.ico"
         Width="1280" Height="800" MinWidth="1024" MinHeight="640"
-        Background="{DynamicResource SurfaceBackgroundBrush}">
-    <!-- PageTransition is assigned in code-behind (CrossFade.Duration is a plain CLR property, not bindable —
+        Background="{DynamicResource SurfaceBackgroundBrush}"
+        ExtendClientAreaToDecorationsHint="True"
+        WindowDecorations="BorderOnly">
+    <!-- Custom chrome (blueprint §3.1/§6-P0): ExtendClientAreaToDecorationsHint + WindowDecorations="BorderOnly"
+         is the one config, of the three tried during the P0 spike, where maximize actually fills the work
+         area and Win11 Snap Layouts still shows on hovering the maximize-role button — "None" broke maximize
+         sizing outright. The title-bar row itself (drag region + caption buttons + nav) lives in ShellView's
+         TitleToolbar, not here — Splash has no toolbar (a deliberate simplification: giving Splash its own
+         chrome would need a second ShellViewModel-independent DataContext path for zero real benefit, since
+         splash is non-interactive and capped at ~900ms — see TitleToolbar's own remarks). During that brief
+         window the OS chrome is gone and no app chrome has taken its place yet, so the window can't be
+         dragged/minimized/closed by mouse — only via taskbar/Alt+F4. Accepted trade-off, not an oversight.
+
+         PageTransition is assigned in code-behind (CrossFade.Duration is a plain CLR property, not bindable —
          a XAML-literal Duration would not respect Appearance.ReducedMotion). -->
     <TransitioningContentControl x:Name="ContentHost" Content="{Binding CurrentContent}"
                                   HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>

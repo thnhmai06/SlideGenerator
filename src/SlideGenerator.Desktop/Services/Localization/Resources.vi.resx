@@ -75,6 +75,21 @@
   <data name="NavSettings" xml:space="preserve">
     <value>Cài đặt</value>
   </data>
+  <data name="NavAbout" xml:space="preserve">
+    <value>Giới thiệu</value>
+  </data>
+  <data name="ShellThemeToggleTooltip" xml:space="preserve">
+    <value>Đổi giao diện</value>
+  </data>
+  <data name="ShellMinimizeTooltip" xml:space="preserve">
+    <value>Thu nhỏ</value>
+  </data>
+  <data name="ShellMaximizeTooltip" xml:space="preserve">
+    <value>Phóng to</value>
+  </data>
+  <data name="ShellCloseTooltip" xml:space="preserve">
+    <value>Đóng</value>
+  </data>
   <data name="RunsFilterAll" xml:space="preserve">
     <value>Tất cả</value>
   </data>

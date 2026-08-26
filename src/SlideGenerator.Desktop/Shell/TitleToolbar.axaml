@@ -1,0 +1,80 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:shell="clr-namespace:SlideGenerator.Desktop.Shell"
+             xmlns:loc="clr-namespace:SlideGenerator.Desktop.Services.Localization"
+             xmlns:chrome="clr-namespace:Avalonia.Controls.Chrome;assembly=Avalonia.Controls"
+             x:Class="SlideGenerator.Desktop.Shell.TitleToolbar"
+             x:DataType="shell:ShellViewModel">
+    <!-- Persistent app-wide toolbar (blueprint §3.1): brand + nav pill + theme/About/Settings + caption
+         buttons, all in one 48px row. DataContext is inherited from ShellView (= the same ShellViewModel
+         instance the page host binds to) — no separate DI wiring needed. Only shown while Shell content is
+         active; Splash has no toolbar (see MainWindow.axaml's remarks).
+
+         Every clickable element inside the TitleBar-role Border below MUST also carry
+         ElementRole="User" (nav pill, theme/About/Settings) or it silently stops receiving clicks — the
+         ambient TitleBar role treats an unmarked descendant as drag surface, same as a real OS titlebar
+         swallows clicks on empty space. The three caption buttons are the one exception: their own
+         MinimizeButton/MaximizeButton/CloseButton roles already make them clickable (and give Win11 Snap
+         Layouts hover on Maximize), confirmed in the P0 spike — this "User" requirement was only discovered
+         once a *non-caption* interactive control (the nav pill) needed to sit in the same region. -->
+    <Border Height="48" Background="{DynamicResource SurfaceBrush}"
+            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1"
+            chrome:WindowDecorationProperties.ElementRole="TitleBar">
+        <Grid ColumnDefinitions="Auto,*,Auto">
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="{StaticResource Space2}"
+                        Margin="16,0,0,0" VerticalAlignment="Center">
+                <Image Source="avares://SlideGenerator.Desktop/Assets/Brand/app-icon.png" Width="20" Height="20"/>
+                <TextBlock Classes="h2" Text="SlideGenerator" VerticalAlignment="Center"/>
+            </StackPanel>
+
+            <Border Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center"
+                    CornerRadius="{StaticResource RadiusFull}" Background="{DynamicResource SurfaceMutedBrush}"
+                    Padding="4">
+                <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space1}">
+                    <Button Classes="nav-item" Classes.active="{Binding IsRecipesActive}"
+                            Content="{loc:Tr NavRecipes}"
+                            Command="{Binding NavigateCommand}"
+                            CommandParameter="{x:Static shell:ShellDestination.Recipes}"
+                            chrome:WindowDecorationProperties.ElementRole="User"/>
+                    <Button Classes="nav-item" Classes.active="{Binding IsRunsActive}"
+                            Content="{loc:Tr NavRuns}"
+                            Command="{Binding NavigateCommand}"
+                            CommandParameter="{x:Static shell:ShellDestination.Runs}"
+                            chrome:WindowDecorationProperties.ElementRole="User"/>
+                </StackPanel>
+            </Border>
+
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="{StaticResource Space1}"
+                        Margin="0,0,8,0" VerticalAlignment="Center">
+                <Button Classes="Tertiary" Width="36" Height="36" Padding="0"
+                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                        Content="&#9680;" ToolTip.Tip="{loc:Tr ShellThemeToggleTooltip}"
+                        Command="{Binding ToggleThemeCommand}"
+                        chrome:WindowDecorationProperties.ElementRole="User"/>
+                <Button Classes="Tertiary" Width="36" Height="36" Padding="0"
+                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                        Content="&#8505;" ToolTip.Tip="{loc:Tr NavAbout}"
+                        Command="{Binding NavigateCommand}" CommandParameter="{x:Static shell:ShellDestination.About}"
+                        chrome:WindowDecorationProperties.ElementRole="User"/>
+                <Button Classes="Tertiary" Width="36" Height="36" Padding="0"
+                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                        Content="&#9881;" ToolTip.Tip="{loc:Tr NavSettings}"
+                        Command="{Binding NavigateCommand}" CommandParameter="{x:Static shell:ShellDestination.Settings}"
+                        chrome:WindowDecorationProperties.ElementRole="User"/>
+
+                <Button Width="46" Height="48" CornerRadius="0" Content="&#8212;"
+                        ToolTip.Tip="{loc:Tr ShellMinimizeTooltip}"
+                        chrome:WindowDecorationProperties.ElementRole="MinimizeButton"
+                        Click="OnMinimizeClick"/>
+                <Button Width="46" Height="48" CornerRadius="0" Content="&#9744;"
+                        ToolTip.Tip="{loc:Tr ShellMaximizeTooltip}"
+                        chrome:WindowDecorationProperties.ElementRole="MaximizeButton"
+                        Click="OnMaximizeClick"/>
+                <Button Width="46" Height="48" CornerRadius="0" Content="&#10005;"
+                        ToolTip.Tip="{loc:Tr ShellCloseTooltip}"
+                        chrome:WindowDecorationProperties.ElementRole="CloseButton"
+                        Click="OnCloseClick"/>
+            </StackPanel>
+        </Grid>
+    </Border>
+</UserControl>

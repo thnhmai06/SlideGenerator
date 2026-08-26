@@ -15,8 +15,9 @@
 namespace SlideGenerator.Desktop.Shell;
 
 /// <summary>
-///     The three fixed sidebar destinations (see the plan's Information Architecture) — never more than
-///     this, so this is a plain enum rather than a registry.
+///     The four fixed shell destinations (see the plan's Information Architecture) — never more than this,
+///     so this is a plain enum rather than a registry. Recipes/Runs sit in the title toolbar's nav pill;
+///     Settings/About are standalone icon buttons alongside it (blueprint §3.1).
 /// </summary>
 public enum ShellDestination
 {
@@ -27,5 +28,8 @@ public enum ShellDestination
     Runs,
 
     /// <summary>Appearance, performance, and network settings.</summary>
-    Settings
+    Settings,
+
+    /// <summary>Product info, update check, developers, supporters (blueprint §5.7 — placeholder until P6).</summary>
+    About
 }

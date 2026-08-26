@@ -18,12 +18,16 @@ using Microsoft.Extensions.DependencyInjection;
 using SlideGenerator.Desktop.Features.Recipes.ViewModels;
 using SlideGenerator.Desktop.Features.Runs.ViewModels;
 using SlideGenerator.Desktop.Features.Settings.ViewModels;
+using SlideGenerator.Desktop.Services.Theme;
+using SlideGenerator.Settings.Mutable;
 
 namespace SlideGenerator.Desktop.Shell;
 
 /// <summary>
-///     Owns the three fixed sidebar destinations (<see cref="ShellDestination" />) and the currently-shown
-///     page. Each destination's page ViewModel is resolved lazily on first navigation via
+///     Owns the four fixed shell destinations (<see cref="ShellDestination" />) and the currently-shown page,
+///     plus the title toolbar's theme-toggle (the toolbar itself — <see cref="TitleToolbar" /> — binds
+///     directly to this VM, inherited from <see cref="ShellView" />'s own DataContext; it needs no DI wiring
+///     of its own). Each destination's page ViewModel is resolved lazily on first navigation via
 ///     <see cref="IServiceProvider" /> rather than all three being constructed eagerly at startup — a page's
 ///     dependencies (repositories, etc.) should not pay their construction cost until the user actually opens
 ///     that page. State is preserved across navigations (the resolved instance is cached in
@@ -33,16 +37,35 @@ public sealed partial class ShellViewModel : ObservableObject
 {
     private readonly Dictionary<ShellDestination, ObservableObject> _pages = new();
     private readonly IServiceProvider _serviceProvider;
+    private readonly IThemeService _themeService;
+    private readonly ISettingManager _settingManager;
 
     [ObservableProperty] private ShellDestination _currentDestination;
     [ObservableProperty] private ObservableObject? _currentPage;
 
     /// <summary>Constructs the shell and navigates to <see cref="ShellDestination.Recipes" />.</summary>
     /// <param name="serviceProvider">Resolves each destination's page ViewModel on first visit.</param>
-    public ShellViewModel(IServiceProvider serviceProvider)
+    /// <param name="themeService">Applies the next theme when <see cref="ToggleThemeCommand" /> runs.</param>
+    /// <param name="settingManager">Reads the current theme mode to compute the next one in the cycle.</param>
+    public ShellViewModel(IServiceProvider serviceProvider, IThemeService themeService, ISettingManager settingManager)
     {
         _serviceProvider = serviceProvider;
+        _themeService = themeService;
+        _settingManager = settingManager;
         Navigate(ShellDestination.Recipes);
+    }
+
+    /// <summary>Cycles <c>Appearance.Theme</c> System → Light → Dark → System, applying it immediately.</summary>
+    [RelayCommand]
+    private async Task ToggleTheme()
+    {
+        var next = _settingManager.Current.Appearance.Theme switch
+        {
+            ThemeMode.System => ThemeMode.Light,
+            ThemeMode.Light => ThemeMode.Dark,
+            _ => ThemeMode.System
+        };
+        await _themeService.SetThemeAsync(next).ConfigureAwait(true);
     }
 
     /// <summary>Gets whether <see cref="ShellDestination.Recipes" /> is the active destination.</summary>
@@ -53,6 +76,9 @@ public sealed partial class ShellViewModel : ObservableObject
 
     /// <summary>Gets whether <see cref="ShellDestination.Settings" /> is the active destination.</summary>
     public bool IsSettingsActive => CurrentDestination == ShellDestination.Settings;
+
+    /// <summary>Gets whether <see cref="ShellDestination.About" /> is the active destination.</summary>
+    public bool IsAboutActive => CurrentDestination == ShellDestination.About;
 
     [RelayCommand]
     private void Navigate(ShellDestination destination)
@@ -72,11 +98,13 @@ public sealed partial class ShellViewModel : ObservableObject
         OnPropertyChanged(nameof(IsRecipesActive));
         OnPropertyChanged(nameof(IsRunsActive));
         OnPropertyChanged(nameof(IsSettingsActive));
+        OnPropertyChanged(nameof(IsAboutActive));
     }
 
-    // Swapped for the real page ViewModel as each feature lands (P2 Runs, P3 Recipes done; P5 Settings still
-    // placeholder) — resolved via _serviceProvider since each page's dependencies vary and shouldn't be
-    // threaded through ShellViewModel's own constructor.
+    // Swapped for the real page ViewModel as each feature lands (Runs/Recipes/Settings done; About is the
+    // PlaceholderPageViewModel default branch below until the overhaul's P6 builds its real page) — resolved
+    // via _serviceProvider since each page's dependencies vary and shouldn't be threaded through
+    // ShellViewModel's own constructor.
     private ObservableObject ResolvePage(ShellDestination destination)
     {
         switch (destination)
