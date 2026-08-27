@@ -37,7 +37,8 @@ public sealed class RecipesViewModelTests
         var repository = Substitute.For<IRecipeRepository>();
         repository.ListAsync(Arg.Any<CancellationToken>()).Returns(new List<IRecipeMetadata>());
         return new RecipesViewModel(repository, Substitute.For<IRecipePackageService>(), Substitute.For<IService>(),
-            dialogService ?? Substitute.For<IDialogService>(), Substitute.For<IFilePicker>(), Substitute.For<IServiceProvider>());
+            dialogService ?? Substitute.For<IDialogService>(), Substitute.For<IFilePicker>(), Substitute.For<IServiceProvider>(),
+            Substitute.For<ISummaryCache>());
     }
 
     private static RecipeEditorViewModel CreateEditor(bool isDirty)

@@ -216,6 +216,24 @@
   <data name="recipes.editor.save" xml:space="preserve">
     <value>Lưu</value>
   </data>
+  <data name="recipes.editor.saved" xml:space="preserve">
+    <value>Đã lưu</value>
+  </data>
+  <data name="recipes.editor.unsaved" xml:space="preserve">
+    <value>Chưa lưu</value>
+  </data>
+  <data name="recipes.stats.mappings" xml:space="preserve">
+    <value> mapping</value>
+  </data>
+  <data name="recipes.stats.sources" xml:space="preserve">
+    <value> nguồn</value>
+  </data>
+  <data name="recipes.stats.text" xml:space="preserve">
+    <value> text</value>
+  </data>
+  <data name="recipes.stats.images" xml:space="preserve">
+    <value> ảnh</value>
+  </data>
   <data name="recipes.unsavedChanges.title" xml:space="preserve">
     <value>Có thay đổi chưa lưu</value>
   </data>

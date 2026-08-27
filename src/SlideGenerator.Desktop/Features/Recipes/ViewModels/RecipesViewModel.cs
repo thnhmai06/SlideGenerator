@@ -17,6 +17,7 @@ using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
+using SlideGenerator.Desktop.Features.RecipeEditor.Services;
 using SlideGenerator.Desktop.Features.RecipeEditor.ViewModels;
 using SlideGenerator.Desktop.Services.Localization;
 using SlideGenerator.Desktop.Services.Dialogs;
@@ -42,6 +43,7 @@ public sealed partial class RecipesViewModel : ObservableObject
     private readonly IRecipeRepository _repository;
     private readonly IService _service;
     private readonly IServiceProvider _serviceProvider;
+    private readonly ISummaryCache _summaryCache;
     private readonly List<RecipeListItemViewModel> _all = [];
 
     [ObservableProperty] private string _searchText = "";
@@ -51,6 +53,19 @@ public sealed partial class RecipesViewModel : ObservableObject
     [ObservableProperty] private bool _isEditorOpen;
     [ObservableProperty] private bool _isLoadingRecentRuns;
     [ObservableProperty] private RecipeEditorViewModel? _editor;
+
+    // Detail-pane stat chips (plan §5.2: "N mapping · N nguồn · N text · N ảnh · ~N records") — fetched only
+    // when a recipe is selected, same "don't pay for data a list view doesn't need" precedent as recent runs.
+    [ObservableProperty] private bool _isLoadingStats;
+    [ObservableProperty] private int _mappingCount;
+    [ObservableProperty] private int _sourceCount;
+    [ObservableProperty] private int _textInstructionCount;
+    [ObservableProperty] private int _imageInstructionCount;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(RecordCountDisplay))] private int? _recordCount;
+
+    /// <summary>Gets the record-count chip text — "~N" once counted, or an em dash if counting failed
+    ///     (plan §5.2: "lỗi → '—'").</summary>
+    public string RecordCountDisplay => RecordCount is { } n ? $"~{n}" : "—";
 
     /// <summary>Gets the recipes matching <see cref="SearchText" />, most recently updated first.</summary>
     public ObservableCollection<RecipeListItemViewModel> FilteredRecipes { get; } = [];
@@ -74,7 +89,7 @@ public sealed partial class RecipesViewModel : ObservableObject
 
     /// <summary>Constructs the ViewModel and starts the initial load.</summary>
     public RecipesViewModel(IRecipeRepository repository, IRecipePackageService packageService, IService service,
-        IDialogService dialogService, IFilePicker filePicker, IServiceProvider serviceProvider)
+        IDialogService dialogService, IFilePicker filePicker, IServiceProvider serviceProvider, ISummaryCache summaryCache)
     {
         _repository = repository;
         _packageService = packageService;
@@ -82,6 +97,7 @@ public sealed partial class RecipesViewModel : ObservableObject
         _dialogService = dialogService;
         _filePicker = filePicker;
         _serviceProvider = serviceProvider;
+        _summaryCache = summaryCache;
         _ = LoadAsync();
     }
 
@@ -133,7 +149,46 @@ public sealed partial class RecipesViewModel : ObservableObject
     {
         RecentRuns.Clear();
         OnPropertyChanged(nameof(HasRecentRuns));
-        if (value is not null) _ = LoadRecentRunsAsync(value.Id);
+        MappingCount = 0;
+        SourceCount = 0;
+        TextInstructionCount = 0;
+        ImageInstructionCount = 0;
+        RecordCount = null;
+        if (value is null) return;
+        _ = LoadRecentRunsAsync(value.Id);
+        _ = LoadStatsAsync(value.Id);
+    }
+
+    private async Task LoadStatsAsync(int recipeId)
+    {
+        IsLoadingStats = true;
+        try
+        {
+            var entry = await _repository.GetAsync(recipeId).ConfigureAwait(true);
+            var mappings = entry.Recipe.Mappings;
+            MappingCount = mappings.Count;
+            SourceCount = mappings.Sum(m => m.Sources.Count);
+            TextInstructionCount = mappings.Sum(m => m.TextInstructions.Count);
+            ImageInstructionCount = mappings.Sum(m => m.ImageInstructions.Count);
+
+            var total = 0;
+            foreach (var source in mappings.SelectMany(m => m.Sources))
+            {
+                var workbook = await _summaryCache.GetWorkbookAsync(source.Workbook, false).ConfigureAwait(true);
+                var worksheet = workbook.Worksheets.FirstOrDefault(w => w.Worksheet == source.Worksheet);
+                if (worksheet is not null) total += worksheet.Count;
+            }
+
+            RecordCount = total;
+        }
+        catch (Exception)
+        {
+            RecordCount = null; // shown as "—" — a failed count must not block viewing the recipe
+        }
+        finally
+        {
+            IsLoadingStats = false;
+        }
     }
 
     private void ApplyFilter()

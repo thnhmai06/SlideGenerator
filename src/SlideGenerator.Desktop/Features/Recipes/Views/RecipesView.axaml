@@ -83,8 +83,39 @@
                             <Button Content="{loc:Tr recipes.delete}" Command="{Binding SelectedRecipe.DeleteCommand}"/>
                         </StackPanel>
 
+                        <!-- Stat chips (plan §5.2: "N mapping · N nguồn · N text · N ảnh · ~N records") -->
+                        <Border Classes="skeleton" Height="24" Width="280" HorizontalAlignment="Left"
+                                IsVisible="{Binding IsLoadingStats}"/>
+                        <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space2}"
+                                    IsVisible="{Binding !IsLoadingStats}">
+                            <Border Classes="pill neutral">
+                                <TextBlock>
+                                    <Run Text="{Binding MappingCount}"/><Run Text="{loc:Tr recipes.stats.mappings}"/>
+                                </TextBlock>
+                            </Border>
+                            <Border Classes="pill neutral">
+                                <TextBlock>
+                                    <Run Text="{Binding SourceCount}"/><Run Text="{loc:Tr recipes.stats.sources}"/>
+                                </TextBlock>
+                            </Border>
+                            <Border Classes="pill neutral">
+                                <TextBlock>
+                                    <Run Text="{Binding TextInstructionCount}"/><Run Text="{loc:Tr recipes.stats.text}"/>
+                                </TextBlock>
+                            </Border>
+                            <Border Classes="pill neutral">
+                                <TextBlock>
+                                    <Run Text="{Binding ImageInstructionCount}"/><Run Text="{loc:Tr recipes.stats.images}"/>
+                                </TextBlock>
+                            </Border>
+                            <Border Classes="pill neutral">
+                                <TextBlock Text="{Binding RecordCountDisplay}"/>
+                            </Border>
+                        </StackPanel>
+
                         <TextBlock Classes="h2" Text="{loc:Tr recipes.recentRuns}"/>
-                        <TextBlock Classes="muted" Text="..." IsVisible="{Binding IsLoadingRecentRuns}"/>
+                        <Border Classes="skeleton" Height="16" Width="200" HorizontalAlignment="Left"
+                                IsVisible="{Binding IsLoadingRecentRuns}"/>
                         <TextBlock Classes="muted" Text="{loc:Tr recipes.noRecentRuns}" IsVisible="{Binding !HasRecentRuns}"/>
                         <ItemsControl ItemsSource="{Binding RecentRuns}">
                             <ItemsControl.ItemTemplate>
@@ -110,11 +141,18 @@
 
                 <!-- Editor overlay -->
                 <Grid RowDefinitions="Auto,*" IsVisible="{Binding IsEditorOpen}" Background="{DynamicResource SurfaceBackgroundBrush}">
-                    <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="{StaticResource PaddingPanel}" ColumnSpacing="{StaticResource Space2}">
+                    <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto,Auto" Margin="{StaticResource PaddingPanel}" ColumnSpacing="{StaticResource Space2}">
                         <Button Grid.Column="0" Content="{loc:Tr recipes.back}" Command="{Binding CloseEditorCommand}"/>
                         <TextBox Grid.Column="1" Classes="h2" Text="{Binding Editor.Name}"
                                  PlaceholderText="{loc:Tr recipes.editor.namePlaceholder}" HorizontalAlignment="Stretch" VerticalAlignment="Center"/>
-                        <Button Grid.Column="2" Content="{loc:Tr recipes.editor.save}" Command="{Binding Editor.SaveCommand}"/>
+                        <Border Grid.Column="2" VerticalAlignment="Center" Classes="pill"
+                                Classes.success="{Binding !Editor.IsDirty}" Classes.warning="{Binding Editor.IsDirty}">
+                            <Panel>
+                                <TextBlock Text="{loc:Tr recipes.editor.saved}" IsVisible="{Binding !Editor.IsDirty}"/>
+                                <TextBlock Text="{loc:Tr recipes.editor.unsaved}" IsVisible="{Binding Editor.IsDirty}"/>
+                            </Panel>
+                        </Border>
+                        <Button Grid.Column="3" Content="{loc:Tr recipes.editor.save}" Command="{Binding Editor.SaveCommand}"/>
                     </Grid>
                     <editor:RecipeEditorView Grid.Row="1" DataContext="{Binding Editor}"/>
                 </Grid>

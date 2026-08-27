@@ -216,6 +216,24 @@
   <data name="recipes.editor.save" xml:space="preserve">
     <value>Save</value>
   </data>
+  <data name="recipes.editor.saved" xml:space="preserve">
+    <value>Saved</value>
+  </data>
+  <data name="recipes.editor.unsaved" xml:space="preserve">
+    <value>Unsaved</value>
+  </data>
+  <data name="recipes.stats.mappings" xml:space="preserve">
+    <value> mapping</value>
+  </data>
+  <data name="recipes.stats.sources" xml:space="preserve">
+    <value> source</value>
+  </data>
+  <data name="recipes.stats.text" xml:space="preserve">
+    <value> text</value>
+  </data>
+  <data name="recipes.stats.images" xml:space="preserve">
+    <value> image</value>
+  </data>
   <data name="recipes.unsavedChanges.title" xml:space="preserve">
     <value>Unsaved changes</value>
   </data>

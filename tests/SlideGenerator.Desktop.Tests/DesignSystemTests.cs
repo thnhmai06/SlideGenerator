@@ -47,12 +47,10 @@ public sealed class DesignSystemTests
         "Features/RecipeEditor/Views/SlideCanvasView.axaml:Margin=\"2\"",
 
         // RecipeEditorView's IsLoading overlay renders a literal "..." — tracked fix is blueprint §4.2's
-        // Spinner/busy component (Semi ProgressBar IsIndeterminate), landing when P4 touches this page, not P1
-        // (P1 only builds the token/style layer, it doesn't sweep every consumer yet).
-        "Features/RecipeEditor/Views/RecipeEditorView.axaml:87:Text=\"...\"",
-
-        // RecipesView's recent-runs list shows a literal "..." while loading — same tracked fix, same P4 page.
-        "Features/Recipes/Views/RecipesView.axaml:87:Text=\"...\""
+        // Spinner/busy component (Semi ProgressBar IsIndeterminate), landing when P4b touches this page.
+        // RecipesView's own "..." (recent-runs loading) was fixed in P4a (Border.skeleton) and removed from
+        // this list already — do the same for this entry the moment P4b lands.
+        "Features/RecipeEditor/Views/RecipeEditorView.axaml:87:Text=\"...\""
     ];
 
     private static string FindDesktopSrc([CallerFilePath] string here = "")
