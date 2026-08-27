@@ -402,4 +402,133 @@
   <data name="enums.jobPhase.done" xml:space="preserve">
     <value>Done</value>
   </data>
+  <data name="enums.roiMode.anchor" xml:space="preserve">
+    <value>Anchor point</value>
+  </data>
+  <data name="enums.roiMode.interest" xml:space="preserve">
+    <value>Content-aware</value>
+  </data>
+  <data name="enums.anchorType.image" xml:space="preserve">
+    <value>Image center</value>
+  </data>
+  <data name="enums.anchorType.face" xml:space="preserve">
+    <value>Face center</value>
+  </data>
+  <data name="enums.anchorType.eyes" xml:space="preserve">
+    <value>Between the eyes</value>
+  </data>
+  <data name="enums.anchorType.nose" xml:space="preserve">
+    <value>Nose</value>
+  </data>
+  <data name="enums.anchorType.mouth" xml:space="preserve">
+    <value>Mouth</value>
+  </data>
+  <data name="enums.interestType.entropy" xml:space="preserve">
+    <value>Most detailed area</value>
+  </data>
+  <data name="enums.interestType.attention" xml:space="preserve">
+    <value>Most eye-catching area</value>
+  </data>
+  <data name="enums.interestType.low" xml:space="preserve">
+    <value>Top-left area</value>
+  </data>
+  <data name="enums.interestType.high" xml:space="preserve">
+    <value>Bottom-right area</value>
+  </data>
+  <data name="enums.interestType.all" xml:space="preserve">
+    <value>Everything important</value>
+  </data>
+  <data name="recipeEditor.unassignedPlaceholder" xml:space="preserve">
+    <value>not set</value>
+  </data>
+  <data name="recipeEditor.section.text" xml:space="preserve">
+    <value>Text</value>
+  </data>
+  <data name="recipeEditor.section.images" xml:space="preserve">
+    <value>Images</value>
+  </data>
+  <data name="recipeEditor.section.sources" xml:space="preserve">
+    <value>Sources</value>
+  </data>
+  <data name="recipeEditor.addMapping" xml:space="preserve">
+    <value>+ Add mapping</value>
+  </data>
+  <data name="recipeEditor.noMappings" xml:space="preserve">
+    <value>This recipe has no mappings yet.</value>
+  </data>
+  <data name="recipeEditor.moveUp" xml:space="preserve">
+    <value>Up</value>
+  </data>
+  <data name="recipeEditor.moveDown" xml:space="preserve">
+    <value>Down</value>
+  </data>
+  <data name="recipeEditor.remove" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="recipeEditor.inspector.title" xml:space="preserve">
+    <value>Inspector</value>
+  </data>
+  <data name="recipeEditor.inspector.roiOrder" xml:space="preserve">
+    <value>ROI try order</value>
+  </data>
+  <data name="recipeEditor.pickFallbackImage" xml:space="preserve">
+    <value>Choose fallback image...</value>
+  </data>
+  <data name="recipeEditor.sources.rowCountSuffix" xml:space="preserve">
+    <value> row</value>
+  </data>
+  <data name="recipeEditor.sources.remove" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="recipeEditor.sources.addWorksheet" xml:space="preserve">
+    <value>+ Add worksheet</value>
+  </data>
+  <data name="recipeEditor.sources.filter.all" xml:space="preserve">
+    <value>All</value>
+  </data>
+  <data name="recipeEditor.sources.filter.indexRange" xml:space="preserve">
+    <value>Row range</value>
+  </data>
+  <data name="recipeEditor.sources.filter.partitionBlock" xml:space="preserve">
+    <value>Partition</value>
+  </data>
+  <data name="recipeEditor.guided.step.template" xml:space="preserve">
+    <value>Template</value>
+  </data>
+  <data name="recipeEditor.guided.step.data" xml:space="preserve">
+    <value>Data</value>
+  </data>
+  <data name="recipeEditor.guided.step.binding" xml:space="preserve">
+    <value>Match</value>
+  </data>
+  <data name="recipeEditor.guided.step.review" xml:space="preserve">
+    <value>Review</value>
+  </data>
+  <data name="recipeEditor.guided.pickTemplate" xml:space="preserve">
+    <value>Choose template slide...</value>
+  </data>
+  <data name="recipeEditor.guided.willCreatePrefix" xml:space="preserve">
+    <value>Will create </value>
+  </data>
+  <data name="recipeEditor.guided.willCreateSuffix" xml:space="preserve">
+    <value> file</value>
+  </data>
+  <data name="recipeEditor.guided.save" xml:space="preserve">
+    <value>Save recipe</value>
+  </data>
+  <data name="recipeEditor.guided.saveAndRun" xml:space="preserve">
+    <value>Save and run</value>
+  </data>
+  <data name="recipeEditor.guided.switchToAdvanced" xml:space="preserve">
+    <value>Need more template slides, row filters, or fallback images? Switch to advanced mode.</value>
+  </data>
+  <data name="recipeEditor.guided.back" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="recipeEditor.guided.next" xml:space="preserve">
+    <value>Next</value>
+  </data>
+  <data name="recipeEditor.bindingSummary" xml:space="preserve">
+    <value>{0} matched · {1} suggested · {2} needs pick · {3} unassigned</value>
+  </data>
 </root>

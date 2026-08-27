@@ -402,4 +402,133 @@
   <data name="enums.jobPhase.done" xml:space="preserve">
     <value>Hoàn tất</value>
   </data>
+  <data name="enums.roiMode.anchor" xml:space="preserve">
+    <value>Điểm neo</value>
+  </data>
+  <data name="enums.roiMode.interest" xml:space="preserve">
+    <value>Tự động phát hiện</value>
+  </data>
+  <data name="enums.anchorType.image" xml:space="preserve">
+    <value>Giữa ảnh</value>
+  </data>
+  <data name="enums.anchorType.face" xml:space="preserve">
+    <value>Giữa khuôn mặt</value>
+  </data>
+  <data name="enums.anchorType.eyes" xml:space="preserve">
+    <value>Giữa hai mắt</value>
+  </data>
+  <data name="enums.anchorType.nose" xml:space="preserve">
+    <value>Mũi</value>
+  </data>
+  <data name="enums.anchorType.mouth" xml:space="preserve">
+    <value>Miệng</value>
+  </data>
+  <data name="enums.interestType.entropy" xml:space="preserve">
+    <value>Vùng nhiều chi tiết nhất</value>
+  </data>
+  <data name="enums.interestType.attention" xml:space="preserve">
+    <value>Vùng thu hút chú ý nhất</value>
+  </data>
+  <data name="enums.interestType.low" xml:space="preserve">
+    <value>Vùng góc trên-trái</value>
+  </data>
+  <data name="enums.interestType.high" xml:space="preserve">
+    <value>Vùng góc dưới-phải</value>
+  </data>
+  <data name="enums.interestType.all" xml:space="preserve">
+    <value>Toàn bộ nội dung quan trọng</value>
+  </data>
+  <data name="recipeEditor.unassignedPlaceholder" xml:space="preserve">
+    <value>chưa gán</value>
+  </data>
+  <data name="recipeEditor.section.text" xml:space="preserve">
+    <value>Chữ</value>
+  </data>
+  <data name="recipeEditor.section.images" xml:space="preserve">
+    <value>Ảnh</value>
+  </data>
+  <data name="recipeEditor.section.sources" xml:space="preserve">
+    <value>Nguồn</value>
+  </data>
+  <data name="recipeEditor.addMapping" xml:space="preserve">
+    <value>+ Thêm mapping</value>
+  </data>
+  <data name="recipeEditor.noMappings" xml:space="preserve">
+    <value>Recipe chưa có mapping nào.</value>
+  </data>
+  <data name="recipeEditor.moveUp" xml:space="preserve">
+    <value>Lên</value>
+  </data>
+  <data name="recipeEditor.moveDown" xml:space="preserve">
+    <value>Xuống</value>
+  </data>
+  <data name="recipeEditor.remove" xml:space="preserve">
+    <value>Xoá</value>
+  </data>
+  <data name="recipeEditor.inspector.title" xml:space="preserve">
+    <value>Inspector</value>
+  </data>
+  <data name="recipeEditor.inspector.roiOrder" xml:space="preserve">
+    <value>Thứ tự ROI</value>
+  </data>
+  <data name="recipeEditor.pickFallbackImage" xml:space="preserve">
+    <value>Chọn ảnh dự phòng...</value>
+  </data>
+  <data name="recipeEditor.sources.rowCountSuffix" xml:space="preserve">
+    <value> dòng</value>
+  </data>
+  <data name="recipeEditor.sources.remove" xml:space="preserve">
+    <value>Xoá</value>
+  </data>
+  <data name="recipeEditor.sources.addWorksheet" xml:space="preserve">
+    <value>+ Thêm worksheet</value>
+  </data>
+  <data name="recipeEditor.sources.filter.all" xml:space="preserve">
+    <value>Tất cả</value>
+  </data>
+  <data name="recipeEditor.sources.filter.indexRange" xml:space="preserve">
+    <value>Khoảng dòng</value>
+  </data>
+  <data name="recipeEditor.sources.filter.partitionBlock" xml:space="preserve">
+    <value>Chia khối</value>
+  </data>
+  <data name="recipeEditor.guided.step.template" xml:space="preserve">
+    <value>Mẫu slide</value>
+  </data>
+  <data name="recipeEditor.guided.step.data" xml:space="preserve">
+    <value>Dữ liệu</value>
+  </data>
+  <data name="recipeEditor.guided.step.binding" xml:space="preserve">
+    <value>Ghép</value>
+  </data>
+  <data name="recipeEditor.guided.step.review" xml:space="preserve">
+    <value>Xem lại</value>
+  </data>
+  <data name="recipeEditor.guided.pickTemplate" xml:space="preserve">
+    <value>Chọn mẫu slide...</value>
+  </data>
+  <data name="recipeEditor.guided.willCreatePrefix" xml:space="preserve">
+    <value>Sẽ tạo </value>
+  </data>
+  <data name="recipeEditor.guided.willCreateSuffix" xml:space="preserve">
+    <value> file</value>
+  </data>
+  <data name="recipeEditor.guided.save" xml:space="preserve">
+    <value>Lưu recipe</value>
+  </data>
+  <data name="recipeEditor.guided.saveAndRun" xml:space="preserve">
+    <value>Lưu và chạy</value>
+  </data>
+  <data name="recipeEditor.guided.switchToAdvanced" xml:space="preserve">
+    <value>Cần nhiều mẫu slide, lọc dòng, hoặc ảnh dự phòng? Mở chế độ nâng cao.</value>
+  </data>
+  <data name="recipeEditor.guided.back" xml:space="preserve">
+    <value>Quay lại</value>
+  </data>
+  <data name="recipeEditor.guided.next" xml:space="preserve">
+    <value>Tiếp theo</value>
+  </data>
+  <data name="recipeEditor.bindingSummary" xml:space="preserve">
+    <value>{0} đã ghép · {1} là đề xuất · {2} cần bạn chọn · {3} chưa gán</value>
+  </data>
 </root>

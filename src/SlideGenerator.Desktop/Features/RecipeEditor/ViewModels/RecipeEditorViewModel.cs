@@ -18,6 +18,7 @@ using CommunityToolkit.Mvvm.Input;
 using SlideGenerator.Desktop.Features.RecipeEditor.Models;
 using SlideGenerator.Desktop.Features.RecipeEditor.Services;
 using SlideGenerator.Desktop.Services.Dialogs;
+using SlideGenerator.Desktop.Services.Localization;
 using SlideGenerator.Recipe.Models;
 using SlideGenerator.Recipe.Services;
 using SlideGenerator.Summarizer.Workbooks;
@@ -97,13 +98,14 @@ public sealed partial class RecipeEditorViewModel : ObservableObject
     ///     mapping×source flattening for the single-mapping case).</summary>
     public int GuidedFileCount => Sources.Sources.Count;
 
-    /// <summary>Gets the current Guided step's user-facing title — no internal vocabulary (plan §5.2.a).</summary>
+    /// <summary>Gets the current Guided step's user-facing title — no internal vocabulary (plan §5.2.a). The
+    ///     step number itself is shown by the stepper dots in the view, not repeated in this text.</summary>
     public string GuidedStepTitle => GuidedStep switch
     {
-        GuidedStep.Template => "① Mẫu slide",
-        GuidedStep.Data => "② Dữ liệu",
-        GuidedStep.Binding => "③ Ghép",
-        GuidedStep.Review => "④ Xem lại",
+        GuidedStep.Template => LocalizationService.Instance["recipeEditor.guided.step.template"],
+        GuidedStep.Data => LocalizationService.Instance["recipeEditor.guided.step.data"],
+        GuidedStep.Binding => LocalizationService.Instance["recipeEditor.guided.step.binding"],
+        GuidedStep.Review => LocalizationService.Instance["recipeEditor.guided.step.review"],
         _ => ""
     };
 
@@ -145,6 +147,10 @@ public sealed partial class RecipeEditorViewModel : ObservableObject
         Canvas.Changed += OnChildChanged;
         TextBindings.Changed += OnChildChanged;
         Sources.Changed += OnChildChanged;
+        // GuidedStepTitle is computed from LocalizationService.Instance directly (not a {loc:Tr} binding, since
+        // it's plain C# string switch) — needs its own refresh hook so a language switch mid-Guided-flow
+        // updates the header text without requiring the user to change step first.
+        LocalizationService.Instance.PropertyChanged += (_, _) => OnPropertyChanged(nameof(GuidedStepTitle));
     }
 
     /// <summary>Loads a brand-new, unsaved recipe into the editor — <see cref="Id" /> stays <see langword="null" />
@@ -371,8 +377,8 @@ public sealed partial class RecipeEditorViewModel : ObservableObject
     [RelayCommand]
     private async Task PickFallbackImageAsync(ShapeOverlayViewModel overlay)
     {
-        var path = await _filePicker.PickFileAsync("Chọn ảnh mặc định",
-            [new Avalonia.Platform.Storage.FilePickerFileType("Ảnh") { Patterns = ["*.png", "*.jpg", "*.jpeg"] }]).ConfigureAwait(true);
+        var path = await _filePicker.PickFileAsync(LocalizationService.Instance["recipeEditor.pickFallbackImage"],
+            [new Avalonia.Platform.Storage.FilePickerFileType("Image") { Patterns = ["*.png", "*.jpg", "*.jpeg"] }]).ConfigureAwait(true);
         if (path is null) return;
         overlay.FallbackImagePath = path;
         MarkDirty();

@@ -14,6 +14,7 @@
 
 using System.Globalization;
 using Avalonia.Data.Converters;
+using SlideGenerator.Desktop.Services.Localization;
 
 namespace SlideGenerator.Desktop.Converters;
 
@@ -31,7 +32,8 @@ public sealed class BindingSummaryConverter : IValueConverter
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is not (int assigned, int suggested, int needsSelection, int unassigned)) return null;
-        return $"{assigned} đã ghép · {suggested} là đề xuất · {needsSelection} cần bạn chọn · {unassigned} chưa gán";
+        return string.Format(LocalizationService.Instance["recipeEditor.bindingSummary"],
+            assigned, suggested, needsSelection, unassigned);
     }
 
     /// <inheritdoc />

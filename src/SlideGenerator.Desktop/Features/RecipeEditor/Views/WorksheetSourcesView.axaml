@@ -2,10 +2,11 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:SlideGenerator.Desktop.Features.RecipeEditor.ViewModels"
              xmlns:conv="clr-namespace:SlideGenerator.Desktop.Converters"
+             xmlns:loc="clr-namespace:SlideGenerator.Desktop.Services.Localization"
              x:Class="SlideGenerator.Desktop.Features.RecipeEditor.Views.WorksheetSourcesView"
              x:DataType="vm:WorksheetSourcesViewModel">
     <StackPanel Spacing="{StaticResource Space2}">
-        <TextBlock Classes="h2" Text="NGUỒN"/>
+        <TextBlock Classes="label" Text="{loc:Tr recipeEditor.section.sources}"/>
 
         <ItemsControl ItemsSource="{Binding Sources}">
             <ItemsControl.ItemTemplate>
@@ -17,9 +18,9 @@
                                     <Run Text="{Binding Worksheet.SheetName}"/>
                                     <Run Text=" · "/>
                                     <Run Text="{Binding RowCount}"/>
-                                    <Run Text=" dòng"/>
+                                    <Run Text="{loc:Tr recipeEditor.sources.rowCountSuffix}"/>
                                 </TextBlock>
-                                <Button Grid.Column="1" Content="Xoá" Click="OnRemoveClick"/>
+                                <Button Grid.Column="1" Content="{loc:Tr recipeEditor.sources.remove}" Click="OnRemoveClick"/>
                             </Grid>
 
                             <!-- No GroupName set on purpose — Avalonia groups RadioButtons implicitly by
@@ -40,15 +41,15 @@
 
                             <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space3}"
                                         DataContext="{Binding RowFilter}" x:DataType="vm:RowFilterEditorViewModel">
-                                <RadioButton Content="Tất cả"
+                                <RadioButton Content="{loc:Tr recipeEditor.sources.filter.all}"
                                              IsChecked="{Binding Mode, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static vm:RowFilterEditorMode.All}}"/>
-                                <RadioButton Content="Khoảng dòng"
+                                <RadioButton Content="{loc:Tr recipeEditor.sources.filter.indexRange}"
                                              IsChecked="{Binding Mode, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static vm:RowFilterEditorMode.IndexRange}}"/>
                                 <NumericUpDown Value="{Binding Start, Mode=TwoWay}" Minimum="1" Width="90"
                                                IsVisible="{Binding Mode, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static vm:RowFilterEditorMode.IndexRange}}"/>
                                 <NumericUpDown Value="{Binding End, Mode=TwoWay}" Minimum="1" Width="90"
                                                IsVisible="{Binding Mode, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static vm:RowFilterEditorMode.IndexRange}}"/>
-                                <RadioButton Content="Chia khối"
+                                <RadioButton Content="{loc:Tr recipeEditor.sources.filter.partitionBlock}"
                                              IsChecked="{Binding Mode, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static vm:RowFilterEditorMode.PartitionBlock}}"/>
                                 <NumericUpDown Value="{Binding PartitionIndex, Mode=TwoWay}" Minimum="0" Width="90"
                                                IsVisible="{Binding Mode, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static vm:RowFilterEditorMode.PartitionBlock}}"/>
@@ -61,6 +62,6 @@
             </ItemsControl.ItemTemplate>
         </ItemsControl>
 
-        <Button Content="+ Thêm worksheet" Command="{Binding AddCommand}"/>
+        <Button Content="{loc:Tr recipeEditor.sources.addWorksheet}" Command="{Binding AddCommand}"/>
     </StackPanel>
 </UserControl>

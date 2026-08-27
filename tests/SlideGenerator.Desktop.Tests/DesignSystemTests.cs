@@ -40,18 +40,11 @@ public sealed class DesignSystemTests
     ///     qua"), never a silent skip. Remove an entry the moment its owning phase actually fixes the line;
     ///     a stale entry here would hide a regression instead of tracking one.
     /// </summary>
-    private static readonly HashSet<string> KnownViolations =
-    [
-        // SlideCanvasView's column-label chip sits flush against its own background (no padding/radius) —
-        // tracked fix is blueprint §5.3 ("label cột có padding + radius"), landing in P4, not P1.
-        "Features/RecipeEditor/Views/SlideCanvasView.axaml:Margin=\"2\"",
-
-        // RecipeEditorView's IsLoading overlay renders a literal "..." — tracked fix is blueprint §4.2's
-        // Spinner/busy component (Semi ProgressBar IsIndeterminate), landing when P4b touches this page.
-        // RecipesView's own "..." (recent-runs loading) was fixed in P4a (Border.skeleton) and removed from
-        // this list already — do the same for this entry the moment P4b lands.
-        "Features/RecipeEditor/Views/RecipeEditorView.axaml:87:Text=\"...\""
-    ];
+    // Empty as of P4b — every entry tracked here since P1 (SlideCanvasView's unpadded label chip,
+    // RecipeEditorView's/RecipesView's literal "..." loading text) has been fixed at its owning phase and
+    // removed rather than re-pinned to a new line number. Add an entry back only for a genuinely new,
+    // out-of-scope-for-now violation — never to paper over a regression.
+    private static readonly HashSet<string> KnownViolations = [];
 
     private static string FindDesktopSrc([CallerFilePath] string here = "")
     {

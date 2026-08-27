@@ -4,6 +4,7 @@
              xmlns:views="clr-namespace:SlideGenerator.Desktop.Features.RecipeEditor.Views"
              xmlns:models="clr-namespace:SlideGenerator.Desktop.Features.RecipeEditor.Models"
              xmlns:conv="clr-namespace:SlideGenerator.Desktop.Converters"
+             xmlns:loc="clr-namespace:SlideGenerator.Desktop.Services.Localization"
              x:Class="SlideGenerator.Desktop.Features.RecipeEditor.Views.RecipeEditorView"
              x:DataType="vm:RecipeEditorViewModel">
     <Grid>
@@ -12,12 +13,12 @@
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="{StaticResource PaddingPanel}">
             <TextBlock Grid.Column="0" Classes="muted" FontSize="{StaticResource FontSizeSm}" VerticalAlignment="Center"
                        Text="{Binding CombinedSummary, Converter={x:Static conv:BindingSummaryConverter.Instance}}"/>
-            <Button Grid.Column="1" Content="+ Thêm mapping" Command="{Binding AddMappingCommand}"/>
+            <Button Grid.Column="1" Content="{loc:Tr recipeEditor.addMapping}" Command="{Binding AddMappingCommand}"/>
         </Grid>
 
         <Grid Grid.Row="1">
             <!-- No mapping to show yet (brand-new recipe, or a mapping still loading) -->
-            <TextBlock Classes="muted body" Text="Recipe chưa có mapping nào."
+            <TextBlock Classes="muted body" Text="{loc:Tr recipeEditor.noMappings}"
                        HorizontalAlignment="Center" VerticalAlignment="Center"
                        IsVisible="{Binding SelectedSession, Converter={x:Static ObjectConverters.IsNull}}"/>
 
@@ -33,9 +34,9 @@
                         <DataTemplate x:DataType="vm:MappingEditSession">
                             <Grid ColumnDefinitions="*,Auto,Auto,Auto">
                                 <TextBlock Grid.Column="0" Classes="body" Text="{Binding Label}" VerticalAlignment="Center"/>
-                                <Button Grid.Column="1" Content="Lên" Click="OnMoveUpClick"/>
-                                <Button Grid.Column="2" Content="Xuống" Click="OnMoveDownClick"/>
-                                <Button Grid.Column="3" Content="Xoá" Click="OnRemoveMappingClick"/>
+                                <Button Grid.Column="1" Content="{loc:Tr recipeEditor.moveUp}" Click="OnMoveUpClick"/>
+                                <Button Grid.Column="2" Content="{loc:Tr recipeEditor.moveDown}" Click="OnMoveDownClick"/>
+                                <Button Grid.Column="3" Content="{loc:Tr recipeEditor.remove}" Click="OnRemoveMappingClick"/>
                             </Grid>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
@@ -55,18 +56,25 @@
                     <Border Classes="hairline-row" IsVisible="{Binding Canvas.SelectedOverlay, Converter={x:Static ObjectConverters.IsNotNull}}">
                         <StackPanel x:Name="InspectorPanel" Spacing="{StaticResource Space2}"
                                     DataContext="{Binding Canvas.SelectedOverlay}" x:DataType="vm:ShapeOverlayViewModel">
-                            <TextBlock Classes="h2" Text="INSPECTOR"/>
+                            <TextBlock Classes="label" Text="{loc:Tr recipeEditor.inspector.title}"/>
                             <TextBlock Classes="muted" Text="{Binding Shape.Shape.ShapeName}"/>
 
-                            <TextBlock Classes="body" Text="Thứ tự ROI"/>
+                            <TextBlock Classes="body" Text="{loc:Tr recipeEditor.inspector.roiOrder}"/>
                             <ItemsControl ItemsSource="{Binding RoiOptions}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <Grid ColumnDefinitions="*,Auto,Auto,Auto">
-                                            <TextBlock Grid.Column="0" Classes="mono" Text="{Binding Mode}" VerticalAlignment="Center"/>
-                                            <Button Grid.Column="1" Content="Lên" Click="OnRoiMoveUpClick"/>
-                                            <Button Grid.Column="2" Content="Xuống" Click="OnRoiMoveDownClick"/>
-                                            <Button Grid.Column="3" Content="Xoá" Click="OnRoiRemoveClick"/>
+                                            <TextBlock Grid.Column="0" Classes="mono" VerticalAlignment="Center">
+                                                <TextBlock.Text>
+                                                    <MultiBinding Converter="{x:Static conv:RoiDescriptionConverter.Instance}">
+                                                        <Binding/>
+                                                        <Binding Path="Revision" Source="{x:Static loc:LocalizationService.Instance}"/>
+                                                    </MultiBinding>
+                                                </TextBlock.Text>
+                                            </TextBlock>
+                                            <Button Grid.Column="1" Content="{loc:Tr recipeEditor.moveUp}" Click="OnRoiMoveUpClick"/>
+                                            <Button Grid.Column="2" Content="{loc:Tr recipeEditor.moveDown}" Click="OnRoiMoveDownClick"/>
+                                            <Button Grid.Column="3" Content="{loc:Tr recipeEditor.remove}" Click="OnRoiRemoveClick"/>
                                         </Grid>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
@@ -75,7 +83,7 @@
                             <Grid ColumnDefinitions="*,Auto">
                                 <TextBlock Grid.Column="0" Classes="body" Text="{Binding FallbackImagePath}"
                                            TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
-                                <Button Grid.Column="1" Content="Chọn ảnh dự phòng..." Click="OnPickFallbackImageClick"/>
+                                <Button Grid.Column="1" Content="{loc:Tr recipeEditor.pickFallbackImage}" Click="OnPickFallbackImageClick"/>
                             </Grid>
                         </StackPanel>
                     </Border>
@@ -84,64 +92,71 @@
             </Grid>
 
             <Border IsVisible="{Binding IsLoading}" Background="{DynamicResource SurfaceBackgroundBrush}" Opacity="0.6">
-                <TextBlock Text="..." HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <ProgressBar IsIndeterminate="True" Width="120" HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </Border>
         </Grid>
     </Grid>
 
     <!-- Guided (plan §5.2.a) — same panels as Advanced, one step's worth shown at a time. No internal
          vocabulary ("Mapping"/"Instruction"/"Source") appears here, only step titles. -->
-    <Grid RowDefinitions="Auto,*,Auto" Margin="{StaticResource PaddingPanel}" RowSpacing="{StaticResource Space3}"
+    <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="{StaticResource PaddingPanel}" RowSpacing="{StaticResource Space3}"
           IsVisible="{Binding IsGuided}">
-        <TextBlock Grid.Row="0" Classes="h1" Text="{Binding GuidedStepTitle}"/>
+        <!-- Stepper dots (plan §5.2.a: "4 chấm + nhãn, active accent") — the step number that used to be
+             baked into GuidedStepTitle's text now lives here instead. -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="{StaticResource Space1}" HorizontalAlignment="Center">
+            <Border Classes="step-dot" Classes.active="{Binding GuidedStep, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:GuidedStep.Template}}"/>
+            <Border Classes="step-dot" Classes.active="{Binding GuidedStep, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:GuidedStep.Data}}"/>
+            <Border Classes="step-dot" Classes.active="{Binding GuidedStep, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:GuidedStep.Binding}}"/>
+            <Border Classes="step-dot" Classes.active="{Binding GuidedStep, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:GuidedStep.Review}}"/>
+        </StackPanel>
+        <TextBlock Grid.Row="1" Classes="h1" Text="{Binding GuidedStepTitle}" HorizontalAlignment="Center"/>
 
-        <ScrollViewer Grid.Row="1">
+        <ScrollViewer Grid.Row="2">
             <StackPanel Spacing="{StaticResource Space3}">
-                <!-- ① Mẫu slide -->
+                <!-- Template -->
                 <StackPanel Spacing="{StaticResource Space2}"
                             IsVisible="{Binding GuidedStep, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:GuidedStep.Template}}">
-                    <Button Content="Chọn mẫu slide..." Command="{Binding AddMappingCommand}" IsVisible="{Binding !HasTemplate}"/>
+                    <Button Content="{loc:Tr recipeEditor.guided.pickTemplate}" Command="{Binding AddMappingCommand}" IsVisible="{Binding !HasTemplate}"/>
                     <Border IsVisible="{Binding HasTemplate}">
                         <views:SlideCanvasView Height="320" DataContext="{Binding Canvas}"/>
                     </Border>
                 </StackPanel>
 
-                <!-- ② Dữ liệu -->
+                <!-- Data -->
                 <StackPanel IsVisible="{Binding GuidedStep, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:GuidedStep.Data}}">
                     <views:WorksheetSourcesView DataContext="{Binding Sources}"/>
                 </StackPanel>
 
-                <!-- ③ Ghép — luôn chia hai nhóm con "Văn bản"/"Ảnh", không trộn chung một danh sách -->
+                <!-- Match — always split into "Text"/"Images" sub-groups, never one merged list -->
                 <StackPanel Spacing="{StaticResource Space3}"
                             IsVisible="{Binding GuidedStep, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:GuidedStep.Binding}}">
-                    <TextBlock Classes="h2" Text="Văn bản"/>
+                    <TextBlock Classes="label" Text="{loc:Tr recipeEditor.section.text}"/>
                     <views:TextBindingsView DataContext="{Binding TextBindings}"/>
-                    <TextBlock Classes="h2" Text="Ảnh"/>
+                    <TextBlock Classes="label" Text="{loc:Tr recipeEditor.section.images}"/>
                     <views:SlideCanvasView Height="320" DataContext="{Binding Canvas}"/>
                 </StackPanel>
 
-                <!-- ④ Xem lại -->
+                <!-- Review -->
                 <StackPanel Spacing="{StaticResource Space3}"
                             IsVisible="{Binding GuidedStep, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:GuidedStep.Review}}">
                     <TextBlock Classes="body">
-                        <Run Text="Sẽ tạo "/><Run Text="{Binding GuidedFileCount}"/><Run Text=" file"/>
+                        <Run Text="{loc:Tr recipeEditor.guided.willCreatePrefix}"/><Run Text="{Binding GuidedFileCount}"/><Run Text="{loc:Tr recipeEditor.guided.willCreateSuffix}"/>
                     </TextBlock>
                     <TextBlock Classes="muted" FontSize="{StaticResource FontSizeSm}"
                                Text="{Binding CombinedSummary, Converter={x:Static conv:BindingSummaryConverter.Instance}}"/>
                     <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space2}">
-                        <Button Content="Lưu recipe" Command="{Binding SaveCommand}"/>
-                        <Button Content="Lưu và chạy" Command="{Binding SaveAndRunCommand}"
-                                Background="{DynamicResource AccentBrush}" Foreground="{DynamicResource TextOnAccentBrush}"/>
+                        <Button Classes="Tertiary" Content="{loc:Tr recipeEditor.guided.save}" Command="{Binding SaveCommand}"/>
+                        <Button Classes="Primary" Content="{loc:Tr recipeEditor.guided.saveAndRun}" Command="{Binding SaveAndRunCommand}"/>
                     </StackPanel>
-                    <Button Content="Cần nhiều mẫu slide, lọc dòng, hoặc ảnh dự phòng? Mở chế độ nâng cao."
+                    <Button Classes="Tertiary" Content="{loc:Tr recipeEditor.guided.switchToAdvanced}"
                             Command="{Binding SwitchToAdvancedCommand}"/>
                 </StackPanel>
             </StackPanel>
         </ScrollViewer>
 
-        <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto">
-            <Button Grid.Column="0" Content="Quay lại" Command="{Binding PreviousGuidedStepCommand}"/>
-            <Button Grid.Column="2" Content="Tiếp theo" Command="{Binding NextGuidedStepCommand}"
+        <Grid Grid.Row="3" ColumnDefinitions="Auto,*,Auto">
+            <Button Grid.Column="0" Content="{loc:Tr recipeEditor.guided.back}" Command="{Binding PreviousGuidedStepCommand}"/>
+            <Button Grid.Column="2" Classes="Primary" Content="{loc:Tr recipeEditor.guided.next}" Command="{Binding NextGuidedStepCommand}"
                     IsVisible="{Binding GuidedStep, Converter={x:Static conv:EnumNotEqualsConverter.Instance}, ConverterParameter={x:Static models:GuidedStep.Review}}"/>
         </Grid>
     </Grid>

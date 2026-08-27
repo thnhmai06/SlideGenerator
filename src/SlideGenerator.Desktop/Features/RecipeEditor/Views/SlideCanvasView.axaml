@@ -3,6 +3,7 @@
              xmlns:vm="clr-namespace:SlideGenerator.Desktop.Features.RecipeEditor.ViewModels"
              xmlns:models="clr-namespace:SlideGenerator.Desktop.Features.RecipeEditor.Models"
              xmlns:conv="clr-namespace:SlideGenerator.Desktop.Converters"
+             xmlns:loc="clr-namespace:SlideGenerator.Desktop.Services.Localization"
              x:Class="SlideGenerator.Desktop.Features.RecipeEditor.Views.SlideCanvasView"
              x:DataType="vm:SlideCanvasViewModel">
     <Grid x:Name="RootPanel" ClipToBounds="True">
@@ -26,7 +27,7 @@
                             <Flyout Placement="Bottom">
                                 <ComboBox ItemsSource="{Binding AllColumns}"
                                           SelectedItem="{Binding Binding.Column, Mode=OneWay}"
-                                          PlaceholderText="chưa gán"
+                                          PlaceholderText="{loc:Tr recipeEditor.unassignedPlaceholder}"
                                           SelectionChanged="OnOverlayColumnSelectionChanged"
                                           Width="180"/>
                             </Flyout>
@@ -36,10 +37,10 @@
                                    Classes.suggested="{Binding Binding.State, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:BindingDisplayState.Suggested}}"
                                    Classes.needs-selection="{Binding Binding.State, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:BindingDisplayState.NeedsSelection}}"
                                    Classes.unassigned="{Binding Binding.State, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:BindingDisplayState.Unassigned}}"/>
-                        <TextBlock Classes="mono" FontSize="{StaticResource FontSizeXs}" Text="{Binding Binding.Column}"
-                                   IsVisible="{Binding Binding.Column, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                                   VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="2"
-                                   Background="{DynamicResource SurfaceBrush}"/>
+                        <Border Classes="pill neutral" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="4"
+                                IsVisible="{Binding Binding.Column, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                            <TextBlock Classes="mono" FontSize="{StaticResource FontSizeXs}" Text="{Binding Binding.Column}"/>
+                        </Border>
                     </Grid>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>

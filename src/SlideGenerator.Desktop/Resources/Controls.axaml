@@ -218,4 +218,42 @@
         <Setter Property="Stroke" Value="{DynamicResource BorderStrongBrush}"/>
         <Setter Property="StrokeDashArray" Value="4,3"/>
     </Style>
+
+    <!-- Hover feedback (plan §5.3: "thêm :pointerover cho shape-overlay — stroke đậm + fill nhẹ") — Fill stays a
+         non-null Transparent brush above so the whole shape body (not just the stroke line) is hit-testable. -->
+    <Style Selector="Rectangle.shape-overlay:pointerover">
+        <Setter Property="StrokeThickness" Value="3"/>
+    </Style>
+    <Style Selector="Rectangle.shape-overlay.assigned:pointerover">
+        <Setter Property="Fill" Value="{DynamicResource AccentMutedBrush}"/>
+        <Setter Property="Opacity" Value="0.35"/>
+    </Style>
+    <Style Selector="Rectangle.shape-overlay.unassigned:pointerover">
+        <Setter Property="Fill" Value="{DynamicResource SurfaceMutedBrush}"/>
+    </Style>
+
+    <!-- Text-binding column picker state (plan §5.3: "sửa dead class hiện tại" — Classes.suggested/.needs-selection
+         were toggled in TextBindingsView/SlideCanvasView with no matching selector anywhere, so they rendered
+         invisibly; these give the same two states a real border). -->
+    <Style Selector="ComboBox.suggested">
+        <Setter Property="BorderBrush" Value="{DynamicResource WarningBrush}"/>
+        <Setter Property="BorderThickness" Value="2"/>
+    </Style>
+    <Style Selector="ComboBox.needs-selection">
+        <Setter Property="BorderBrush" Value="{DynamicResource DangerBrush}"/>
+        <Setter Property="BorderThickness" Value="2"/>
+    </Style>
+
+    <!-- Guided-mode stepper dots (plan §5.2.a: "thay '① Mẫu slide' bằng stepper component nhẹ — 4 chấm +
+         nhãn, active accent") — the step number that used to be baked into GuidedStepTitle's text lives here
+         instead, as 4 small dots, the current one filled with AccentBrush. -->
+    <Style Selector="Border.step-dot">
+        <Setter Property="Width" Value="8"/>
+        <Setter Property="Height" Value="8"/>
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusFull}"/>
+        <Setter Property="Background" Value="{DynamicResource BorderStrongBrush}"/>
+    </Style>
+    <Style Selector="Border.step-dot.active">
+        <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+    </Style>
 </Styles>

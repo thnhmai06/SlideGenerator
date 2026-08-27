@@ -3,10 +3,11 @@
              xmlns:vm="clr-namespace:SlideGenerator.Desktop.Features.RecipeEditor.ViewModels"
              xmlns:models="clr-namespace:SlideGenerator.Desktop.Features.RecipeEditor.Models"
              xmlns:conv="clr-namespace:SlideGenerator.Desktop.Converters"
+             xmlns:loc="clr-namespace:SlideGenerator.Desktop.Services.Localization"
              x:Class="SlideGenerator.Desktop.Features.RecipeEditor.Views.TextBindingsView"
              x:DataType="vm:TextBindingsViewModel">
     <StackPanel Spacing="{StaticResource Space2}">
-        <TextBlock Classes="h2" Text="CHỮ"/>
+        <TextBlock Classes="label" Text="{loc:Tr recipeEditor.section.text}"/>
 
         <ItemsControl ItemsSource="{Binding Rows}">
             <ItemsControl.ItemTemplate>
@@ -18,7 +19,7 @@
                             </TextBlock>
                             <ComboBox Grid.Column="1" ItemsSource="{Binding DropdownOptions}"
                                       SelectedItem="{Binding Binding.Column, Mode=OneWay}"
-                                      PlaceholderText="chưa gán"
+                                      PlaceholderText="{loc:Tr recipeEditor.unassignedPlaceholder}"
                                       Classes.suggested="{Binding Binding.State, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:BindingDisplayState.Suggested}}"
                                       Classes.needs-selection="{Binding Binding.State, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:BindingDisplayState.NeedsSelection}}"
                                       SelectionChanged="OnColumnSelectionChanged"
