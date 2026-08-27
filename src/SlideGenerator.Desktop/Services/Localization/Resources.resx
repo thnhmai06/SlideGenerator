@@ -531,4 +531,73 @@
   <data name="recipeEditor.bindingSummary" xml:space="preserve">
     <value>{0} matched · {1} suggested · {2} needs pick · {3} unassigned</value>
   </data>
+  <data name="recipeEditor.templatePicker.title" xml:space="preserve">
+    <value>Choose template slide</value>
+  </data>
+  <data name="recipeEditor.templatePicker.noPresentation" xml:space="preserve">
+    <value>No presentation picked</value>
+  </data>
+  <data name="recipeEditor.templatePicker.pickPresentation" xml:space="preserve">
+    <value>Choose presentation...</value>
+  </data>
+  <data name="recipeEditor.templatePicker.pickPresentationDialogTitle" xml:space="preserve">
+    <value>Choose template presentation</value>
+  </data>
+  <data name="recipeEditor.templatePicker.empty" xml:space="preserve">
+    <value>Pick a presentation to see its slides.</value>
+  </data>
+  <data name="recipeEditor.templatePicker.slidePrefix" xml:space="preserve">
+    <value>Slide </value>
+  </data>
+  <data name="recipeEditor.templatePicker.cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="recipeEditor.templatePicker.confirm" xml:space="preserve">
+    <value>Choose</value>
+  </data>
+  <data name="runDialog.title" xml:space="preserve">
+    <value>Run recipe</value>
+  </data>
+  <data name="runDialog.name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="runDialog.format" xml:space="preserve">
+    <value>Format</value>
+  </data>
+  <data name="runDialog.saveTo" xml:space="preserve">
+    <value>Save to</value>
+  </data>
+  <data name="runDialog.pickFolder" xml:space="preserve">
+    <value>Choose...</value>
+  </data>
+  <data name="runDialog.pickFolderDialogTitle" xml:space="preserve">
+    <value>Choose save folder</value>
+  </data>
+  <data name="runDialog.advanced" xml:space="preserve">
+    <value>Advanced</value>
+  </data>
+  <data name="runDialog.allowLocalPaths" xml:space="preserve">
+    <value>Allow local paths</value>
+  </data>
+  <data name="runDialog.willCreatePrefix" xml:space="preserve">
+    <value>Will create </value>
+  </data>
+  <data name="runDialog.willCreateSuffix" xml:space="preserve">
+    <value> file</value>
+  </data>
+  <data name="runDialog.calculating" xml:space="preserve">
+    <value>Calculating</value>
+  </data>
+  <data name="runDialog.cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="runDialog.start" xml:space="preserve">
+    <value>Start</value>
+  </data>
+  <data name="enums.conflictKind.duplicateWithinRequest" xml:space="preserve">
+    <value>⚠ duplicate within this run</value>
+  </data>
+  <data name="enums.conflictKind.conflictsWithActiveRequest" xml:space="preserve">
+    <value>⚠ conflicts with an active run</value>
+  </data>
 </root>

@@ -16,6 +16,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SlideGenerator.Desktop.Services.Dialogs;
+using SlideGenerator.Desktop.Services.Localization;
 using SlideGenerator.Document.Presentations.Identifiers;
 using SlideGenerator.Generator;
 
@@ -124,7 +125,7 @@ public sealed partial class RunDialogViewModel : ObservableObject
     [RelayCommand]
     private async Task PickFolderAsync()
     {
-        var folder = await _filePicker.PickFolderAsync("Chọn thư mục lưu").ConfigureAwait(true);
+        var folder = await _filePicker.PickFolderAsync(LocalizationService.Instance["runDialog.pickFolderDialogTitle"]).ConfigureAwait(true);
         if (folder is not null) SaveFolder = folder;
     }
 

@@ -2,56 +2,70 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:SlideGenerator.Desktop.Features.RecipeEditor.ViewModels"
         xmlns:models="clr-namespace:SlideGenerator.Desktop.Features.RecipeEditor.Models"
+        xmlns:loc="clr-namespace:SlideGenerator.Desktop.Services.Localization"
         x:Class="SlideGenerator.Desktop.Features.RecipeEditor.Views.TemplatePickerView"
         x:DataType="vm:TemplatePickerViewModel"
-        Title="Chọn slide mẫu"
+        Title="{loc:Tr recipeEditor.templatePicker.title}"
         Width="560" Height="480"
         WindowStartupLocation="CenterOwner"
         Background="{DynamicResource SurfaceBrush}">
     <Grid RowDefinitions="Auto,*,Auto" Margin="{StaticResource PaddingPanel}" RowSpacing="{StaticResource Space3}">
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource Space2}">
             <TextBox Grid.Column="0" Text="{Binding PresentationPath}" IsReadOnly="True"
-                     PlaceholderText="Chưa chọn presentation"/>
-            <Button Grid.Column="1" Content="Chọn presentation..." Command="{Binding PickPresentationCommand}"/>
+                     PlaceholderText="{loc:Tr recipeEditor.templatePicker.noPresentation}"/>
+            <Button Grid.Column="1" Content="{loc:Tr recipeEditor.templatePicker.pickPresentation}" Command="{Binding PickPresentationCommand}"/>
         </Grid>
 
         <Border Grid.Row="1" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
             <Grid>
-                <TextBlock Classes="muted body" Text="Đang tải..." HorizontalAlignment="Center" VerticalAlignment="Center"
-                           IsVisible="{Binding IsLoading}"/>
+                <ProgressBar IsIndeterminate="True" Width="120" HorizontalAlignment="Center" VerticalAlignment="Center"
+                             IsVisible="{Binding IsLoading}"/>
                 <TextBlock Classes="body" Foreground="{DynamicResource DangerBrush}" Text="{Binding ErrorMessage}"
                            HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" Margin="16"
                            IsVisible="{Binding ErrorMessage, Converter={x:Static ObjectConverters.IsNotNull}}"/>
 
-                <ScrollViewer IsVisible="{Binding !IsLoading}">
-                    <ItemsControl ItemsSource="{Binding Slides}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapPanel/>
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="models:TemplateSlideRow">
-                                <Border Classes="hairline-row" Width="160" Margin="4" PointerPressed="OnSlidePointerPressed">
+                <!-- Empty state: no presentation picked yet, nothing loading, nothing failed -->
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="{StaticResource Space2}"
+                            IsVisible="{Binding PresentationPath, Converter={x:Static ObjectConverters.IsNull}}">
+                    <TextBlock Classes="muted body" Text="{loc:Tr recipeEditor.templatePicker.empty}" HorizontalAlignment="Center"/>
+                </StackPanel>
+
+                <ListBox ItemsSource="{Binding Slides}" SelectedItem="{Binding SelectedSlide}"
+                         IsVisible="{Binding !IsLoading}">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel/>
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="models:TemplateSlideRow">
+                            <Border Classes="hairline-row" Width="160" Margin="4">
+                                <Grid>
                                     <StackPanel Spacing="{StaticResource Space1}">
-                                        <Image Source="{Binding Preview}" Stretch="Uniform" Height="90"/>
+                                        <Image Source="{Binding Preview}" Stretch="Uniform" Height="88"/>
                                         <TextBlock Classes="muted" HorizontalAlignment="Center">
-                                            <Run Text="Slide "/>
+                                            <Run Text="{loc:Tr recipeEditor.templatePicker.slidePrefix}"/>
                                             <Run Text="{Binding Slide.Slide.SlideIndex}"/>
                                         </TextBlock>
                                     </StackPanel>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ScrollViewer>
+                                    <Border Classes="selected-check" Width="20" Height="20"
+                                            CornerRadius="{StaticResource RadiusFull}" Background="{DynamicResource AccentBrush}"
+                                            HorizontalAlignment="Right" VerticalAlignment="Top" Margin="4">
+                                        <TextBlock Text="&#10003;" Foreground="{DynamicResource TextOnAccentBrush}"
+                                                   FontSize="{StaticResource FontSizeSm}"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
             </Grid>
         </Border>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="{StaticResource Space2}">
-            <Button Content="Huỷ" Command="{Binding CancelCommand}" HotKey="Escape"/>
-            <Button Content="Chọn" Command="{Binding ConfirmCommand}"
-                    Background="{DynamicResource AccentBrush}" Foreground="{DynamicResource TextOnAccentBrush}"/>
+            <Button Content="{loc:Tr recipeEditor.templatePicker.cancel}" Command="{Binding CancelCommand}" HotKey="Escape"/>
+            <Button Classes="Primary" Content="{loc:Tr recipeEditor.templatePicker.confirm}" Command="{Binding ConfirmCommand}"/>
         </StackPanel>
     </Grid>
 </Window>

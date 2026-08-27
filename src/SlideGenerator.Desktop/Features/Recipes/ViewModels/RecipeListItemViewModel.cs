@@ -102,7 +102,8 @@ public sealed partial class RecipeListItemViewModel : ObservableObject
         var confirmed = await _dialogService
             .ConfirmAsync(LocalizationService.Instance["recipes.delete.title"],
                 string.Format(LocalizationService.Instance["recipes.delete.message"], Name),
-                LocalizationService.Instance["recipes.delete.confirm"], LocalizationService.Instance["recipes.delete.cancel"])
+                LocalizationService.Instance["recipes.delete.confirm"], LocalizationService.Instance["recipes.delete.cancel"],
+                danger: true)
             .ConfigureAwait(true);
         if (!confirmed) return;
 

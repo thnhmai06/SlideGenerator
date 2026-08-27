@@ -531,4 +531,73 @@
   <data name="recipeEditor.bindingSummary" xml:space="preserve">
     <value>{0} đã ghép · {1} là đề xuất · {2} cần bạn chọn · {3} chưa gán</value>
   </data>
+  <data name="recipeEditor.templatePicker.title" xml:space="preserve">
+    <value>Chọn slide mẫu</value>
+  </data>
+  <data name="recipeEditor.templatePicker.noPresentation" xml:space="preserve">
+    <value>Chưa chọn presentation</value>
+  </data>
+  <data name="recipeEditor.templatePicker.pickPresentation" xml:space="preserve">
+    <value>Chọn presentation...</value>
+  </data>
+  <data name="recipeEditor.templatePicker.pickPresentationDialogTitle" xml:space="preserve">
+    <value>Chọn presentation mẫu</value>
+  </data>
+  <data name="recipeEditor.templatePicker.empty" xml:space="preserve">
+    <value>Chọn một presentation để xem các slide.</value>
+  </data>
+  <data name="recipeEditor.templatePicker.slidePrefix" xml:space="preserve">
+    <value>Slide </value>
+  </data>
+  <data name="recipeEditor.templatePicker.cancel" xml:space="preserve">
+    <value>Huỷ</value>
+  </data>
+  <data name="recipeEditor.templatePicker.confirm" xml:space="preserve">
+    <value>Chọn</value>
+  </data>
+  <data name="runDialog.title" xml:space="preserve">
+    <value>Chạy recipe</value>
+  </data>
+  <data name="runDialog.name" xml:space="preserve">
+    <value>Tên</value>
+  </data>
+  <data name="runDialog.format" xml:space="preserve">
+    <value>Định dạng</value>
+  </data>
+  <data name="runDialog.saveTo" xml:space="preserve">
+    <value>Lưu vào</value>
+  </data>
+  <data name="runDialog.pickFolder" xml:space="preserve">
+    <value>Chọn...</value>
+  </data>
+  <data name="runDialog.pickFolderDialogTitle" xml:space="preserve">
+    <value>Chọn thư mục lưu</value>
+  </data>
+  <data name="runDialog.advanced" xml:space="preserve">
+    <value>Nâng cao</value>
+  </data>
+  <data name="runDialog.allowLocalPaths" xml:space="preserve">
+    <value>Cho phép đường dẫn cục bộ</value>
+  </data>
+  <data name="runDialog.willCreatePrefix" xml:space="preserve">
+    <value>Sẽ tạo </value>
+  </data>
+  <data name="runDialog.willCreateSuffix" xml:space="preserve">
+    <value> file</value>
+  </data>
+  <data name="runDialog.calculating" xml:space="preserve">
+    <value>Đang tính</value>
+  </data>
+  <data name="runDialog.cancel" xml:space="preserve">
+    <value>Huỷ</value>
+  </data>
+  <data name="runDialog.start" xml:space="preserve">
+    <value>Bắt đầu</value>
+  </data>
+  <data name="enums.conflictKind.duplicateWithinRequest" xml:space="preserve">
+    <value>⚠ trùng trong lượt chạy này</value>
+  </data>
+  <data name="enums.conflictKind.conflictsWithActiveRequest" xml:space="preserve">
+    <value>⚠ trùng với lượt đang chạy</value>
+  </data>
 </root>

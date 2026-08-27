@@ -144,7 +144,8 @@ public sealed partial class RequestRunViewModel : ObservableObject
         var confirmed = await _dialogService
             .ConfirmAsync(LocalizationService.Instance["runs.delete.title"],
                 string.Format(LocalizationService.Instance["runs.delete.message"], Name),
-                LocalizationService.Instance["runs.delete.confirm"], LocalizationService.Instance["runs.delete.cancel"])
+                LocalizationService.Instance["runs.delete.confirm"], LocalizationService.Instance["runs.delete.cancel"],
+                danger: true)
             .ConfigureAwait(true);
         if (confirmed) await _service.DeleteAsync(RequestId).ConfigureAwait(true);
     }

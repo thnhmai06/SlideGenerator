@@ -7,11 +7,14 @@
         WindowStartupLocation="CenterOwner"
         Background="{DynamicResource SurfaceBrush}">
     <StackPanel Margin="{StaticResource PaddingPanel}" Spacing="{StaticResource Space4}">
-        <TextBlock Classes="body" Text="{Binding #Root.Message}" TextWrapping="Wrap"/>
+        <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space2}">
+            <TextBlock Text="&#9888;" Foreground="{DynamicResource DangerBrush}" IsVisible="{Binding #Root.IsDanger}"/>
+            <TextBlock Classes="body" Text="{Binding #Root.Message}" TextWrapping="Wrap"/>
+        </StackPanel>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="{StaticResource Space2}">
             <Button Content="{Binding #Root.CancelLabel}" Click="OnCancel" HotKey="Escape"/>
             <Button Content="{Binding #Root.ConfirmLabel}" Click="OnConfirm"
-                    Background="{DynamicResource AccentBrush}" Foreground="{DynamicResource TextOnAccentBrush}"/>
+                    Classes.Primary="{Binding !#Root.IsDanger}" Classes.Danger="{Binding #Root.IsDanger}"/>
         </StackPanel>
     </StackPanel>
 </Window>

@@ -256,4 +256,19 @@
     <Style Selector="Border.step-dot.active">
         <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
     </Style>
+
+    <!-- Template picker thumbnail selected state (plan §5.3: "thumbnail có selected state — border accent 2px
+         + check badge") — a plain ListBox already gives every item container the :selected pseudo-class for
+         free, so this reaches into the DataTemplate's content by descendant selector rather than needing any
+         binding/converter. -->
+    <Style Selector="ListBoxItem Border.selected-check">
+        <Setter Property="IsVisible" Value="False"/>
+    </Style>
+    <Style Selector="ListBoxItem:selected Border.selected-check">
+        <Setter Property="IsVisible" Value="True"/>
+    </Style>
+    <Style Selector="ListBoxItem:selected Border.hairline-row">
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+        <Setter Property="BorderThickness" Value="2"/>
+    </Style>
 </Styles>

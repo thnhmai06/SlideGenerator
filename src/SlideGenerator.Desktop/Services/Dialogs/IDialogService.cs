@@ -32,8 +32,11 @@ namespace SlideGenerator.Desktop.Services.Dialogs;
 /// </summary>
 public interface IDialogService
 {
-    /// <summary>Shows a yes/no confirmation dialog. Returns <see langword="true" /> if the user confirmed.</summary>
-    Task<bool> ConfirmAsync(string title, string message, string confirmLabel, string cancelLabel);
+    /// <summary>Shows a yes/no confirmation dialog. Returns <see langword="true" /> if the user confirmed.
+    ///     Pass <paramref name="danger" /> for an irreversible/destructive action (plan §4.2: "icon + variant
+    ///     danger — nút đỏ khi destructive") so the confirm button renders as a warning rather than the
+    ///     default affirmative color.</summary>
+    Task<bool> ConfirmAsync(string title, string message, string confirmLabel, string cancelLabel, bool danger = false);
 
     /// <summary>
     ///     Shows the run confirmation dialog for a recipe. Returns the new request id if the user started a
@@ -55,9 +58,12 @@ public sealed class DialogService(IServiceProvider serviceProvider) : IDialogSer
         ((IClassicDesktopStyleApplicationLifetime)Application.Current!.ApplicationLifetime!).MainWindow;
 
     /// <inheritdoc />
-    public async Task<bool> ConfirmAsync(string title, string message, string confirmLabel, string cancelLabel)
+    public async Task<bool> ConfirmAsync(string title, string message, string confirmLabel, string cancelLabel, bool danger = false)
     {
-        var dialog = new ConfirmDialog { Title = title, Message = message, ConfirmLabel = confirmLabel, CancelLabel = cancelLabel };
+        var dialog = new ConfirmDialog
+        {
+            Title = title, Message = message, ConfirmLabel = confirmLabel, CancelLabel = cancelLabel, IsDanger = danger
+        };
         return Owner is not null && await dialog.ShowDialog<bool>(Owner).ConfigureAwait(false);
     }
 

@@ -36,6 +36,10 @@ public sealed partial class ConfirmDialog : Window
     public static readonly StyledProperty<string> CancelLabelProperty =
         AvaloniaProperty.Register<ConfirmDialog, string>(nameof(CancelLabel));
 
+    /// <summary>Identifies the <see cref="IsDanger" /> styled property.</summary>
+    public static readonly StyledProperty<bool> IsDangerProperty =
+        AvaloniaProperty.Register<ConfirmDialog, bool>(nameof(IsDanger));
+
     /// <summary>Constructs the dialog and loads its XAML.</summary>
     public ConfirmDialog()
     {
@@ -61,6 +65,14 @@ public sealed partial class ConfirmDialog : Window
     {
         get => GetValue(CancelLabelProperty);
         set => SetValue(CancelLabelProperty, value);
+    }
+
+    /// <summary>Gets or sets whether this confirms an irreversible/destructive action — renders the confirm
+    ///     button as <c>Classes="Danger"</c> instead of <c>Classes="Primary"</c> (plan §4.2).</summary>
+    public bool IsDanger
+    {
+        get => GetValue(IsDangerProperty);
+        set => SetValue(IsDangerProperty, value);
     }
 
     private void OnConfirm(object? sender, RoutedEventArgs e)

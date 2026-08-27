@@ -20,6 +20,7 @@ using CommunityToolkit.Mvvm.Input;
 using SlideGenerator.Desktop.Features.RecipeEditor.Models;
 using SlideGenerator.Desktop.Features.RecipeEditor.Services;
 using SlideGenerator.Desktop.Services.Dialogs;
+using SlideGenerator.Desktop.Services.Localization;
 using SlideGenerator.Document.Presentations.Identifiers;
 using SlideGenerator.Recipe.Models;
 
@@ -60,7 +61,7 @@ public sealed partial class TemplatePickerViewModel : ObservableObject
     [RelayCommand]
     private async Task PickPresentationAsync()
     {
-        var path = await _filePicker.PickFileAsync("Chọn presentation mẫu",
+        var path = await _filePicker.PickFileAsync(LocalizationService.Instance["recipeEditor.templatePicker.pickPresentationDialogTitle"],
             [new Avalonia.Platform.Storage.FilePickerFileType("PowerPoint") { Patterns = ["*.pptx", "*.potx", "*.ppsx"] }]).ConfigureAwait(true);
         if (path is null) return;
 
