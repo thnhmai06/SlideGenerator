@@ -14,13 +14,32 @@
                 <TextBlock Classes="h1" Text="{loc:Tr settings.appearance}"/>
 
                 <TextBlock Classes="body" Text="{loc:Tr settings.theme}"/>
-                <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space3}">
-                    <RadioButton GroupName="Theme" Content="{loc:Tr settings.theme.system}"
-                                 IsChecked="{Binding Theme, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static settings:ThemeMode.System}}"/>
-                    <RadioButton GroupName="Theme" Content="{loc:Tr settings.theme.light}"
-                                 IsChecked="{Binding Theme, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static settings:ThemeMode.Light}}"/>
-                    <RadioButton GroupName="Theme" Content="{loc:Tr settings.theme.dark}"
-                                 IsChecked="{Binding Theme, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static settings:ThemeMode.Dark}}"/>
+                <!-- Card-style options (plan §5.6: "theme = 3 lựa chọn dạng card nhỏ") rather than bare radio
+                     text — still plain RadioButtons underneath for state/keyboard behavior, just re-templated
+                     as a bordered card with an icon. A live mini light/dark/system preview render inside each
+                     card (the plan's stretch idea) is not built here — plain icon + label only. -->
+                <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space2}">
+                    <ToggleButton Classes="theme-option"
+                                  IsChecked="{Binding Theme, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static settings:ThemeMode.System}}">
+                        <StackPanel Spacing="{StaticResource Space1}" HorizontalAlignment="Center">
+                            <TextBlock Text="&#9703;" HorizontalAlignment="Center" FontSize="{StaticResource FontSizeLg}"/>
+                            <TextBlock Text="{loc:Tr settings.theme.system}"/>
+                        </StackPanel>
+                    </ToggleButton>
+                    <ToggleButton Classes="theme-option"
+                                  IsChecked="{Binding Theme, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static settings:ThemeMode.Light}}">
+                        <StackPanel Spacing="{StaticResource Space1}" HorizontalAlignment="Center">
+                            <TextBlock Text="&#9728;" HorizontalAlignment="Center" FontSize="{StaticResource FontSizeLg}"/>
+                            <TextBlock Text="{loc:Tr settings.theme.light}"/>
+                        </StackPanel>
+                    </ToggleButton>
+                    <ToggleButton Classes="theme-option"
+                                  IsChecked="{Binding Theme, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static settings:ThemeMode.Dark}}">
+                        <StackPanel Spacing="{StaticResource Space1}" HorizontalAlignment="Center">
+                            <TextBlock Text="&#9790;" HorizontalAlignment="Center" FontSize="{StaticResource FontSizeLg}"/>
+                            <TextBlock Text="{loc:Tr settings.theme.dark}"/>
+                        </StackPanel>
+                    </ToggleButton>
                 </StackPanel>
 
                 <TextBlock Classes="body" Text="{loc:Tr settings.language}"/>
@@ -74,40 +93,20 @@
                 <Grid ColumnDefinitions="*,*,*" ColumnSpacing="{StaticResource Space2}">
                     <StackPanel Grid.Column="0" Spacing="{StaticResource Space1}">
                         <TextBlock Classes="muted" Text="{loc:Tr settings.retry.maxAttempts}"/>
-                        <TextBox Text="{Binding MaxRetries}"/>
+                        <NumericUpDown Value="{Binding MaxRetries}" Minimum="0" FormatString="0"/>
                     </StackPanel>
                     <StackPanel Grid.Column="1" Spacing="{StaticResource Space1}">
                         <TextBlock Classes="muted" Text="{loc:Tr settings.retry.timeoutSeconds}"/>
-                        <TextBox Text="{Binding RetryTimeoutSeconds}"/>
+                        <NumericUpDown Value="{Binding RetryTimeoutSeconds}" Minimum="0" FormatString="0"/>
                     </StackPanel>
                     <StackPanel Grid.Column="2" Spacing="{StaticResource Space1}">
                         <TextBlock Classes="muted" Text="{loc:Tr settings.retry.maxBackoffSeconds}"/>
-                        <TextBox Text="{Binding MaxRetryDelaySeconds}"/>
+                        <NumericUpDown Value="{Binding MaxRetryDelaySeconds}" Minimum="0" FormatString="0"/>
                     </StackPanel>
                 </Grid>
 
                 <TextBlock Classes="muted" Text="{loc:Tr settings.network.maxDownloadMb}"/>
-                <TextBox Text="{Binding MaxDownloadMegabytes}"/>
-            </StackPanel>
-
-            <Border Classes="hairline-row"/>
-
-            <!-- Giới thiệu -->
-            <StackPanel Spacing="{StaticResource Space2}">
-                <TextBlock Classes="h2" Text="{loc:Tr settings.about}"/>
-                <TextBlock Classes="body">
-                    <Run Text="{loc:Tr settings.about.version}"/><Run Text=": "/><Run Text="{Binding Version}"/>
-                </TextBlock>
-                <TextBlock Classes="muted" Text="{Binding LicenseText}" TextWrapping="Wrap"/>
-                <TextBlock Classes="body">
-                    <Run Text="{loc:Tr settings.about.repository}"/><Run Text=": "/><Run Text="{Binding RepositoryUrl}"/>
-                </TextBlock>
-                <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space2}">
-                    <Button Content="{loc:Tr settings.about.checkUpdate}" Command="{Binding CheckForUpdateCommand}"
-                            IsEnabled="{Binding !IsCheckingForUpdate}"/>
-                    <TextBlock Classes="muted" VerticalAlignment="Center" Text="{Binding UpdateStatusMessage}"
-                               IsVisible="{Binding UpdateStatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-                </StackPanel>
+                <NumericUpDown Value="{Binding MaxDownloadMegabytes}" Minimum="0" FormatString="0"/>
             </StackPanel>
 
         </StackPanel>

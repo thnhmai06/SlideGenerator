@@ -1,0 +1,121 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:SlideGenerator.Desktop.Features.About.ViewModels"
+             xmlns:models="clr-namespace:SlideGenerator.Desktop.Features.About.Models"
+             xmlns:loc="clr-namespace:SlideGenerator.Desktop.Services.Localization"
+             xmlns:conv="clr-namespace:SlideGenerator.Desktop.Converters"
+             xmlns:components="clr-namespace:SlideGenerator.Desktop.Components"
+             x:Class="SlideGenerator.Desktop.Features.About.Views.AboutView"
+             x:DataType="vm:AboutViewModel">
+    <ScrollViewer>
+        <StackPanel Margin="{StaticResource PaddingPanel}" Spacing="{StaticResource Space4}" MaxWidth="640"
+                    HorizontalAlignment="Center">
+
+            <!-- Brand + tagline -->
+            <components:BrandLockup x:Name="Lockup" HorizontalAlignment="Center" Margin="0,16,0,0"/>
+            <StackPanel Spacing="{StaticResource Space1}" HorizontalAlignment="Center">
+                <TextBlock Classes="body" Text="{Binding DescriptionEn}" HorizontalAlignment="Center"/>
+                <TextBlock Classes="muted body" Text="{Binding DescriptionVi}" HorizontalAlignment="Center"/>
+            </StackPanel>
+
+            <Border Classes="card">
+                <StackPanel Spacing="{StaticResource Space2}">
+                    <TextBlock Classes="label" Text="{loc:Tr about.update.title}"/>
+                    <TextBlock Classes="body">
+                        <Run Text="{loc:Tr settings.about.version}"/><Run Text=": "/><Run Text="{Binding Version}"/>
+                    </TextBlock>
+                    <TextBlock Classes="muted" Text="{Binding LicenseText}" TextWrapping="Wrap"/>
+                    <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space2}">
+                        <Button Classes="Tertiary" Content="{loc:Tr settings.about.checkUpdate}"
+                                Command="{Binding CheckForUpdateCommand}" IsEnabled="{Binding !IsCheckingForUpdate}"/>
+                        <TextBlock Classes="muted" VerticalAlignment="Center" Text="{Binding UpdateStatusMessage}"
+                                   IsVisible="{Binding UpdateStatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Developers -->
+            <StackPanel Spacing="{StaticResource Space2}">
+                <TextBlock Classes="label" Text="{loc:Tr about.developers.title}"/>
+                <Border Classes="skeleton" Height="40" IsVisible="{Binding IsLoadingDevelopers}"/>
+                <TextBlock Classes="muted body" Text="{loc:Tr about.developers.empty}">
+                    <TextBlock.IsVisible>
+                        <MultiBinding Converter="{x:Static BoolConverters.And}">
+                            <Binding Path="!IsLoadingDevelopers"/>
+                            <Binding Path="!HasDevelopers"/>
+                        </MultiBinding>
+                    </TextBlock.IsVisible>
+                </TextBlock>
+                <ItemsControl ItemsSource="{Binding Developers}" IsVisible="{Binding !IsLoadingDevelopers}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="models:Contributor">
+                            <StackPanel Spacing="{StaticResource Space1}" Margin="4" Width="72"
+                                        ToolTip.Tip="{Binding Login}" Cursor="Hand" PointerPressed="OnDeveloperPointerPressed">
+                                <Border Classes="avatar-circle" HorizontalAlignment="Center">
+                                    <TextBlock Text="{Binding Login, Converter={x:Static conv:FirstLetterUpperConverter.Instance}}"/>
+                                </Border>
+                                <TextBlock Classes="muted" FontSize="{StaticResource FontSizeXs}" Text="{Binding Login}"
+                                           HorizontalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+
+            <!-- GitHub -->
+            <Border Classes="card">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Grid.Column="0" Classes="body" Text="{loc:Tr about.github.title}" VerticalAlignment="Center"/>
+                    <Button Grid.Column="1" Classes="Tertiary" Content="{loc:Tr about.github.open}"
+                            Command="{Binding OpenRepositoryCommand}"/>
+                </Grid>
+            </Border>
+
+            <!-- Supporters -->
+            <StackPanel Spacing="{StaticResource Space2}">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Grid.Column="0" Classes="label" Text="{loc:Tr about.supporters.title}" VerticalAlignment="Center"/>
+                    <Button Grid.Column="1" Classes="Primary" Content="{loc:Tr about.supporters.cta}"
+                            Command="{Binding OpenSponsorPageCommand}"/>
+                </Grid>
+                <Border Classes="skeleton" Height="40" IsVisible="{Binding IsLoadingSupporters}"/>
+                <TextBlock Classes="muted body" Text="{loc:Tr about.supporters.empty}">
+                    <TextBlock.IsVisible>
+                        <MultiBinding Converter="{x:Static BoolConverters.And}">
+                            <Binding Path="!IsLoadingSupporters"/>
+                            <Binding Path="!HasSupporters"/>
+                        </MultiBinding>
+                    </TextBlock.IsVisible>
+                </TextBlock>
+                <ItemsControl ItemsSource="{Binding Supporters}" IsVisible="{Binding !IsLoadingSupporters}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="models:Supporter">
+                            <StackPanel Spacing="{StaticResource Space1}" Margin="4" Width="72"
+                                        ToolTip.Tip="{Binding Login}" Cursor="Hand" PointerPressed="OnSupporterPointerPressed">
+                                <Border Classes="avatar-circle" HorizontalAlignment="Center">
+                                    <TextBlock Text="{Binding Login, Converter={x:Static conv:FirstLetterUpperConverter.Instance}}"/>
+                                </Border>
+                                <TextBlock Classes="muted" FontSize="{StaticResource FontSizeXs}" Text="{Binding Login}"
+                                           HorizontalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+
+            <!-- Footer -->
+            <TextBlock Classes="muted" FontSize="{StaticResource FontSizeSm}" Text="{Binding LicenseText}"
+                       HorizontalAlignment="Center" Margin="0,8,0,16"/>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

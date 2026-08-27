@@ -14,7 +14,6 @@
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using SlideGenerator.Desktop.Bootstrap;
 using SlideGenerator.Desktop.Services.Localization;
 using SlideGenerator.Desktop.Services.Theme;
 using SlideGenerator.Settings.Mutable;
@@ -22,12 +21,13 @@ using SlideGenerator.Settings.Mutable;
 namespace SlideGenerator.Desktop.Features.Settings.ViewModels;
 
 /// <summary>
-///     Backs the one-scroll, three-group Settings page (plan §5.5: Giao diện/Hiệu năng/Mạng + a closing "Giới
-///     thiệu" block). Every field persists immediately through <see cref="ISettingManager" /> on change — same
-///     no-debounce, no-explicit-save convention <see cref="IThemeService.SetThemeAsync" /> already established
-///     for Theme; a Settings page has no "Lưu" button anywhere in the plan. <c>ponytail:</c> a proxy/retry
-///     text field writes to disk on every keystroke rather than debouncing — the settings file is tiny and
-///     typing pace is not a throughput concern; add a debounce only if this is ever actually observed to lag.
+///     Backs the one-scroll, three-group Settings page (plan §5.5: Giao diện/Hiệu năng/Mạng — the old closing
+///     "Giới thiệu" block moved to its own About page in P6, see <c>AboutViewModel</c>). Every field persists
+///     immediately through <see cref="ISettingManager" /> on change — same no-debounce, no-explicit-save
+///     convention <see cref="IThemeService.SetThemeAsync" /> already established for Theme; a Settings page
+///     has no "Lưu" button anywhere in the plan. <c>ponytail:</c> a proxy/retry text field writes to disk on
+///     every keystroke rather than debouncing — the settings file is tiny and typing pace is not a throughput
+///     concern; add a debounce only if this is ever actually observed to lag.
 /// </summary>
 public sealed partial class SettingsViewModel : ObservableObject
 {
@@ -54,17 +54,6 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private int _retryTimeoutSeconds;
     [ObservableProperty] private int _maxRetryDelaySeconds;
     [ObservableProperty] private uint _maxDownloadMegabytes;
-    [ObservableProperty] private string? _updateStatusMessage;
-    [ObservableProperty] private bool _isCheckingForUpdate;
-
-    /// <summary>Gets the running app's informational version, for the "Giới thiệu" block.</summary>
-    public string Version => Metadata.Value.Version;
-
-    /// <summary>Gets the copyright/license line, for the "Giới thiệu" block.</summary>
-    public string LicenseText => Metadata.Print.License;
-
-    /// <summary>Gets the repository URL, for the "Giới thiệu" block.</summary>
-    public string RepositoryUrl => Metadata.Value.Repository;
 
     /// <summary>Constructs the page and loads the current settings into its bound properties.</summary>
     public SettingsViewModel(ISettingManager settingManager, IThemeService themeService, ILocalizationService localizationService)
@@ -169,28 +158,5 @@ public sealed partial class SettingsViewModel : ObservableObject
         var current = _settingManager.Current;
         await _settingManager.Update(current with { Performance = new Setting.PerformanceSetting() }).ConfigureAwait(true);
         LoadFromSettings();
-    }
-
-    [RelayCommand]
-    private async Task CheckForUpdateAsync()
-    {
-        IsCheckingForUpdate = true;
-        UpdateStatusMessage = null;
-        try
-        {
-            var result = await UpdateChecker.CheckForUpdatesAsync().ConfigureAwait(true);
-            UpdateStatusMessage = result switch
-            {
-                UpdateCheckResult.NotInstalled => LocalizationService.Instance["settings.about.updateStatus.notInstalled"],
-                UpdateCheckResult.UpToDate => LocalizationService.Instance["settings.about.updateStatus.upToDate"],
-                UpdateCheckResult.UpdateDownloaded => LocalizationService.Instance["settings.about.updateStatus.downloaded"],
-                UpdateCheckResult.Failed => LocalizationService.Instance["settings.about.updateStatus.failed"],
-                _ => null
-            };
-        }
-        finally
-        {
-            IsCheckingForUpdate = false;
-        }
     }
 }

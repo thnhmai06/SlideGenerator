@@ -615,4 +615,28 @@
   <data name="enums.rowStage.savingOutput" xml:space="preserve">
     <value>Đang lưu</value>
   </data>
+  <data name="about.update.title" xml:space="preserve">
+    <value>Cập nhật</value>
+  </data>
+  <data name="about.developers.title" xml:space="preserve">
+    <value>Nhà phát triển</value>
+  </data>
+  <data name="about.developers.empty" xml:space="preserve">
+    <value>Không tải được danh sách nhà phát triển lúc này.</value>
+  </data>
+  <data name="about.github.title" xml:space="preserve">
+    <value>GitHub</value>
+  </data>
+  <data name="about.github.open" xml:space="preserve">
+    <value>Xem trên GitHub</value>
+  </data>
+  <data name="about.supporters.title" xml:space="preserve">
+    <value>Người ủng hộ</value>
+  </data>
+  <data name="about.supporters.empty" xml:space="preserve">
+    <value>Trở thành người đầu tiên ủng hộ dự án này.</value>
+  </data>
+  <data name="about.supporters.cta" xml:space="preserve">
+    <value>♥ Ủng hộ</value>
+  </data>
 </root>

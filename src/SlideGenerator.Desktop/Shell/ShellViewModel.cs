@@ -16,6 +16,7 @@ using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
+using SlideGenerator.Desktop.Features.About.ViewModels;
 using SlideGenerator.Desktop.Features.Recipes.ViewModels;
 using SlideGenerator.Desktop.Features.Runs.ViewModels;
 using SlideGenerator.Desktop.Features.Settings.ViewModels;
@@ -131,6 +132,8 @@ public sealed partial class ShellViewModel : ObservableObject
                 return recipes;
             case ShellDestination.Settings:
                 return _serviceProvider.GetRequiredService<SettingsViewModel>();
+            case ShellDestination.About:
+                return _serviceProvider.GetRequiredService<AboutViewModel>();
             default:
                 return new PlaceholderPageViewModel(destination.ToString());
         }

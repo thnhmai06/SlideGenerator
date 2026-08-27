@@ -80,6 +80,26 @@
         <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
     </Style>
 
+    <!-- Settings' theme picker (plan §5.6: "theme = 3 lựa chọn dạng card nhỏ") — same proven card-on-a-
+         ToggleButton technique as .chip, just larger/vertical. -->
+    <Style Selector="ToggleButton.theme-option">
+        <Setter Property="Width" Value="88"/>
+        <Setter Property="Padding" Value="{StaticResource Thickness3}"/>
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusPanel}"/>
+        <Setter Property="Background" Value="{DynamicResource SurfaceMutedBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="BorderBrush" Duration="{DynamicResource MotionMicro}"/>
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="ToggleButton.theme-option:checked">
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+        <Setter Property="BorderThickness" Value="2"/>
+    </Style>
+
     <!-- Press feedback — every interactive control gets a tactile 100ms scale, per plan §4.5. -->
     <Style Selector="Button, ToggleButton">
         <Setter Property="RenderTransform" Value="none"/>
@@ -270,5 +290,19 @@
     <Style Selector="ListBoxItem:selected Border.hairline-row">
         <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
         <Setter Property="BorderThickness" Value="2"/>
+    </Style>
+
+    <!-- Initials-circle avatar placeholder (plan §5.7's About page Developers/Supporters rows). -->
+    <Style Selector="Border.avatar-circle">
+        <Setter Property="Width" Value="40"/>
+        <Setter Property="Height" Value="40"/>
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusFull}"/>
+        <Setter Property="Background" Value="{DynamicResource AccentMutedBrush}"/>
+    </Style>
+    <Style Selector="Border.avatar-circle TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>
 </Styles>

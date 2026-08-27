@@ -615,4 +615,28 @@
   <data name="enums.rowStage.savingOutput" xml:space="preserve">
     <value>Saving output</value>
   </data>
+  <data name="about.update.title" xml:space="preserve">
+    <value>Update</value>
+  </data>
+  <data name="about.developers.title" xml:space="preserve">
+    <value>Developers</value>
+  </data>
+  <data name="about.developers.empty" xml:space="preserve">
+    <value>Couldn't load contributors right now.</value>
+  </data>
+  <data name="about.github.title" xml:space="preserve">
+    <value>GitHub</value>
+  </data>
+  <data name="about.github.open" xml:space="preserve">
+    <value>View on GitHub</value>
+  </data>
+  <data name="about.supporters.title" xml:space="preserve">
+    <value>Supporters</value>
+  </data>
+  <data name="about.supporters.empty" xml:space="preserve">
+    <value>Be the first to support this project.</value>
+  </data>
+  <data name="about.supporters.cta" xml:space="preserve">
+    <value>♥ Sponsor</value>
+  </data>
 </root>

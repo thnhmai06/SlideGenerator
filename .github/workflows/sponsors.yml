@@ -1,0 +1,88 @@
+name: Publish sponsors
+
+# Publishes sponsors.json to the "data" branch — the About page's Supporters list fetches it from
+# raw.githubusercontent.com (see AboutDataService.GetSupportersAsync). Reads every GitHub profile listed
+# under FUNDING.yml's `github:` key (currently just thnhmai06) and merges their sponsors into one list.
+#
+# Requires a repo secret SPONSORS_PAT: a GitHub personal access token with the `read:user` scope, created by
+# (or with read access to) every profile listed in FUNDING.yml's `github:` key — plan §5.7-Q5. Until that
+# secret is added, this workflow still runs but writes an empty sponsors.json (the About page already shows
+# an EmptyState for that case, not an error).
+
+on:
+  schedule:
+    - cron: "0 6 * * 1" # weekly, Monday 06:00 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  publish-sponsors:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main (to read FUNDING.yml)
+        uses: actions/checkout@v4
+
+      - name: Extract sponsor profiles from FUNDING.yml
+        id: profiles
+        run: |
+          # FUNDING.yml's `github:` key is a flow-style single-line list today, e.g. `github: [ thnhmai06 ]`.
+          # Only that flow-style form is supported here — a block-style (multi-line "- name") list would
+          # need a real YAML parser instead of this grep/sed one-liner; upgrade this step if FUNDING.yml
+          # ever switches format.
+          logins=$(grep '^github:' .github/FUNDING.yml | sed -E 's/^github:\s*\[(.*)\]/\1/' | tr ',' '\n' | tr -d ' ' | grep -v '^$' || true)
+          echo "logins<<SPONSORS_EOF" >> "$GITHUB_OUTPUT"
+          echo "$logins" >> "$GITHUB_OUTPUT"
+          echo "SPONSORS_EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Query sponsors via GraphQL
+        env:
+          GH_TOKEN: ${{ secrets.SPONSORS_PAT }}
+          LOGINS: ${{ steps.profiles.outputs.logins }}
+        run: |
+          all="[]"
+          if [ -z "${GH_TOKEN}" ]; then
+            echo "SPONSORS_PAT secret not set — writing an empty sponsors.json until it's added."
+          else
+            while IFS= read -r login; do
+              [ -z "$login" ] && continue
+              resp=$(gh api graphql -f query='
+                query($login: String!) {
+                  user(login: $login) {
+                    sponsorshipsAsMaintainer(first: 100, includePrivate: false) {
+                      nodes {
+                        sponsorEntity {
+                          ... on User { login avatarUrl url }
+                          ... on Organization { login avatarUrl url }
+                        }
+                      }
+                    }
+                  }
+                }' -f login="$login")
+              entities=$(echo "$resp" | jq '[.data.user.sponsorshipsAsMaintainer.nodes[].sponsorEntity | {login, avatarUrl, profileUrl: .url}]')
+              all=$(jq -n --argjson a "$all" --argjson b "$entities" '$a + $b')
+            done <<< "$LOGINS"
+            all=$(echo "$all" | jq 'unique_by(.login)')
+          fi
+          echo "$all" > /tmp/sponsors.json
+
+      - name: Publish sponsors.json to the data branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin data || true
+          if git show-ref --verify --quiet refs/remotes/origin/data; then
+            git checkout -B data origin/data
+          else
+            git checkout --orphan data
+            git rm -rf . > /dev/null 2>&1 || true
+          fi
+          cp /tmp/sponsors.json sponsors.json
+          git add sponsors.json
+          if git diff --cached --quiet; then
+            echo "sponsors.json unchanged — skipping commit."
+          else
+            git commit -m "chore: update sponsors.json"
+            git push origin data
+          fi
