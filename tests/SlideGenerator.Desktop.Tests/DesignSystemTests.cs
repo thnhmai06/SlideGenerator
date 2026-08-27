@@ -247,11 +247,6 @@ public sealed class DesignSystemTests
         AssertNoUntrackedOffenders(offenders, "radius must be {StaticResource Radius*}, not a literal");
     }
 
-    /// <summary>
-    ///     <c>PlaceholderPageView.axaml</c> is excluded here: the file existing as documented, unreferenced
-    ///     dead code (blueprint §1 / plan's own P7 cleanup note) is fine — this rule is about USING a
-    ///     placeholder as a real page's content, not about the file's existence.
-    /// </summary>
     [Fact]
     public void ViewXaml_ContainsNoPlaceholderMarkers()
     {
@@ -259,7 +254,6 @@ public sealed class DesignSystemTests
         var offenders = new List<(string Key, string Message)>();
         foreach (var file in ViewFiles())
         {
-            if (Path.GetFileName(file) == "PlaceholderPageView.axaml") continue;
             foreach (var (lineNo, line) in Lines(file))
             foreach (var marker in markers)
                 if (line.Contains(marker, StringComparison.Ordinal))

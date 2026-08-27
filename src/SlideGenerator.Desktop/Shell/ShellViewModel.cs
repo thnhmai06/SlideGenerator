@@ -12,6 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using System.Diagnostics;
 using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -116,9 +117,7 @@ public sealed partial class ShellViewModel : ObservableObject
         OnPropertyChanged(nameof(IsAboutActive));
     }
 
-    // Swapped for the real page ViewModel as each feature lands (Runs/Recipes/Settings done; About is the
-    // PlaceholderPageViewModel default branch below until the overhaul's P6 builds its real page) — resolved
-    // via _serviceProvider since each page's dependencies vary and shouldn't be threaded through
+    // Resolved via _serviceProvider since each page's dependencies vary and shouldn't be threaded through
     // ShellViewModel's own constructor.
     private ObservableObject ResolvePage(ShellDestination destination)
     {
@@ -135,7 +134,7 @@ public sealed partial class ShellViewModel : ObservableObject
             case ShellDestination.About:
                 return _serviceProvider.GetRequiredService<AboutViewModel>();
             default:
-                return new PlaceholderPageViewModel(destination.ToString());
+                throw new UnreachableException($"No page ViewModel registered for {destination}.");
         }
     }
 
@@ -145,14 +144,4 @@ public sealed partial class ShellViewModel : ObservableObject
         Navigate(ShellDestination.Runs);
         if (_pages[ShellDestination.Runs] is RunsViewModel runs) _ = runs.SelectRequestAsync(requestId);
     }
-}
-
-/// <summary>
-///     Stand-in page shown for a destination whose real page has not been built yet in the current phase
-///     sequence. Not a permanent feature — removed once every destination has a real page ViewModel.
-/// </summary>
-public sealed partial class PlaceholderPageViewModel(string title) : ObservableObject
-{
-    /// <summary>Gets the destination name shown while its real page is not yet built.</summary>
-    public string Title { get; } = title;
 }

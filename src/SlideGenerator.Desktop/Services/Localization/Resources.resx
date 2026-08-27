@@ -93,9 +93,6 @@
   <data name="shell.activeJobsTitleSuffix" xml:space="preserve">
     <value> — {0} job running</value>
   </data>
-  <data name="shell.placeholder.message" xml:space="preserve">
-    <value>Not built at this stage</value>
-  </data>
   <data name="runs.filter.all" xml:space="preserve">
     <value>All</value>
   </data>

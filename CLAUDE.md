@@ -100,7 +100,7 @@ hosted at `nuget.pkg.github.com/thnhmai06`. `nuget.config` reads credentials fro
 ```
 ├── src/                                — 11 source modules (slnx-tracked)
 │   ├── SlideGenerator.Utilities/        — loose files, no subfolders
-│   ├── SlideGenerator.Settings/         — Config/, Rules/, Database/ (NameAndPaths stays put — see below)
+│   ├── SlideGenerator.Settings/         — Immutable/, Mutable/, Database/ (NameAndPaths stays put — see below)
 │   ├── SlideGenerator.Cloud/            — Resolvers/, root CloudClient.cs
 │   ├── SlideGenerator.Document/         — Workbooks/, Slides/, Template/
 │   ├── SlideGenerator.Logging/          — FileLogging/, root formatters/helpers
@@ -580,17 +580,18 @@ own `SqliteConnectionStringBuilder(NameAndPaths.DataFolder.DataFile.ConnectionSt
 `Registration.cs` (both `SlideGenerator.Recipe/Registration.cs` and
 `SlideGenerator.Generator/Registration.cs` do this — functionally harmless, since both point at the identical connection
 string). Schema creation is **centralized**: `SlideGenerator.Settings.Database.DatabaseMigrator.Migrate`
-(`src/SlideGenerator.Settings/Database/DatabaseMigrator.cs`) runs 3 embedded DbUp scripts
-(`Database/Scripts/0001_CreateRecipes.sql`/`0002_CreateRequests.sql`/`0003_CreateJobs.sql`, one `CREATE TABLE IF NOT
-EXISTS` each, `PRAGMA journal_mode=WAL;` prepended to the first) against the connection string, tracked via DbUp's own
-`SchemaVersions` table. Called once in `SlideGenerator.Stdio/Program.cs`'s `Main`, right after
-`BootstrapSystemLogger` and before `Host.CreateApplicationBuilder` (with `Directory.CreateDirectory(NameAndPaths
-.DataFolder.FolderPath)` first, since `NameAndPaths.InitializeDirectories()` — which also creates it — doesn't run until
-later, inside `StartupAsync`). None of the 3 repositories create their own tables anymore (`DbEnsureCreated`
-has been removed from all of them); DbUp's logging is forwarded to Serilog via a small `IUpgradeLog` adapter
-(`DatabaseMigrator.SerilogUpgradeLog`) since `LogToConsole()` would collide with stdout (owned by StreamJsonRpc) and
-`LogToAutodetectedLog()` doesn't exist in `dbup-core`. Short-lived-connection-per-operation (open/close per call)
-is unchanged for all 3 repositories' CRUD paths.
+(`src/SlideGenerator.Settings/Database/DatabaseMigrator.cs`) runs embedded DbUp scripts from
+`Database/Scripts/*.sql` (currently `001_2.0.0.sql` — one consolidated script creating all 3 tables, `PRAGMA
+journal_mode=WAL;` prepended — plus `002_add-total-rows-to-jobs.sql`, an `ALTER TABLE Jobs ADD COLUMN TotalRows`
+added later; new scripts are picked up automatically via the `.csproj`'s wildcard `EmbeddedResource` glob, no
+manual registration needed) against the connection string, tracked via DbUp's own `SchemaVersions` table. Called
+once in `SlideGenerator.Desktop/Program.cs`'s `Main`, right after `BootstrapSystemLogger` and before
+`Host.CreateApplicationBuilder` (with `Directory.CreateDirectory(NameAndPaths.DataFolder.FolderPath)` first, since
+`NameAndPaths.InitializeDirectories()` — which also creates it — doesn't run until later, inside `StartupAsync`).
+None of the 3 repositories create their own tables anymore (`DbEnsureCreated` has been removed from all of them);
+DbUp's logging is forwarded to Serilog via a small `IUpgradeLog` adapter (`DatabaseMigrator.SerilogUpgradeLog`)
+since `LogToAutodetectedLog()` doesn't exist in `dbup-core`. Short-lived-connection-per-operation (open/close per
+call) is unchanged for all 3 repositories' CRUD paths.
 
 - **`Jobs`** — every `JobSpecification` field gets its own explicit column, with one deliberate, *named* exception:
   `UsedColumnsJson`/`TextInstructionsJson`/`ImageInstructionsJson` are stored as JSON text, since they're
@@ -598,8 +599,10 @@ is unchanged for all 3 repositories' CRUD paths.
   tables serving a query pattern nobody actually uses (a job's spec is read once, whole, when it runs) — mirrors how
   `Recipes` already stores an entire `Recipe` graph under one JSON column. `RowFilter` (a small closed set of 3 shapes:
   `AllRowFilter`/`IndexRangeFilter`/`PartitionBlockFilter`) instead gets `RowFilterType` + 4 nullable scalar columns,
-  since it's small and closed enough not to need JSON. Composite primary key
-  `(RequestId, JobId)`.
+  since it's small and closed enough not to need JSON. `TotalRows` (nullable `int`, added by
+  `002_add-total-rows-to-jobs.sql`) is not part of `JobSpecification` — it's a workload-computed progress field
+  (row count known once the workload starts) mirrored onto `JobSnapshot`/`JobSummary` for the Desktop UI's
+  determinate progress bar. Composite primary key `(RequestId, JobId)`.
 - **`Requests`** — one explicit column per `Request` DTO field (`RecipeId`/`Name`/`OutputType`/`SaveFolder`/
   `AllowLocalPaths`) plus `LogPath` (the one `.log` file shared by every job of the request) and `CreatedAt`.
   `RecipeId` here is purely informational (`Summary.Request.RecipeId` for display/history) — **not** used at resume,
@@ -685,12 +688,12 @@ frontend's recipe editor.
 
 ```xml
 <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.*" />
-<PackageReference Include="xunit.v3" Version="3.*" />
-<PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
+<PackageReference Include="xunit.v3" Version="4.*" />
+<PackageReference Include="xunit.runner.visualstudio" Version="4.*">
     <PrivateAssets>all</PrivateAssets>
     <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 </PackageReference>
-<PackageReference Include="NSubstitute" Version="5.*" />
+<PackageReference Include="NSubstitute" Version="6.*" />
 <PackageReference Include="FluentAssertions" Version="8.*" />
 ```
 
@@ -763,8 +766,8 @@ folder's own name would otherwise collide with a type living inside it (e.g. `Re
 fine for cross-feature helpers that don't belong to any one folder (e.g. `SlideGenerator.Logging/Utilities.cs`, used by
 both `ConsoleLogFormatter` and everything under `FileLogging/`) or for infra so widely shared that moving it into a
 feature folder would be pure namespace churn for no benefit (e.g.
-`SlideGenerator.Settings/Rules/NameAndPaths.cs` stayed at its old `Rules/` location — see **Solution Layout**
-above). Examples of the convention in practice:
+`SlideGenerator.Settings/Immutable/NameAndPaths.cs` stayed at its own top-level location rather than moving into a
+feature folder — see **Solution Layout** above). Examples of the convention in practice:
 
 ```
 SlideGenerator.Document/

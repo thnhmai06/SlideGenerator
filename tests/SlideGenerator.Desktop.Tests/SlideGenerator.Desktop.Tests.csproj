@@ -8,7 +8,12 @@
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Remove="StyleCop.Analyzers"/>
-        <PackageReference Include="Avalonia.Headless.XUnit" Version="12.1.1" />
+        <!-- Avalonia.Headless.XUnit dropped: its [AvaloniaFact] discoverer reflects into a
+             Xunit.v3.TestIntrospectionHelper overload that changed shape in xunit.v3 4.0.0 (this repo's pinned
+             version), throwing MissingMethodException at test-discovery time (12.1.1 confirmed latest on
+             NuGet — no newer release fixes it). ViewConstructionTests.cs drives HeadlessUnitTestSession
+             directly instead (no xunit coupling in that type), so only the plain runtime package is needed. -->
+        <PackageReference Include="Avalonia.Headless" Version="12.1.1" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.9.0" />
         <PackageReference Include="xunit.v3" Version="4.0.0" />
         <PackageReference Include="xunit.runner.visualstudio" Version="4.0.0">

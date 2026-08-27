@@ -93,9 +93,6 @@
   <data name="shell.activeJobsTitleSuffix" xml:space="preserve">
     <value> — {0} job đang chạy</value>
   </data>
-  <data name="shell.placeholder.message" xml:space="preserve">
-    <value>Chưa xây dựng ở giai đoạn này</value>
-  </data>
   <data name="runs.filter.all" xml:space="preserve">
     <value>Tất cả</value>
   </data>
