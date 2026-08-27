@@ -141,6 +141,12 @@
   <data name="runs.logsHeader" xml:space="preserve">
     <value>Nhật ký</value>
   </data>
+  <data name="runs.copyLogs" xml:space="preserve">
+    <value>Sao chép</value>
+  </data>
+  <data name="runs.activitySeparator" xml:space="preserve">
+    <value>: </value>
+  </data>
   <data name="runs.jobSeparator" xml:space="preserve">
     <value> job · </value>
   </data>
@@ -599,5 +605,14 @@
   </data>
   <data name="enums.conflictKind.conflictsWithActiveRequest" xml:space="preserve">
     <value>⚠ trùng với lượt đang chạy</value>
+  </data>
+  <data name="enums.rowStage.downloading" xml:space="preserve">
+    <value>Đang tải</value>
+  </data>
+  <data name="enums.rowStage.croppingImage" xml:space="preserve">
+    <value>Đang cắt ảnh</value>
+  </data>
+  <data name="enums.rowStage.savingOutput" xml:space="preserve">
+    <value>Đang lưu</value>
   </data>
 </root>

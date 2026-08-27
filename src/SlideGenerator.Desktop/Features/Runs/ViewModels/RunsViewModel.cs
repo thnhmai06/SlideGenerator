@@ -21,6 +21,7 @@ using SlideGenerator.Desktop.Services.Dialogs;
 using SlideGenerator.Desktop.Services.Progress;
 using SlideGenerator.Generator;
 using SlideGenerator.Generator.Jobs.Models;
+using SlideGenerator.Generator.Progress;
 
 namespace SlideGenerator.Desktop.Features.Runs.ViewModels;
 
@@ -58,6 +59,7 @@ public sealed partial class RunsViewModel : ObservableObject
         _progressHub = progressHub;
         _dialogService = dialogService;
         _progressHub.Jobs.CollectionChanged += OnJobsChanged;
+        _progressHub.Rows.CollectionChanged += OnRowsChanged;
         _ = LoadAsync();
     }
 
@@ -163,5 +165,16 @@ public sealed partial class RunsViewModel : ObservableObject
 
         // A brand-new request's first job(s) arrived — reload once to pick it up with full Summary fields.
         if (sawUnknownRequest) _ = LoadAsync();
+    }
+
+    // Unlike OnJobsChanged, a row belonging to a request this VM hasn't loaded yet is simply dropped — its
+    // job snapshot arrives via OnJobsChanged in the same batch and triggers the reload that will show it;
+    // there is nothing row-specific to display until then.
+    private void OnRowsChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (e.NewItems is null) return;
+        foreach (RowProgress row in e.NewItems)
+            if (_byRequestId.TryGetValue(row.RequestId, out var request))
+                request.ApplyLiveRowUpdate(row);
     }
 }

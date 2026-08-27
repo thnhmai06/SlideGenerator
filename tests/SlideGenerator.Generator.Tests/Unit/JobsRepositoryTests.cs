@@ -140,4 +140,34 @@ public sealed class JobsRepositoryTests : IDisposable
 
         jobs.Should().BeEmpty();
     }
+
+    /// <summary>Verifies that <see cref="JobSnapshot.TotalRows" /> round-trips through the
+    ///     <c>002_add-total-rows-to-jobs.sql</c> migration's column (plan §3.5's <c>TotalRows</c> contract).</summary>
+    [Fact]
+    public async Task EnqueueWithTotalRows_RoundTripsTotalRows()
+    {
+        var record = new JobSnapshot("req6", 0, JobStatus.Running, JobPhase.CreatingSlides, 2, Spec(),
+            DateTimeOffset.UtcNow, 42);
+        _repo.Enqueue(record);
+        await _repo.FlushAsync(TestContext.Current.CancellationToken);
+
+        var jobs = await _repo.GetByRequestIdAsync("req6", TestContext.Current.CancellationToken);
+
+        jobs[0].TotalRows.Should().Be(42);
+    }
+
+    /// <summary>Verifies that a snapshot with no <see cref="JobSnapshot.TotalRows" /> (the default) persists
+    ///     and reads back as <see langword="null" /> rather than 0 or throwing.</summary>
+    [Fact]
+    public async Task EnqueueWithoutTotalRows_RoundTripsNull()
+    {
+        var record = new JobSnapshot("req7", 0, JobStatus.Pending, JobPhase.CreatingOutput, 0, Spec(),
+            DateTimeOffset.UtcNow);
+        _repo.Enqueue(record);
+        await _repo.FlushAsync(TestContext.Current.CancellationToken);
+
+        var jobs = await _repo.GetByRequestIdAsync("req7", TestContext.Current.CancellationToken);
+
+        jobs[0].TotalRows.Should().BeNull();
+    }
 }

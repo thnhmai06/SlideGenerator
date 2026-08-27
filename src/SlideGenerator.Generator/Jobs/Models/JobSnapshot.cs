@@ -31,6 +31,12 @@ namespace SlideGenerator.Generator.Jobs.Models;
 /// </param>
 /// <param name="Specification">Everything needed to run or resume this job, fully resolved.</param>
 /// <param name="Timestamp">UTC timestamp of the last state change.</param>
+/// <param name="TotalRows">
+///     The worksheet's row count (after <see cref="RowFilter" /> is applied), known from the moment the
+///     workload starts running — <see langword="null" /> only for a snapshot minted before this field
+///     existed (a crash-resumed job from an older build) or by a caller that never sets it. Determinate
+///     progress (Runs' <c>ProgressBar</c>) falls back to indeterminate when this is <see langword="null" />.
+/// </param>
 public sealed record JobSnapshot(
     string RequestId,
     int JobId,
@@ -38,7 +44,8 @@ public sealed record JobSnapshot(
     JobPhase Phase,
     int CurrentIndex,
     JobSpecification Specification,
-    DateTimeOffset Timestamp)
+    DateTimeOffset Timestamp,
+    int? TotalRows = null)
 {
     /// <summary>Gets the output file path this job writes to — a convenience shortcut onto <see cref="Specification" />.</summary>
     public string OutputPath => Specification.OutputPath;

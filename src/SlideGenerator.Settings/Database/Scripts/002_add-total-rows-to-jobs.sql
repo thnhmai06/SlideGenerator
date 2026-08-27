@@ -1,0 +1,2 @@
+ALTER TABLE Jobs
+    ADD COLUMN TotalRows INTEGER NULL;

@@ -57,8 +57,10 @@ public interface IJobsRepository
 ///     the only table in the shared database that changes on every row/phase transition. Every field of
 ///     <see cref="JobSpecification" /> gets an explicit column; only the free-form nested lists
 ///     (<c>UsedColumns</c>/<c>TextInstructions</c>/<c>ImageInstructions</c>) are stored as named JSON
-///     columns — see <c>0003_CreateJobs.sql</c> (<see cref="SlideGenerator.Settings.Database.DatabaseMigrator" />) for the
-///     schema.
+///     columns — see <c>001_2.0.0.sql</c> (<see cref="SlideGenerator.Settings.Database.DatabaseMigrator" />) for the
+///     original schema, and <c>002_add-total-rows-to-jobs.sql</c> for the <c>TotalRows</c> column added later
+///     (an existing <c>Data.db</c> only gets a new column via a follow-up migration — <c>CREATE TABLE IF NOT
+///     EXISTS</c> alone would silently no-op on a database that already has the table).
 /// </summary>
 internal sealed class JobsRepository(SqliteConnectionStringBuilder builder, ILogger<JobsRepository> logger)
     : BufferedRepository<(string RequestId, int JobId), JobSnapshot>(logger), IJobsRepository
@@ -126,17 +128,17 @@ internal sealed class JobsRepository(SqliteConnectionStringBuilder builder, ILog
                 WorkbookPath, WorksheetName, UsedColumnsJson,
                 RowFilterType, RowFilterStart, RowFilterEnd, RowFilterPartitionIndex, RowFilterPartitionCount,
                 TemplatePresentationPath, TemplateSlideIndex, TextInstructionsJson, ImageInstructionsJson,
-                OutputPath, Timestamp
+                OutputPath, Timestamp, TotalRows
             ) VALUES (
                 @RequestId, @JobId, @Status, @Phase, @CurrentIndex,
                 @WorkbookPath, @WorksheetName, @UsedColumnsJson,
                 @RowFilterType, @RowFilterStart, @RowFilterEnd, @RowFilterPartitionIndex, @RowFilterPartitionCount,
                 @TemplatePresentationPath, @TemplateSlideIndex, @TextInstructionsJson, @ImageInstructionsJson,
-                @OutputPath, @Timestamp
+                @OutputPath, @Timestamp, @TotalRows
             )
             ON CONFLICT(RequestId, JobId) DO UPDATE SET
                 Status = excluded.Status, Phase = excluded.Phase, CurrentIndex = excluded.CurrentIndex,
-                OutputPath = excluded.OutputPath, Timestamp = excluded.Timestamp
+                OutputPath = excluded.OutputPath, Timestamp = excluded.Timestamp, TotalRows = excluded.TotalRows
             """,
             batch.Select(ToRow), tx, cancellationToken: ct)).ConfigureAwait(false);
         await tx.CommitAsync(ct).ConfigureAwait(false);
@@ -174,7 +176,8 @@ internal sealed class JobsRepository(SqliteConnectionStringBuilder builder, ILog
         string TextInstructionsJson,
         string ImageInstructionsJson,
         string OutputPath,
-        string Timestamp);
+        string Timestamp,
+        long? TotalRows);
 
     private static object ToRow(JobSnapshot r)
     {
@@ -213,7 +216,8 @@ internal sealed class JobsRepository(SqliteConnectionStringBuilder builder, ILog
             TextInstructionsJson = JsonSerializer.Serialize(spec.TextInstructions, JobSpecificationJson.Options),
             ImageInstructionsJson = JsonSerializer.Serialize(spec.ImageInstructions, JobSpecificationJson.Options),
             spec.OutputPath,
-            Timestamp = DbFormatUtc(r.Timestamp)
+            Timestamp = DbFormatUtc(r.Timestamp),
+            r.TotalRows
         };
     }
 
@@ -250,7 +254,8 @@ internal sealed class JobsRepository(SqliteConnectionStringBuilder builder, ILog
             Enum.Parse<JobPhase>(row.Phase),
             (int)row.CurrentIndex,
             spec,
-            DbParseUtc(row.Timestamp));
+            DbParseUtc(row.Timestamp),
+            (int?)row.TotalRows);
     }
 
     private static string DbFormatUtc(DateTimeOffset value)

@@ -141,6 +141,12 @@
   <data name="runs.logsHeader" xml:space="preserve">
     <value>Log</value>
   </data>
+  <data name="runs.copyLogs" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="runs.activitySeparator" xml:space="preserve">
+    <value>: </value>
+  </data>
   <data name="runs.jobSeparator" xml:space="preserve">
     <value> job · </value>
   </data>
@@ -599,5 +605,14 @@
   </data>
   <data name="enums.conflictKind.conflictsWithActiveRequest" xml:space="preserve">
     <value>⚠ conflicts with an active run</value>
+  </data>
+  <data name="enums.rowStage.downloading" xml:space="preserve">
+    <value>Downloading</value>
+  </data>
+  <data name="enums.rowStage.croppingImage" xml:space="preserve">
+    <value>Cropping image</value>
+  </data>
+  <data name="enums.rowStage.savingOutput" xml:space="preserve">
+    <value>Saving output</value>
   </data>
 </root>

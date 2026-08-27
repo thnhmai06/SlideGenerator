@@ -100,7 +100,7 @@ internal sealed class SlideGenerationWorkload(
             if (phase == JobPhase.CreatingOutput)
             {
                 (phase, currentIndex) = (JobPhase.CreatingSlides, output.SlidesCount);
-                await AdvancePhaseAsync(context, requestId, jobId, spec, phase, currentIndex, ct).ConfigureAwait(false);
+                await AdvancePhaseAsync(context, requestId, jobId, spec, phase, currentIndex, dataRows.Count, ct).ConfigureAwait(false);
             }
 
             if (phase == JobPhase.CreatingSlides)
@@ -108,7 +108,7 @@ internal sealed class SlideGenerationWorkload(
                 await RunCreatingSlidesAsync(requestId, jobId, spec, output, templateSlide, context, dataRows, ct)
                     .ConfigureAwait(false);
                 (phase, currentIndex) = (JobPhase.FillingText, 0);
-                await AdvancePhaseAsync(context, requestId, jobId, spec, phase, currentIndex, ct).ConfigureAwait(false);
+                await AdvancePhaseAsync(context, requestId, jobId, spec, phase, currentIndex, dataRows.Count, ct).ConfigureAwait(false);
             }
 
             if (phase == JobPhase.FillingText)
@@ -116,7 +116,7 @@ internal sealed class SlideGenerationWorkload(
                 await RunFillingTextAsync(requestId, jobId, spec, worksheet, headerToIndex, output, currentIndex,
                     dataRows, context, ct).ConfigureAwait(false);
                 (phase, currentIndex) = (JobPhase.FillingImages, 0);
-                await AdvancePhaseAsync(context, requestId, jobId, spec, phase, currentIndex, ct).ConfigureAwait(false);
+                await AdvancePhaseAsync(context, requestId, jobId, spec, phase, currentIndex, dataRows.Count, ct).ConfigureAwait(false);
             }
 
             if (phase == JobPhase.FillingImages)
@@ -130,7 +130,7 @@ internal sealed class SlideGenerationWorkload(
 
             jobLogger.LogInformation("Job complete: {OutputPath}", spec.OutputPath);
             return new JobSnapshot(requestId, jobId, JobStatus.Complete, JobPhase.Done, dataRows.Count, spec,
-                DateTimeOffset.UtcNow);
+                DateTimeOffset.UtcNow, dataRows.Count);
         }
         finally
         {
@@ -140,10 +140,10 @@ internal sealed class SlideGenerationWorkload(
 
     private static async Task AdvancePhaseAsync(
         IJobContext<JobSnapshot> context, string requestId, int jobId, JobSpecification spec, JobPhase phase,
-        int currentIndex, CancellationToken ct)
+        int currentIndex, int totalRows, CancellationToken ct)
     {
         var record = new JobSnapshot(requestId, jobId, JobStatus.Running, phase, currentIndex, spec,
-            DateTimeOffset.UtcNow);
+            DateTimeOffset.UtcNow, totalRows);
         await context.ReportAsync(record, true, ct).ConfigureAwait(false);
     }
 
@@ -163,7 +163,7 @@ internal sealed class SlideGenerationWorkload(
 
             await context.ReportAsync(
                 new JobSnapshot(requestId, jobId, JobStatus.Running, JobPhase.CreatingSlides, i + 1, spec,
-                    DateTimeOffset.UtcNow),
+                    DateTimeOffset.UtcNow, dataRows.Count),
                 false, ct).ConfigureAwait(false);
         }
     }
@@ -239,7 +239,7 @@ internal sealed class SlideGenerationWorkload(
             ReportRow(requestId, jobId, dataRow + 1, RowStatus.Done);
             await context.ReportAsync(
                 new JobSnapshot(requestId, jobId, JobStatus.Running, JobPhase.FillingText, i + 1, spec,
-                    DateTimeOffset.UtcNow),
+                    DateTimeOffset.UtcNow, dataRows.Count),
                 false, ct).ConfigureAwait(false);
         }
     }
@@ -359,7 +359,7 @@ internal sealed class SlideGenerationWorkload(
 
             await context.ReportAsync(
                 new JobSnapshot(requestId, jobId, JobStatus.Running, JobPhase.FillingImages, i + 1, spec,
-                    DateTimeOffset.UtcNow),
+                    DateTimeOffset.UtcNow, dataRows.Count),
                 false, ct).ConfigureAwait(false);
         }
     }

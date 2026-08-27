@@ -70,6 +70,10 @@ public sealed record JobSummary
     /// <summary>Gets how many rows have completed within <see cref="Phase" /> — the resume point.</summary>
     public required int CurrentIndex { get; init; }
 
+    /// <summary>Gets the worksheet's row count, known once the job starts running — <see langword="null" />
+    ///     for a job whose progress predates this field. Drives Runs' determinate progress bar.</summary>
+    public int? TotalRows { get; init; }
+
     /// <summary>Gets the output file path this job writes to.</summary>
     public required string OutputPath { get; init; }
 

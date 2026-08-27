@@ -76,6 +76,12 @@ public sealed partial class RequestRunViewModel : ObservableObject
         if (Status is JobStatus.Complete or JobStatus.Cancelled) CompletedAt ??= snapshot.Timestamp;
     }
 
+    /// <summary>Patches this row's job at <paramref name="row" />'s <c>JobId</c> with a live row-activity update.</summary>
+    public void ApplyLiveRowUpdate(RowProgress row)
+    {
+        Jobs.FirstOrDefault(j => j.JobId == row.JobId)?.ApplyLiveRowUpdate(row);
+    }
+
     private JobStatus DeriveDisplayStatus()
     {
         if (Jobs.Count == 0) return JobStatus.Complete;

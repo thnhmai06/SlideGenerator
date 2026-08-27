@@ -6,6 +6,7 @@
              xmlns:loc="clr-namespace:SlideGenerator.Desktop.Services.Localization"
              xmlns:jobs="clr-namespace:SlideGenerator.Generator.Jobs.Models;assembly=SlideGenerator.Generator"
              xmlns:gen="clr-namespace:SlideGenerator.Generator;assembly=SlideGenerator.Generator"
+             xmlns:prog="clr-namespace:SlideGenerator.Generator.Progress;assembly=SlideGenerator.Generator"
              x:Class="SlideGenerator.Desktop.Features.Runs.Views.RunsView"
              x:DataType="vm:RunsViewModel">
     <Grid RowDefinitions="Auto,*" Background="{DynamicResource SurfaceBackgroundBrush}">
@@ -88,7 +89,8 @@
                                 <Border Classes="hairline-row">
                                     <Grid ColumnDefinitions="80,*,Auto" ColumnSpacing="{StaticResource Space3}">
                                         <ProgressBar Grid.Column="0" Height="4" VerticalAlignment="Center"
-                                                     IsIndeterminate="{Binding JobStatus, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static jobs:JobStatus.Running}}"/>
+                                                     IsIndeterminate="{Binding TotalRows, Converter={x:Static ObjectConverters.IsNull}}"
+                                                     Minimum="0" Maximum="{Binding TotalRows}" Value="{Binding CurrentIndex}"/>
                                         <StackPanel Grid.Column="1">
                                             <TextBlock Classes="body">
                                                 <Run>
@@ -103,6 +105,21 @@
                                                 <Run Text="{Binding CurrentIndex}"/>
                                             </TextBlock>
                                             <TextBlock Classes="mono muted" Text="{Binding OutputPath}"/>
+                                            <!-- Live activity line (plan §5.4) — hidden while no image-editing sub-stage is
+                                                 in progress (RowStage.None, e.g. during text-filling or between rows) -->
+                                            <TextBlock Classes="mono muted" FontSize="{StaticResource FontSizeXs}"
+                                                       IsVisible="{Binding CurrentActivityStage, Converter={x:Static conv:EnumNotEqualsConverter.Instance}, ConverterParameter={x:Static prog:RowStage.None}}">
+                                                <Run>
+                                                    <Run.Text>
+                                                        <MultiBinding Converter="{x:Static conv:EnumLocalizedTextConverter.Instance}" ConverterParameter="rowStage">
+                                                            <Binding Path="CurrentActivityStage"/>
+                                                            <Binding Path="Revision" Source="{x:Static loc:LocalizationService.Instance}"/>
+                                                        </MultiBinding>
+                                                    </Run.Text>
+                                                </Run>
+                                                <Run Text="{loc:Tr runs.activitySeparator}"/>
+                                                <Run Text="{Binding CurrentActivityNote}"/>
+                                            </TextBlock>
                                         </StackPanel>
                                         <TextBlock Grid.Column="2" Classes="muted" VerticalAlignment="Center">
                                             <TextBlock.Text>
@@ -120,12 +137,19 @@
                 </ScrollViewer>
 
                 <Border Grid.Row="2" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
-                        MaxHeight="200">
-                    <ScrollViewer>
-                        <ItemsControl ItemsSource="{Binding SelectedRequest.Logs}" Margin="{StaticResource PaddingPanel}">
+                        MaxHeight="240">
+                <Grid RowDefinitions="Auto,*">
+                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="{StaticResource PaddingPanel}">
+                        <TextBlock Grid.Column="0" Classes="label" Text="{loc:Tr runs.logsHeader}"/>
+                        <Button Grid.Column="1" Classes="Tertiary" Content="{loc:Tr runs.copyLogs}" Click="OnCopyLogsClick"/>
+                    </Grid>
+                    <ScrollViewer Grid.Row="1" x:Name="LogScroll">
+                        <ItemsControl x:Name="LogItems" ItemsSource="{Binding SelectedRequest.Logs}"
+                                      Margin="{StaticResource PaddingPanel}" LayoutUpdated="OnLogItemsLayoutUpdated">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="gen:LogEntry">
-                                    <TextBlock Classes="mono" FontSize="{StaticResource FontSizeXs}">
+                                    <TextBlock Classes="mono" FontSize="{StaticResource FontSizeXs}"
+                                               Foreground="{Binding Level, Converter={x:Static conv:LogLevelBrushConverter.Instance}}">
                                         <Run Text="{Binding Timestamp}"/>
                                         <Run Text=" "/>
                                         <Run Text="{Binding Level}"/>
@@ -136,6 +160,7 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                     </ScrollViewer>
+                </Grid>
                 </Border>
             </Grid>
 

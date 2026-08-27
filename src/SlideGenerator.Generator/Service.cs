@@ -487,6 +487,7 @@ internal sealed class Service(
             JobStatus = job.JobStatus,
             Phase = job.Phase,
             CurrentIndex = job.CurrentIndex,
+            TotalRows = job.TotalRows,
             OutputPath = job.OutputPath,
             CompletedAt = job.JobStatus is JobStatus.Complete or JobStatus.Cancelled or JobStatus.Error
                 ? job.Timestamp
