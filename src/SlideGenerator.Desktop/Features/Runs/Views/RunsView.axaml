@@ -12,18 +12,18 @@
         <!-- Header: filter chips + search -->
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="{StaticResource PaddingPage}">
             <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="{StaticResource Space2}">
-                <ToggleButton Classes="chip" Content="{loc:Tr RunsFilterAll}"
+                <ToggleButton Classes="chip" Content="{loc:Tr runs.filter.all}"
                               IsChecked="{Binding Filter, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:RunStatusFilter.All}}"/>
-                <ToggleButton Classes="chip" Content="{loc:Tr RunsFilterRunning}"
+                <ToggleButton Classes="chip" Content="{loc:Tr runs.filter.running}"
                               IsChecked="{Binding Filter, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:RunStatusFilter.Running}}"/>
-                <ToggleButton Classes="chip" Content="{loc:Tr RunsFilterPaused}"
+                <ToggleButton Classes="chip" Content="{loc:Tr runs.filter.paused}"
                               IsChecked="{Binding Filter, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:RunStatusFilter.Paused}}"/>
-                <ToggleButton Classes="chip" Content="{loc:Tr RunsFilterDone}"
+                <ToggleButton Classes="chip" Content="{loc:Tr runs.filter.done}"
                               IsChecked="{Binding Filter, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:RunStatusFilter.Done}}"/>
-                <ToggleButton Classes="chip" Content="{loc:Tr RunsFilterCancelled}"
+                <ToggleButton Classes="chip" Content="{loc:Tr runs.filter.cancelled}"
                               IsChecked="{Binding Filter, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:RunStatusFilter.Cancelled}}"/>
             </StackPanel>
-            <TextBox Grid.Column="1" Width="200" PlaceholderText="{loc:Tr RunsSearchPlaceholder}" Text="{Binding SearchText}"/>
+            <TextBox Grid.Column="1" Width="200" PlaceholderText="{loc:Tr runs.searchPlaceholder}" Text="{Binding SearchText}"/>
         </Grid>
 
         <!-- Body -->
@@ -34,8 +34,8 @@
                     <!-- Empty state -->
                     <StackPanel IsVisible="{Binding !HasResults}" HorizontalAlignment="Center" VerticalAlignment="Center"
                                 Spacing="{StaticResource Space2}" Margin="24">
-                        <TextBlock Classes="h2" Text="{loc:Tr RunsEmptyTitle}" HorizontalAlignment="Center"/>
-                        <TextBlock Classes="muted body" Text="{loc:Tr RunsEmptyBody}" HorizontalAlignment="Center"
+                        <TextBlock Classes="h2" Text="{loc:Tr runs.empty.title}" HorizontalAlignment="Center"/>
+                        <TextBlock Classes="muted body" Text="{loc:Tr runs.empty.body}" HorizontalAlignment="Center"
                                    TextWrapping="Wrap" TextAlignment="Center"/>
                     </StackPanel>
 
@@ -50,8 +50,15 @@
                                         <TextBlock Classes="body" Text="{Binding Name}" FontWeight="SemiBold"/>
                                         <TextBlock Classes="muted" FontSize="{StaticResource FontSizeSm}">
                                             <Run Text="{Binding Jobs.Count}"/>
-                                            <Run Text=" job · "/>
-                                            <Run Text="{Binding Status}"/>
+                                            <Run Text="{loc:Tr runs.jobSeparator}"/>
+                                            <Run>
+                                                <Run.Text>
+                                                    <MultiBinding Converter="{x:Static conv:EnumLocalizedTextConverter.Instance}" ConverterParameter="jobStatus">
+                                                        <Binding Path="Status"/>
+                                                        <Binding Path="Revision" Source="{x:Static loc:LocalizationService.Instance}"/>
+                                                    </MultiBinding>
+                                                </Run.Text>
+                                            </Run>
                                         </TextBlock>
                                     </StackPanel>
                                 </Border>
@@ -66,11 +73,11 @@
                 <StackPanel Grid.Row="0" Margin="{StaticResource PaddingPanel}" Spacing="{StaticResource Space2}">
                     <TextBlock Classes="h2" Text="{Binding SelectedRequest.Name}"/>
                     <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space2}">
-                        <Button Content="{loc:Tr RunsPause}" Command="{Binding SelectedRequest.PauseCommand}"/>
-                        <Button Content="{loc:Tr RunsResume}" Command="{Binding SelectedRequest.ResumeCommand}"/>
-                        <Button Content="{loc:Tr RunsStop}" Command="{Binding SelectedRequest.StopCommand}"/>
-                        <Button Content="{loc:Tr RunsOpenFolder}" Command="{Binding SelectedRequest.OpenFolderCommand}"/>
-                        <Button Content="{loc:Tr RunsDelete}" Command="{Binding SelectedRequest.DeleteCommand}"/>
+                        <Button Content="{loc:Tr runs.pause}" Command="{Binding SelectedRequest.PauseCommand}"/>
+                        <Button Content="{loc:Tr runs.resume}" Command="{Binding SelectedRequest.ResumeCommand}"/>
+                        <Button Content="{loc:Tr runs.stop}" Command="{Binding SelectedRequest.StopCommand}"/>
+                        <Button Content="{loc:Tr runs.openFolder}" Command="{Binding SelectedRequest.OpenFolderCommand}"/>
+                        <Button Content="{loc:Tr runs.delete}" Command="{Binding SelectedRequest.DeleteCommand}"/>
                     </StackPanel>
                 </StackPanel>
 
@@ -84,13 +91,27 @@
                                                      IsIndeterminate="{Binding JobStatus, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static jobs:JobStatus.Running}}"/>
                                         <StackPanel Grid.Column="1">
                                             <TextBlock Classes="body">
-                                                <Run Text="{Binding Phase}"/>
-                                                <Run Text=" · dòng "/>
+                                                <Run>
+                                                    <Run.Text>
+                                                        <MultiBinding Converter="{x:Static conv:EnumLocalizedTextConverter.Instance}" ConverterParameter="jobPhase">
+                                                            <Binding Path="Phase"/>
+                                                            <Binding Path="Revision" Source="{x:Static loc:LocalizationService.Instance}"/>
+                                                        </MultiBinding>
+                                                    </Run.Text>
+                                                </Run>
+                                                <Run Text="{loc:Tr runs.rowSeparator}"/>
                                                 <Run Text="{Binding CurrentIndex}"/>
                                             </TextBlock>
                                             <TextBlock Classes="mono muted" Text="{Binding OutputPath}"/>
                                         </StackPanel>
-                                        <TextBlock Grid.Column="2" Classes="muted" Text="{Binding JobStatus}" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="2" Classes="muted" VerticalAlignment="Center">
+                                            <TextBlock.Text>
+                                                <MultiBinding Converter="{x:Static conv:EnumLocalizedTextConverter.Instance}" ConverterParameter="jobStatus">
+                                                    <Binding Path="JobStatus"/>
+                                                    <Binding Path="Revision" Source="{x:Static loc:LocalizationService.Instance}"/>
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
                                     </Grid>
                                 </Border>
                             </DataTemplate>
@@ -118,7 +139,7 @@
                 </Border>
             </Grid>
 
-            <TextBlock Grid.Column="1" Classes="muted body" Text="{loc:Tr RunsNoSelectionHint}"
+            <TextBlock Grid.Column="1" Classes="muted body" Text="{loc:Tr runs.noSelectionHint}"
                        HorizontalAlignment="Center" VerticalAlignment="Center"
                        IsVisible="{Binding SelectedRequest, Converter={x:Static ObjectConverters.IsNull}}"/>
         </Grid>

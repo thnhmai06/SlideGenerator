@@ -24,7 +24,7 @@
             <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="{StaticResource Space2}"
                         Margin="16,0,0,0" VerticalAlignment="Center">
                 <Image Source="avares://SlideGenerator.Desktop/Assets/Brand/app-icon.png" Width="20" Height="20"/>
-                <TextBlock Classes="h2" Text="SlideGenerator" VerticalAlignment="Center"/>
+                <TextBlock Classes="h2" Text="{loc:Tr app.title}" VerticalAlignment="Center"/>
             </StackPanel>
 
             <Border Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -32,12 +32,12 @@
                     Padding="4">
                 <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space1}">
                     <Button Classes="nav-item" Classes.active="{Binding IsRecipesActive}"
-                            Content="{loc:Tr NavRecipes}"
+                            Content="{loc:Tr nav.recipes}"
                             Command="{Binding NavigateCommand}"
                             CommandParameter="{x:Static shell:ShellDestination.Recipes}"
                             chrome:WindowDecorationProperties.ElementRole="User"/>
                     <Button Classes="nav-item" Classes.active="{Binding IsRunsActive}"
-                            Content="{loc:Tr NavRuns}"
+                            Content="{loc:Tr nav.runs}"
                             Command="{Binding NavigateCommand}"
                             CommandParameter="{x:Static shell:ShellDestination.Runs}"
                             chrome:WindowDecorationProperties.ElementRole="User"/>
@@ -48,30 +48,30 @@
                         Margin="0,0,8,0" VerticalAlignment="Center">
                 <Button Classes="Tertiary" Width="36" Height="36" Padding="0"
                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                        Content="&#9680;" ToolTip.Tip="{loc:Tr ShellThemeToggleTooltip}"
+                        Content="&#9680;" ToolTip.Tip="{loc:Tr shell.themeToggleTooltip}"
                         Click="OnThemeToggleClick"
                         chrome:WindowDecorationProperties.ElementRole="User"/>
                 <Button Classes="Tertiary" Width="36" Height="36" Padding="0"
                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                        Content="&#8505;" ToolTip.Tip="{loc:Tr NavAbout}"
+                        Content="&#8505;" ToolTip.Tip="{loc:Tr nav.about}"
                         Command="{Binding NavigateCommand}" CommandParameter="{x:Static shell:ShellDestination.About}"
                         chrome:WindowDecorationProperties.ElementRole="User"/>
                 <Button Classes="Tertiary" Width="36" Height="36" Padding="0"
                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                        Content="&#9881;" ToolTip.Tip="{loc:Tr NavSettings}"
+                        Content="&#9881;" ToolTip.Tip="{loc:Tr nav.settings}"
                         Command="{Binding NavigateCommand}" CommandParameter="{x:Static shell:ShellDestination.Settings}"
                         chrome:WindowDecorationProperties.ElementRole="User"/>
 
                 <Button Width="46" Height="48" CornerRadius="0" Content="&#8212;"
-                        ToolTip.Tip="{loc:Tr ShellMinimizeTooltip}"
+                        ToolTip.Tip="{loc:Tr shell.minimizeTooltip}"
                         chrome:WindowDecorationProperties.ElementRole="MinimizeButton"
                         Click="OnMinimizeClick"/>
                 <Button Width="46" Height="48" CornerRadius="0" Content="&#9744;"
-                        ToolTip.Tip="{loc:Tr ShellMaximizeTooltip}"
+                        ToolTip.Tip="{loc:Tr shell.maximizeTooltip}"
                         chrome:WindowDecorationProperties.ElementRole="MaximizeButton"
                         Click="OnMaximizeClick"/>
                 <Button Width="46" Height="48" CornerRadius="0" Content="&#10005;"
-                        ToolTip.Tip="{loc:Tr ShellCloseTooltip}"
+                        ToolTip.Tip="{loc:Tr shell.closeTooltip}"
                         chrome:WindowDecorationProperties.ElementRole="CloseButton"
                         Click="OnCloseClick"/>
             </StackPanel>

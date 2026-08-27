@@ -181,10 +181,10 @@ public sealed partial class SettingsViewModel : ObservableObject
             var result = await UpdateChecker.CheckForUpdatesAsync().ConfigureAwait(true);
             UpdateStatusMessage = result switch
             {
-                UpdateCheckResult.NotInstalled => "Không áp dụng. Ứng dụng không chạy dưới dạng bản cài đặt.",
-                UpdateCheckResult.UpToDate => "Đã là bản mới nhất.",
-                UpdateCheckResult.UpdateDownloaded => "Đã tải bản cập nhật. Khởi động lại để áp dụng.",
-                UpdateCheckResult.Failed => "Kiểm tra cập nhật thất bại. Thử lại sau.",
+                UpdateCheckResult.NotInstalled => LocalizationService.Instance["settings.about.updateStatus.notInstalled"],
+                UpdateCheckResult.UpToDate => LocalizationService.Instance["settings.about.updateStatus.upToDate"],
+                UpdateCheckResult.UpdateDownloaded => LocalizationService.Instance["settings.about.updateStatus.downloaded"],
+                UpdateCheckResult.Failed => LocalizationService.Instance["settings.about.updateStatus.failed"],
                 _ => null
             };
         }

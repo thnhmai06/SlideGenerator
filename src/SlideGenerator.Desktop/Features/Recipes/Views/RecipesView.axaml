@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:SlideGenerator.Desktop.Features.Recipes.ViewModels"
              xmlns:loc="clr-namespace:SlideGenerator.Desktop.Services.Localization"
+             xmlns:conv="clr-namespace:SlideGenerator.Desktop.Converters"
              xmlns:editor="clr-namespace:SlideGenerator.Desktop.Features.RecipeEditor.Views"
              x:Class="SlideGenerator.Desktop.Features.Recipes.Views.RecipesView"
              x:DataType="vm:RecipesViewModel">
@@ -13,9 +14,9 @@
         <!-- Header: search + New/Import -->
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" Margin="{StaticResource PaddingPage}">
             <TextBox x:Name="SearchBox" Grid.Column="0" Width="240" HorizontalAlignment="Left"
-                      PlaceholderText="{loc:Tr RecipesSearchPlaceholder}" Text="{Binding SearchText}"/>
-            <Button Grid.Column="1" Classes="Tertiary" Content="{loc:Tr RecipesImport}" Command="{Binding ImportCommand}" Margin="8,0,0,0"/>
-            <Button Grid.Column="2" Classes="Primary" Content="{loc:Tr RecipesNew}" Command="{Binding NewCommand}" Margin="8,0,0,0"/>
+                      PlaceholderText="{loc:Tr recipes.searchPlaceholder}" Text="{Binding SearchText}"/>
+            <Button Grid.Column="1" Classes="Tertiary" Content="{loc:Tr recipes.import}" Command="{Binding ImportCommand}" Margin="8,0,0,0"/>
+            <Button Grid.Column="2" Classes="Primary" Content="{loc:Tr recipes.new}" Command="{Binding NewCommand}" Margin="8,0,0,0"/>
         </Grid>
 
         <!-- Body -->
@@ -26,8 +27,8 @@
                     <!-- Empty state -->
                     <StackPanel IsVisible="{Binding !HasResults}" HorizontalAlignment="Center" VerticalAlignment="Center"
                                 Spacing="{StaticResource Space2}" Margin="24">
-                        <TextBlock Classes="h2" Text="{loc:Tr RecipesEmptyTitle}" HorizontalAlignment="Center"/>
-                        <TextBlock Classes="muted body" Text="{loc:Tr RecipesEmptyBody}" HorizontalAlignment="Center"
+                        <TextBlock Classes="h2" Text="{loc:Tr recipes.empty.title}" HorizontalAlignment="Center"/>
+                        <TextBlock Classes="muted body" Text="{loc:Tr recipes.empty.body}" HorizontalAlignment="Center"
                                    TextWrapping="Wrap" TextAlignment="Center"/>
                     </StackPanel>
 
@@ -40,22 +41,22 @@
                                 <Border Classes="hairline-row">
                                     <Border.ContextMenu>
                                         <ContextMenu>
-                                            <MenuItem Header="{loc:Tr RecipesEdit}" Command="{Binding EditCommand}"/>
-                                            <MenuItem Header="{loc:Tr RecipesDuplicate}" Command="{Binding DuplicateCommand}"/>
-                                            <MenuItem Header="{loc:Tr RecipesExport}" Command="{Binding ExportCommand}"/>
+                                            <MenuItem Header="{loc:Tr recipes.edit}" Command="{Binding EditCommand}"/>
+                                            <MenuItem Header="{loc:Tr recipes.duplicate}" Command="{Binding DuplicateCommand}"/>
+                                            <MenuItem Header="{loc:Tr recipes.export}" Command="{Binding ExportCommand}"/>
                                             <Separator/>
-                                            <MenuItem Header="{loc:Tr RecipesDelete}" Command="{Binding DeleteCommand}"/>
+                                            <MenuItem Header="{loc:Tr recipes.delete}" Command="{Binding DeleteCommand}"/>
                                         </ContextMenu>
                                     </Border.ContextMenu>
                                     <Grid ColumnDefinitions="*,Auto">
                                         <StackPanel Grid.Column="0" Spacing="{StaticResource Space1}">
                                             <TextBlock Classes="body" Text="{Binding Name}" FontWeight="SemiBold"/>
                                             <TextBlock Classes="muted" FontSize="{StaticResource FontSizeSm}">
-                                                <Run Text="sửa lần cuối "/>
+                                                <Run Text="{loc:Tr recipes.updatedPrefix}"/>
                                                 <Run Text="{Binding UpdatedTimestamp}"/>
                                             </TextBlock>
                                         </StackPanel>
-                                        <Button Grid.Column="1" Content="{loc:Tr RecipesRun}" Command="{Binding RunCommand}"
+                                        <Button Grid.Column="1" Content="{loc:Tr recipes.run}" Command="{Binding RunCommand}"
                                                 VerticalAlignment="Center"/>
                                     </Grid>
                                 </Border>
@@ -67,7 +68,7 @@
 
             <!-- Detail / editor -->
             <Grid Grid.Column="1">
-                <TextBlock Classes="muted body" Text="{loc:Tr RecipesNoSelectionHint}"
+                <TextBlock Classes="muted body" Text="{loc:Tr recipes.noSelectionHint}"
                            HorizontalAlignment="Center" VerticalAlignment="Center"
                            IsVisible="{Binding SelectedRecipe, Converter={x:Static ObjectConverters.IsNull}}"/>
 
@@ -75,23 +76,30 @@
                     <StackPanel Margin="{StaticResource PaddingPanel}" Spacing="{StaticResource Space3}">
                         <TextBlock Classes="h2" Text="{Binding SelectedRecipe.Name}"/>
                         <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space2}">
-                            <Button Content="{loc:Tr RecipesRun}" Command="{Binding SelectedRecipe.RunCommand}"/>
-                            <Button Content="{loc:Tr RecipesEdit}" Command="{Binding SelectedRecipe.EditCommand}"/>
-                            <Button Content="{loc:Tr RecipesDuplicate}" Command="{Binding SelectedRecipe.DuplicateCommand}"/>
-                            <Button Content="{loc:Tr RecipesExport}" Command="{Binding SelectedRecipe.ExportCommand}"/>
-                            <Button Content="{loc:Tr RecipesDelete}" Command="{Binding SelectedRecipe.DeleteCommand}"/>
+                            <Button Content="{loc:Tr recipes.run}" Command="{Binding SelectedRecipe.RunCommand}"/>
+                            <Button Content="{loc:Tr recipes.edit}" Command="{Binding SelectedRecipe.EditCommand}"/>
+                            <Button Content="{loc:Tr recipes.duplicate}" Command="{Binding SelectedRecipe.DuplicateCommand}"/>
+                            <Button Content="{loc:Tr recipes.export}" Command="{Binding SelectedRecipe.ExportCommand}"/>
+                            <Button Content="{loc:Tr recipes.delete}" Command="{Binding SelectedRecipe.DeleteCommand}"/>
                         </StackPanel>
 
-                        <TextBlock Classes="h2" Text="{loc:Tr RecipesRecentRuns}"/>
+                        <TextBlock Classes="h2" Text="{loc:Tr recipes.recentRuns}"/>
                         <TextBlock Classes="muted" Text="..." IsVisible="{Binding IsLoadingRecentRuns}"/>
-                        <TextBlock Classes="muted" Text="{loc:Tr RecipesNoRecentRuns}" IsVisible="{Binding !HasRecentRuns}"/>
+                        <TextBlock Classes="muted" Text="{loc:Tr recipes.noRecentRuns}" IsVisible="{Binding !HasRecentRuns}"/>
                         <ItemsControl ItemsSource="{Binding RecentRuns}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="vm:RecentRunViewModel">
                                     <Border Classes="hairline-row">
                                         <Grid ColumnDefinitions="*,Auto">
                                             <TextBlock Grid.Column="0" Classes="body" Text="{Binding Name}"/>
-                                            <TextBlock Grid.Column="1" Classes="muted" Text="{Binding Status}"/>
+                                            <TextBlock Grid.Column="1" Classes="muted">
+                                                <TextBlock.Text>
+                                                    <MultiBinding Converter="{x:Static conv:EnumLocalizedTextConverter.Instance}" ConverterParameter="jobStatus">
+                                                        <Binding Path="Status"/>
+                                                        <Binding Path="Revision" Source="{x:Static loc:LocalizationService.Instance}"/>
+                                                    </MultiBinding>
+                                                </TextBlock.Text>
+                                            </TextBlock>
                                         </Grid>
                                     </Border>
                                 </DataTemplate>
@@ -103,10 +111,10 @@
                 <!-- Editor overlay -->
                 <Grid RowDefinitions="Auto,*" IsVisible="{Binding IsEditorOpen}" Background="{DynamicResource SurfaceBackgroundBrush}">
                     <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="{StaticResource PaddingPanel}" ColumnSpacing="{StaticResource Space2}">
-                        <Button Grid.Column="0" Content="{loc:Tr RecipesBack}" Command="{Binding CloseEditorCommand}"/>
+                        <Button Grid.Column="0" Content="{loc:Tr recipes.back}" Command="{Binding CloseEditorCommand}"/>
                         <TextBox Grid.Column="1" Classes="h2" Text="{Binding Editor.Name}"
-                                 PlaceholderText="Tên recipe" HorizontalAlignment="Stretch" VerticalAlignment="Center"/>
-                        <Button Grid.Column="2" Content="Lưu" Command="{Binding Editor.SaveCommand}"/>
+                                 PlaceholderText="{loc:Tr recipes.editor.namePlaceholder}" HorizontalAlignment="Stretch" VerticalAlignment="Center"/>
+                        <Button Grid.Column="2" Content="{loc:Tr recipes.editor.save}" Command="{Binding Editor.SaveCommand}"/>
                     </Grid>
                     <editor:RecipeEditorView Grid.Row="1" DataContext="{Binding Editor}"/>
                 </Grid>

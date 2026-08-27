@@ -63,166 +63,325 @@
             PublicKeyToken=b77a5c561934e089
         </value>
     </resheader>
-    <data name="AppTitle" xml:space="preserve">
+    <data name="app.title" xml:space="preserve">
     <value>SlideGenerator</value>
   </data>
-  <data name="NavRecipes" xml:space="preserve">
+  <data name="nav.recipes" xml:space="preserve">
     <value>Recipe</value>
   </data>
-  <data name="NavRuns" xml:space="preserve">
+  <data name="nav.runs" xml:space="preserve">
     <value>Lượt chạy</value>
   </data>
-  <data name="NavSettings" xml:space="preserve">
+  <data name="nav.settings" xml:space="preserve">
     <value>Cài đặt</value>
   </data>
-  <data name="NavAbout" xml:space="preserve">
+  <data name="nav.about" xml:space="preserve">
     <value>Giới thiệu</value>
   </data>
-  <data name="ShellThemeToggleTooltip" xml:space="preserve">
+  <data name="shell.themeToggleTooltip" xml:space="preserve">
     <value>Đổi giao diện</value>
   </data>
-  <data name="ShellMinimizeTooltip" xml:space="preserve">
+  <data name="shell.minimizeTooltip" xml:space="preserve">
     <value>Thu nhỏ</value>
   </data>
-  <data name="ShellMaximizeTooltip" xml:space="preserve">
+  <data name="shell.maximizeTooltip" xml:space="preserve">
     <value>Phóng to</value>
   </data>
-  <data name="ShellCloseTooltip" xml:space="preserve">
+  <data name="shell.closeTooltip" xml:space="preserve">
     <value>Đóng</value>
   </data>
-  <data name="ShellActiveJobsTitleSuffix" xml:space="preserve">
+  <data name="shell.activeJobsTitleSuffix" xml:space="preserve">
     <value> — {0} job đang chạy</value>
   </data>
-  <data name="RunsFilterAll" xml:space="preserve">
+  <data name="shell.placeholder.message" xml:space="preserve">
+    <value>Chưa xây dựng ở giai đoạn này</value>
+  </data>
+  <data name="runs.filter.all" xml:space="preserve">
     <value>Tất cả</value>
   </data>
-  <data name="RunsFilterRunning" xml:space="preserve">
+  <data name="runs.filter.running" xml:space="preserve">
     <value>Đang chạy</value>
   </data>
-  <data name="RunsFilterPaused" xml:space="preserve">
+  <data name="runs.filter.paused" xml:space="preserve">
     <value>Tạm dừng</value>
   </data>
-  <data name="RunsFilterDone" xml:space="preserve">
+  <data name="runs.filter.done" xml:space="preserve">
     <value>Xong</value>
   </data>
-  <data name="RunsFilterCancelled" xml:space="preserve">
+  <data name="runs.filter.cancelled" xml:space="preserve">
     <value>Đã huỷ</value>
   </data>
-  <data name="RunsSearchPlaceholder" xml:space="preserve">
+  <data name="runs.searchPlaceholder" xml:space="preserve">
     <value>Tìm...</value>
   </data>
-  <data name="RunsPause" xml:space="preserve">
+  <data name="runs.pause" xml:space="preserve">
     <value>Tạm dừng</value>
   </data>
-  <data name="RunsResume" xml:space="preserve">
+  <data name="runs.resume" xml:space="preserve">
     <value>Tiếp tục</value>
   </data>
-  <data name="RunsStop" xml:space="preserve">
+  <data name="runs.stop" xml:space="preserve">
     <value>Dừng</value>
   </data>
-  <data name="RunsOpenFolder" xml:space="preserve">
+  <data name="runs.openFolder" xml:space="preserve">
     <value>Mở thư mục</value>
   </data>
-  <data name="RunsDelete" xml:space="preserve">
+  <data name="runs.delete" xml:space="preserve">
     <value>Xoá</value>
   </data>
-  <data name="RunsEmptyTitle" xml:space="preserve">
+  <data name="runs.empty.title" xml:space="preserve">
     <value>Chưa có lượt chạy nào</value>
   </data>
-  <data name="RunsEmptyBody" xml:space="preserve">
+  <data name="runs.empty.body" xml:space="preserve">
     <value>Chạy một recipe từ trang Recipes để thấy nó ở đây.</value>
   </data>
-  <data name="RunsNoSelectionHint" xml:space="preserve">
+  <data name="runs.noSelectionHint" xml:space="preserve">
     <value>Chọn một lượt chạy để xem chi tiết.</value>
   </data>
-  <data name="RunsLogsHeader" xml:space="preserve">
+  <data name="runs.logsHeader" xml:space="preserve">
     <value>Nhật ký</value>
   </data>
-  <data name="SettingsAppearance" xml:space="preserve">
+  <data name="runs.jobSeparator" xml:space="preserve">
+    <value> job · </value>
+  </data>
+  <data name="runs.rowSeparator" xml:space="preserve">
+    <value> · dòng </value>
+  </data>
+  <data name="runs.delete.title" xml:space="preserve">
+    <value>Xoá yêu cầu</value>
+  </data>
+  <data name="runs.delete.message" xml:space="preserve">
+    <value>Xoá vĩnh viễn "{0}" và toàn bộ dữ liệu của nó?</value>
+  </data>
+  <data name="runs.delete.confirm" xml:space="preserve">
+    <value>Xoá</value>
+  </data>
+  <data name="runs.delete.cancel" xml:space="preserve">
+    <value>Huỷ</value>
+  </data>
+  <data name="recipes.empty.title" xml:space="preserve">
+    <value>Chưa có recipe nào</value>
+  </data>
+  <data name="recipes.empty.body" xml:space="preserve">
+    <value>Tạo recipe đầu tiên để bắt đầu tạo bài trình chiếu.</value>
+  </data>
+  <data name="recipes.new" xml:space="preserve">
+    <value>Recipe mới</value>
+  </data>
+  <data name="recipes.import" xml:space="preserve">
+    <value>Nhập</value>
+  </data>
+  <data name="recipes.searchPlaceholder" xml:space="preserve">
+    <value>Tìm...</value>
+  </data>
+  <data name="recipes.run" xml:space="preserve">
+    <value>Chạy</value>
+  </data>
+  <data name="recipes.edit" xml:space="preserve">
+    <value>Sửa</value>
+  </data>
+  <data name="recipes.duplicate" xml:space="preserve">
+    <value>Nhân bản</value>
+  </data>
+  <data name="recipes.export" xml:space="preserve">
+    <value>Xuất</value>
+  </data>
+  <data name="recipes.delete" xml:space="preserve">
+    <value>Xoá</value>
+  </data>
+  <data name="recipes.recentRuns" xml:space="preserve">
+    <value>Lượt chạy gần đây</value>
+  </data>
+  <data name="recipes.viewAllRuns" xml:space="preserve">
+    <value>Xem tất cả trong Lượt chạy</value>
+  </data>
+  <data name="recipes.noRecentRuns" xml:space="preserve">
+    <value>Chưa chạy lần nào.</value>
+  </data>
+  <data name="recipes.editor.placeholder" xml:space="preserve">
+    <value>Chưa xây dựng ở giai đoạn này</value>
+  </data>
+  <data name="recipes.back" xml:space="preserve">
+    <value>Quay lại</value>
+  </data>
+  <data name="recipes.noSelectionHint" xml:space="preserve">
+    <value>Chọn một recipe để xem chi tiết.</value>
+  </data>
+  <data name="recipes.updatedPrefix" xml:space="preserve">
+    <value>sửa lần cuối </value>
+  </data>
+  <data name="recipes.editor.namePlaceholder" xml:space="preserve">
+    <value>Tên recipe</value>
+  </data>
+  <data name="recipes.editor.save" xml:space="preserve">
+    <value>Lưu</value>
+  </data>
+  <data name="recipes.unsavedChanges.title" xml:space="preserve">
+    <value>Có thay đổi chưa lưu</value>
+  </data>
+  <data name="recipes.unsavedChanges.message" xml:space="preserve">
+    <value>Rời trang sẽ mất các thay đổi chưa lưu. Bạn có chắc muốn rời trang?</value>
+  </data>
+  <data name="recipes.unsavedChanges.leave" xml:space="preserve">
+    <value>Rời trang</value>
+  </data>
+  <data name="recipes.unsavedChanges.stay" xml:space="preserve">
+    <value>Ở lại</value>
+  </data>
+  <data name="recipes.import.dialogTitle" xml:space="preserve">
+    <value>Nhập recipe</value>
+  </data>
+  <data name="recipes.export.dialogTitle" xml:space="preserve">
+    <value>Xuất recipe</value>
+  </data>
+  <data name="recipes.duplicateSuffix" xml:space="preserve">
+    <value> (bản sao)</value>
+  </data>
+  <data name="recipes.delete.title" xml:space="preserve">
+    <value>Xoá recipe</value>
+  </data>
+  <data name="recipes.delete.message" xml:space="preserve">
+    <value>Xoá vĩnh viễn "{0}"? Recipe đã dùng cho lượt chạy trước đó không bị ảnh hưởng.</value>
+  </data>
+  <data name="recipes.delete.confirm" xml:space="preserve">
+    <value>Xoá</value>
+  </data>
+  <data name="recipes.delete.cancel" xml:space="preserve">
+    <value>Huỷ</value>
+  </data>
+  <data name="settings.appearance" xml:space="preserve">
     <value>Giao diện</value>
   </data>
-  <data name="SettingsTheme" xml:space="preserve">
+  <data name="settings.theme" xml:space="preserve">
     <value>Chủ đề</value>
   </data>
-  <data name="SettingsThemeSystem" xml:space="preserve">
+  <data name="settings.theme.system" xml:space="preserve">
     <value>Theo hệ thống</value>
   </data>
-  <data name="SettingsThemeLight" xml:space="preserve">
+  <data name="settings.theme.light" xml:space="preserve">
     <value>Sáng</value>
   </data>
-  <data name="SettingsThemeDark" xml:space="preserve">
+  <data name="settings.theme.dark" xml:space="preserve">
     <value>Tối</value>
   </data>
-  <data name="SettingsLanguage" xml:space="preserve">
+  <data name="settings.language" xml:space="preserve">
     <value>Ngôn ngữ</value>
   </data>
-  <data name="SettingsLanguageVietnamese" xml:space="preserve">
+  <data name="settings.language.vietnamese" xml:space="preserve">
     <value>Tiếng Việt</value>
   </data>
-  <data name="SettingsLanguageEnglish" xml:space="preserve">
+  <data name="settings.language.english" xml:space="preserve">
     <value>English</value>
   </data>
-  <data name="SettingsReducedMotion" xml:space="preserve">
+  <data name="settings.reducedMotion" xml:space="preserve">
     <value>Giảm chuyển động</value>
   </data>
-  <data name="SettingsPerformance" xml:space="preserve">
+  <data name="settings.performance" xml:space="preserve">
     <value>Hiệu năng</value>
   </data>
-  <data name="SettingsMaxConcurrentJobs" xml:space="preserve">
+  <data name="settings.maxConcurrentJobs" xml:space="preserve">
     <value>Số job chạy song song tối đa</value>
   </data>
-  <data name="SettingsMaxConcurrentJobsHint" xml:space="preserve">
+  <data name="settings.maxConcurrentJobsHint" xml:space="preserve">
     <value>Giá trị càng cao chạy càng nhanh nhưng tốn RAM hơn: mỗi job đang chạy giữ một workbook/presentation trong bộ nhớ.</value>
   </data>
-  <data name="SettingsResetDefaults" xml:space="preserve">
+  <data name="settings.resetDefaults" xml:space="preserve">
     <value>Khôi phục mặc định</value>
   </data>
-  <data name="SettingsNetwork" xml:space="preserve">
+  <data name="settings.network" xml:space="preserve">
     <value>Mạng</value>
   </data>
-  <data name="SettingsProxy" xml:space="preserve">
+  <data name="settings.proxy" xml:space="preserve">
     <value>Proxy</value>
   </data>
-  <data name="SettingsProxyEnable" xml:space="preserve">
+  <data name="settings.proxy.enable" xml:space="preserve">
     <value>Dùng proxy</value>
   </data>
-  <data name="SettingsProxyAddress" xml:space="preserve">
+  <data name="settings.proxy.address" xml:space="preserve">
     <value>Địa chỉ</value>
   </data>
-  <data name="SettingsProxyUsername" xml:space="preserve">
+  <data name="settings.proxy.username" xml:space="preserve">
     <value>Tên đăng nhập</value>
   </data>
-  <data name="SettingsProxyPassword" xml:space="preserve">
+  <data name="settings.proxy.password" xml:space="preserve">
     <value>Mật khẩu</value>
   </data>
-  <data name="SettingsProxyDomain" xml:space="preserve">
+  <data name="settings.proxy.domain" xml:space="preserve">
     <value>Domain</value>
   </data>
-  <data name="SettingsRetry" xml:space="preserve">
+  <data name="settings.retry" xml:space="preserve">
     <value>Thử lại</value>
   </data>
-  <data name="SettingsMaxRetries" xml:space="preserve">
+  <data name="settings.retry.maxAttempts" xml:space="preserve">
     <value>Số lần thử tối đa</value>
   </data>
-  <data name="SettingsRetryTimeout" xml:space="preserve">
+  <data name="settings.retry.timeoutSeconds" xml:space="preserve">
     <value>Timeout (giây)</value>
   </data>
-  <data name="SettingsMaxRetryDelay" xml:space="preserve">
+  <data name="settings.retry.maxBackoffSeconds" xml:space="preserve">
     <value>Backoff tối đa (giây)</value>
   </data>
-  <data name="SettingsMaxDownloadMb" xml:space="preserve">
+  <data name="settings.network.maxDownloadMb" xml:space="preserve">
     <value>Dung lượng tải tối đa (MB)</value>
   </data>
-  <data name="SettingsAbout" xml:space="preserve">
+  <data name="settings.about" xml:space="preserve">
     <value>Giới thiệu</value>
   </data>
-  <data name="SettingsVersion" xml:space="preserve">
+  <data name="settings.about.version" xml:space="preserve">
     <value>Phiên bản</value>
   </data>
-  <data name="SettingsRepository" xml:space="preserve">
+  <data name="settings.about.repository" xml:space="preserve">
     <value>Repository</value>
   </data>
-  <data name="SettingsCheckUpdate" xml:space="preserve">
+  <data name="settings.about.checkUpdate" xml:space="preserve">
     <value>Kiểm tra cập nhật</value>
+  </data>
+  <data name="settings.about.updateStatus.notInstalled" xml:space="preserve">
+    <value>Không áp dụng. Ứng dụng không chạy dưới dạng bản cài đặt.</value>
+  </data>
+  <data name="settings.about.updateStatus.upToDate" xml:space="preserve">
+    <value>Đã là bản mới nhất.</value>
+  </data>
+  <data name="settings.about.updateStatus.downloaded" xml:space="preserve">
+    <value>Đã tải bản cập nhật. Khởi động lại để áp dụng.</value>
+  </data>
+  <data name="settings.about.updateStatus.failed" xml:space="preserve">
+    <value>Kiểm tra cập nhật thất bại. Thử lại sau.</value>
+  </data>
+  <data name="enums.jobStatus.pending" xml:space="preserve">
+    <value>Đang chờ</value>
+  </data>
+  <data name="enums.jobStatus.running" xml:space="preserve">
+    <value>Đang chạy</value>
+  </data>
+  <data name="enums.jobStatus.complete" xml:space="preserve">
+    <value>Hoàn tất</value>
+  </data>
+  <data name="enums.jobStatus.paused" xml:space="preserve">
+    <value>Tạm dừng</value>
+  </data>
+  <data name="enums.jobStatus.cancelled" xml:space="preserve">
+    <value>Đã huỷ</value>
+  </data>
+  <data name="enums.jobStatus.error" xml:space="preserve">
+    <value>Lỗi</value>
+  </data>
+  <data name="enums.jobPhase.queued" xml:space="preserve">
+    <value>Đang chờ</value>
+  </data>
+  <data name="enums.jobPhase.creatingOutput" xml:space="preserve">
+    <value>Tạo file đầu ra</value>
+  </data>
+  <data name="enums.jobPhase.creatingSlides" xml:space="preserve">
+    <value>Tạo slide</value>
+  </data>
+  <data name="enums.jobPhase.fillingText" xml:space="preserve">
+    <value>Điền chữ</value>
+  </data>
+  <data name="enums.jobPhase.fillingImages" xml:space="preserve">
+    <value>Điền ảnh</value>
+  </data>
+  <data name="enums.jobPhase.done" xml:space="preserve">
+    <value>Hoàn tất</value>
   </data>
 </root>

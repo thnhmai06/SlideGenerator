@@ -52,7 +52,7 @@ public sealed class DesignSystemTests
         "Features/RecipeEditor/Views/RecipeEditorView.axaml:87:Text=\"...\"",
 
         // RecipesView's recent-runs list shows a literal "..." while loading — same tracked fix, same P4 page.
-        "Features/Recipes/Views/RecipesView.axaml:86:Text=\"...\""
+        "Features/Recipes/Views/RecipesView.axaml:87:Text=\"...\""
     ];
 
     private static string FindDesktopSrc([CallerFilePath] string here = "")

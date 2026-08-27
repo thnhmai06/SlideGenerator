@@ -18,6 +18,7 @@ using System.Runtime.InteropServices;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SlideGenerator.Desktop.Services.Dialogs;
+using SlideGenerator.Desktop.Services.Localization;
 using SlideGenerator.Generator;
 using SlideGenerator.Generator.Jobs.Models;
 using SlideGenerator.Generator.Progress;
@@ -141,7 +142,9 @@ public sealed partial class RequestRunViewModel : ObservableObject
     private async Task DeleteAsync()
     {
         var confirmed = await _dialogService
-            .ConfirmAsync("Xoá yêu cầu", $"Xoá vĩnh viễn \"{Name}\" và toàn bộ dữ liệu của nó?", "Xoá", "Huỷ")
+            .ConfirmAsync(LocalizationService.Instance["runs.delete.title"],
+                string.Format(LocalizationService.Instance["runs.delete.message"], Name),
+                LocalizationService.Instance["runs.delete.confirm"], LocalizationService.Instance["runs.delete.cancel"])
             .ConfigureAwait(true);
         if (confirmed) await _service.DeleteAsync(RequestId).ConfigureAwait(true);
     }

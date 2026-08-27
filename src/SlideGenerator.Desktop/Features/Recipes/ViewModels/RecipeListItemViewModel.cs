@@ -15,6 +15,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SlideGenerator.Desktop.Services.Dialogs;
+using SlideGenerator.Desktop.Services.Localization;
 using SlideGenerator.Recipe.Formats;
 using SlideGenerator.Recipe.Services;
 
@@ -82,7 +83,7 @@ public sealed partial class RecipeListItemViewModel : ObservableObject
     private async Task DuplicateAsync()
     {
         var entry = await _repository.GetAsync(Id).ConfigureAwait(true);
-        var copy = await _repository.AddAsync(new RecipeInput($"{Name} (bản sao)", entry.Recipe)).ConfigureAwait(true);
+        var copy = await _repository.AddAsync(new RecipeInput($"{Name}{LocalizationService.Instance["recipes.duplicateSuffix"]}", entry.Recipe)).ConfigureAwait(true);
         Duplicated?.Invoke(copy);
     }
 
@@ -90,7 +91,7 @@ public sealed partial class RecipeListItemViewModel : ObservableObject
     private async Task ExportAsync()
     {
         var path = await _filePicker
-            .PickSaveFileAsync("Export recipe", $"{Name}{RecipePackageFormat.PackageExtension}")
+            .PickSaveFileAsync(LocalizationService.Instance["recipes.export.dialogTitle"], $"{Name}{RecipePackageFormat.PackageExtension}")
             .ConfigureAwait(true);
         if (path is not null) await _packageService.ExportAsync(Id, path).ConfigureAwait(true);
     }
@@ -99,8 +100,9 @@ public sealed partial class RecipeListItemViewModel : ObservableObject
     private async Task DeleteAsync()
     {
         var confirmed = await _dialogService
-            .ConfirmAsync("Xoá recipe", $"Xoá vĩnh viễn \"{Name}\"? Recipe đã dùng cho lượt chạy trước đó không bị ảnh hưởng.",
-                "Xoá", "Huỷ")
+            .ConfirmAsync(LocalizationService.Instance["recipes.delete.title"],
+                string.Format(LocalizationService.Instance["recipes.delete.message"], Name),
+                LocalizationService.Instance["recipes.delete.confirm"], LocalizationService.Instance["recipes.delete.cancel"])
             .ConfigureAwait(true);
         if (!confirmed) return;
 

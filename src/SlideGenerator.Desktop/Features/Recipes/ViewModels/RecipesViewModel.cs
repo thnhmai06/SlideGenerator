@@ -18,6 +18,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using SlideGenerator.Desktop.Features.RecipeEditor.ViewModels;
+using SlideGenerator.Desktop.Services.Localization;
 using SlideGenerator.Desktop.Services.Dialogs;
 using SlideGenerator.Generator;
 using SlideGenerator.Recipe.Formats;
@@ -248,8 +249,10 @@ public sealed partial class RecipesViewModel : ObservableObject
         if (Editor is { IsDirty: true })
         {
             var confirmed = await _dialogService.ConfirmAsync(
-                "Có thay đổi chưa lưu", "Rời trang sẽ mất các thay đổi chưa lưu. Bạn có chắc muốn rời trang?",
-                "Rời trang", "Ở lại").ConfigureAwait(true);
+                LocalizationService.Instance["recipes.unsavedChanges.title"],
+                LocalizationService.Instance["recipes.unsavedChanges.message"],
+                LocalizationService.Instance["recipes.unsavedChanges.leave"],
+                LocalizationService.Instance["recipes.unsavedChanges.stay"]).ConfigureAwait(true);
             if (!confirmed) return;
         }
 
@@ -262,7 +265,7 @@ public sealed partial class RecipesViewModel : ObservableObject
     private async Task ImportAsync()
     {
         var path = await _filePicker
-            .PickFileAsync("Nhập recipe", [new FilePickerFileType("Recipe") { Patterns = [$"*{RecipePackageFormat.PackageExtension}"] }])
+            .PickFileAsync(LocalizationService.Instance["recipes.import.dialogTitle"], [new FilePickerFileType("Recipe") { Patterns = [$"*{RecipePackageFormat.PackageExtension}"] }])
             .ConfigureAwait(true);
         if (path is null) return;
 

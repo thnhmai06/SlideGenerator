@@ -57,7 +57,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private void UpdateWindowTitle(int activeCount)
     {
         WindowTitle = activeCount > 0
-            ? BaseTitle + string.Format(_localizationService["ShellActiveJobsTitleSuffix"], activeCount)
+            ? BaseTitle + string.Format(_localizationService["shell.activeJobsTitleSuffix"], activeCount)
             : BaseTitle;
     }
 }

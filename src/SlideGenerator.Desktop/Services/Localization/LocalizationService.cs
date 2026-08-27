@@ -63,17 +63,22 @@ public sealed class LocalizationService : ILocalizationService
     private CultureInfo _currentCulture = CultureInfo.CurrentUICulture;
     private int _revision;
 
+    private static ILocalizationService? _instance;
+
     /// <summary>
-    ///     Gets the process-wide instance, set once by the constructor since this service is registered as a
-    ///     DI singleton — <see cref="TrExtension" /> cannot resolve it through DI, only through this static
-    ///     reference.
+    ///     Gets the process-wide instance, normally set once by the constructor since this service is
+    ///     registered as a DI singleton — <see cref="TrExtension" /> cannot resolve it through DI, only through
+    ///     this static reference. Self-initializes on first access if DI never constructed one (e.g. a
+    ///     ViewModel unit test that calls <c>LocalizationService.Instance[key]</c> directly without going
+    ///     through the app's host) — falling back to <see cref="CultureInfo.CurrentUICulture" /> is the same
+    ///     default the real constructor would have used anyway.
     /// </summary>
-    public static ILocalizationService Instance { get; private set; } = null!;
+    public static ILocalizationService Instance => _instance ??= new LocalizationService();
 
     /// <summary>Constructs the service and publishes it to <see cref="Instance" />.</summary>
     public LocalizationService()
     {
-        Instance = this;
+        _instance = this;
     }
 
     /// <inheritdoc />
