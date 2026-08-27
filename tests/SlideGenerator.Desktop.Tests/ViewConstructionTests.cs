@@ -66,10 +66,7 @@ namespace SlideGenerator.Desktop.Tests;
 /// </summary>
 public sealed class ViewConstructionTests
 {
-    /// <summary>One shared headless Avalonia session for every test in this class (starting one per test is
-    /// unnecessary — none of these tests mutate global app state).</summary>
-    private static readonly HeadlessUnitTestSession Session =
-        HeadlessUnitTestSession.StartNew(typeof(App));
+    private static readonly HeadlessUnitTestSession Session = HeadlessTestSession.Instance;
 
     [Fact]
     public Task RecipesView_ConstructsAndShows_WithoutThrowing()
