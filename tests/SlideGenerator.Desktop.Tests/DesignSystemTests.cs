@@ -147,7 +147,14 @@ public sealed class DesignSystemTests
         ("TextMutedBrush", "SurfaceBackgroundBrush"),
         ("TextMutedBrush", "SurfaceBrush"),
         ("TextMutedBrush", "SurfaceMutedBrush"),
-        ("TextOnAccentBrush", "AccentBrush")
+        ("TextOnAccentBrush", "AccentBrush"),
+        // Border.pill.success/.warning/.danger (Controls.axaml) — Saved/Unsaved badge, conflict badges, status
+        // pills — all use TextOnAccentBrush over these 3 backgrounds, same as AccentBrush above.
+        ("TextOnAccentBrush", "SuccessBrush"),
+        ("TextOnAccentBrush", "WarningBrush"),
+        ("TextOnAccentBrush", "DangerBrush"),
+        // Border.pill.info (Controls.axaml) — AccentBrush text over AccentMutedBrush background.
+        ("AccentBrush", "AccentMutedBrush")
     ];
 
     /// <summary>

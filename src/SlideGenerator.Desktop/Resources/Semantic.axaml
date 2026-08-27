@@ -56,7 +56,10 @@
             <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource BrandDodger}"/>
             <SolidColorBrush x:Key="AccentHoverBrush" Color="#4DA6FF"/>
             <SolidColorBrush x:Key="AccentPressedBrush" Color="#0F7ADB"/>
-            <SolidColorBrush x:Key="AccentMutedBrush" Color="#2A4E85"/>
+            <!-- Darkened from #2A4E85 (P7 design-system gate: AccentBrush [BrandDodger] text on this
+                 background — nav-item.active, avatar-circle, pill.info — was only 2.57:1, below WCAG AA.
+                 Halved (same hue/ratio, just darker) to 4.63:1. -->
+            <SolidColorBrush x:Key="AccentMutedBrush" Color="#152742"/>
             <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessDark}"/>
             <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningDark}"/>
             <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DangerDark}"/>
