@@ -135,10 +135,10 @@ public sealed partial class RunsViewModel : ObservableObject
     {
         return Filter switch
         {
-            RunStatusFilter.Running => request.Status == JobStatus.Running,
-            RunStatusFilter.Paused => request.Status == JobStatus.Paused,
-            RunStatusFilter.Done => request.Status == JobStatus.Complete,
-            RunStatusFilter.Cancelled => request.Status == JobStatus.Cancelled,
+            RunStatusFilter.Running => request.Status == RequestStatus.Running,
+            RunStatusFilter.Paused => request.Status == RequestStatus.Paused,
+            RunStatusFilter.Done => request.Status == RequestStatus.Complete,
+            RunStatusFilter.Cancelled => request.Status == RequestStatus.Cancelled,
             _ => true
         };
     }

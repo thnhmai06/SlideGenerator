@@ -12,7 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Generator.Jobs.Models;
+using SlideGenerator.Generator;
 
 namespace SlideGenerator.Desktop.Features.Recipes.ViewModels;
 
@@ -22,4 +22,4 @@ namespace SlideGenerator.Desktop.Features.Recipes.ViewModels;
 ///     key on <c>IService.ListActiveAsync</c>/<c>ListCompletedAsync</c>), so this record captures it alongside
 ///     the display fields for the "Xem tất cả" link into Runs.
 /// </summary>
-public sealed record RecentRunViewModel(string WorkflowId, string Name, JobStatus Status, DateTimeOffset CreatedAt);
+public sealed record RecentRunViewModel(string WorkflowId, string Name, RequestStatus Status, DateTimeOffset CreatedAt);

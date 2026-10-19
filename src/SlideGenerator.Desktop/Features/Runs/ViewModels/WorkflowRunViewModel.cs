@@ -43,7 +43,7 @@ public sealed partial class WorkflowRunViewModel : ObservableObject
     public int RecipeId { get; }
 
     [ObservableProperty] private string _name;
-    [ObservableProperty] private JobStatus _status;
+    [ObservableProperty] private RequestStatus _status;
     [ObservableProperty] private WorkflowPhase? _phase;
     [ObservableProperty] private DateTimeOffset _createdAt;
     [ObservableProperty] private DateTimeOffset? _completedAt;
@@ -64,8 +64,8 @@ public sealed partial class WorkflowRunViewModel : ObservableObject
         _dialogService = dialogService;
         RecipeId = summary.Request.RecipeId;
         _name = summary.Request.Name;
-        _status = summary.JobStatus;
-        _isWorkflowPaused = summary.JobStatus == JobStatus.Paused;
+        _status = summary.Status;
+        _isWorkflowPaused = summary.Status == RequestStatus.Paused;
         _phase = summary.Phase;
         _createdAt = summary.CreatedAt;
         _completedAt = summary.CompletedAt;
@@ -78,7 +78,7 @@ public sealed partial class WorkflowRunViewModel : ObservableObject
         var job = Jobs.FirstOrDefault(j => j.JobId == snapshot.JobId);
         job?.ApplyLiveUpdate(snapshot);
         Status = DeriveDisplayStatus();
-        if (Status is JobStatus.Complete or JobStatus.Cancelled) CompletedAt ??= snapshot.Timestamp;
+        if (Status is not (RequestStatus.Running or RequestStatus.Paused)) CompletedAt ??= snapshot.Timestamp;
     }
 
     /// <summary>Records the workflow-level pause flag from <paramref name="snapshot" /> and re-derives the display status.</summary>
@@ -94,14 +94,9 @@ public sealed partial class WorkflowRunViewModel : ObservableObject
         Jobs.FirstOrDefault(j => j.JobId == row.JobId)?.ApplyLiveRowUpdate(row);
     }
 
-    private JobStatus DeriveDisplayStatus()
+    private RequestStatus DeriveDisplayStatus()
     {
-        if (Jobs.Count == 0) return JobStatus.Complete;
-        if (Jobs.Any(j => j.JobStatus is JobStatus.Running or JobStatus.Pending))
-            return _isWorkflowPaused ? JobStatus.Paused : JobStatus.Running;
-        if (Jobs.Any(j => j.JobStatus == JobStatus.Paused)) return JobStatus.Paused;
-        if (Jobs.All(j => j.JobStatus == JobStatus.Cancelled)) return JobStatus.Cancelled;
-        return JobStatus.Complete;
+        return RequestStatusRules.Derive([.. Jobs.Select(j => j.JobStatus)], _isWorkflowPaused);
     }
 
     /// <summary>Loads this request's log entries (never fetched at list time — see <c>includeLogs</c>).</summary>
@@ -111,7 +106,7 @@ public sealed partial class WorkflowRunViewModel : ObservableObject
         IsLoadingLogs = true;
         try
         {
-            var summaries = Status is JobStatus.Running or JobStatus.Paused
+            var summaries = Status is RequestStatus.Running or RequestStatus.Paused
                 ? await _service.ListActiveAsync().ConfigureAwait(true)
                 : await _service.ListCompletedAsync().ConfigureAwait(true);
             if (summaries.TryGetValue(WorkflowId, out var summary))
@@ -132,7 +127,7 @@ public sealed partial class WorkflowRunViewModel : ObservableObject
 
     private bool CanPause()
     {
-        return Status == JobStatus.Running;
+        return Status == RequestStatus.Running;
     }
 
     [RelayCommand(CanExecute = nameof(CanResume))]
@@ -143,7 +138,7 @@ public sealed partial class WorkflowRunViewModel : ObservableObject
 
     private bool CanResume()
     {
-        return Status == JobStatus.Paused;
+        return Status == RequestStatus.Paused;
     }
 
     [RelayCommand(CanExecute = nameof(CanStop))]
@@ -154,7 +149,7 @@ public sealed partial class WorkflowRunViewModel : ObservableObject
 
     private bool CanStop()
     {
-        return Status is JobStatus.Running or JobStatus.Paused or JobStatus.Pending;
+        return Status is RequestStatus.Running or RequestStatus.Paused;
     }
 
     [RelayCommand]

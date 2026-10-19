@@ -122,7 +122,7 @@ public sealed class ServiceTests
     {
         var jobs = new[] { Job(JobStatus.Complete), Job(JobStatus.Pending), Job(JobStatus.Cancelled) };
 
-        Service.DeriveStatus(jobs).Should().Be(JobStatus.Running);
+        Service.DeriveStatus(jobs).Should().Be(RequestStatus.Running);
     }
 
     /// <summary>No job Pending/Running but at least one Paused → Paused.</summary>
@@ -131,7 +131,7 @@ public sealed class ServiceTests
     {
         var jobs = new[] { Job(JobStatus.Complete), Job(JobStatus.Paused) };
 
-        Service.DeriveStatus(jobs).Should().Be(JobStatus.Paused);
+        Service.DeriveStatus(jobs).Should().Be(RequestStatus.Paused);
     }
 
     /// <summary>Every job Canceled → Canceled.</summary>
@@ -140,7 +140,7 @@ public sealed class ServiceTests
     {
         var jobs = new[] { Job(JobStatus.Cancelled), Job(JobStatus.Cancelled) };
 
-        Service.DeriveStatus(jobs).Should().Be(JobStatus.Cancelled);
+        Service.DeriveStatus(jobs).Should().Be(RequestStatus.Cancelled);
     }
 
     /// <summary>Every job Complete → Complete.</summary>
@@ -149,7 +149,7 @@ public sealed class ServiceTests
     {
         var jobs = new[] { Job(JobStatus.Complete), Job(JobStatus.Complete) };
 
-        Service.DeriveStatus(jobs).Should().Be(JobStatus.Complete);
+        Service.DeriveStatus(jobs).Should().Be(RequestStatus.Complete);
     }
 
     /// <summary>A mix of Complete and Canceled (no Pending/Running/Paused) falls back to Complete.</summary>
@@ -158,7 +158,7 @@ public sealed class ServiceTests
     {
         var jobs = new[] { Job(JobStatus.Complete), Job(JobStatus.Cancelled) };
 
-        Service.DeriveStatus(jobs).Should().Be(JobStatus.Complete);
+        Service.DeriveStatus(jobs).Should().Be(RequestStatus.Complete);
     }
 
     #endregion
@@ -347,6 +347,38 @@ public sealed class ServicePreviewAndLoggingTests
         summaries[workflowId].Jobs[0].Logs.Should().BeEmpty();
     }
 
+    /// <summary>
+    ///     A request whose jobs all errored must still be listed as completed, with <see cref="RequestStatus.Error" />;
+    ///     a request mixing Complete and Error reports <see cref="RequestStatus.CompletedWithError" />.
+    /// </summary>
+    [Fact]
+    public async Task ListCompletedAsync_AllJobsErrored_IsListedAsCompletedWithErrorStatus()
+    {
+        const string errored = "wf-errored";
+        const string mixed = "wf-mixed";
+        var spec = new JobSpecification("wb", "Sheet1", null, null, "ppt", 1, [], [], "out.pptx");
+        IReadOnlyList<JobSnapshot> jobs =
+        [
+            new JobSnapshot(errored, 0, JobStatus.Error, JobPhase.FillingText, 0, spec, DateTimeOffset.UtcNow),
+            new JobSnapshot(errored, 1, JobStatus.Error, JobPhase.FillingText, 0, spec, DateTimeOffset.UtcNow),
+            new JobSnapshot(mixed, 0, JobStatus.Complete, JobPhase.Done, 1, spec, DateTimeOffset.UtcNow),
+            new JobSnapshot(mixed, 1, JobStatus.Error, JobPhase.FillingText, 0, spec, DateTimeOffset.UtcNow)
+        ];
+        _jobsRepository.GetAllAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult(jobs));
+        WorkflowRecord Record(string workflowId) => new(workflowId,
+            new Request(1, "Test", PresentationType.Pptx, Path.GetTempPath()), "unused.log",
+            DateTimeOffset.UtcNow, JobStatus.Complete);
+        _workflowsRepository.GetAsync(errored, Arg.Any<CancellationToken>()).Returns(Record(errored));
+        _workflowsRepository.GetAsync(mixed, Arg.Any<CancellationToken>()).Returns(Record(mixed));
+
+        var summaries = await CreateService().ListCompletedAsync(includeLogs: false, TestContext.Current.CancellationToken);
+
+        summaries.Should().ContainKey(errored);
+        summaries[errored].Status.Should().Be(RequestStatus.Error);
+        summaries.Should().ContainKey(mixed);
+        summaries[mixed].Status.Should().Be(RequestStatus.CompletedWithError);
+    }
+
     #endregion
 
     #region Workflow control
@@ -436,6 +468,51 @@ public sealed class ServicePreviewAndLoggingTests
     }
 
     /// <summary>
+    ///     Two concurrent requests claiming the same output path must not both pass the conflict check before either
+    ///     has persisted its job rows — the second is rejected once the first's rows become visible.
+    /// </summary>
+    [Fact]
+    public async Task CreateAsync_TwoConcurrentRequestsSameOutputPath_OnlyOneIsStarted()
+    {
+        SetupRecipe(ServiceTests_OneMappingOneSource());
+        var request = new Request(1, "Test", PresentationType.Pptx, Path.GetTempPath());
+
+        var persisted = new List<JobSnapshot>();
+        _jobsRepository.GetNonTerminalAsync(Arg.Any<CancellationToken>())
+            .Returns(_ => Task.FromResult<IReadOnlyList<JobSnapshot>>([.. persisted]));
+
+        var firstStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        _workflowController.StartWorkflowAsync(Arg.Any<string>(),
+                Arg.Any<IReadOnlyList<JobSpecification>>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(async ci =>
+            {
+                firstStarted.TrySetResult();
+                await release.Task;
+                var workflowId = ci.ArgAt<string>(0);
+                var specs = ci.ArgAt<IReadOnlyList<JobSpecification>>(1);
+                persisted.AddRange(specs.Select((spec, index) =>
+                    new JobSnapshot(workflowId, index, JobStatus.Pending, JobPhase.CreatingOutput, 0, spec,
+                        DateTimeOffset.UtcNow)));
+            });
+
+        var ct = TestContext.Current.CancellationToken;
+        var service = CreateService();
+        var first = service.CreateAsync(request, ct);
+        await firstStarted.Task.WaitAsync(TimeSpan.FromSeconds(10), ct);
+        var second = service.CreateAsync(request, ct);
+
+        release.SetResult();
+        var firstId = await first;
+
+        Func<Task> secondCall = () => second;
+        await secondCall.Should().ThrowAsync<InvalidOperationException>().WithMessage("*already being generated*");
+        await _workflowController.Received(1).StartWorkflowAsync(Arg.Any<string>(),
+            Arg.Any<IReadOnlyList<JobSpecification>>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+        firstId.Should().NotBeNullOrEmpty();
+    }
+
+    /// <summary>
     ///     A workflow stored as paused whose job rows still derive as running reports as paused; once every job has
     ///     finished the stored pause no longer matters.
     /// </summary>
@@ -446,9 +523,9 @@ public sealed class ServicePreviewAndLoggingTests
         JobSnapshot Job(JobStatus status) =>
             new("wf", 0, status, JobPhase.FillingText, 0, spec, DateTimeOffset.UtcNow);
 
-        Service.DeriveStatus([Job(JobStatus.Running)], JobStatus.Paused).Should().Be(JobStatus.Paused);
-        Service.DeriveStatus([Job(JobStatus.Complete)], JobStatus.Paused).Should().Be(JobStatus.Complete);
-        Service.DeriveStatus([Job(JobStatus.Running)], JobStatus.Running).Should().Be(JobStatus.Running);
+        Service.DeriveStatus([Job(JobStatus.Running)], JobStatus.Paused).Should().Be(RequestStatus.Paused);
+        Service.DeriveStatus([Job(JobStatus.Complete)], JobStatus.Paused).Should().Be(RequestStatus.Complete);
+        Service.DeriveStatus([Job(JobStatus.Running)], JobStatus.Running).Should().Be(RequestStatus.Running);
     }
 
     #endregion
@@ -531,6 +608,27 @@ public sealed class ServicePreviewAndLoggingTests
 
         deleted.Should().BeTrue();
         await _workflowsRepository.Received(1).DeleteAsync(workflowId, Arg.Any<CancellationToken>());
+    }
+
+    /// <summary>
+    ///     Deleting an active request stops its workflow with <c>waitForExit</c> before removing rows, so the workflow
+    ///     cannot re-write its job rows or log file after they are deleted.
+    /// </summary>
+    [Fact]
+    public async Task DeleteAsync_ActiveWorkflow_StopsAndWaitsForExitBeforeDeletingRows()
+    {
+        const string workflowId = "wf-active";
+        SetupWorkflow(workflowId, JobStatus.Running, JobStatus.Running);
+        _workflowController.StopWorkflowAsync(workflowId, true).Returns(true);
+
+        var deleted = await CreateService().DeleteAsync(workflowId, TestContext.Current.CancellationToken);
+
+        deleted.Should().BeTrue();
+        Received.InOrder(() =>
+        {
+            _workflowController.StopWorkflowAsync(workflowId, true);
+            _jobsRepository.DeleteByWorkflowIdAsync(workflowId, Arg.Any<CancellationToken>());
+        });
     }
 
     /// <summary>Bulk-deleting completed workflows removes every one of their log files.</summary>

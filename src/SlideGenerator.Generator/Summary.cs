@@ -31,8 +31,8 @@ public sealed record Summary
     /// <summary>Gets the original request submitted to <c>generating.active.create</c>.</summary>
     public required Request Request { get; init; }
 
-    /// <summary>Gets the aggregate execution status across every job of this request (see <c>Service.DeriveStatus</c>).</summary>
-    public required JobStatus JobStatus { get; init; }
+    /// <summary>Gets the aggregate status of this request across its jobs (see <see cref="RequestStatusRules.Derive" />).</summary>
+    public required RequestStatus Status { get; init; }
 
     /// <summary>Gets the aggregate lifecycle phase of this request, or <see langword="null" /> if none recorded yet.</summary>
     public WorkflowPhase? Phase { get; init; }
@@ -40,7 +40,7 @@ public sealed record Summary
     /// <summary>Gets the UTC timestamp when the earliest job of this request was created.</summary>
     public required DateTimeOffset CreatedAt { get; init; }
 
-    /// <summary>Gets the UTC timestamp when the latest job finished or was terminated, if the request is complete/canceled.</summary>
+    /// <summary>Gets the UTC timestamp when the latest job finished or was terminated, if the request has finished (any status other than Running or Paused).</summary>
     public DateTimeOffset? CompletedAt { get; init; }
 
     /// <summary>

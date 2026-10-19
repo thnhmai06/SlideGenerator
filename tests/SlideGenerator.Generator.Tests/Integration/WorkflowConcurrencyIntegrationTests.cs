@@ -126,8 +126,20 @@ public sealed class WorkflowConcurrencyIntegrationTests
         {
             var jobs = await harness.Jobs.GetByWorkflowIdAsync(workflowId, TestContext.Current.CancellationToken);
             jobs.Should().HaveCount(3);
+
+            // Surface why a job failed: its exception is logged under the workflow's scope path.
+            var errorLog = "";
+            if (jobs.Any(j => j.JobStatus != JobStatus.Complete))
+            {
+                // The workflow's .log file also carries the exception text, which LogEntry does not.
+                using var stream = new FileStream(Path.Combine(harness.TempRoot, $"{workflowId}.log"),
+                    FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                using var reader = new StreamReader(stream);
+                errorLog = reader.ReadToEnd();
+            }
+
             jobs.Should().OnlyContain(j => j.JobStatus == JobStatus.Complete,
-                $"every job of workflow {workflowId} must reach Complete despite the cap");
+                $"every job of workflow {workflowId} must reach Complete despite the cap. Log:\n{errorLog}");
             jobs.Should().OnlyContain(j => j.Phase == JobPhase.Done);
         }
     }
