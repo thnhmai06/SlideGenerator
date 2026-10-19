@@ -213,7 +213,9 @@ method — match the file you are editing.
 apply theme/language → `IService.InitializeAsync()` (crash-resume) → fire-and-forget update check.
 `IProgressHub` must be constructed (subscribed) **before** `IService.InitializeAsync()`: crash-resumed workflows are scheduled
 immediately and a late subscriber would miss their first events.
-On shutdown (`ShutdownRequested`), `IService.ShutdownAsync()` runs, then settings are saved.
+On shutdown (`ShutdownRequested`), `IService.ShutdownAsync()` runs, then settings are saved. Shutdown **cancels** every
+running workflow: its jobs end `Cancelled` and their `.partial` files are deleted, so a normal close does not resume on
+the next start — only a crash/kill leaves resumable `Pending`/`Running` rows.
 
 ## Request → Workflow → Job flow
 
