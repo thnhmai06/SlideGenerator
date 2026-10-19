@@ -183,7 +183,7 @@ internal sealed class Service(
                     ?? throw new InvalidOperationException($"Recipe {request.RecipeId} not found.");
 
         var workflowId = Guid.NewGuid().ToString();
-        var logPath = ResolveWorkflowLogPath(request);
+        var logPath = ResolveWorkflowLogPath(workflowId);
         var jobs = BuildJobs(entry.Recipe, request);
 
         var duplicatePaths = FindDuplicateOutputPath(jobs);
@@ -283,8 +283,7 @@ internal sealed class Service(
         if (DeriveStatus(jobs, record?.Status) is JobStatus.Running or JobStatus.Paused)
             await StopAsync(workflowId, ct).ConfigureAwait(false);
 
-        await jobsRepository.DeleteByWorkflowIdAsync(workflowId, ct).ConfigureAwait(false);
-        await workflowsRepository.DeleteAsync(workflowId, ct).ConfigureAwait(false);
+        await DeleteWorkflowAsync(workflowId, record, ct).ConfigureAwait(false);
         logger.LogInformation("Deleted request {WorkflowId} ({Count} job(s)).", workflowId, jobs.Count);
         return true;
     }
@@ -296,8 +295,8 @@ internal sealed class Service(
         var deleted = 0;
         foreach (var workflowId in completed.Keys)
         {
-            await jobsRepository.DeleteByWorkflowIdAsync(workflowId, ct).ConfigureAwait(false);
-            await workflowsRepository.DeleteAsync(workflowId, ct).ConfigureAwait(false);
+            var record = await workflowsRepository.GetAsync(workflowId, ct).ConfigureAwait(false);
+            await DeleteWorkflowAsync(workflowId, record, ct).ConfigureAwait(false);
             deleted++;
         }
 
@@ -305,11 +304,31 @@ internal sealed class Service(
         return deleted;
     }
 
-    private static string ResolveWorkflowLogPath(Request request)
+    /// <summary>The log file of workflow <paramref name="workflowId" />: named after the id (unique), never after the user-chosen request name.</summary>
+    private static string ResolveWorkflowLogPath(string workflowId)
     {
-        var fileName = Naming.SanitizeFileName(request.Name);
-        if (string.IsNullOrWhiteSpace(fileName)) fileName = "workflow";
-        return Path.Combine(NameAndPaths.LogsFolder.WorkflowPath, $"{fileName}.log");
+        return Path.Combine(NameAndPaths.LogsFolder.WorkflowPath, $"{workflowId}.log");
+    }
+
+    private async Task DeleteWorkflowAsync(string workflowId, WorkflowRecord? record, CancellationToken ct)
+    {
+        await jobsRepository.DeleteByWorkflowIdAsync(workflowId, ct).ConfigureAwait(false);
+        await workflowsRepository.DeleteAsync(workflowId, ct).ConfigureAwait(false);
+        if (record is not null) DeleteLogFile(record.LogPath);
+    }
+
+    /// <summary>Removes a workflow's log file. Best-effort: the file may still be held open by the logger of a workflow that is still unwinding.</summary>
+    private void DeleteLogFile(string logPath)
+    {
+        logPath = Path.GetFullPath(logPath); // CodeQL path-injection sanitizer — keep (see AGENTS.md Security Patterns)
+        try
+        {
+            File.Delete(logPath);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            logger.LogWarning(ex, "Failed to delete log file '{LogPath}'.", logPath);
+        }
     }
 
     #region Aggregation helpers

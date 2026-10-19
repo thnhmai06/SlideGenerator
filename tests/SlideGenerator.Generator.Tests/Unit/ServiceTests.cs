@@ -452,4 +452,125 @@ public sealed class ServicePreviewAndLoggingTests
     }
 
     #endregion
+
+    #region Log path and deletion
+
+    private static string CreateTempLogFile()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.log");
+        File.WriteAllText(path, "log");
+        return path;
+    }
+
+    /// <summary>
+    ///     Two requests sharing the same user-chosen name must still get distinct log files, each named after its
+    ///     own workflow id — otherwise both workflows would append into one mixed file.
+    /// </summary>
+    [Fact]
+    public async Task CreateAsync_TwoRequestsWithSameName_PersistDistinctLogPathsNamedAfterWorkflowId()
+    {
+        SetupRecipe(ServiceTests_OneMappingOneSource());
+        _jobsRepository.GetNonTerminalAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<JobSnapshot>>([]));
+        List<WorkflowRecord> records = [];
+        await _workflowsRepository.CreateAsync(Arg.Do<WorkflowRecord>(records.Add), Arg.Any<CancellationToken>());
+        var ct = TestContext.Current.CancellationToken;
+        var service = CreateService();
+        var first = new Request(1, "Same Name", PresentationType.Pptx,
+            Path.Combine(Path.GetTempPath(), $"out-a-{Guid.NewGuid():N}"));
+        var second = new Request(1, "Same Name", PresentationType.Pptx,
+            Path.Combine(Path.GetTempPath(), $"out-b-{Guid.NewGuid():N}"));
+
+        var firstId = await service.CreateAsync(first, ct);
+        var secondId = await service.CreateAsync(second, ct);
+
+        records.Should().HaveCount(2);
+        records[0].LogPath.Should().NotBe(records[1].LogPath);
+        Path.GetFileNameWithoutExtension(records[0].LogPath).Should().Be(firstId);
+        Path.GetFileNameWithoutExtension(records[1].LogPath).Should().Be(secondId);
+    }
+
+    /// <summary>Deleting a workflow removes its log file along with its rows.</summary>
+    [Fact]
+    public async Task DeleteAsync_WorkflowWithLogFile_DeletesTheLogFile()
+    {
+        const string workflowId = "wf-log";
+        var logPath = CreateTempLogFile();
+        try
+        {
+            SetupWorkflow(workflowId, JobStatus.Complete, JobStatus.Complete);
+            _workflowsRepository.GetAsync(workflowId, Arg.Any<CancellationToken>())
+                .Returns(new WorkflowRecord(workflowId,
+                    new Request(1, "Test", PresentationType.Pptx, Path.GetTempPath()), logPath,
+                    DateTimeOffset.UtcNow, JobStatus.Complete));
+
+            var deleted = await CreateService().DeleteAsync(workflowId, TestContext.Current.CancellationToken);
+
+            deleted.Should().BeTrue();
+            File.Exists(logPath).Should().BeFalse();
+        }
+        finally
+        {
+            if (File.Exists(logPath)) File.Delete(logPath);
+        }
+    }
+
+    /// <summary>Deleting a workflow whose log file is already gone still deletes its rows and reports success.</summary>
+    [Fact]
+    public async Task DeleteAsync_LogFileAlreadyMissing_StillDeletesRows()
+    {
+        const string workflowId = "wf-no-log";
+        var logPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.log");
+        SetupWorkflow(workflowId, JobStatus.Complete, JobStatus.Complete);
+        _workflowsRepository.GetAsync(workflowId, Arg.Any<CancellationToken>())
+            .Returns(new WorkflowRecord(workflowId,
+                new Request(1, "Test", PresentationType.Pptx, Path.GetTempPath()), logPath,
+                DateTimeOffset.UtcNow, JobStatus.Complete));
+
+        var deleted = await CreateService().DeleteAsync(workflowId, TestContext.Current.CancellationToken);
+
+        deleted.Should().BeTrue();
+        await _workflowsRepository.Received(1).DeleteAsync(workflowId, Arg.Any<CancellationToken>());
+    }
+
+    /// <summary>Bulk-deleting completed workflows removes every one of their log files.</summary>
+    [Fact]
+    public async Task DeleteAllCompletedAsync_CompletedWorkflows_DeletesTheirLogFiles()
+    {
+        const string firstId = "wf-done-1";
+        const string secondId = "wf-done-2";
+        var firstLog = CreateTempLogFile();
+        var secondLog = CreateTempLogFile();
+        try
+        {
+            var spec = new JobSpecification("wb", "Sheet1", null, null, "ppt", 1, [], [], "out.pptx");
+            IReadOnlyList<JobSnapshot> jobs =
+            [
+                new JobSnapshot(firstId, 0, JobStatus.Complete, JobPhase.Done, 1, spec, DateTimeOffset.UtcNow),
+                new JobSnapshot(secondId, 0, JobStatus.Complete, JobPhase.Done, 1, spec, DateTimeOffset.UtcNow)
+            ];
+            _jobsRepository.GetAllAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult(jobs));
+            _workflowsRepository.GetAsync(firstId, Arg.Any<CancellationToken>())
+                .Returns(new WorkflowRecord(firstId,
+                    new Request(1, "A", PresentationType.Pptx, Path.GetTempPath()), firstLog,
+                    DateTimeOffset.UtcNow, JobStatus.Complete));
+            _workflowsRepository.GetAsync(secondId, Arg.Any<CancellationToken>())
+                .Returns(new WorkflowRecord(secondId,
+                    new Request(1, "B", PresentationType.Pptx, Path.GetTempPath()), secondLog,
+                    DateTimeOffset.UtcNow, JobStatus.Complete));
+
+            var deleted = await CreateService().DeleteAllCompletedAsync(TestContext.Current.CancellationToken);
+
+            deleted.Should().Be(2);
+            File.Exists(firstLog).Should().BeFalse();
+            File.Exists(secondLog).Should().BeFalse();
+        }
+        finally
+        {
+            if (File.Exists(firstLog)) File.Delete(firstLog);
+            if (File.Exists(secondLog)) File.Delete(secondLog);
+        }
+    }
+
+    #endregion
 }
