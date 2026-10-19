@@ -78,7 +78,35 @@ public enum ConflictKind
     DuplicateWithinRequest,
 
     /// <summary>A job of a different, currently active (running, pending, or paused) request already claims this output path.</summary>
-    ConflictsWithActiveRequest
+    ConflictsWithActiveRequest,
+
+    /// <summary>The output file already exists and will be replaced when the job succeeds. A warning only — it does not block the request.</summary>
+    OverwritesExistingFile
+}
+
+/// <summary>
+///     Why a planned job cannot run as configured. Unlike a conflict, it is a defect of the job's own inputs.
+///     Returned by <see cref="IService.PreviewAsync" /> and enforced by <see cref="IService.CreateAsync" />.
+/// </summary>
+public enum JobProblem
+{
+    /// <summary>No problem.</summary>
+    None,
+
+    /// <summary>The source workbook file does not exist.</summary>
+    WorkbookNotFound,
+
+    /// <summary>The template presentation file does not exist.</summary>
+    TemplateNotFound,
+
+    /// <summary>The template slide index is below 1.</summary>
+    InvalidTemplateSlide,
+
+    /// <summary>
+    ///     The row filter selects nothing by construction: an index range with <c>Start</c> below 1 or <c>End</c> below
+    ///     <c>Start</c>, or a partition whose count is not positive or whose index is outside <c>0..count-1</c>.
+    /// </summary>
+    InvalidRowFilter
 }
 
 /// <summary>
@@ -91,8 +119,16 @@ public enum ConflictKind
 /// <param name="WorkbookPath">Absolute path to the source workbook this job reads from.</param>
 /// <param name="WorksheetName">Name of the source worksheet within <see cref="WorkbookPath" />.</param>
 /// <param name="ConflictKind">Why <see cref="OutputPath" /> is unusable, or <see cref="Generator.ConflictKind.None" /> if it is not.</param>
+/// <param name="Problem">Why this job cannot run as configured, or <see cref="JobProblem.None" />.</param>
 public sealed record PlannedJob(
     string OutputPath,
     string WorkbookPath,
     string WorksheetName,
-    ConflictKind ConflictKind);
+    ConflictKind ConflictKind,
+    JobProblem Problem = JobProblem.None)
+{
+    /// <summary>Whether this job stops the request from being created: an input problem, or an output-path conflict (an overwrite warning does not block).</summary>
+    public bool IsBlocked => Problem != JobProblem.None ||
+                             ConflictKind is Generator.ConflictKind.DuplicateWithinRequest
+                                 or Generator.ConflictKind.ConflictsWithActiveRequest;
+}

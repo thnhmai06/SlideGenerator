@@ -47,18 +47,22 @@ public interface IService
     /// <summary>
     ///     Computes the job list <see cref="CreateAsync" /> would spawn for <paramref name="request" />,
     ///     without spawning anything — lets a caller (e.g. a run confirmation dialog) show exactly what will
-    ///     be created and flag every output-path conflict <see cref="CreateAsync" /> would otherwise reject
-    ///     at submit time, using the identical conflict definition. Does not itself throw on conflicts —
-    ///     conflicts are reported per job via <see cref="PlannedJob.ConflictKind" /> instead.
+    ///     be created, flag every output-path conflict and input problem (<see cref="JobProblem" />)
+    ///     <see cref="CreateAsync" /> would otherwise reject at submit time, using the identical definition,
+    ///     and warn about jobs that would overwrite an existing file
+    ///     (<see cref="ConflictKind.OverwritesExistingFile" />, which does not block). Does not itself throw on
+    ///     conflicts or problems — they are reported per job via <see cref="PlannedJob.ConflictKind" /> and
+    ///     <see cref="PlannedJob.Problem" /> instead.
     /// </summary>
     Task<IReadOnlyList<PlannedJob>> PreviewAsync(Request request, CancellationToken ct = default);
 
     /// <summary>
     ///     Starts a new slide-generation request for the given <paramref name="request" /> — spawns one
     ///     job per computed job specification. Multiple active requests for the same recipe are
-    ///     allowed; throws if two of the request's own jobs would write to the same output path, or if a
-    ///     computed job's output path collides with one already claimed by another active (running or
-    ///     paused) request's job.
+    ///     allowed; throws if a job has an input problem (its source workbook or template presentation is
+    ///     missing, its template slide index is below 1, or its row filter selects nothing), if two of the
+    ///     request's own jobs would write to the same output path, or if a computed job's output path collides
+    ///     with one already claimed by another active (running or paused) request's job.
     /// </summary>
     /// <returns>The generated workflow id grouping every job spawned for it.</returns>
     Task<string> CreateAsync(Request request, CancellationToken ct = default);
@@ -165,15 +169,7 @@ internal sealed class Service(
                     ?? throw new InvalidOperationException($"Recipe {request.RecipeId} not found.");
 
         var jobs = BuildJobs(entry.Recipe, request);
-        var duplicatePaths = FindDuplicateOutputPath(jobs);
-        var activeOutputPaths = await GetActiveOutputPathsAsync().ConfigureAwait(false);
-
-        return jobs
-            .Select(j => new PlannedJob(j.OutputPath, j.WorkbookPath, j.WorksheetName,
-                duplicatePaths.Contains(j.OutputPath) ? ConflictKind.DuplicateWithinRequest
-                : activeOutputPaths.Contains(j.OutputPath) ? ConflictKind.ConflictsWithActiveRequest
-                : ConflictKind.None))
-            .ToList();
+        return await PlanAsync(jobs).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -191,6 +187,23 @@ internal sealed class Service(
         await _createLock.WaitAsync(ct).ConfigureAwait(false);
         try
         {
+            var planned = await PlanAsync(jobs).ConfigureAwait(false);
+            var blockedIndex = -1;
+            for (var i = 0; i < planned.Count; i++)
+                if (planned[i].Problem != JobProblem.None)
+                {
+                    blockedIndex = i;
+                    break;
+                }
+
+            if (blockedIndex >= 0)
+            {
+                var blockedJob = jobs[blockedIndex];
+                throw new InvalidOperationException(
+                    $"Job {blockedIndex} ({blockedJob.WorksheetName} of {Path.GetFileName(blockedJob.WorkbookPath)}) " +
+                    $"cannot run: {planned[blockedIndex].Problem}.");
+            }
+
             var duplicatePaths = FindDuplicateOutputPath(jobs);
             if (duplicatePaths.Count > 0)
                 throw new InvalidOperationException(
@@ -313,6 +326,46 @@ internal sealed class Service(
 
         logger.LogInformation("Deleted {Count} completed/cancelled request(s).", deleted);
         return deleted;
+    }
+
+    /// <summary>
+    ///     Plans one <see cref="PlannedJob" /> per job specification, in the same order — the single planner shared
+    ///     by <see cref="PreviewAsync" /> and <see cref="CreateAsync" /> so both apply the identical input-problem and
+    ///     output-path-conflict definition.
+    /// </summary>
+    private async Task<IReadOnlyList<PlannedJob>> PlanAsync(IReadOnlyList<JobSpecification> jobs)
+    {
+        var duplicatePaths = FindDuplicateOutputPath(jobs);
+        var activeOutputPaths = await GetActiveOutputPathsAsync().ConfigureAwait(false);
+
+        return jobs
+            .Select(j => new PlannedJob(j.OutputPath, j.WorkbookPath, j.WorksheetName,
+                duplicatePaths.Contains(j.OutputPath) ? ConflictKind.DuplicateWithinRequest
+                : activeOutputPaths.Contains(j.OutputPath) ? ConflictKind.ConflictsWithActiveRequest
+                : File.Exists(j.OutputPath) ? ConflictKind.OverwritesExistingFile
+                : ConflictKind.None,
+                FindProblem(j)))
+            .ToList();
+    }
+
+    /// <summary>
+    ///     Returns why <paramref name="job" /> cannot run as configured, or <see cref="JobProblem.None" />. Only
+    ///     cheap checks: file existence and numeric sanity, never opening the workbook or presentation (a preview
+    ///     must not block on a file held open by Excel).
+    /// </summary>
+    private static JobProblem FindProblem(JobSpecification job)
+    {
+        if (!File.Exists(job.WorkbookPath)) return JobProblem.WorkbookNotFound;
+        if (!File.Exists(job.TemplatePresentationPath)) return JobProblem.TemplateNotFound;
+        if (job.TemplateSlideIndex < 1) return JobProblem.InvalidTemplateSlide;
+
+        return job.RowFilter switch
+        {
+            Recipe.Models.IndexRangeFilter { Start: < 1 } => JobProblem.InvalidRowFilter,
+            Recipe.Models.IndexRangeFilter filter when filter.End < filter.Start => JobProblem.InvalidRowFilter,
+            Recipe.Models.PartitionBlockFilter { IsValid: false } => JobProblem.InvalidRowFilter,
+            _ => JobProblem.None
+        };
     }
 
     /// <summary>The log file of workflow <paramref name="workflowId" />: named after the id (unique), never after the user-chosen request name.</summary>

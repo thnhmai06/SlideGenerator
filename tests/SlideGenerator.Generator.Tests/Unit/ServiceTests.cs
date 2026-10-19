@@ -205,8 +205,9 @@ public sealed class ServiceTests
 ///     <c>PreviewAsync</c> (per-job conflict classification, §8.5) and the <c>includeLogs</c> gate on
 ///     <c>ListActiveAsync</c>/<c>ListCompletedAsync</c> (§8.4 — list views must never touch the log file).
 /// </summary>
-public sealed class ServicePreviewAndLoggingTests
+public sealed class ServicePreviewAndLoggingTests : IDisposable
 {
+    private readonly string _tempDir = Path.Combine(Path.GetTempPath(), $"sg-service-tests-{Guid.NewGuid():N}");
     private readonly IWorkflowController _workflowController = Substitute.For<IWorkflowController>();
     private readonly IRecipeRepository _recipeRepository = Substitute.For<IRecipeRepository>();
     private readonly IWorkflowsRepository _workflowsRepository = Substitute.For<IWorkflowsRepository>();
@@ -214,23 +215,67 @@ public sealed class ServicePreviewAndLoggingTests
     private readonly ILogFileReader _logFileReader = Substitute.For<ILogFileReader>();
     private readonly ILogger<Service> _logger = NullLogger<Service>.Instance;
 
+    /// <summary>
+    ///     Creates a fresh temporary directory holding the real (empty) workbook and presentation files the planner
+    ///     requires to report no <see cref="JobProblem" />.
+    /// </summary>
+    public ServicePreviewAndLoggingTests()
+    {
+        Directory.CreateDirectory(_tempDir);
+        foreach (var name in new[] { "data.xlsx", "a.xlsx", "b.xlsx", "a.pptx", "b.pptx", "template.pptx" })
+            File.WriteAllBytes(Path.Combine(_tempDir, name), []);
+    }
+
+    /// <summary>Deletes the temporary directory created for this test instance.</summary>
+    public void Dispose()
+    {
+        if (Directory.Exists(_tempDir)) Directory.Delete(_tempDir, recursive: true);
+    }
+
+    private string TempPath(string fileName)
+    {
+        return Path.Combine(_tempDir, fileName);
+    }
+
     private Service CreateService()
     {
         return new Service(_workflowController, _recipeRepository, _workflowsRepository, _jobsRepository,
             _logFileReader, _logger);
     }
 
-    private static Recipe.Models.Recipe TwoMappingsSameWorksheet()
+    private Recipe.Models.Recipe TwoMappingsSameWorksheet()
     {
-        var workbook = new WorkbookIdentifier(Path.Combine(Path.GetTempPath(), "data.xlsx"));
+        var workbook = new WorkbookIdentifier(TempPath("data.xlsx"));
         var worksheet = new WorksheetIdentifier("Sheet1");
         Mapping Mapping(string templateName) => new(
             [new WorksheetSource(workbook, worksheet)],
             new PresentationSource(
-                new PresentationIdentifier(Path.Combine(Path.GetTempPath(), templateName)),
+                new PresentationIdentifier(TempPath(templateName)),
                 new SlideIdentifier(1)),
             [], []);
         return new Recipe.Models.Recipe([Mapping("a.pptx"), Mapping("b.pptx")]);
+    }
+
+    private Recipe.Models.Recipe OneMapping(string workbookPath, string templatePath, int slideIndex,
+        RowFilter? rowFilter = null)
+    {
+        var source = new WorksheetSource(
+            new WorkbookIdentifier(workbookPath),
+            new WorksheetIdentifier("Sheet1"),
+            null,
+            rowFilter);
+        var mapping = new Mapping(
+            [source],
+            new PresentationSource(
+                new PresentationIdentifier(templatePath),
+                new SlideIdentifier(1) { SlideIndex = slideIndex }),
+            [], []);
+        return new Recipe.Models.Recipe([mapping]);
+    }
+
+    private Recipe.Models.Recipe ServiceTests_OneMappingOneSource()
+    {
+        return OneMapping(TempPath("data.xlsx"), TempPath("template.pptx"), 1);
     }
 
     private void SetupRecipe(Recipe.Models.Recipe recipe)
@@ -238,6 +283,25 @@ public sealed class ServicePreviewAndLoggingTests
         _recipeRepository.GetAsync(1, Arg.Any<CancellationToken>())
             .Returns(new RecipeEntry(1, "Test", recipe, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow));
     }
+
+    /// <summary>Row filters that select nothing by construction, regardless of the worksheet's row count.</summary>
+    public static TheoryData<RowFilter> InvalidRowFilters => new()
+    {
+        new IndexRangeFilter(0, 5),
+        new IndexRangeFilter(5, 2),
+        new PartitionBlockFilter(0, 0),
+        new PartitionBlockFilter(3, 3),
+        new PartitionBlockFilter(-1, 2)
+    };
+
+    /// <summary>Row filters that are valid by construction (including no filter at all).</summary>
+    public static TheoryData<RowFilter?> ValidRowFilters => new()
+    {
+        (RowFilter?)null,
+        new AllRowFilter(),
+        new IndexRangeFilter(1, 5),
+        new PartitionBlockFilter(1, 3)
+    };
 
     #region PreviewAsync
 
@@ -302,18 +366,159 @@ public sealed class ServicePreviewAndLoggingTests
         planned.Should().ContainSingle().Which.ConflictKind.Should().Be(ConflictKind.ConflictsWithActiveRequest);
     }
 
-    private static Recipe.Models.Recipe ServiceTests_OneMappingOneSource()
+    /// <summary>A job whose source workbook is missing is reported as <see cref="JobProblem.WorkbookNotFound" />.</summary>
+    [Fact]
+    public async Task PreviewAsync_MissingWorkbook_ReportsWorkbookNotFound()
     {
-        var source = new WorksheetSource(
-            new WorkbookIdentifier(Path.Combine(Path.GetTempPath(), "data.xlsx")),
-            new WorksheetIdentifier("Sheet1"));
-        var mapping = new Mapping(
-            [source],
-            new PresentationSource(
-                new PresentationIdentifier(Path.Combine(Path.GetTempPath(), "template.pptx")),
-                new SlideIdentifier(1)),
-            [], []);
-        return new Recipe.Models.Recipe([mapping]);
+        SetupRecipe(OneMapping(Path.Combine(_tempDir, "missing.xlsx"), TempPath("template.pptx"), 1));
+        _jobsRepository.GetNonTerminalAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<JobSnapshot>>([]));
+
+        var planned = await CreateService().PreviewAsync(
+            new Request(1, "Test", PresentationType.Pptx, _tempDir), TestContext.Current.CancellationToken);
+
+        var job = planned.Should().ContainSingle().Subject;
+        job.Problem.Should().Be(JobProblem.WorkbookNotFound);
+        job.IsBlocked.Should().BeTrue();
+    }
+
+    /// <summary>A job whose template presentation is missing is reported as <see cref="JobProblem.TemplateNotFound" />.</summary>
+    [Fact]
+    public async Task PreviewAsync_MissingTemplate_ReportsTemplateNotFound()
+    {
+        SetupRecipe(OneMapping(TempPath("data.xlsx"), Path.Combine(_tempDir, "missing.pptx"), 1));
+        _jobsRepository.GetNonTerminalAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<JobSnapshot>>([]));
+
+        var planned = await CreateService().PreviewAsync(
+            new Request(1, "Test", PresentationType.Pptx, _tempDir), TestContext.Current.CancellationToken);
+
+        var job = planned.Should().ContainSingle().Subject;
+        job.Problem.Should().Be(JobProblem.TemplateNotFound);
+        job.IsBlocked.Should().BeTrue();
+    }
+
+    /// <summary>A template slide index below 1 is reported as <see cref="JobProblem.InvalidTemplateSlide" />.</summary>
+    [Fact]
+    public async Task PreviewAsync_TemplateSlideIndexZero_ReportsInvalidTemplateSlide()
+    {
+        SetupRecipe(OneMapping(TempPath("data.xlsx"), TempPath("template.pptx"), 0));
+        _jobsRepository.GetNonTerminalAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<JobSnapshot>>([]));
+
+        var planned = await CreateService().PreviewAsync(
+            new Request(1, "Test", PresentationType.Pptx, _tempDir), TestContext.Current.CancellationToken);
+
+        var job = planned.Should().ContainSingle().Subject;
+        job.Problem.Should().Be(JobProblem.InvalidTemplateSlide);
+        job.IsBlocked.Should().BeTrue();
+    }
+
+    /// <summary>
+    ///     Row filters that select nothing by construction are reported as
+    ///     <see cref="JobProblem.InvalidRowFilter" /> before the job ever starts.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(InvalidRowFilters))]
+    public async Task PreviewAsync_InvalidRowFilter_ReportsInvalidRowFilter(RowFilter rowFilter)
+    {
+        SetupRecipe(OneMapping(TempPath("data.xlsx"), TempPath("template.pptx"), 1, rowFilter));
+        _jobsRepository.GetNonTerminalAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<JobSnapshot>>([]));
+
+        var planned = await CreateService().PreviewAsync(
+            new Request(1, "Test", PresentationType.Pptx, _tempDir), TestContext.Current.CancellationToken);
+
+        var job = planned.Should().ContainSingle().Subject;
+        job.Problem.Should().Be(JobProblem.InvalidRowFilter);
+        job.IsBlocked.Should().BeTrue();
+    }
+
+    /// <summary>Valid row filters (including no filter at all) report no problem.</summary>
+    [Theory]
+    [MemberData(nameof(ValidRowFilters))]
+    public async Task PreviewAsync_ValidRowFilter_ReportsNoProblem(RowFilter? rowFilter)
+    {
+        SetupRecipe(OneMapping(TempPath("data.xlsx"), TempPath("template.pptx"), 1, rowFilter));
+        _jobsRepository.GetNonTerminalAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<JobSnapshot>>([]));
+
+        var planned = await CreateService().PreviewAsync(
+            new Request(1, "Test", PresentationType.Pptx, _tempDir), TestContext.Current.CancellationToken);
+
+        planned.Should().ContainSingle().Which.Problem.Should().Be(JobProblem.None);
+    }
+
+    /// <summary>
+    ///     An already existing output file is reported as an overwrite warning — it does not block the request, and
+    ///     <c>CreateAsync</c> still starts the workflow.
+    /// </summary>
+    [Fact]
+    public async Task PreviewAsync_OutputFileAlreadyExists_ReportsOverwriteWarningThatDoesNotBlock()
+    {
+        var recipe = ServiceTests_OneMappingOneSource();
+        SetupRecipe(recipe);
+        _jobsRepository.GetNonTerminalAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<JobSnapshot>>([]));
+        var request = new Request(1, "Test", PresentationType.Pptx, _tempDir);
+        var outputPath = Service.BuildJobs(recipe, request)[0].OutputPath;
+        Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
+        File.WriteAllBytes(outputPath, []);
+
+        var planned = await CreateService().PreviewAsync(request, TestContext.Current.CancellationToken);
+
+        var job = planned.Should().ContainSingle().Subject;
+        job.ConflictKind.Should().Be(ConflictKind.OverwritesExistingFile);
+        job.IsBlocked.Should().BeFalse();
+
+        var workflowId = await CreateService().CreateAsync(request, TestContext.Current.CancellationToken);
+
+        workflowId.Should().NotBeNullOrEmpty();
+        await _workflowController.Received(1).StartWorkflowAsync(workflowId,
+            Arg.Any<IReadOnlyList<JobSpecification>>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+    }
+
+    /// <summary>
+    ///     <c>CreateAsync</c> refuses a request whose first job has an input problem, names that problem, and starts
+    ///     and persists nothing.
+    /// </summary>
+    [Fact]
+    public async Task CreateAsync_JobWithMissingWorkbook_ThrowsAndStartsNothing()
+    {
+        SetupRecipe(OneMapping(Path.Combine(_tempDir, "missing.xlsx"), TempPath("template.pptx"), 1));
+        _jobsRepository.GetNonTerminalAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<JobSnapshot>>([]));
+
+        var act = () => CreateService().CreateAsync(
+            new Request(1, "Test", PresentationType.Pptx, _tempDir), TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*Job 0 (Sheet1 of missing.xlsx) cannot run: WorkbookNotFound*");
+        await _workflowController.DidNotReceive().StartWorkflowAsync(Arg.Any<string>(),
+            Arg.Any<IReadOnlyList<JobSpecification>>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+        await _workflowsRepository.DidNotReceive().CreateAsync(Arg.Any<WorkflowRecord>(),
+            Arg.Any<CancellationToken>());
+    }
+
+    /// <summary>
+    ///     <see cref="PlannedJob.IsBlocked" /> is true for input problems and real conflicts, but not for the
+    ///     non-blocking overwrite warning.
+    /// </summary>
+    [Fact]
+    public void PlannedJob_IsBlocked_OnlyForProblemsAndRealConflicts()
+    {
+        static PlannedJob Planned(ConflictKind conflictKind, JobProblem problem = JobProblem.None)
+        {
+            return new PlannedJob("out.pptx", "wb.xlsx", "Sheet1", conflictKind, problem);
+        }
+
+        Planned(ConflictKind.None).IsBlocked.Should().BeFalse();
+        Planned(ConflictKind.OverwritesExistingFile).IsBlocked.Should().BeFalse();
+        Planned(ConflictKind.DuplicateWithinRequest).IsBlocked.Should().BeTrue();
+        Planned(ConflictKind.ConflictsWithActiveRequest).IsBlocked.Should().BeTrue();
+
+        foreach (var problem in Enum.GetValues<JobProblem>().Where(p => p != JobProblem.None))
+            Planned(ConflictKind.None, problem).IsBlocked.Should().BeTrue();
     }
 
     #endregion
@@ -443,13 +648,13 @@ public sealed class ServicePreviewAndLoggingTests
     {
         var mapping = new Mapping(
             [
-                new WorksheetSource(new WorkbookIdentifier(Path.Combine(Path.GetTempPath(), "a.xlsx")),
+                new WorksheetSource(new WorkbookIdentifier(TempPath("a.xlsx")),
                     new WorksheetIdentifier("A")),
-                new WorksheetSource(new WorkbookIdentifier(Path.Combine(Path.GetTempPath(), "b.xlsx")),
+                new WorksheetSource(new WorkbookIdentifier(TempPath("b.xlsx")),
                     new WorksheetIdentifier("B"))
             ],
             new PresentationSource(
-                new PresentationIdentifier(Path.Combine(Path.GetTempPath(), "template.pptx")),
+                new PresentationIdentifier(TempPath("template.pptx")),
                 new SlideIdentifier(1)),
             [], []);
         SetupRecipe(new Recipe.Models.Recipe([mapping]));
