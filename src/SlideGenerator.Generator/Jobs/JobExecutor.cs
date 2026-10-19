@@ -79,7 +79,10 @@ internal sealed class JobExecutor(
         var jobId = initial.JobId;
         var spec = initial.Specification;
 
-        if (!context.IsResume) PreflightCleanup.Run(spec.OutputPath, jobLogger);
+        // The job works on its own .partial file and only moves it onto OutputPath once every phase succeeded,
+        // so a failed/cancelled run leaves the previous result in place. A fresh run clears a stale working file.
+        var partialPath = JobOutput.GetPartialPath(spec.OutputPath);
+        if (!context.IsResume) PreflightCleanup.Run(partialPath, jobLogger);
 
         using var workbook = await workbookOpener.OpenWorkbookReadOnlyAsync(
             new WorkbookIdentifier(spec.WorkbookPath), ct).ConfigureAwait(false);
@@ -91,11 +94,35 @@ internal sealed class JobExecutor(
         var dataCount = Math.Max(0, worksheet.RowCount - 1);
         var dataRows = (spec.RowFilter?.GetIndices(dataCount) ?? Enumerable.Range(1, dataCount)).ToList();
 
-        // Phase A — create/open output.
+        // Phase A — create/open output (always the working file).
         var templateId = new PresentationIdentifier(spec.TemplatePresentationPath);
-        var output = initial.Phase == JobPhase.CreatingOutput && !File.Exists(spec.OutputPath)
-            ? await CreateOutputAsync(spec, templateId, jobLogger, ct).ConfigureAwait(false)
-            : await OpenOutputAsync(new PresentationIdentifier(spec.OutputPath), jobLogger, ct).ConfigureAwait(false);
+        IPresentation output;
+        // At CreatingOutput a leftover working file may be a template copy whose slides were not yet removed, so
+        // it is recreated; from CreatingSlides on it holds the job's progress and is reopened.
+        if (initial.Phase != JobPhase.CreatingOutput && File.Exists(partialPath))
+        {
+            output = await OpenOutputAsync(new PresentationIdentifier(partialPath), jobLogger, ct)
+                .ConfigureAwait(false);
+        }
+        else if (initial.Phase == JobPhase.CreatingOutput)
+        {
+            output = await CreateOutputAsync(partialPath, templateId, jobLogger, ct).ConfigureAwait(false);
+        }
+        else if (File.Exists(spec.OutputPath))
+        {
+            // A resumed job past CreatingOutput whose working file is gone, but the final file is there: the
+            // previous attempt had already committed it and crashed before persisting Complete.
+            jobLogger.LogInformation("Output already committed: {OutputPath}", spec.OutputPath);
+            return new JobSnapshot(workflowId, jobId, JobStatus.Complete, JobPhase.Done, dataRows.Count, spec,
+                DateTimeOffset.UtcNow, dataRows.Count);
+        }
+        else
+        {
+            throw new InvalidOperationException(
+                $"Working file '{partialPath}' is missing; job {jobId} cannot resume.");
+        }
+
+        var outputDisposed = false;
         try
         {
             var (templatePresentation, templateSlide) = await LoadTemplateSlideAsync(
@@ -145,13 +172,20 @@ internal sealed class JobExecutor(
                     .ConfigureAwait(false);
             }
 
+            // Commit: release the working file, then rename it onto the final output path (same directory, so
+            // this is an atomic replace). Only now does the new result replace the previous one.
+            output.Save();
+            output.Dispose();
+            outputDisposed = true;
+            File.Move(partialPath, spec.OutputPath, overwrite: true);
+
             jobLogger.LogInformation("Job complete: {OutputPath}", spec.OutputPath);
             return new JobSnapshot(workflowId, jobId, JobStatus.Complete, JobPhase.Done, dataRows.Count, spec,
                 DateTimeOffset.UtcNow, dataRows.Count);
         }
         finally
         {
-            output.Dispose();
+            if (!outputDisposed) output.Dispose();
         }
     }
 
@@ -199,14 +233,14 @@ internal sealed class JobExecutor(
     }
 
     private async Task<IPresentation> CreateOutputAsync(
-        JobSpecification spec, PresentationIdentifier templateId, ILogger jobLogger, CancellationToken ct)
+        string partialPath, PresentationIdentifier templateId, ILogger jobLogger, CancellationToken ct)
     {
-        jobLogger.LogInformation("Creating output: {OutputPath}", spec.OutputPath);
-        var dir = Path.GetDirectoryName(spec.OutputPath);
+        jobLogger.LogInformation("Creating output: {OutputPath}", partialPath);
+        var dir = Path.GetDirectoryName(partialPath);
         if (dir != null) Directory.CreateDirectory(dir);
-        File.Copy(templateId.PresentationPath, spec.OutputPath, true);
+        File.Copy(templateId.PresentationPath, partialPath, true);
 
-        var presentation = await OpenOutputAsync(new PresentationIdentifier(spec.OutputPath), jobLogger, ct)
+        var presentation = await OpenOutputAsync(new PresentationIdentifier(partialPath), jobLogger, ct)
             .ConfigureAwait(false);
         for (var i = presentation.SlidesCount - 1; i >= 0; i--) presentation.RemoveSlideAt(i);
         return presentation;

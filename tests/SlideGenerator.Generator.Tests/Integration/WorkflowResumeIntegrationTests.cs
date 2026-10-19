@@ -14,6 +14,7 @@
 
 using System.Text;
 using FluentAssertions;
+using SlideGenerator.Generator.Jobs;
 using SlideGenerator.Generator.Jobs.Models;
 using SlideGenerator.Generator.Workflows;
 using SlideGenerator.Recipe.Models;
@@ -92,13 +93,26 @@ public sealed class WorkflowResumeIntegrationTests
             File.Exists(logPath).Should().BeTrue(
                 "the LoggingWorkflowRunner opened the file during the first run");
 
-            // Simulate the crash: cancel the engine's CTS (the same path StopAsync takes), wait for the
-            // engine's terminal callback to durably land Cancelled in the buffer, then rewind the workflow
-            // and job rows back to Running. A real kill -9 leaves the engine mid-write and the rows at
-            // whatever was last persisted (before any terminal Cancelled write completed); the wrapper here
-            // replicates that explicitly because the engine otherwise does write Cancelled synchronously
-            // after StopAsync. The wait is the deterministic synchronization point: without it the
-            // engine's background task could overwrite Running with Cancelled after our rewind flush.
+            // Simulate the crash: a real kill -9 never reaches the workflow's cleanup, which discards the
+            // job's working (.partial) file on a cancellation. Pause first (the in-flight row finishes and
+            // the runner parks at its next checkpoint), preserve the working file, then cancel the engine
+            // and restore it — the resume needs it to continue where the job stopped.
+            var outputPath = specs[0].OutputPath;
+            var partialPath = JobOutput.GetPartialPath(outputPath);
+            (await first.Controller.PauseWorkflowAsync(workflowId)).Should().BeTrue();
+            await Task.Delay(300, TestContext.Current.CancellationToken);
+
+            File.Exists(partialPath).Should().BeTrue("the job is mid-run and writes into its working file");
+            var partialBackupPath = Path.Combine(first.TempRoot, "partial-backup.pptx.partial");
+            File.Copy(partialPath, partialBackupPath, overwrite: true);
+
+            // Cancel the engine's CTS (the same path StopAsync takes), wait for the engine's terminal
+            // callback to durably land Cancelled in the buffer, then rewind the workflow and job rows back
+            // to Running. A real kill -9 leaves the engine mid-write and the rows at whatever was last
+            // persisted (before any terminal Cancelled write completed); the wrapper here replicates that
+            // explicitly because the engine otherwise does write Cancelled synchronously after StopAsync.
+            // The wait is the deterministic synchronization point: without it the engine's background task
+            // could overwrite Running with Cancelled after our rewind flush.
             await first.Engine.StopAsync(workflowId);
 
             // Drain the engine's terminal write (OnTerminalAsync -> workflows repository, plus the
@@ -117,6 +131,12 @@ public sealed class WorkflowResumeIntegrationTests
 
             // Cleanly shut the first engine down so its background task exits.
             await first.ShutdownAsync();
+
+            // The graceful stop discarded the working file (a real crash would not). Restore it so the
+            // resumed job finds the work it had already done, exactly as a killed process would leave it.
+            File.Exists(partialPath).Should().BeFalse("cancelling the workflow discards the working file");
+            File.Copy(partialBackupPath, partialPath, overwrite: true);
+            File.Exists(partialPath).Should().BeTrue("a real crash leaves the working file behind for the resume");
 
             // Capture the line count from the first run before resuming into the same file.
             var firstRunLineCount = CountLines(logPath);
@@ -171,6 +191,10 @@ public sealed class WorkflowResumeIntegrationTests
             finalJobs[0].Phase.Should().Be(JobPhase.Done);
             finalJobs[0].CurrentIndex.Should().Be(3,
                 "IndexRangeFilter(1, 3) yields 3 rows; the resumed run reaches the last one");
+
+            // The resumed job committed its working file onto the final output path.
+            File.Exists(outputPath).Should().BeTrue("the resumed run committed the finished presentation");
+            File.Exists(partialPath).Should().BeFalse("the committed job leaves no working file behind");
 
             // The workflow row itself is now Complete.
             var workflowRowAfter = await second.Workflows.GetAsync(workflowId, TestContext.Current.CancellationToken);

@@ -62,6 +62,7 @@ internal sealed class SlideGenerationWorkflow(
     {
         using var jobScope = LogContext.PushProperty("JobId", job.JobId);
         var jobContext = new JobContext(job, context, workflowLogger, this);
+        var completed = false;
         try
         {
             using var lease = await jobGate.AcquireAsync(ct).ConfigureAwait(false);
@@ -72,6 +73,7 @@ internal sealed class SlideGenerationWorkflow(
             var final = await jobExecutor.RunAsync(job, jobContext, ct).ConfigureAwait(false);
             await PersistAndPublishAsync(final with { JobStatus = JobStatus.Complete, Timestamp = DateTimeOffset.UtcNow },
                 true, CancellationToken.None).ConfigureAwait(false);
+            completed = true;
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
@@ -90,6 +92,10 @@ internal sealed class SlideGenerationWorkflow(
         finally
         {
             CleanupJobTempFolder(job.WorkflowId, job.JobId);
+
+            // A job that never completed must not leave its working file behind (a crash never reaches this
+            // point, so a crashed job keeps the .partial file it can resume from).
+            if (!completed) JobOutput.DiscardPartial(job.Specification.OutputPath, workflowLogger);
         }
     }
 
