@@ -166,6 +166,51 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
         entry.Name.Should().Be("TestName");
     }
 
+    /// <summary>
+    ///     A row inserted directly whose recipe JSON omits a mapping's collection properties reads back
+    ///     with empty — never null — collections that can be enumerated safely.
+    /// </summary>
+    [Fact]
+    public async Task GetAsync_RowJsonOmitsMappingCollections_ReturnsEmptyCollections()
+    {
+        const string json = """
+                            {
+                              "mappings": [
+                                {
+                                  "template": {
+                                    "presentation": { "presentationPath": "template.pptx" },
+                                    "slide": { "slideIndex": 1 }
+                                  }
+                                }
+                              ]
+                            }
+                            """;
+        long id;
+        await using (var command = _anchor.CreateCommand())
+        {
+            command.CommandText =
+                "INSERT INTO Recipes (Name, Recipe, CreatedTimestamp, UpdatedTimestamp) " +
+                "VALUES ('Crafted', @recipe, '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z'); " +
+                "SELECT last_insert_rowid();";
+            command.Parameters.AddWithValue("@recipe", json);
+            id = (long)(await command.ExecuteScalarAsync(TestContext.Current.CancellationToken))!;
+        }
+
+        var entry = await _repo.GetAsync((int)id, TestContext.Current.CancellationToken);
+        var list = await _repo.ListAsync(TestContext.Current.CancellationToken);
+
+        var mapping = entry.Recipe.Mappings.Single();
+        mapping.Sources.Should().NotBeNull().And.BeEmpty();
+        mapping.TextInstructions.Should().NotBeNull().And.BeEmpty();
+        mapping.ImageInstructions.Should().NotBeNull().And.BeEmpty();
+        mapping.Sources.Count.Should().Be(0);
+
+        var listed = (RecipeEntry)list.Single(e => e.Id == id);
+        listed.Recipe.Mappings.Single().Sources.Should().NotBeNull().And.BeEmpty();
+        listed.Recipe.Mappings.Single().TextInstructions.Should().NotBeNull().And.BeEmpty();
+        listed.Recipe.Mappings.Single().ImageInstructions.Should().NotBeNull().And.BeEmpty();
+    }
+
     /// <summary>Listing against an empty database returns an empty result.</summary>
     [Fact]
     public async Task ListAsync_EmptyDatabase_ReturnsEmptyList()

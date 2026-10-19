@@ -25,6 +25,20 @@ namespace SlideGenerator.Recipe.Models;
 public sealed record Recipe(IReadOnlyList<Mapping> Mappings)
 {
     /// <summary>
+    ///     Returns this recipe with every collection that a deserialized or hand-crafted recipe may have left null
+    ///     replaced by an empty one, recursively (mappings, sources, instructions, placeholders, columns, shapes,
+    ///     ROI options and a missing image edit instruction). Members that are already non-null are kept as they
+    ///     are, and a null <see cref="WorksheetSource.UsedColumns" />/<see cref="WorksheetSource.RowFilter" /> keeps
+    ///     its meaning (all columns / all rows). A null <see cref="Mapping.Template" /> is not repaired.
+    /// </summary>
+    public Recipe Normalized()
+    {
+        // Runtime values can be null: System.Text.Json does not enforce nullable annotations.
+        // ReSharper disable once NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract
+        return new Recipe([.. (Mappings ?? []).Select(m => m.Normalized())]);
+    }
+
+    /// <summary>
     ///     Extracts all unique workbook and presentation file paths referenced by this recipe.
     /// </summary>
     public IReadOnlySet<string> GetReferencedFiles()
@@ -49,7 +63,25 @@ public sealed record Mapping(
     IReadOnlyList<WorksheetSource> Sources,
     PresentationSource Template,
     IReadOnlyList<TextInstruction> TextInstructions,
-    IReadOnlyList<ImageInstruction> ImageInstructions);
+    IReadOnlyList<ImageInstruction> ImageInstructions)
+{
+    /// <summary>
+    ///     Returns this mapping with every null collection replaced by an empty one and its instructions
+    ///     normalized recursively. A null <see cref="Template" /> is not repaired.
+    /// </summary>
+    internal Mapping Normalized()
+    {
+        // Runtime values can be null: System.Text.Json does not enforce nullable annotations.
+        // ReSharper disable NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract
+        return this with
+        {
+            Sources = Sources ?? [],
+            TextInstructions = [.. (TextInstructions ?? []).Select(t => t.Normalized())],
+            ImageInstructions = [.. (ImageInstructions ?? []).Select(i => i.Normalized())]
+        };
+        // ReSharper restore NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract
+    }
+}
 
 /// <summary>
 ///     Identifies one worksheet as a data source, with optional column/row filtering.

@@ -40,6 +40,7 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
     private readonly List<string> _cleanupDirs = [];
     private readonly List<string> _cleanupFiles = [];
     private readonly RecipePackageService _pkg;
+    private readonly SqliteRecipeRepository _repo;
 
     /// <summary>
     ///     Sets up a shared-cache in-memory SQLite database with an anchor connection.
@@ -55,8 +56,8 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
         _anchor = new SqliteConnection(builder.ConnectionString);
         _anchor.Open();
         DatabaseMigrator.Migrate(builder.ConnectionString);
-        var repo = new SqliteRecipeRepository(builder);
-        _pkg = new RecipePackageService(repo);
+        _repo = new SqliteRecipeRepository(builder);
+        _pkg = new RecipePackageService(_repo);
     }
 
     /// <inheritdoc />
@@ -118,6 +119,59 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
             TestContext.Current.CancellationToken);
 
         await act.Should().ThrowAsync<InvalidDataException>();
+    }
+
+    /// <summary>
+    ///     An archive whose recipe JSON leaves a mapping's collections null or missing imports successfully
+    ///     and stores a recipe whose collections are empty rather than null.
+    /// </summary>
+    [Fact(DisplayName = "ImportAsync normalizes null/missing mapping collections to empty")]
+    public async Task ImportAsync_RecipeWithNullCollections_StoresEmptyCollections()
+    {
+        var sandboxRoot = Path.Combine(Path.GetTempPath(), "rrs_" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(sandboxRoot);
+        _cleanupDirs.Add(sandboxRoot);
+
+        var workbooksDir = Path.Combine(sandboxRoot, "workbooks");
+        var presentationsDir = Path.Combine(sandboxRoot, "presentations");
+        Directory.CreateDirectory(workbooksDir);
+        Directory.CreateDirectory(presentationsDir);
+
+        var zipPath = Path.Combine(sandboxRoot, "null-collections" + RecipePackageFormat.PackageExtension);
+        _cleanupFiles.Add(zipPath);
+
+        const string recipeJson = """
+                                  {
+                                    "mappings": [
+                                      {
+                                        "template": {
+                                          "presentation": { "presentationPath": "template.pptx" },
+                                          "slide": { "slideIndex": 1 }
+                                        },
+                                        "sources": null,
+                                        "imageInstructions": null
+                                      }
+                                    ]
+                                  }
+                                  """;
+
+        await using (var fs = File.Create(zipPath))
+        await using (var archive = new ZipArchive(fs, ZipArchiveMode.Create))
+        {
+            var recipeEntry = archive.CreateEntry("recipe.json", CompressionLevel.NoCompression);
+            await using var recipeStream = await recipeEntry.OpenAsync(TestContext.Current.CancellationToken);
+            await using var writer = new StreamWriter(recipeStream);
+            await writer.WriteAsync(recipeJson);
+        }
+
+        var imported = await _pkg.ImportAsync(zipPath, (workbooksDir, presentationsDir),
+            TestContext.Current.CancellationToken);
+        var entry = await _repo.GetAsync(imported.Id, TestContext.Current.CancellationToken);
+
+        var mapping = entry.Recipe.Mappings.Single();
+        mapping.Sources.Should().NotBeNull().And.BeEmpty();
+        mapping.TextInstructions.Should().NotBeNull().And.BeEmpty();
+        mapping.ImageInstructions.Should().NotBeNull().And.BeEmpty();
     }
 
     #endregion

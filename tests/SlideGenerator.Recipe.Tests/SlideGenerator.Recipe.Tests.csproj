@@ -22,6 +22,7 @@
     <ItemGroup>
         <ProjectReference Include="../../src/SlideGenerator.Recipe/SlideGenerator.Recipe.csproj"/>
         <ProjectReference Include="../../src/SlideGenerator.Document/SlideGenerator.Document.csproj"/>
+        <ProjectReference Include="../../src/SlideGenerator.Image/SlideGenerator.Image.csproj"/>
         <ProjectReference Include="../../src/SlideGenerator.Settings/SlideGenerator.Settings.csproj"/>
     </ItemGroup>
 

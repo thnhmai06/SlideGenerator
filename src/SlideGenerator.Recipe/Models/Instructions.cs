@@ -27,7 +27,18 @@ namespace SlideGenerator.Recipe.Models;
 /// <param name="Columns">The list of columns whose values will provide the replacement text.</param>
 public record TextInstruction(
     IReadOnlySet<string> Placeholders,
-    IReadOnlyList<ColumnIdentifier> Columns);
+    IReadOnlyList<ColumnIdentifier> Columns)
+{
+    /// <summary>
+    ///     Returns this instruction with null placeholders/columns replaced by empty collections.
+    /// </summary>
+    internal TextInstruction Normalized()
+    {
+        // Runtime values can be null: System.Text.Json does not enforce nullable annotations.
+        // ReSharper disable once NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract
+        return this with { Placeholders = Placeholders ?? new HashSet<string>(), Columns = Columns ?? [] };
+    }
+}
 
 #endregion
 
@@ -64,6 +75,25 @@ public record ImageInstruction(
         get;
         init => field = string.IsNullOrWhiteSpace(value) ? null : Path.GetFullPath(value);
     } = FallbackImagePath;
+
+    /// <summary>
+    ///     Returns this instruction with null shapes/columns replaced by empty collections, a null image
+    ///     edit instruction replaced by one with no ROI options, and its ROI options normalized as well.
+    /// </summary>
+    internal ImageInstruction Normalized()
+    {
+        // Runtime values can be null: System.Text.Json does not enforce nullable annotations.
+        // ReSharper disable NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract
+        return this with
+        {
+            Shapes = Shapes ?? new HashSet<ShapeIdentifier>(),
+            Columns = Columns ?? [],
+            ImageEditInstruction = ImageEditInstruction is null
+                ? new ImageEditInstruction([])
+                : ImageEditInstruction with { RoiOptions = ImageEditInstruction.RoiOptions ?? [] }
+        };
+        // ReSharper restore NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract
+    }
 }
 
 #endregion

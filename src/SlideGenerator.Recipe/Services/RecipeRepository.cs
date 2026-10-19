@@ -173,9 +173,8 @@ internal sealed class SqliteRecipeRepository(SqliteConnectionStringBuilder build
             graph = new Models.Recipe([]);
         }
 
-        // ponytail: missing/null "mappings" on otherwise-valid JSON is treated as an empty recipe,
-        // not a crash — matches the "archive rejected? no, just empty" spirit without hiding real parse errors.
-        graph = new Models.Recipe(graph.Mappings);
+        // A row whose JSON omits collections reads back with empty ones, never null.
+        graph = graph.Normalized();
 
         return new RecipeEntry(
             (int)row.Id,

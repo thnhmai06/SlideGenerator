@@ -51,8 +51,9 @@ internal sealed partial class RecipePackageService
 
     /// <summary>
     ///     Reads and deserializes the required <c>Recipe.json</c> entry from <paramref name="archive" />.
-    ///     A <c>null</c> <c>Mappings</c> array (e.g., a crafted or truncated <c>"{}"</c> payload) is normalized
-    ///     to an empty list rather than left to crash a later consumer.
+    ///     Every collection the payload leaves null or omits (mappings, sources, instructions, placeholders,
+    ///     columns, shapes and ROI options) is normalized to an empty one rather than left to crash a later
+    ///     consumer.
     /// </summary>
     private static Models.Recipe ReadRecipeFile(ZipArchive archive)
     {
@@ -72,9 +73,9 @@ internal sealed partial class RecipePackageService
             var recipe = JsonSerializer.Deserialize<Models.Recipe>(json, RecipePackageFormat.Data.Recipe.Format)
                          ?? throw new InvalidDataException(
                              $"Archive rejected: '{RecipePackageFormat.Data.Recipe.FileName}' deserialize as null.");
-            // ReSharper disable once NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract
-            // recipe.Mappings can be null on runtime when "mappings":null
-            return new Models.Recipe(recipe.Mappings ?? []);
+            // Runtime collections (including "mappings") can be null when the JSON omits or nulls them:
+            // System.Text.Json does not enforce nullable annotations.
+            return recipe.Normalized();
         }
         catch (JsonException ex)
         {
