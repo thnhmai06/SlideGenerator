@@ -52,8 +52,14 @@ public interface IWorkflowEngine<TKey, TState> where TKey : notnull
     /// <summary>Resumes a paused workflow. Returns <see langword="false" /> if not currently registered.</summary>
     Task<bool> ResumeAsync(TKey key);
 
-    /// <summary>Cancels a running or paused workflow. Returns <see langword="false" /> if not currently registered.</summary>
-    Task<bool> StopAsync(TKey key);
+    /// <summary>
+    ///     Cancels a running or paused workflow. Returns <see langword="false" /> if not currently registered.
+    ///     When <paramref name="waitForExit" /> is <see langword="true" />, the returned task completes only after
+    ///     the runner has unwound and its terminal outcome has been forwarded to the observer, so the caller can
+    ///     safely delete the workflow's data afterwards. Never await it from inside the runner itself — it would
+    ///     wait for itself.
+    /// </summary>
+    Task<bool> StopAsync(TKey key, bool waitForExit = false);
 }
 
 /// <summary>
@@ -125,12 +131,13 @@ public sealed class WorkflowEngine<TKey, TState>(
     }
 
     /// <inheritdoc />
-    public Task<bool> StopAsync(TKey key)
+    public async Task<bool> StopAsync(TKey key, bool waitForExit = false)
     {
-        if (!_running.TryGetValue(key, out var workflow)) return Task.FromResult(false);
+        if (!_running.TryGetValue(key, out var workflow)) return false;
         workflow.Cts.Cancel();
         workflow.Gate.Resume(); // unblock a paused checkpoint so cancellation is observed promptly
-        return Task.FromResult(true);
+        if (waitForExit) await workflow.Exited.Task.ConfigureAwait(false);
+        return true;
     }
 
     /// <summary>Registers a new running workflow. Throws if <paramref name="key" /> is already registered.</summary>
@@ -177,6 +184,7 @@ public sealed class WorkflowEngine<TKey, TState>(
         finally
         {
             _running.TryRemove(key, out _);
+            running.Exited.TrySetResult();
         }
     }
 
@@ -189,6 +197,9 @@ public sealed class WorkflowEngine<TKey, TState>(
         public CancellationTokenSource Cts { get; } = new();
         public PauseGate Gate { get; } = new();
         public Task? RunTask { get; set; }
+
+        /// <summary>Completed once the runner has finished and its terminal outcome has been forwarded to the observer.</summary>
+        public TaskCompletionSource Exited { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         public void SetLastState(TState state)
         {

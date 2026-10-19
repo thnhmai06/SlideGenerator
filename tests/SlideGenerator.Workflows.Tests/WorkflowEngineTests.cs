@@ -39,6 +39,15 @@ public sealed class WorkflowEngineTests
         return (engine, observer);
     }
 
+    private static (WorkflowEngine<string, TestState> Engine, HeldTerminalObserver Observer)
+        CreateEngineWithHeldTerminal()
+    {
+        var observer = new HeldTerminalObserver();
+        var engine =
+            new WorkflowEngine<string, TestState>(observer, NullLogger<WorkflowEngine<string, TestState>>.Instance);
+        return (engine, observer);
+    }
+
     /// <summary>
     ///     Returns <see langword="true" /> if <paramref name="task" /> completes within <paramref name="timeout" />,
     ///     without throwing on timeout.
@@ -209,5 +218,154 @@ public sealed class WorkflowEngineTests
 
         runner1.Release[0].SetResult();
         runner2.WasCalled.Should().BeFalse();
+    }
+
+    /// <summary>
+    ///     <c>StopAsync(waitForExit: true)</c> must not complete until the runner has unwound and its terminal
+    ///     outcome has actually been forwarded to the observer.
+    /// </summary>
+    [Fact]
+    public async Task StopAsync_WaitForExit_CompletesOnlyAfterTerminalCallbackIsForwarded()
+    {
+        var (engine, observer) = CreateEngineWithHeldTerminal();
+        var runner = new CancellationBlockingRunner();
+
+        await engine.StartWorkflowAsync("workflow", new TestState(0), runner, TestContext.Current.CancellationToken);
+        await runner.Entered.Task.WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
+
+        var stop = engine.StopAsync("workflow", waitForExit: true);
+        await observer.Entered.Task.WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
+
+        (await CompletesWithinAsync(stop, NoProgressWindow)).Should()
+            .BeFalse("the terminal callback is still held, so the workflow has not exited yet");
+
+        observer.Release.SetResult();
+        (await stop.WaitAsync(ShortTimeout, TestContext.Current.CancellationToken)).Should().BeTrue();
+
+        var result = await observer.Inner.WaitTerminalAsync("workflow")
+            .WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
+        result.Outcome.Should().Be(WorkflowOutcome.Cancelled);
+    }
+
+    /// <summary>
+    ///     Stopping a paused workflow with <c>waitForExit: true</c> must unblock its checkpoint, wait for the
+    ///     cancel to unwind, and report <see cref="WorkflowOutcome.Cancelled" />.
+    /// </summary>
+    [Fact]
+    public async Task StopAsync_WaitForExitWhilePaused_UnblocksTheGateAndCompletes()
+    {
+        var (engine, observer) = CreateEngine();
+        var runner = new ScriptedRunner(2, new TestState(99));
+
+        await engine.StartWorkflowAsync("workflow", new TestState(0), runner, TestContext.Current.CancellationToken);
+        await runner.Reported[0].Task.WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
+
+        await engine.PauseAsync("workflow");
+        runner.Release[0].SetResult();
+        (await CompletesWithinAsync(runner.Reported[1].Task, NoProgressWindow)).Should().BeFalse();
+
+        var stopped = await engine.StopAsync("workflow", waitForExit: true)
+            .WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
+        stopped.Should().BeTrue();
+
+        var result = await observer.WaitTerminalAsync("workflow")
+            .WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
+        result.Outcome.Should().Be(WorkflowOutcome.Cancelled);
+    }
+
+    /// <summary>
+    ///     Without <c>waitForExit</c>, <c>StopAsync</c> must return as soon as cancellation is requested, before
+    ///     the runner has unwound or the observer has seen the terminal outcome.
+    /// </summary>
+    [Fact]
+    public async Task StopAsync_WithoutWaitForExit_ReturnsBeforeTheRunnerHasExited()
+    {
+        var (engine, observer) = CreateEngineWithHeldTerminal();
+        var runner = new CancellationBlockingRunner();
+
+        await engine.StartWorkflowAsync("workflow", new TestState(0), runner, TestContext.Current.CancellationToken);
+        await runner.Entered.Task.WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
+
+        (await engine.StopAsync("workflow").WaitAsync(ShortTimeout, TestContext.Current.CancellationToken)).Should()
+            .BeTrue();
+        await observer.Entered.Task.WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
+
+        (await CompletesWithinAsync(observer.Inner.WaitTerminalAsync("workflow"), NoProgressWindow)).Should()
+            .BeFalse("the terminal callback is still held, so stop must not have waited for it");
+
+        observer.Release.SetResult();
+        var result = await observer.Inner.WaitTerminalAsync("workflow")
+            .WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
+        result.Outcome.Should().Be(WorkflowOutcome.Cancelled);
+    }
+
+    /// <summary>
+    ///     Stopping an unknown key must return <see langword="false" /> immediately, even when asked to wait for
+    ///     an exit that can never happen.
+    /// </summary>
+    [Fact]
+    public async Task StopAsync_UnknownKey_ReturnsFalseEvenWhenWaiting()
+    {
+        var (engine, _) = CreateEngine();
+
+        var stopped = await engine.StopAsync("missing", waitForExit: true)
+            .WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
+
+        stopped.Should().BeFalse();
+    }
+
+    /// <summary>
+    ///     A runner that parks inside <see cref="Task.Delay(TimeSpan, CancellationToken)" /> until the engine
+    ///     cancels it — nothing else can complete it, so it deterministically stays running.
+    /// </summary>
+    private sealed class CancellationBlockingRunner : IWorkflowRunner<TestState>
+    {
+        /// <summary>Signalled once the runner has entered its only await point.</summary>
+        public TaskCompletionSource Entered { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        /// <inheritdoc />
+        public async Task<TestState> RunAsync(TestState state, IWorkflowContext<TestState> context, CancellationToken ct)
+        {
+            Entered.TrySetResult();
+            await Task.Delay(Timeout.InfiniteTimeSpan, ct).ConfigureAwait(false);
+            return state; // unreachable: the delay only completes by throwing on cancellation
+        }
+    }
+
+    /// <summary>
+    ///     Delegates every callback to a <see cref="RecordingObserver" /> but holds
+    ///     <see cref="OnTerminalAsync" /> until the test releases it, so a test can prove whether a caller really
+    ///     waits for the terminal outcome to be forwarded.
+    /// </summary>
+    private sealed class HeldTerminalObserver : IWorkflowObserver<string, TestState>
+    {
+        /// <summary>Signalled once <see cref="OnTerminalAsync" /> has been entered and is now held.</summary>
+        public TaskCompletionSource Entered { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        /// <summary>Completed by the test to let the held terminal callback return.</summary>
+        public TaskCompletionSource Release { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        /// <summary>The callbacks recorded once <see cref="Release" /> is completed.</summary>
+        public RecordingObserver Inner { get; } = new();
+
+        /// <inheritdoc />
+        public Task OnProgressAsync(string key, TestState state, bool durable, CancellationToken ct) =>
+            Inner.OnProgressAsync(key, state, durable, ct);
+
+        /// <inheritdoc />
+        public Task OnPausedAsync(string key, TestState state, CancellationToken ct) =>
+            Inner.OnPausedAsync(key, state, ct);
+
+        /// <inheritdoc />
+        public Task OnResumedAsync(string key, TestState state, CancellationToken ct) =>
+            Inner.OnResumedAsync(key, state, ct);
+
+        /// <inheritdoc />
+        public async Task OnTerminalAsync(string key, WorkflowTerminalResult<TestState> result, CancellationToken ct)
+        {
+            Entered.TrySetResult();
+            await Release.Task.ConfigureAwait(false);
+            await Inner.OnTerminalAsync(key, result, ct).ConfigureAwait(false);
+        }
     }
 }

@@ -209,7 +209,7 @@ internal sealed class Service(
     public Task<PartialResult> StopAsync(string workflowId, CancellationToken ct = default)
     {
         return ControlAsync(workflowId, status => status is JobStatus.Running or JobStatus.Pending or JobStatus.Paused,
-            workflowController.StopWorkflowAsync, ct);
+            id => workflowController.StopWorkflowAsync(id), ct);
     }
 
     /// <inheritdoc />

@@ -182,6 +182,52 @@ public sealed class WorkflowControlIntegrationTests
     }
 
     /// <summary>
+    ///     Stops the workflow with <c>waitForExit: true</c>: the call may only return once the runner has unwound
+    ///     and its terminal outcome was forwarded, so the workflow and every job row are <em>immediately</em>
+    ///     readable as <see cref="JobStatus.Cancelled" /> with no waiting on the observer and no later re-write.
+    ///     A second stop then reports the workflow is no longer registered.
+    /// </summary>
+    [Fact(DisplayName = "INTEGRATION: (b) stop with wait-for-exit commits cancelled rows before returning")]
+    public async Task StopWaitForExit_ReturnsOnlyAfterWorkflowAndJobRowsAreCancelled()
+    {
+        if (!WorkflowTestHarness.HasLicense())
+        {
+            Assert.Skip("SYNCFUSION_LICENSE_KEY not set — add the secret to run this integration test");
+        }
+
+        await using var harness = new WorkflowTestHarness();
+        harness.Settings.MaxConcurrentJobs = 1;
+
+        var specs = new[]
+        {
+            harness.BuildSpec(rowRange: new IndexRangeFilter(1, 18)),
+            harness.BuildSpec(rowRange: new IndexRangeFilter(1, 18))
+        };
+        var workflowId = await harness.StartAsync(specs, name: "stop-wait-exit",
+            TestContext.Current.CancellationToken);
+
+        await harness.WaitForJobsAsync(workflowId,
+            jobs => jobs.Count == 2 && jobs.Any(j => j.JobStatus == JobStatus.Running),
+            TestTimeout, TestContext.Current.CancellationToken);
+
+        (await harness.Controller.StopWorkflowAsync(workflowId, waitForExit: true)).Should().BeTrue();
+
+        // Deliberately no harness.Observer.WaitTerminalAsync here: waitForExit promises the terminal callback has
+        // already been forwarded, so the persisted rows must be readable right away.
+        var workflow = await harness.Workflows.GetAsync(workflowId, TestContext.Current.CancellationToken);
+        workflow.Should().NotBeNull();
+        workflow!.Status.Should().Be(JobStatus.Cancelled);
+
+        var jobs = await harness.Jobs.GetByWorkflowIdAsync(workflowId, TestContext.Current.CancellationToken);
+        jobs.Should().HaveCount(2);
+        jobs.Should().OnlyContain(j => j.JobStatus == JobStatus.Cancelled,
+            "the workflow had fully exited before StopWorkflowAsync returned");
+
+        (await harness.Controller.StopWorkflowAsync(workflowId)).Should().BeFalse(
+            "the workflow is no longer registered once it has exited");
+    }
+
+    /// <summary>
     ///     Polls the harness's event bus (20 ms delay between passes) until an already-published snapshot of
     ///     <paramref name="workflowId" /> matches <paramref name="predicate" />, or the timeout elapses. The bus
     ///     is live (every <see cref="JobExecutor" /> report passes through it), so this is a simple polling

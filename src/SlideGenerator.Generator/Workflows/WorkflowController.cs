@@ -49,8 +49,12 @@ public interface IWorkflowController
     /// <summary>Resumes a paused workflow. Returns <see langword="false" /> if not currently running.</summary>
     Task<bool> ResumeWorkflowAsync(string workflowId);
 
-    /// <summary>Cancels a running or paused workflow. Returns <see langword="false" /> if not currently running.</summary>
-    Task<bool> StopWorkflowAsync(string workflowId);
+    /// <summary>
+    ///     Cancels a running or paused workflow; with <paramref name="waitForExit" /> also waits until it has fully
+    ///     exited — see <see cref="IWorkflowEngine{TKey,TState}.StopAsync" />. Returns false if not currently
+    ///     running.
+    /// </summary>
+    Task<bool> StopWorkflowAsync(string workflowId, bool waitForExit = false);
 }
 
 /// <inheritdoc cref="IWorkflowController" />
@@ -105,8 +109,8 @@ internal sealed class WorkflowController(
     }
 
     /// <inheritdoc />
-    public Task<bool> StopWorkflowAsync(string workflowId)
+    public Task<bool> StopWorkflowAsync(string workflowId, bool waitForExit = false)
     {
-        return engine.StopAsync(workflowId);
+        return engine.StopAsync(workflowId, waitForExit);
     }
 }
