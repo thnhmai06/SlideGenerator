@@ -64,7 +64,7 @@ public sealed class ImageCacheTests : IDisposable
         var bytes = MakePngBytes(8);
         var cloud = Substitute.For<ICloudClient>();
         cloud.InspectAsync(uri, Arg.Any<HttpClient?>(), Arg.Any<CancellationToken>())
-            .Returns(new ContentInfo(uri, "image/png", (uint)bytes.Length, ".png"));
+            .Returns(new ContentInfo(uri, "image/png", (uint)bytes.Length));
         cloud.DownloadToFileAsync(uri, Arg.Any<string>(), Arg.Any<long>(), Arg.Any<HttpClient?>(),
                 Arg.Any<CancellationToken>())
             .Returns(ci => { File.WriteAllBytes((string)ci[1]!, bytes); return Task.CompletedTask; });
@@ -97,9 +97,9 @@ public sealed class ImageCacheTests : IDisposable
 
         var cloud = Substitute.For<ICloudClient>();
         cloud.InspectAsync(source1, Arg.Any<HttpClient?>(), Arg.Any<CancellationToken>())
-            .Returns(new ContentInfo(final, "image/png", (uint)bytes.Length, ".png"));
+            .Returns(new ContentInfo(final, "image/png", (uint)bytes.Length));
         cloud.InspectAsync(source2, Arg.Any<HttpClient?>(), Arg.Any<CancellationToken>())
-            .Returns(new ContentInfo(final, "image/png", (uint)bytes.Length, ".png"));
+            .Returns(new ContentInfo(final, "image/png", (uint)bytes.Length));
         cloud.DownloadToFileAsync(final, Arg.Any<string>(), Arg.Any<long>(), Arg.Any<HttpClient?>(),
                 Arg.Any<CancellationToken>())
             .Returns(ci => { File.WriteAllBytes((string)ci[1]!, bytes); return Task.CompletedTask; });
@@ -133,7 +133,7 @@ public sealed class ImageCacheTests : IDisposable
 
         var cloud = Substitute.For<ICloudClient>();
         cloud.InspectAsync(uri, Arg.Any<HttpClient?>(), Arg.Any<CancellationToken>())
-            .Returns(new ContentInfo(uri, "image/png", (uint)bytes.Length, ".png"));
+            .Returns(new ContentInfo(uri, "image/png", (uint)bytes.Length));
         cloud.DownloadToFileAsync(uri, Arg.Any<string>(), Arg.Any<long>(), Arg.Any<HttpClient?>(),
                 Arg.Any<CancellationToken>())
             .Returns(async ci =>
@@ -178,7 +178,7 @@ public sealed class ImageCacheTests : IDisposable
 
         var cloud = Substitute.For<ICloudClient>();
         cloud.InspectAsync(uri, Arg.Any<HttpClient?>(), Arg.Any<CancellationToken>())
-            .Returns(new ContentInfo(uri, "image/png", (uint)bytes.Length, ".png"));
+            .Returns(new ContentInfo(uri, "image/png", (uint)bytes.Length));
         var downloadedTo = string.Empty;
         cloud.DownloadToFileAsync(uri, Arg.Any<string>(), Arg.Any<long>(), Arg.Any<HttpClient?>(),
                 Arg.Any<CancellationToken>())
@@ -217,7 +217,7 @@ public sealed class ImageCacheTests : IDisposable
 
         var cloud = Substitute.For<ICloudClient>();
         cloud.InspectAsync(uri, Arg.Any<HttpClient?>(), Arg.Any<CancellationToken>())
-            .Returns(new ContentInfo(uri, "image/png", (uint)bytes.Length, ".png"));
+            .Returns(new ContentInfo(uri, "image/png", (uint)bytes.Length));
         cloud.DownloadToFileAsync(uri, Arg.Any<string>(), Arg.Any<long>(), Arg.Any<HttpClient?>(),
                 Arg.Any<CancellationToken>())
             .Returns(ci => { File.WriteAllBytes((string)ci[1]!, bytes); return Task.CompletedTask; });
@@ -277,7 +277,7 @@ public sealed class ImageCacheTests : IDisposable
 
         var cloud = Substitute.For<ICloudClient>();
         cloud.InspectAsync(uri, Arg.Any<HttpClient?>(), Arg.Any<CancellationToken>())
-            .Returns(new ContentInfo(uri, "application/octet-stream", (uint)bytes.Length, ".png"));
+            .Returns(new ContentInfo(uri, "application/octet-stream", (uint)bytes.Length));
         cloud.DownloadToFileAsync(uri, Arg.Any<string>(), Arg.Any<long>(), Arg.Any<HttpClient?>(),
                 Arg.Any<CancellationToken>())
             .Returns(ci => { File.WriteAllBytes((string)ci[1]!, bytes); return Task.CompletedTask; });
@@ -304,7 +304,7 @@ public sealed class ImageCacheTests : IDisposable
         var uri = new Uri("https://example.com/page");
         var cloud = Substitute.For<ICloudClient>();
         cloud.InspectAsync(uri, Arg.Any<HttpClient?>(), Arg.Any<CancellationToken>())
-            .Returns(new ContentInfo(uri, "text/html", 4096, ".html"));
+            .Returns(new ContentInfo(uri, "text/html", 4096));
 
         using var cache = new ImageCache(
             CreateCacheFolder(),
@@ -328,7 +328,7 @@ public sealed class ImageCacheTests : IDisposable
         var uri = new Uri("https://example.com/huge");
         var cloud = Substitute.For<ICloudClient>();
         cloud.InspectAsync(uri, Arg.Any<HttpClient?>(), Arg.Any<CancellationToken>())
-            .Returns(new ContentInfo(uri, "image/png", 999_999, ".png"));
+            .Returns(new ContentInfo(uri, "image/png", 999_999));
         cloud.DownloadToFileAsync(uri, Arg.Any<string>(), Arg.Any<long>(), Arg.Any<HttpClient?>(),
                 Arg.Any<CancellationToken>())
             .Returns<Task>(_ => throw new InvalidDataException("too big"));
@@ -367,7 +367,7 @@ public sealed class ImageCacheTests : IDisposable
 
         var cloud = Substitute.For<ICloudClient>();
         cloud.InspectAsync(uri, Arg.Any<HttpClient?>(), Arg.Any<CancellationToken>())
-            .Returns(new ContentInfo(uri, "image/png", 8, ".png"));
+            .Returns(new ContentInfo(uri, "image/png", 8));
 
         using var cache = new ImageCache(
             folder,
@@ -395,7 +395,7 @@ public sealed class ImageCacheTests : IDisposable
 
         var cloud = Substitute.For<ICloudClient>();
         cloud.InspectAsync(uri, Arg.Any<HttpClient?>(), Arg.Any<CancellationToken>())
-            .Returns(new ContentInfo(uri, "image/png", (uint)bytes.Length, ".png"));
+            .Returns(new ContentInfo(uri, "image/png", (uint)bytes.Length));
         cloud.DownloadToFileAsync(uri, Arg.Any<string>(), Arg.Any<long>(), Arg.Any<HttpClient?>(),
                 Arg.Any<CancellationToken>())
             .Returns(async ci =>

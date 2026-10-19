@@ -27,12 +27,7 @@ namespace SlideGenerator.Cloud;
 ///     supply one. Only used to determine <see cref="IsImage" />.
 /// </param>
 /// <param name="Length">Content length in bytes, or <see langword="null" /> when unknown.</param>
-/// <param name="Extension">
-///     File extension (including the leading dot, e.g. <c>.jpg</c>) taken directly from the
-///     <c>Content-Disposition</c> file name or, failing that, from the URL path — never guessed from
-///     <see cref="MimeType" />. <see langword="null" /> when neither source yields one.
-/// </param>
-public record ContentInfo(Uri Uri, string? MimeType, uint? Length, string? Extension)
+public record ContentInfo(Uri Uri, string? MimeType, uint? Length)
 {
     /// <summary>
     ///     Returns <see langword="true" /> when <see cref="MimeType" /> starts with <c>image/</c>
@@ -81,28 +76,6 @@ public interface ICloudClient
     /// </param>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
     Task<ContentInfo?> InspectAsync(
-        Uri uri,
-        HttpClient? httpClient = null,
-        CancellationToken cancellationToken = default);
-
-    /// <summary>
-    ///     Downloads the resource at <paramref name="uri" /> and writes it to <paramref name="savePath" />.
-    ///     When <paramref name="httpClient" /> is <see langword="null" />, a new instance is created
-    ///     automatically with redirect-following enabled.
-    /// </summary>
-    Task DownloadAsync(
-        Uri uri,
-        string savePath,
-        HttpClient? httpClient = null,
-        CancellationToken cancellationToken = default);
-
-    /// <summary>
-    ///     Downloads the resource at <paramref name="uri" /> and returns its content directly as a
-    ///     byte array, without writing to disk. When <paramref name="httpClient" /> is
-    ///     <see langword="null" />, a new instance is created automatically with redirect-following
-    ///     enabled.
-    /// </summary>
-    Task<byte[]> DownloadAsync(
         Uri uri,
         HttpClient? httpClient = null,
         CancellationToken cancellationToken = default);
@@ -221,64 +194,6 @@ internal sealed class CloudClient(ILogger<CloudClient>? logger = null) : ICloudC
 
     /// <inheritdoc />
     /// <remarks>
-    ///     Streams the response body directly to <paramref name="savePath" />, creating or
-    ///     overwriting the file.  The caller is responsible for ensuring the directory exists.
-    /// </remarks>
-    public async Task DownloadAsync(
-        Uri uri,
-        string savePath,
-        HttpClient? httpClient = null,
-        CancellationToken cancellationToken = default)
-    {
-        savePath = Path.GetFullPath(savePath);
-        var ownsClient = httpClient is null;
-        httpClient ??= DefaultClient();
-        try
-        {
-            logger?.LogDebug("Download start | Uri: {Uri}, Path: {Path}", uri, savePath);
-
-            await using var stream = await httpClient
-                .GetStreamAsync(uri, cancellationToken)
-                .ConfigureAwait(false);
-            await using var fs = new FileStream(savePath, FileMode.Create, FileAccess.Write, FileShare.None);
-            await stream.CopyToAsync(fs, cancellationToken).ConfigureAwait(false);
-
-            logger?.LogDebug("Download completed | Uri: {Uri}, Path: {Path}", uri, savePath);
-        }
-        finally
-        {
-            if (ownsClient) httpClient.Dispose();
-        }
-    }
-
-    /// <inheritdoc />
-    /// <remarks>
-    ///     Streams the response body into an in-memory buffer — no file is created.
-    /// </remarks>
-    public async Task<byte[]> DownloadAsync(
-        Uri uri,
-        HttpClient? httpClient = null,
-        CancellationToken cancellationToken = default)
-    {
-        var ownsClient = httpClient is null;
-        httpClient ??= DefaultClient();
-        try
-        {
-            logger?.LogDebug("Download start (in-memory) | Uri: {Uri}", uri);
-
-            var bytes = await httpClient.GetByteArrayAsync(uri, cancellationToken).ConfigureAwait(false);
-
-            logger?.LogDebug("Download completed (in-memory) | Uri: {Uri}", uri);
-            return bytes;
-        }
-        finally
-        {
-            if (ownsClient) httpClient.Dispose();
-        }
-    }
-
-    /// <inheritdoc />
-    /// <remarks>
     ///     The body is copied from the network stream to the file with a fixed-size buffer, so memory
     ///     usage does not grow with the resource size. The caller is responsible for ensuring the
     ///     directory exists.
@@ -373,8 +288,7 @@ internal sealed class CloudClient(ILogger<CloudClient>? logger = null) : ICloudC
             var mimeType = response.Content.Headers.ContentType?.MediaType;
             var rawLength = response.Content.Headers.ContentLength;
             var length = rawLength is > 0 ? (uint)rawLength.Value : (uint?)null;
-            var extension = ExtractExtension(response, finalUri);
-            return new ContentInfo(finalUri, mimeType, length, extension);
+            return new ContentInfo(finalUri, mimeType, length);
         }
     }
 
@@ -425,26 +339,6 @@ internal sealed class CloudClient(ILogger<CloudClient>? logger = null) : ICloudC
         {
             // Best effort: the original exception is more useful to the caller.
         }
-    }
-
-    /// <summary>
-    ///     Extracts the file extension (with leading dot) from the response's <c>Content-Disposition</c>
-    ///     file name, falling back to <paramref name="finalUri" />'s path when absent. Returns
-    ///     <see langword="null" /> when neither source yields an extension.
-    /// </summary>
-    private static string? ExtractExtension(HttpResponseMessage response, Uri finalUri)
-    {
-        var fileName = response.Content.Headers.ContentDisposition?.FileNameStar ??
-                       response.Content.Headers.ContentDisposition?.FileName;
-        if (!string.IsNullOrWhiteSpace(fileName))
-        {
-            var trimmed = fileName.Trim('"');
-            var extFromFileName = Path.GetExtension(trimmed);
-            if (!string.IsNullOrEmpty(extFromFileName)) return extFromFileName;
-        }
-
-        var extFromUrl = Path.GetExtension(finalUri.AbsolutePath);
-        return string.IsNullOrEmpty(extFromUrl) ? null : extFromUrl;
     }
 
     /// <summary>

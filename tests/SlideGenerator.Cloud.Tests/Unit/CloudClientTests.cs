@@ -57,52 +57,6 @@ public sealed class CloudClientTests : IDisposable
         };
     }
 
-    #region DownloadAsync
-
-    /// <summary>
-    ///     Verifies that <see cref="CloudClient.DownloadAsync" /> writes the response body bytes
-    ///     to the specified file path exactly.
-    /// </summary>
-    [Fact]
-    public async Task DownloadAsync_ValidUri_WritesContentToFile()
-    {
-        var ct = TestContext.Current.CancellationToken;
-        var expectedBytes = "fake binary content"u8.ToArray();
-        var handler = new FakeHttpHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
-        {
-            Content = new ByteArrayContent(expectedBytes)
-        });
-        using var client = new HttpClient(handler);
-        _tempFile = Path.GetTempFileName();
-
-        await _sut.DownloadAsync(TestUri, _tempFile, client, ct);
-
-        var writtenBytes = await File.ReadAllBytesAsync(_tempFile, ct);
-        writtenBytes.Should().Equal(expectedBytes);
-    }
-
-    /// <summary>
-    ///     Verifies that the byte-array overload of <see cref="CloudClient.DownloadAsync" /> returns
-    ///     the response body directly in memory, without touching the disk.
-    /// </summary>
-    [Fact]
-    public async Task DownloadAsync_ByteArrayOverload_ReturnsContentBytes()
-    {
-        var ct = TestContext.Current.CancellationToken;
-        var expectedBytes = "fake binary content"u8.ToArray();
-        var handler = new FakeHttpHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
-        {
-            Content = new ByteArrayContent(expectedBytes)
-        });
-        using var client = new HttpClient(handler);
-
-        var result = await _sut.DownloadAsync(TestUri, client, ct);
-
-        result.Should().Equal(expectedBytes);
-    }
-
-    #endregion
-
     #region InspectAsync
 
     /// <summary>
@@ -226,70 +180,6 @@ public sealed class CloudClientTests : IDisposable
         var result = await _sut.InspectAsync(new Uri("https://this-host-does-not-exist.invalid"), null, ct);
 
         result.Should().BeNull();
-    }
-
-    #endregion
-
-    #region InspectAsync — Extension
-
-    /// <summary>
-    ///     Verifies that <see cref="CloudClient.InspectAsync" /> takes <c>Extension</c> from the
-    ///     <c>Content-Disposition</c> file name when present, in preference to the URL path.
-    /// </summary>
-    [Fact]
-    public async Task InspectAsync_ContentDispositionFileName_ReturnsExtensionFromFileName()
-    {
-        var ct = TestContext.Current.CancellationToken;
-        var handler = new FakeHttpHandler(_ =>
-        {
-            var r = new HttpResponseMessage(HttpStatusCode.OK);
-            r.Content.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
-            r.Content.Headers.ContentDisposition =
-                new ContentDispositionHeaderValue("attachment") { FileName = "photo.png" };
-            return r;
-        });
-        using var client = new HttpClient(handler);
-
-        var result = await _sut.InspectAsync(new Uri("https://example.com/download?id=1"), client, ct);
-
-        result.Should().NotBeNull();
-        result.Extension.Should().Be(".png");
-    }
-
-    /// <summary>
-    ///     Verifies that <see cref="CloudClient.InspectAsync" /> falls back to the URL path's extension
-    ///     when no <c>Content-Disposition</c> file name is present.
-    /// </summary>
-    [Fact]
-    public async Task InspectAsync_NoContentDisposition_ReturnsExtensionFromUrlPath()
-    {
-        var ct = TestContext.Current.CancellationToken;
-        var uri = new Uri("https://example.com/images/photo.jpg");
-        var handler = new FakeHttpHandler(_ => new HttpResponseMessage(HttpStatusCode.OK));
-        using var client = new HttpClient(handler);
-
-        var result = await _sut.InspectAsync(uri, client, ct);
-
-        result.Should().NotBeNull();
-        result.Extension.Should().Be(".jpg");
-    }
-
-    /// <summary>
-    ///     Verifies that <see cref="CloudClient.InspectAsync" /> returns a <see langword="null" />
-    ///     <c>Extension</c> when neither the <c>Content-Disposition</c> file name nor the URL path
-    ///     carries one.
-    /// </summary>
-    [Fact]
-    public async Task InspectAsync_NoFileNameOrUrlExtension_ReturnsNullExtension()
-    {
-        var ct = TestContext.Current.CancellationToken;
-        var handler = new FakeHttpHandler(_ => new HttpResponseMessage(HttpStatusCode.OK));
-        using var client = new HttpClient(handler);
-
-        var result = await _sut.InspectAsync(TestUri, client, ct);
-
-        result.Should().NotBeNull();
-        result.Extension.Should().BeNull();
     }
 
     #endregion
