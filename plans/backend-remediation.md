@@ -31,7 +31,7 @@ bằng cách đọc code; chưa chạy được code (không có `dotnet` trong 
 `PresentationPassword`), bộ nhớ của `ProgressHub` (thuộc Desktop).
 
 **Quy trình cho mọi mục:** viết test tái hiện lỗi trước, rồi sửa, rồi test xanh (Basic Rules §4 trong `AGENTS.md`).
-Thứ tự phụ thuộc: 1 → 2 → 3 → (4 song song với 5) → 6; 5.2 phải sau 3.1.
+Thứ tự phụ thuộc: **A** → 1 → 2 → 3 → (4 song song với 5) → 6; 5.2 phải sau 3.1.
 
 ---
 
@@ -46,6 +46,57 @@ chiều; không thêm module hay framework. Ba trục cần sửa:
 3. **Ghi file đầu ra an toàn.** Hiện ghi đè thẳng `OutputPath`, xoá file cũ ngay khi bắt đầu, `Save()` khoảng 3N lần.
 
 ---
+
+## Giai đoạn A: xác minh refactor Workflow/Job (agent kế tiếp làm trước mọi việc khác)
+
+Refactor "Request = 1 Workflow ⊃ nhiều Job" (commit `389fdf2`, cùng các commit đổi tên trước đó) **chưa từng được build hay
+chạy test** — các phiên trước không có .NET SDK. Việc đầu tiên là làm cho nó build được và xanh; **không bắt đầu giai đoạn
+1 trở đi khi chưa xong mục này.** Người viết plan này (agent trước) không sửa test; toàn bộ việc dưới đây, kể cả sửa test nếu
+cần, thuộc agent kế tiếp.
+
+**A.1 Build và test**
+- `dotnet build SlideGenerator.slnx`, sửa mọi lỗi biên dịch; rồi `dotnet test` từng project test (như CI). Ghi lại số test
+  trước/sau (mốc cũ: 548 test, 1 skip).
+- Xoá `Data.db` dev cũ trước khi chạy app (schema đã gộp vào `001`, DbUp sẽ không áp lại cho DB đã ghi nhận `001`).
+
+**A.2 Chỗ dễ lỗi biên dịch/ngữ nghĩa (kiểm tra có chủ đích)**
+- Hai namespace gần tên: `SlideGenerator.Workflows` (project engine) và `SlideGenerator.Generator.Workflows` (workflow-level
+  của Generator). Các `using SlideGenerator.Workflows.Engine;` nằm ngoài namespace nên phải phân giải đúng; nếu phát sinh
+  nhập nhằng thì dùng alias hoặc đổi tên thư mục/namespace phía Generator.
+- `Summary.Jobs`, `WorkflowRunViewModel.Jobs`, `IProgressHub.Workflows` là thuộc tính trùng tên với namespace — vốn đã chạy
+  được với `Jobs` trước đây; xác nhận vẫn đúng với `Workflows`.
+- Mock/stub phải khớp contract mới: mọi nơi giả lập `IProgressHub` cần `Workflows` (đã thêm ở `ViewConstructionTests`; tìm
+  nơi khác), `IEventBus` mới chỉ có `Publish(WorkflowSnapshot|JobSnapshot|RowProgress)`, `Service` không còn nhận `IEventBus`.
+  NSubstitute không tự trả danh sách rỗng cho `Task<IReadOnlyList<...>>` nên mọi test gọi `ListActiveAsync` phải mock
+  `IWorkflowsRepository.GetNonTerminalAsync`.
+- File được viết lại bằng script có thể lệch kiểu xuống dòng (LF/CRLF) so với phần còn lại: kiểm tra `git diff` có bị nhiễu
+  toàn file không (`WorkflowEngine.cs`, `SlideGenerationWorkflow.cs`, `WorkflowsRepository.cs`...) và theo `.editorconfig`.
+- `SlideGenerator.Workflows.Tests`: đã bỏ ba test giới hạn đồng thời và `FakeConcurrencyProvider`; xác nhận project vẫn
+  build (còn `UnreachableRunner` dùng cho test khoá trùng).
+- Test mới/đã đổi cần rà soát vì chưa từng chạy: `WorkflowsRepositoryTests`, `JobGateTests`, vùng "Workflow control" và
+  `CreateAsync_TwoSources_StartsOneWorkflowWithTwoJobs` trong `ServiceTests`, `DeriveStatus_WorkflowPaused_...`,
+  `ProgressHubTests.Drain_TwoWorkflowSnapshotsSameId_KeepsOnlyLatest`, `JobExecutorHelpersTests`,
+  `JobExecutorIntegrationTests` (cần license Syncfusion + fixtures), `DatabaseMigratorTests` (bảng `Workflows`).
+
+**A.3 Kiểm tra hành vi bằng cách chạy thật (hoặc test tích hợp)**
+- Một request nhiều sheet: các job chạy song song, không vượt `MaxConcurrentJobs` trên **tất cả** workflow cùng lúc.
+- Pause: cả workflow dừng ở checkpoint kế tiếp (job đang chạy dở một row thì xong row đó), UI hiện `Paused`; Resume tiếp
+  tục; Stop khi đang pause thoát ngay; job đang chờ `JobGate` khi pause không bắt đầu cho tới khi resume.
+- Một job lỗi: job đó `Error`, các job khác vẫn `Complete`, workflow `Complete`.
+- Crash-resume: giết app giữa chừng, mở lại — workflow tiếp tục, log vẫn ghi vào đúng file cũ, mỗi job tiếp tục từ
+  `Phase`/`CurrentIndex`.
+- Xoá request đang chạy; tạo hai request liên tiếp (xem lỗi logger 1.1 — request thứ hai hiện vẫn lỗi).
+
+**A.4 Lỗ hổng đã biết của thiết kế hiện tại (đưa vào các giai đoạn sau, không làm ở A)**
+- Nếu `SlideGenerationWorkflow` ném lỗi **ngoài** phạm vi từng job (ví dụ đọc `Jobs` thất bại) thì workflow `Faulted` nhưng
+  các hàng job chưa kết thúc vẫn `Running` mãi: cần đánh dấu các job chưa kết thúc là `Error` (hoặc `Cancelled`) khi workflow
+  kết thúc không bình thường.
+- `Workflows.Status` dùng lại enum `JobStatus`; tách enum riêng khi làm `CompletedWithError` (mục 2.3).
+- Hàng `Workflows`/`Jobs` có thể bị ghi lại sau khi `DeleteAsync` đã xoá (job ghi trạng thái cuối) — mục 2.3.
+- Workflow tạm dừng vẫn giữ slot `JobGate` của các job đang chạy (quyết định 1); job còn lại chờ slot.
+- Thư mục log vẫn tên `Logs/Workflows/` và khoá cấu hình `Logging:Workflow:MinimumLevel` (từ trước khi có khái niệm
+  Workflow = request); cân nhắc đổi thành `Logs/Requests/` kèm di chuyển file cũ.
+- Cosmetic: `JobSpecificationJson` và test Logging còn nhắc `Stdio`/`SlideGenerationWorkload` trong comment/chuỗi.
 
 ## Giai đoạn 0: chuẩn bị
 
