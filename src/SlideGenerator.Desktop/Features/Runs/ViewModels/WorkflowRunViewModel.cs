@@ -81,13 +81,14 @@ public sealed partial class WorkflowRunViewModel : ObservableObject
         if (Status is JobStatus.Complete or JobStatus.Cancelled) CompletedAt ??= snapshot.Timestamp;
     }
 
-    /// <summary>Patches this row's job at <paramref name="row" />'s <c>JobId</c> with a live row-activity update.</summary>
+    /// <summary>Records the workflow-level pause flag from <paramref name="snapshot" /> and re-derives the display status.</summary>
     public void ApplyLiveWorkflowUpdate(WorkflowSnapshot snapshot)
     {
         _isWorkflowPaused = snapshot.Status == JobStatus.Paused;
         Status = DeriveDisplayStatus();
     }
 
+    /// <summary>Patches this row's job at <paramref name="row" />'s <c>JobId</c> with a live row-activity update.</summary>
     public void ApplyLiveRowUpdate(RowProgress row)
     {
         Jobs.FirstOrDefault(j => j.JobId == row.JobId)?.ApplyLiveRowUpdate(row);

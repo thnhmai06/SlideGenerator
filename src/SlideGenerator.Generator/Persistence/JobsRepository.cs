@@ -157,12 +157,15 @@ internal sealed class JobsRepository(SqliteConnectionStringBuilder builder, ILog
 
     #region Row mapping
 
+    // Dapper's DefaultTypeMap.FindConstructor matches parameters to the SELECT * column
+    // order positionally — keep this list in the same order as the Jobs columns in 001_2.0.0.sql.
     private sealed record JobRow(
         string WorkflowId,
         long JobId,
         string Status,
         string Phase,
         long CurrentIndex,
+        long? TotalRows,
         string WorkbookPath,
         string WorksheetName,
         string? UsedColumnsJson,
@@ -176,8 +179,7 @@ internal sealed class JobsRepository(SqliteConnectionStringBuilder builder, ILog
         string TextInstructionsJson,
         string ImageInstructionsJson,
         string OutputPath,
-        string Timestamp,
-        long? TotalRows);
+        string Timestamp);
 
     private static object ToRow(JobSnapshot r)
     {
