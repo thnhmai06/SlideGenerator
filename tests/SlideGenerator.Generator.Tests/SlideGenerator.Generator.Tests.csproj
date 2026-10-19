@@ -38,7 +38,7 @@
     <!-- Needed for the SlideGenerationWorkload integration test: Document's SfWorkbookOpener/SfPresentationOpener
          load Syncfusion at runtime, and Microsoft.Extensions.Http.IHttpClientFactory is referenced by the
          workload's constructor. Neither package flows transitively through a ProjectReference (see
-         CLAUDE.md's NuGet-transitivity pitfall — Directory.Build.props sets PrivateAssets="all" on all
+         AGENTS.md's NuGet-transitivity pitfall — Directory.Build.props sets PrivateAssets="all" on all
          ProjectReference items), so both must be declared explicitly here. -->
     <ItemGroup>
         <PackageReference Include="Syncfusion.XlsIO.NET" Version="34.2.3" />

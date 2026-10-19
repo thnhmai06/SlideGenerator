@@ -7,7 +7,7 @@ không cần đọc lại toàn bộ plan.
 
 ## Bối cảnh
 
-Backend V2 (`SlideGenerator.Generator`/`.Recipe`/`.Settings`/... — 10 module domain, xem `CLAUDE.md` ở root repo)
+Backend V2 (`SlideGenerator.Generator`/`.Recipe`/`.Settings`/... — 10 module domain, xem `AGENTS.md` ở root repo)
 đã hoàn chỉnh, chạy in-process (không IPC sidecar nữa). `SlideGenerator.Desktop` là frontend Avalonia — lúc bắt
 đầu plan này chỉ là khung rỗng (`MainWindow` là `TextBlock` placeholder). Plan này xây toàn bộ frontend đó.
 
@@ -47,7 +47,7 @@ Không còn task nào treo trong plan. Build xanh, 523/524 test toàn solution q
 ## Kiến trúc & quy ước quan trọng
 
 - **MVVM feature-folder** dưới `src/SlideGenerator.Desktop/Features/{Recipes,Runs,RecipeEditor,Settings}/`
-  (`Views/`, `ViewModels/`, `Models/`) — khác quy ước 10 module domain (xem `CLAUDE.md`), vì đây là UI code.
+  (`Views/`, `ViewModels/`, `Models/`) — khác quy ước 10 module domain (xem `AGENTS.md`), vì đây là UI code.
 - **`ShellViewModel`** giữ 3 page ViewModel làm property, `CurrentPage` trỏ 1 trong 3 — không
   `INavigationService` (3 đích cố định).
 - **`ProgressHub`** (`Services/Progress/`) là điểm gom duy nhất giữa `GeneratingEventBus`/`LogNotifier` (bắn từ

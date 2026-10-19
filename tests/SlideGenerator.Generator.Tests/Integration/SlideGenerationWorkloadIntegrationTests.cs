@@ -40,7 +40,7 @@ namespace SlideGenerator.Generator.Tests.Integration;
 /// <summary>
 ///     Runs the real 4-phase <see cref="SlideGenerationWorkload" /> pipeline end to end against the
 ///     <c>Data.xlsx</c> / <c>Template.pptx</c> fixtures — real Syncfusion workbook/presentation I/O, no
-///     mocked domain logic. Per CLAUDE.md's "What NOT to unit test", the phase bodies require a Syncfusion
+///     mocked domain logic. Per AGENTS.md's "What NOT to unit test", the phase bodies require a Syncfusion
 ///     license and real files, so this belongs here rather than in <c>Unit/</c>.
 /// </summary>
 /// <remarks>
