@@ -92,6 +92,35 @@ public sealed class ServiceTests
         jobs.Select(j => j.WorksheetName).Should().Contain(["A", "B"]);
     }
 
+    /// <summary>
+    ///     Verifies that the request's local-path choice is resolved into every job of the fan-out, so each job
+    ///     carries it independently of the originating request.
+    /// </summary>
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void BuildJobs_AllowLocalPathsRequest_PropagatesTheFlagToEveryJob(bool allowLocalPaths)
+    {
+        var mapping = new Mapping(
+            [
+                new WorksheetSource(new WorkbookIdentifier(Path.Combine(Path.GetTempPath(), "a.xlsx")),
+                    new WorksheetIdentifier("A")),
+                new WorksheetSource(new WorkbookIdentifier(Path.Combine(Path.GetTempPath(), "b.xlsx")),
+                    new WorksheetIdentifier("B"))
+            ],
+            new PresentationSource(
+                new PresentationIdentifier(Path.Combine(Path.GetTempPath(), "template.pptx")),
+                new SlideIdentifier(1)),
+            [], []);
+        var recipe = new Recipe.Models.Recipe([mapping]);
+        var request = new Request(1, "Test", PresentationType.Pptx, Path.GetTempPath(), allowLocalPaths);
+
+        var jobs = Service.BuildJobs(recipe, request);
+
+        jobs.Should().HaveCount(2);
+        jobs.Should().OnlyContain(j => j.AllowLocalPaths == allowLocalPaths);
+    }
+
     /// <summary>Verifies that an empty recipe (no mappings) produces no jobs.</summary>
     [Fact]
     public void BuildJobs_EmptyRecipe_ProducesNoJobs()

@@ -32,6 +32,10 @@ namespace SlideGenerator.Generator.Jobs.Models;
 /// <param name="TextInstructions">Rules for mapping worksheet columns to slide text placeholders.</param>
 /// <param name="ImageInstructions">Rules for mapping worksheet columns to slide image shapes.</param>
 /// <param name="OutputPath">Absolute path to the output presentation file for this job.</param>
+/// <param name="AllowLocalPaths">
+///     Whether a cell value naming an existing local file may be used as an image source; resolved from the
+///     request at spawn time.
+/// </param>
 public sealed record JobSpecification(
     string WorkbookPath,
     string WorksheetName,
@@ -41,4 +45,5 @@ public sealed record JobSpecification(
     int TemplateSlideIndex,
     IReadOnlyList<TextInstruction> TextInstructions,
     IReadOnlyList<ImageInstruction> ImageInstructions,
-    string OutputPath);
+    string OutputPath,
+    bool AllowLocalPaths = false);

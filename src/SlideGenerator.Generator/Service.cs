@@ -488,7 +488,8 @@ internal sealed class Service(
                 m.Template.Slide.SlideIndex,
                 m.TextInstructions,
                 m.ImageInstructions,
-                BuildOutputPath(request, s.Workbook.BookPath, s.Worksheet.SheetName))))
+                BuildOutputPath(request, s.Workbook.BookPath, s.Worksheet.SheetName),
+                request.AllowLocalPaths)))
         ];
     }
 

@@ -58,12 +58,12 @@ public sealed class JobsRepositoryTests : IDisposable
         _anchor.Dispose();
     }
 
-    private static JobSpecification Spec(RowFilter? rowFilter = null)
+    private static JobSpecification Spec(RowFilter? rowFilter = null, bool allowLocalPaths = false)
     {
         return new JobSpecification(
             "wb.xlsx", "Sheet1", null, rowFilter, "template.pptx", 1,
             [new TextInstruction(new HashSet<string> { "{{Name}}" }, [new ColumnIdentifier("Name")])],
-            [], "out.pptx");
+            [], "out.pptx", allowLocalPaths);
     }
 
     /// <summary>Verifies that a freshly enqueued and flushed job round-trips its resume state exactly.</summary>
@@ -169,6 +169,26 @@ public sealed class JobsRepositoryTests : IDisposable
         var jobs = await _repo.GetByWorkflowIdAsync("req7", TestContext.Current.CancellationToken);
 
         jobs[0].TotalRows.Should().BeNull();
+    }
+
+    /// <summary>
+    ///     Verifies that <see cref="JobSpecification.AllowLocalPaths" /> — the request's local-path choice, resolved
+    ///     into the job at spawn time — survives a flush and read-back on the <c>AllowLocalPaths</c> column.
+    /// </summary>
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Enqueue_AllowLocalPaths_RoundTripsTheFlag(bool allowLocalPaths)
+    {
+        var record = new JobSnapshot("req10", 0, JobStatus.Pending, JobPhase.CreatingOutput, 0,
+            Spec(allowLocalPaths: allowLocalPaths), DateTimeOffset.UtcNow);
+        _repo.Enqueue(record);
+        await _repo.FlushAsync(TestContext.Current.CancellationToken);
+
+        var jobs = await _repo.GetByWorkflowIdAsync("req10", TestContext.Current.CancellationToken);
+
+        jobs.Should().ContainSingle();
+        jobs[0].Specification.AllowLocalPaths.Should().Be(allowLocalPaths);
     }
 
     /// <summary>

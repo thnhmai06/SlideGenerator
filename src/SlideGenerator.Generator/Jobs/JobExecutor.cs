@@ -325,38 +325,39 @@ internal sealed class JobExecutor(
         var result = new Dictionary<string, ContentInfo?>();
         if (spec.ImageInstructions.Count == 0) return result;
 
-        var sources = new HashSet<string>();
+        // Only values the policy accepts as a network URL are collected here — a local path, free text or a
+        // non-http scheme must never cause an InspectAsync call.
+        var sources = new Dictionary<string, Uri>();
         foreach (var dataRow in dataRows)
         {
             var rowValues = ReadRowValues(worksheet, headerToIndex, dataRow);
             foreach (var instruction in spec.ImageInstructions)
             {
                 var source = Utilities.GetSource(rowValues, instruction.Columns);
-                if (string.IsNullOrWhiteSpace(source)) continue;
-                sources.Add(source);
+                if (ImageSourcePolicy.Classify(source, spec.AllowLocalPaths, out var url) != ImageSourceKind.Url)
+                    continue;
+                sources[source] = url!;
             }
         }
 
-        foreach (var source in sources)
+        foreach (var (source, url) in sources)
         {
             ct.ThrowIfCancellationRequested();
-            result[source] = await InspectAsync(source, jobLogger, ct).ConfigureAwait(false);
+            result[source] = await InspectAsync(url, jobLogger, ct).ConfigureAwait(false);
         }
 
         return result;
     }
 
-    private async Task<ContentInfo?> InspectAsync(string source, ILogger jobLogger, CancellationToken ct)
+    private async Task<ContentInfo?> InspectAsync(Uri url, ILogger jobLogger, CancellationToken ct)
     {
-        jobLogger.LogInformation("Resolving URL: {Source}", source);
-        var urlStr = source.Contains("://") ? source : "https://" + source;
-        if (!Uri.TryCreate(urlStr, UriKind.Absolute, out var parsedUri)) return null;
+        jobLogger.LogInformation("Resolving URL: {Source}", url);
 
         var httpClient = httpClientFactory.CreateHttpClientWithSetting(settingProvider);
         var info = await Utilities.ExecuteWithBackoffAsync(
             settingProvider.Current.Network.Retry.MaxRetries,
             TimeSpan.FromSeconds(settingProvider.Current.Network.Retry.MaxRetryDelay),
-            () => cloudClient.InspectAsync(parsedUri, httpClient, ct), ct).ConfigureAwait(false);
+            () => cloudClient.InspectAsync(url, httpClient, ct), ct).ConfigureAwait(false);
 
         return info != null && info.IsImage() ? info : null;
     }
@@ -398,8 +399,8 @@ internal sealed class JobExecutor(
                             (int)Math.Round(templateShape.Bounds.Height, MidpointRounding.AwayFromZero)));
 
                     inspected.TryGetValue(source, out var contentInfo);
-                    var imageData = await ResolveShapeImageAsync(source, instruction, targetSize, contentInfo,
-                        tempDir, workflowId, jobId, dataRow + 1, jobLogger, ct).ConfigureAwait(false);
+                    var imageData = await ResolveShapeImageAsync(source, spec.AllowLocalPaths, instruction, targetSize,
+                        contentInfo, tempDir, workflowId, jobId, dataRow + 1, jobLogger, ct).ConfigureAwait(false);
                     if (imageData != null) targetShape.ImageData = imageData;
                 }
             }
@@ -416,16 +417,16 @@ internal sealed class JobExecutor(
     }
 
     private async Task<byte[]?> ResolveShapeImageAsync(
-        string source, ImageInstruction instruction, Size targetSize, ContentInfo? inspected, string tempDir,
-        string workflowId, int jobId, int rowIndex, ILogger jobLogger, CancellationToken ct)
+        string source, bool allowLocalPaths, ImageInstruction instruction, Size targetSize, ContentInfo? inspected,
+        string tempDir, string workflowId, int jobId, int rowIndex, ILogger jobLogger, CancellationToken ct)
     {
-        if (!string.IsNullOrWhiteSpace(source))
+        switch (ImageSourcePolicy.Classify(source, allowLocalPaths, out _))
         {
-            if (File.Exists(source))
+            case ImageSourceKind.LocalFile:
                 return await EditImageFromPathAsync(source, targetSize, instruction.ImageEditInstruction, jobLogger)
                     .ConfigureAwait(false);
 
-            if (inspected != null)
+            case ImageSourceKind.Url when inspected != null:
             {
                 var bytes = await EnsureDownloadedAsync(inspected, tempDir, workflowId, jobId, rowIndex, jobLogger, ct)
                     .ConfigureAwait(false);
@@ -435,6 +436,8 @@ internal sealed class JobExecutor(
                         jobLogger).ConfigureAwait(false);
                     if (edited != null) return edited;
                 }
+
+                break;
             }
         }
 

@@ -47,5 +47,6 @@ CREATE TABLE IF NOT EXISTS Jobs
 
     OutputPath               TEXT    NOT NULL,
     Timestamp                TEXT    NOT NULL,
+    AllowLocalPaths          INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (WorkflowId, JobId)
 );

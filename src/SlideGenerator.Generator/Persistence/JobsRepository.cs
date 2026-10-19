@@ -132,13 +132,13 @@ internal sealed class JobsRepository(SqliteConnectionStringBuilder builder, ILog
                 WorkbookPath, WorksheetName, UsedColumnsJson,
                 RowFilterType, RowFilterStart, RowFilterEnd, RowFilterPartitionIndex, RowFilterPartitionCount,
                 TemplatePresentationPath, TemplateSlideIndex, TextInstructionsJson, ImageInstructionsJson,
-                OutputPath, Timestamp, TotalRows
+                OutputPath, Timestamp, TotalRows, AllowLocalPaths
             ) VALUES (
                 @WorkflowId, @JobId, @Status, @Phase, @CurrentIndex,
                 @WorkbookPath, @WorksheetName, @UsedColumnsJson,
                 @RowFilterType, @RowFilterStart, @RowFilterEnd, @RowFilterPartitionIndex, @RowFilterPartitionCount,
                 @TemplatePresentationPath, @TemplateSlideIndex, @TextInstructionsJson, @ImageInstructionsJson,
-                @OutputPath, @Timestamp, @TotalRows
+                @OutputPath, @Timestamp, @TotalRows, @AllowLocalPaths
             )
             ON CONFLICT(WorkflowId, JobId) DO UPDATE SET
                 Status = excluded.Status, Phase = excluded.Phase, CurrentIndex = excluded.CurrentIndex,
@@ -184,7 +184,8 @@ internal sealed class JobsRepository(SqliteConnectionStringBuilder builder, ILog
         string TextInstructionsJson,
         string ImageInstructionsJson,
         string OutputPath,
-        string Timestamp);
+        string Timestamp,
+        long AllowLocalPaths);
 
     private static object ToRow(JobSnapshot r)
     {
@@ -224,7 +225,8 @@ internal sealed class JobsRepository(SqliteConnectionStringBuilder builder, ILog
             ImageInstructionsJson = JsonSerializer.Serialize(spec.ImageInstructions, JobSpecificationJson.Options),
             spec.OutputPath,
             Timestamp = DbFormatUtc(r.Timestamp),
-            r.TotalRows
+            r.TotalRows,
+            AllowLocalPaths = spec.AllowLocalPaths ? 1 : 0
         };
     }
 
@@ -252,7 +254,8 @@ internal sealed class JobsRepository(SqliteConnectionStringBuilder builder, ILog
                 JobSpecificationJson.Options) ?? [],
             JsonSerializer.Deserialize<IReadOnlyList<ImageInstruction>>(row.ImageInstructionsJson,
                 JobSpecificationJson.Options) ?? [],
-            row.OutputPath);
+            row.OutputPath,
+            row.AllowLocalPaths != 0);
 
         return new JobSnapshot(
             row.WorkflowId,
