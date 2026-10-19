@@ -28,6 +28,7 @@ public static class Registration
     {
         /// <summary>
         ///     Adds the file logger factory service.
+        ///     The container must provide a Transient <see cref="LoggerConfiguration" />; each log file is built from its own instance.
         /// </summary>
         /// <returns>The updated service collection.</returns>
         public IServiceCollection AddLoggingServices()
@@ -37,9 +38,9 @@ public static class Registration
                 builder.ClearProviders();
                 builder.AddSerilog(dispose: false);
             });
-            services
-                .AddTransient<IFileLoggerFactory,
-                    SerilogFileLoggerFactory>(); // must have to be Transient, not Singleton
+            // Singleton is safe: every CreateFile call resolves a fresh (Transient) LoggerConfiguration from the container.
+            services.AddSingleton<IFileLoggerFactory>(sp =>
+                new SerilogFileLoggerFactory(() => sp.GetRequiredService<LoggerConfiguration>()));
             return services;
         }
     }

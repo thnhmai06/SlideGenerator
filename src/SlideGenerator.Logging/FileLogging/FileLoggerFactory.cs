@@ -49,8 +49,9 @@ public interface IFileLoggerFactory
 ///     Each factory owns a dedicated Serilog file sink; callers obtain named
 ///     <see cref="Microsoft.Extensions.Logging.ILogger" />
 ///     instances via <see cref="ILoggerFactory.CreateLogger" />.
+///     Every <see cref="CreateFile" /> call builds its logger from a fresh <see cref="LoggerConfiguration" /> supplied by the configuration factory, so one instance can serve any number of log files.
 /// </summary>
-internal sealed class SerilogFileLoggerFactory(LoggerConfiguration config) : IFileLoggerFactory
+internal sealed class SerilogFileLoggerFactory(Func<LoggerConfiguration> createConfiguration) : IFileLoggerFactory
 {
     /// <inheritdoc />
     public ILoggerFactory CreateFile(
@@ -62,7 +63,8 @@ internal sealed class SerilogFileLoggerFactory(LoggerConfiguration config) : IFi
         if (!string.IsNullOrWhiteSpace(directory)) Directory.CreateDirectory(directory);
 
         var scope = scopePropertyNames ?? [];
-        var loggerConfig = config.WriteTo.File(new FileLogFormatter(scope), filePath);
+        // A LoggerConfiguration builds one logger only and every WriteTo adds a sink to it, so each file needs a fresh one.
+        var loggerConfig = createConfiguration().WriteTo.File(new FileLogFormatter(scope), filePath);
         if (onLogEvent != null)
             loggerConfig = loggerConfig.WriteTo.Sink(new ScopeNotifyingSink(scope, onLogEvent));
 

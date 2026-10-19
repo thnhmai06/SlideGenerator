@@ -13,6 +13,7 @@
  */
 
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Context;
@@ -27,8 +28,9 @@ namespace SlideGenerator.Logging.Tests.Unit;
 public sealed class SerilogFileLoggerFactoryTests : IDisposable
 {
     // Enrich.FromLogContext() mirrors the real DI-registered LoggerConfiguration (Program.Services.cs) —
-    // without it, properties pushed via LogContext.PushProperty never reach the formatter/sink.
-    private readonly SerilogFileLoggerFactory _factory = new(new LoggerConfiguration().Enrich.FromLogContext());
+    // without it, properties pushed via LogContext.PushProperty never reach the formatter/sink. The factory
+    // takes a delegate, so every CreateFile call gets a fresh configuration.
+    private readonly SerilogFileLoggerFactory _factory = new(() => new LoggerConfiguration().Enrich.FromLogContext());
     private readonly List<string> _tempFiles = [];
 
     /// <inheritdoc />
@@ -43,6 +45,58 @@ public sealed class SerilogFileLoggerFactoryTests : IDisposable
         var path = Path.GetTempFileName();
         _tempFiles.Add(path);
         return path;
+    }
+
+    /// <summary>
+    ///     A single factory instance can back several log files: each logger writes only to its own file, proving
+    ///     the Serilog sinks do not accumulate on one shared configuration.
+    /// </summary>
+    [Fact]
+    public void CreateFile_CalledTwiceOnSameInstance_EachLoggerWritesOnlyToItsOwnFile()
+    {
+        var firstPath = NewTempFilePath();
+        var secondPath = NewTempFilePath();
+
+        using (var first = _factory.CreateFile(firstPath))
+        using (var second = _factory.CreateFile(secondPath))
+        {
+            first.CreateLogger(nameof(SerilogFileLoggerFactoryTests)).LogInformation("first file message");
+            second.CreateLogger(nameof(SerilogFileLoggerFactoryTests)).LogInformation("second file message");
+        }
+
+        var firstContent = File.ReadAllText(firstPath);
+        var secondContent = File.ReadAllText(secondPath);
+
+        firstContent.Should().Contain("first file message").And.NotContain("second file message");
+        secondContent.Should().Contain("second file message").And.NotContain("first file message");
+    }
+
+    /// <summary>
+    ///     The factory resolved once from a container configured by <c>AddLoggingServices</c> — as the singleton
+    ///     consumers hold it — can create two log files and both loggers write.
+    /// </summary>
+    [Fact]
+    public void AddLoggingServices_FileLoggerFactory_CanCreateTwoFilesFromTheContainer()
+    {
+        var services = new ServiceCollection();
+        services.AddTransient(_ => new LoggerConfiguration().Enrich.FromLogContext());
+        services.AddLoggingServices();
+
+        using var provider = services.BuildServiceProvider();
+        var factory = provider.GetRequiredService<IFileLoggerFactory>();
+
+        var firstPath = NewTempFilePath();
+        var secondPath = NewTempFilePath();
+
+        using (var first = factory.CreateFile(firstPath))
+        using (var second = factory.CreateFile(secondPath))
+        {
+            first.CreateLogger(nameof(SerilogFileLoggerFactoryTests)).LogInformation("container first message");
+            second.CreateLogger(nameof(SerilogFileLoggerFactoryTests)).LogInformation("container second message");
+        }
+
+        File.ReadAllText(firstPath).Should().Contain("container first message");
+        File.ReadAllText(secondPath).Should().Contain("container second message");
     }
 
     /// <summary>Null file path throws ArgumentException.</summary>

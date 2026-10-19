@@ -31,7 +31,6 @@ using SlideGenerator.Generator.Workflows.Models;
 using SlideGenerator.Image;
 using SlideGenerator.Image.FaceDetection;
 using SlideGenerator.Logging;
-using SlideGenerator.Logging.FileLogging;
 using SlideGenerator.Recipe.Models;
 using SlideGenerator.Settings.Database;
 using SlideGenerator.Settings.Mutable;
@@ -127,9 +126,10 @@ internal sealed class WorkflowTestHarness : IAsyncDisposable
         _settings = new FakeSettingProvider();
 
         var services = new ServiceCollection();
-        // SerilogFileLoggerFactory takes a LoggerConfiguration (Transient). Provide a minimal one —
-        // matching the pattern in SlideGenerator.Desktop.App.ConfigureServices, just with Verbose level
-        // so the test sees every line the file sink writes.
+        // SerilogFileLoggerFactory takes a LoggerConfiguration (Transient). AddLoggingServices requires a
+        // Transient LoggerConfiguration; the singleton file-logger factory builds one per log file. Provide a
+        // minimal one matching the pattern in SlideGenerator.Desktop.App.ConfigureServices, just with Verbose
+        // level so the test sees every line the file sink writes.
         services.AddTransient<LoggerConfiguration>(_ => new LoggerConfiguration()
             .MinimumLevel.Is(LogEventLevel.Verbose)
             .Enrich.FromLogContext());
@@ -284,23 +284,7 @@ internal sealed class WorkflowTestHarness : IAsyncDisposable
             DateTimeOffset.UtcNow);
         await Workflows.CreateAsync(record, ct).ConfigureAwait(false);
 
-        // Drive the engine directly with a freshly-constructed LoggingWorkflowRunner because the singleton
-        // controller pins one IFileLoggerFactory (known bug, fixed in backend-remediation item 1.1; once
-        // fixed, switch this method to Controller.StartWorkflowAsync).
-        var now = DateTimeOffset.UtcNow;
-        for (var jobId = 0; jobId < specs.Count; jobId++)
-        {
-            Jobs.Enqueue(new JobSnapshot(workflowId, jobId, JobStatus.Pending, JobPhase.CreatingOutput, 0,
-                specs[jobId], now));
-        }
-
-        await Jobs.FlushAsync(ct).ConfigureAwait(false);
-
-        var freshFileLogger = _provider.GetRequiredService<IFileLoggerFactory>();
-        var runner = new LoggingWorkflowRunner(logPath, _provider.GetRequiredService<SlideGenerationWorkflow>(),
-            freshFileLogger, _logNotifier);
-        await Engine.StartWorkflowAsync(workflowId,
-            new WorkflowSnapshot(workflowId, JobStatus.Pending, now), runner, ct).ConfigureAwait(false);
+        await Controller.StartWorkflowAsync(workflowId, specs, logPath, ct).ConfigureAwait(false);
         return workflowId;
     }
 
