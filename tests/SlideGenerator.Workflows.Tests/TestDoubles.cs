@@ -2,7 +2,7 @@
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Jobs.Tests
+ * Project: SlideGenerator.Workflows.Tests
  * File: TestDoubles.cs
  *
  * This file is part of this solution.
@@ -12,9 +12,9 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Jobs.Engine;
+using SlideGenerator.Workflows.Engine;
 
-namespace SlideGenerator.Jobs.Tests;
+namespace SlideGenerator.Workflows.Tests;
 
 /// <summary>Minimal domain-free state used by every <see cref="JobEngine{TKey,TState}" /> test.</summary>
 internal sealed record TestState(int Step);

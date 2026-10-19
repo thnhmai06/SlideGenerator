@@ -2,7 +2,7 @@
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Jobs.Tests
+ * Project: SlideGenerator.Workflows.Tests
  * File: JobEngineTests.cs
  *
  * This file is part of this solution.
@@ -14,10 +14,10 @@
 
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
-using SlideGenerator.Jobs.Engine;
+using SlideGenerator.Workflows.Engine;
 using Xunit;
 
-namespace SlideGenerator.Jobs.Tests;
+namespace SlideGenerator.Workflows.Tests;
 
 /// <summary>
 ///     Domain-free behavioral tests for <see cref="JobEngine{TKey,TState}" />, using

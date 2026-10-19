@@ -16,7 +16,7 @@ using SlideGenerator.Generator.Jobs.Models;
 using SlideGenerator.Generator.Jobs.Workloads;
 using SlideGenerator.Generator.Persistence;
 using SlideGenerator.Generator.Progress;
-using SlideGenerator.Jobs.Engine;
+using SlideGenerator.Workflows.Engine;
 using SlideGenerator.Logging.FileLogging;
 using SlideGenerator.Settings.Immutable;
 

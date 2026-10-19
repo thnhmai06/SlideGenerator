@@ -16,14 +16,14 @@ using SlideGenerator.Generator.Jobs.Models;
 using SlideGenerator.Generator.Jobs.Workloads;
 using SlideGenerator.Generator.Persistence;
 using SlideGenerator.Generator.Progress;
-using SlideGenerator.Jobs.Engine;
+using SlideGenerator.Workflows.Engine;
 using SlideGenerator.Logging.FileLogging;
 
 namespace SlideGenerator.Generator.Jobs;
 
 /// <summary>
 ///     Runs jobs by delegating to <see cref="IJobEngine{TKey,TState}" /> (the generic scheduler/lifecycle
-///     engine, in <c>SlideGenerator.Jobs</c>) with a <see cref="SlideGenerationWorkload" /> (the 4-phase
+///     engine, in <c>SlideGenerator.Workflows</c>) with a <see cref="SlideGenerationWorkload" /> (the 4-phase
 ///     slide-generation logic) wrapped in a <see cref="LoggingWorkload" />. This type itself is a thin
 ///     adapter — its public contract is unchanged from before the Engine/Workload split, so
 ///     <c>Service</c>/<c>Program.Startup.cs</c>/existing tests mocking <see cref="IJobRunner" /> don't need

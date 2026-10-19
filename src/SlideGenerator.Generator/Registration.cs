@@ -19,8 +19,8 @@ using SlideGenerator.Generator.Jobs.Models;
 using SlideGenerator.Generator.Jobs.Workloads;
 using SlideGenerator.Generator.Persistence;
 using SlideGenerator.Generator.Progress;
-using SlideGenerator.Jobs;
-using SlideGenerator.Jobs.Engine;
+using SlideGenerator.Workflows;
+using SlideGenerator.Workflows.Engine;
 using SlideGenerator.Settings.Immutable;
 using SlideGenerator.Settings.Mutable;
 
@@ -60,7 +60,7 @@ public static class Registration
             // Reads the per-request workflow log file back into scoped LogEntry records for Summary.Logs.
             services.AddSingleton<ILogFileReader, LogFileReader>();
 
-            // Job execution — generic Job Engine (SlideGenerator.Jobs) driving the slide-generation workload.
+            // Job execution — generic Job Engine (SlideGenerator.Workflows) driving the slide-generation workload.
             services.AddSingleton<IJobConcurrencyProvider, SettingConcurrencyProvider>();
             services.AddSingleton<SlideGenerationWorkload>();
             services.AddSingleton<IJobObserver<JobKey, JobSnapshot>, GeneratorJobObserver>();

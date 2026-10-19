@@ -30,7 +30,7 @@ using SlideGenerator.Image;
 using SlideGenerator.Image.Cropping;
 using SlideGenerator.Image.FaceDetection;
 using SlideGenerator.Image.Loading;
-using SlideGenerator.Jobs.Engine;
+using SlideGenerator.Workflows.Engine;
 using SlideGenerator.Recipe.Models;
 using SlideGenerator.Settings.Mutable;
 using Xunit;

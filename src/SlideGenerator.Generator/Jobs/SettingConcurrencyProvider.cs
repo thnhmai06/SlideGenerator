@@ -12,7 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Jobs.Engine;
+using SlideGenerator.Workflows.Engine;
 using SlideGenerator.Settings.Mutable;
 
 namespace SlideGenerator.Generator.Jobs;

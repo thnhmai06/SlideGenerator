@@ -2,7 +2,7 @@
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Jobs
+ * Project: SlideGenerator.Workflows
  * File: PauseGate.cs
  *
  * This file is part of this solution.
@@ -12,7 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Jobs.Engine;
+namespace SlideGenerator.Workflows.Engine;
 
 /// <summary>
 ///     Swappable cooperative pause checkpoint: <see cref="Pause" />/<see cref="Resume" /> toggle a shared

@@ -2,7 +2,7 @@
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Jobs
+ * Project: SlideGenerator.Workflows
  * File: JobOutcome.cs
  *
  * This file is part of this solution.
@@ -12,7 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Jobs.Engine;
+namespace SlideGenerator.Workflows.Engine;
 
 /// <summary>A job's terminal outcome, as decided solely by <see cref="IJobEngine{TKey,TState}" />.</summary>
 public enum JobOutcome : byte

@@ -17,7 +17,7 @@ using Serilog.Context;
 using Serilog.Events;
 using SlideGenerator.Generator.Jobs.Models;
 using SlideGenerator.Generator.Progress;
-using SlideGenerator.Jobs.Engine;
+using SlideGenerator.Workflows.Engine;
 using SlideGenerator.Logging.FileLogging;
 
 namespace SlideGenerator.Generator.Jobs.Workloads;

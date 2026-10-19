@@ -59,7 +59,7 @@ chiều; không thêm module hay framework. Ba trục cần sửa:
 
 ## Giai đoạn 2: vòng đời job và lưu trữ
 
-**2.1 Máy trạng thái trong engine** (`Jobs/Engine/`, vẫn generic)
+**2.1 Máy trạng thái trong engine** (`Workflows/Engine/`, vẫn generic)
 - Thêm `JobLifecycle { Queued, Running, Paused, Completed, Cancelled, Faulted }`. `RunningJob` giữ lifecycle, chuyển
   trạng thái dưới lock riêng của job; trạng thái kết thúc là cuối cùng.
 - `PauseGate` báo engine khi job thật sự đỗ ở checkpoint; chỉ khi đó mới báo `Paused`. `IJobObserver` nhận lifecycle;

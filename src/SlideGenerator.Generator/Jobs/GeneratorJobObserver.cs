@@ -16,7 +16,7 @@ using Microsoft.Extensions.Logging;
 using SlideGenerator.Generator.Jobs.Models;
 using SlideGenerator.Generator.Persistence;
 using SlideGenerator.Generator.Progress;
-using SlideGenerator.Jobs.Engine;
+using SlideGenerator.Workflows.Engine;
 
 namespace SlideGenerator.Generator.Jobs;
 
@@ -25,7 +25,7 @@ namespace SlideGenerator.Generator.Jobs;
 ///     <see cref="IJobsRepository" />/<see cref="IEventBus" /> — the only place <see cref="JobStatus" />
 ///     values get assigned. The enqueue (persist) and publish (event) side effects below are not atomic
 ///     with each other; that is an accepted application-level integration detail, not a guarantee
-///     <c>SlideGenerator.Jobs</c> makes.
+///     <c>SlideGenerator.Workflows</c> makes.
 /// </summary>
 internal sealed class GeneratorJobObserver(
     IJobsRepository jobsRepository,

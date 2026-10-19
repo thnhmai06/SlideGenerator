@@ -84,7 +84,7 @@ dotnet run --project src/SlideGenerator.Desktop/SlideGenerator.Desktop.csproj
 dotnet test SlideGenerator.slnx
 
 # Run tests for one project
-dotnet test tests/SlideGenerator.Jobs.Tests/SlideGenerator.Jobs.Tests.csproj
+dotnet test tests/SlideGenerator.Workflows.Tests/SlideGenerator.Workflows.Tests.csproj
 ```
 
 - SDK: .NET 10.0 (`global.json` pins `10.0.100`, `rollForward: latestMajor`, prerelease allowed) and the
@@ -112,7 +112,7 @@ dotnet test tests/SlideGenerator.Jobs.Tests/SlideGenerator.Jobs.Tests.csproj
 │   ├── SlideGenerator.Logging/          — FileLogging/, Formats/ (file + console formatters, ScopeNotifyingSink)
 │   ├── SlideGenerator.Document/         — Workbooks/, Presentations/, Template/ (Syncfusion + Mustache)
 │   ├── SlideGenerator.Image/            — FaceDetection/, Cropping/, Loading/
-│   ├── SlideGenerator.Jobs/             — Engine/ (generic Job Engine, zero project references)
+│   ├── SlideGenerator.Workflows/             — Engine/ (generic Job Engine, zero project references)
 │   ├── SlideGenerator.Recipe/           — Models/, Services/ (repository + export/import), Formats/
 │   ├── SlideGenerator.Summarizer/       — Workbooks/, Presentations/, SummarizationService
 │   ├── SlideGenerator.Generator/        — Jobs/, Persistence/, Progress/, root Service + DTOs
@@ -148,7 +148,7 @@ Foundation
 ├── Logging       - Serilog file/console formatters, IFileLoggerFactory, scope-notifying sink
 ├── Document      - Syncfusion Excel/PowerPoint abstractions + Mustache text templating
 ├── Image         - NetVips loading, ROI cropping, OpenCV YuNet face detection
-└── Jobs          - Generic Job Engine: runs any IJobWorkload<TState> — concurrency, pause/resume/stop,
+└── Workflows     - Generic Job Engine: runs any IJobWorkload<TState> — concurrency, pause/resume/stop,
                     crash-resume — with no knowledge of what a job does
 
 Domain
@@ -165,7 +165,7 @@ Application
 ### Dependency Rules
 
 - Dependencies flow downward only — no circular references.
-- `SlideGenerator.Jobs` has zero project references.
+- `SlideGenerator.Workflows` has zero project references.
 - Each module has a root `Registration.cs` as its DI entry point.
 - `SlideGenerator.Desktop` is the executable that wires all modules (`App.axaml.cs`).
 
@@ -180,7 +180,7 @@ Application
 | Image         | `AddImageServices()`                                                                                       |
 | Recipe        | `AddRecipeServices()`                                                                                      |
 | Summarizer    | `AddSummarizationServices()`                                                                               |
-| Jobs          | `AddJobEngine<TKey,TState>()` — generic, called from `AddGeneratorServices()`, not from the host directly  |
+| Workflows     | `AddJobEngine<TKey,TState>()` — generic, called from `AddGeneratorServices()`, not from the host directly  |
 | Generator     | `AddGeneratorServices()`                                                                                   |
 | Desktop       | `AddDesktopServices()` (event bus, progress hub, localization, theme, dialogs, ViewModels)                 |
 
@@ -193,7 +193,7 @@ extension(IServiceCollection services)
 }
 ```
 
-Desktop, Document, Jobs, Recipe, Settings and Summarizer still use a classic `this IServiceCollection` extension
+Desktop, Document, Workflows, Recipe, Settings and Summarizer still use a classic `this IServiceCollection` extension
 method — match the file you are editing.
 
 ### Startup / shutdown sequence
@@ -245,7 +245,7 @@ path equals one claimed by an already Pending/Running/Paused job of another requ
 `Complete` at request level — error status exists only per job (`JobSummary.JobStatus`). `Summary.Phase`
 (`RequestPhase`) is likewise recomputed from current job statuses on every list call (`DeriveRequestPhase`).
 
-## Job Engine (`SlideGenerator.Jobs`)
+## Job Engine (`SlideGenerator.Workflows`)
 
 Fully generic and domain-free: no `JobSnapshot`, `JobStatus`, Syncfusion, `Settings` or SQLite references.
 
@@ -467,7 +467,7 @@ fixtures are missing. Do not write unit stubs that bypass that behavior. Safe to
 - `BufferedRepository<TKey,TValue>` with a fake `UpsertBatchAsync`.
 - `JobsRepository` row mapping/schema against a real temp-file SQLite DB.
 - `Service` aggregation logic (`DeriveStatus`, `BuildJobs`, fan-out) against mocked `IJobRunner` / repositories.
-- `JobEngine<TKey,TState>` with a fake workload/observer (`Jobs.Tests/JobEngineTests.cs`): pause/checkpoint cooperation,
+- `JobEngine<TKey,TState>` with a fake workload/observer (`Workflows.Tests/JobEngineTests.cs`): pause/checkpoint cooperation,
   stop unblocking a paused job, concurrency-cap sharing and swap-not-resize, non-blocking `InitializeAsync`, terminal
   state ownership.
 - Desktop ViewModels/services (`Desktop.Tests`), including headless Avalonia view-construction smoke tests that share one
@@ -481,8 +481,8 @@ Library modules are organized by business feature/concept, not by technical laye
 implementations, models and several small related classes in one file (the old "1 file = 1 class" rule does not apply
 within a feature folder). Folder names are plural when the singular would collide with a type inside it (e.g.
 `Recipe/Models/` containing `Recipe.cs`; CS0118). Loose root files are fine for cross-feature helpers (e.g.
-`Logging/Utilities.cs`). **Namespace mirrors the physical folder path 1:1** (e.g. `Jobs/Engine/JobEngine.cs` →
-`SlideGenerator.Jobs.Engine`, `Generator/Jobs/Workloads/SlideGenerationWorkload.cs` →
+`Logging/Utilities.cs`). **Namespace mirrors the physical folder path 1:1** (e.g. `Workflows/Engine/JobEngine.cs` →
+`SlideGenerator.Workflows.Engine`, `Generator/Jobs/Workloads/SlideGenerationWorkload.cs` →
 `SlideGenerator.Generator.Jobs.Workloads`).
 
 ### Coding style
@@ -560,7 +560,7 @@ for this; replicate the pattern in any new service that logs file paths from ext
 
 - [ ] Each module has a root `Registration.cs` with its DI setup
 - [ ] Module dependencies flow downward only; no circular references
-- [ ] `SlideGenerator.Jobs` (`Engine/`) stays domain-free — no reference to `JobSnapshot` / `JobStatus` / Syncfusion /
+- [ ] `SlideGenerator.Workflows` (`Engine/`) stays domain-free — no reference to `JobSnapshot` / `JobStatus` / Syncfusion /
   `Settings` / SQLite, and no project references to any other module
 - [ ] `SlideGenerationWorkload` phase bodies call `context.CheckpointAsync` + `ct.ThrowIfCancellationRequested()` before
   every row, never mid-row

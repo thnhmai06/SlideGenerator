@@ -2,7 +2,7 @@
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Jobs
+ * Project: SlideGenerator.Workflows
  * File: Registration.cs
  *
  * This file is part of this solution.
@@ -13,9 +13,9 @@
  */
 
 using Microsoft.Extensions.DependencyInjection;
-using SlideGenerator.Jobs.Engine;
+using SlideGenerator.Workflows.Engine;
 
-namespace SlideGenerator.Jobs;
+namespace SlideGenerator.Workflows;
 
 /// <summary>Registers a <see cref="IJobEngine{TKey,TState}" /> into the dependency injection container.</summary>
 public static class Registration

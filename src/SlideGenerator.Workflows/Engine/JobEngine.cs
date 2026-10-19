@@ -2,7 +2,7 @@
  * Copyright (C) 2026 Thành Mai (thnhmai06)
  *
  * Solution: SlideGenerator
- * Project: SlideGenerator.Jobs
+ * Project: SlideGenerator.Workflows
  * File: JobEngine.cs
  *
  * This file is part of this solution.
@@ -15,7 +15,7 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
 
-namespace SlideGenerator.Jobs.Engine;
+namespace SlideGenerator.Workflows.Engine;
 
 /// <summary>
 ///     Runs jobs concurrently — bounded by <see cref="IJobConcurrencyProvider" />, tracked by

@@ -27,7 +27,7 @@ using SlideGenerator.Generator.Jobs.Models;
 using SlideGenerator.Generator.Progress;
 using SlideGenerator.Image.Cropping;
 using SlideGenerator.Image.Loading;
-using SlideGenerator.Jobs.Engine;
+using SlideGenerator.Workflows.Engine;
 using SlideGenerator.Recipe.Models;
 using SlideGenerator.Settings.Mutable;
 using SlideGenerator.Utilities;
@@ -39,7 +39,7 @@ namespace SlideGenerator.Generator.Jobs.Workloads;
 ///     The 4-phase slide-generation job (create/open output → create slides → fill text → fill images), as
 ///     an <see cref="IJobWorkload{TState}" />. Knows nothing about concurrency, pause/resume checkpointing
 ///     beyond what <see cref="IJobContext{TState}" /> hands it, or persistence beyond
-///     <see cref="IJobContext{TState}.ReportAsync" /> — that is <c>SlideGenerator.Jobs</c>'s concern. Ported
+///     <see cref="IJobContext{TState}.ReportAsync" /> — that is <c>SlideGenerator.Workflows</c>'s concern. Ported
 ///     from the former <c>JobRunner.Phases.cs</c>.
 /// </summary>
 internal sealed class SlideGenerationWorkload(

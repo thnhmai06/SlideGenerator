@@ -496,7 +496,7 @@ V2 has a full execution model. Vocabulary:
 | **Request** (a.k.a. **Run**) | one user-initiated generation of a Recipe. Identified by `requestId` (GUID string). Persisted as `RequestRecord` in the `Requests` table (write-once). Groups N Jobs. |
 | **Job** | one unit of generation = one Mapping × one WorksheetSource = one output file. Identified within its Request by a 0-based ordinal `JobId` (int). Persisted as a `JobSnapshot` row in the `Jobs` table (current-state, updated as it progresses). |
 | **JobSpecification** | the fully-resolved, self-contained description of what a Job does (workbook, worksheet, columns, row filter, template path + slide index, text/image instructions, output path). |
-| **Job Engine** (`SlideGenerator.Jobs`) | a generic, domain-free scheduler: `IJobEngine<TKey,TState>` runs any `IJobWorkload<TState>`, owning the running-job registry, the concurrency semaphore, pause/checkpoint, and crash-resume. Zero knowledge of slides. |
+| **Job Engine** (`SlideGenerator.Workflows`) | a generic, domain-free scheduler: `IJobEngine<TKey,TState>` runs any `IJobWorkload<TState>`, owning the running-job registry, the concurrency semaphore, pause/checkpoint, and crash-resume. Zero knowledge of slides. |
 | **Job Workload** (`SlideGenerationWorkload`) | the slide-specific 4-phase pipeline, plugged into the engine. Wrapped in `LoggingWorkload` (per-Job file-log scope). |
 | **JobRunner** | thin adapter from `IService`/`Service` vocabulary onto `IJobEngine`. |
 
@@ -750,10 +750,10 @@ All in-process (no message broker, no IPC). Two publish-only interfaces in `Slid
 
 **Responsibilities:**
 - **Domain layer** owns the *definitions*: what a Recipe is, how it is stored, how a `.recipe` is packaged; what a Setting is and where it lives.
-- **Application layer** owns *execution*: turning a Recipe + a Run request into Jobs, running the 4-phase pipeline, tracking/persisting Job state, resuming after a crash, exposing the `IService` façade. `SlideGenerator.Jobs` owns *generic* execution mechanics (concurrency, checkpoint, resume) with no domain knowledge.
+- **Application layer** owns *execution*: turning a Recipe + a Run request into Jobs, running the 4-phase pipeline, tracking/persisting Job state, resuming after a crash, exposing the `IService` façade. `SlideGenerator.Workflows` owns *generic* execution mechanics (concurrency, checkpoint, resume) with no domain knowledge.
 - **Foundation** owns *capabilities*: document I/O, templating, image processing, HTTP/cloud, logging.
 - **Host/UI** owns *presentation and process lifecycle*: the window, navigation, ViewModels, the in-process event bus implementations, DI wiring, startup (single-instance, DB migration, Velopack, splash), shutdown.
-- **Dependencies flow strictly downward.** Each module has a `Registration.cs` DI entry point. `SlideGenerator.Jobs` has no project references at all.
+- **Dependencies flow strictly downward.** Each module has a `Registration.cs` DI entry point. `SlideGenerator.Workflows` has no project references at all.
 
 **On disk but not in the solution (orphans — treat as non-existent):** `src\SlideGenerator.Coordinator\`, `tests\SlideGenerator.Acquisition.Tests\`. Neither is in `SlideGenerator.slnx` or `git ls-files`. "Coordinator" is not a live V2 concept.
 
@@ -789,7 +789,7 @@ All in-process (no message broker, no IPC). Two publish-only interfaces in `Slid
 | **Phase** | One of `CreatingOutput → CreatingSlides → FillingText → FillingImages → Done`. Forward-only. |
 | **CurrentIndex** | Rows completed within the current phase; the resume position with `Phase`. |
 | **TotalRows** | Filtered row count of the Job's worksheet; drives the determinate progress bar. |
-| **Job Engine** | The generic, domain-free scheduler (`SlideGenerator.Jobs`). |
+| **Job Engine** | The generic, domain-free scheduler (`SlideGenerator.Workflows`). |
 | **Job Workload** | The slide-specific 4-phase pipeline (`SlideGenerationWorkload`). |
 | **Summary** | A per-Run snapshot returned by the list APIs (request-level fields + a dict of `JobSummary`). Rebuilt on every call. |
 | **RowProgress** | A live-only, unpersisted per-row activity event (status, stage, note). |
