@@ -20,8 +20,7 @@ namespace SlideGenerator.Generator.Persistence;
 ///     Coalesce-and-flush base: callers <see cref="Enqueue" /> dirty values keyed by <typeparamref name="TKey" />
 ///     (last write per key wins); a background loop atomically drains the buffer roughly once a second and
 ///     calls <see cref="UpsertBatchAsync" /> once per tick, then raises <see cref="Flushed" /> with the
-///     batch. Extracted from the pattern used by the old Stdio-side progress coalescer so any table that
-///     often changes (here, just <c>Jobs</c>) can reuse the same buffering without re-deriving it.
+///     batch. Any table that changes often (here, just <c>Jobs</c>) can reuse the same buffering.
 ///     Flushes are serialized, so batches reach storage in the order they were drained; a failed flush keeps
 ///     its values for the next one.
 /// </summary>

@@ -3,7 +3,7 @@ version: "3"
 vars:
   BACKEND_SOLUTION: SlideGenerator.slnx
   BACKEND_RESULTS_DIR: '{{.BACKEND_RESULTS_DIR | default "TestResults"}}'
-  BACKEND_RUN_PROJECT: src/SlideGenerator.Stdio/SlideGenerator.Stdio.csproj
+  BACKEND_RUN_PROJECT: src/SlideGenerator.Desktop/SlideGenerator.Desktop.csproj
 
 env:
   DOTNET_NOLOGO: "true"
@@ -26,7 +26,7 @@ tasks:
       - dotnet build {{.BACKEND_SOLUTION}} --no-restore
 
   run:
-    desc: Run backend stdio sidecar (Debug).
+    desc: Run the desktop app (Debug).
     dir: "{{.TASKFILE_DIR}}"
     deps:
       - restore

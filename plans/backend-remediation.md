@@ -10,6 +10,14 @@ bằng cách đọc code; chưa chạy được code (không có `dotnet` trong 
 > cột `Status`) và `Jobs` (khoá `(WorkflowId, JobId)`); các migration đã gộp thành `001`. Các mục dưới đây viết theo mô
 > hình này; mục nào đã được thay đổi này giải quyết sẽ ghi rõ.
 
+> **Trạng thái thực hiện (2026-10-20):** giai đoạn A → 6 đã làm xong trên `develop`; chi tiết từng mục, số test, quyết
+> định chờ duyệt nằm trong `plans/backend-remediation-progress.md`. Commit theo mục: A.2 `990add03`, A.3 `1623ae39`,
+> 1.1 `d4c06d42`, 1.2 `b0a0954a`, 2.1 `16a12caf`, 2.2 `ef15aaca`, 2.3 `d836774f` + `c7ffebdc`, 2.4 `a9a7df09`,
+> 3.1 `cde85bfb`, 3.2 `c2093129`, 3.3 `70cb142d` + `14b33b74`, 4.1 `d4d61dbc`, 4.2 `972e3978`, 4.3 `3d381351`,
+> 4.4 `41abd89f`, 5.1 `939f843c`, 5.2 `1c4c0e72`, 5.3 `6bbcd5ba` + `abfbf2d1`. Phần còn hở (không làm): 2.1b — workflow
+> lỗi ngoài phạm vi job chưa đánh dấu các job dở là `Error`; `Workflows.Status` vẫn dùng `JobStatus`. Các mục bên dưới
+> giữ nguyên làm tài liệu thiết kế, không phải việc còn lại.
+
 ## Quyết định đã chốt
 
 1. Job đang pause **giữ** slot đồng thời (`MaxConcurrentJobs` là cơ chế kiểm soát RAM; job pause vẫn giữ file pptx trong bộ nhớ).
