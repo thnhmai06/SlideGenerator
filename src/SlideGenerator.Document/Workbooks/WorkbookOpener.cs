@@ -53,12 +53,11 @@ public interface IWorkbookOpener
 
 /// <summary>
 ///     Syncfusion implementation of <see cref="IWorkbookOpener" />.
-///     Wraps the singleton <see cref="ExcelEngine" /> so callers never import Syncfusion types.
+///     Creates one <c>ExcelEngine</c> per opened workbook, because the engine's workbook collection is not
+///     thread-safe and jobs open workbooks concurrently; the engine is released with the workbook.
 /// </summary>
 internal sealed class SfWorkbookOpener : IWorkbookOpener
 {
-    private readonly ExcelEngine _engine = new();
-
     /// <inheritdoc />
     public async Task<IWorkbook> OpenWorkbookAsync(WorkbookIdentifier identifier, CancellationToken ct = default)
     {
@@ -100,55 +99,77 @@ internal sealed class SfWorkbookOpener : IWorkbookOpener
 
     private SfWorkbook CreateWorkbookInstance(WorkbookIdentifier identifier)
     {
-        Syncfusion.XlsIO.IWorkbook workbook;
-
-        switch (identifier.GetBookType())
+        // One engine per workbook: ExcelEngine's workbook collection is not thread-safe.
+        var engine = new ExcelEngine();
+        try
         {
-            case WorkbookType.Csv:
-            case WorkbookType.Tsv:
-                workbook = _engine.Excel.Workbooks.Open(identifier.BookPath, identifier.Separator);
-                break;
+            Syncfusion.XlsIO.IWorkbook workbook;
 
-            case WorkbookType.Xls:
-            case WorkbookType.Xlsx:
-            case WorkbookType.Xltx:
-            case WorkbookType.Ods:
-            default:
-                workbook = _engine.Excel.Workbooks.Open(
-                    identifier.BookPath, ExcelParseOptions.Default,
-                    false, identifier.BookPassword);
-                break;
+            switch (identifier.GetBookType())
+            {
+                case WorkbookType.Csv:
+                case WorkbookType.Tsv:
+                    workbook = engine.Excel.Workbooks.Open(identifier.BookPath, identifier.Separator);
+                    break;
+
+                case WorkbookType.Xls:
+                case WorkbookType.Xlsx:
+                case WorkbookType.Xltx:
+                case WorkbookType.Ods:
+                default:
+                    workbook = engine.Excel.Workbooks.Open(
+                        identifier.BookPath, ExcelParseOptions.Default,
+                        false, identifier.BookPassword);
+                    break;
+            }
+
+            return new SfWorkbook(workbook, engine, identifier);
         }
-
-        return new SfWorkbook(workbook, identifier);
+        catch
+        {
+            engine.Dispose();
+            throw;
+        }
     }
 
     private SfWorkbook CreateWorkbookReadOnlyInstance(WorkbookIdentifier identifier)
     {
-        Syncfusion.XlsIO.IWorkbook workbook;
+        // One engine per workbook: ExcelEngine's workbook collection is not thread-safe.
+        var engine = new ExcelEngine();
         FileStream? fileStream = null;
 
-        switch (identifier.GetBookType())
+        try
         {
-            case WorkbookType.Csv:
-            case WorkbookType.Tsv:
-                fileStream = new FileStream(
-                    identifier.BookPath, FileMode.Open,
-                    FileAccess.Read, FileShare.ReadWrite);
-                workbook = _engine.Excel.Workbooks.Open(fileStream, identifier.Separator);
-                break;
+            Syncfusion.XlsIO.IWorkbook workbook;
 
-            case WorkbookType.Xls:
-            case WorkbookType.Xlsx:
-            case WorkbookType.Xltx:
-            case WorkbookType.Ods:
-            default:
-                workbook = _engine.Excel.Workbooks.Open(
-                    identifier.BookPath, ExcelParseOptions.Default,
-                    true, identifier.BookPassword);
-                break;
+            switch (identifier.GetBookType())
+            {
+                case WorkbookType.Csv:
+                case WorkbookType.Tsv:
+                    fileStream = new FileStream(
+                        identifier.BookPath, FileMode.Open,
+                        FileAccess.Read, FileShare.ReadWrite);
+                    workbook = engine.Excel.Workbooks.Open(fileStream, identifier.Separator);
+                    break;
+
+                case WorkbookType.Xls:
+                case WorkbookType.Xlsx:
+                case WorkbookType.Xltx:
+                case WorkbookType.Ods:
+                default:
+                    workbook = engine.Excel.Workbooks.Open(
+                        identifier.BookPath, ExcelParseOptions.Default,
+                        true, identifier.BookPassword);
+                    break;
+            }
+
+            return new SfWorkbook(workbook, engine, identifier, fileStream);
         }
-
-        return new SfWorkbook(workbook, identifier, fileStream);
+        catch
+        {
+            fileStream?.Dispose();
+            engine.Dispose();
+            throw;
+        }
     }
 }

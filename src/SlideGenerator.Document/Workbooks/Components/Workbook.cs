@@ -13,6 +13,7 @@
  */
 
 using SlideGenerator.Document.Workbooks.Identifiers;
+using Syncfusion.XlsIO;
 using SyncfusionWorkbook = Syncfusion.XlsIO.IWorkbook;
 
 namespace SlideGenerator.Document.Workbooks.Components;
@@ -73,10 +74,12 @@ public interface IWorkbook : IReadOnlyWorkbook
 }
 
 /// <summary>
-///     Wraps a Syncfusion IWorkbook and its FileStream for proper disposal and saving.
+///     Wraps a Syncfusion IWorkbook together with the ExcelEngine that created it and its FileStream,
+///     so all three are released together.
 /// </summary>
 internal sealed class SfWorkbook(
     SyncfusionWorkbook value,
+    ExcelEngine engine,
     WorkbookIdentifier identifier,
     FileStream? fileStream = null) : IWorkbook
 {
@@ -122,11 +125,18 @@ internal sealed class SfWorkbook(
     }
 
     /// <summary>
-    ///     Closes the workbook and disposes of any underlying file streams.
+    ///     Closes the workbook, then disposes its engine and any underlying file stream.
     /// </summary>
     public void Dispose()
     {
-        value.Close();
-        fileStream?.Dispose();
+        try
+        {
+            value.Close();
+        }
+        finally
+        {
+            engine.Dispose();
+            fileStream?.Dispose();
+        }
     }
 }
