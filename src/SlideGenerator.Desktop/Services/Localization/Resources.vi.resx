@@ -108,6 +108,9 @@
   <data name="runs.filter.cancelled" xml:space="preserve">
     <value>Đã huỷ</value>
   </data>
+  <data name="runs.filter.failed" xml:space="preserve">
+    <value>Lỗi</value>
+  </data>
   <data name="runs.searchPlaceholder" xml:space="preserve">
     <value>Tìm...</value>
   </data>
@@ -386,6 +389,24 @@
   </data>
   <data name="enums.jobStatus.error" xml:space="preserve">
     <value>Lỗi</value>
+  </data>
+  <data name="enums.requestStatus.running" xml:space="preserve">
+    <value>Đang chạy</value>
+  </data>
+  <data name="enums.requestStatus.paused" xml:space="preserve">
+    <value>Tạm dừng</value>
+  </data>
+  <data name="enums.requestStatus.complete" xml:space="preserve">
+    <value>Hoàn tất</value>
+  </data>
+  <data name="enums.requestStatus.completedWithError" xml:space="preserve">
+    <value>Hoàn tất (có lỗi)</value>
+  </data>
+  <data name="enums.requestStatus.error" xml:space="preserve">
+    <value>Lỗi</value>
+  </data>
+  <data name="enums.requestStatus.cancelled" xml:space="preserve">
+    <value>Đã huỷ</value>
   </data>
   <data name="enums.jobPhase.queued" xml:space="preserve">
     <value>Đang chờ</value>

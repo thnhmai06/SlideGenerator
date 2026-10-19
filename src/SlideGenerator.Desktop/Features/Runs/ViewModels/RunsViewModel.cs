@@ -138,6 +138,7 @@ public sealed partial class RunsViewModel : ObservableObject
             RunStatusFilter.Running => request.Status == RequestStatus.Running,
             RunStatusFilter.Paused => request.Status == RequestStatus.Paused,
             RunStatusFilter.Done => request.Status == RequestStatus.Complete,
+            RunStatusFilter.Failed => request.Status is RequestStatus.Error or RequestStatus.CompletedWithError,
             RunStatusFilter.Cancelled => request.Status == RequestStatus.Cancelled,
             _ => true
         };

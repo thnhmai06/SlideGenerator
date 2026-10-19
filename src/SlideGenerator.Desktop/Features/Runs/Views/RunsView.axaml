@@ -21,6 +21,8 @@
                               IsChecked="{Binding Filter, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:RunStatusFilter.Paused}}"/>
                 <ToggleButton Classes="chip" Content="{loc:Tr runs.filter.done}"
                               IsChecked="{Binding Filter, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:RunStatusFilter.Done}}"/>
+                <ToggleButton Classes="chip" Content="{loc:Tr runs.filter.failed}"
+                              IsChecked="{Binding Filter, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:RunStatusFilter.Failed}}"/>
                 <ToggleButton Classes="chip" Content="{loc:Tr runs.filter.cancelled}"
                               IsChecked="{Binding Filter, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static models:RunStatusFilter.Cancelled}}"/>
             </StackPanel>
@@ -54,7 +56,7 @@
                                             <Run Text="{loc:Tr runs.jobSeparator}"/>
                                             <Run>
                                                 <Run.Text>
-                                                    <MultiBinding Converter="{x:Static conv:EnumLocalizedTextConverter.Instance}" ConverterParameter="jobStatus">
+                                                    <MultiBinding Converter="{x:Static conv:EnumLocalizedTextConverter.Instance}" ConverterParameter="requestStatus">
                                                         <Binding Path="Status"/>
                                                         <Binding Path="Revision" Source="{x:Static loc:LocalizationService.Instance}"/>
                                                     </MultiBinding>

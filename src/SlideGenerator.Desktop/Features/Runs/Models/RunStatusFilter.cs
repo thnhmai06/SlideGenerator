@@ -30,8 +30,11 @@ public enum RunStatusFilter
     /// <summary>Requests whose aggregate status is Paused.</summary>
     Paused,
 
-    /// <summary>Requests whose aggregate status is Complete.</summary>
+    /// <summary>Requests whose aggregate status is Complete (every job finished without error).</summary>
     Done,
+
+    /// <summary>Requests whose aggregate status is Error or CompletedWithError (at least one job failed).</summary>
+    Failed,
 
     /// <summary>Requests whose aggregate status is Cancelled.</summary>
     Cancelled
