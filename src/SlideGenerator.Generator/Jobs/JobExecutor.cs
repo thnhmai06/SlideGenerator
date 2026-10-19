@@ -21,7 +21,6 @@ using SlideGenerator.Document.Presentations.Components;
 using SlideGenerator.Document.Presentations.Identifiers;
 using SlideGenerator.Document.Template;
 using SlideGenerator.Document.Workbooks;
-using SlideGenerator.Document.Workbooks.Components;
 using SlideGenerator.Document.Workbooks.Identifiers;
 using SlideGenerator.Generator.Jobs.Models;
 using SlideGenerator.Generator.Progress;
@@ -84,15 +83,22 @@ internal sealed class JobExecutor(
         var partialPath = JobOutput.GetPartialPath(spec.OutputPath);
         if (!context.IsResume) PreflightCleanup.Run(partialPath, jobLogger);
 
-        using var workbook = await workbookOpener.OpenWorkbookReadOnlyAsync(
-            new WorkbookIdentifier(spec.WorkbookPath), ct).ConfigureAwait(false);
-        var worksheet = workbook.GetWorksheet(spec.WorksheetName)
-                        ?? throw new InvalidOperationException(
-                            $"Sheet '{spec.WorksheetName}' not found in '{spec.WorkbookPath}'.");
+        // The workbook is read once up front and released before any output/image work starts: every row the
+        // phases need is already in memory, so the source file is not held open for the whole job.
+        List<int> dataRows;
+        IReadOnlyList<IReadOnlyDictionary<ColumnIdentifier, string>> rows;
+        using (var workbook = await workbookOpener.OpenWorkbookReadOnlyAsync(
+                   new WorkbookIdentifier(spec.WorkbookPath), ct).ConfigureAwait(false))
+        {
+            var worksheet = workbook.GetWorksheet(spec.WorksheetName)
+                            ?? throw new InvalidOperationException(
+                                $"Sheet '{spec.WorksheetName}' not found in '{spec.WorkbookPath}'.");
 
-        var headerToIndex = Utilities.BuildHeaderToIndexMap(worksheet);
-        var dataCount = Math.Max(0, worksheet.RowCount - 1);
-        var dataRows = (spec.RowFilter?.GetIndices(dataCount) ?? Enumerable.Range(1, dataCount)).ToList();
+            var headerToIndex = Utilities.FilterColumns(Utilities.BuildHeaderToIndexMap(worksheet), spec.UsedColumns);
+            var dataCount = Math.Max(0, worksheet.RowCount - 1);
+            dataRows = (spec.RowFilter?.GetIndices(dataCount) ?? Enumerable.Range(1, dataCount)).ToList();
+            rows = Utilities.ReadRows(worksheet, headerToIndex, dataRows);
+        }
 
         // Phase A — create/open output (always the working file).
         var templateId = new PresentationIdentifier(spec.TemplatePresentationPath);
@@ -157,7 +163,7 @@ internal sealed class JobExecutor(
 
             if (phase == JobPhase.FillingText)
             {
-                await RunFillingTextAsync(workflowId, jobId, spec, worksheet, headerToIndex, output, currentIndex,
+                await RunFillingTextAsync(workflowId, jobId, spec, rows, output, currentIndex,
                     dataRows, context, ct).ConfigureAwait(false);
                 (phase, currentIndex) = (JobPhase.FillingImages, 0);
                 await AdvancePhaseAsync(context, workflowId, jobId, spec, phase, currentIndex, dataRows.Count, ct).ConfigureAwait(false);
@@ -165,9 +171,9 @@ internal sealed class JobExecutor(
 
             if (phase == JobPhase.FillingImages)
             {
-                var inspected = await InspectSourcesAsync(spec, worksheet, headerToIndex, dataRows, jobLogger, ct)
+                var inspected = await InspectSourcesAsync(spec, rows, jobLogger, ct)
                     .ConfigureAwait(false);
-                await RunFillingImagesAsync(workflowId, jobId, spec, worksheet, headerToIndex,
+                await RunFillingImagesAsync(workflowId, jobId, spec, rows,
                         templateShapesByIdentifier, output, currentIndex, dataRows, inspected, context, jobLogger, ct)
                     .ConfigureAwait(false);
             }
@@ -268,8 +274,8 @@ internal sealed class JobExecutor(
     #region Phase C — text
 
     private async Task RunFillingTextAsync(
-        string workflowId, int jobId, JobSpecification spec, IReadOnlyWorksheet worksheet,
-        IReadOnlyDictionary<ColumnIdentifier, int> headerToIndex, IPresentation output, int startIndex,
+        string workflowId, int jobId, JobSpecification spec,
+        IReadOnlyList<IReadOnlyDictionary<ColumnIdentifier, string>> rows, IPresentation output, int startIndex,
         IReadOnlyList<int> dataRows, IJobContext context, CancellationToken ct)
     {
         for (var i = startIndex; i < dataRows.Count; i++)
@@ -281,8 +287,7 @@ internal sealed class JobExecutor(
             using var rowScope = LogContext.PushProperty("RowIndex", dataRow + 1);
             ReportRow(workflowId, jobId, dataRow + 1, RowStatus.Processing);
 
-            var rowValues = ReadRowValues(worksheet, headerToIndex, dataRow);
-            var textValues = BuildRowTextValues(rowValues, spec.TextInstructions);
+            var textValues = BuildRowTextValues(rows[i], spec.TextInstructions);
             var slide = output.Slides.ElementAt(i);
             foreach (var shape in slide.Shapes) textComposer.Compose(shape, textValues);
             output.Save();
@@ -319,8 +324,8 @@ internal sealed class JobExecutor(
     #region Phase D — images
 
     private async Task<IReadOnlyDictionary<string, ContentInfo?>> InspectSourcesAsync(
-        JobSpecification spec, IReadOnlyWorksheet worksheet, IReadOnlyDictionary<ColumnIdentifier, int> headerToIndex,
-        IReadOnlyList<int> dataRows, ILogger jobLogger, CancellationToken ct)
+        JobSpecification spec, IReadOnlyList<IReadOnlyDictionary<ColumnIdentifier, string>> rows,
+        ILogger jobLogger, CancellationToken ct)
     {
         var result = new Dictionary<string, ContentInfo?>();
         if (spec.ImageInstructions.Count == 0) return result;
@@ -328,9 +333,8 @@ internal sealed class JobExecutor(
         // Only values the policy accepts as a network URL are collected here — a local path, free text or a
         // non-http scheme must never cause an InspectAsync call.
         var sources = new Dictionary<string, Uri>();
-        foreach (var dataRow in dataRows)
+        foreach (var rowValues in rows)
         {
-            var rowValues = ReadRowValues(worksheet, headerToIndex, dataRow);
             foreach (var instruction in spec.ImageInstructions)
             {
                 var source = Utilities.GetSource(rowValues, instruction.Columns);
@@ -363,8 +367,8 @@ internal sealed class JobExecutor(
     }
 
     private async Task RunFillingImagesAsync(
-        string workflowId, int jobId, JobSpecification spec, IReadOnlyWorksheet worksheet,
-        IReadOnlyDictionary<ColumnIdentifier, int> headerToIndex,
+        string workflowId, int jobId, JobSpecification spec,
+        IReadOnlyList<IReadOnlyDictionary<ColumnIdentifier, string>> rows,
         IReadOnlyDictionary<ShapeIdentifier, IShape> templateShapesByIdentifier, IPresentation output,
         int startIndex, IReadOnlyList<int> dataRows, IReadOnlyDictionary<string, ContentInfo?> inspected,
         IJobContext context, ILogger jobLogger, CancellationToken ct)
@@ -380,7 +384,7 @@ internal sealed class JobExecutor(
             using var rowScope = LogContext.PushProperty("RowIndex", dataRow + 1);
             ReportRow(workflowId, jobId, dataRow + 1, RowStatus.Processing);
 
-            var rowValues = ReadRowValues(worksheet, headerToIndex, dataRow);
+            var rowValues = rows[i];
             var slide = output.Slides.ElementAt(i);
             var shapesByIdentifier = slide.Shapes.ToDictionary(s => s.Identifier);
 
@@ -518,13 +522,6 @@ internal sealed class JobExecutor(
     #endregion
 
     #region Shared row helpers
-
-    private static IReadOnlyDictionary<ColumnIdentifier, string> ReadRowValues(
-        IReadOnlyWorksheet worksheet, IReadOnlyDictionary<ColumnIdentifier, int> headerToIndex, int dataRow)
-    {
-        var row = worksheet.GetRow(dataRow + 1); // row 1 = header => data row N = absolute row N+1
-        return headerToIndex.ToDictionary(kv => kv.Key, kv => row[kv.Value]);
-    }
 
     private void ReportRow(string workflowId, int jobId, int rowIndex, RowStatus status,
         RowStage stage = RowStage.None, string? note = null)

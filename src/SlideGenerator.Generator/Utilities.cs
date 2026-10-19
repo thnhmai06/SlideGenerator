@@ -126,6 +126,61 @@ internal static class Utilities
         return result;
     }
 
+    /// <summary>
+    ///     Restricts <paramref name="headerToIndex" /> to the columns named in <paramref name="usedColumns" />
+    ///     (the column headers visible to the job's instructions). When <paramref name="usedColumns" /> is
+    ///     <see langword="null" /> every column is used and the map is returned as-is.
+    /// </summary>
+    /// <param name="headerToIndex">The worksheet's full column map, as built by <see cref="BuildHeaderToIndexMap" />.</param>
+    /// <param name="usedColumns">The columns to keep, or <see langword="null" /> to keep them all.</param>
+    /// <returns>
+    ///     A case-insensitive map holding only the used columns (with their original indexes), or
+    ///     <paramref name="headerToIndex" /> itself when <paramref name="usedColumns" /> is <see langword="null" />.
+    /// </returns>
+    internal static IReadOnlyDictionary<ColumnIdentifier, int> FilterColumns(
+        IReadOnlyDictionary<ColumnIdentifier, int> headerToIndex, IReadOnlySet<ColumnIdentifier>? usedColumns)
+    {
+        if (usedColumns is null) return headerToIndex;
+
+        var usedNames = new HashSet<string>(usedColumns.Select(c => c.ColumnName), StringComparer.OrdinalIgnoreCase);
+        var result = new Dictionary<ColumnIdentifier, int>(ColumnIdentifierComparer.Instance);
+        foreach (var (column, index) in headerToIndex)
+            if (usedNames.Contains(column.ColumnName))
+                result[column] = index;
+
+        return result;
+    }
+
+    /// <summary>
+    ///     Reads the requested data rows, calling <see cref="IReadOnlyWorksheet.GetRow" /> exactly once per row.
+    ///     Element <c>i</c> of the result is the value map for <c>dataRows[i]</c>; each map is keyed by the columns
+    ///     of <paramref name="headerToIndex" /> (ordinal-ignore-case) and missing cells read as
+    ///     <see cref="string.Empty" />.
+    /// </summary>
+    /// <param name="worksheet">Worksheet to read from.</param>
+    /// <param name="headerToIndex">Column → 0-based list index map, already filtered to the used columns.</param>
+    /// <param name="dataRows">
+    ///     1-based data row indices; the worksheet row is <c>dataRow + 1</c> (row 1 = the header row).
+    /// </param>
+    /// <returns>One value map per entry of <paramref name="dataRows" />, in the same order.</returns>
+    internal static IReadOnlyList<IReadOnlyDictionary<ColumnIdentifier, string>> ReadRows(
+        IReadOnlyWorksheet worksheet, IReadOnlyDictionary<ColumnIdentifier, int> headerToIndex,
+        IReadOnlyList<int> dataRows)
+    {
+        var result = new List<IReadOnlyDictionary<ColumnIdentifier, string>>(dataRows.Count);
+        foreach (var dataRow in dataRows)
+        {
+            var row = worksheet.GetRow(dataRow + 1); // row 1 = header => data row N = absolute row N+1
+            var values = new Dictionary<ColumnIdentifier, string>(
+                headerToIndex.Count, ColumnIdentifierComparer.Instance);
+            foreach (var (column, index) in headerToIndex)
+                values[column] = index < row.Count ? row[index] : string.Empty;
+            result.Add(values);
+        }
+
+        return result;
+    }
+
     /// <summary>Case-insensitive equality on <see cref="ColumnIdentifier.ColumnName" />.</summary>
     private sealed class ColumnIdentifierComparer : IEqualityComparer<ColumnIdentifier>
     {
