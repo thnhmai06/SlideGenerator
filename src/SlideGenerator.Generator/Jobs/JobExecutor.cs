@@ -88,7 +88,7 @@ internal sealed class JobExecutor(
                             $"Sheet '{spec.WorksheetName}' not found in '{spec.WorkbookPath}'.");
 
         var headerToIndex = Utilities.BuildHeaderToIndexMap(worksheet);
-        var dataCount = worksheet.RowCount - 1;
+        var dataCount = Math.Max(0, worksheet.RowCount - 1);
         var dataRows = (spec.RowFilter?.GetIndices(dataCount) ?? Enumerable.Range(1, dataCount)).ToList();
 
         // Phase A — create/open output.

@@ -33,12 +33,13 @@ public interface IReadOnlyWorksheet
     string Name { get; }
 
     /// <summary>
-    ///     Gets the total number of rows in the worksheet.
+    ///     Gets the number of rows in the worksheet's used range, counted from its first row (the header row when
+    ///     the data does not start at row 1). 0 for an empty worksheet.
     /// </summary>
     int RowCount { get; }
 
     /// <summary>
-    ///     Gets the total number of columns in the worksheet.
+    ///     Gets the number of columns in the used range, counted from its first column. 0 for an empty worksheet.
     /// </summary>
     int ColumnCount { get; }
 
@@ -48,12 +49,15 @@ public interface IReadOnlyWorksheet
     /// <param name="row">The 1-based row index.</param>
     /// <param name="col">The 1-based column index.</param>
     /// <returns>The string value of the cell.</returns>
+    /// <remarks>Worksheet coordinates (not relative to the used range).</remarks>
     string GetCell(int row, int col);
 
     /// <summary>
     ///     Gets all cell values in a specified row.
     /// </summary>
-    /// <param name="rowIndex">The 1-based row index.</param>
+    /// <param name="rowIndex">
+    ///     The 1-based row index relative to the first row of the used range (row 1 = the header row).
+    /// </param>
     /// <returns>A read-only list of string values in the row.</returns>
     IReadOnlyList<string> GetRow(int rowIndex);
 }
@@ -82,7 +86,8 @@ internal sealed class SfWorksheet(SyncfusionWorksheet worksheet) : IWorksheet
         get
         {
             var used = worksheet.UsedRange;
-            return used?.LastRow ?? 0;
+            if (!HasData(used)) return 0;
+            return used!.LastRow - used.Row + 1;
         }
     }
 
@@ -91,7 +96,8 @@ internal sealed class SfWorksheet(SyncfusionWorksheet worksheet) : IWorksheet
         get
         {
             var used = worksheet.UsedRange;
-            return used?.LastColumn ?? 0;
+            if (!HasData(used)) return 0;
+            return used!.LastColumn - used.Column + 1;
         }
     }
 
@@ -103,9 +109,9 @@ internal sealed class SfWorksheet(SyncfusionWorksheet worksheet) : IWorksheet
     public IReadOnlyList<string> GetRow(int rowIndex)
     {
         var used = worksheet.UsedRange;
-        if (used == null || rowIndex < 1) return [];
+        if (!HasData(used) || rowIndex < 1) return [];
 
-        var cols = used.LastColumn - used.Column + 1;
+        var cols = used!.LastColumn - used.Column + 1;
         var dataRowAbsolute = used.Row + rowIndex - 1;
         var result = new List<string>(cols);
 
@@ -121,5 +127,22 @@ internal sealed class SfWorksheet(SyncfusionWorksheet worksheet) : IWorksheet
     public void SetCell(int row, int col, string value)
     {
         worksheet.Range[row, col].Text = value;
+    }
+
+    /// <summary>
+    ///     Whether the used range holds data. Syncfusion returns a 0-row/0-column range for an untouched sheet and a
+    ///     1×1 range with empty text for a sheet whose only cell was written then cleared; both read as empty because
+    ///     a single empty cell is indistinguishable from a sheet with no data.
+    /// </summary>
+    /// <param name="used">The worksheet's used range, or null when Syncfusion reports none.</param>
+    /// <returns><c>true</c> when the range contains at least one meaningful cell; otherwise <c>false</c>.</returns>
+    private static bool HasData(Syncfusion.XlsIO.IRange? used)
+    {
+        return used is not null
+               && used.LastRow >= used.Row
+               && used.LastColumn >= used.Column
+               && (used.LastRow > used.Row
+                   || used.LastColumn > used.Column
+                   || !string.IsNullOrEmpty(used.DisplayText));
     }
 }

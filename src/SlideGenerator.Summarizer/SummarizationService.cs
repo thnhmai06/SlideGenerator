@@ -85,7 +85,7 @@ internal sealed class SummarizationService(
         {
             ct.ThrowIfCancellationRequested();
             var headers = worksheet.GetRow(1);
-            var count = worksheet.RowCount - 1;
+            var count = Math.Max(0, worksheet.RowCount - 1);
 
             WorksheetPreview? preview = null;
             if (getPreview)
