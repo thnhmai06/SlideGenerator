@@ -14,7 +14,6 @@
 
 using FluentAssertions;
 using NSubstitute;
-using SlideGenerator.Cloud;
 using SlideGenerator.Document.Workbooks.Components;
 using SlideGenerator.Document.Workbooks.Identifiers;
 using Xunit;
@@ -23,8 +22,7 @@ namespace SlideGenerator.Generator.Tests.Unit;
 
 /// <summary>
 ///     Unit tests for <see cref="Utilities.ExecuteWithBackoffAsync{T}" />,
-///     <see cref="Utilities.ExceedsMaxDownloadBytes" />, <see cref="Utilities.FilterColumns" /> and
-///     <see cref="Utilities.ReadRows" />.
+///     <see cref="Utilities.FilterColumns" /> and <see cref="Utilities.ReadRows" />.
 /// </summary>
 public sealed class UtilitiesTests
 {
@@ -127,53 +125,6 @@ public sealed class UtilitiesTests
 
         await act.Should().ThrowAsync<OperationCanceledException>();
         calls.Should().Be(1);
-    }
-
-    #endregion
-
-    #region ExceedsMaxDownloadBytes
-
-    /// <summary>Verifies a null <see cref="ContentInfo" /> never exceeds the limit.</summary>
-    [Fact]
-    public void ExceedsMaxDownloadBytes_NullContentInfo_ReturnsFalse()
-    {
-        Utilities.ExceedsMaxDownloadBytes(null, 1000).Should().BeFalse();
-    }
-
-    /// <summary>Verifies an unknown (null) content length never exceeds the limit.</summary>
-    [Fact]
-    public void ExceedsMaxDownloadBytes_NullLength_ReturnsFalse()
-    {
-        var info = new ContentInfo(new Uri("https://example.com/a.png"), "image/png", null, ".png");
-
-        Utilities.ExceedsMaxDownloadBytes(info, 1000).Should().BeFalse();
-    }
-
-    /// <summary>Verifies a content length over the limit returns true.</summary>
-    [Fact]
-    public void ExceedsMaxDownloadBytes_LengthOverLimit_ReturnsTrue()
-    {
-        var info = new ContentInfo(new Uri("https://example.com/a.png"), "image/png", 2000, ".png");
-
-        Utilities.ExceedsMaxDownloadBytes(info, 1000).Should().BeTrue();
-    }
-
-    /// <summary>Verifies a content length within the limit returns false.</summary>
-    [Fact]
-    public void ExceedsMaxDownloadBytes_LengthWithinLimit_ReturnsFalse()
-    {
-        var info = new ContentInfo(new Uri("https://example.com/a.png"), "image/png", 500, ".png");
-
-        Utilities.ExceedsMaxDownloadBytes(info, 1000).Should().BeFalse();
-    }
-
-    /// <summary>Verifies a <c>maxDownloadBytes</c> of 0 (unlimited) never exceeds, regardless of length.</summary>
-    [Fact]
-    public void ExceedsMaxDownloadBytes_UnlimitedZero_ReturnsFalse()
-    {
-        var info = new ContentInfo(new Uri("https://example.com/a.png"), "image/png", uint.MaxValue, ".png");
-
-        Utilities.ExceedsMaxDownloadBytes(info, 0).Should().BeFalse();
     }
 
     #endregion

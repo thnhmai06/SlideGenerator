@@ -67,6 +67,7 @@ public static class Registration
                 var settings = sp.GetRequiredService<ISettingProvider>();
                 return new JobGate(() => (int)settings.Current.Performance.MaxConcurrentJobs);
             });
+            services.AddSingleton<ImageCacheFactory>();
             services.AddSingleton<JobExecutor>();
             services.AddSingleton<SlideGenerationWorkflow>();
             services.AddSingleton<IWorkflowObserver<string, WorkflowSnapshot>, GeneratorWorkflowObserver>();

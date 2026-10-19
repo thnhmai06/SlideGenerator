@@ -112,15 +112,24 @@ public sealed class JobExecutorIntegrationTests : IDisposable
         services.AddSingleton(Substitute.For<IFaceDetector>());
         await using var provider = services.BuildServiceProvider();
 
+        // Wire up an ImageCache through the real factory (against a fresh temp folder), so the job's
+        // FakeJobContext has a real cache to share even though this test only uses local fallback paths.
+        var cacheFolder = Path.Combine(_tempDir, "cache");
+        Directory.CreateDirectory(cacheFolder);
+        var cache = new ImageCache(
+            cacheFolder,
+            Substitute.For<ICloudClient>(),
+            provider.GetRequiredService<IImageLoader>(),
+            Substitute.For<IHttpClientFactory>(),
+            FakeSettingProvider(),
+            NullLogger<ImageCache>.Instance);
+
         var executor = new JobExecutor(
             provider.GetRequiredService<IWorkbookOpener>(),
             provider.GetRequiredService<IPresentationOpener>(),
             provider.GetRequiredService<TextComposer>(),
             provider.GetRequiredService<ISmartCropper>(),
             provider.GetRequiredService<IImageLoader>(),
-            Substitute.For<ICloudClient>(),
-            Substitute.For<IHttpClientFactory>(),
-            FakeSettingProvider(),
             Substitute.For<IEventBus>(),
             NullLogger<JobExecutor>.Instance);
 
@@ -149,7 +158,7 @@ public sealed class JobExecutorIntegrationTests : IDisposable
         var initial = new JobSnapshot("req-1", 0, JobStatus.Pending, JobPhase.CreatingOutput, 0, spec,
             DateTimeOffset.UtcNow);
 
-        var result = await executor.RunAsync(initial, new FakeJobContext(), TestContext.Current.CancellationToken);
+        var result = await executor.RunAsync(initial, new FakeJobContext(cache), TestContext.Current.CancellationToken);
 
         result.JobStatus.Should().Be(JobStatus.Complete);
         result.Phase.Should().Be(JobPhase.Done);
@@ -182,11 +191,13 @@ public sealed class JobExecutorIntegrationTests : IDisposable
     }
 
     /// <summary>Minimal <see cref="IJobContext" /> — never resuming, never paused, records nothing.</summary>
-    private sealed class FakeJobContext : IJobContext
+    private sealed class FakeJobContext(ImageCache images) : IJobContext
     {
         public bool IsResume => false;
 
         public ILogger? Logger => null;
+
+        public ImageCache Images => images;
 
         public Task ReportAsync(JobSnapshot state, bool durable = false, CancellationToken ct = default)
         {

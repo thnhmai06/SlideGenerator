@@ -12,6 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using SlideGenerator.Generator.Jobs;
 using SlideGenerator.Generator.Jobs.Models;
 using SlideGenerator.Generator.Persistence;
 using SlideGenerator.Generator.Progress;
@@ -64,12 +65,21 @@ internal sealed class WorkflowController(
     SlideGenerationWorkflow slideGenerationWorkflow,
     IFileLoggerFactory fileLoggerFactory,
     ILogNotifier logNotifier,
-    IJobsRepository jobsRepository) : IWorkflowController
+    IJobsRepository jobsRepository,
+    IWorkflowsRepository workflowsRepository,
+    ImageCacheFactory imageCacheFactory) : IWorkflowController
 {
     /// <inheritdoc />
-    public Task InitializeAsync(CancellationToken ct = default)
+    public async Task InitializeAsync(CancellationToken ct = default)
     {
-        return engine.InitializeAsync(resumeSource, ct);
+        // Remove image cache folders left behind by workflows that finished or never resumed; workflows we are
+        // about to resume keep theirs (the engine's resume source reads GetNonTerminalAsync next).
+        var active = (await workflowsRepository.GetNonTerminalAsync(ct).ConfigureAwait(false))
+            .Select(r => r.WorkflowId)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        imageCacheFactory.DeleteOrphans(active);
+
+        await engine.InitializeAsync(resumeSource, ct).ConfigureAwait(false);
     }
 
     /// <inheritdoc />

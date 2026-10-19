@@ -146,8 +146,8 @@ internal sealed class WorkflowTestHarness : IAsyncDisposable
         services.AddSingleton<ISettingProvider>(_settings);
         // JobExecutor's Phase D network calls go through IHttpClientFactory; replace the registered
         // factory with a stub so we never reach the OS network. The job uses no images in these tests
-        // (ImageInstructions are empty), so InspectSourcesAsync is a no-op — the stub is wired only to
-        // satisfy DI.
+        // (ImageInstructions are empty), so the shared ImageCache is never queried — the stub is wired
+        // only to satisfy DI.
         services.AddSingleton(Substitute.For<IHttpClientFactory>());
 
         services.AddSingleton(builder);
@@ -157,6 +157,7 @@ internal sealed class WorkflowTestHarness : IAsyncDisposable
 
         services.AddSingleton(sp =>
             new JobGate(() => (int)sp.GetRequiredService<FakeSettingProvider>().Current.Performance.MaxConcurrentJobs));
+        services.AddSingleton<ImageCacheFactory>();
         services.AddSingleton<JobExecutor>();
         services.AddSingleton<SlideGenerationWorkflow>();
         // The engine's observer wires to two things in production: (a) the persistent workflow status

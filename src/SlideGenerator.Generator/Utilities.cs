@@ -12,7 +12,6 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Cloud;
 using SlideGenerator.Document.Workbooks.Components;
 using SlideGenerator.Document.Workbooks.Identifiers;
 using SlideGenerator.Settings.Immutable;
@@ -77,15 +76,6 @@ internal static class Utilities
         }
 
         return null;
-    }
-
-    /// <summary>
-    ///     Whether <paramref name="inspected" />'s known content length exceeds <paramref name="maxDownloadBytes" /> (0 =
-    ///     unlimited).
-    /// </summary>
-    internal static bool ExceedsMaxDownloadBytes(ContentInfo? inspected, uint maxDownloadBytes)
-    {
-        return maxDownloadBytes > 0 && inspected?.Length is { } length && length > maxDownloadBytes;
     }
 
     /// <summary>

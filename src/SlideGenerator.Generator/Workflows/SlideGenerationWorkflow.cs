@@ -38,6 +38,7 @@ internal sealed class SlideGenerationWorkflow(
     IJobsRepository jobsRepository,
     JobExecutor jobExecutor,
     JobGate jobGate,
+    ImageCacheFactory imageCacheFactory,
     IEventBus eventBus,
     ILogger<SlideGenerationWorkflow> logger) : IWorkflowRunner<WorkflowSnapshot>
 {
@@ -48,20 +49,27 @@ internal sealed class SlideGenerationWorkflow(
         var workflowLogger = context is IScopedLoggerContext scoped ? scoped.Logger : logger;
         var jobs = await jobsRepository.GetByWorkflowIdAsync(state.WorkflowId, ct).ConfigureAwait(false);
 
+        // One image cache for the whole workflow — shared by every job. Disposed when this RunAsync unwinds,
+        // so a paused workflow keeps its downloads (a pause does not unwind us) and a finished/cancelled/faulted
+        // run cleans the folder up. Crash-resume is handled separately: an orphaned folder is re-used by
+        // WorkflowController.InitializeAsync via DeleteOrphans (which keeps the active set).
+        using var images = imageCacheFactory.Create(state.WorkflowId);
+
         // Pending/Running/Paused rows are unfinished: a fresh workflow has only Pending ones, a resumed one may
         // have jobs part-way through (Phase + CurrentIndex say where to continue).
         var unfinished = jobs.Where(j => j.JobStatus is JobStatus.Pending or JobStatus.Running or JobStatus.Paused);
         await Task.WhenAll(unfinished.Select(job =>
-            Task.Run(() => RunJobAsync(job, context, workflowLogger, ct), CancellationToken.None))).ConfigureAwait(false);
+            Task.Run(() => RunJobAsync(job, context, images, workflowLogger, ct), CancellationToken.None))).ConfigureAwait(false);
 
         return state with { Timestamp = DateTimeOffset.UtcNow };
     }
 
     private async Task RunJobAsync(
-        JobSnapshot job, IWorkflowContext<WorkflowSnapshot> context, ILogger workflowLogger, CancellationToken ct)
+        JobSnapshot job, IWorkflowContext<WorkflowSnapshot> context, ImageCache images,
+        ILogger workflowLogger, CancellationToken ct)
     {
         using var jobScope = LogContext.PushProperty("JobId", job.JobId);
-        var jobContext = new JobContext(job, context, workflowLogger, this, eventBus);
+        var jobContext = new JobContext(job, context, images, workflowLogger, this, eventBus);
         var completed = false;
         try
         {
@@ -91,10 +99,9 @@ internal sealed class SlideGenerationWorkflow(
         }
         finally
         {
-            CleanupJobTempFolder(job.WorkflowId, job.JobId);
-
             // A job that never completed must not leave its working file behind (a crash never reaches this
-            // point, so a crashed job keeps the .partial file it can resume from).
+            // point, so a crashed job keeps the .partial file it can resume from). The shared image cache's
+            // download folder is removed by its own Dispose when RunAsync unwinds.
             if (!completed) JobOutput.DiscardPartial(job.Specification.OutputPath, workflowLogger);
         }
     }
@@ -106,23 +113,9 @@ internal sealed class SlideGenerationWorkflow(
         eventBus.Publish(snapshot);
     }
 
-    /// <summary>Deletes the per-job download folder once the job has finished, whatever its outcome.</summary>
-    private void CleanupJobTempFolder(string workflowId, int jobId)
-    {
-        var dir = JobTempFolder.GetPath(workflowId, jobId);
-        try
-        {
-            if (Directory.Exists(dir)) Directory.Delete(dir, true);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            logger.LogWarning(ex, "Failed to clean up job temp folder '{Dir}'.", dir);
-        }
-    }
-
     /// <summary>Bridges one job to its workflow: reports persist/publish its snapshot, checkpoints use the workflow's gate.</summary>
     private sealed class JobContext(
-        JobSnapshot initial, IWorkflowContext<WorkflowSnapshot> workflow, ILogger logger,
+        JobSnapshot initial, IWorkflowContext<WorkflowSnapshot> workflow, ImageCache images, ILogger logger,
         SlideGenerationWorkflow owner, IEventBus eventBus) : IJobContext
     {
         private readonly Lock _lock = new();
@@ -143,6 +136,8 @@ internal sealed class SlideGenerationWorkflow(
         public bool IsResume => workflow.IsResume;
 
         public ILogger Logger => logger;
+
+        public ImageCache Images => images;
 
         public Task ReportAsync(JobSnapshot state, bool durable = false, CancellationToken ct = default)
         {

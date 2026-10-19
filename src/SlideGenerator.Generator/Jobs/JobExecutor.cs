@@ -16,7 +16,6 @@ using System.Diagnostics;
 using System.Drawing;
 using Microsoft.Extensions.Logging;
 using Serilog.Context;
-using SlideGenerator.Cloud;
 using SlideGenerator.Document.Presentations;
 using SlideGenerator.Document.Presentations.Components;
 using SlideGenerator.Document.Presentations.Identifiers;
@@ -28,8 +27,6 @@ using SlideGenerator.Generator.Progress;
 using SlideGenerator.Image.Cropping;
 using SlideGenerator.Image.Loading;
 using SlideGenerator.Recipe.Models;
-using SlideGenerator.Settings.Mutable;
-using SlideGenerator.Utilities;
 using Math = System.Math;
 
 namespace SlideGenerator.Generator.Jobs;
@@ -57,6 +54,9 @@ internal interface IJobContext
 
     /// <summary>Blocks while the owning workflow is paused; returns immediately otherwise.</summary>
     Task CheckpointAsync(CancellationToken ct);
+
+    /// <summary>The image cache shared by every job of the owning workflow.</summary>
+    ImageCache Images { get; }
 }
 
 /// <summary>
@@ -71,9 +71,6 @@ internal sealed class JobExecutor(
     TextComposer textComposer,
     ISmartCropper smartCropper,
     IImageLoader imageLoader,
-    ICloudClient cloudClient,
-    IHttpClientFactory httpClientFactory,
-    ISettingProvider settingProvider,
     IEventBus eventBus,
     ILogger<JobExecutor> logger)
 {
@@ -82,6 +79,9 @@ internal sealed class JobExecutor(
 
     // … or after at most this long, whichever comes first.
     private static readonly TimeSpan SaveEveryInterval = TimeSpan.FromSeconds(5);
+
+    /// <summary>How many upcoming rows' image URLs to prefetch in the background.</summary>
+    private const int PrefetchRows = 3;
 
     /// <summary>Runs the job to completion, or until <paramref name="ct" /> is cancelled.</summary>
     public async Task<JobSnapshot> RunAsync(JobSnapshot initial, IJobContext context, CancellationToken ct)
@@ -175,12 +175,8 @@ internal sealed class JobExecutor(
 
             startIndex = Math.Clamp(startIndex, 0, dataRows.Count);
 
-            var inspected = spec.ImageInstructions.Count > 0
-                ? await InspectSourcesAsync(spec, rows, jobLogger, ct).ConfigureAwait(false)
-                : new Dictionary<string, ContentInfo?>();
-
             await RunGeneratingAsync(workflowId, jobId, spec, rows, templateSlide, templateShapesByIdentifier,
-                    output, startIndex, dataRows, inspected, context, jobLogger, ct)
+                    output, startIndex, dataRows, context, jobLogger, ct)
                 .ConfigureAwait(false);
 
             // Commit: release the working file, then rename it onto the final output path (same directory, so
@@ -259,16 +255,17 @@ internal sealed class JobExecutor(
         string workflowId, int jobId, JobSpecification spec,
         IReadOnlyList<IReadOnlyDictionary<ColumnIdentifier, string>> rows, ISlide templateSlide,
         IReadOnlyDictionary<ShapeIdentifier, IShape> templateShapesByIdentifier, IPresentation output,
-        int startIndex, IReadOnlyList<int> dataRows, IReadOnlyDictionary<string, ContentInfo?> inspected,
+        int startIndex, IReadOnlyList<int> dataRows,
         IJobContext context, ILogger jobLogger, CancellationToken ct)
     {
-        var tempDir = JobTempFolder.GetPath(workflowId, jobId);
         var lastSavedIndex = startIndex;
         var sinceSave = Stopwatch.StartNew();
         for (var i = startIndex; i < dataRows.Count; i++)
         {
             ct.ThrowIfCancellationRequested();
             await context.CheckpointAsync(ct).ConfigureAwait(false);
+
+            PrefetchAhead(rows, i, spec, context.Images);
 
             var dataRow = dataRows[i];
             using var rowScope = LogContext.PushProperty("RowIndex", dataRow + 1);
@@ -303,9 +300,8 @@ internal sealed class JobExecutor(
                         Math.Max(1,
                             (int)Math.Round(templateShape.Bounds.Height, MidpointRounding.AwayFromZero)));
 
-                    inspected.TryGetValue(source, out var contentInfo);
                     var imageData = await ResolveShapeImageAsync(source, spec.AllowLocalPaths, instruction, targetSize,
-                        contentInfo, tempDir, workflowId, jobId, dataRow + 1, jobLogger, ct).ConfigureAwait(false);
+                        context.Images, dataRow + 1, workflowId, jobId, jobLogger, ct).ConfigureAwait(false);
                     if (imageData != null) targetShape.ImageData = imageData;
                 }
             }
@@ -353,66 +349,23 @@ internal sealed class JobExecutor(
 
     #region Image helpers
 
-    private async Task<IReadOnlyDictionary<string, ContentInfo?>> InspectSourcesAsync(
-        JobSpecification spec, IReadOnlyList<IReadOnlyDictionary<ColumnIdentifier, string>> rows,
-        ILogger jobLogger, CancellationToken ct)
-    {
-        var result = new Dictionary<string, ContentInfo?>();
-        if (spec.ImageInstructions.Count == 0) return result;
-
-        // Only values the policy accepts as a network URL are collected here — a local path, free text or a
-        // non-http scheme must never cause an InspectAsync call.
-        var sources = new Dictionary<string, Uri>();
-        foreach (var rowValues in rows)
-        {
-            foreach (var instruction in spec.ImageInstructions)
-            {
-                var source = Utilities.GetSource(rowValues, instruction.Columns);
-                if (ImageSourcePolicy.Classify(source, spec.AllowLocalPaths, out var url) != ImageSourceKind.Url)
-                    continue;
-                sources[source] = url!;
-            }
-        }
-
-        foreach (var (source, url) in sources)
-        {
-            ct.ThrowIfCancellationRequested();
-            result[source] = await InspectAsync(url, jobLogger, ct).ConfigureAwait(false);
-        }
-
-        return result;
-    }
-
-    private async Task<ContentInfo?> InspectAsync(Uri url, ILogger jobLogger, CancellationToken ct)
-    {
-        jobLogger.LogInformation("Resolving URL: {Source}", url);
-
-        var httpClient = httpClientFactory.CreateHttpClientWithSetting(settingProvider);
-        var info = await Utilities.ExecuteWithBackoffAsync(
-            settingProvider.Current.Network.Retry.MaxRetries,
-            TimeSpan.FromSeconds(settingProvider.Current.Network.Retry.MaxRetryDelay),
-            () => cloudClient.InspectAsync(url, httpClient, ct), ct).ConfigureAwait(false);
-
-        return info != null && info.IsImage() ? info : null;
-    }
-
     private async Task<byte[]?> ResolveShapeImageAsync(
-        string source, bool allowLocalPaths, ImageInstruction instruction, Size targetSize, ContentInfo? inspected,
-        string tempDir, string workflowId, int jobId, int rowIndex, ILogger jobLogger, CancellationToken ct)
+        string source, bool allowLocalPaths, ImageInstruction instruction, Size targetSize, ImageCache images,
+        int rowIndex, string workflowId, int jobId, ILogger jobLogger, CancellationToken ct)
     {
-        switch (ImageSourcePolicy.Classify(source, allowLocalPaths, out _))
+        switch (ImageSourcePolicy.Classify(source, allowLocalPaths, out var url))
         {
             case ImageSourceKind.LocalFile:
                 return await EditImageFromPathAsync(source, targetSize, instruction.ImageEditInstruction, jobLogger)
                     .ConfigureAwait(false);
 
-            case ImageSourceKind.Url when inspected != null:
+            case ImageSourceKind.Url:
             {
-                var bytes = await EnsureDownloadedAsync(inspected, tempDir, workflowId, jobId, rowIndex, jobLogger, ct)
-                    .ConfigureAwait(false);
-                if (bytes != null)
+                var path = await images.GetImagePathAsync(url!, u => ReportRow(workflowId, jobId, rowIndex,
+                        RowStatus.Processing, RowStage.Downloading, u.ToString()), ct).ConfigureAwait(false);
+                if (path != null)
                 {
-                    var edited = await EditImageFromBytesAsync(bytes, targetSize, instruction.ImageEditInstruction,
+                    var edited = await EditImageFromPathAsync(path, targetSize, instruction.ImageEditInstruction,
                         jobLogger).ConfigureAwait(false);
                     if (edited != null) return edited;
                 }
@@ -429,35 +382,30 @@ internal sealed class JobExecutor(
     }
 
     /// <summary>
-    ///     Ensures the per-job download cache at <c>{tempDir}/{hash(resolvedUri)}{ext}</c> exists,
-    ///     downloading it if not already present. Ponytail: no file-lock/wait-for-unlock dance — each job
-    ///     has its own temp folder (see <see cref="JobTempFolder" />) so no two jobs contend on the same
-    ///     file; a within-job re-download race is harmless (same bytes, last write wins).
+    ///     Kicks off background prefetch for up to <see cref="PrefetchRows" /> upcoming rows' URLs. The cache
+    ///     swallows every failure — this never throws.
     /// </summary>
-    private async Task<byte[]?> EnsureDownloadedAsync(
-        ContentInfo inspected, string tempDir, string workflowId, int jobId, int rowIndex, ILogger jobLogger,
-        CancellationToken ct)
+    private static void PrefetchAhead(
+        IReadOnlyList<IReadOnlyDictionary<ColumnIdentifier, string>> rows, int currentIndex,
+        JobSpecification spec, ImageCache images)
     {
-        Directory.CreateDirectory(tempDir);
-        var path = Path.Combine(tempDir, $"{inspected.Uri.AbsoluteUri.HashText()}{inspected.Extension}");
-        if (File.Exists(path)) return await File.ReadAllBytesAsync(path, ct).ConfigureAwait(false);
+        if (spec.ImageInstructions.Count == 0) return;
 
-        if (Utilities.ExceedsMaxDownloadBytes(inspected, settingProvider.Current.Network.MaxDownloadBytes))
+        var last = Math.Min(currentIndex + PrefetchRows, rows.Count - 1);
+        for (var r = currentIndex + 1; r <= last; r++)
         {
-            jobLogger.LogWarning("Skipped download exceeding MaxDownloadBytes: {Uri}", inspected.Uri);
-            return null;
+            var rowValues = rows[r];
+            foreach (var instruction in spec.ImageInstructions)
+            {
+                if (ImageSourcePolicy.Classify(
+                        Utilities.GetSource(rowValues, instruction.Columns),
+                        spec.AllowLocalPaths,
+                        out var url) == ImageSourceKind.Url)
+                {
+                    images.Prefetch(url!);
+                }
+            }
         }
-
-        ReportRow(workflowId, jobId, rowIndex, RowStatus.Processing, RowStage.Downloading, inspected.Uri.ToString());
-        using var httpClient = httpClientFactory.CreateHttpClientWithSetting(settingProvider);
-        var bytes = await Utilities.ExecuteWithBackoffAsync(
-            settingProvider.Current.Network.Retry.MaxRetries,
-            TimeSpan.FromSeconds(settingProvider.Current.Network.Retry.MaxRetryDelay),
-            () => cloudClient.DownloadAsync(inspected.Uri, httpClient, ct), ct).ConfigureAwait(false);
-        if (bytes == null) return null;
-
-        await File.WriteAllBytesAsync(path, bytes, ct).ConfigureAwait(false);
-        return bytes;
     }
 
     private async Task<byte[]?> EditImageFromPathAsync(
@@ -465,14 +413,6 @@ internal sealed class JobExecutor(
     {
         using var image = imageLoader.Open(path);
         return await CropToPngAsync(image, targetSize, editInstruction, path, jobLogger).ConfigureAwait(false);
-    }
-
-    private async Task<byte[]?> EditImageFromBytesAsync(
-        byte[] data, Size targetSize, ImageEditInstruction editInstruction, ILogger jobLogger)
-    {
-        using var image = imageLoader.Open(data);
-        return await CropToPngAsync(image, targetSize, editInstruction, "<in-memory>", jobLogger)
-            .ConfigureAwait(false);
     }
 
     private async Task<byte[]?> CropToPngAsync(
