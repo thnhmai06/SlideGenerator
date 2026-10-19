@@ -18,3 +18,5 @@ Plan điều phối: `C:\Users\haith\.claude\plans\c-c-c-file-plans-twinkly-sedg
 |---|---|---|---|---|---|
 | 0 restore + backup DB | xong | — | — | — | restore offline OK |
 | A.1/A.2 build + test | xong | (xem git log) | orchestrator (XML doc) + mimo-v2.6-flash (JobRow) | 7 fail → 0 fail (555 total) | JobRow: Dapper khớp ctor theo vị trí cột, `TotalRows` phải ở vị trí 6 |
+| A.3 integration tests | **chờ review, CHƯA commit** | — | minimax-m3 | Generator 64 → 69 (agent báo, 3 lần chạy ổn định) | 5 file mới chưa theo dõi trong `tests/SlideGenerator.Generator.Tests/Integration/` (Concurrency, Control, Failure, Resume, WorkflowTestHarness). Việc còn lại: review từng dòng, Rider reformat+lint (agent báo `get_file_problems` trả null), build, commit. Harness tự dựng `LoggingWorkflowRunner` để né lỗi logger singleton — lỗi thật, sửa ở mục 1.1; sau 1.1 nên bỏ workaround đó. Test pause chỉ kiểm bất biến sau pause, không kiểm "xong hàng đang dở". |
+| Quy ước | — | — | — | — | Model mặc định `opencode-go/deepseek-v4.1-flash` (đã bật Global). Scenario (e) logger request thứ hai chuyển thành test repro của 1.1. Cron nhắc 1:37am + mỗi 5h (session-only). |
