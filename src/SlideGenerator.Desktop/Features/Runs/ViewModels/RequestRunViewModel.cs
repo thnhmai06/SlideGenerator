@@ -20,14 +20,14 @@ using CommunityToolkit.Mvvm.Input;
 using SlideGenerator.Desktop.Services.Dialogs;
 using SlideGenerator.Desktop.Services.Localization;
 using SlideGenerator.Generator;
-using SlideGenerator.Generator.Jobs.Models;
+using SlideGenerator.Generator.Workflows.Models;
 using SlideGenerator.Generator.Progress;
 
 namespace SlideGenerator.Desktop.Features.Runs.ViewModels;
 
 /// <summary>
 ///     One request row + its detail panel. Owns its own Pause/Resume/Stop/Delete commands (all request-scoped
-///     — <c>IService</c> has no per-job control) so each row is self-sufficient rather than routing actions
+///     — <c>IService</c> has no per-workflow control) so each row is self-sufficient rather than routing actions
 ///     back through the parent list ViewModel.
 /// </summary>
 public sealed partial class RequestRunViewModel : ObservableObject
@@ -35,22 +35,22 @@ public sealed partial class RequestRunViewModel : ObservableObject
     private readonly IDialogService _dialogService;
     private readonly IService _service;
 
-    /// <summary>Gets the id grouping every job of this request.</summary>
+    /// <summary>Gets the id grouping every workflow of this request.</summary>
     public string RequestId { get; }
 
     /// <summary>Gets the recipe id this request was generated from — <see langword="null" /> for requests predating recipes.</summary>
     public int RecipeId { get; }
 
     [ObservableProperty] private string _name;
-    [ObservableProperty] private JobStatus _status;
+    [ObservableProperty] private WorkflowStatus _status;
     [ObservableProperty] private RequestPhase? _phase;
     [ObservableProperty] private DateTimeOffset _createdAt;
     [ObservableProperty] private DateTimeOffset? _completedAt;
     [ObservableProperty] private ObservableCollection<LogEntry> _logs = [];
     [ObservableProperty] private bool _isLoadingLogs;
 
-    /// <summary>Gets every job of this request, keyed by job id order.</summary>
-    public ObservableCollection<JobRunViewModel> Jobs { get; } = [];
+    /// <summary>Gets every workflow of this request, keyed by workflow id order.</summary>
+    public ObservableCollection<WorkflowRunViewModel> Workflows { get; } = [];
 
     /// <summary>Constructs a row from an initial <see cref="Summary" /> fetched at load time.</summary>
     public RequestRunViewModel(string requestId, Summary summary, IService service, IDialogService dialogService)
@@ -60,35 +60,35 @@ public sealed partial class RequestRunViewModel : ObservableObject
         _dialogService = dialogService;
         RecipeId = summary.Request.RecipeId;
         _name = summary.Request.Name;
-        _status = summary.JobStatus;
+        _status = summary.WorkflowStatus;
         _phase = summary.Phase;
         _createdAt = summary.CreatedAt;
         _completedAt = summary.CompletedAt;
-        foreach (var (jobId, jobSummary) in summary.Jobs) Jobs.Add(new JobRunViewModel(jobId, jobSummary));
+        foreach (var (workflowId, workflowSummary) in summary.Workflows) Workflows.Add(new WorkflowRunViewModel(workflowId, workflowSummary));
     }
 
-    /// <summary>Patches this row's job at <paramref name="snapshot" />'s <c>JobId</c> from a live update.</summary>
-    public void ApplyLiveJobUpdate(JobSnapshot snapshot)
+    /// <summary>Patches this row's workflow at <paramref name="snapshot" />'s <c>WorkflowId</c> from a live update.</summary>
+    public void ApplyLiveWorkflowUpdate(WorkflowSnapshot snapshot)
     {
-        var job = Jobs.FirstOrDefault(j => j.JobId == snapshot.JobId);
-        job?.ApplyLiveUpdate(snapshot);
+        var workflow = Workflows.FirstOrDefault(j => j.WorkflowId == snapshot.WorkflowId);
+        workflow?.ApplyLiveUpdate(snapshot);
         Status = DeriveDisplayStatus();
-        if (Status is JobStatus.Complete or JobStatus.Cancelled) CompletedAt ??= snapshot.Timestamp;
+        if (Status is WorkflowStatus.Complete or WorkflowStatus.Cancelled) CompletedAt ??= snapshot.Timestamp;
     }
 
-    /// <summary>Patches this row's job at <paramref name="row" />'s <c>JobId</c> with a live row-activity update.</summary>
+    /// <summary>Patches this row's workflow at <paramref name="row" />'s <c>WorkflowId</c> with a live row-activity update.</summary>
     public void ApplyLiveRowUpdate(RowProgress row)
     {
-        Jobs.FirstOrDefault(j => j.JobId == row.JobId)?.ApplyLiveRowUpdate(row);
+        Workflows.FirstOrDefault(j => j.WorkflowId == row.WorkflowId)?.ApplyLiveRowUpdate(row);
     }
 
-    private JobStatus DeriveDisplayStatus()
+    private WorkflowStatus DeriveDisplayStatus()
     {
-        if (Jobs.Count == 0) return JobStatus.Complete;
-        if (Jobs.Any(j => j.JobStatus is JobStatus.Running or JobStatus.Pending)) return JobStatus.Running;
-        if (Jobs.Any(j => j.JobStatus == JobStatus.Paused)) return JobStatus.Paused;
-        if (Jobs.All(j => j.JobStatus == JobStatus.Cancelled)) return JobStatus.Cancelled;
-        return JobStatus.Complete;
+        if (Workflows.Count == 0) return WorkflowStatus.Complete;
+        if (Workflows.Any(j => j.WorkflowStatus is WorkflowStatus.Running or WorkflowStatus.Pending)) return WorkflowStatus.Running;
+        if (Workflows.Any(j => j.WorkflowStatus == WorkflowStatus.Paused)) return WorkflowStatus.Paused;
+        if (Workflows.All(j => j.WorkflowStatus == WorkflowStatus.Cancelled)) return WorkflowStatus.Cancelled;
+        return WorkflowStatus.Complete;
     }
 
     /// <summary>Loads this request's log entries (never fetched at list time — see <c>includeLogs</c>).</summary>
@@ -98,11 +98,11 @@ public sealed partial class RequestRunViewModel : ObservableObject
         IsLoadingLogs = true;
         try
         {
-            var summaries = Status is JobStatus.Running or JobStatus.Paused
+            var summaries = Status is WorkflowStatus.Running or WorkflowStatus.Paused
                 ? await _service.ListActiveAsync().ConfigureAwait(true)
                 : await _service.ListCompletedAsync().ConfigureAwait(true);
             if (summaries.TryGetValue(RequestId, out var summary))
-                Logs = new ObservableCollection<LogEntry>(summary.Logs.Concat(summary.Jobs.Values.SelectMany(j => j.Logs))
+                Logs = new ObservableCollection<LogEntry>(summary.Logs.Concat(summary.Workflows.Values.SelectMany(j => j.Logs))
                     .OrderBy(e => e.Timestamp));
         }
         finally
@@ -119,7 +119,7 @@ public sealed partial class RequestRunViewModel : ObservableObject
 
     private bool CanPause()
     {
-        return Status == JobStatus.Running;
+        return Status == WorkflowStatus.Running;
     }
 
     [RelayCommand(CanExecute = nameof(CanResume))]
@@ -130,7 +130,7 @@ public sealed partial class RequestRunViewModel : ObservableObject
 
     private bool CanResume()
     {
-        return Status == JobStatus.Paused;
+        return Status == WorkflowStatus.Paused;
     }
 
     [RelayCommand(CanExecute = nameof(CanStop))]
@@ -141,7 +141,7 @@ public sealed partial class RequestRunViewModel : ObservableObject
 
     private bool CanStop()
     {
-        return Status is JobStatus.Running or JobStatus.Paused or JobStatus.Pending;
+        return Status is WorkflowStatus.Running or WorkflowStatus.Paused or WorkflowStatus.Pending;
     }
 
     [RelayCommand]
@@ -159,9 +159,9 @@ public sealed partial class RequestRunViewModel : ObservableObject
     [RelayCommand]
     private void OpenFolder()
     {
-        var job = Jobs.FirstOrDefault();
-        if (job is null) return;
-        var folder = Path.GetDirectoryName(job.OutputPath);
+        var workflow = Workflows.FirstOrDefault();
+        if (workflow is null) return;
+        var folder = Path.GetDirectoryName(workflow.OutputPath);
         if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder)) return;
 
         var startInfo = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)

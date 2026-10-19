@@ -12,19 +12,36 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using System.Text.Json.Serialization;
+
 namespace SlideGenerator.Settings.Mutable;
 
 public sealed partial record Setting
 {
     /// <summary>
-    ///     Setting related to the execution and orchestration of generation jobs.
+    ///     Setting related to the execution and orchestration of generation workflows.
     /// </summary>
     public sealed record PerformanceSetting
     {
         /// <summary>
-        ///     Gets the maximum number of concurrently running per-job generation workflows across the app —
+        ///     Gets the maximum number of concurrently running generation workflows across the app —
         ///     caps RAM usage from Workbook/Presentation instances held in memory during generation.
         /// </summary>
-        public uint MaxConcurrentJobs { get; init; } = 5;
+        public uint MaxConcurrentWorkflows { get; init; } = 5;
+
+        /// <summary>
+        ///     Reads <see cref="MaxConcurrentWorkflows" /> from the pre-rename settings key
+        ///     (<c>MaxConcurrentJobs</c>) so an existing <c>UserSettings.json</c> keeps its value. Never written.
+        /// </summary>
+        [JsonPropertyName("MaxConcurrentJobs")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public uint? LegacyMaxConcurrentJobs
+        {
+            get => null;
+            init
+            {
+                if (value is { } legacy) MaxConcurrentWorkflows = legacy;
+            }
+        }
     }
 }

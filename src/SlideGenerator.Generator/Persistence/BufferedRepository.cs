@@ -22,7 +22,7 @@ namespace SlideGenerator.Generator.Persistence;
 ///     (last write per key wins); a background loop atomically drains the buffer roughly once a second and
 ///     calls <see cref="UpsertBatchAsync" /> once per tick, then raises <see cref="Flushed" /> with the
 ///     batch. Extracted from the pattern used by the old Stdio-side progress coalescer so any table that
-///     often changes (here, just <c>Jobs</c>) can reuse the same buffering without re-deriving it.
+///     often changes (here, just <c>Workflows</c>) can reuse the same buffering without re-deriving it.
 /// </summary>
 internal abstract class BufferedRepository<TKey, TValue> : IAsyncDisposable where TKey : notnull
 {

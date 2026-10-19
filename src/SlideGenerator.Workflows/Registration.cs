@@ -17,20 +17,20 @@ using SlideGenerator.Workflows.Engine;
 
 namespace SlideGenerator.Workflows;
 
-/// <summary>Registers a <see cref="IJobEngine{TKey,TState}" /> into the dependency injection container.</summary>
+/// <summary>Registers a <see cref="IWorkflowEngine{TKey,TState}" /> into the dependency injection container.</summary>
 public static class Registration
 {
     /// <summary>
-    ///     Adds <see cref="JobEngine{TKey,TState}" /> as the <see cref="IJobEngine{TKey,TState}" /> for the
+    ///     Adds <see cref="WorkflowEngine{TKey,TState}" /> as the <see cref="IWorkflowEngine{TKey,TState}" /> for the
     ///     given <typeparamref name="TKey" />/<typeparamref name="TState" /> pair. The caller must separately
-    ///     register <see cref="IJobConcurrencyProvider" /> and <see cref="IJobObserver{TKey,TState}" /> for
+    ///     register <see cref="IWorkflowConcurrencyProvider" /> and <see cref="IWorkflowObserver{TKey,TState}" /> for
     ///     the same pair.
     /// </summary>
     /// <returns>The updated service collection.</returns>
-    public static IServiceCollection AddJobEngine<TKey, TState>(this IServiceCollection services)
+    public static IServiceCollection AddWorkflowEngine<TKey, TState>(this IServiceCollection services)
         where TKey : notnull
     {
-        services.AddSingleton<IJobEngine<TKey, TState>, JobEngine<TKey, TState>>();
+        services.AddSingleton<IWorkflowEngine<TKey, TState>, WorkflowEngine<TKey, TState>>();
         return services;
     }
 }

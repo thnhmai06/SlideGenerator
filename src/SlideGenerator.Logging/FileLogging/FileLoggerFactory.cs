@@ -30,7 +30,7 @@ public interface IFileLoggerFactory
     /// <param name="filePath">The file path to write log events to.</param>
     /// <param name="scopePropertyNames">
     ///     Ordered ambient property names (pushed via <c>Serilog.Context.LogContext.PushProperty</c>) to join
-    ///     into each event's scope path — e.g. <c>["RequestId", "JobId", "RowIndex"]</c>. This module has no
+    ///     into each event's scope path — e.g. <c>["RequestId", "WorkflowId", "RowIndex"]</c>. This module has no
     ///     notion of what a scope means; the caller owns the property names. <see langword="null" /> or empty
     ///     yields an empty scope path for every event.
     /// </param>

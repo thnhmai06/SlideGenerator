@@ -17,7 +17,7 @@ using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using Avalonia.Threading;
 using SlideGenerator.Generator;
-using SlideGenerator.Generator.Jobs.Models;
+using SlideGenerator.Generator.Workflows.Models;
 using SlideGenerator.Generator.Progress;
 
 namespace SlideGenerator.Desktop.Services.Progress;
@@ -25,29 +25,29 @@ namespace SlideGenerator.Desktop.Services.Progress;
 /// <summary>
 ///     Marshals <see cref="GeneratingEventBus" />/<see cref="LogNotifier" /> events (raised from background
 ///     threads, potentially very dense — one <see cref="RowProgress" /> per row per stage per concurrently
-///     running job) onto the UI thread in coalesced batches, so ViewModels never touch the raw event bus.
+///     running workflow) onto the UI thread in coalesced batches, so ViewModels never touch the raw event bus.
 /// </summary>
 /// <remarks>
 ///     <para>
 ///         Must be constructed, and its constructor's subscriptions attached, <b>before</b>
-///         <c>IService.InitializeAsync()</c> is called — <c>JobRunner.InitializeAsync</c> schedules
-///         crash-resumed jobs immediately and returns without waiting, so a job resumed from a previous crash
+///         <c>IService.InitializeAsync()</c> is called — <c>WorkflowController.InitializeAsync</c> schedules
+///         crash-resumed workflows immediately and returns without waiting, so a workflow resumed from a previous crash
 ///         is not a "request" and its first progress events would be missed by a subscriber that attaches
 ///         any later. See <c>App.axaml.cs</c>'s startup sequence.
 ///     </para>
 ///     <para>
-///         Job snapshots coalesce by <c>(RequestId, JobId)</c> (last write wins), row progress coalesces by
-///         <c>(RequestId, JobId, RowIndex)</c>, and log lines are append-only (every line matters, never
+///         Workflow snapshots coalesce by <c>(RequestId, WorkflowId)</c> (last write wins), row progress coalesces by
+///         <c>(RequestId, WorkflowId, RowIndex)</c>, and log lines are append-only (every line matters, never
 ///         dropped) — mirroring the old <c>ProgressCoalescer</c> that existed in the removed IPC sidecar,
 ///         adapted for direct in-process consumption instead of JSON-RPC notifications.
 ///     </para>
 /// </remarks>
 public interface IProgressHub
 {
-    /// <summary>Gets the current snapshot of every job seen so far, updated on the UI thread every ~250ms.</summary>
-    ObservableCollection<JobSnapshot> Jobs { get; }
+    /// <summary>Gets the current snapshot of every workflow seen so far, updated on the UI thread every ~250ms.</summary>
+    ObservableCollection<WorkflowSnapshot> Workflows { get; }
 
-    /// <summary>Gets the most recent progress per <c>(RequestId, JobId, RowIndex)</c>, updated on the UI thread.</summary>
+    /// <summary>Gets the most recent progress per <c>(RequestId, WorkflowId, RowIndex)</c>, updated on the UI thread.</summary>
     ObservableCollection<RowProgress> Rows { get; }
 
     /// <summary>Gets every log line seen so far, in arrival order, updated on the UI thread.</summary>
@@ -62,8 +62,8 @@ internal sealed class ProgressHub : IProgressHub, IDisposable
 {
     private static readonly TimeSpan DrainInterval = TimeSpan.FromMilliseconds(250);
 
-    private readonly ConcurrentDictionary<(string RequestId, int JobId), JobSnapshot> _dirtyJobs = new();
-    private readonly ConcurrentDictionary<(string RequestId, int JobId, int RowIndex), RowProgress> _dirtyRows = new();
+    private readonly ConcurrentDictionary<(string RequestId, int WorkflowId), WorkflowSnapshot> _dirtyWorkflows = new();
+    private readonly ConcurrentDictionary<(string RequestId, int WorkflowId, int RowIndex), RowProgress> _dirtyRows = new();
     private readonly ConcurrentQueue<LogEntry> _pendingLogs = new();
     private readonly DispatcherTimer _timer;
 
@@ -75,8 +75,8 @@ internal sealed class ProgressHub : IProgressHub, IDisposable
     /// </summary>
     public ProgressHub(GeneratingEventBus eventBus, LogNotifier logNotifier)
     {
-        eventBus.OnJobProgress += job => _dirtyJobs[(job.RequestId, job.JobId)] = job;
-        eventBus.OnRowProgress += row => _dirtyRows[(row.RequestId, row.JobId, row.RowIndex)] = row;
+        eventBus.OnWorkflowProgress += workflow => _dirtyWorkflows[(workflow.RequestId, workflow.WorkflowId)] = workflow;
+        eventBus.OnRowProgress += row => _dirtyRows[(row.RequestId, row.WorkflowId, row.RowIndex)] = row;
         eventBus.OnRequestProgress += progress => RequestProgressChanged?.Invoke(progress);
         logNotifier.OnLogEntry += entry => _pendingLogs.Enqueue(entry);
 
@@ -86,7 +86,7 @@ internal sealed class ProgressHub : IProgressHub, IDisposable
     }
 
     /// <inheritdoc />
-    public ObservableCollection<JobSnapshot> Jobs { get; } = [];
+    public ObservableCollection<WorkflowSnapshot> Workflows { get; } = [];
 
     /// <inheritdoc />
     public ObservableCollection<RowProgress> Rows { get; } = [];
@@ -107,11 +107,11 @@ internal sealed class ProgressHub : IProgressHub, IDisposable
     ///     directly instead of waiting on the real timer tick.</summary>
     internal void Drain()
     {
-        if (!_dirtyJobs.IsEmpty)
+        if (!_dirtyWorkflows.IsEmpty)
         {
-            var batch = _dirtyJobs.Values;
-            foreach (var job in batch) UpsertByKey(Jobs, job, j => j.RequestId == job.RequestId && j.JobId == job.JobId);
-            _dirtyJobs.Clear();
+            var batch = _dirtyWorkflows.Values;
+            foreach (var workflow in batch) UpsertByKey(Workflows, workflow, j => j.RequestId == workflow.RequestId && j.WorkflowId == workflow.WorkflowId);
+            _dirtyWorkflows.Clear();
         }
 
         if (!_dirtyRows.IsEmpty)
@@ -119,7 +119,7 @@ internal sealed class ProgressHub : IProgressHub, IDisposable
             var batch = _dirtyRows.Values;
             foreach (var row in batch)
                 UpsertByKey(Rows, row,
-                    r => r.RequestId == row.RequestId && r.JobId == row.JobId && r.RowIndex == row.RowIndex);
+                    r => r.RequestId == row.RequestId && r.WorkflowId == row.WorkflowId && r.RowIndex == row.RowIndex);
             _dirtyRows.Clear();
         }
 

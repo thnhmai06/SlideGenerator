@@ -15,20 +15,20 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
-using SlideGenerator.Generator.Jobs;
+using SlideGenerator.Generator.Workflows;
 using Xunit;
 
 namespace SlideGenerator.Generator.Tests.Unit;
 
 /// <summary>
-///     Unit tests for <see cref="PreflightCleanup" />, locking its per-job overwrite-only behavior
+///     Unit tests for <see cref="PreflightCleanup" />, locking its per-workflow overwrite-only behavior
 ///     (never touches the parent output directory or sibling files).
 /// </summary>
 public sealed class PreflightCleanupTests
 {
     private static readonly ILogger Logger = Substitute.For<ILogger>();
 
-    /// <summary>Verifies an existing output file for this job is deleted.</summary>
+    /// <summary>Verifies an existing output file for this workflow is deleted.</summary>
     [Fact]
     public void Run_OutputFileExists_DeletesIt()
     {
@@ -60,15 +60,15 @@ public sealed class PreflightCleanupTests
         act.Should().NotThrow();
     }
 
-    /// <summary>Verifies a sibling file in the same output directory (belonging to another job) survives.</summary>
+    /// <summary>Verifies a sibling file in the same output directory (belonging to another workflow) survives.</summary>
     [Fact]
     public void Run_SiblingFileInSameDirectory_IsNotDeleted()
     {
         var dir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dir);
         var outputPath = Path.Combine(dir, "output.pptx");
-        var siblingPath = Path.Combine(dir, "sibling-job-output.pptx");
-        File.WriteAllText(siblingPath, "belongs to another job");
+        var siblingPath = Path.Combine(dir, "sibling-workflow-output.pptx");
+        File.WriteAllText(siblingPath, "belongs to another workflow");
 
         try
         {

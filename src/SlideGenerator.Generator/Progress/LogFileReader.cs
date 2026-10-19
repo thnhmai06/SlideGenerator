@@ -19,7 +19,7 @@ namespace SlideGenerator.Generator.Progress;
 
 /// <summary>
 ///     Reads and parses a workflow log file back into scoped <see cref="LogEntry" /> records, for serving
-///     <c>Summary.Logs</c>/<c>JobSummary.Logs</c>/<c>RowSummary.Logs</c> without a dedicated log database
+///     <c>Summary.Logs</c>/<c>WorkflowSummary.Logs</c>/<c>RowSummary.Logs</c> without a dedicated log database
 ///     table. Reads straight from disk on every call — no in-memory cache — since <c>Summary</c> is polled
 ///     infrequently.
 /// </summary>

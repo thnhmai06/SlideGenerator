@@ -15,11 +15,11 @@
 namespace SlideGenerator.Generator.Progress;
 
 /// <summary>
-///     Defines a publish-only sink for real-time log line notifications, scoped to Request/Job/Row.
+///     Defines a publish-only sink for real-time log line notifications, scoped to Request/Workflow/Row.
 /// </summary>
 /// <remarks>
 ///     <para>
-///         This interface is owned by the <c>Generator</c> module (the publisher — <c>JobRunner</c>
+///         This interface is owned by the <c>Generator</c> module (the publisher — <c>WorkflowController</c>
 ///         wires it into <c>IFileLoggerFactory.CreateFile</c>'s callback). The concrete implementation
 ///         lives in <c>SlideGenerator.Stdio</c> and forwards entries as <c>log/entries</c> JSON-RPC
 ///         notifications, mirroring <see cref="IEventBus" />'s <c>dep-interface-ownership</c> pattern.

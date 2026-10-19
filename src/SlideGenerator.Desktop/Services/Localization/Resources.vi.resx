@@ -90,8 +90,8 @@
   <data name="shell.closeTooltip" xml:space="preserve">
     <value>Đóng</value>
   </data>
-  <data name="shell.activeJobsTitleSuffix" xml:space="preserve">
-    <value> — {0} job đang chạy</value>
+  <data name="shell.activeWorkflowsTitleSuffix" xml:space="preserve">
+    <value> — {0} workflow đang chạy</value>
   </data>
   <data name="runs.filter.all" xml:space="preserve">
     <value>Tất cả</value>
@@ -144,8 +144,8 @@
   <data name="runs.activitySeparator" xml:space="preserve">
     <value>: </value>
   </data>
-  <data name="runs.jobSeparator" xml:space="preserve">
-    <value> job · </value>
+  <data name="runs.workflowSeparator" xml:space="preserve">
+    <value> workflow · </value>
   </data>
   <data name="runs.rowSeparator" xml:space="preserve">
     <value> · dòng </value>
@@ -300,11 +300,11 @@
   <data name="settings.performance" xml:space="preserve">
     <value>Hiệu năng</value>
   </data>
-  <data name="settings.maxConcurrentJobs" xml:space="preserve">
-    <value>Số job chạy song song tối đa</value>
+  <data name="settings.maxConcurrentWorkflows" xml:space="preserve">
+    <value>Số workflow chạy song song tối đa</value>
   </data>
-  <data name="settings.maxConcurrentJobsHint" xml:space="preserve">
-    <value>Giá trị càng cao chạy càng nhanh nhưng tốn RAM hơn: mỗi job đang chạy giữ một workbook/presentation trong bộ nhớ.</value>
+  <data name="settings.maxConcurrentWorkflowsHint" xml:space="preserve">
+    <value>Giá trị càng cao chạy càng nhanh nhưng tốn RAM hơn: mỗi workflow đang chạy giữ một workbook/presentation trong bộ nhớ.</value>
   </data>
   <data name="settings.resetDefaults" xml:space="preserve">
     <value>Khôi phục mặc định</value>
@@ -369,40 +369,40 @@
   <data name="settings.about.updateStatus.failed" xml:space="preserve">
     <value>Kiểm tra cập nhật thất bại. Thử lại sau.</value>
   </data>
-  <data name="enums.jobStatus.pending" xml:space="preserve">
+  <data name="enums.workflowStatus.pending" xml:space="preserve">
     <value>Đang chờ</value>
   </data>
-  <data name="enums.jobStatus.running" xml:space="preserve">
+  <data name="enums.workflowStatus.running" xml:space="preserve">
     <value>Đang chạy</value>
   </data>
-  <data name="enums.jobStatus.complete" xml:space="preserve">
+  <data name="enums.workflowStatus.complete" xml:space="preserve">
     <value>Hoàn tất</value>
   </data>
-  <data name="enums.jobStatus.paused" xml:space="preserve">
+  <data name="enums.workflowStatus.paused" xml:space="preserve">
     <value>Tạm dừng</value>
   </data>
-  <data name="enums.jobStatus.cancelled" xml:space="preserve">
+  <data name="enums.workflowStatus.cancelled" xml:space="preserve">
     <value>Đã huỷ</value>
   </data>
-  <data name="enums.jobStatus.error" xml:space="preserve">
+  <data name="enums.workflowStatus.error" xml:space="preserve">
     <value>Lỗi</value>
   </data>
-  <data name="enums.jobPhase.queued" xml:space="preserve">
+  <data name="enums.workflowPhase.queued" xml:space="preserve">
     <value>Đang chờ</value>
   </data>
-  <data name="enums.jobPhase.creatingOutput" xml:space="preserve">
+  <data name="enums.workflowPhase.creatingOutput" xml:space="preserve">
     <value>Tạo file đầu ra</value>
   </data>
-  <data name="enums.jobPhase.creatingSlides" xml:space="preserve">
+  <data name="enums.workflowPhase.creatingSlides" xml:space="preserve">
     <value>Tạo slide</value>
   </data>
-  <data name="enums.jobPhase.fillingText" xml:space="preserve">
+  <data name="enums.workflowPhase.fillingText" xml:space="preserve">
     <value>Điền chữ</value>
   </data>
-  <data name="enums.jobPhase.fillingImages" xml:space="preserve">
+  <data name="enums.workflowPhase.fillingImages" xml:space="preserve">
     <value>Điền ảnh</value>
   </data>
-  <data name="enums.jobPhase.done" xml:space="preserve">
+  <data name="enums.workflowPhase.done" xml:space="preserve">
     <value>Hoàn tất</value>
   </data>
   <data name="enums.roiMode.anchor" xml:space="preserve">

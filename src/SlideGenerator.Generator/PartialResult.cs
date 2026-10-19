@@ -15,8 +15,8 @@
 namespace SlideGenerator.Generator;
 
 /// <summary>
-///     Result of a best-effort fan-out operation (cancel/pause/resume) applied to every job of a
-///     generation request. Jobs already in a terminal or non-runnable state are counted as skipped,
+///     Result of a best-effort fan-out operation (cancel/pause/resume) applied to every workflow of a
+///     generation request. Workflows already in a terminal or non-runnable state are counted as skipped,
 ///     not as failures.
 /// </summary>
 public sealed record PartialResult(int Succeeded, int Skipped);

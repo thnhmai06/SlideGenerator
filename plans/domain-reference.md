@@ -13,7 +13,7 @@ SlideGenerator automates the production of PowerPoint presentations from tabular
 
 The user has: (a) an Excel/CSV workbook whose rows are records (people, products, awards, …), and (b) a PowerPoint file containing one slide designed as a template, with text placeholders and picture shapes. The user wants: one output presentation where the template slide is repeated once per data row, with each copy's placeholders filled from that row's cells and its picture shapes filled with images named/linked in that row (downloaded, cropped to fit, face-aware where asked).
 
-In V2 the user builds a reusable **Recipe** that binds template placeholders/shapes to worksheet columns, then starts a **Run** of that recipe against a chosen output folder. Each Run fans out into one **Job** per (template-slide × worksheet) pair; each Job executes a fixed 4-phase pipeline in the background, reporting live progress. Completed and running Runs are browsable on a **Runs** page. Everything domain-related (recipes, run history, settings) is stored locally in SQLite/JSON; the network is used only for downloading row images, checking for app updates, and fetching the About page's contributor/sponsor lists.
+In V2 the user builds a reusable **Recipe** that binds template placeholders/shapes to worksheet columns, then starts a **Run** of that recipe against a chosen output folder. Each Run fans out into one **Workflow** per (template-slide × worksheet) pair; each Workflow executes a fixed 4-phase pipeline in the background, reporting live progress. Completed and running Runs are browsable on a **Runs** page. Everything domain-related (recipes, run history, settings) is stored locally in SQLite/JSON; the network is used only for downloading row images, checking for app updates, and fetching the About page's contributor/sponsor lists.
 
 Technically: a .NET 10 / Avalonia desktop app, Windows-first, MVVM (CommunityToolkit.Mvvm), 12 modules layered Foundation → Domain → Application → Host. Document I/O is Syncfusion (Excel + PowerPoint); templating is Mustache (Stubble); image work is NetVips + OpenCV YuNet face detection; updates are Velopack against GitHub Releases.
 
@@ -25,9 +25,9 @@ Technically: a .NET 10 / Avalonia desktop app, Windows-first, MVVM (CommunityToo
 
 - A **Recipe** is a saved binding configuration. It says: "for template slide *X* in presentation *P*, feed it from worksheet(s) *W*; put column *Name* into placeholder `{{Name}}`; put the image at column *Photo* into the shape called `Picture 1`, cropping around the face."
 - A Recipe holds one or more **Mappings**. Each Mapping is: *one template slide* + *its text rules* + *its image rules* + *one or more worksheet data sources*. A Recipe with three Mappings produces three kinds of slide.
-- A **Run** (called a *Request* in code) is one execution of a Recipe: "generate now, save the `.pptx` files under this folder." A Run immediately expands into **Jobs** — one Job per (Mapping × worksheet source). Each Job writes exactly one output presentation file.
-- A **Job** walks four phases in order: create the output file → add one slide per row → fill text → fill images. It can be paused/resumed/stopped **at the Run level only** (never per-Job), and it resumes automatically after an app crash from wherever it stopped.
-- **Settings** are global: appearance (theme/language/motion — UI only), performance (`MaxConcurrentJobs` — affects generation), network (proxy, retry, download size cap — affects generation).
+- A **Run** (called a *Request* in code) is one execution of a Recipe: "generate now, save the `.pptx` files under this folder." A Run immediately expands into **Workflows** — one Workflow per (Mapping × worksheet source). Each Workflow writes exactly one output presentation file.
+- A **Workflow** walks four phases in order: create the output file → add one slide per row → fill text → fill images. It can be paused/resumed/stopped **at the Run level only** (never per-Workflow), and it resumes automatically after an app crash from wherever it stopped.
+- **Settings** are global: appearance (theme/language/motion — UI only), performance (`MaxConcurrentWorkflows` — affects generation), network (proxy, retry, download size cap — affects generation).
 - The **About** page shows version/update status and live GitHub contributor/sponsor lists.
 
 ### Technical representation
@@ -43,10 +43,10 @@ Recipe (SQLite row: id, name, JSON, timestamps)
 
 Run:  Request(RecipeId, Name, OutputType, SaveFolder, AllowLocalPaths)
   │   Service.CreateAsync → requestId (GUID string)
-  └── Jobs : one JobSpecification per (Mapping × WorksheetSource), fully resolved, id = 0-based ordinal int
-        JobSnapshot(RequestId, JobId, JobStatus, JobPhase, CurrentIndex, JobSpecification, Timestamp, TotalRows?)
+  └── Workflows : one WorkflowSpecification per (Mapping × WorksheetSource), fully resolved, id = 0-based ordinal int
+        WorkflowSnapshot(RequestId, WorkflowId, WorkflowStatus, WorkflowPhase, CurrentIndex, WorkflowSpecification, Timestamp, TotalRows?)
 
-Persistence (single Data.db): Recipes | Requests (write-once) | Jobs (current-state, ~1s buffered)
+Persistence (single Data.db): Recipes | Requests (write-once) | Workflows (current-state, ~1s buffered)
 ```
 
 ---
@@ -60,7 +60,7 @@ Persistence (single Data.db): Recipes | Requests (write-once) | Jobs (current-st
 - **Represents:** the user's answer to "how does my spreadsheet fill my template."
 - **Properties:** integer `Id` (SQLite autoincrement), `Name` (free text, the only user-editable metadata), `Mappings` (flat list — see 3.2), `CreatedTimestamp`/`UpdatedTimestamp` (UTC).
 - **Lifecycle:** created empty (`Recipe([])`) or by import; edited in the Recipe Editor; saved (insert on first save, update thereafter); duplicated; exported to a `.recipe` file; deleted permanently. No soft-delete, no versioning.
-- **Can do:** be run any number of times, concurrently; be edited while Runs derived from it are in flight (a Job carries a fully-resolved `JobSpecification`, so editing/deleting the Recipe does not disturb running Jobs); expose `GetReferencedFiles()` (all distinct workbook + presentation paths).
+- **Can do:** be run any number of times, concurrently; be edited while Runs derived from it are in flight (a Workflow carries a fully-resolved `WorkflowSpecification`, so editing/deleting the Recipe does not disturb running Workflows); expose `GetReferencedFiles()` (all distinct workbook + presentation paths).
 - **Cannot do:** carry run history (that lives on Runs), carry per-recipe UI preferences (e.g. "always open me in Advanced mode" — **not stored**), reference data by anything other than an absolute/relative file path + name/index.
 - **Depends on:** file paths to workbooks and presentations that exist on disk at run time (not enforced at save time).
 - **Depended on by:** Runs (via `Request.RecipeId`), the Recipe Editor, `.recipe` export/import.
@@ -73,7 +73,7 @@ Persistence (single Data.db): Recipes | Requests (write-once) | Jobs (current-st
 - **Represents:** one template slide plus the rules and data feeding it. Every `WorksheetSource` in a Mapping is rendered through the *same* template slide and the *same* text/image instructions — the one thing the removed graph model expressed that the flat list still needs (a nested list, no ids).
 - **Has no name or id of its own.** The Editor labels a Mapping `"Slide {index}"` (`MappingEditSession.Label`).
 - **Lifecycle:** exists only inside a `Recipe`. Added via the template picker, removed, reordered in the Editor's mapping navigator (shown only when ≥ 2 Mappings exist).
-- **Fan-out rule:** at Run time each Mapping expands to `Sources.Count` Jobs (`Service.BuildJobs` = `Mappings.SelectMany(m => m.Sources.Select(...))`).
+- **Fan-out rule:** at Run time each Mapping expands to `Sources.Count` Workflows (`Service.BuildWorkflows` = `Mappings.SelectMany(m => m.Sources.Select(...))`).
 
 ### 3.3 WorksheetSource
 
@@ -92,7 +92,7 @@ Persistence (single Data.db): Recipes | Requests (write-once) | Jobs (current-st
   - `IndexRangeFilter(int Start, int End)` — 1-based, inclusive. Index 1 = first data row (= worksheet row 2).
   - `PartitionBlockFilter(int PartitionIndex, int PartitionCount)` — divides the data rows into `PartitionCount` equal blocks and takes block `PartitionIndex` (0-based). Used to split one worksheet across several Runs/machines.
 - `GetIndices(int dataCount)` returns the selected 1-based data-row indices.
-- **Persistence note:** `null` and `AllRowFilter` are treated as identical everywhere; `JobsRepository` never materialises `AllRowFilter` (stores `RowFilterType = null`).
+- **Persistence note:** `null` and `AllRowFilter` are treated as identical everywhere; `WorkflowsRepository` never materialises `AllRowFilter` (stores `RowFilterType = null`).
 
 ### 3.5 PresentationSource ("the template")
 
@@ -104,7 +104,7 @@ Persistence (single Data.db): Recipes | Requests (write-once) | Jobs (current-st
 ### 3.6 TextInstruction
 
 - **Type:** `TextInstruction(IReadOnlySet<string> Placeholders, IReadOnlyList<ColumnIdentifier> Columns)`.
-- **Semantics (`SlideGenerationWorkload.BuildRowTextValues`):** for each instruction, the **first non-empty cell** across `Columns` (in order) is the value; **every** tag in `Placeholders` is set to that value. So `Columns` is a fallback chain, `Placeholders` is a fan-out.
+- **Semantics (`SlideGenerationRunner.BuildRowTextValues`):** for each instruction, the **first non-empty cell** across `Columns` (in order) is the value; **every** tag in `Placeholders` is set to that value. So `Columns` is a fallback chain, `Placeholders` is a fan-out.
 - Placeholder tags are Mustache keys — the bare `Name` from `{{Name}}` (see §10, TextComposer/TemplateEngine).
 
 ### 3.7 ImageInstruction
@@ -128,28 +128,28 @@ Persistence (single Data.db): Recipes | Requests (write-once) | Jobs (current-st
 - **Type:** `Request(int RecipeId, string Name, PresentationType OutputType, string SaveFolder, bool AllowLocalPaths = false)`.
 - `SaveFolder` is validated non-blank and normalised at construction (throws otherwise).
 - `OutputType` sets the output file extension (`.pptx` / `.potx` / `.ppsx`).
-- **`AllowLocalPaths` is inert.** It is a `Request` field, a `Requests`-table column, and a Run-dialog checkbox — but `JobSpecification` has no such field, `Service.BuildJobs` never propagates it, and `SlideGenerationWorkload` therefore cannot read it. Local file paths in image cells are handled **unconditionally** (`if (File.Exists(source))` in `ResolveShapeImageAsync`): loaded and cropped in memory, no hard-link, no copy. The XML doc on `Request.AllowLocalPaths` ("hard-linked or copied") describes behaviour that does not exist in V2. **Flag for design: treat this checkbox as a no-op until the backend wires it.**
+- **`AllowLocalPaths` is inert.** It is a `Request` field, a `Requests`-table column, and a Run-dialog checkbox — but `WorkflowSpecification` has no such field, `Service.BuildWorkflows` never propagates it, and `SlideGenerationRunner` therefore cannot read it. Local file paths in image cells are handled **unconditionally** (`if (File.Exists(source))` in `ResolveShapeImageAsync`): loaded and cropped in memory, no hard-link, no copy. The XML doc on `Request.AllowLocalPaths` ("hard-linked or copied") describes behaviour that does not exist in V2. **Flag for design: treat this checkbox as a no-op until the backend wires it.**
 - **Persisted as** `RequestRecord(string RequestId, Request Request, string LogPath, DateTimeOffset CreatedAt)` — write-once, never updated.
 
-### 3.10 JobSpecification
+### 3.10 WorkflowSpecification
 
-- **Type:** `JobSpecification(string WorkbookPath, string WorksheetName, IReadOnlySet<ColumnIdentifier>? UsedColumns, RowFilter? RowFilter, string TemplatePresentationPath, int TemplateSlideIndex, IReadOnlyList<TextInstruction> TextInstructions, IReadOnlyList<ImageInstruction> ImageInstructions, string OutputPath)`.
-- **Every value resolved from the Recipe at spawn time.** A Job never re-reads the Recipe to run or resume. This is why a Recipe can be edited/deleted while its Runs execute.
+- **Type:** `WorkflowSpecification(string WorkbookPath, string WorksheetName, IReadOnlySet<ColumnIdentifier>? UsedColumns, RowFilter? RowFilter, string TemplatePresentationPath, int TemplateSlideIndex, IReadOnlyList<TextInstruction> TextInstructions, IReadOnlyList<ImageInstruction> ImageInstructions, string OutputPath)`.
+- **Every value resolved from the Recipe at spawn time.** A Workflow never re-reads the Recipe to run or resume. This is why a Recipe can be edited/deleted while its Runs execute.
 - `OutputPath` = `{Request.SaveFolder}/{workbookFileStem}/{sanitizedWorksheetName}{outputExtension}` (`Service.BuildOutputPath`). **It encodes neither the Mapping nor the slide index** — so two Mappings that share one worksheet in the same Request produce the *same* output path, which is exactly the collision `FindDuplicateOutputPath` rejects at submit. **Design consequence: within one Run, a given worksheet can feed at most one Mapping.**
 
-### 3.11 JobSnapshot
+### 3.11 WorkflowSnapshot
 
-- **Type:** `JobSnapshot(string RequestId, int JobId, JobStatus JobStatus, JobPhase Phase, int CurrentIndex, JobSpecification Specification, DateTimeOffset Timestamp, int? TotalRows = null)`.
-- `JobId` is a **plain 0-based ordinal** (position in the Request's Job list), not a GUID.
+- **Type:** `WorkflowSnapshot(string RequestId, int WorkflowId, WorkflowStatus WorkflowStatus, WorkflowPhase Phase, int CurrentIndex, WorkflowSpecification Specification, DateTimeOffset Timestamp, int? TotalRows = null)`.
+- `WorkflowId` is a **plain 0-based ordinal** (position in the Request's Workflow list), not a GUID.
 - `CurrentIndex` = rows completed within the current `Phase`; reset to 0 on every phase transition. Together `(Phase, CurrentIndex)` is the entire resume position.
-- `TotalRows` = the worksheet's row count after `RowFilter`, known once the workload starts; `null` for jobs from older builds → Runs' progress bar goes indeterminate.
-- Doubles as the **job-scoped progress payload** — there is no separate `JobProgress` DTO.
+- `TotalRows` = the worksheet's row count after `RowFilter`, known once the runner starts; `null` for workflows from older builds → Runs' progress bar goes indeterminate.
+- Doubles as the **workflow-scoped progress payload** — there is no separate `WorkflowProgress` DTO.
 
-### 3.12 JobStatus / JobPhase (state enums)
+### 3.12 WorkflowStatus / WorkflowPhase (state enums)
 
-- `JobStatus : byte { Pending, Running, Complete, Paused, Cancelled, Error }`. **All six values are used.** `Pending` = spawned but not yet picked up.
-- `JobPhase : byte { Queued, CreatingOutput, CreatingSlides, FillingText, FillingImages, Done }`.
-  - **`Queued` is declared but never emitted.** `JobRunner.StartJobAsync` mints the first snapshot at `CreatingOutput`. Live phases are `CreatingOutput → CreatingSlides → FillingText → FillingImages → Done`. Forward-only, never regresses.
+- `WorkflowStatus : byte { Pending, Running, Complete, Paused, Cancelled, Error }`. **All six values are used.** `Pending` = spawned but not yet picked up.
+- `WorkflowPhase : byte { Queued, CreatingOutput, CreatingSlides, FillingText, FillingImages, Done }`.
+  - **`Queued` is declared but never emitted.** `WorkflowController.StartWorkflowAsync` mints the first snapshot at `CreatingOutput`. Live phases are `CreatingOutput → CreatingSlides → FillingText → FillingImages → Done`. Forward-only, never regresses.
 
 ### 3.13 Recipe Editor session state (Desktop-only)
 
@@ -206,10 +206,10 @@ See §12.
 | Recipe | workbook file | N Mappings → M files (a Mapping's Sources may span several workbooks) | reference only | file independent, reusable across Recipes |
 | Recipe | presentation file | N Mappings → M files | reference only | file independent, reusable across Recipes and Mappings |
 | Run (Request) | Recipe | N → 1 (`RecipeId`) | Run captures a **fully-resolved snapshot** at spawn; no live link afterwards | Recipe may be edited/deleted while the Run executes; `RecipeId` on the record is informational only |
-| Run (Request) | Job | 1 → 1..N (one per Mapping × WorksheetSource) | Run owns its Jobs; deleting the Run deletes its Job rows and `RequestRecord` | a Job has no meaning without its Request |
-| Job | output `.pptx` file | 1 → 1 | Job writes it; nothing deletes it automatically (`PreflightCleanup` only overwrites the Job's *own* prior output on a fresh, non-resumed start) | file persists after the Run; user opens it via "Open folder" |
-| Job | per-job download cache | 1 → 1 folder (`%TEMP%\SlideGenerator\{requestId}\{jobId}\`) | created in phase D, **deleted by `GeneratorJobObserver.OnTerminalAsync`** once the Job reaches a terminal (non-Paused) state | transient |
-| Run | `.log` file | 1 → 1 (`RequestRecord.LogPath`, shared by every Job of the Run) | written during execution; **not deleted** on Run delete | persists on disk |
+| Run (Request) | Workflow | 1 → 1..N (one per Mapping × WorksheetSource) | Run owns its Workflows; deleting the Run deletes its Workflow rows and `RequestRecord` | a Workflow has no meaning without its Request |
+| Workflow | output `.pptx` file | 1 → 1 | Workflow writes it; nothing deletes it automatically (`PreflightCleanup` only overwrites the Workflow's *own* prior output on a fresh, non-resumed start) | file persists after the Run; user opens it via "Open folder" |
+| Workflow | per-workflow download cache | 1 → 1 folder (`%TEMP%\SlideGenerator\{requestId}\{workflowId}\`) | created in phase D, **deleted by `GeneratorWorkflowObserver.OnTerminalAsync`** once the Workflow reaches a terminal (non-Paused) state | transient |
+| Run | `.log` file | 1 → 1 (`RequestRecord.LogPath`, shared by every Workflow of the Run) | written during execution; **not deleted** on Run delete | persists on disk |
 | Recipe | `.recipe` package | export/import only | a `.recipe` is a portable zip snapshot; importing creates a **new** Recipe row + copies bundled files into `Imported/` | fully independent artefact |
 | Setting | everything | 1 global instance | `ISettingManager.Current`; persisted to `UserSettings.json` | — |
 
@@ -247,21 +247,21 @@ Only workflows the code supports are listed.
 
 1. **Start:** Recipes list row → "Run", or Guided step ④ → "Save and run". Opens the **Run dialog** (`RunDialogViewModel`, a transient instance).
 2. **Intent:** generate output presentations now.
-3. **Objects:** `Request`, `IService.PreviewAsync` / `CreateAsync`, `PlannedJob`.
-4. **Actions:** set `Name` (pre-seeded `"{recipe} {yyyy-MM-dd HH-mm}"`), `OutputType`, `SaveFolder` (folder picker), optional `AllowLocalPaths` (currently a no-op — §3.9). Every field change re-runs `PreviewAsync`, which lists every `PlannedJob(OutputPath, WorkbookPath, WorksheetName, ConflictKind)`.
-5. **State changes:** on "Start" → `CreateAsync` mints a `requestId`, persists the `RequestRecord`, publishes `RequestProgress(PreparationStarted)`, announces the expected Job count, then spawns each Job (`JobStatus.Pending`, persisted and flushed immediately).
-6. **Validation (`CanStart`):** not previewing, ≥ 1 planned Job, **no conflicts**, non-blank name and folder. `CreateAsync` re-checks: throws if two of the Request's Jobs share an output path (`ConflictKind.DuplicateWithinRequest`), or if a Job's output path is already claimed by another active (Running/Pending/Paused) Request (`ConflictKind.ConflictsWithActiveRequest`).
+3. **Objects:** `Request`, `IService.PreviewAsync` / `CreateAsync`, `PlannedWorkflow`.
+4. **Actions:** set `Name` (pre-seeded `"{recipe} {yyyy-MM-dd HH-mm}"`), `OutputType`, `SaveFolder` (folder picker), optional `AllowLocalPaths` (currently a no-op — §3.9). Every field change re-runs `PreviewAsync`, which lists every `PlannedWorkflow(OutputPath, WorkbookPath, WorksheetName, ConflictKind)`.
+5. **State changes:** on "Start" → `CreateAsync` mints a `requestId`, persists the `RequestRecord`, publishes `RequestProgress(PreparationStarted)`, announces the expected Workflow count, then spawns each Workflow (`WorkflowStatus.Pending`, persisted and flushed immediately).
+6. **Validation (`CanStart`):** not previewing, ≥ 1 planned Workflow, **no conflicts**, non-blank name and folder. `CreateAsync` re-checks: throws if two of the Request's Workflows share an output path (`ConflictKind.DuplicateWithinRequest`), or if a Workflow's output path is already claimed by another active (Running/Pending/Paused) Request (`ConflictKind.ConflictsWithActiveRequest`).
 7. **Success:** dialog closes with the new `requestId`; the shell navigates to Runs and preselects it.
 8. **Failure:** any exception → `ErrorMessage` in the dialog; the dialog stays open.
 9. **Edge cases:** multiple concurrent Runs of the *same* Recipe are allowed (guarded only at the output-path level, not the recipe level).
 
 ### 5.4 Track and control a Run
 
-1. **Start:** Runs page. One list, chip-filtered (`RunStatusFilter`: All / Running / Paused / Done / Cancelled), searchable by name. Master–detail: request row + its Job rows + logs.
-2. **Objects:** `RunsViewModel`, `RequestRunViewModel` per Request, `JobRunViewModel` per Job, `IProgressHub`.
-3. **Live updates:** after the initial load, `IProgressHub` pushes coalesced `JobSnapshot` and `RowProgress` batches every 250 ms; existing rows are patched in place. A Request key never seen before triggers one full reload (a `JobSnapshot` alone lacks `Request.Name`/`CreatedAt`).
-4. **Per-Request commands (there are no per-Job commands):** Pause (when Running), Resume (when Paused), Stop (when Running/Paused/Pending), Delete (confirm dialog; stops first if active), Open folder (opens the first Job's output directory in the OS file browser).
-5. **Detail shows:** per-Job status, phase, `CurrentIndex`/`TotalRows` (determinate progress bar, or indeterminate if `TotalRows` is null), output path, a live "activity line" (`RowStage` + free-text `Note`, e.g. the URL being downloaded), and logs read on demand from the `.log` file.
+1. **Start:** Runs page. One list, chip-filtered (`RunStatusFilter`: All / Running / Paused / Done / Cancelled), searchable by name. Master–detail: request row + its Workflow rows + logs.
+2. **Objects:** `RunsViewModel`, `RequestRunViewModel` per Request, `WorkflowRunViewModel` per Workflow, `IProgressHub`.
+3. **Live updates:** after the initial load, `IProgressHub` pushes coalesced `WorkflowSnapshot` and `RowProgress` batches every 250 ms; existing rows are patched in place. A Request key never seen before triggers one full reload (a `WorkflowSnapshot` alone lacks `Request.Name`/`CreatedAt`).
+4. **Per-Request commands (there are no per-Workflow commands):** Pause (when Running), Resume (when Paused), Stop (when Running/Paused/Pending), Delete (confirm dialog; stops first if active), Open folder (opens the first Workflow's output directory in the OS file browser).
+5. **Detail shows:** per-Workflow status, phase, `CurrentIndex`/`TotalRows` (determinate progress bar, or indeterminate if `TotalRows` is null), output path, a live "activity line" (`RowStage` + free-text `Note`, e.g. the URL being downloaded), and logs read on demand from the `.log` file.
 6. **Success/failure:** aggregate Request status via `Service.DeriveStatus` — see §6.3. **There is no Request-level `Error` state** (see §16).
 
 ### 5.5 Adjust settings
@@ -276,23 +276,23 @@ About page → "Check for updates" (`UpdateChecker` via Velopack/GitHub Releases
 
 ## 6. State Machines / Lifecycle
 
-### 6.1 Job phase (within one running Job)
+### 6.1 Workflow phase (within one running Workflow)
 
 ```
 CreatingOutput ──► CreatingSlides ──► FillingText ──► FillingImages ──► Done
    (copy template,     (append 1        (per row:        (per row:          (terminal
-    strip slides;       cloned slide     read cells,       resolve source,    JobPhase
+    strip slides;       cloned slide     read cells,       resolve source,    WorkflowPhase
     or reopen on        per data row,    compose text,     download/local,    stamped on
     resume)             Save each)       Save each)        crop, set          the final
-                                                           ImageData,         JobSnapshot)
+                                                           ImageData,         WorkflowSnapshot)
                                                            Save each)
 ```
 
-- **Transitions:** automatic, forward-only, one direction. Driven by `SlideGenerationWorkload.RunAsync`. Each transition writes a durable `JobSnapshot` (flushed before proceeding) so a crash resumes from the correct phase.
+- **Transitions:** automatic, forward-only, one direction. Driven by `SlideGenerationRunner.RunAsync`. Each transition writes a durable `WorkflowSnapshot` (flushed before proceeding) so a crash resumes from the correct phase.
 - **Checkpoint:** `context.CheckpointAsync(ct)` + `ct.ThrowIfCancellationRequested()` **before every row**. Pause/cancel granularity is "between rows," never mid-row.
 - `Queued` — never entered (§3.12).
 
-### 6.2 Job status
+### 6.2 Workflow status
 
 ```
                  ┌────────── PauseAsync ─────────┐
@@ -301,39 +301,39 @@ Pending ──► Running ◄──────── ResumeAsync ────�
    │           │  │                               │
    │           │  └──────── StopAsync ────────────┤
    │           │                                  │
-   │           ├─► Complete   (workload returned) │
-   │           ├─► Error      (workload threw)    │
+   │           ├─► Complete   (runner returned) │
+   │           ├─► Error      (runner threw)    │
    └───────────┴─► Cancelled  (cancellation observed) ◄─┘
 ```
 
-- **Pending → Running:** the engine picks the Job up (after acquiring a concurrency slot; a "starting" tick is published *before* the slot is acquired, so a queued Job still shows Running in the UI).
-- **Running ⇄ Paused:** user, at the **Request** level (`IService.PauseAsync`/`ResumeAsync` fan out over the Request's Jobs). `GeneratorJobObserver` stamps `Paused`/`Running`. A paused Job blocks at its next checkpoint.
-- **→ Cancelled:** user Stop, or app shutdown. The engine cancels the Job's `CancellationTokenSource` and also releases the pause gate so a paused Job unblocks to observe the cancellation.
-- **→ Complete:** `RunAsync` returns a terminal `JobSnapshot(Complete, Done, TotalRows, TotalRows)`.
+- **Pending → Running:** the engine picks the Workflow up (after acquiring a concurrency slot; a "starting" tick is published *before* the slot is acquired, so a queued Workflow still shows Running in the UI).
+- **Running ⇄ Paused:** user, at the **Request** level (`IService.PauseAsync`/`ResumeAsync` fan out over the Request's Workflows). `GeneratorWorkflowObserver` stamps `Paused`/`Running`. A paused Workflow blocks at its next checkpoint.
+- **→ Cancelled:** user Stop, or app shutdown. The engine cancels the Workflow's `CancellationTokenSource` and also releases the pause gate so a paused Workflow unblocks to observe the cancellation.
+- **→ Complete:** `RunAsync` returns a terminal `WorkflowSnapshot(Complete, Done, TotalRows, TotalRows)`.
 - **→ Error:** `RunAsync` threw (any exception in any phase, including a per-row exception — rows are **not** individually isolated).
 - **Terminal states:** `Complete`, `Cancelled`, `Error`. `Paused` is *not* terminal.
-- **Crash resume:** at startup `GeneratorResumeSource` reads every `Pending`/`Running`/`Paused` row and reschedules it from `(Phase, CurrentIndex)`, logging to the original Request's `.log` file. A previously `Paused` Job resumes as plain `Running` (no "why paused" is persisted).
+- **Crash resume:** at startup `GeneratorResumeSource` reads every `Pending`/`Running`/`Paused` row and reschedules it from `(Phase, CurrentIndex)`, logging to the original Request's `.log` file. A previously `Paused` Workflow resumes as plain `Running` (no "why paused" is persisted).
 
 ### 6.3 Request (Run) aggregate status — `Service.DeriveStatus`
 
 ```
-any Job Running or Pending      → Running
-else any Job Paused             → Paused
-else all Jobs Cancelled         → Cancelled
+any Workflow Running or Pending      → Running
+else any Workflow Paused             → Paused
+else all Workflows Cancelled         → Cancelled
 else                            → Complete      ◄── an all-Error Request lands HERE
 ```
 
-- **There is no `Error` branch.** A Request whose Jobs all ended `Error` reports `Complete`, appears in `ListCompletedAsync`, and `RunStatusFilter` has no "Errored" chip. `RequestRunViewModel.DeriveDisplayStatus` repeats the same omission client-side. Job-level `Error` *is* visible per-Job in the detail panel. **This is a real gap the Runs page must account for.**
+- **There is no `Error` branch.** A Request whose Workflows all ended `Error` reports `Complete`, appears in `ListCompletedAsync`, and `RunStatusFilter` has no "Errored" chip. `RequestRunViewModel.DeriveDisplayStatus` repeats the same omission client-side. Workflow-level `Error` *is* visible per-Workflow in the detail panel. **This is a real gap the Runs page must account for.**
 
 ### 6.4 Request lifecycle phase — `RequestPhase` (progress only, never persisted)
 
 ```
 PreparationStarted ──► ProcessingStarted ──► Completed
- (spawn loop begins)   (every announced Job   (every announced Job
+ (spawn loop begins)   (every announced Workflow   (every announced Workflow
                         has left Pending)      has reached a terminal status)
 ```
 
-Monotonic. Published live by `Service.CreateAsync` (`PreparationStarted`) and derived elsewhere; `Summary.Phase` is recomputed statelessly from current Job statuses on every list call (`DeriveRequestPhase`).
+Monotonic. Published live by `Service.CreateAsync` (`PreparationStarted`) and derived elsewhere; `Summary.Phase` is recomputed statelessly from current Workflow statuses on every list call (`DeriveRequestPhase`).
 
 ### 6.5 Recipe Editor mode
 
@@ -367,15 +367,15 @@ Guided ──"Open Advanced mode"──► Advanced      (one-way within a sessi
 | **Duplicate recipe** | `id` | recipe exists | Get + Add with `" (copy)"` name | insert | new metadata | — |
 | **Export recipe** | `id`, `outputPath` | recipe exists | `RecipePackageService.ExportAsync` | writes a `.recipe` zip (+ bundled files) | — | — |
 | **Import recipe** | `.recipe` path, target folders | valid archive | `ImportAsync` | extracts files to `Imported/`, inserts a new recipe | `IRecipeMetadata` | `InvalidDataException` on missing/invalid `Recipe.json`, Zip-Slip, etc. |
-| **Preview a run** | `Request` | recipe exists | `IService.PreviewAsync` → `BuildJobs` + conflict scan | none | `IReadOnlyList<PlannedJob>` | throws if recipe missing |
-| **Create a run** | `Request` | recipe exists; no output-path conflicts | `CreateAsync` → `BuildJobs`, persist `RequestRecord`, spawn N Jobs | inserts `Requests` row + N `Jobs` rows; starts N background tasks; creates the `.log` file; emits progress | `requestId` (string) | throws on duplicate/active-conflict output path, or missing recipe |
-| **Pause / Resume / Stop a run** | `requestId` | — | fan out over eligible Jobs | Job status transitions, progress events | `PartialResult(Succeeded, Skipped)` | ineligible Jobs counted skipped, not failed |
+| **Preview a run** | `Request` | recipe exists | `IService.PreviewAsync` → `BuildWorkflows` + conflict scan | none | `IReadOnlyList<PlannedWorkflow>` | throws if recipe missing |
+| **Create a run** | `Request` | recipe exists; no output-path conflicts | `CreateAsync` → `BuildWorkflows`, persist `RequestRecord`, spawn N Workflows | inserts `Requests` row + N `Workflows` rows; starts N background tasks; creates the `.log` file; emits progress | `requestId` (string) | throws on duplicate/active-conflict output path, or missing recipe |
+| **Pause / Resume / Stop a run** | `requestId` | — | fan out over eligible Workflows | Workflow status transitions, progress events | `PartialResult(Succeeded, Skipped)` | ineligible Workflows counted skipped, not failed |
 | **Pause-all / Stop-all** | — | — | fan out over all active requests | as above | `int` (requests affected) | — |
-| **List active / completed runs** | `includeLogs` | — | group `Jobs` by `RequestId`, filter by `DeriveStatus`, join `Requests`, optionally parse `.log` | reads (+ `.log` parse if `includeLogs`) | `IReadOnlyDictionary<string, Summary>` | — |
-| **Delete a run** | `requestId` | — | stop if active, then delete Job + Request rows | deletes rows (not the `.log`, not output files) | `bool` (found?) | — |
+| **List active / completed runs** | `includeLogs` | — | group `Workflows` by `RequestId`, filter by `DeriveStatus`, join `Requests`, optionally parse `.log` | reads (+ `.log` parse if `includeLogs`) | `IReadOnlyDictionary<string, Summary>` | — |
+| **Delete a run** | `requestId` | — | stop if active, then delete Workflow + Request rows | deletes rows (not the `.log`, not output files) | `bool` (found?) | — |
 | **Delete all completed runs** | — | — | loop delete | as above | `int` | — |
-| **Initialize** (startup) | — | called once before anything else | `JobRunner.InitializeAsync` → resume non-terminal Jobs | reschedules crash-leftover Jobs | — | — |
-| **Shutdown** | — | called at app exit | cancel running Jobs, wait, final flush | — | — | — |
+| **Initialize** (startup) | — | called once before anything else | `WorkflowController.InitializeAsync` → resume non-terminal Workflows | reschedules crash-leftover Workflows | — | — |
+| **Shutdown** | — | called at app exit | cancel running Workflows, wait, final flush | — | — | — |
 | **Summarize workbook** | `WorkbookIdentifier`, `getPreview` | file exists | open read-only, read headers + up to 20 rows/sheet | Syncfusion read | `WorkbookSummary` | `FileNotFoundException` |
 | **Summarize presentation** | `PresentationIdentifier`, `getPreview` | file exists | open read-only, scan placeholders + image shapes + thumbnails | Syncfusion read | `PresentationSummary` | `FileNotFoundException` |
 | **Get / Update / Reset settings** | `Setting` | — | `ISettingManager` | writes `UserSettings.json` | `Setting` | write error rethrown |
@@ -404,7 +404,7 @@ Guided ──"Open Advanced mode"──► Advanced      (one-way within a sessi
 
 **Template ownership:** templates are **not owned by Recipes** and are **not managed entities**. They are file paths. The same `.pptx` can be referenced by any number of Recipes and any number of Mappings. Selecting a template = the template-picker dialog (pick a presentation file → pick a slide).
 
-**How a Recipe participates in generation:** at Run time `Service.BuildJobs` flattens `Mappings.SelectMany(m => m.Sources.Select(...))` into one fully-resolved `JobSpecification` per (Mapping × Source). From that moment the Recipe is irrelevant to the Run — every value has been copied into the `JobSpecification` and persisted on the Job row.
+**How a Recipe participates in generation:** at Run time `Service.BuildWorkflows` flattens `Mappings.SelectMany(m => m.Sources.Select(...))` into one fully-resolved `WorkflowSpecification` per (Mapping × Source). From that moment the Recipe is irrelevant to the Run — every value has been copied into the `WorkflowSpecification` and persisted on the Workflow row.
 
 **What happens when a Recipe changes:** nothing happens to existing Runs (they carry snapshots). Future Runs use the new definition. Editing/deleting a Recipe while its Runs execute is explicitly safe.
 
@@ -425,7 +425,7 @@ Guided ──"Open Advanced mode"──► Advanced      (one-way within a sessi
 
 **Relationship with Recipes:** a Mapping *references* one template. A Recipe (via its Mappings) references 0..N templates. Many Recipes and many Mappings may reference the same template file; the file has no idea it is being used.
 
-**Relationship with generated slides:** in phase A the Job **copies the template file** to the output path and **removes all of its slides**. In phase B it opens the template read-only, `Clone()`s the requested slide, and `AddSlide()`s one clone per selected data row (the source presentation is kept open the whole time because Syncfusion clones stay coupled to their source's layout/master). So every output slide is a structural clone of the one template slide.
+**Relationship with generated slides:** in phase A the Workflow **copies the template file** to the output path and **removes all of its slides**. In phase B it opens the template read-only, `Clone()`s the requested slide, and `AddSlide()`s one clone per selected data row (the source presentation is kept open the whole time because Syncfusion clones stay coupled to their source's layout/master). So every output slide is a structural clone of the one template slide.
 
 **Configuration:** the template itself is not configured. What *is* configured against it: `TextInstruction`s keyed by the Mustache tags found in its shapes' text, and `ImageInstruction`s keyed by the names of its picture shapes. `TemplateSlideIndex` selects which slide.
 
@@ -454,36 +454,36 @@ The closest thing is the **Recipe Editor**, which is an *inline state of the Rec
 "Start" in the Run dialog → `IService.CreateAsync(Request)`. Synchronously it:
 
 1. resolves the Recipe, mints `requestId` (`Guid.NewGuid().ToString()`),
-2. computes the Job list (`BuildJobs`),
+2. computes the Workflow list (`BuildWorkflows`),
 3. rejects duplicate / active-conflicting output paths,
-4. writes the `RequestRecord` (`Requests` table), publishes `RequestProgress(PreparationStarted)`, announces the expected Job count,
-5. loops: for each Job, persist its initial `Pending` `JobSnapshot` (flushed immediately) and hand it to the Job engine, which fires it on `Task.Run` and returns without waiting.
+4. writes the `RequestRecord` (`Requests` table), publishes `RequestProgress(PreparationStarted)`, announces the expected Workflow count,
+5. loops: for each Workflow, persist its initial `Pending` `WorkflowSnapshot` (flushed immediately) and hand it to the Workflow engine, which fires it on `Task.Run` and returns without waiting.
 
 `CreateAsync` returns the `requestId` almost immediately. Generation runs entirely in the background.
 
-### 10.3 What runs internally per Job (`SlideGenerationWorkload.RunAsync`)
+### 10.3 What runs internally per Workflow (`SlideGenerationRunner.RunAsync`)
 
-- **Phase A — CreatingOutput:** if fresh, `PreflightCleanup` deletes any prior file at this Job's own output path, `File.Copy` the template → output path, remove every slide. If resuming, reopen the existing output as-is. Open the source workbook read-only, resolve the worksheet, compute `dataRows` from the `RowFilter`, load + clone the template slide.
-- **Phase B — CreatingSlides:** append `dataRows.Count` clones of the template slide, `output.Save()` after each; `JobSnapshot(CreatingSlides, i+1)` per slide.
-- **Phase C — FillingText:** per row — read the row's cells, `BuildRowTextValues` (per `TextInstruction`: first non-empty column value → all its placeholders), `TextComposer.Compose(shape, values)` for every shape on the row's slide (`ITextComposer` renders Mustache while preserving each text run's formatting via coverage-ratio distribution), `output.Save()`; `RowProgress` + `JobSnapshot` per row.
+- **Phase A — CreatingOutput:** if fresh, `PreflightCleanup` deletes any prior file at this Workflow's own output path, `File.Copy` the template → output path, remove every slide. If resuming, reopen the existing output as-is. Open the source workbook read-only, resolve the worksheet, compute `dataRows` from the `RowFilter`, load + clone the template slide.
+- **Phase B — CreatingSlides:** append `dataRows.Count` clones of the template slide, `output.Save()` after each; `WorkflowSnapshot(CreatingSlides, i+1)` per slide.
+- **Phase C — FillingText:** per row — read the row's cells, `BuildRowTextValues` (per `TextInstruction`: first non-empty column value → all its placeholders), `TextComposer.Compose(shape, values)` for every shape on the row's slide (`ITextComposer` renders Mustache while preserving each text run's formatting via coverage-ratio distribution), `output.Save()`; `RowProgress` + `WorkflowSnapshot` per row.
 - **Phase D — FillingImages:** first inspect every distinct image source across all rows once (`ICloudClient.InspectAsync` → `ContentInfo`, deduped, retried with backoff per `Setting.Network.Retry`). Then per row, per `ImageInstruction`, per target shape:
   - resolve the source cell (first non-empty of `Columns`);
   - if it is an existing local file → load + crop in memory;
-  - else if it inspected to an image → ensure it is in the per-job download cache (`%TEMP%\SlideGenerator\{requestId}\{jobId}\{hash(uri)}{ext}`), respecting `Setting.Network.MaxDownloadBytes`; then crop;
+  - else if it inspected to an image → ensure it is in the per-workflow download cache (`%TEMP%\SlideGenerator\{requestId}\{workflowId}\{hash(uri)}{ext}`), respecting `Setting.Network.MaxDownloadBytes`; then crop;
   - else if `FallbackImagePath` exists → load + crop it;
   - crop = `ISmartCropper.CropAsync(image, shapeBounds, RoiOptions)` — try each `RoiOption` in order, first success wins, else centre crop;
   - assign the PNG bytes to `IShape.ImageData`; `output.Save()` after the row.
-- **Completion:** `RunAsync` returns `JobSnapshot(Complete, Done, TotalRows, TotalRows)`.
+- **Completion:** `RunAsync` returns `WorkflowSnapshot(Complete, Done, TotalRows, TotalRows)`.
 
 ### 10.4 Progress & errors
 
-- **Progress:** `RequestProgress` (aggregate phase), `JobSnapshot` (per-Job current state), `RowProgress` (per-row: `RowStatus`, `RowStage`, free-text `Note`). Published on the in-process `IEventBus`; the Desktop's `ProgressHub` coalesces and marshals them to the UI thread every 250 ms. Only `Jobs` is persisted (buffered ~1 s); rows are live-only.
-- **Errors:** an exception anywhere in `RunAsync` (missing worksheet, missing template slide, Syncfusion failure, an unhandled per-row error) fails the whole Job → `JobStatus.Error`. Rows are **not** individually try/caught to continue. *Image-specific* soft failures do not fail the Job: a failed download returns `null` (→ fallback image, else the shape is left unfilled); a crop exception is caught and logged (`CropToPngAsync`) and the shape is left unfilled.
-- **Outputs:** one `.pptx/.potx/.ppsx` per Job at its `OutputPath`. Files are never auto-deleted; the user opens the folder from the Runs detail panel.
+- **Progress:** `RequestProgress` (aggregate phase), `WorkflowSnapshot` (per-Workflow current state), `RowProgress` (per-row: `RowStatus`, `RowStage`, free-text `Note`). Published on the in-process `IEventBus`; the Desktop's `ProgressHub` coalesces and marshals them to the UI thread every 250 ms. Only `Workflows` is persisted (buffered ~1 s); rows are live-only.
+- **Errors:** an exception anywhere in `RunAsync` (missing worksheet, missing template slide, Syncfusion failure, an unhandled per-row error) fails the whole Workflow → `WorkflowStatus.Error`. Rows are **not** individually try/caught to continue. *Image-specific* soft failures do not fail the Workflow: a failed download returns `null` (→ fallback image, else the shape is left unfilled); a crop exception is caught and logged (`CropToPngAsync`) and the shape is left unfilled.
+- **Outputs:** one `.pptx/.potx/.ppsx` per Workflow at its `OutputPath`. Files are never auto-deleted; the user opens the folder from the Runs detail panel.
 
 ### 10.5 Synchronous or asynchronous
 
-**Asynchronous.** `CreateAsync` returns immediately; Jobs run on background tasks bounded by `MaxConcurrentJobs`; the UI observes them through the progress stream and periodic list reloads. There is a genuine Run/Job/execution model — see §11.
+**Asynchronous.** `CreateAsync` returns immediately; Workflows run on background tasks bounded by `MaxConcurrentWorkflows`; the UI observes them through the progress stream and periodic list reloads. There is a genuine Run/Workflow/execution model — see §11.
 
 ---
 
@@ -493,34 +493,34 @@ V2 has a full execution model. Vocabulary:
 
 | Code term | Meaning |
 |---|---|
-| **Request** (a.k.a. **Run**) | one user-initiated generation of a Recipe. Identified by `requestId` (GUID string). Persisted as `RequestRecord` in the `Requests` table (write-once). Groups N Jobs. |
-| **Job** | one unit of generation = one Mapping × one WorksheetSource = one output file. Identified within its Request by a 0-based ordinal `JobId` (int). Persisted as a `JobSnapshot` row in the `Jobs` table (current-state, updated as it progresses). |
-| **JobSpecification** | the fully-resolved, self-contained description of what a Job does (workbook, worksheet, columns, row filter, template path + slide index, text/image instructions, output path). |
-| **Job Engine** (`SlideGenerator.Workflows`) | a generic, domain-free scheduler: `IJobEngine<TKey,TState>` runs any `IJobWorkload<TState>`, owning the running-job registry, the concurrency semaphore, pause/checkpoint, and crash-resume. Zero knowledge of slides. |
-| **Job Workload** (`SlideGenerationWorkload`) | the slide-specific 4-phase pipeline, plugged into the engine. Wrapped in `LoggingWorkload` (per-Job file-log scope). |
-| **JobRunner** | thin adapter from `IService`/`Service` vocabulary onto `IJobEngine`. |
+| **Request** (a.k.a. **Run**) | one user-initiated generation of a Recipe. Identified by `requestId` (GUID string). Persisted as `RequestRecord` in the `Requests` table (write-once). Groups N Workflows. |
+| **Workflow** | one unit of generation = one Mapping × one WorksheetSource = one output file. Identified within its Request by a 0-based ordinal `WorkflowId` (int). Persisted as a `WorkflowSnapshot` row in the `Workflows` table (current-state, updated as it progresses). |
+| **WorkflowSpecification** | the fully-resolved, self-contained description of what a Workflow does (workbook, worksheet, columns, row filter, template path + slide index, text/image instructions, output path). |
+| **Workflow Engine** (`SlideGenerator.Workflows`) | a generic, domain-free scheduler: `IWorkflowEngine<TKey,TState>` runs any `IWorkflowRunner<TState>`, owning the running-workflow registry, the concurrency semaphore, pause/checkpoint, and crash-resume. Zero knowledge of slides. |
+| **Workflow Runner** (`SlideGenerationRunner`) | the slide-specific 4-phase pipeline, plugged into the engine. Wrapped in `LoggingRunner` (per-Workflow file-log scope). |
+| **WorkflowController** | thin adapter from `IService`/`Service` vocabulary onto `IWorkflowEngine`. |
 
-**Why it exists:** generation is long-running (per-row, with network I/O), needs bounded concurrency to cap RAM, needs pause/resume, and must survive an app crash mid-generation. The Engine/Workload split makes the concurrency/resume machinery reusable for future non-slide job types.
+**Why it exists:** generation is long-running (per-row, with network I/O), needs bounded concurrency to cap RAM, needs pause/resume, and must survive an app crash mid-generation. The Engine/Runner split makes the concurrency/resume machinery reusable for future non-slide workflow types.
 
-**Lifecycle & states:** see §6.2 (Job status), §6.1 (Job phase), §6.3–6.4 (Request aggregate).
+**Lifecycle & states:** see §6.2 (Workflow status), §6.1 (Workflow phase), §6.3–6.4 (Request aggregate).
 
 **What creates a Run:** only `IService.CreateAsync`, from the Run dialog or Guided "Save and run."
 
-**What a Run references:** a `RecipeId` (informational after spawn), a `SaveFolder`, an `OutputType`, a `Name`, one shared `.log` path, and its Jobs.
+**What a Run references:** a `RecipeId` (informational after spawn), a `SaveFolder`, an `OutputType`, a `Name`, one shared `.log` path, and its Workflows.
 
-**Information a Run/Job carries:** everything in §3.9–3.12. Notably a Job carries its **whole** `JobSpecification` on its row — no lookup needed to run or resume.
+**Information a Run/Workflow carries:** everything in §3.9–3.12. Notably a Workflow carries its **whole** `WorkflowSpecification` on its row — no lookup needed to run or resume.
 
-**Progress tracking:** live via the event bus / `ProgressHub` (§10.4). Persisted state is coarse: `(JobStatus, JobPhase, CurrentIndex, TotalRows)` per Job, buffered to SQLite ~1×/second. **Per-row history is never persisted** — once a row's `RowProgress` event has been shown, it is gone; `JobSummary` has no `Rows` field.
+**Progress tracking:** live via the event bus / `ProgressHub` (§10.4). Persisted state is coarse: `(WorkflowStatus, WorkflowPhase, CurrentIndex, TotalRows)` per Workflow, buffered to SQLite ~1×/second. **Per-row history is never persisted** — once a row's `RowProgress` event has been shown, it is gone; `WorkflowSummary` has no `Rows` field.
 
-**Completion:** a Job reaching `Complete`/`Cancelled`/`Error`. A Request is "complete" when `DeriveStatus` no longer returns `Running`/`Paused` (note the missing `Error` case, §16). `Summary.CompletedAt` = the latest Job timestamp once the Request is done.
+**Completion:** a Workflow reaching `Complete`/`Cancelled`/`Error`. A Request is "complete" when `DeriveStatus` no longer returns `Running`/`Paused` (note the missing `Error` case, §16). `Summary.CompletedAt` = the latest Workflow timestamp once the Request is done.
 
-**Failure:** per-Job `Error` (visible in the Job detail). No aggregate error state. A Cancelled Job leaves a partially-written output file on disk.
+**Failure:** per-Workflow `Error` (visible in the Workflow detail). No aggregate error state. A Cancelled Workflow leaves a partially-written output file on disk.
 
-**Inspecting past executions:** yes — `ListCompletedAsync` returns `Summary` per completed/cancelled Request, browsable on the Runs page (name, status, created/completed times, per-Job phase/index/output path, and logs parsed from the `.log` file on demand). The Recipes page also shows a per-recipe "recent runs" strip (up to 5, immutable snapshots).
+**Inspecting past executions:** yes — `ListCompletedAsync` returns `Summary` per completed/cancelled Request, browsable on the Runs page (name, status, created/completed times, per-Workflow phase/index/output path, and logs parsed from the `.log` file on demand). The Recipes page also shows a per-recipe "recent runs" strip (up to 5, immutable snapshots).
 
 **Persistence vs transience:**
-- Persistent: `Requests` rows, `Jobs` rows (current state only), the `.log` file, the output `.pptx` files.
-- Transient: everything about rows (progress, activity line), the per-job download cache (deleted on terminal), `RequestPhase`, the in-memory running-job registry, `Summary` objects (rebuilt every list call), parsed log entries (never cached).
+- Persistent: `Requests` rows, `Workflows` rows (current state only), the `.log` file, the output `.pptx` files.
+- Transient: everything about rows (progress, activity line), the per-workflow download cache (deleted on terminal), `RequestPhase`, the in-memory running-workflow registry, `Summary` objects (rebuilt every list call), parsed log entries (never cached).
 
 ---
 
@@ -540,7 +540,7 @@ V2 has a full execution model. Vocabulary:
 
 | Field | Type | Default | Effect |
 |---|---|---|---|
-| `MaxConcurrentJobs` | `uint` | `5` | size of the Job engine's concurrency semaphore. Caps how many Jobs run their workload simultaneously (RAM guard — each holds a Workbook + Presentation in memory). Applies to the **next** Job spawned (read fresh per property access); running Jobs keep their slot. Only throttles execution, never Run acceptance. |
+| `MaxConcurrentWorkflows` | `uint` | `5` | size of the Workflow engine's concurrency semaphore. Caps how many Workflows run their runner simultaneously (RAM guard — each holds a Workbook + Presentation in memory). Applies to the **next** Workflow spawned (read fresh per property access); running Workflows keep their slot. Only throttles execution, never Run acceptance. |
 
 This is the **only** field on `PerformanceSetting` — the old parallel-download/edit/read fields and the hardware/network calibration system were removed.
 
@@ -574,10 +574,10 @@ This is the **only** field on `PerformanceSetting` — the old parallel-download
 
 | What | From | When |
 |---|---|---|
-| Source workbooks (`.xls/.xlsx/.xltx/.ods/.csv/.tsv`) | user-picked absolute paths (or `Imported\Workbooks\` for imports) | Editor preview; every Job, phase A/C/D |
-| Template presentations (`.pptx/.potx/.ppsx`) | user-picked absolute paths (or `Imported\Presentations\`) | Editor preview; every Job, phase A/B |
+| Source workbooks (`.xls/.xlsx/.xltx/.ods/.csv/.tsv`) | user-picked absolute paths (or `Imported\Workbooks\` for imports) | Editor preview; every Workflow, phase A/C/D |
+| Template presentations (`.pptx/.potx/.ppsx`) | user-picked absolute paths (or `Imported\Presentations\`) | Editor preview; every Workflow, phase A/B |
 | `.recipe` package | user-picked path | on import |
-| `Data.db` | `%LOCALAPPDATA%\SlideGenerator\Data\Data.db` | continuously (recipes, requests, jobs) |
+| `Data.db` | `%LOCALAPPDATA%\SlideGenerator\Data\Data.db` | continuously (recipes, requests, workflows) |
 | `UserSettings.json` | same folder | at startup |
 | `appsettings.json` | executable directory | at startup (log levels) |
 | About caches (`about-contributors.json`, `about-sponsors.json`) | `Data\` | About page, 24 h TTL |
@@ -588,12 +588,12 @@ This is the **only** field on `PerformanceSetting` — the old parallel-download
 
 | What | To |
 |---|---|
-| Output presentations | `{Request.SaveFolder}\{workbookStem}\{worksheetName}{ext}` — one per Job, incrementally saved after every row |
+| Output presentations | `{Request.SaveFolder}\{workbookStem}\{worksheetName}{ext}` — one per Workflow, incrementally saved after every row |
 | `Data.db` | `%LOCALAPPDATA%\SlideGenerator\Data\` (SQLite, `journal_mode=WAL`) |
 | `UserSettings.json` | same folder |
-| Per-Run log | `%LOCALAPPDATA%\SlideGenerator\Logs\Workflows\{sanitizedRunName}.log` (one file shared by all Jobs of the Run) |
+| Per-Run log | `%LOCALAPPDATA%\SlideGenerator\Logs\Workflows\{sanitizedRunName}.log` (one file shared by all Workflows of the Run) |
 | System logs | `Logs\System\{timestamp}.log` |
-| Per-Job download cache | `%TEMP%\SlideGenerator\{requestId}\{jobId}\{hash(uri)}{ext}` — deleted when the Job reaches a terminal (non-Paused) state |
+| Per-Workflow download cache | `%TEMP%\SlideGenerator\{requestId}\{workflowId}\{hash(uri)}{ext}` — deleted when the Workflow reaches a terminal (non-Paused) state |
 | Imported recipe resources | `Imported\Workbooks\`, `Imported\Presentations\` |
 | Update packages | Velopack's own location (on "download update") |
 | Single-instance lock | `Instance.pid` under the user data root |
@@ -620,14 +620,14 @@ There is **no local server**, no background service, no telemetry endpoint. If t
 
 ### 14.1 The single database — `Data.db`
 
-One SQLite file, `%LOCALAPPDATA%\SlideGenerator\Data\Data.db`, `journal_mode=WAL`. Replaces an older per-purpose split. Schema is created and migrated by **DbUp** at startup (`DatabaseMigrator.Migrate`, called from `Program.Main` before the host is built), from embedded scripts `001_2.0.0.sql` and `002_add-total-rows-to-jobs.sql`, tracked in DbUp's `SchemaVersions` table. Three domain tables:
+One SQLite file, `%LOCALAPPDATA%\SlideGenerator\Data\Data.db`, `journal_mode=WAL`. Replaces an older per-purpose split. Schema is created and migrated by **DbUp** at startup (`DatabaseMigrator.Migrate`, called from `Program.Main` before the host is built), from embedded scripts `001_2.0.0.sql`, `002_add-total-rows-to-jobs.sql` and `003_rename-jobs-to-workflows.sql`, tracked in DbUp's `SchemaVersions` table. Three domain tables:
 
 - **`Recipes`** — `Id` (INTEGER PK AUTOINCREMENT), `Name` (TEXT), `Recipe` (TEXT — the whole `Recipe` object as JSON), `CreatedTimestamp`, `UpdatedTimestamp` (TEXT, ISO-8601 UTC). Changes rarely (only on Editor save / import / duplicate / delete). Short-lived connection per CRUD call.
 - **`Requests`** — `RequestId` (TEXT PK), `RecipeId` (INTEGER), `Name`, `OutputType`, `SaveFolder`, `AllowLocalPaths` (INTEGER), `LogPath`, `CreatedAt`. **Write-once** — inserted by `CreateAsync`, never updated. Deleted with its Run.
-- **`Jobs`** — composite PK `(RequestId, JobId)`. Columns: `Status`, `Phase`, `CurrentIndex`, `TotalRows` (the mutable current state); `WorkbookPath`, `WorksheetName`, `UsedColumnsJson` (nullable JSON), `RowFilterType` + `RowFilterStart`/`End`/`PartitionIndex`/`PartitionCount` (nullable scalars — a small closed set, no JSON), `TemplatePresentationPath`, `TemplateSlideIndex`, `TextInstructionsJson`, `ImageInstructionsJson`, `OutputPath` (the resolved spec — written once), `Timestamp`. The `UPSERT` only updates `Status`/`Phase`/`CurrentIndex`/`OutputPath`/`Timestamp`/`TotalRows` on conflict; the spec columns are immutable after insert.
+- **`Workflows`** — composite PK `(RequestId, WorkflowId)`. Columns: `Status`, `Phase`, `CurrentIndex`, `TotalRows` (the mutable current state); `WorkbookPath`, `WorksheetName`, `UsedColumnsJson` (nullable JSON), `RowFilterType` + `RowFilterStart`/`End`/`PartitionIndex`/`PartitionCount` (nullable scalars — a small closed set, no JSON), `TemplatePresentationPath`, `TemplateSlideIndex`, `TextInstructionsJson`, `ImageInstructionsJson`, `OutputPath` (the resolved spec — written once), `Timestamp`. The `UPSERT` only updates `Status`/`Phase`/`CurrentIndex`/`OutputPath`/`Timestamp`/`TotalRows` on conflict; the spec columns are immutable after insert.
 - **No `Rows` table** — per-row progress is never persisted.
 
-`Jobs` is the only hot table. `JobsRepository : BufferedRepository<(string,int), JobSnapshot>` — writers `Enqueue` (coalesced, last-write-wins per key); a background `PeriodicTimer` (~1 s) drains the dirty set and upserts the batch in one transaction, then raises `Flushed`. Certain writes force an immediate flush (initial `Pending`, phase transitions, terminal states) so a crash resumes from the right point.
+`Workflows` is the only hot table. `WorkflowsRepository : BufferedRepository<(string,int), WorkflowSnapshot>` — writers `Enqueue` (coalesced, last-write-wins per key); a background `PeriodicTimer` (~1 s) drains the dirty set and upserts the batch in one transaction, then raises `Flushed`. Certain writes force an immediate flush (initial `Pending`, phase transitions, terminal states) so a crash resumes from the right point.
 
 ### 14.2 Settings
 
@@ -636,19 +636,19 @@ One SQLite file, `%LOCALAPPDATA%\SlideGenerator\Data\Data.db`, `journal_mode=WAL
 ### 14.3 Serialization formats
 
 - Recipe (DB + `.recipe`): camelCase JSON, `JsonStringEnumConverter`, ignore-null, a custom `IReadOnlySet` converter. `RowFilter` polymorphism via a `"mode"` discriminator; `RoiOption` polymorphism via `Mode`.
-- Job spec `*Json` columns: a separate small `JsonSerializerOptions` (`JobSpecificationJson`).
+- Workflow spec `*Json` columns: a separate small `JsonSerializerOptions` (`WorkflowSpecificationJson`).
 - Settings: default STJ, indented.
-- Logs: line-oriented text with a parseable scope path (`{requestId}` / `{requestId}/{jobId}` / `{requestId}/{jobId}/{rowIndex}`), read back by a regex `LogFileReader`.
+- Logs: line-oriented text with a parseable scope path (`{requestId}` / `{requestId}/{workflowId}` / `{requestId}/{workflowId}/{rowIndex}`), read back by a regex `LogFileReader`.
 
 ### 14.4 Persistent vs transient objects
 
 | Persistent | Transient (rebuilt/lost) |
 |---|---|
 | `RecipeEntry` (row) | `Recipe` object graphs held in the Editor |
-| `RequestRecord` (row) | `Summary` / `JobSummary` (recomputed every list call) |
-| `JobSnapshot` current state (row) | `RowProgress`, activity line, per-row anything |
-| Output `.pptx` files | in-memory running-Job registry, `PauseGate` |
-| Per-Run `.log` file | per-Job download cache (deleted on terminal) |
+| `RequestRecord` (row) | `Summary` / `WorkflowSummary` (recomputed every list call) |
+| `WorkflowSnapshot` current state (row) | `RowProgress`, activity line, per-row anything |
+| Output `.pptx` files | in-memory running-Workflow registry, `PauseGate` |
+| Per-Run `.log` file | per-Workflow download cache (deleted on terminal) |
 | — | `RequestPhase` aggregation, `MappingEditSession` touched-sets |
 
 ### 14.5 Migration / versioning
@@ -664,15 +664,15 @@ All in-process (no message broker, no IPC). Two publish-only interfaces in `Slid
 | Event | Payload | Emitted when / by | Consumed by | Domain fact or UI signal? |
 |---|---|---|---|---|
 | `RequestProgress` | `RequestId`, `RequestPhase` (`PreparationStarted`/`ProcessingStarted`/`Completed`), `Timestamp` | `Service.CreateAsync` (`PreparationStarted`); other phases inferred | `ProgressHub.RequestProgressChanged` → shell/ViewModels | UI signal — never persisted |
-| `AnnounceExpectedJobCount(requestId, count)` | request id + N | `Service.CreateAsync` before the spawn loop | phase-aggregation logic | internal timing signal |
-| `JobSnapshot` (published as job progress) | the whole job current-state row | `GeneratorJobObserver` on every progress/pause/resume/terminal transition; and each phase transition | `ProgressHub.Jobs` (coalesced by `(requestId,jobId)`, 250 ms) → `RunsViewModel` patches rows; `MainWindowViewModel` counts active jobs for the window title | **Domain fact** — also the persisted row |
-| `RowProgress` | `RequestId`, `JobId`, `RowIndex` (1-based), `RowStatus` (`Waiting`/`Processing`/`Done`/`Error` — **only `Processing` and `Done` are ever emitted**), `RowStage` (`None`/`Downloading`/`CroppingImage`/`SavingOutput` — **`CroppingImage` is never emitted**), `Note`, `Timestamp` | `SlideGenerationWorkload.ReportRow` — one call per row per stage | `ProgressHub.Rows` (coalesced by `(requestId,jobId,rowIndex)`) → the Job detail "activity line" | UI signal — never persisted, no history |
-| `LogNotification` / `LogEntry` | timestamp, scope path, level, message | every log line written during a Job (`ScopeNotifyingSink`) | `ProgressHub.Logs` (append-only, never dropped) + the per-Run `.log` file | diagnostic — persisted only to the `.log` file |
-| `IJobsRepository.Flushed` | the batch just persisted | after each ~1 s SQLite flush | — (was relayed over IPC in V1; now unused by the Desktop UI, which reads the event bus directly) | internal |
+| `AnnounceExpectedWorkflowCount(requestId, count)` | request id + N | `Service.CreateAsync` before the spawn loop | phase-aggregation logic | internal timing signal |
+| `WorkflowSnapshot` (published as workflow progress) | the whole workflow current-state row | `GeneratorWorkflowObserver` on every progress/pause/resume/terminal transition; and each phase transition | `ProgressHub.Workflows` (coalesced by `(requestId,workflowId)`, 250 ms) → `RunsViewModel` patches rows; `MainWindowViewModel` counts active workflows for the window title | **Domain fact** — also the persisted row |
+| `RowProgress` | `RequestId`, `WorkflowId`, `RowIndex` (1-based), `RowStatus` (`Waiting`/`Processing`/`Done`/`Error` — **only `Processing` and `Done` are ever emitted**), `RowStage` (`None`/`Downloading`/`CroppingImage`/`SavingOutput` — **`CroppingImage` is never emitted**), `Note`, `Timestamp` | `SlideGenerationRunner.ReportRow` — one call per row per stage | `ProgressHub.Rows` (coalesced by `(requestId,workflowId,rowIndex)`) → the Workflow detail "activity line" | UI signal — never persisted, no history |
+| `LogNotification` / `LogEntry` | timestamp, scope path, level, message | every log line written during a Workflow (`ScopeNotifyingSink`) | `ProgressHub.Logs` (append-only, never dropped) + the per-Run `.log` file | diagnostic — persisted only to the `.log` file |
+| `IWorkflowsRepository.Flushed` | the batch just persisted | after each ~1 s SQLite flush | — (was relayed over IPC in V1; now unused by the Desktop UI, which reads the event bus directly) | internal |
 
 **ViewModel-level events** (not a bus): `RecipesViewModel.RunStarted` → shell navigates to Runs; `RecipeListItemViewModel.EditRequested`/`RunStarted`/`Deleted`/`Duplicated`; editor `Saved`/`RunStarted`; child-panel `Changed` → dirty tracking; `RunDialogViewModel.RequestClose`; `TemplatePickerViewModel.RequestClose`; `LocalizationService.PropertyChanged` (language switch).
 
-**Ordering constraint the UI must respect:** `ProgressHub` must be constructed (and its subscriptions attached) **before** `IService.InitializeAsync()`, because crash-resumed Jobs start emitting immediately and a late subscriber would miss their first events (`App.axaml.cs` enforces this).
+**Ordering constraint the UI must respect:** `ProgressHub` must be constructed (and its subscriptions attached) **before** `IService.InitializeAsync()`, because crash-resumed Workflows start emitting immediately and a late subscriber would miss their first events (`App.axaml.cs` enforces this).
 
 ---
 
@@ -689,23 +689,23 @@ All in-process (no message broker, no IPC). Two publish-only interfaces in `Slid
 | Blank `SaveFolder` | `Request` ctor | `ArgumentException` | user picks a folder | none |
 | Output-path duplicate within a Run | `Service.CreateAsync` / `PreviewAsync` | `ConflictKind.DuplicateWithinRequest`; `CreateAsync` throws `InvalidOperationException` | user changes folder / recipe | no Run created |
 | Output-path collides with an active Run | same | `ConflictKind.ConflictsWithActiveRequest`; `CreateAsync` throws | user waits / changes folder | no Run created |
-| Worksheet / sheet name not found | `SlideGenerationWorkload` phase A | exception → `JobStatus.Error` | resume won't help (config wrong); user fixes recipe + re-runs | partial output file on disk |
-| Template slide index out of range | phase A | exception → `JobStatus.Error` | as above | partial output file |
-| Syncfusion licence missing | Document layer | exception at first workbook/presentation open → `JobStatus.Error` | set the licence, re-run | none |
-| Image URL unreachable / over size cap | phase D | soft — `null` → fallback image → shape left unfilled; logged | — | Job continues, `Complete` |
-| Crop failure | `CropToPngAsync` | soft — caught, logged, shape left unfilled | — | Job continues |
-| Any other per-row exception | phase B/C/D loop | **hard** — propagates → `JobStatus.Error` | resume from `(Phase, CurrentIndex)` after fixing cause | partial output file |
-| App crash mid-Job | — | Job row stays `Pending`/`Running`/`Paused` | **auto-resumed** at next startup from `(Phase, CurrentIndex)` | output file kept and reopened |
+| Worksheet / sheet name not found | `SlideGenerationRunner` phase A | exception → `WorkflowStatus.Error` | resume won't help (config wrong); user fixes recipe + re-runs | partial output file on disk |
+| Template slide index out of range | phase A | exception → `WorkflowStatus.Error` | as above | partial output file |
+| Syncfusion licence missing | Document layer | exception at first workbook/presentation open → `WorkflowStatus.Error` | set the licence, re-run | none |
+| Image URL unreachable / over size cap | phase D | soft — `null` → fallback image → shape left unfilled; logged | — | Workflow continues, `Complete` |
+| Crop failure | `CropToPngAsync` | soft — caught, logged, shape left unfilled | — | Workflow continues |
+| Any other per-row exception | phase B/C/D loop | **hard** — propagates → `WorkflowStatus.Error` | resume from `(Phase, CurrentIndex)` after fixing cause | partial output file |
+| App crash mid-Workflow | — | Workflow row stays `Pending`/`Running`/`Paused` | **auto-resumed** at next startup from `(Phase, CurrentIndex)` | output file kept and reopened |
 | Settings file unreadable | `SettingManager.Load` | logged → defaults written | — | settings reset to defaults |
 | Network failure on About / update | `AboutDataService` / `UpdateChecker` | empty lists / `UpdateCheckResult.Failed` — never an exception to the UI | user retries | none |
 
 ### 16.2 The gaps a designer must know
 
-1. **No Request-level `Error` status** (§6.3). An all-failed Run displays as `Complete` and sits in the "Done" filter. Job-level `Error` is only visible by expanding the Run's Jobs.
-2. **`RowStatus.Error` and `RowStatus.Waiting` are never emitted**; `RowStage.CroppingImage` is never emitted; `JobPhase.Queued` is never entered. Do not design chips/indicators for these four.
-3. **Rows are not error-isolated.** One bad row (structurally) kills its whole Job. Only *image* problems degrade gracefully within a row.
+1. **No Request-level `Error` status** (§6.3). An all-failed Run displays as `Complete` and sits in the "Done" filter. Workflow-level `Error` is only visible by expanding the Run's Workflows.
+2. **`RowStatus.Error` and `RowStatus.Waiting` are never emitted**; `RowStage.CroppingImage` is never emitted; `WorkflowPhase.Queued` is never entered. Do not design chips/indicators for these four.
+3. **Rows are not error-isolated.** One bad row (structurally) kills its whole Workflow. Only *image* problems degrade gracefully within a row.
 4. **`AllowLocalPaths` does nothing** (§3.9).
-5. **No pre-run validation that referenced files exist.** A recipe pointing at a moved workbook saves fine and only fails when its Job hits phase A.
+5. **No pre-run validation that referenced files exist.** A recipe pointing at a moved workbook saves fine and only fails when its Workflow hits phase A.
 6. **The Editor can save an incomplete/invalid recipe** (§8). Only "Save and run" is gated.
 7. **Re-saving an imported recipe with N-column fallback chains flattens them to 1** (§5.1).
 
@@ -726,8 +726,8 @@ All in-process (no message broker, no IPC). Two publish-only interfaces in `Slid
 ┌───────────────┴───────────────────────────────────────────────┐
 │ Application                                                     │
 │   SlideGenerator.Generator  — IService façade, Service,         │
-│     JobRunner, SlideGenerationWorkload, GeneratorJobObserver,   │
-│     GeneratorResumeSource, JobsRepository/RequestsRepository,   │
+│     WorkflowController, SlideGenerationRunner, GeneratorWorkflowObserver,   │
+│     GeneratorResumeSource, WorkflowsRepository/RequestsRepository,   │
 │     Progress DTOs, IEventBus/ILogNotifier (publish-only)        │
 │   SlideGenerator.Summarizer  — ISummarizationService            │
 └───────────────▲───────────────────────────────────────────────┘
@@ -744,13 +744,13 @@ All in-process (no message broker, no IPC). Two publish-only interfaces in `Slid
 │   Logging (Serilog, scoped file logging) ·                      │
 │   Document (Syncfusion Excel/PPT wrappers + Mustache engine) ·  │
 │   Image (NetVips load, SmartCropper, YuNet face detection) ·    │
-│   Jobs (generic IJobEngine<TKey,TState> — zero project refs)    │
+│   Workflows (generic IWorkflowEngine<TKey,TState> — zero project refs)    │
 └───────────────────────────────────────────────────────────────┘
 ```
 
 **Responsibilities:**
 - **Domain layer** owns the *definitions*: what a Recipe is, how it is stored, how a `.recipe` is packaged; what a Setting is and where it lives.
-- **Application layer** owns *execution*: turning a Recipe + a Run request into Jobs, running the 4-phase pipeline, tracking/persisting Job state, resuming after a crash, exposing the `IService` façade. `SlideGenerator.Workflows` owns *generic* execution mechanics (concurrency, checkpoint, resume) with no domain knowledge.
+- **Application layer** owns *execution*: turning a Recipe + a Run request into Workflows, running the 4-phase pipeline, tracking/persisting Workflow state, resuming after a crash, exposing the `IService` façade. `SlideGenerator.Workflows` owns *generic* execution mechanics (concurrency, checkpoint, resume) with no domain knowledge.
 - **Foundation** owns *capabilities*: document I/O, templating, image processing, HTTP/cloud, logging.
 - **Host/UI** owns *presentation and process lifecycle*: the window, navigation, ViewModels, the in-process event bus implementations, DI wiring, startup (single-instance, DB migration, Velopack, splash), shutdown.
 - **Dependencies flow strictly downward.** Each module has a `Registration.cs` DI entry point. `SlideGenerator.Workflows` has no project references at all.
@@ -783,20 +783,20 @@ All in-process (no message broker, no IPC). Two publish-only interfaces in `Slid
 | **Guided / Advanced** | Two layouts of the same Recipe Editor. Guided = a 4-step wizard (Template → Data → Binding → Review). Advanced = everything at once + mapping navigator + shape inspector. |
 | **Binding state** | `Assigned` / `Suggested` (auto-matched, unconfirmed) / `NeedsSelection` (ambiguous) / `Unassigned`. |
 | **Run** / **Request** | One user-initiated generation of a Recipe. `requestId` (GUID string). `Requests` table row (write-once). |
-| **Generate** | Pressing "Start" in the Run dialog → `IService.CreateAsync` → spawns Jobs; returns immediately. |
-| **Job** | One unit of generation = one Mapping × one WorksheetSource = one output file. `JobId` = 0-based ordinal int within its Run. `Jobs` table row (current state). |
-| **JobSpecification** | The fully-resolved, self-contained description of a Job (no Recipe lookup needed to run or resume). |
+| **Generate** | Pressing "Start" in the Run dialog → `IService.CreateAsync` → spawns Workflows; returns immediately. |
+| **Workflow** | One unit of generation = one Mapping × one WorksheetSource = one output file. `WorkflowId` = 0-based ordinal int within its Run. `Workflows` table row (current state). |
+| **WorkflowSpecification** | The fully-resolved, self-contained description of a Workflow (no Recipe lookup needed to run or resume). |
 | **Phase** | One of `CreatingOutput → CreatingSlides → FillingText → FillingImages → Done`. Forward-only. |
 | **CurrentIndex** | Rows completed within the current phase; the resume position with `Phase`. |
-| **TotalRows** | Filtered row count of the Job's worksheet; drives the determinate progress bar. |
-| **Job Engine** | The generic, domain-free scheduler (`SlideGenerator.Workflows`). |
-| **Job Workload** | The slide-specific 4-phase pipeline (`SlideGenerationWorkload`). |
-| **Summary** | A per-Run snapshot returned by the list APIs (request-level fields + a dict of `JobSummary`). Rebuilt on every call. |
+| **TotalRows** | Filtered row count of the Workflow's worksheet; drives the determinate progress bar. |
+| **Workflow Engine** | The generic, domain-free scheduler (`SlideGenerator.Workflows`). |
+| **Workflow Runner** | The slide-specific 4-phase pipeline (`SlideGenerationRunner`). |
+| **Summary** | A per-Run snapshot returned by the list APIs (request-level fields + a dict of `WorkflowSummary`). Rebuilt on every call. |
 | **RowProgress** | A live-only, unpersisted per-row activity event (status, stage, note). |
 | **Setting** | The single global config tree: Appearance (UI), Performance (generation), Network (generation). `UserSettings.json`. |
 | **`.recipe`** | A portable zip package: the Recipe JSON + bundled workbook/presentation files. Import creates a new Recipe. |
-| **Data.db** | The one shared SQLite database: `Recipes` + `Requests` + `Jobs`. |
-| **`MaxConcurrentJobs`** | The only concurrency control — how many Jobs run their workload at once. Default 5. |
+| **Data.db** | The one shared SQLite database: `Recipes` + `Requests` + `Workflows`. |
+| **`MaxConcurrentWorkflows`** | The only concurrency control — how many Workflows run their runner at once. Default 5. |
 
 ### Misleading V1 terms — do NOT carry into V2
 
@@ -805,9 +805,9 @@ All in-process (no message broker, no IPC). Two publish-only interfaces in `Slid
 | **Studio** | No such concept. There is no 3-tab studio, no combined generation workspace. Rejected in `plans/status.md`. |
 | **Run / Check** (the old paired UI areas) | Removed per `plans/idea.md` §8 — replaced by record/text/image *count* statistics on the recipe detail. |
 | **IPC sidecar / JSON-RPC / StreamJsonRpc / `SlideGenerator.Stdio`** | The whole IPC layer is gone. Everything is one in-process app. |
-| **Workflow / WorkflowCore / "workflow engine"** | Replaced by plain Task-based Jobs. The `Logs\Workflows\` folder name is a vestigial path, not a concept. |
+| **Workflow / WorkflowCore / "workflow engine"** | Replaced by plain Task-based Workflows. The `Logs\Workflows\` folder name is a vestigial path, not a concept. |
 | **Node / Edge / recipe graph** | The Recipe is a flat list. There is no graph editor (rejected). |
-| **Coordinator / concurrency gates / performance calibration** | Removed. Only `MaxConcurrentJobs`. |
+| **Coordinator / concurrency gates / performance calibration** | Removed. Only `MaxConcurrentWorkflows`. |
 | **Acquisition / Collector** | Modules deleted. |
 | **Cryptography module** | Folded into Utilities. |
 
@@ -822,15 +822,15 @@ V1                                          →   V2
 ─────────────────────────────────────────────────────────────────────────────
 Tauri web frontend + Rust host              →   single Avalonia .NET desktop app
 Backend as a JSON-RPC IPC sidecar (Stdio)   →   backend runs in-process; no IPC
-WorkflowCore-driven job execution           →   plain Task-based Job Engine + Workload
+WorkflowCore-driven workflow execution           →   plain Task-based Workflow Engine + Runner
 Recipe = Node/Edge graph                    →   Recipe = flat List<Mapping>
 "Studio" (multi-tab generation workspace)   →   no Studio; inline Recipe Editor
                                                 inside the Recipes page
 3-tab Studio / wizard-separate-from-editor   →  Guided/Advanced are two layouts of ONE editor
 "Run" + "Check" panels on a recipe          →   record / text / image count stats
-Coordinator: 3 concurrency gates + a         →   one setting: MaxConcurrentJobs (default 5)
+Coordinator: 3 concurrency gates + a         →   one setting: MaxConcurrentWorkflows (default 5)
   hardware/network calibration system
-Per-purpose DBs (Workflows.db, Recipes.db,   →   one Data.db (Recipes | Requests | Jobs)
+Per-purpose DBs (Workflows.db, Recipes.db,   →   one Data.db (Recipes | Requests | Workflows)
   Cache.db, Studio.db)
 SHA-256 in a Cryptography module             →   Utilities/Sha256.cs
 Acquisition + Collector modules              →   deleted
@@ -877,7 +877,7 @@ Acquisition + Collector modules              →   deleted
 
    User → Run dialog → Request(RecipeId, Name, OutputType, SaveFolder)
                           │  IService.CreateAsync
-                          │  Service.BuildJobs = Mappings × Sources
+                          │  Service.BuildWorkflows = Mappings × Sources
                           ▼
         ┌───────────────────────────────────────────────┐
         │  Request (Run)   requestId (GUID)              │
@@ -886,9 +886,9 @@ Acquisition + Collector modules              →   deleted
                         │ owns 1..N
                         ▼
         ┌───────────────────────────────────────────────┐
-        │  Job    (RequestId, JobId ordinal)            │
-        │  JobSnapshot row: JobStatus · JobPhase ·       │
-        │    CurrentIndex · TotalRows · JobSpecification │
+        │  Workflow    (RequestId, WorkflowId ordinal)            │
+        │  WorkflowSnapshot row: WorkflowStatus · WorkflowPhase ·       │
+        │    CurrentIndex · TotalRows · WorkflowSpecification │
         │  (fully resolved — no Recipe lookup)           │
         └───────────────┬───────────────────────────────┘
                         │ runs, forward-only
@@ -898,13 +898,13 @@ Acquisition + Collector modules              →   deleted
     strip slides)    per data row)    Mustache)     crop, set image)
                         │ writes                        │ live events
                         ▼                               ▼
-              one output .pptx per Job         RequestProgress / JobSnapshot /
+              one output .pptx per Workflow         RequestProgress / WorkflowSnapshot /
               under {SaveFolder}\{book}\        RowProgress  →  ProgressHub  →
               {sheet}{ext}                      Runs page (250 ms coalesced)
 
-   Job status:  Pending → Running ⇄ Paused → { Complete | Cancelled | Error }
-   Control:     Pause/Resume/Stop  — at the REQUEST level only, never per-Job
-   Crash:       non-terminal Jobs auto-resume from (Phase, CurrentIndex) at startup
+   Workflow status:  Pending → Running ⇄ Paused → { Complete | Cancelled | Error }
+   Control:     Pause/Resume/Stop  — at the REQUEST level only, never per-Workflow
+   Crash:       non-terminal Workflows auto-resume from (Phase, CurrentIndex) at startup
 ```
 
 ---
@@ -929,21 +929,21 @@ Things the UI/UX design **must** respect, each backed by the code:
 
 **Runs & Execution**
 - Generation is **asynchronous**. "Start" returns instantly; work happens in the background and is observed via a live progress stream + periodic list reloads.
-- A Run expands into N Jobs, one output file each. The design must show a Run→Jobs hierarchy.
-- Control (Pause / Resume / Stop) is **Request-level only**. There is no per-Job pause/stop. Job rows in the UI are read-only.
-- Pause/stop granularity is "between rows" — a paused Job finishes its current row first.
-- Jobs **auto-resume after an app crash** from `(Phase, CurrentIndex)`. The Runs page must handle Jobs that were mid-flight last session and are now running again.
+- A Run expands into N Workflows, one output file each. The design must show a Run→Workflows hierarchy.
+- Control (Pause / Resume / Stop) is **Request-level only**. There is no per-Workflow pause/stop. Workflow rows in the UI are read-only.
+- Pause/stop granularity is "between rows" — a paused Workflow finishes its current row first.
+- Workflows **auto-resume after an app crash** from `(Phase, CurrentIndex)`. The Runs page must handle Workflows that were mid-flight last session and are now running again.
 - Determinate progress needs `TotalRows` (nullable) — fall back to indeterminate when null.
-- **There is no Request-level error state.** An all-failed Run shows as `Complete` in the "Done" filter; the only error signal is per-Job `Error` inside the detail. Design the Runs page to make Job-level failure discoverable despite the missing aggregate.
+- **There is no Request-level error state.** An all-failed Run shows as `Complete` in the "Done" filter; the only error signal is per-Workflow `Error` inside the detail. Design the Runs page to make Workflow-level failure discoverable despite the missing aggregate.
 - `RunStatusFilter` = All / Running / Paused / Done / Cancelled — no "Errored" chip exists.
-- Do **not** design chips/states for `JobPhase.Queued`, `RowStatus.Waiting`, `RowStatus.Error`, or `RowStage.CroppingImage` — declared but never emitted.
-- Row-level detail (activity line: which URL is downloading, etc.) is **live-only, never persisted**. A completed Run has no per-row history — only Job phase/index and the `.log` file.
-- Output files and `.log` files are never auto-deleted, even when a Run is deleted. Per-job download caches are deleted on Job completion.
-- The Run dialog must live-preview the exact Job fan-out and every output-path conflict (`PreviewAsync`/`PlannedJob`/`ConflictKind`) and disable "Start" on any conflict.
+- Do **not** design chips/states for `WorkflowPhase.Queued`, `RowStatus.Waiting`, `RowStatus.Error`, or `RowStage.CroppingImage` — declared but never emitted.
+- Row-level detail (activity line: which URL is downloading, etc.) is **live-only, never persisted**. A completed Run has no per-row history — only Workflow phase/index and the `.log` file.
+- Output files and `.log` files are never auto-deleted, even when a Run is deleted. Per-workflow download caches are deleted on Workflow completion.
+- The Run dialog must live-preview the exact Workflow fan-out and every output-path conflict (`PreviewAsync`/`PlannedWorkflow`/`ConflictKind`) and disable "Start" on any conflict.
 - The `AllowLocalPaths` checkbox is currently a **no-op** — local paths always work regardless.
 
 **Settings**
-- Three groups: Appearance (**UI only**), Performance (**affects generation** — `MaxConcurrentJobs`), Network (**affects generation** — proxy, retry, download cap).
+- Three groups: Appearance (**UI only**), Performance (**affects generation** — `MaxConcurrentWorkflows`), Network (**affects generation** — proxy, retry, download cap).
 - Every change persists **immediately** — no Save button anywhere. Design accordingly (no dirty/save affordance).
 - Reset is **per-group** ("restore defaults"), not whole-app.
 - No validation on numeric fields — the design's input controls are the only guardrail.
@@ -959,5 +959,5 @@ Things the UI/UX design **must** respect, each backed by the code:
 - Developer role badges (crown / computer / paint from `plans/idea.md`): the login→role map was **never supplied** — **Unknown / Not determined from the code**. The `Contributor` model has no role field.
 
 **Vocabulary**
-- Use: Recipe, Mapping, Run, Job, Template, Placeholder, Binding, Phase, Settings, Import/Export.
+- Use: Recipe, Mapping, Run, Workflow, Template, Placeholder, Binding, Phase, Settings, Import/Export.
 - Never use: Studio, Workflow, Node/Edge, Coordinator, IPC/sidecar, the paired "Run/Check" panels.

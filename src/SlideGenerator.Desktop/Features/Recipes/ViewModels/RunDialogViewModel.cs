@@ -25,7 +25,7 @@ namespace SlideGenerator.Desktop.Features.Recipes.ViewModels;
 /// <summary>
 ///     Backs the run confirmation dialog. Every field change re-previews via <c>IService.PreviewAsync</c> —
 ///     the same conflict definition <c>IService.CreateAsync</c> enforces at submit time (see the plan's
-///     Run dialog contract) — so the user sees every output-path conflict and the full job fan-out before
+///     Run dialog contract) — so the user sees every output-path conflict and the full workflow fan-out before
 ///     committing, never a frontend-invented approximation of it.
 /// </summary>
 public sealed partial class RunDialogViewModel : ObservableObject
@@ -49,8 +49,8 @@ public sealed partial class RunDialogViewModel : ObservableObject
     [ObservableProperty] private bool _isPreviewLoading;
     [ObservableProperty] private string? _errorMessage;
 
-    /// <summary>Gets every job this run would create, with its output path and any conflict.</summary>
-    public ObservableCollection<PlannedJob> PlannedJobs { get; } = [];
+    /// <summary>Gets every workflow this run would create, with its output path and any conflict.</summary>
+    public ObservableCollection<PlannedWorkflow> PlannedWorkflows { get; } = [];
 
     /// <summary>Gets the request id created by <see cref="StartCommand" />, once it has run successfully.</summary>
     public string? CreatedRequestId { get; private set; }
@@ -73,8 +73,8 @@ public sealed partial class RunDialogViewModel : ObservableObject
         _ = RefreshPreviewAsync();
     }
 
-    /// <summary>Gets whether any planned job's output path conflicts with another job.</summary>
-    public bool HasConflicts => PlannedJobs.Any(j => j.ConflictKind != ConflictKind.None);
+    /// <summary>Gets whether any planned workflow's output path conflicts with another workflow.</summary>
+    public bool HasConflicts => PlannedWorkflows.Any(j => j.ConflictKind != ConflictKind.None);
 
     partial void OnOutputTypeChanged(PresentationType value)
     {
@@ -90,7 +90,7 @@ public sealed partial class RunDialogViewModel : ObservableObject
     {
         if (string.IsNullOrWhiteSpace(SaveFolder) || string.IsNullOrWhiteSpace(Name))
         {
-            PlannedJobs.Clear();
+            PlannedWorkflows.Clear();
             StartCommand.NotifyCanExecuteChanged();
             return;
         }
@@ -101,13 +101,13 @@ public sealed partial class RunDialogViewModel : ObservableObject
         {
             var request = BuildRequest();
             var planned = await _service.PreviewAsync(request).ConfigureAwait(true);
-            PlannedJobs.Clear();
-            foreach (var job in planned) PlannedJobs.Add(job);
+            PlannedWorkflows.Clear();
+            foreach (var workflow in planned) PlannedWorkflows.Add(workflow);
         }
         catch (Exception ex)
         {
             ErrorMessage = ex.Message;
-            PlannedJobs.Clear();
+            PlannedWorkflows.Clear();
         }
         finally
         {
@@ -131,7 +131,7 @@ public sealed partial class RunDialogViewModel : ObservableObject
 
     private bool CanStart()
     {
-        return !IsPreviewLoading && PlannedJobs.Count > 0 && !HasConflicts &&
+        return !IsPreviewLoading && PlannedWorkflows.Count > 0 && !HasConflicts &&
                !string.IsNullOrWhiteSpace(SaveFolder) && !string.IsNullOrWhiteSpace(Name);
     }
 

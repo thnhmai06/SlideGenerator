@@ -28,8 +28,8 @@
     <ItemGroup>
         <ProjectReference Include="../../src/SlideGenerator.Desktop/SlideGenerator.Desktop.csproj"/>
         <!-- Not transitive via Desktop (Directory.Build.props sets PrivateAssets=all on ProjectReference) —
-             needed directly for JobSnapshot/RowProgress/LogEntry in ProgressHubTests.cs. Document is needed
-             transitively for JobSpecification's ColumnIdentifier parameter type, even though tests pass null. -->
+             needed directly for WorkflowSnapshot/RowProgress/LogEntry in ProgressHubTests.cs. Document is needed
+             transitively for WorkflowSpecification's ColumnIdentifier parameter type, even though tests pass null. -->
         <ProjectReference Include="../../src/SlideGenerator.Generator/SlideGenerator.Generator.csproj"/>
         <ProjectReference Include="../../src/SlideGenerator.Document/SlideGenerator.Document.csproj"/>
         <ProjectReference Include="../../src/SlideGenerator.Recipe/SlideGenerator.Recipe.csproj"/>

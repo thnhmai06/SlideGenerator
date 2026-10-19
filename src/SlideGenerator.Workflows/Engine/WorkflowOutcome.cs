@@ -1,0 +1,28 @@
+/*
+ * Copyright (C) 2026 Thành Mai (thnhmai06)
+ *
+ * Solution: SlideGenerator
+ * Project: SlideGenerator.Workflows
+ * File: WorkflowOutcome.cs
+ *
+ * This file is part of this solution.
+ * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
+ *
+ * Licensed under the Apache License 2.0.
+ * See the LICENSE file in the project root for full license information.
+ */
+
+namespace SlideGenerator.Workflows.Engine;
+
+/// <summary>A workflow's terminal outcome, as decided solely by <see cref="IWorkflowEngine{TKey,TState}" />.</summary>
+public enum WorkflowOutcome : byte
+{
+    /// <summary><see cref="IWorkflowRunner{TState}.RunAsync" /> returned normally.</summary>
+    Completed,
+
+    /// <summary>The workflow was stopped (or the engine was shut down) before it completed.</summary>
+    Cancelled,
+
+    /// <summary><see cref="IWorkflowRunner{TState}.RunAsync" /> threw an exception other than cancellation.</summary>
+    Faulted
+}

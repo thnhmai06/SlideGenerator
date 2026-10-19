@@ -61,7 +61,7 @@ public sealed class SettingManagerTests : IDisposable
     {
         var custom = new Setting
         {
-            Performance = new Setting.PerformanceSetting { MaxConcurrentJobs = 42u }
+            Performance = new Setting.PerformanceSetting { MaxConcurrentWorkflows = 42u }
         };
         await _manager.Update(custom);
 
@@ -83,7 +83,7 @@ public sealed class SettingManagerTests : IDisposable
     {
         var newSetting = new Setting
         {
-            Performance = new Setting.PerformanceSetting { MaxConcurrentJobs = 7u }
+            Performance = new Setting.PerformanceSetting { MaxConcurrentWorkflows = 7u }
         };
 
         await _manager.Update(newSetting);
@@ -149,13 +149,30 @@ public sealed class SettingManagerTests : IDisposable
         var writer = new SettingManager(_logger, _testFilePath);
         await writer.Update(new Setting
         {
-            Performance = new Setting.PerformanceSetting { MaxConcurrentJobs = 99u }
+            Performance = new Setting.PerformanceSetting { MaxConcurrentWorkflows = 99u }
         });
 
         var result = await _manager.Load();
 
         result.Should().BeTrue();
-        _manager.Current.Performance.MaxConcurrentJobs.Should().Be(99u);
+        _manager.Current.Performance.MaxConcurrentWorkflows.Should().Be(99u);
+    }
+
+    /// <summary>
+    ///     Verifies that <see cref="SettingManager.Load" /> still reads the pre-rename <c>MaxConcurrentJobs</c>
+    ///     key from an existing settings file into <see cref="Setting.PerformanceSetting.MaxConcurrentWorkflows" />.
+    /// </summary>
+    [Fact]
+    public async Task Load_LegacyMaxConcurrentJobsKey_MapsToMaxConcurrentWorkflows()
+    {
+        await File.WriteAllTextAsync(_testFilePath,
+            "{\"Application\":{\"Performance\":{\"MaxConcurrentJobs\":12}}}",
+            TestContext.Current.CancellationToken);
+
+        var result = await _manager.Load();
+
+        result.Should().BeTrue();
+        _manager.Current.Performance.MaxConcurrentWorkflows.Should().Be(12u);
     }
 
     #endregion

@@ -15,18 +15,18 @@
 namespace SlideGenerator.Generator.Progress;
 
 /// <summary>
-///     Identifies the aggregate lifecycle phase of a generation request, derived across every job spawned
+///     Identifies the aggregate lifecycle phase of a generation request, derived across every workflow spawned
 ///     for it. Monotonically increasing — never regresses once reported.
 /// </summary>
 public enum RequestPhase
 {
-    /// <summary>At least one job has been spawned and is running its preparation step.</summary>
+    /// <summary>At least one workflow has been spawned and is running its preparation step.</summary>
     PreparationStarted,
 
-    /// <summary>Every known job of this request has left its preparation phase.</summary>
+    /// <summary>Every known workflow of this request has left its preparation phase.</summary>
     ProcessingStarted,
 
-    /// <summary>Every job of this request has reached a terminal state.</summary>
+    /// <summary>Every workflow of this request has reached a terminal state.</summary>
     Completed
 }
 
@@ -49,8 +49,8 @@ public sealed record RowProgress
     /// <summary>Gets the request id this row belongs to.</summary>
     public required string RequestId { get; init; }
 
-    /// <summary>Gets the job id (ordinal within the request) this row belongs to.</summary>
-    public required int JobId { get; init; }
+    /// <summary>Gets the workflow id (ordinal within the request) this row belongs to.</summary>
+    public required int WorkflowId { get; init; }
 
     /// <summary>Gets the 1-based data row index (excludes the header row).</summary>
     public required int RowIndex { get; init; }

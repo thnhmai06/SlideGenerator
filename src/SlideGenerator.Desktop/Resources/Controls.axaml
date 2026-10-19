@@ -43,7 +43,7 @@
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
     </Style>
 
-    <!-- Hairline row divider — used instead of floating cards throughout (Recipes list, Runs list, job rows). -->
+    <!-- Hairline row divider — used instead of floating cards throughout (Recipes list, Runs list, workflow rows). -->
     <Style Selector="Border.hairline-row">
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
         <Setter Property="BorderThickness" Value="0,0,0,1"/>

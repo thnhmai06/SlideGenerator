@@ -220,7 +220,7 @@ public sealed partial class RecipesViewModel : ObservableObject
                 .Where(kv => kv.Value.Request.RecipeId == recipeId)
                 .OrderByDescending(kv => kv.Value.CreatedAt)
                 .Take(5)
-                .Select(kv => new RecentRunViewModel(kv.Key, kv.Value.Request.Name, kv.Value.JobStatus, kv.Value.CreatedAt));
+                .Select(kv => new RecentRunViewModel(kv.Key, kv.Value.Request.Name, kv.Value.WorkflowStatus, kv.Value.CreatedAt));
 
             RecentRuns.Clear();
             foreach (var run in runs) RecentRuns.Add(run);

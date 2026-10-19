@@ -17,7 +17,7 @@ namespace SlideGenerator.Workflows.Engine;
 /// <summary>
 ///     Swappable cooperative pause checkpoint: <see cref="Pause" />/<see cref="Resume" /> toggle a shared
 ///     signal; <see cref="CheckpointAsync" /> blocks the caller while paused. Only ever observed at a point
-///     a workload itself calls <see cref="CheckpointAsync" /> — never mid-step.
+///     a runner itself calls <see cref="CheckpointAsync" /> — never mid-step.
 /// </summary>
 public sealed class PauseGate
 {

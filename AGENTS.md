@@ -112,10 +112,10 @@ dotnet test tests/SlideGenerator.Workflows.Tests/SlideGenerator.Workflows.Tests.
 │   ├── SlideGenerator.Logging/          — FileLogging/, Formats/ (file + console formatters, ScopeNotifyingSink)
 │   ├── SlideGenerator.Document/         — Workbooks/, Presentations/, Template/ (Syncfusion + Mustache)
 │   ├── SlideGenerator.Image/            — FaceDetection/, Cropping/, Loading/
-│   ├── SlideGenerator.Workflows/             — Engine/ (generic Job Engine, zero project references)
+│   ├── SlideGenerator.Workflows/             — Engine/ (generic Workflow Engine, zero project references)
 │   ├── SlideGenerator.Recipe/           — Models/, Services/ (repository + export/import), Formats/
 │   ├── SlideGenerator.Summarizer/       — Workbooks/, Presentations/, SummarizationService
-│   ├── SlideGenerator.Generator/        — Jobs/, Persistence/, Progress/, root Service + DTOs
+│   ├── SlideGenerator.Generator/        — Workflows/, Persistence/, Progress/, root Service + DTOs
 │   └── SlideGenerator.Desktop/          — Avalonia host (MVVM, Features/, Services/, Shell/, Bootstrap/)
 ├── tests/                              — one test project per module (mirrors src, standalone; no Summarizer.Tests)
 │   └── fixtures/                       — shared test data
@@ -128,7 +128,7 @@ The host is `SlideGenerator.Desktop`, a single in-process Avalonia application. 
 `SlideGenerator.Stdio` JSON-RPC sidecar (and the Tauri frontend it served) no longer exist. ViewModels depend on
 `SlideGenerator.Generator.IService` and friends directly.
 
-Modules removed in the past and not to be reintroduced by accident: WorkflowCore (job execution is plain `Task`-based
+Modules removed in the past and not to be reintroduced by accident: WorkflowCore (workflow execution is plain `Task`-based
 code), `Cryptography` (→ `Utilities/Sha256.cs`), `Coordinator` (its gates and performance calibration were deleted;
 `Pool<T>` → `Utilities/Pool.cs`), `Acquisition`, `Collector`, and the Recipe `Node`/`Edge` graph model.
 `tests/SlideGenerator.Acquisition.Tests/` may exist on disk as an orphan (no source, not in the slnx) — leave it alone
@@ -136,8 +136,8 @@ unless asked.
 
 ## Architecture: Modular Monolith, In-Process
 
-SlideGenerator automates PowerPoint generation from Excel data and templates. Each `Job` runs as a plain in-process
-`Task`, managed by a generic Job Engine and driven from the Avalonia UI through the `IService` facade.
+SlideGenerator automates PowerPoint generation from Excel data and templates. Each `Workflow` runs as a plain in-process
+`Task`, managed by a generic Workflow Engine and driven from the Avalonia UI through the `IService` facade.
 
 ### Module Map
 
@@ -148,16 +148,16 @@ Foundation
 ├── Logging       - Serilog file/console formatters, IFileLoggerFactory, scope-notifying sink
 ├── Document      - Syncfusion Excel/PowerPoint abstractions + Mustache text templating
 ├── Image         - NetVips loading, ROI cropping, OpenCV YuNet face detection
-└── Workflows     - Generic Job Engine: runs any IJobWorkload<TState> — concurrency, pause/resume/stop,
-                    crash-resume — with no knowledge of what a job does
+└── Workflows     - Generic Workflow Engine: runs any IWorkflowRunner<TState> — concurrency, pause/resume/stop,
+                    crash-resume — with no knowledge of what a workflow does
 
 Domain
 ├── Settings      - JSON user settings (ISettingProvider/ISettingManager) + the shared SQLite schema migrator
 └── Recipe        - Recipe CRUD (SQLite) + *.recipe export/import packages; a Recipe is a flat list of Mappings
 
 Application
-├── Generator     - IService facade, JobRunner (adapter over the Job Engine), SlideGenerationWorkload,
-│                   Requests/Jobs persistence, progress + log contracts
+├── Generator     - IService facade, WorkflowController (adapter over the Workflow Engine), SlideGenerationRunner,
+│                   Requests/Workflows persistence, progress + log contracts
 └── Summarizer    - Workbook/presentation metadata scanner (used by the recipe editor)
 
 Host
@@ -182,7 +182,7 @@ Host
 | Image         | `AddImageServices()`                                                                                       |
 | Recipe        | `AddRecipeServices()`                                                                                      |
 | Summarizer    | `AddSummarizationServices()`                                                                               |
-| Workflows     | `AddJobEngine<TKey,TState>()` — generic, called from `AddGeneratorServices()`, not from the host directly  |
+| Workflows     | `AddWorkflowEngine<TKey,TState>()` — generic, called from `AddGeneratorServices()`, not from the host directly  |
 | Generator     | `AddGeneratorServices()`                                                                                   |
 | Desktop       | `AddDesktopServices()` (event bus, progress hub, localization, theme, dialogs, ViewModels)                 |
 
@@ -211,86 +211,86 @@ method — match the file you are editing.
 
 `App.InitializeAsync` then: `NameAndPaths.InitializeDirectories()` → **resolve `IProgressHub` first** → load settings →
 apply theme/language → `IService.InitializeAsync()` (crash-resume) → fire-and-forget update check.
-`IProgressHub` must be constructed (subscribed) **before** `IService.InitializeAsync()`: crash-resumed jobs are scheduled
+`IProgressHub` must be constructed (subscribed) **before** `IService.InitializeAsync()`: crash-resumed workflows are scheduled
 immediately and a late subscriber would miss their first events.
 On shutdown (`ShutdownRequested`), `IService.ShutdownAsync()` runs, then settings are saved.
 
-## Request → Job flow
+## Request → Workflow flow
 
 `IService` (`Generator/Service.cs`) is the only surface the UI uses:
 
-- `PreviewAsync(request)` — computes the job list and per-job `ConflictKind` without spawning anything.
-- `CreateAsync(request)` — reads the recipe, flattens it to jobs, validates output paths, persists the
-  `RequestRecord`, publishes `RequestProgress(PreparationStarted)` + `AnnounceExpectedJobCount`, then calls
-  `IJobRunner.StartJobAsync` once per job. Returns immediately; it is **not** throttled by `MaxConcurrentJobs`.
-- `StopAsync` / `PauseAsync` / `ResumeAsync(requestId)` — request-scoped, best-effort fan-out over the request's jobs,
-  returning `PartialResult(Succeeded, Skipped)`. `StopAllAsync` / `PauseAllAsync` are bulk variants. There is no per-job
+- `PreviewAsync(request)` — computes the workflow list and per-workflow `ConflictKind` without spawning anything.
+- `CreateAsync(request)` — reads the recipe, flattens it to workflows, validates output paths, persists the
+  `RequestRecord`, publishes `RequestProgress(PreparationStarted)` + `AnnounceExpectedWorkflowCount`, then calls
+  `IWorkflowController.StartWorkflowAsync` once per workflow. Returns immediately; it is **not** throttled by `MaxConcurrentWorkflows`.
+- `StopAsync` / `PauseAsync` / `ResumeAsync(requestId)` — request-scoped, best-effort fan-out over the request's workflows,
+  returning `PartialResult(Succeeded, Skipped)`. `StopAllAsync` / `PauseAllAsync` are bulk variants. There is no per-workflow
   variant on `IService`.
 - `ListActiveAsync` / `ListCompletedAsync(includeLogs)` — `IReadOnlyDictionary<string, Summary>` keyed by request id.
   Pass `includeLogs: false` for list views (reading/parsing the `.log` file is the expensive part).
 - `DeleteAsync` (stops the request first if still active) / `DeleteAllCompletedAsync`.
 
-**Identity**: `requestId` is a GUID minted in `CreateAsync`; `JobId` is a plain 0-based `int` ordinal within the request;
-`JobKey` is a `global using` alias for `(string RequestId, int JobId)`.
+**Identity**: `requestId` is a GUID minted in `CreateAsync`; `WorkflowId` is a plain 0-based `int` ordinal within the request;
+`WorkflowKey` is a `global using` alias for `(string RequestId, int WorkflowId)`.
 
-**Building jobs** (`Service.BuildJobs`): one `JobSpecification` per (mapping × worksheet source) pair, every value
+**Building workflows** (`Service.BuildWorkflows`): one `WorkflowSpecification` per (mapping × worksheet source) pair, every value
 already resolved (workbook path, sheet, template presentation + slide index, instructions, `UsedColumns`, `RowFilter`).
-Output path = `{SaveFolder}/{workbook name}/{sanitized sheet name}{ext}`. A job needs nothing else to run or resume — no
-recipe or workbook lookup — so editing/deleting a recipe never affects existing jobs.
+Output path = `{SaveFolder}/{workbook name}/{sanitized sheet name}{ext}`. A workflow needs nothing else to run or resume — no
+recipe or workbook lookup — so editing/deleting a recipe never affects existing workflows.
 
 **Conflict guard**: there is no recipe-level lock; multiple active requests for the same recipe are allowed. Instead
-`CreateAsync` throws if two jobs of the request share an output path (`FindDuplicateOutputPath`) or if a job's output
-path equals one claimed by an already Pending/Running/Paused job of another request (`GetActiveOutputPathsAsync`).
+`CreateAsync` throws if two workflows of the request share an output path (`FindDuplicateOutputPath`) or if a workflow's output
+path equals one claimed by an already Pending/Running/Paused workflow of another request (`GetActiveOutputPathsAsync`).
 
 **Request status** is derived, never stored (`Service.DeriveStatus`): any Running/Pending → `Running`; else any Paused →
-`Paused`; else all Cancelled → `Cancelled`; else `Complete`. Note a request whose jobs ended in `Error` therefore reports
-`Complete` at request level — error status exists only per job (`JobSummary.JobStatus`). `Summary.Phase`
-(`RequestPhase`) is likewise recomputed from current job statuses on every list call (`DeriveRequestPhase`).
+`Paused`; else all Cancelled → `Cancelled`; else `Complete`. Note a request whose workflows ended in `Error` therefore reports
+`Complete` at request level — error status exists only per workflow (`WorkflowSummary.WorkflowStatus`). `Summary.Phase`
+(`RequestPhase`) is likewise recomputed from current workflow statuses on every list call (`DeriveRequestPhase`).
 
-## Job Engine (`SlideGenerator.Workflows`)
+## Workflow Engine (`SlideGenerator.Workflows`)
 
-Fully generic and domain-free: no `JobSnapshot`, `JobStatus`, Syncfusion, `Settings` or SQLite references.
+Fully generic and domain-free: no `WorkflowSnapshot`, `WorkflowStatus`, Syncfusion, `Settings` or SQLite references.
 
-- `IJobEngine<TKey,TState>` / `JobEngine<TKey,TState>` — `InitializeAsync(resumeSource)`, `ShutdownAsync`,
-  `StartJobAsync`, `PauseAsync`, `ResumeAsync`, `StopAsync`. Each job runs on its own `Task.Run`, tracked in an in-memory
+- `IWorkflowEngine<TKey,TState>` / `WorkflowEngine<TKey,TState>` — `InitializeAsync(resumeSource)`, `ShutdownAsync`,
+  `StartWorkflowAsync`, `PauseAsync`, `ResumeAsync`, `StopAsync`. Each workflow runs on its own `Task.Run`, tracked in an in-memory
   `ConcurrentDictionary`. Starting a duplicate key throws.
-- `IJobWorkload<TState>.RunAsync(initial, IJobContext<TState>, ct)` — the domain half. `IJobContext` offers
+- `IWorkflowRunner<TState>.RunAsync(initial, IWorkflowContext<TState>, ct)` — the domain half. `IWorkflowContext` offers
   `IsResume`, `ReportAsync(state, durable, ct)` and `CheckpointAsync(ct)`.
-- `IJobObserver<TKey,TState>` — `OnProgressAsync(key, state, durable, ct)`, `OnPausedAsync`, `OnResumedAsync`,
-  `OnTerminalAsync(key, JobTerminalResult)`. The engine never inspects `TState`; every transition is forwarded here.
-- `IJobResumeSource<TKey,TState>` → `PendingJob` list for crash recovery; `IJobConcurrencyProvider.MaxConcurrentJobs`.
+- `IWorkflowObserver<TKey,TState>` — `OnProgressAsync(key, state, durable, ct)`, `OnPausedAsync`, `OnResumedAsync`,
+  `OnTerminalAsync(key, WorkflowTerminalResult)`. The engine never inspects `TState`; every transition is forwarded here.
+- `IWorkflowResumeSource<TKey,TState>` → `PendingWorkflow` list for crash recovery; `IWorkflowConcurrencyProvider.MaxConcurrentWorkflows`.
 
-**Concurrency (`MaxConcurrentJobs`)** is the *only* concurrency/RAM control in the pipeline (default 5,
+**Concurrency (`MaxConcurrentWorkflows`)** is the *only* concurrency/RAM control in the pipeline (default 5,
 `Setting.PerformanceSetting`, the only field left on it). There are no per-operation gates (download/edit/save) and no
 performance calibration. The engine uses a `SemaphoreSlim`:
 
-- `ApplyConcurrencyLimit()` runs in `InitializeAsync` and at the start of every `StartJobAsync`; it swaps in a **new**
+- `ApplyConcurrencyLimit()` runs in `InitializeAsync` and at the start of every `StartWorkflowAsync`; it swaps in a **new**
   semaphore only when the value actually changed (tracked in `_currentLimit`). Swapping unconditionally would give each
-  new job its own private semaphore and defeat the limit.
-- `RunJobAsync` captures `_semaphore` into a local once and uses that same instance for `WaitAsync` and `Release`, so a
-  swap mid-job can't cause a `SemaphoreFullException`.
+  new workflow its own private semaphore and defeat the limit.
+- `RunWorkflowAsync` captures `_semaphore` into a local once and uses that same instance for `WaitAsync` and `Release`, so a
+  swap mid-workflow can't cause a `SemaphoreFullException`.
 - The limit only throttles *execution*: the "starting execution" progress tick is published before the slot is awaited,
-  so a queued job still shows as running.
-- `SettingConcurrencyProvider` (Generator) re-reads `settingProvider.Current.Performance.MaxConcurrentJobs` on every
-  access, so a settings change applies to the next started job; running jobs are unaffected.
+  so a queued workflow still shows as running.
+- `SettingConcurrencyProvider` (Generator) re-reads `settingProvider.Current.Performance.MaxConcurrentWorkflows` on every
+  access, so a settings change applies to the next started workflow; running workflows are unaffected.
 
-**Pause/stop** use `PauseGate` (one per running job, engine-owned): `Pause()`/`Resume()` toggle a swappable
-`TaskCompletionSource`; the workload calls `CheckpointAsync` before each row, so pausing is cooperative and happens
-**between rows**, never mid-row. `StopAsync` cancels the job's CTS *and* resumes the gate so a paused job observes the
-cancellation immediately. `ShutdownAsync` does the same for every job, then awaits them all.
+**Pause/stop** use `PauseGate` (one per running workflow, engine-owned): `Pause()`/`Resume()` toggle a swappable
+`TaskCompletionSource`; the runner calls `CheckpointAsync` before each row, so pausing is cooperative and happens
+**between rows**, never mid-row. `StopAsync` cancels the workflow's CTS *and* resumes the gate so a paused workflow observes the
+cancellation immediately. `ShutdownAsync` does the same for every workflow, then awaits them all.
 
 **State ownership**: `RunAsync` is the only place that creates a new `TState`. On normal completion its *return value*
 is the terminal state; on cancel/fault the terminal state is the last one passed to `ReportAsync` (cached per running
-job by the engine). Outcome mapping: `Completed` / `Cancelled` (`OperationCanceledException` while cancellation was
+workflow by the engine). Outcome mapping: `Completed` / `Cancelled` (`OperationCanceledException` while cancellation was
 requested) / `Faulted` (anything else, logged).
 
-## Slide-generation workload (`SlideGenerator.Generator`)
+## Slide-generation runner (`SlideGenerator.Generator`)
 
-`JobRunner` (`Jobs/JobRunner.cs`, `IJobRunner`) is a thin adapter: `StartJobAsync` persists the initial `Pending`
-`JobSnapshot` and **flushes it immediately** (so conflict checks see it right away), wraps `SlideGenerationWorkload` in a
-`LoggingWorkload`, and hands it to the engine. `ShutdownAsync` shuts the engine down *then* flushes the repository.
+`WorkflowController` (`Workflows/WorkflowController.cs`, `IWorkflowController`) is a thin adapter: `StartWorkflowAsync` persists the initial `Pending`
+`WorkflowSnapshot` and **flushes it immediately** (so conflict checks see it right away), wraps `SlideGenerationRunner` in a
+`LoggingRunner`, and hands it to the engine. `ShutdownAsync` shuts the engine down *then* flushes the repository.
 
-`SlideGenerationWorkload : IJobWorkload<JobSnapshot>` (`Jobs/Workloads/`) runs four phases in order, each with
+`SlideGenerationRunner : IWorkflowRunner<WorkflowSnapshot>` (`Workflows/Runners/`) runs four phases in order, each with
 `ct.ThrowIfCancellationRequested()` + `context.CheckpointAsync(ct)` before every row and `output.Save()` after it:
 
 ```
@@ -303,71 +303,71 @@ CreatingOutput → CreatingSlides → FillingText → FillingImages (→ Done)
 - **C — text**: `BuildRowTextValues` + `TextComposer` fill placeholders; for each `TextInstruction` the first non-empty
   cell across its columns wins.
 - **D — images**: inspect every distinct image source once up front (`ICloudClient.InspectAsync`, with retry/backoff from
-  `Network.Retry`); then per row resolve a local file, or download (per-job cache, `MaxDownloadBytes` cap) and crop with
+  `Network.Retry`); then per row resolve a local file, or download (per-workflow cache, `MaxDownloadBytes` cap) and crop with
   `ISmartCropper`, falling back to `FallbackImagePath`. A failed crop is logged and skipped, not fatal.
 
 The template presentation handle must stay open for the whole run (Syncfusion's `ISlide.Clone()` still resolves
 layout/master through its source).
 
-Any other exception during a row propagates and fails the whole job (→ `JobStatus.Error`); rows are not individually
+Any other exception during a row propagates and fails the whole workflow (→ `WorkflowStatus.Error`); rows are not individually
 try/caught.
 
-`JobPhase` has 5 values (`Done` is the terminal stamp, never "run"). `JobSnapshot` = `JobSpecification` + `JobStatus` /
-`Phase` / `CurrentIndex` / `Timestamp` / `TotalRows` (nullable; known once the workload starts, drives the UI's
+`WorkflowPhase` has 5 values (`Done` is the terminal stamp, never "run"). `WorkflowSnapshot` = `WorkflowSpecification` + `WorkflowStatus` /
+`Phase` / `CurrentIndex` / `Timestamp` / `TotalRows` (nullable; known once the runner starts, drives the UI's
 determinate progress bar).
 
-**`GeneratorJobObserver`** is the only place `JobStatus` values are assigned (`OnProgress` → `Running`, `OnPaused` →
+**`GeneratorWorkflowObserver`** is the only place `WorkflowStatus` values are assigned (`OnProgress` → `Running`, `OnPaused` →
 `Paused`, `OnResumed` → `Running`, `OnTerminal` → `Complete`/`Cancelled`/`Error`). Each transition does
-`jobsRepository.Enqueue(state)` (+ immediate `FlushAsync` when `durable`) then `eventBus.Publish(state)`. On terminal it
-also deletes the job's temp download folder.
+`workflowsRepository.Enqueue(state)` (+ immediate `FlushAsync` when `durable`) then `eventBus.Publish(state)`. On terminal it
+also deletes the workflow's temp download folder.
 
 **Crash-resume**: `GeneratorResumeSource` loads every Pending/Running/Paused row (`GetNonTerminalAsync`) — by definition
-crash leftovers — and rebuilds a `LoggingWorkload` using the owning request's persisted `LogPath` (so the resumed run
-keeps appending to the same `.log`). `Phase` + `CurrentIndex` say where to continue; the embedded `JobSpecification` says
-what to do. A job that was `Paused` resumes as `Running` (no persisted "why").
+crash leftovers — and rebuilds a `LoggingRunner` using the owning request's persisted `LogPath` (so the resumed run
+keeps appending to the same `.log`). `Phase` + `CurrentIndex` say where to continue; the embedded `WorkflowSpecification` says
+what to do. A workflow that was `Paused` resumes as `Running` (no persisted "why").
 
 ## Progress, logs and persistence
 
 **Event flow** (all in-process; there is no JSON-RPC notification layer any more):
 
 ```
-SlideGenerationWorkload ──ReportRow──► IEventBus ─┐
-GeneratorJobObserver ───Publish(JobSnapshot)────► IEventBus ─┼─► GeneratingEventBus (Desktop) ─► ProgressHub ─► ViewModels
-Service ──RequestProgress / AnnounceExpectedJobCount──────────┘
-LoggingWorkload ─► ILogNotifier ─► LogNotifier (Desktop) ─────────────► ProgressHub
+SlideGenerationRunner ──ReportRow──► IEventBus ─┐
+GeneratorWorkflowObserver ───Publish(WorkflowSnapshot)────► IEventBus ─┼─► GeneratingEventBus (Desktop) ─► ProgressHub ─► ViewModels
+Service ──RequestProgress / AnnounceExpectedWorkflowCount──────────┘
+LoggingRunner ─► ILogNotifier ─► LogNotifier (Desktop) ─────────────► ProgressHub
 ```
 
 - Contracts (`IEventBus`, `ILogNotifier`, `RequestProgress`, `RowProgress`, `RowStatus`, `RowStage`) live in
   `Generator/Progress/`; Generator depends only on these interfaces. The concrete `GeneratingEventBus` / `LogNotifier`
   live in `Desktop/Services/Progress/` and are registered both as concrete types and as the interfaces (so `ProgressHub`
   can subscribe to the C# events).
-- `ProgressHub` (`IProgressHub`) drains every **250 ms** on the UI `DispatcherTimer`: jobs coalesce by
-  `(RequestId, JobId)`, rows by `(RequestId, JobId, RowIndex)` (last write wins), logs are append-only (never dropped).
+- `ProgressHub` (`IProgressHub`) drains every **250 ms** on the UI `DispatcherTimer`: workflows coalesce by
+  `(RequestId, WorkflowId)`, rows by `(RequestId, WorkflowId, RowIndex)` (last write wins), logs are append-only (never dropped).
 - `RowProgress` is **never persisted** — live only. `RequestProgress` is not persisted either.
 - `RequestPhase`: `PreparationStarted` | `ProcessingStarted` | `Completed`.
 
 **Logging scopes**: log lines go to one `.log` file per request (`RequestRecord.LogPath`, under
-`Logs/Workflows/`, shared by all of the request's jobs). `LoggingWorkload` opens an `IFileLoggerFactory.CreateFile(...)`
-scope with ordered property names `["RequestId", "JobId", "RowIndex"]`, pushes `RequestId`/`JobId` on `LogContext`, and
+`Logs/Workflows/`, shared by all of the request's workflows). `LoggingRunner` opens an `IFileLoggerFactory.CreateFile(...)`
+scope with ordered property names `["RequestId", "WorkflowId", "RowIndex"]`, pushes `RequestId`/`WorkflowId` on `LogContext`, and
 the phases push `RowIndex` per row. `FileLogFormatter` writes the scope path into each line; `Service.ToSummaryAsync`
 reads it back via `ILogFileReader`/`LogFileReader` (regex parse) and filters by scope-path prefix — logs are
 deliberately not cached in RAM. `Logging` itself has no notion of what a scope means.
 
 **Persistence** — a **single** SQLite database `Data/Data.db` shared by every module (tables `Recipes`, `Requests`,
-`Jobs`). Schema is created centrally by `Settings.Database.DatabaseMigrator.Migrate` (DbUp, embedded scripts in
-`Settings/Database/Scripts/`: `001_2.0.0.sql`, `002_add-total-rows-to-jobs.sql`; new scripts are picked up by the
+`Workflows`). Schema is created centrally by `Settings.Database.DatabaseMigrator.Migrate` (DbUp, embedded scripts in
+`Settings/Database/Scripts/`: `001_2.0.0.sql`, `002_add-total-rows-to-jobs.sql`, `003_rename-jobs-to-workflows.sql` (renames the pre-rename `Jobs` table and `JobId` column); new scripts are picked up by the
 `.csproj` wildcard — just add the file with the next number). No repository creates its own tables. Each repository
 opens/closes a short-lived connection per operation.
 
-- `Jobs`: one explicit column per `JobSpecification` field, except `UsedColumnsJson` / `TextInstructionsJson` /
-  `ImageInstructionsJson` (JSON text, serialized with `JobSpecificationJson` options). `RowFilter` →
-  `RowFilterType` + 4 nullable scalars. Composite PK `(RequestId, JobId)`.
+- `Workflows`: one explicit column per `WorkflowSpecification` field, except `UsedColumnsJson` / `TextInstructionsJson` /
+  `ImageInstructionsJson` (JSON text, serialized with `WorkflowSpecificationJson` options). `RowFilter` →
+  `RowFilterType` + 4 nullable scalars. Composite PK `(RequestId, WorkflowId)`.
 - `Requests`: one column per `Request` field plus `LogPath` and `CreatedAt`; written once, never updated.
   `RecipeId` is informational only (not used on resume).
-- `JobsRepository` extends `BufferedRepository<TKey,TValue>`: `Enqueue` is coalesced last-write-wins, a ~1 s
+- `WorkflowsRepository` extends `BufferedRepository<TKey,TValue>`: `Enqueue` is coalesced last-write-wins, a ~1 s
   `PeriodicTimer` drains the dirty set and upserts one batch per tick, then raises `Flushed`; `FlushAsync` forces it.
   `RequestsRepository` deliberately does **not** buffer.
-- `Service.DeleteAsync` / `DeleteAllCompletedAsync` delete from both `Jobs` and `Requests`.
+- `Service.DeleteAsync` / `DeleteAllCompletedAsync` delete from both `Workflows` and `Requests`.
 
 ## Recipes
 
@@ -398,7 +398,7 @@ whose `Mappings` is `null` (e.g. `recipe.json` of `"{}"`, or a crafted archive) 
 `imported with { Mappings = imported.Mappings ?? [] }`.
 
 `SummarizationService` (`SlideGenerator.Summarizer`, synchronous) produces `WorkbookSummary` / `PresentationSummary`
-metadata for the Desktop recipe editor (via `ISummaryCache`); it is unrelated to `Service.BuildJobs`.
+metadata for the Desktop recipe editor (via `ISummaryCache`); it is unrelated to `Service.BuildWorkflows`.
 
 ## Image Processing
 
@@ -411,7 +411,7 @@ metadata for the Desktop recipe editor (via `ISummaryCache`); it is unrelated to
   succeeds; `null` if none do or `targetSize` is invalid.
 - `IImage.ToPng()` → `byte[]` is the only place a `byte[]` re-appears, right before `IShape.ImageData = ...`.
 - Face detection: `IFaceDetector.DetectAsync` (OpenCV YuNet), pooled via `YuNetPool` (generic `Pool<T>`, bounded by
-  `Environment.ProcessorCount` — CPU-bound native work; unrelated to `MaxConcurrentJobs`).
+  `Environment.ProcessorCount` — CPU-bound native work; unrelated to `MaxConcurrentWorkflows`).
 - Always `using` / `await using` for `IImage`.
 
 ## Desktop host (Avalonia)
@@ -461,16 +461,16 @@ versions already used in the sibling test projects. `Directory.Build.props` adds
 
 ### What NOT to unit test
 
-`SlideGenerationWorkload`'s phase bodies need a Syncfusion license plus real `.xlsx`/`.pptx` files and real
+`SlideGenerationRunner`'s phase bodies need a Syncfusion license plus real `.xlsx`/`.pptx` files and real
 NetVips/OpenCV work — they belong in integration tests (`Generator.Tests/Integration`), which skip when the license or
 fixtures are missing. Do not write unit stubs that bypass that behavior. Safe to unit test directly:
 
 - `PreflightCleanup` (plain file I/O) and pure helpers such as `BuildRowTextValues`.
 - `BufferedRepository<TKey,TValue>` with a fake `UpsertBatchAsync`.
-- `JobsRepository` row mapping/schema against a real temp-file SQLite DB.
-- `Service` aggregation logic (`DeriveStatus`, `BuildJobs`, fan-out) against mocked `IJobRunner` / repositories.
-- `JobEngine<TKey,TState>` with a fake workload/observer (`Workflows.Tests/JobEngineTests.cs`): pause/checkpoint cooperation,
-  stop unblocking a paused job, concurrency-cap sharing and swap-not-resize, non-blocking `InitializeAsync`, terminal
+- `WorkflowsRepository` row mapping/schema against a real temp-file SQLite DB.
+- `Service` aggregation logic (`DeriveStatus`, `BuildWorkflows`, fan-out) against mocked `IWorkflowController` / repositories.
+- `WorkflowEngine<TKey,TState>` with a fake runner/observer (`Workflows.Tests/WorkflowEngineTests.cs`): pause/checkpoint cooperation,
+  stop unblocking a paused workflow, concurrency-cap sharing and swap-not-resize, non-blocking `InitializeAsync`, terminal
   state ownership.
 - Desktop ViewModels/services (`Desktop.Tests`), including headless Avalonia view-construction smoke tests that share one
   `HeadlessTestSession.Instance` per assembly (several sessions racing on `Application.Current` fail under parallel xUnit).
@@ -483,9 +483,9 @@ Library modules are organized by business feature/concept, not by technical laye
 implementations, models and several small related classes in one file (the old "1 file = 1 class" rule does not apply
 within a feature folder). Folder names are plural when the singular would collide with a type inside it (e.g.
 `Recipe/Models/` containing `Recipe.cs`; CS0118). Loose root files are fine for cross-feature helpers (e.g.
-`Logging/Utilities.cs`). **Namespace mirrors the physical folder path 1:1** (e.g. `Workflows/Engine/JobEngine.cs` →
-`SlideGenerator.Workflows.Engine`, `Generator/Jobs/Workloads/SlideGenerationWorkload.cs` →
-`SlideGenerator.Generator.Jobs.Workloads`).
+`Logging/Utilities.cs`). **Namespace mirrors the physical folder path 1:1** (e.g. `Workflows/Engine/WorkflowEngine.cs` →
+`SlideGenerator.Workflows.Engine`, `Generator/Workflows/Runners/SlideGenerationRunner.cs` →
+`SlideGenerator.Generator.Workflows.Runners`).
 
 ### Coding style
 
@@ -527,12 +527,12 @@ UserPath/
 ├── Imported/Workbooks/    — ImportedFolder.WorkbooksPath
 ├── Imported/Presentations/— ImportedFolder.PresentationsPath
 └── Data/
-    ├── Data.db            — DataFolder.DataFile (shared SQLite: Recipes / Requests / Jobs)
+    ├── Data.db            — DataFolder.DataFile (shared SQLite: Recipes / Requests / Workflows)
     └── UserSettings.*     — DataFolder.SettingsFile (user settings)
 
-TempFolder.RootPath (%TEMP%\SlideGenerator) — per-job download cache outside UserPath:
-{RootPath}/{requestId}/{jobId}/{hash(url)}{ext}  (JobTempFolder.GetPath). Deleted wholesale by
-GeneratorJobObserver.OnTerminalAsync when that job ends; there is no shared cross-job cache.
+TempFolder.RootPath (%TEMP%\SlideGenerator) — per-workflow download cache outside UserPath:
+{RootPath}/{requestId}/{workflowId}/{hash(url)}{ext}  (WorkflowTempFolder.GetPath). Deleted wholesale by
+GeneratorWorkflowObserver.OnTerminalAsync when that workflow ends; there is no shared cross-workflow cache.
 ```
 
 ### Resource injection (`cs/resource-injection`)
@@ -555,18 +555,18 @@ for this; replicate the pattern in any new service that logs file paths from ext
 
 - `Request.AllowLocalPaths` is persisted and shown in the Run dialog but **not enforced**: `ResolveShapeImageAsync`
   always accepts a `File.Exists(source)` local path.
-- Request-level status never reports `Error` (see **Request status**); errored jobs roll up to `Complete`.
+- Request-level status never reports `Error` (see **Request status**); errored workflows roll up to `Complete`.
 - `Taskfile.yml` still references the removed `SlideGenerator.Stdio` project.
 
 ## Invariants Checklist
 
 - [ ] Each module has a root `Registration.cs` with its DI setup
 - [ ] Module dependencies flow downward only; no circular references
-- [ ] `SlideGenerator.Workflows` (`Engine/`) stays domain-free — no reference to `JobSnapshot` / `JobStatus` / Syncfusion /
+- [ ] `SlideGenerator.Workflows` (`Engine/`) stays domain-free — no reference to `WorkflowSnapshot` / `WorkflowStatus` / Syncfusion /
   `Settings` / SQLite, and no project references to any other module
-- [ ] `SlideGenerationWorkload` phase bodies call `context.CheckpointAsync` + `ct.ThrowIfCancellationRequested()` before
+- [ ] `SlideGenerationRunner` phase bodies call `context.CheckpointAsync` + `ct.ThrowIfCancellationRequested()` before
   every row, never mid-row
-- [ ] `JobStatus` values are assigned only in `GeneratorJobObserver`
+- [ ] `WorkflowStatus` values are assigned only in `GeneratorWorkflowObserver`
 - [ ] Async library code uses `ConfigureAwait(false)`
 - [ ] `record` for data, `sealed` for logic by default
 - [ ] Image handling uses `IImage` / NetVips; byte arrays only at boundaries

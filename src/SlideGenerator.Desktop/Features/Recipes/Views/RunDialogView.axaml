@@ -42,7 +42,7 @@
             <StackPanel Spacing="{StaticResource Space2}">
                 <TextBlock Classes="muted body" IsVisible="{Binding !IsPreviewLoading}">
                     <Run Text="{loc:Tr runDialog.willCreatePrefix}"/>
-                    <Run Text="{Binding PlannedJobs.Count}"/>
+                    <Run Text="{Binding PlannedWorkflows.Count}"/>
                     <Run Text="{loc:Tr runDialog.willCreateSuffix}"/>
                 </TextBlock>
                 <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space2}" IsVisible="{Binding IsPreviewLoading}">
@@ -52,9 +52,9 @@
                 <TextBlock Classes="body" Foreground="{DynamicResource DangerBrush}" Text="{Binding ErrorMessage}"
                            IsVisible="{Binding ErrorMessage, Converter={x:Static ObjectConverters.IsNotNull}}"
                            TextWrapping="Wrap"/>
-                <ItemsControl ItemsSource="{Binding PlannedJobs}" MaxHeight="160">
+                <ItemsControl ItemsSource="{Binding PlannedWorkflows}" MaxHeight="160">
                     <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="gen:PlannedJob">
+                        <DataTemplate x:DataType="gen:PlannedWorkflow">
                             <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space2}">
                                 <TextBlock Classes="mono" FontSize="{StaticResource FontSizeXs}" Text="{Binding OutputPath}"/>
                                 <TextBlock Foreground="{DynamicResource DangerBrush}" FontSize="{StaticResource FontSizeXs}"

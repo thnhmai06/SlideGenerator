@@ -15,64 +15,64 @@
 using FluentAssertions;
 using SlideGenerator.Desktop.Services.Progress;
 using SlideGenerator.Generator;
-using SlideGenerator.Generator.Jobs.Models;
+using SlideGenerator.Generator.Workflows.Models;
 using SlideGenerator.Generator.Progress;
 using Xunit;
 
 namespace SlideGenerator.Desktop.Tests;
 
 /// <summary>
-///     Unit tests for <see cref="ProgressHub" />'s coalescing: job snapshots and row progress keep only the
+///     Unit tests for <see cref="ProgressHub" />'s coalescing: workflow snapshots and row progress keep only the
 ///     latest value per key (last write wins), while log lines are never dropped. <c>Drain()</c> is called
 ///     directly rather than waiting on the real 250ms timer tick.
 /// </summary>
 public sealed class ProgressHubTests
 {
-    private static JobSnapshot Job(string requestId, int jobId, int currentIndex)
+    private static WorkflowSnapshot Workflow(string requestId, int workflowId, int currentIndex)
     {
-        return new JobSnapshot(requestId, jobId, JobStatus.Running, JobPhase.FillingText, currentIndex,
-            new JobSpecification("wb", "Sheet1", null, null, "ppt", 1, [], [], "out.pptx"), DateTimeOffset.UtcNow);
+        return new WorkflowSnapshot(requestId, workflowId, WorkflowStatus.Running, WorkflowPhase.FillingText, currentIndex,
+            new WorkflowSpecification("wb", "Sheet1", null, null, "ppt", 1, [], [], "out.pptx"), DateTimeOffset.UtcNow);
     }
 
-    private static RowProgress Row(string requestId, int jobId, int rowIndex, RowStatus status)
+    private static RowProgress Row(string requestId, int workflowId, int rowIndex, RowStatus status)
     {
         return new RowProgress
         {
-            RequestId = requestId, JobId = jobId, RowIndex = rowIndex, Status = status,
+            RequestId = requestId, WorkflowId = workflowId, RowIndex = rowIndex, Status = status,
             Timestamp = DateTimeOffset.UtcNow
         };
     }
 
-    /// <summary>Two snapshots for the same (RequestId, JobId) coalesce into one — the most recent value.</summary>
+    /// <summary>Two snapshots for the same (RequestId, WorkflowId) coalesce into one — the most recent value.</summary>
     [Fact]
-    public void Drain_TwoJobSnapshotsSameKey_KeepsOnlyLatest()
+    public void Drain_TwoWorkflowSnapshotsSameKey_KeepsOnlyLatest()
     {
         var eventBus = new GeneratingEventBus();
         using var hub = new ProgressHub(eventBus, new LogNotifier());
 
-        eventBus.Publish(Job("req", 0, 1));
-        eventBus.Publish(Job("req", 0, 5));
+        eventBus.Publish(Workflow("req", 0, 1));
+        eventBus.Publish(Workflow("req", 0, 5));
         hub.Drain();
 
-        hub.Jobs.Should().ContainSingle();
-        hub.Jobs[0].CurrentIndex.Should().Be(5);
+        hub.Workflows.Should().ContainSingle();
+        hub.Workflows[0].CurrentIndex.Should().Be(5);
     }
 
-    /// <summary>Snapshots for different jobs both survive a drain — coalescing is per-key, not global.</summary>
+    /// <summary>Snapshots for different workflows both survive a drain — coalescing is per-key, not global.</summary>
     [Fact]
-    public void Drain_DifferentJobKeys_KeepsBoth()
+    public void Drain_DifferentWorkflowKeys_KeepsBoth()
     {
         var eventBus = new GeneratingEventBus();
         using var hub = new ProgressHub(eventBus, new LogNotifier());
 
-        eventBus.Publish(Job("req", 0, 1));
-        eventBus.Publish(Job("req", 1, 1));
+        eventBus.Publish(Workflow("req", 0, 1));
+        eventBus.Publish(Workflow("req", 1, 1));
         hub.Drain();
 
-        hub.Jobs.Should().HaveCount(2);
+        hub.Workflows.Should().HaveCount(2);
     }
 
-    /// <summary>Row progress coalesces by the finer-grained (RequestId, JobId, RowIndex) key.</summary>
+    /// <summary>Row progress coalesces by the finer-grained (RequestId, WorkflowId, RowIndex) key.</summary>
     [Fact]
     public void Drain_TwoRowUpdatesSameRow_KeepsOnlyLatestStatus()
     {
@@ -111,7 +111,7 @@ public sealed class ProgressHubTests
 
         hub.Drain();
 
-        hub.Jobs.Should().BeEmpty();
+        hub.Workflows.Should().BeEmpty();
         hub.Rows.Should().BeEmpty();
         hub.Logs.Should().BeEmpty();
     }

@@ -42,7 +42,7 @@ public sealed class SettingsViewModelTests
         var setting = new Setting
         {
             Appearance = new Setting.AppearanceSetting { Theme = ThemeMode.Dark, Language = "en", ReducedMotion = true },
-            Performance = new Setting.PerformanceSetting { MaxConcurrentJobs = 8 }
+            Performance = new Setting.PerformanceSetting { MaxConcurrentWorkflows = 8 }
         };
         var manager = CreateManager(setting);
         var themeService = Substitute.For<IThemeService>();
@@ -53,7 +53,7 @@ public sealed class SettingsViewModelTests
         vm.Theme.Should().Be(ThemeMode.Dark);
         vm.Language.Should().Be("en");
         vm.ReducedMotion.Should().BeTrue();
-        vm.MaxConcurrentJobs.Should().Be(8u);
+        vm.MaxConcurrentWorkflows.Should().Be(8u);
         themeService.DidNotReceiveWithAnyArgs().SetThemeAsync(default);
         localization.DidNotReceiveWithAnyArgs().SetLanguage(default!);
         manager.DidNotReceiveWithAnyArgs().Update(default!);
@@ -87,15 +87,15 @@ public sealed class SettingsViewModelTests
     }
 
     [Fact]
-    public async Task MaxConcurrentJobsChanged_Persists()
+    public async Task MaxConcurrentWorkflowsChanged_Persists()
     {
         var manager = CreateManager();
         var vm = new SettingsViewModel(manager, Substitute.For<IThemeService>(), Substitute.For<ILocalizationService>());
 
-        vm.MaxConcurrentJobs = 12;
+        vm.MaxConcurrentWorkflows = 12;
         await Task.Yield();
 
-        await manager.Received(1).Update(Arg.Is<Setting>(s => s.Performance.MaxConcurrentJobs == 12));
+        await manager.Received(1).Update(Arg.Is<Setting>(s => s.Performance.MaxConcurrentWorkflows == 12));
     }
 
     [Fact]
@@ -120,7 +120,7 @@ public sealed class SettingsViewModelTests
         var setting = new Setting
         {
             Appearance = new Setting.AppearanceSetting { Theme = ThemeMode.Dark },
-            Performance = new Setting.PerformanceSetting { MaxConcurrentJobs = 15 }
+            Performance = new Setting.PerformanceSetting { MaxConcurrentWorkflows = 15 }
         };
         var manager = CreateManager(setting);
         Setting? persisted = null;
@@ -133,8 +133,8 @@ public sealed class SettingsViewModelTests
 
         await vm.ResetPerformanceCommand.ExecuteAsync(null);
 
-        persisted!.Performance.MaxConcurrentJobs.Should().Be(5u); // PerformanceSetting's default
+        persisted!.Performance.MaxConcurrentWorkflows.Should().Be(5u); // PerformanceSetting's default
         persisted.Appearance.Theme.Should().Be(ThemeMode.Dark); // untouched
-        vm.MaxConcurrentJobs.Should().Be(5u);
+        vm.MaxConcurrentWorkflows.Should().Be(5u);
     }
 }

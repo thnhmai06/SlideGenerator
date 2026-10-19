@@ -59,14 +59,14 @@
             <StackPanel Spacing="{StaticResource Space2}">
                 <TextBlock Classes="h1" Text="{loc:Tr settings.performance}"/>
 
-                <TextBlock Classes="body" Text="{loc:Tr settings.maxConcurrentJobs}"/>
+                <TextBlock Classes="body" Text="{loc:Tr settings.maxConcurrentWorkflows}"/>
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource Space2}">
                     <Slider Grid.Column="0" Minimum="1" Maximum="16" TickFrequency="1" IsSnapToTickEnabled="True"
-                            Value="{Binding MaxConcurrentJobs}"/>
-                    <TextBlock Grid.Column="1" Classes="mono" Text="{Binding MaxConcurrentJobs}" VerticalAlignment="Center"/>
+                            Value="{Binding MaxConcurrentWorkflows}"/>
+                    <TextBlock Grid.Column="1" Classes="mono" Text="{Binding MaxConcurrentWorkflows}" VerticalAlignment="Center"/>
                 </Grid>
                 <TextBlock Classes="muted" FontSize="{StaticResource FontSizeSm}" TextWrapping="Wrap"
-                           Text="{loc:Tr settings.maxConcurrentJobsHint}"/>
+                           Text="{loc:Tr settings.maxConcurrentWorkflowsHint}"/>
                 <Button Content="{loc:Tr settings.resetDefaults}" Command="{Binding ResetPerformanceCommand}"/>
             </StackPanel>
 

@@ -68,7 +68,7 @@ public sealed partial class RowFilterEditorViewModel : ObservableObject
 
     /// <summary>
     ///     Projects the current mode's fields back into a <see cref="RowFilter" /> — <see langword="null" />
-    ///     for All, matching how <c>JobsRepository</c> already treats <see langword="null" /> and
+    ///     for All, matching how <c>WorkflowsRepository</c> already treats <see langword="null" /> and
     ///     <see cref="AllRowFilter" /> as equivalent (never constructs the latter).
     /// </summary>
     public RowFilter? ToRowFilter()

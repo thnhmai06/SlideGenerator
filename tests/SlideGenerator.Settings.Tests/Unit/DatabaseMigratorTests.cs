@@ -21,7 +21,7 @@ namespace SlideGenerator.Settings.Tests.Unit;
 
 /// <summary>
 ///     Unit tests for <see cref="DatabaseMigrator" />, verifying it creates the <c>Recipes</c>/
-///     <c>Requests</c>/<c>Jobs</c> tables against a real temp-file SQLite database and is idempotent
+///     <c>Requests</c>/<c>Workflows</c> tables against a real temp-file SQLite database and is idempotent
 ///     on a second run.
 /// </summary>
 public sealed class DatabaseMigratorTests : IDisposable
@@ -57,7 +57,7 @@ public sealed class DatabaseMigratorTests : IDisposable
         var tables = new List<string>();
         while (reader.Read()) tables.Add(reader.GetString(0));
 
-        tables.Should().Contain(["Recipes", "Requests", "Jobs"]);
+        tables.Should().Contain(["Recipes", "Requests", "Workflows"]);
     }
 
     /// <summary>Verifies that running the migration twice against the same database does not throw.</summary>

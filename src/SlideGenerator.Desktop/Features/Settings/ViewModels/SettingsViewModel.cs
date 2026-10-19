@@ -44,7 +44,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private ThemeMode _theme;
     [ObservableProperty] private string _language = "";
     [ObservableProperty] private bool _reducedMotion;
-    [ObservableProperty] private uint _maxConcurrentJobs;
+    [ObservableProperty] private uint _maxConcurrentWorkflows;
     [ObservableProperty] private bool _useProxy;
     [ObservableProperty] private string _proxyAddress = "";
     [ObservableProperty] private string _proxyUsername = "";
@@ -73,7 +73,7 @@ public sealed partial class SettingsViewModel : ObservableObject
             Theme = setting.Appearance.Theme;
             Language = setting.Appearance.Language;
             ReducedMotion = setting.Appearance.ReducedMotion;
-            MaxConcurrentJobs = setting.Performance.MaxConcurrentJobs;
+            MaxConcurrentWorkflows = setting.Performance.MaxConcurrentWorkflows;
             UseProxy = setting.Network.Proxy.UseProxy;
             ProxyAddress = setting.Network.Proxy.ProxyAddress;
             ProxyUsername = setting.Network.Proxy.Username;
@@ -109,7 +109,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         Persist();
         _themeService.ApplyFromSettings();
     }
-    partial void OnMaxConcurrentJobsChanged(uint value) => Persist();
+    partial void OnMaxConcurrentWorkflowsChanged(uint value) => Persist();
     partial void OnUseProxyChanged(bool value) => Persist();
     partial void OnProxyAddressChanged(string value) => Persist();
     partial void OnProxyUsernameChanged(string value) => Persist();
@@ -132,7 +132,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         var updated = current with
         {
             Appearance = current.Appearance with { Theme = Theme, Language = Language, ReducedMotion = ReducedMotion },
-            Performance = current.Performance with { MaxConcurrentJobs = MaxConcurrentJobs },
+            Performance = current.Performance with { MaxConcurrentWorkflows = MaxConcurrentWorkflows },
             Network = current.Network with
             {
                 Proxy = current.Network.Proxy with

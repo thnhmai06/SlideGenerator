@@ -20,7 +20,7 @@ using SlideGenerator.Desktop.Features.Runs.Models;
 using SlideGenerator.Desktop.Services.Dialogs;
 using SlideGenerator.Desktop.Services.Progress;
 using SlideGenerator.Generator;
-using SlideGenerator.Generator.Jobs.Models;
+using SlideGenerator.Generator.Workflows.Models;
 using SlideGenerator.Generator.Progress;
 
 namespace SlideGenerator.Desktop.Features.Runs.ViewModels;
@@ -28,10 +28,10 @@ namespace SlideGenerator.Desktop.Features.Runs.ViewModels;
 /// <summary>
 ///     Owns the single Runs list — <c>ListActiveAsync</c>/<c>ListCompletedAsync</c> return the identical
 ///     <see cref="Summary" /> shape, so "active" and "completed" are a chip filter over one list, not two
-///     pages. After the initial load, per-job updates arrive live via <see cref="IProgressHub" /> and patch
+///     pages. After the initial load, per-workflow updates arrive live via <see cref="IProgressHub" /> and patch
 ///     existing rows directly — a brand-new request (a key this ViewModel has never seen) triggers one full
 ///     reload instead, since building its display requires <see cref="Summary" /> fields
-///     (<c>Request.Name</c>, <c>CreatedAt</c>, …) a live <see cref="JobSnapshot" /> alone doesn't carry.
+///     (<c>Request.Name</c>, <c>CreatedAt</c>, …) a live <see cref="WorkflowSnapshot" /> alone doesn't carry.
 /// </summary>
 public sealed partial class RunsViewModel : ObservableObject
 {
@@ -58,7 +58,7 @@ public sealed partial class RunsViewModel : ObservableObject
         _service = service;
         _progressHub = progressHub;
         _dialogService = dialogService;
-        _progressHub.Jobs.CollectionChanged += OnJobsChanged;
+        _progressHub.Workflows.CollectionChanged += OnWorkflowsChanged;
         _progressHub.Rows.CollectionChanged += OnRowsChanged;
         _ = LoadAsync();
     }
@@ -133,10 +133,10 @@ public sealed partial class RunsViewModel : ObservableObject
     {
         return Filter switch
         {
-            RunStatusFilter.Running => request.Status == JobStatus.Running,
-            RunStatusFilter.Paused => request.Status == JobStatus.Paused,
-            RunStatusFilter.Done => request.Status == JobStatus.Complete,
-            RunStatusFilter.Cancelled => request.Status == JobStatus.Cancelled,
+            RunStatusFilter.Running => request.Status == WorkflowStatus.Running,
+            RunStatusFilter.Paused => request.Status == WorkflowStatus.Paused,
+            RunStatusFilter.Done => request.Status == WorkflowStatus.Complete,
+            RunStatusFilter.Cancelled => request.Status == WorkflowStatus.Cancelled,
             _ => true
         };
     }
@@ -147,7 +147,7 @@ public sealed partial class RunsViewModel : ObservableObject
                request.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase);
     }
 
-    private void OnJobsChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    private void OnWorkflowsChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
         if (e.Action == NotifyCollectionChangedAction.Reset)
         {
@@ -157,18 +157,18 @@ public sealed partial class RunsViewModel : ObservableObject
 
         if (e.NewItems is null) return;
         var sawUnknownRequest = false;
-        foreach (JobSnapshot snapshot in e.NewItems)
+        foreach (WorkflowSnapshot snapshot in e.NewItems)
             if (_byRequestId.TryGetValue(snapshot.RequestId, out var request))
-                request.ApplyLiveJobUpdate(snapshot);
+                request.ApplyLiveWorkflowUpdate(snapshot);
             else
                 sawUnknownRequest = true;
 
-        // A brand-new request's first job(s) arrived — reload once to pick it up with full Summary fields.
+        // A brand-new request's first workflow(s) arrived — reload once to pick it up with full Summary fields.
         if (sawUnknownRequest) _ = LoadAsync();
     }
 
-    // Unlike OnJobsChanged, a row belonging to a request this VM hasn't loaded yet is simply dropped — its
-    // job snapshot arrives via OnJobsChanged in the same batch and triggers the reload that will show it;
+    // Unlike OnWorkflowsChanged, a row belonging to a request this VM hasn't loaded yet is simply dropped — its
+    // workflow snapshot arrives via OnWorkflowsChanged in the same batch and triggers the reload that will show it;
     // there is nothing row-specific to display until then.
     private void OnRowsChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
