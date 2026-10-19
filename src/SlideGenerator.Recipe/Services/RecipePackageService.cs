@@ -33,12 +33,14 @@ public interface IRecipePackageService
     ///     Imports a package file, extracts its resources, and stores the recipe in the database.
     /// </summary>
     /// <param name="filePath">The full path to the package file.</param>
-    /// <param name="saveFolders">Target directories for extracted workbook and presentation files.</param>
+    /// <param name="saveFolders">
+    ///     Target directories for extracted workbook, presentation and fallback image files.
+    /// </param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>The metadata of the newly imported recipe.</returns>
     Task<IRecipeMetadata> ImportAsync(
         string filePath,
-        (string Workbooks, string Presentations) saveFolders,
+        (string Workbooks, string Presentations, string Images) saveFolders,
         CancellationToken ct = default);
 }
 

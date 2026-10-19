@@ -69,6 +69,7 @@ public static class NameAndPaths
         // Imported recipe resources
         Directory.CreateDirectory(ImportedFolder.WorkbooksPath);
         Directory.CreateDirectory(ImportedFolder.PresentationsPath);
+        Directory.CreateDirectory(ImportedFolder.ImagesPath);
     }
 
     /// <summary>
@@ -135,6 +136,9 @@ public static class NameAndPaths
 
         /// <summary>Gets the folder imported presentation files are extracted into.</summary>
         public static string PresentationsPath => Path.Combine(UserPath, "Imported", "Presentations");
+
+        /// <summary>Gets the folder imported fallback image files are extracted into.</summary>
+        public static string ImagesPath => Path.Combine(UserPath, "Imported", "Images");
     }
 
     /// <summary>

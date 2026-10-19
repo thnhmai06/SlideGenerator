@@ -329,7 +329,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
         {
             await _pkg.ExportAsync(exported.Id, zipPath, TestContext.Current.CancellationToken);
 
-            var imported = await _pkg.ImportAsync(zipPath, (workbooksDir, presentationsDir),
+            var imported = await _pkg.ImportAsync(zipPath, (workbooksDir, presentationsDir, Path.Combine(workbooksDir, "images")),
                 TestContext.Current.CancellationToken);
             var entry = await _repo.GetAsync(imported.Id, TestContext.Current.CancellationToken);
 
@@ -362,7 +362,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
                 // empty archive
             }
 
-            var act = async () => await _pkg.ImportAsync(zipPath, (workbooksDir, presentationsDir),
+            var act = async () => await _pkg.ImportAsync(zipPath, (workbooksDir, presentationsDir, Path.Combine(workbooksDir, "images")),
                 TestContext.Current.CancellationToken);
 
             await act.Should().ThrowAsync<InvalidDataException>()
@@ -395,7 +395,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
                 TestContext.Current.CancellationToken);
             await _pkg.ExportAsync(exported.Id, zipPath, TestContext.Current.CancellationToken);
 
-            var imported = await _pkg.ImportAsync(zipPath, (workbooksDir, presentationsDir),
+            var imported = await _pkg.ImportAsync(zipPath, (workbooksDir, presentationsDir, Path.Combine(workbooksDir, "images")),
                 TestContext.Current.CancellationToken);
             var entry = await _repo.GetAsync(imported.Id, TestContext.Current.CancellationToken);
 
@@ -437,7 +437,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
                 await entryStream.WriteAsync(bytes, TestContext.Current.CancellationToken);
             }
 
-            var act = async () => await _pkg.ImportAsync(zipPath, (workbooksDir, presentationsDir),
+            var act = async () => await _pkg.ImportAsync(zipPath, (workbooksDir, presentationsDir, Path.Combine(workbooksDir, "images")),
                 TestContext.Current.CancellationToken);
 
             await act.Should().ThrowAsync<InvalidDataException>()
@@ -477,7 +477,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
                 }
             }
 
-            await _pkg.ImportAsync(zipPath, (workbooksDir, presentationsDir),
+            await _pkg.ImportAsync(zipPath, (workbooksDir, presentationsDir, Path.Combine(workbooksDir, "images")),
                 TestContext.Current.CancellationToken);
 
             Directory.Exists(workbooksDir).Should().BeFalse();
@@ -513,7 +513,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
             var conflictingPath = Path.Combine(workbooksDir, Path.GetFileName(wbPath));
             await File.WriteAllBytesAsync(conflictingPath, [0xFF], TestContext.Current.CancellationToken);
 
-            var imported = await _pkg.ImportAsync(zipPath, (workbooksDir, presentationsDir),
+            var imported = await _pkg.ImportAsync(zipPath, (workbooksDir, presentationsDir, Path.Combine(workbooksDir, "images")),
                 TestContext.Current.CancellationToken);
             var entry = await _repo.GetAsync(imported.Id, TestContext.Current.CancellationToken);
 
@@ -559,7 +559,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
                 TestContext.Current.CancellationToken);
             await _pkg.ExportAsync(exported.Id, zipPath, TestContext.Current.CancellationToken);
 
-            var imported = await _pkg.ImportAsync(zipPath, (workbooksDir, presentationsDir),
+            var imported = await _pkg.ImportAsync(zipPath, (workbooksDir, presentationsDir, Path.Combine(workbooksDir, "images")),
                 TestContext.Current.CancellationToken);
             var entry = await _repo.GetAsync(imported.Id, TestContext.Current.CancellationToken);
 
@@ -608,7 +608,7 @@ public sealed class SqliteRecipeRepositoryTests : IDisposable
                 }
             }
 
-            var imported = await _pkg.ImportAsync(zipPath, (workbooksDir, presentationsDir),
+            var imported = await _pkg.ImportAsync(zipPath, (workbooksDir, presentationsDir, Path.Combine(workbooksDir, "images")),
                 TestContext.Current.CancellationToken);
 
             imported.Id.Should().BeGreaterThan(0);

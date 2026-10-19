@@ -115,7 +115,7 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
             await entryStream.WriteAsync(data, TestContext.Current.CancellationToken);
         }
 
-        var act = async () => await _pkg.ImportAsync(zipPath, (workbooksDir, presentationsDir),
+        var act = async () => await _pkg.ImportAsync(zipPath, (workbooksDir, presentationsDir, Path.Combine(workbooksDir, "images")),
             TestContext.Current.CancellationToken);
 
         await act.Should().ThrowAsync<InvalidDataException>();
@@ -164,7 +164,7 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
             await writer.WriteAsync(recipeJson);
         }
 
-        var imported = await _pkg.ImportAsync(zipPath, (workbooksDir, presentationsDir),
+        var imported = await _pkg.ImportAsync(zipPath, (workbooksDir, presentationsDir, Path.Combine(workbooksDir, "images")),
             TestContext.Current.CancellationToken);
         var entry = await _repo.GetAsync(imported.Id, TestContext.Current.CancellationToken);
 
@@ -254,7 +254,7 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
         // in either case nothing may escape the sandbox.
         async Task Act()
         {
-            await _pkg.ImportAsync(zipPath, (workbooksDir, presentationsDir),
+            await _pkg.ImportAsync(zipPath, (workbooksDir, presentationsDir, Path.Combine(workbooksDir, "images")),
                 TestContext.Current.CancellationToken);
         }
     }
@@ -311,7 +311,7 @@ public sealed class RecipeRepositorySecurityTests : IDisposable
 
         async Task Act()
         {
-            await _pkg.ImportAsync(zipPath, (workbooksDir, presentationsDir),
+            await _pkg.ImportAsync(zipPath, (workbooksDir, presentationsDir, Path.Combine(workbooksDir, "images")),
                 TestContext.Current.CancellationToken);
         }
     }

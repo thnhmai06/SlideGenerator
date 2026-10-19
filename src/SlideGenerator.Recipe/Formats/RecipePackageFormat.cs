@@ -74,5 +74,19 @@ public static class RecipePackageFormat
                 new HashSet<string>(Enum.GetValues<PresentationType>().Select(t => t.ToExtension()),
                     StringComparer.OrdinalIgnoreCase);
         }
+
+        public static class Images
+        {
+            public const string FolderPrefix = "Images/";
+
+            /// <summary>
+            ///     Allowed extensions for entries under <c>Images/</c> (case-insensitive, with dot).
+            ///     Covers the raster formats NetVips can decode as fallback images.
+            /// </summary>
+            public static readonly IReadOnlySet<string> FileExtensions =
+                new HashSet<string>(
+                    [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".tif", ".tiff"],
+                    StringComparer.OrdinalIgnoreCase);
+        }
     }
 }

@@ -327,7 +327,10 @@ public sealed partial class RecipesViewModel : ObservableObject
         try
         {
             var metadata = await _packageService
-                .ImportAsync(path, (NameAndPaths.ImportedFolder.WorkbooksPath, NameAndPaths.ImportedFolder.PresentationsPath))
+                .ImportAsync(path, (
+                    NameAndPaths.ImportedFolder.WorkbooksPath,
+                    NameAndPaths.ImportedFolder.PresentationsPath,
+                    NameAndPaths.ImportedFolder.ImagesPath))
                 .ConfigureAwait(true);
             _all.Add(CreateItem(metadata));
             ApplyFilter();

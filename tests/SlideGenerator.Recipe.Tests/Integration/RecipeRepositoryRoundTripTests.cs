@@ -97,7 +97,9 @@ public sealed class RecipeRepositoryRoundTripTests : IDisposable
 
         var workbooksDir = Path.Combine(_tempDir, "Workbooks");
         var presentationsDir = Path.Combine(_tempDir, "Presentations");
-        var imported = await _packageService.ImportAsync(archivePath, (workbooksDir, presentationsDir), ct);
+        var imagesDir = Path.Combine(_tempDir, "Images");
+        var imported = await _packageService.ImportAsync(
+            archivePath, (workbooksDir, presentationsDir, imagesDir), ct);
 
         imported.Id.Should().NotBe(original.Id, "import must insert a new recipe row");
 

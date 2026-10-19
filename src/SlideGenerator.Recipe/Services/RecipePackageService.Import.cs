@@ -24,13 +24,14 @@ internal sealed partial class RecipePackageService
 {
     /// <inheritdoc cref="IRecipePackageService.ImportAsync" />
     public async Task<IRecipeMetadata> ImportAsync(
-        string filePath, (string Workbooks, string Presentations) saveFolders,
+        string filePath, (string Workbooks, string Presentations, string Images) saveFolders,
         CancellationToken ct = default)
     {
         filePath = Path.GetFullPath(filePath);
         var name = Path.GetFileNameWithoutExtension(filePath);
         var workbooksDirectory = Path.GetFullPath(saveFolders.Workbooks);
         var presentationsDirectory = Path.GetFullPath(saveFolders.Presentations);
+        var imagesDirectory = Path.GetFullPath(saveFolders.Images);
 
         var recipe = await Task.Run(() =>
         {
@@ -38,11 +39,12 @@ internal sealed partial class RecipePackageService
             using var archive = new ZipArchive(inputStream, ZipArchiveMode.Read);
 
             var recipe = ReadRecipeFile(archive);
-            var (workbookMapping, presentationMapping) = BuildPathMappings(
-                recipe, workbooksDirectory, presentationsDirectory);
-            var relocatedRecipe = RewriteForImport(recipe, workbookMapping, presentationMapping);
+            var (workbookMapping, presentationMapping, imageMapping) = BuildPathMappings(
+                recipe, workbooksDirectory, presentationsDirectory, imagesDirectory, GetImageEntryNames(archive));
+            var relocatedRecipe = RewriteForImport(recipe, workbookMapping, presentationMapping, imageMapping);
             ExtractDataFiles(
-                archive, workbookMapping, presentationMapping, workbooksDirectory, presentationsDirectory, ct);
+                archive, workbookMapping, presentationMapping, imageMapping,
+                workbooksDirectory, presentationsDirectory, imagesDirectory, ct);
             return relocatedRecipe;
         }, ct).ConfigureAwait(false);
 
@@ -85,22 +87,43 @@ internal sealed partial class RecipePackageService
     }
 
     /// <summary>
+    ///     Returns the relative names of every file entry under <c>Images/</c> in <paramref name="archive" />,
+    ///     i.e. the fallback images the package actually ships.
+    /// </summary>
+    private static HashSet<string> GetImageEntryNames(ZipArchive archive)
+    {
+        var prefix = RecipePackageFormat.Data.Images.FolderPrefix;
+        return archive.Entries
+            .Where(e => !string.IsNullOrEmpty(e.Name) &&
+                        e.FullName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            .Select(e => e.FullName[prefix.Length..])
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
     ///     For each file referenced by <paramref name="recipe" />, resolves a deduplicated absolute path
     ///     under the respective target folder. If a file with the same name already exists on disk (or was
     ///     already claimed within this batch), a <c>_N</c> suffix is appended. Only the bare filename is
-    ///     used, so path-traversal values in the recipe itself are silently sanitized.
+    ///     used, so path-traversal values in the recipe itself are silently sanitized. Fallback images are
+    ///     only mapped when the archive actually ships them (<paramref name="archivedImages" />), so a
+    ///     recipe cannot make an import point at a file the package does not contain.
     /// </summary>
     /// <returns>
-    ///     Two dictionaries keyed by the bare filename stored in the zip (e.g. <c>"data.xlsx"</c>), mapping
+    ///     Three dictionaries keyed by the bare filename stored in the zip (e.g. <c>"data.xlsx"</c>), mapping
     ///     to the deduplicated absolute path where the file will be extracted.
     /// </returns>
-    private static (Dictionary<string, string> Workbooks, Dictionary<string, string> Presentations)
-        BuildPathMappings(Models.Recipe recipe, string workbooksDirectory, string presentationsDirectory)
+    private static (Dictionary<string, string> Workbooks, Dictionary<string, string> Presentations,
+        Dictionary<string, string> Images)
+        BuildPathMappings(
+            Models.Recipe recipe, string workbooksDirectory, string presentationsDirectory,
+            string imagesDirectory, IReadOnlySet<string> archivedImages)
     {
         var usedWorkbookPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var usedPresentationPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var usedImagePaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var workbookMapping = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var presentationMapping = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var imageMapping = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var mapping in recipe.Mappings)
         {
@@ -116,9 +139,19 @@ internal sealed partial class RecipePackageService
             if (!string.IsNullOrEmpty(presentationFilename) && !presentationMapping.ContainsKey(presentationFilename))
                 presentationMapping[presentationFilename] = ResolveImportTargetPath(
                     presentationFilename, presentationsDirectory, usedPresentationPaths);
+
+            foreach (var instruction in mapping.ImageInstructions)
+            {
+                var imageFilename = Path.GetFileName(instruction.FallbackImagePath);
+                if (!string.IsNullOrEmpty(imageFilename) &&
+                    archivedImages.Contains(imageFilename) &&
+                    !imageMapping.ContainsKey(imageFilename))
+                    imageMapping[imageFilename] = ResolveImportTargetPath(
+                        imageFilename, imagesDirectory, usedImagePaths);
+            }
         }
 
-        return (workbookMapping, presentationMapping);
+        return (workbookMapping, presentationMapping, imageMapping);
     }
 
     /// <summary>
@@ -147,14 +180,18 @@ internal sealed partial class RecipePackageService
     }
 
     /// <summary>
-    ///     Returns a copy of <paramref name="recipe" /> in which each <see cref="WorksheetSource" /> and
-    ///     <see cref="Mapping.Template" /> has its path replaced by the deduplicated absolute path from the
-    ///     corresponding mapping. Entries whose filename is absent from the mapping are left unchanged.
+    ///     Returns a copy of <paramref name="recipe" /> in which each <see cref="WorksheetSource" />,
+    ///     <see cref="Mapping.Template" /> and <see cref="ImageInstruction" /> has its path replaced by the
+    ///     deduplicated absolute path from the corresponding mapping. Workbook/presentation entries whose
+    ///     filename is absent from the mapping are left unchanged; a fallback image is either mapped to a
+    ///     file shipped inside the package or cleared — an imported recipe must never point at an arbitrary
+    ///     local file.
     /// </summary>
     private static Models.Recipe RewriteForImport(
         Models.Recipe recipe,
         Dictionary<string, string> workbookMapping,
-        Dictionary<string, string> presentationMapping)
+        Dictionary<string, string> presentationMapping,
+        Dictionary<string, string> imageMapping)
     {
         var rewritten = recipe.Mappings.Select(m =>
         {
@@ -166,7 +203,16 @@ internal sealed partial class RecipePackageService
                 Path.GetFileName(m.Template.Presentation.PresentationPath), out var pptDestination)
                 ? m.Template with { Presentation = m.Template.Presentation with { PresentationPath = pptDestination } }
                 : m.Template;
-            return m with { Sources = sources, Template = template };
+            var images = m.ImageInstructions.Select(i =>
+            {
+                var filename = Path.GetFileName(i.FallbackImagePath);
+                // An imported recipe may only point at images shipped inside the package: anything else is
+                // cleared, so a crafted package cannot reference an arbitrary file on the importing machine.
+                return !string.IsNullOrEmpty(filename) && imageMapping.TryGetValue(filename, out var imageDestination)
+                    ? i with { FallbackImagePath = imageDestination }
+                    : i with { FallbackImagePath = null };
+            }).ToList();
+            return m with { Sources = sources, Template = template, ImageInstructions = images };
         }).ToList();
         return new Models.Recipe(rewritten);
     }
@@ -179,7 +225,8 @@ internal sealed partial class RecipePackageService
         ZipArchive archive,
         Dictionary<string, string> workbookMapping,
         Dictionary<string, string> presentationMapping,
-        string workbooksDirectory, string presentationsDirectory,
+        Dictionary<string, string> imageMapping,
+        string workbooksDirectory, string presentationsDirectory, string imagesDirectory,
         CancellationToken ct)
     {
         foreach (var zipEntry in archive.Entries)
@@ -191,22 +238,23 @@ internal sealed partial class RecipePackageService
             if (string.Equals(entryName, RecipePackageFormat.Data.Recipe.FileName, StringComparison.OrdinalIgnoreCase))
                 continue;
             ExtractEntry(
-                zipEntry, entryName, workbookMapping, presentationMapping,
-                workbooksDirectory, presentationsDirectory, ct);
+                zipEntry, entryName, workbookMapping, presentationMapping, imageMapping,
+                workbooksDirectory, presentationsDirectory, imagesDirectory, ct);
         }
     }
 
     /// <summary>
     ///     Extracts a single zip entry to the deduplicated path from the mapping, after validating: the
-    ///     entry is under a known folder prefix (<c>Workbooks/</c> or <c>Presentations/</c>), the extension
-    ///     is allowed, the reconstructed path stays within the target directory (Zip Slip guard — throws),
-    ///     and the filename appears in the mapping (allowlist — skips otherwise).
+    ///     entry is under a known folder prefix (<c>Workbooks/</c>, <c>Presentations/</c> or <c>Images/</c>),
+    ///     the extension is allowed, the reconstructed path stays within the target directory (Zip Slip
+    ///     guard — throws), and the filename appears in the mapping (allowlist — skips otherwise).
     /// </summary>
     private static void ExtractEntry(
         ZipArchiveEntry zipEntry, string entryName,
         Dictionary<string, string> workbookMapping,
         Dictionary<string, string> presentationMapping,
-        string workbooksDirectory, string presentationsDirectory,
+        Dictionary<string, string> imageMapping,
+        string workbooksDirectory, string presentationsDirectory, string imagesDirectory,
         CancellationToken ct)
     {
         string directory;
@@ -228,6 +276,13 @@ internal sealed partial class RecipePackageService
             directory = presentationsDirectory;
             allowedExtensions = RecipePackageFormat.Data.Presentations.FileExtensions;
             mapping = presentationMapping;
+        }
+        else if (entryName.StartsWith(RecipePackageFormat.Data.Images.FolderPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            relativeName = entryName[RecipePackageFormat.Data.Images.FolderPrefix.Length..];
+            directory = imagesDirectory;
+            allowedExtensions = RecipePackageFormat.Data.Images.FileExtensions;
+            mapping = imageMapping;
         }
         else
         {

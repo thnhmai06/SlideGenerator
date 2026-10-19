@@ -35,6 +35,12 @@ internal sealed partial class RecipePackageService
         var presentationPaths = entry.Recipe.Mappings
             .Select(m => m.Template.Presentation.PresentationPath)
             .ToFrozenSet(StringComparer.OrdinalIgnoreCase);
+        var imagePaths = entry.Recipe.Mappings
+            .SelectMany(m => m.ImageInstructions)
+            .Select(i => i.FallbackImagePath)
+            .Where(p => !string.IsNullOrEmpty(p))
+            .OfType<string>()
+            .ToFrozenSet(StringComparer.OrdinalIgnoreCase);
 
         var outputDirectory = Path.GetDirectoryName(outputPath);
         if (!string.IsNullOrEmpty(outputDirectory)) Directory.CreateDirectory(outputDirectory);
@@ -45,7 +51,10 @@ internal sealed partial class RecipePackageService
                 workbookPaths, RecipePackageFormat.Data.Workbooks.FolderPrefix, ct);
             var presentationMapping = BuildEntryMapping(
                 presentationPaths, RecipePackageFormat.Data.Presentations.FolderPrefix, ct);
-            var portableRecipe = RewriteForExport(entry.Recipe, workbookMapping, presentationMapping);
+            var imageMapping = BuildEntryMapping(
+                imagePaths, RecipePackageFormat.Data.Images.FolderPrefix, ct);
+            var portableRecipe = RewriteForExport(
+                entry.Recipe, workbookMapping, presentationMapping, imageMapping);
 
             using var outputStream = File.Create(outputPath);
             using var archive = new ZipArchive(outputStream, ZipArchiveMode.Create);
@@ -53,6 +62,7 @@ internal sealed partial class RecipePackageService
             WriteRecipeFile(archive, portableRecipe);
             WriteDataFiles(archive, workbookMapping, ct);
             WriteDataFiles(archive, presentationMapping, ct);
+            WriteDataFiles(archive, imageMapping, ct);
         }, ct).ConfigureAwait(false);
     }
 
@@ -127,15 +137,17 @@ internal sealed partial class RecipePackageService
     }
 
     /// <summary>
-    ///     Returns a copy of <paramref name="recipe" /> in which every <see cref="WorksheetSource" /> and
-    ///     <see cref="Mapping.Template" /> whose absolute path appears in <paramref name="workbookMapping" />
-    ///     / <paramref name="presentationMapping" /> has its path replaced by the bare filename it will be
-    ///     stored under in the zip (e.g. <c>data.xlsx</c>). Paths not in either mapping are left unchanged.
+    ///     Returns a copy of <paramref name="recipe" /> in which every <see cref="WorksheetSource" />,
+    ///     <see cref="Mapping.Template" /> and <see cref="ImageInstruction" /> whose absolute path appears in
+    ///     <paramref name="workbookMapping" /> / <paramref name="presentationMapping" /> /
+    ///     <paramref name="imageMapping" /> has its path replaced by the bare filename it will be stored under
+    ///     in the zip (e.g. <c>data.xlsx</c>). Paths not in any mapping are left unchanged.
     /// </summary>
     private static Models.Recipe RewriteForExport(
         Models.Recipe recipe,
         FrozenDictionary<string, string> workbookMapping,
-        FrozenDictionary<string, string> presentationMapping)
+        FrozenDictionary<string, string> presentationMapping,
+        FrozenDictionary<string, string> imageMapping)
     {
         var rewritten = recipe.Mappings.Select(m =>
         {
@@ -150,7 +162,13 @@ internal sealed partial class RecipePackageService
                     Presentation = m.Template.Presentation with { PresentationPath = Path.GetFileName(pptEntryName) }
                 }
                 : m.Template;
-            return m with { Sources = sources, Template = template };
+            // The init accessor resolves a bare filename against the current directory; that is acceptable
+            // because import only ever uses Path.GetFileName of this value.
+            var images = m.ImageInstructions.Select(i =>
+                i.FallbackImagePath is { } imagePath && imageMapping.TryGetValue(imagePath, out var imageEntryName)
+                    ? i with { FallbackImagePath = Path.GetFileName(imageEntryName) }
+                    : i).ToList();
+            return m with { Sources = sources, Template = template, ImageInstructions = images };
         }).ToList();
         return new Models.Recipe(rewritten);
     }
