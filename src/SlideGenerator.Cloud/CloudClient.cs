@@ -13,7 +13,6 @@
  */
 
 using System.Collections.Immutable;
-using System.Net;
 using Microsoft.Extensions.Logging;
 using SlideGenerator.Cloud.Resolvers;
 
@@ -57,8 +56,8 @@ public interface ICloudClient
     ///     content-length.
     ///     <list type="number">
     ///         <item>
-    ///             <b>HTTP redirect.</b> Sends HEAD (falling back to GET on 405) and follows any
-    ///             redirects to get the final URI.
+    ///             <b>HTTP redirect.</b> Sends HEAD (falling back to a header-only GET when the HEAD
+    ///             fails for any reason) and follows any redirects to get the final URI.
     ///         </item>
     ///         <item>
     ///             <b>Cloud resolution.</b> If the final URI is recognized by a registered cloud
@@ -107,6 +106,22 @@ public interface ICloudClient
         Uri uri,
         HttpClient? httpClient = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    ///     Streams the resource at <paramref name="uri" /> into <paramref name="savePath" /> without
+    ///     buffering it in memory. <paramref name="maxBytes" /> caps the body size (0 = unlimited): a
+    ///     response whose Content-Length exceeds it is rejected before any byte is read, and a body
+    ///     that grows past it while streaming is aborted. On ANY failure (HTTP error status, limit
+    ///     exceeded, I/O error, cancellation) the partial file is deleted and the exception
+    ///     propagates; the caller chooses the file name (typically a temporary one it moves into
+    ///     place after validating the content).
+    /// </summary>
+    Task DownloadToFileAsync(
+        Uri uri,
+        string savePath,
+        long maxBytes,
+        HttpClient? httpClient = null,
+        CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -124,8 +139,9 @@ internal sealed class CloudClient(ILogger<CloudClient>? logger = null) : ICloudC
     ///     Execution flow:
     ///     <list type="number">
     ///         <item>
-    ///             Sends a HEAD request (falling back to GET on 405) and follows any redirects to get
-    ///             the final URI, content-type, and content-length.
+    ///             Sends a HEAD request (falling back to a header-only GET when the HEAD fails for any
+    ///             reason) and follows any redirects to get the final URI, content-type, and
+    ///             content-length.
     ///         </item>
     ///         <item>
     ///             Checks whether the final URI is handled by a registered cloud provider module
@@ -151,48 +167,56 @@ internal sealed class CloudClient(ILogger<CloudClient>? logger = null) : ICloudC
         HttpClient? httpClient = null,
         CancellationToken cancellationToken = default)
     {
+        var ownsClient = httpClient is null;
         httpClient ??= DefaultClient();
-        logger?.LogDebug("HTTP inspect start | Uri: {Uri}", uri);
-
-        // First Collect
-        var info = await CollectContentInfo(uri, httpClient, cancellationToken).ConfigureAwait(false);
-        if (info is null)
-        {
-            logger?.LogWarning("HTTP inspect failed, skipped | Uri: {Uri}", uri);
-            return null;
-        }
-
-        // Resolve
-        var finalUri = info.Uri;
-        var resolver = FindResolver(finalUri);
-        if (resolver is null)
-        {
-            logger?.LogDebug("No cloud provider matched, return direct URI | Uri: {Uri}", finalUri);
-            return info;
-        }
-
-        logger?.LogDebug("Cloud provider matched | Uri: {Uri}", finalUri);
-
-        Uri? resolvedUri;
         try
         {
-            resolvedUri = await resolver.ResolveAsync(finalUri, httpClient, cancellationToken).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            logger?.LogWarning(ex, "Cloud module resolve failed, returning final URI | Uri: {Uri}", finalUri);
-            return info;
-        }
+            logger?.LogDebug("HTTP inspect start | Uri: {Uri}", uri);
 
-        if (resolvedUri is null)
-        {
-            logger?.LogDebug("Cloud module returned null, return final URI | Uri: {Uri}", finalUri);
-            return info;
-        }
+            // First Collect
+            var info = await CollectContentInfo(uri, httpClient, cancellationToken).ConfigureAwait(false);
+            if (info is null)
+            {
+                logger?.LogWarning("HTTP inspect failed, skipped | Uri: {Uri}", uri);
+                return null;
+            }
 
-        // Second Collect
-        logger?.LogDebug("Cloud resolve completed, re-inspecting | ResolvedUri: {ResolvedUri}", resolvedUri);
-        return await CollectContentInfo(resolvedUri, httpClient, cancellationToken).ConfigureAwait(false);
+            // Resolve
+            var finalUri = info.Uri;
+            var resolver = FindResolver(finalUri);
+            if (resolver is null)
+            {
+                logger?.LogDebug("No cloud provider matched, return direct URI | Uri: {Uri}", finalUri);
+                return info;
+            }
+
+            logger?.LogDebug("Cloud provider matched | Uri: {Uri}", finalUri);
+
+            Uri? resolvedUri;
+            try
+            {
+                resolvedUri = await resolver.ResolveAsync(finalUri, httpClient, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                logger?.LogWarning(ex, "Cloud module resolve failed, returning final URI | Uri: {Uri}", finalUri);
+                return info;
+            }
+
+            if (resolvedUri is null)
+            {
+                logger?.LogDebug("Cloud module returned null, return final URI | Uri: {Uri}", finalUri);
+                return info;
+            }
+
+            // Second Collect
+            logger?.LogDebug("Cloud resolve completed, re-inspecting | ResolvedUri: {ResolvedUri}", resolvedUri);
+            return await CollectContentInfo(resolvedUri, httpClient, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            if (ownsClient) httpClient.Dispose();
+        }
     }
 
     /// <inheritdoc />
@@ -207,16 +231,24 @@ internal sealed class CloudClient(ILogger<CloudClient>? logger = null) : ICloudC
         CancellationToken cancellationToken = default)
     {
         savePath = Path.GetFullPath(savePath);
+        var ownsClient = httpClient is null;
         httpClient ??= DefaultClient();
-        logger?.LogDebug("Download start | Uri: {Uri}, Path: {Path}", uri, savePath);
+        try
+        {
+            logger?.LogDebug("Download start | Uri: {Uri}, Path: {Path}", uri, savePath);
 
-        await using var stream = await httpClient
-            .GetStreamAsync(uri, cancellationToken)
-            .ConfigureAwait(false);
-        await using var fs = new FileStream(savePath, FileMode.Create, FileAccess.Write, FileShare.None);
-        await stream.CopyToAsync(fs, cancellationToken).ConfigureAwait(false);
+            await using var stream = await httpClient
+                .GetStreamAsync(uri, cancellationToken)
+                .ConfigureAwait(false);
+            await using var fs = new FileStream(savePath, FileMode.Create, FileAccess.Write, FileShare.None);
+            await stream.CopyToAsync(fs, cancellationToken).ConfigureAwait(false);
 
-        logger?.LogDebug("Download completed | Uri: {Uri}, Path: {Path}", uri, savePath);
+            logger?.LogDebug("Download completed | Uri: {Uri}, Path: {Path}", uri, savePath);
+        }
+        finally
+        {
+            if (ownsClient) httpClient.Dispose();
+        }
     }
 
     /// <inheritdoc />
@@ -228,61 +260,170 @@ internal sealed class CloudClient(ILogger<CloudClient>? logger = null) : ICloudC
         HttpClient? httpClient = null,
         CancellationToken cancellationToken = default)
     {
+        var ownsClient = httpClient is null;
         httpClient ??= DefaultClient();
-        logger?.LogDebug("Download start (in-memory) | Uri: {Uri}", uri);
+        try
+        {
+            logger?.LogDebug("Download start (in-memory) | Uri: {Uri}", uri);
 
-        var bytes = await httpClient.GetByteArrayAsync(uri, cancellationToken).ConfigureAwait(false);
+            var bytes = await httpClient.GetByteArrayAsync(uri, cancellationToken).ConfigureAwait(false);
 
-        logger?.LogDebug("Download completed (in-memory) | Uri: {Uri}", uri);
-        return bytes;
+            logger?.LogDebug("Download completed (in-memory) | Uri: {Uri}", uri);
+            return bytes;
+        }
+        finally
+        {
+            if (ownsClient) httpClient.Dispose();
+        }
+    }
+
+    /// <inheritdoc />
+    /// <remarks>
+    ///     The body is copied from the network stream to the file with a fixed-size buffer, so memory
+    ///     usage does not grow with the resource size. The caller is responsible for ensuring the
+    ///     directory exists.
+    /// </remarks>
+    public async Task DownloadToFileAsync(
+        Uri uri,
+        string savePath,
+        long maxBytes,
+        HttpClient? httpClient = null,
+        CancellationToken cancellationToken = default)
+    {
+        savePath = Path.GetFullPath(savePath);
+        var ownsClient = httpClient is null;
+        httpClient ??= DefaultClient();
+        try
+        {
+            logger?.LogDebug("Download start (streamed) | Uri: {Uri}, Path: {Path}", uri, savePath);
+
+            using var response = await httpClient
+                .GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
+                .ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
+
+            if (maxBytes > 0 && response.Content.Headers.ContentLength > maxBytes)
+            {
+                throw new InvalidDataException($"Download exceeds the {maxBytes} byte limit: {uri}");
+            }
+
+            try
+            {
+                await using var source = await response.Content
+                    .ReadAsStreamAsync(cancellationToken)
+                    .ConfigureAwait(false);
+                await using var target = new FileStream(savePath, FileMode.Create, FileAccess.Write, FileShare.None);
+
+                var buffer = new byte[81920];
+                long total = 0;
+                int read;
+                while ((read = await source.ReadAsync(buffer, cancellationToken).ConfigureAwait(false)) > 0)
+                {
+                    total += read;
+                    if (maxBytes > 0 && total > maxBytes)
+                    {
+                        throw new InvalidDataException($"Download exceeds the {maxBytes} byte limit: {uri}");
+                    }
+
+                    await target.WriteAsync(buffer.AsMemory(0, read), cancellationToken).ConfigureAwait(false);
+                }
+            }
+            catch
+            {
+                TryDelete(savePath);
+                throw;
+            }
+
+            logger?.LogDebug("Download completed (streamed) | Uri: {Uri}, Path: {Path}", uri, savePath);
+        }
+        finally
+        {
+            if (ownsClient) httpClient.Dispose();
+        }
     }
 
     #region Private helpers
 
     /// <summary>
-    ///     Sends a HEAD request to <paramref name="uri" /> (falling back to GET on 405) and returns
-    ///     a <see cref="ContentInfo" /> with the final URI, content-type, and content-length.
-    ///     Returns <see langword="null" /> on any exception.
+    ///     Sends a HEAD request to <paramref name="uri" />, falling back to a header-only GET when the
+    ///     HEAD fails for any reason, and returns a <see cref="ContentInfo" /> with the final URI,
+    ///     content-type, and content-length. Returns <see langword="null" /> when no request succeeds.
     /// </summary>
     private static async Task<ContentInfo?> CollectContentInfo(
         Uri uri,
         HttpClient httpClient,
         CancellationToken cancellationToken)
     {
+        // Many servers reject HEAD (403/404/405/501) or drop the connection, so any failed HEAD falls back to a GET
+        // that reads only the response headers.
+        var response = await TrySendAsync(httpClient, HttpMethod.Head, uri, cancellationToken).ConfigureAwait(false);
+        if (response is null || !response.IsSuccessStatusCode)
+        {
+            response?.Dispose();
+            response = await TrySendAsync(httpClient, HttpMethod.Get, uri, cancellationToken).ConfigureAwait(false);
+        }
+
+        if (response is null) return null;
+
+        using (response)
+        {
+            if (!response.IsSuccessStatusCode) return null;
+
+            var finalUri = response.RequestMessage?.RequestUri ?? uri;
+            var mimeType = response.Content.Headers.ContentType?.MediaType;
+            var rawLength = response.Content.Headers.ContentLength;
+            var length = rawLength is > 0 ? (uint)rawLength.Value : (uint?)null;
+            var extension = ExtractExtension(response, finalUri);
+            return new ContentInfo(finalUri, mimeType, length, extension);
+        }
+    }
+
+    /// <summary>
+    ///     Sends a single request reading only the response headers. Returns <see langword="null" />
+    ///     for any transport failure; a cancellation requested through
+    ///     <paramref name="cancellationToken" /> is rethrown instead of being swallowed.
+    /// </summary>
+    private static async Task<HttpResponseMessage?> TrySendAsync(
+        HttpClient httpClient,
+        HttpMethod method,
+        Uri uri,
+        CancellationToken cancellationToken)
+    {
+        using var request = new HttpRequestMessage(method, uri);
         try
         {
-            // HEAD
-            var headResp = await httpClient
-                .SendAsync(new HttpRequestMessage(HttpMethod.Head, uri), cancellationToken)
+            return await httpClient
+                .SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
                 .ConfigureAwait(false);
-
-            // GET fallback
-            HttpResponseMessage response;
-            if (headResp.StatusCode == HttpStatusCode.MethodNotAllowed)
-            {
-                headResp.Dispose();
-                response = await httpClient
-                    .GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
-                    .ConfigureAwait(false);
-            }
-            else
-            {
-                response = headResp;
-            }
-
-            using (response)
-            {
-                var finalUri = response.RequestMessage?.RequestUri ?? uri;
-                var mimeType = response.Content.Headers.ContentType?.MediaType;
-                var rawLength = response.Content.Headers.ContentLength;
-                var length = rawLength is > 0 ? (uint)rawLength.Value : (uint?)null;
-                var extension = ExtractExtension(response, finalUri);
-                return new ContentInfo(finalUri, mimeType, length, extension);
-            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch
         {
+            // Includes HttpClient timeouts, which surface as TaskCanceledException while the token is not cancelled.
             return null;
+        }
+    }
+
+    /// <summary>
+    ///     Deletes <paramref name="path" /> on a best-effort basis, ignoring missing-file and access
+    ///     errors so that the original failure keeps propagating.
+    /// </summary>
+    private static void TryDelete(string path)
+    {
+        try
+        {
+            File.Delete(path);
+        }
+        catch (IOException)
+        {
+            // Best effort: the original exception is more useful to the caller.
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // Best effort: the original exception is more useful to the caller.
         }
     }
 

@@ -14,6 +14,7 @@
 
 using System.Net;
 using System.Net.Http.Headers;
+using System.Text;
 using FluentAssertions;
 using SlideGenerator.Cloud.Tests.Helpers;
 using Xunit;
@@ -29,6 +30,8 @@ public sealed class CloudClientTests : IDisposable
 {
     private static readonly Uri TestUri = new("https://example.com/resource");
     private readonly CloudClient _sut = new();
+    private readonly string _tempDirectory = Directory.CreateDirectory(
+        Path.Combine(Path.GetTempPath(), "SlideGenerator.Cloud.Tests", Guid.NewGuid().ToString("N"))).FullName;
     private string? _tempFile;
 
     /// <inheritdoc />
@@ -36,6 +39,22 @@ public sealed class CloudClientTests : IDisposable
     {
         if (_tempFile is not null && File.Exists(_tempFile))
             File.Delete(_tempFile);
+
+        if (Directory.Exists(_tempDirectory))
+            Directory.Delete(_tempDirectory, true);
+    }
+
+    /// <summary>
+    ///     Builds a method-specific factory map whose <see cref="HttpMethod.Head" /> entry is
+    ///     <paramref name="head" />; every other method is answered by the handler's fallback factory.
+    /// </summary>
+    private static IReadOnlyDictionary<HttpMethod, Func<HttpRequestMessage, HttpResponseMessage>> HeadResponds(
+        Func<HttpRequestMessage, HttpResponseMessage> head)
+    {
+        return new Dictionary<HttpMethod, Func<HttpRequestMessage, HttpResponseMessage>>
+        {
+            [HttpMethod.Head] = head
+        };
     }
 
     #region DownloadAsync
@@ -369,6 +388,308 @@ public sealed class CloudClientTests : IDisposable
 
         result.Should().NotBeNull();
         result.Uri.Should().Be(folderUri);
+    }
+
+    #endregion
+
+    #region InspectAsync — HEAD fallback
+
+    /// <summary>
+    ///     Verifies that a HEAD answered with 403 falls back to a header-only GET and still yields
+    ///     content metadata.
+    /// </summary>
+    [Fact]
+    public async Task InspectAsync_HeadForbidden_FallsBackToGetAndReturnsInfo()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await AssertHeadFallsBackToGet(_ => new HttpResponseMessage(HttpStatusCode.Forbidden), ct);
+    }
+
+    /// <summary>
+    ///     Verifies that a HEAD answered with 501 falls back to a header-only GET and still yields
+    ///     content metadata.
+    /// </summary>
+    [Fact]
+    public async Task InspectAsync_HeadNotImplemented_FallsBackToGetAndReturnsInfo()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await AssertHeadFallsBackToGet(_ => new HttpResponseMessage(HttpStatusCode.NotImplemented), ct);
+    }
+
+    /// <summary>
+    ///     Verifies that a HEAD answered with 404 falls back to a header-only GET and still yields
+    ///     content metadata.
+    /// </summary>
+    [Fact]
+    public async Task InspectAsync_HeadNotFound_FallsBackToGetAndReturnsInfo()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await AssertHeadFallsBackToGet(_ => new HttpResponseMessage(HttpStatusCode.NotFound), ct);
+    }
+
+    /// <summary>
+    ///     Verifies that a HEAD that throws (e.g. the server drops the connection) falls back to a
+    ///     header-only GET and still yields content metadata.
+    /// </summary>
+    [Fact]
+    public async Task InspectAsync_HeadThrows_FallsBackToGetAndReturnsInfo()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await AssertHeadFallsBackToGet(_ => throw new HttpRequestException("HEAD dropped"), ct);
+    }
+
+    /// <summary>
+    ///     Verifies that a successful HEAD is not followed by a GET request.
+    /// </summary>
+    [Fact]
+    public async Task InspectAsync_HeadSucceeds_DoesNotSendGet()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var handler = new FakeHttpHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("image-bytes", Encoding.UTF8, "image/jpeg")
+        });
+        using var client = new HttpClient(handler);
+
+        var result = await _sut.InspectAsync(TestUri, client, ct);
+
+        result.Should().NotBeNull();
+        result.IsImage().Should().BeTrue();
+        handler.Methods.Should().NotContain(HttpMethod.Get);
+    }
+
+    /// <summary>
+    ///     Verifies that <see cref="CloudClient.InspectAsync" /> returns <see langword="null" />
+    ///     when both the HEAD and the fallback GET answer with a non-success status.
+    /// </summary>
+    [Fact]
+    public async Task InspectAsync_HeadAndGetNotFound_ReturnsNull()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var handler = new FakeHttpHandler(_ => new HttpResponseMessage(HttpStatusCode.NotFound));
+        using var client = new HttpClient(handler);
+
+        var result = await _sut.InspectAsync(TestUri, client, ct);
+
+        result.Should().BeNull();
+    }
+
+    /// <summary>
+    ///     Verifies that <see cref="CloudClient.InspectAsync" /> returns <see langword="null" />
+    ///     when both the HEAD and the fallback GET throw.
+    /// </summary>
+    [Fact]
+    public async Task InspectAsync_HeadAndGetThrow_ReturnsNull()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var handler = new FakeHttpHandler(_ => throw new HttpRequestException("Network error"));
+        using var client = new HttpClient(handler);
+
+        var result = await _sut.InspectAsync(TestUri, client, ct);
+
+        result.Should().BeNull();
+    }
+
+    /// <summary>
+    ///     Verifies that a cancelled token is not swallowed into a <see langword="null" /> result but
+    ///     propagates as <see cref="OperationCanceledException" />.
+    /// </summary>
+    [Fact]
+    public async Task InspectAsync_CancelledToken_ThrowsOperationCanceledException()
+    {
+        using var cts = new CancellationTokenSource();
+        await cts.CancelAsync();
+        var ct = cts.Token;
+        var handler = new FakeHttpHandler(_ =>
+        {
+            ct.ThrowIfCancellationRequested();
+            return new HttpResponseMessage(HttpStatusCode.OK);
+        });
+        using var client = new HttpClient(handler);
+
+        var act = () => _sut.InspectAsync(TestUri, client, ct);
+
+        await act.Should().ThrowAsync<OperationCanceledException>();
+    }
+
+    /// <summary>
+    ///     Registers a HEAD factory and asserts that inspection falls back to a GET, producing an
+    ///     image <c>ContentInfo</c>.
+    /// </summary>
+    private async Task AssertHeadFallsBackToGet(
+        Func<HttpRequestMessage, HttpResponseMessage> head,
+        CancellationToken cancellationToken)
+    {
+        var handler = new FakeHttpHandler(
+            _ => new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("image-bytes", Encoding.UTF8, "image/jpeg")
+            },
+            HeadResponds(head));
+        using var client = new HttpClient(handler);
+
+        var result = await _sut.InspectAsync(TestUri, client, cancellationToken);
+
+        result.Should().NotBeNull();
+        result.IsImage().Should().BeTrue();
+        handler.Methods.Should().Contain(HttpMethod.Head);
+        handler.Methods.Should().Contain(HttpMethod.Get);
+    }
+
+    #endregion
+
+    #region InspectAsync — client lifetime
+
+    /// <summary>
+    ///     Verifies that a client supplied by the caller is not disposed by
+    ///     <see cref="CloudClient.InspectAsync" />: a subsequent request through the same client
+    ///     still succeeds.
+    /// </summary>
+    [Fact]
+    public async Task InspectAsync_ClientSuppliedByCaller_IsNotDisposed()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var handler = new FakeHttpHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("image-bytes", Encoding.UTF8, "image/jpeg")
+        });
+        using var client = new HttpClient(handler);
+
+        await _sut.InspectAsync(TestUri, client, ct);
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, TestUri);
+        using var response = await client.SendAsync(request, ct);
+        response.IsSuccessStatusCode.Should().BeTrue();
+    }
+
+    #endregion
+
+    #region DownloadToFileAsync
+
+    /// <summary>
+    ///     Verifies that <see cref="CloudClient.DownloadToFileAsync" /> writes the response body to
+    ///     the target file byte for byte.
+    /// </summary>
+    [Fact]
+    public async Task DownloadToFileAsync_Success_WritesTheBodyToTheFile()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var expectedBytes = "streamed content"u8.ToArray();
+        var savePath = Path.Combine(_tempDirectory, "success.bin");
+        var handler = new FakeHttpHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new ByteArrayContent(expectedBytes)
+        });
+        using var client = new HttpClient(handler);
+
+        await _sut.DownloadToFileAsync(TestUri, savePath, 0, client, ct);
+
+        var writtenBytes = await File.ReadAllBytesAsync(savePath, ct);
+        writtenBytes.Should().Equal(expectedBytes);
+    }
+
+    /// <summary>
+    ///     Verifies that a declared <c>Content-Length</c> above the limit is rejected before the
+    ///     output file is created.
+    /// </summary>
+    [Fact]
+    public async Task DownloadToFileAsync_ContentLengthOverLimit_ThrowsBeforeWritingAnyFile()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var savePath = Path.Combine(_tempDirectory, "too-large.bin");
+        var handler = new FakeHttpHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new ByteArrayContent(new byte[64])
+        });
+        using var client = new HttpClient(handler);
+
+        var act = () => _sut.DownloadToFileAsync(TestUri, savePath, 8, client, ct);
+
+        await act.Should().ThrowAsync<InvalidDataException>();
+        File.Exists(savePath).Should().BeFalse();
+    }
+
+    /// <summary>
+    ///     Verifies that when no <c>Content-Length</c> is declared and the streamed body grows past
+    ///     the limit, the download is aborted and the partial file is deleted.
+    /// </summary>
+    [Fact]
+    public async Task DownloadToFileAsync_BodyOverLimitWithoutContentLength_ThrowsAndDeletesPartialFile()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var savePath = Path.Combine(_tempDirectory, "streamed-too-large.bin");
+        var content = new StreamContent(new MemoryStream(new byte[64]));
+        content.Headers.ContentLength = null;
+        var handler = new FakeHttpHandler(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = content });
+        using var client = new HttpClient(handler);
+
+        var act = () => _sut.DownloadToFileAsync(TestUri, savePath, 8, client, ct);
+
+        await act.Should().ThrowAsync<InvalidDataException>();
+        File.Exists(savePath).Should().BeFalse();
+    }
+
+    /// <summary>
+    ///     Verifies that a limit of zero means unlimited: the whole body is written to the file.
+    /// </summary>
+    [Fact]
+    public async Task DownloadToFileAsync_LimitZero_IsUnlimited()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var expectedBytes = new byte[256];
+        Random.Shared.NextBytes(expectedBytes);
+        var savePath = Path.Combine(_tempDirectory, "unlimited.bin");
+        var handler = new FakeHttpHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new ByteArrayContent(expectedBytes)
+        });
+        using var client = new HttpClient(handler);
+
+        await _sut.DownloadToFileAsync(TestUri, savePath, 0, client, ct);
+
+        var writtenBytes = await File.ReadAllBytesAsync(savePath, ct);
+        writtenBytes.Should().Equal(expectedBytes);
+    }
+
+    /// <summary>
+    ///     Verifies that an HTTP error status surfaces as an exception and leaves no file behind.
+    /// </summary>
+    [Fact]
+    public async Task DownloadToFileAsync_HttpErrorStatus_ThrowsAndLeavesNoFile()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var savePath = Path.Combine(_tempDirectory, "missing.bin");
+        var handler = new FakeHttpHandler(_ => new HttpResponseMessage(HttpStatusCode.NotFound)
+        {
+            Content = new StringContent("not found")
+        });
+        using var client = new HttpClient(handler);
+
+        var act = () => _sut.DownloadToFileAsync(TestUri, savePath, 0, client, ct);
+
+        await act.Should().ThrowAsync<HttpRequestException>();
+        File.Exists(savePath).Should().BeFalse();
+    }
+
+    /// <summary>
+    ///     Verifies that a cancelled token aborts the download and leaves no file behind.
+    /// </summary>
+    [Fact]
+    public async Task DownloadToFileAsync_CancelledToken_LeavesNoFile()
+    {
+        var savePath = Path.Combine(_tempDirectory, "cancelled.bin");
+        var handler = new FakeHttpHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new ByteArrayContent(new byte[16])
+        });
+        using var client = new HttpClient(handler);
+        using var cts = new CancellationTokenSource();
+        await cts.CancelAsync();
+
+        var act = () => _sut.DownloadToFileAsync(TestUri, savePath, 0, client, cts.Token);
+
+        await act.Should().ThrowAsync<OperationCanceledException>();
+        File.Exists(savePath).Should().BeFalse();
     }
 
     #endregion
