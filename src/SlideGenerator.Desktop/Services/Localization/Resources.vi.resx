@@ -624,6 +624,21 @@
   <data name="enums.conflictKind.conflictsWithActiveRequest" xml:space="preserve">
     <value>⚠ trùng với lượt đang chạy</value>
   </data>
+  <data name="enums.conflictKind.overwritesExistingFile" xml:space="preserve">
+    <value>Sẽ ghi đè file đã có</value>
+  </data>
+  <data name="enums.jobProblem.workbookNotFound" xml:space="preserve">
+    <value>Không tìm thấy file dữ liệu</value>
+  </data>
+  <data name="enums.jobProblem.templateNotFound" xml:space="preserve">
+    <value>Không tìm thấy file mẫu</value>
+  </data>
+  <data name="enums.jobProblem.invalidTemplateSlide" xml:space="preserve">
+    <value>Số thứ tự slide mẫu không hợp lệ</value>
+  </data>
+  <data name="enums.jobProblem.invalidRowFilter" xml:space="preserve">
+    <value>Phạm vi hàng không chọn được hàng nào</value>
+  </data>
   <data name="enums.rowStage.downloading" xml:space="preserve">
     <value>Đang tải</value>
   </data>

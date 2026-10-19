@@ -517,6 +517,11 @@ public sealed class ServicePreviewAndLoggingTests : IDisposable
         Planned(ConflictKind.DuplicateWithinRequest).IsBlocked.Should().BeTrue();
         Planned(ConflictKind.ConflictsWithActiveRequest).IsBlocked.Should().BeTrue();
 
+        Planned(ConflictKind.None).HasBlockingConflict.Should().BeFalse();
+        Planned(ConflictKind.OverwritesExistingFile).HasBlockingConflict.Should().BeFalse();
+        Planned(ConflictKind.DuplicateWithinRequest).HasBlockingConflict.Should().BeTrue();
+        Planned(ConflictKind.ConflictsWithActiveRequest).HasBlockingConflict.Should().BeTrue();
+
         foreach (var problem in Enum.GetValues<JobProblem>().Where(p => p != JobProblem.None))
             Planned(ConflictKind.None, problem).IsBlocked.Should().BeTrue();
     }

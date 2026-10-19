@@ -624,6 +624,21 @@
   <data name="enums.conflictKind.conflictsWithActiveRequest" xml:space="preserve">
     <value>⚠ conflicts with an active run</value>
   </data>
+  <data name="enums.conflictKind.overwritesExistingFile" xml:space="preserve">
+    <value>Will replace an existing file</value>
+  </data>
+  <data name="enums.jobProblem.workbookNotFound" xml:space="preserve">
+    <value>Data file not found</value>
+  </data>
+  <data name="enums.jobProblem.templateNotFound" xml:space="preserve">
+    <value>Template file not found</value>
+  </data>
+  <data name="enums.jobProblem.invalidTemplateSlide" xml:space="preserve">
+    <value>Template slide number is invalid</value>
+  </data>
+  <data name="enums.jobProblem.invalidRowFilter" xml:space="preserve">
+    <value>Row range selects nothing</value>
+  </data>
   <data name="enums.rowStage.downloading" xml:space="preserve">
     <value>Downloading</value>
   </data>

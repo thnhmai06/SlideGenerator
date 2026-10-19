@@ -58,7 +58,25 @@
                             <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space2}">
                                 <TextBlock Classes="mono" FontSize="{StaticResource FontSizeXs}" Text="{Binding OutputPath}"/>
                                 <TextBlock Foreground="{DynamicResource DangerBrush}" FontSize="{StaticResource FontSizeXs}"
-                                           IsVisible="{Binding ConflictKind, Converter={x:Static conv:EnumNotEqualsConverter.Instance}, ConverterParameter={x:Static gen:ConflictKind.None}}">
+                                           IsVisible="{Binding HasBlockingConflict}">
+                                    <TextBlock.Text>
+                                        <MultiBinding Converter="{x:Static conv:EnumLocalizedTextConverter.Instance}" ConverterParameter="conflictKind">
+                                            <Binding Path="ConflictKind"/>
+                                            <Binding Path="Revision" Source="{x:Static loc:LocalizationService.Instance}"/>
+                                        </MultiBinding>
+                                    </TextBlock.Text>
+                                </TextBlock>
+                                <TextBlock Foreground="{DynamicResource DangerBrush}" FontSize="{StaticResource FontSizeXs}"
+                                           IsVisible="{Binding Problem, Converter={x:Static conv:EnumNotEqualsConverter.Instance}, ConverterParameter={x:Static gen:JobProblem.None}}">
+                                    <TextBlock.Text>
+                                        <MultiBinding Converter="{x:Static conv:EnumLocalizedTextConverter.Instance}" ConverterParameter="jobProblem">
+                                            <Binding Path="Problem"/>
+                                            <Binding Path="Revision" Source="{x:Static loc:LocalizationService.Instance}"/>
+                                        </MultiBinding>
+                                    </TextBlock.Text>
+                                </TextBlock>
+                                <TextBlock Foreground="{DynamicResource WarningBrush}" FontSize="{StaticResource FontSizeXs}"
+                                           IsVisible="{Binding ConflictKind, Converter={x:Static conv:EnumEqualsConverter.Instance}, ConverterParameter={x:Static gen:ConflictKind.OverwritesExistingFile}}">
                                     <TextBlock.Text>
                                         <MultiBinding Converter="{x:Static conv:EnumLocalizedTextConverter.Instance}" ConverterParameter="conflictKind">
                                             <Binding Path="ConflictKind"/>

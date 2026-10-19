@@ -127,8 +127,13 @@ public sealed record PlannedJob(
     ConflictKind ConflictKind,
     JobProblem Problem = JobProblem.None)
 {
+    /// <summary>
+    ///     Whether the output path collides with another job of the request or with an active request — an
+    ///     overwrite warning does not count.
+    /// </summary>
+    public bool HasBlockingConflict => ConflictKind is Generator.ConflictKind.DuplicateWithinRequest
+        or Generator.ConflictKind.ConflictsWithActiveRequest;
+
     /// <summary>Whether this job stops the request from being created: an input problem, or an output-path conflict (an overwrite warning does not block).</summary>
-    public bool IsBlocked => Problem != JobProblem.None ||
-                             ConflictKind is Generator.ConflictKind.DuplicateWithinRequest
-                                 or Generator.ConflictKind.ConflictsWithActiveRequest;
+    public bool IsBlocked => Problem != JobProblem.None || HasBlockingConflict;
 }

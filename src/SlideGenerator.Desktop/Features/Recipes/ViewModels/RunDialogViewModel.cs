@@ -73,8 +73,16 @@ public sealed partial class RunDialogViewModel : ObservableObject
         _ = RefreshPreviewAsync();
     }
 
-    /// <summary>Gets whether any planned job's output path conflicts with another job.</summary>
-    public bool HasConflicts => PlannedJobs.Any(j => j.ConflictKind != ConflictKind.None);
+    /// <summary>
+    ///     Gets whether any planned job cannot be created: an input problem or an output-path conflict. An
+    ///     overwrite warning does not count.
+    /// </summary>
+    public bool HasBlockedJobs => PlannedJobs.Any(j => j.IsBlocked);
+
+    /// <summary>
+    ///     Gets whether any planned job would replace an existing file — a warning, Start stays enabled.
+    /// </summary>
+    public bool HasOverwriteWarnings => PlannedJobs.Any(j => j.ConflictKind == ConflictKind.OverwritesExistingFile);
 
     partial void OnOutputTypeChanged(PresentationType value)
     {
@@ -112,7 +120,8 @@ public sealed partial class RunDialogViewModel : ObservableObject
         finally
         {
             IsPreviewLoading = false;
-            OnPropertyChanged(nameof(HasConflicts));
+            OnPropertyChanged(nameof(HasBlockedJobs));
+            OnPropertyChanged(nameof(HasOverwriteWarnings));
             StartCommand.NotifyCanExecuteChanged();
         }
     }
@@ -131,7 +140,7 @@ public sealed partial class RunDialogViewModel : ObservableObject
 
     private bool CanStart()
     {
-        return !IsPreviewLoading && PlannedJobs.Count > 0 && !HasConflicts &&
+        return !IsPreviewLoading && PlannedJobs.Count > 0 && !HasBlockedJobs &&
                !string.IsNullOrWhiteSpace(SaveFolder) && !string.IsNullOrWhiteSpace(Name);
     }
 
