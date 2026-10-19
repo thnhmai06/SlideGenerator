@@ -120,7 +120,7 @@ dotnet test tests/SlideGenerator.Jobs.Tests/SlideGenerator.Jobs.Tests.csproj
 ├── tests/                              — one test project per module (mirrors src, standalone; no Summarizer.Tests)
 │   └── fixtures/                       — shared test data
 ├── scripts/ApplyCopyright/             — build-time tool (in the slnx, not a module)
-├── plans/                              — design notes / UI mockups, not source of truth for code
+├── plans/                              — backend-remediation.md (open plan) + domain-reference.md (V2 domain reference); not source of truth for code
 └── .github/                            — workflows (ci, codeql, qodana, sponsors), codeql config, CODEOWNERS
 ```
 
