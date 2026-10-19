@@ -38,7 +38,6 @@ using SlideGenerator.Settings;
 using SlideGenerator.Settings.Immutable;
 using SlideGenerator.Settings.Mutable;
 using SlideGenerator.Summarizer;
-using SlideGenerator.Utilities;
 
 namespace SlideGenerator.Desktop;
 
@@ -163,20 +162,6 @@ public sealed class App : Application
         Log.Information("Initializing application directories...");
         NameAndPaths.InitializeDirectories();
         Log.Information("Data DB: {Path}", NameAndPaths.DataFolder.DataFile.FilePath);
-
-        var latestPath = Path.Combine(NameAndPaths.LogsFolder.SystemPath, "latest.log");
-        var currentLogFiles = Directory.GetFiles(NameAndPaths.LogsFolder.SystemPath, "*.log")
-            .OrderByDescending(File.GetLastWriteTimeUtc)
-            .FirstOrDefault();
-        if (currentLogFiles is not null)
-            try
-            {
-                HardLink.Create(latestPath, currentLogFiles);
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-            {
-                Log.Warning("Could not create 'latest.log' hard link: {Message}", ex.Message);
-            }
 
         // Must resolve (construct + subscribe) before IService.InitializeAsync() — crash-resumed jobs are
         // scheduled immediately by JobRunner.InitializeAsync and their first progress events would be lost

@@ -13,7 +13,9 @@ trong phiên lập kế hoạch).
 5. Thêm trạng thái request **`CompletedWithError`**.
 6. **Khử trùng ảnh là bắt buộc**: giữ dict `ContentInfo` (khoá khử trùng là URI sau redirect/resolve, chỉ biết được sau
    khi inspect). Ý tưởng bỏ dict bằng cách chuẩn hoá URI offline đã bị loại.
-7. Tra cache theo hai bước để tránh HEAD lặp lại (xem 5.3).
+7. Tránh HEAD lặp lại bằng dict inspect trong RAM theo chuỗi nguồn đã chuẩn hoá (xem 5.3). Không dùng alias/hard link
+   trên đĩa; sau crash chỉ tốn một lượt HEAD cho mỗi URL.
+8. Bỏ `latest.log` (hard link) và xoá `Utilities/HardLink.cs` — không còn nơi nào cần hard link.
 
 **Ngoài phạm vi:** zip bomb và dọn file giải nén dở khi import lỗi, mã hoá mật khẩu đang lưu (proxy, `BookPassword`,
 `PresentationPassword`), bộ nhớ của `ProgressHub` (thuộc Desktop).
@@ -138,30 +140,25 @@ Job cũ còn dở vẫn resume được (chỉ số lấy từ `SlidesCount`, c�
 
 Phạm vi theo **request**: `{TempRoot}/{requestId}/`. Các job cùng request dùng chung ảnh.
 
-Tên file cache: `{SHA256(uri)}` (không đuôi). Hai loại khoá cùng trỏ về một file dữ liệu:
+Tên file cache: `{SHA256(ContentInfo.Uri)}` (không đuôi) — **khoá đích**, tức URI sau redirect/resolve; đây là khoá
+khử trùng thật. **Không có alias theo chuỗi nguồn và không dùng hard link** (đã cân nhắc và bỏ: trong một lần chạy,
+dict trong RAM đã tránh HEAD lặp; sau crash chỉ tốn một lượt HEAD cho mỗi URL).
 
-- **Khoá nguồn** = hash của chuỗi nguồn đã chuẩn hoá nhẹ (trim, thêm `https://` nếu thiếu scheme, dạng chuẩn của
-  `Uri.AbsoluteUri`, bỏ fragment, **giữ nguyên query**).
-- **Khoá đích** = hash của `ContentInfo.Uri` (URI sau redirect/resolve). Đây là khoá khử trùng thật.
-
-Luồng tra cứu cho mỗi nguồn (để tránh HEAD lặp lại):
+Luồng cho mỗi nguồn:
 
 ```
-1. Tra file theo khoá nguồn  → có: dùng luôn (không gọi mạng)
-2. Không có: HEAD (đã chuẩn hoá) → ContentInfo → khoá đích
-3. Tra file theo khoá đích   → có: tạo alias khoá nguồn → dùng luôn
-4. Không có: tải → .tmp → kiểm tra header ảnh → Move thành file khoá đích
-                         → tạo alias khoá nguồn (nếu khác khoá đích)
+1. Chuẩn hoá nhẹ chuỗi nguồn (trim, thêm https:// nếu thiếu scheme, dạng chuẩn của Uri.AbsoluteUri,
+   bỏ fragment, GIỮ NGUYÊN query)
+2. Tra dict inspect trong RAM theo chuỗi đã chuẩn hoá → có: dùng ContentInfo đã có (không HEAD)
+3. Không có: HEAD (dự phòng GET) → ContentInfo → khoá đích
+4. Tra file theo khoá đích → có: dùng luôn
+5. Không có: tải → .tmp → kiểm tra header ảnh → Move thành file khoá đích
 ```
 
-- **Alias** là hard link (`HardLink.Create`) từ file khoá nguồn tới file khoá đích; không tốn thêm dung lượng, cùng bị
-  xoá khi xoá thư mục request. Nếu hard link thất bại thì dùng `File.Copy`.
-- Alias làm cho lần tra cứu thứ hai trở đi (và sau resume do crash) không cần HEAD nữa, kể cả khi nguồn là link rút gọn
-  hay link Drive dạng chia sẻ.
-- **Trong RAM** (cùng phạm vi request): `ConcurrentDictionary<khoá nguồn, Lazy<Task<ContentInfo?>>>` để HEAD chỉ chạy
-  một lần cho mỗi nguồn trong lúc job đang chạy; `ConcurrentDictionary<khoá đích, Lazy<Task<string?>>>` để hai job/hàng
-  cùng khoá chỉ tải một lần; `HashSet` các khoá đích đã thất bại để URL hỏng ở 500 hàng không bị tải lại 500 lần (không
-  ghi lỗi lên đĩa vì sau crash nên thử lại).
+- **Trong RAM** (cùng phạm vi request): `ConcurrentDictionary<chuỗi nguồn đã chuẩn hoá, Lazy<Task<ContentInfo?>>>` để HEAD
+  chỉ chạy một lần cho mỗi nguồn trong lúc job đang chạy; `ConcurrentDictionary<khoá đích, Lazy<Task<string?>>>` để hai
+  job/hàng cùng khoá chỉ tải một lần; `HashSet` các khoá đích đã thất bại để URL hỏng ở 500 hàng không bị tải lại 500
+  lần (không ghi lỗi lên đĩa vì sau crash nên thử lại).
 - **Kiểm tra trước khi vào cache:** tải về `{hash}.tmp` → mở bằng NetVips để đọc header (lỗi thì xoá `.tmp`, ghi vào
   tập lỗi) → `File.Move`. "Có file" luôn nghĩa là có ảnh hợp lệ; `.tmp` không bao giờ được coi là đã có.
 - **Lọc MIME nới lỏng:** chỉ bỏ qua khi MIME khẳng định không phải ảnh (vd `text/html`); `application/octet-stream` hoặc
@@ -173,7 +170,7 @@ Luồng tra cứu cho mỗi nguồn (để tránh HEAD lặp lại):
 - `GeneratorJobObserver.CleanupJobTempFolder` đổi thành dọn theo request qua `ImageCache`.
 
 Test: bảng chuẩn hoá khoá nguồn (hoa/thường, cổng mặc định, fragment, thiếu scheme; query giữ nguyên); lần tra cứu thứ
-hai theo cùng nguồn không gọi HEAD; hai nguồn khác nhau cùng ContentInfo.Uri chỉ tải một lần và dùng chung dữ liệu;
+hai theo cùng nguồn trong cùng lần chạy không gọi HEAD; hai nguồn khác nhau cùng ContentInfo.Uri chỉ tải một lần và dùng chung dữ liệu;
 `.tmp` dở không được dùng; file không phải ảnh bị loại; URL lỗi chỉ thử một lần mỗi request; HEAD trả 403/501 thì GET
 dự phòng vẫn lấy được ảnh; `octet-stream` nhưng nội dung là ảnh vẫn dùng được; vượt `MaxDownloadBytes` thì huỷ và không
 để lại file; dọn thư mục khi job cuối kết thúc và dọn mồ côi khi khởi động.

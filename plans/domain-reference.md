@@ -592,7 +592,7 @@ This is the **only** field on `PerformanceSetting` — the old parallel-download
 | `Data.db` | `%LOCALAPPDATA%\SlideGenerator\Data\` (SQLite, `journal_mode=WAL`) |
 | `UserSettings.json` | same folder |
 | Per-Run log | `%LOCALAPPDATA%\SlideGenerator\Logs\Workflows\{sanitizedRunName}.log` (one file shared by all Jobs of the Run) |
-| System logs | `Logs\System\{timestamp}.log` (+ a `latest.log` hard link) |
+| System logs | `Logs\System\{timestamp}.log` |
 | Per-Job download cache | `%TEMP%\SlideGenerator\{requestId}\{jobId}\{hash(uri)}{ext}` — deleted when the Job reaches a terminal (non-Paused) state |
 | Imported recipe resources | `Imported\Workbooks\`, `Imported\Presentations\` |
 | Update packages | Velopack's own location (on "download update") |

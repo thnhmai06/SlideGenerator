@@ -106,7 +106,7 @@ dotnet test tests/SlideGenerator.Jobs.Tests/SlideGenerator.Jobs.Tests.csproj
 
 ```
 ├── src/                                — 11 modules (all tracked in SlideGenerator.slnx)
-│   ├── SlideGenerator.Utilities/        — Sha256, Naming, TextNormalization, generic Pool<T>, HardLink, FileAccessHelper
+│   ├── SlideGenerator.Utilities/        — Sha256, Naming, TextNormalization, generic Pool<T>, FileAccessHelper
 │   ├── SlideGenerator.Settings/         — Immutable/ (NameAndPaths), Mutable/ (Setting + SettingManager), Database/ (DbUp)
 │   ├── SlideGenerator.Cloud/            — CloudClient + Resolvers/ (Google Drive only)
 │   ├── SlideGenerator.Logging/          — FileLogging/, Formats/ (file + console formatters, ScopeNotifyingSink)
@@ -520,7 +520,7 @@ caching).
 ```
 UserPath/
 ├── Instance.pid           — AppLocker
-├── Logs/System/           — LogsFolder.SystemPath (system logs, plus a latest.log hard link)
+├── Logs/System/           — LogsFolder.SystemPath (system logs, one file per run)
 ├── Logs/Workflows/        — LogsFolder.WorkflowPath (per-request .log files; name predates the WorkflowCore removal)
 ├── Imported/Workbooks/    — ImportedFolder.WorkbooksPath
 ├── Imported/Presentations/— ImportedFolder.PresentationsPath
