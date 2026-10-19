@@ -41,7 +41,7 @@ public sealed class WorkflowControlIntegrationTests
     /// <summary>
     ///     Runs a workflow with <see cref="Setting.PerformanceSetting.MaxConcurrentJobs" /> = 1 (so the second job
     ///     queues behind whichever job holds the single slot), waits until job 0 is demonstrably mid-run
-    ///     (<see cref="JobPhase.FillingText" /> with <see cref="JobSnapshot.CurrentIndex" /> &gt;= 1), pauses the
+    ///     (<see cref="JobPhase.Generating" /> with <see cref="JobSnapshot.CurrentIndex" /> &gt;= 1), pauses the
     ///     workflow, and verifies that:
     ///     <list type="bullet">
     ///         <item>the row that was in flight finishes and the runner then parks at its next checkpoint;</item>
@@ -73,10 +73,10 @@ public sealed class WorkflowControlIntegrationTests
         var workflowId = await harness.StartAsync(specs, name: "pause-resume",
             TestContext.Current.CancellationToken);
 
-        // Wait until job 0 has published at least one FillingText snapshot with CurrentIndex >= 1, i.e. it is
+        // Wait until job 0 has published at least one Generating snapshot with CurrentIndex >= 1, i.e. it is
         // demonstrably inside the row loop rather than still being queued or creating output.
         await WaitForLiveEventAsync(harness, workflowId,
-            j => j.JobId == 0 && j.Phase == JobPhase.FillingText && j.CurrentIndex >= 1,
+            j => j.JobId == 0 && j.Phase == JobPhase.Generating && j.CurrentIndex >= 1,
             TestTimeout, TestContext.Current.CancellationToken);
 
         (await harness.Controller.PauseWorkflowAsync(workflowId)).Should().BeTrue();

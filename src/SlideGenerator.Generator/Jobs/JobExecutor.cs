@@ -12,6 +12,7 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using System.Diagnostics;
 using System.Drawing;
 using Microsoft.Extensions.Logging;
 using Serilog.Context;
@@ -48,13 +49,19 @@ internal interface IJobContext
     /// <summary>Persists/publishes the job's latest state; <paramref name="durable" /> flushes it immediately.</summary>
     Task ReportAsync(JobSnapshot state, bool durable = false, CancellationToken ct = default);
 
+    /// <summary>
+    ///     Publishes the job's live progress to listeners WITHOUT persisting it (use ReportAsync for state that
+    ///     must survive a crash).
+    /// </summary>
+    void Publish(JobSnapshot state);
+
     /// <summary>Blocks while the owning workflow is paused; returns immediately otherwise.</summary>
     Task CheckpointAsync(CancellationToken ct);
 }
 
 /// <summary>
-///     The 4-phase slide-generation job (create/open output → create slides → fill text → fill images) for one
-///     worksheet/presentation pair. Knows nothing about concurrency, pause/resume beyond what
+///     The slide-generation job (create/open output → one pipeline per row) for one worksheet/presentation pair.
+///     Knows nothing about concurrency, pause/resume beyond what
 ///     <see cref="IJobContext" /> hands it, or persistence beyond <see cref="IJobContext.ReportAsync" /> — the
 ///     owning <c>SlideGenerationWorkflow</c> handles those. Ported from the former <c>JobRunner.Phases.cs</c>.
 /// </summary>
@@ -70,6 +77,12 @@ internal sealed class JobExecutor(
     IEventBus eventBus,
     ILogger<JobExecutor> logger)
 {
+    // The working file is saved after at most this many generated rows …
+    private const int SaveEveryRows = 10;
+
+    // … or after at most this long, whichever comes first.
+    private static readonly TimeSpan SaveEveryInterval = TimeSpan.FromSeconds(5);
+
     /// <summary>Runs the job to completion, or until <paramref name="ct" /> is cancelled.</summary>
     public async Task<JobSnapshot> RunAsync(JobSnapshot initial, IJobContext context, CancellationToken ct)
     {
@@ -78,13 +91,14 @@ internal sealed class JobExecutor(
         var jobId = initial.JobId;
         var spec = initial.Specification;
 
-        // The job works on its own .partial file and only moves it onto OutputPath once every phase succeeded,
-        // so a failed/cancelled run leaves the previous result in place. A fresh run clears a stale working file.
+        // The job works on its own .partial file and only moves it onto OutputPath once every row has been
+        // generated, so a failed/cancelled run leaves the previous result in place. A fresh run clears a stale
+        // working file.
         var partialPath = JobOutput.GetPartialPath(spec.OutputPath);
         if (!context.IsResume) PreflightCleanup.Run(partialPath, jobLogger);
 
         // The workbook is read once up front and released before any output/image work starts: every row the
-        // phases need is already in memory, so the source file is not held open for the whole job.
+        // pipeline needs is already in memory, so the source file is not held open for the whole job.
         List<int> dataRows;
         IReadOnlyList<IReadOnlyDictionary<ColumnIdentifier, string>> rows;
         using (var workbook = await workbookOpener.OpenWorkbookReadOnlyAsync(
@@ -104,7 +118,7 @@ internal sealed class JobExecutor(
         var templateId = new PresentationIdentifier(spec.TemplatePresentationPath);
         IPresentation output;
         // At CreatingOutput a leftover working file may be a template copy whose slides were not yet removed, so
-        // it is recreated; from CreatingSlides on it holds the job's progress and is reopened.
+        // it is recreated; from Generating on (or a legacy phase) it holds the job's progress and is reopened.
         if (initial.Phase != JobPhase.CreatingOutput && File.Exists(partialPath))
         {
             output = await OpenOutputAsync(new PresentationIdentifier(partialPath), jobLogger, ct)
@@ -136,7 +150,7 @@ internal sealed class JobExecutor(
                 .ConfigureAwait(false);
             // Kept alive for the rest of this method: Syncfusion's ISlide.Clone() doesn't fully detach from
             // its source presentation (still resolves layout/master through it), so AddSlide()-ing a clone
-            // of templateSlide (see RunCreatingSlidesAsync) throws NullReferenceException once the source
+            // of templateSlide (see RunGeneratingAsync) throws NullReferenceException once the source
             // that produced it has been disposed.
             using var templatePresentationHandle = templatePresentation;
             if (templateSlide is null)
@@ -144,39 +158,30 @@ internal sealed class JobExecutor(
                     $"Template slide #{spec.TemplateSlideIndex} not found in '{spec.TemplatePresentationPath}'.");
             var templateShapesByIdentifier = templateSlide.Shapes.ToDictionary(s => s.Identifier);
 
-            var phase = initial.Phase;
-            var currentIndex = initial.CurrentIndex;
-
-            if (phase == JobPhase.CreatingOutput)
+            // CurrentIndex is the number of rows whose slide is already saved in the working file, so it is
+            // exactly where the per-row pipeline continues. A legacy phase (CreatingSlides/FillingText/
+            // FillingImages) starts over at row 0: the work is idempotent (existing slides are reused and
+            // refilled).
+            var startIndex = 0;
+            if (initial.Phase == JobPhase.CreatingOutput)
             {
-                (phase, currentIndex) = (JobPhase.CreatingSlides, output.SlidesCount);
-                await AdvancePhaseAsync(context, workflowId, jobId, spec, phase, currentIndex, dataRows.Count, ct).ConfigureAwait(false);
-            }
-
-            if (phase == JobPhase.CreatingSlides)
-            {
-                await RunCreatingSlidesAsync(workflowId, jobId, spec, output, templateSlide, context, dataRows, ct)
-                    .ConfigureAwait(false);
-                (phase, currentIndex) = (JobPhase.FillingText, 0);
-                await AdvancePhaseAsync(context, workflowId, jobId, spec, phase, currentIndex, dataRows.Count, ct).ConfigureAwait(false);
-            }
-
-            if (phase == JobPhase.FillingText)
-            {
-                await RunFillingTextAsync(workflowId, jobId, spec, rows, output, currentIndex,
-                    dataRows, context, ct).ConfigureAwait(false);
-                (phase, currentIndex) = (JobPhase.FillingImages, 0);
-                await AdvancePhaseAsync(context, workflowId, jobId, spec, phase, currentIndex, dataRows.Count, ct).ConfigureAwait(false);
-            }
-
-            if (phase == JobPhase.FillingImages)
-            {
-                var inspected = await InspectSourcesAsync(spec, rows, jobLogger, ct)
-                    .ConfigureAwait(false);
-                await RunFillingImagesAsync(workflowId, jobId, spec, rows,
-                        templateShapesByIdentifier, output, currentIndex, dataRows, inspected, context, jobLogger, ct)
+                await AdvancePhaseAsync(context, workflowId, jobId, spec, JobPhase.Generating, 0, dataRows.Count, ct)
                     .ConfigureAwait(false);
             }
+            else if (initial.Phase == JobPhase.Generating)
+            {
+                startIndex = initial.CurrentIndex;
+            }
+
+            startIndex = Math.Clamp(startIndex, 0, dataRows.Count);
+
+            var inspected = spec.ImageInstructions.Count > 0
+                ? await InspectSourcesAsync(spec, rows, jobLogger, ct).ConfigureAwait(false)
+                : new Dictionary<string, ContentInfo?>();
+
+            await RunGeneratingAsync(workflowId, jobId, spec, rows, templateSlide, templateShapesByIdentifier,
+                    output, startIndex, dataRows, inspected, context, jobLogger, ct)
+                .ConfigureAwait(false);
 
             // Commit: release the working file, then rename it onto the final output path (same directory, so
             // this is an atomic replace). Only now does the new result replace the previous one.
@@ -203,29 +208,6 @@ internal sealed class JobExecutor(
             DateTimeOffset.UtcNow, totalRows);
         await context.ReportAsync(record, true, ct).ConfigureAwait(false);
     }
-
-    #region Phase B — slides
-
-    private static async Task RunCreatingSlidesAsync(
-        string workflowId, int jobId, JobSpecification spec, IPresentation output, ISlide templateSlide,
-        IJobContext context, IReadOnlyList<int> dataRows, CancellationToken ct)
-    {
-        for (var i = output.SlidesCount; i < dataRows.Count; i++)
-        {
-            ct.ThrowIfCancellationRequested();
-            await context.CheckpointAsync(ct).ConfigureAwait(false);
-
-            output.AddSlide(templateSlide.Clone());
-            output.Save();
-
-            await context.ReportAsync(
-                new JobSnapshot(workflowId, jobId, JobStatus.Running, JobPhase.CreatingSlides, i + 1, spec,
-                    DateTimeOffset.UtcNow, dataRows.Count),
-                false, ct).ConfigureAwait(false);
-        }
-    }
-
-    #endregion
 
     #region Phase A — output
 
@@ -271,13 +253,18 @@ internal sealed class JobExecutor(
 
     #endregion
 
-    #region Phase C — text
+    #region Generating — one pipeline per row
 
-    private async Task RunFillingTextAsync(
+    private async Task RunGeneratingAsync(
         string workflowId, int jobId, JobSpecification spec,
-        IReadOnlyList<IReadOnlyDictionary<ColumnIdentifier, string>> rows, IPresentation output, int startIndex,
-        IReadOnlyList<int> dataRows, IJobContext context, CancellationToken ct)
+        IReadOnlyList<IReadOnlyDictionary<ColumnIdentifier, string>> rows, ISlide templateSlide,
+        IReadOnlyDictionary<ShapeIdentifier, IShape> templateShapesByIdentifier, IPresentation output,
+        int startIndex, IReadOnlyList<int> dataRows, IReadOnlyDictionary<string, ContentInfo?> inspected,
+        IJobContext context, ILogger jobLogger, CancellationToken ct)
     {
+        var tempDir = JobTempFolder.GetPath(workflowId, jobId);
+        var lastSavedIndex = startIndex;
+        var sinceSave = Stopwatch.StartNew();
         for (var i = startIndex; i < dataRows.Count; i++)
         {
             ct.ThrowIfCancellationRequested();
@@ -287,16 +274,59 @@ internal sealed class JobExecutor(
             using var rowScope = LogContext.PushProperty("RowIndex", dataRow + 1);
             ReportRow(workflowId, jobId, dataRow + 1, RowStatus.Processing);
 
-            var textValues = BuildRowTextValues(rows[i], spec.TextInstructions);
+            // 1. Slide — one per row, in order. On a resume the working file may already hold it: the persisted
+            // index only advances on a save, so the file can be ahead of it.
+            if (output.SlidesCount < i)
+                throw new InvalidOperationException(
+                    $"Working file has {output.SlidesCount} slides but row {i} needs slide {i}.");
+            if (output.SlidesCount == i) output.AddSlide(templateSlide.Clone());
             var slide = output.Slides.ElementAt(i);
-            foreach (var shape in slide.Shapes) textComposer.Compose(shape, textValues);
-            output.Save();
 
+            // 2. Text.
+            var rowValues = rows[i];
+            var textValues = BuildRowTextValues(rowValues, spec.TextInstructions);
+            foreach (var shape in slide.Shapes) textComposer.Compose(shape, textValues);
+
+            // 3. Images.
+            var shapesByIdentifier = slide.Shapes.ToDictionary(s => s.Identifier);
+            foreach (var instruction in spec.ImageInstructions)
+            {
+                var source = Utilities.GetSource(rowValues, instruction.Columns);
+                foreach (var shapeIdentifier in instruction.Shapes)
+                {
+                    if (!templateShapesByIdentifier.TryGetValue(shapeIdentifier, out var templateShape)) continue;
+                    if (!shapesByIdentifier.TryGetValue(shapeIdentifier, out var targetShape)) continue;
+
+                    var targetSize = new Size(
+                        Math.Max(1,
+                            (int)Math.Round(templateShape.Bounds.Width, MidpointRounding.AwayFromZero)),
+                        Math.Max(1,
+                            (int)Math.Round(templateShape.Bounds.Height, MidpointRounding.AwayFromZero)));
+
+                    inspected.TryGetValue(source, out var contentInfo);
+                    var imageData = await ResolveShapeImageAsync(source, spec.AllowLocalPaths, instruction, targetSize,
+                        contentInfo, tempDir, workflowId, jobId, dataRow + 1, jobLogger, ct).ConfigureAwait(false);
+                    if (imageData != null) targetShape.ImageData = imageData;
+                }
+            }
+
+            // Live progress only: the persisted index must never run ahead of the working file.
             ReportRow(workflowId, jobId, dataRow + 1, RowStatus.Done);
-            await context.ReportAsync(
-                new JobSnapshot(workflowId, jobId, JobStatus.Running, JobPhase.FillingText, i + 1, spec,
-                    DateTimeOffset.UtcNow, dataRows.Count),
-                false, ct).ConfigureAwait(false);
+            context.Publish(new JobSnapshot(workflowId, jobId, JobStatus.Running, JobPhase.Generating, i + 1, spec,
+                DateTimeOffset.UtcNow, dataRows.Count));
+
+            var isLast = i == dataRows.Count - 1;
+            if (isLast || i + 1 - lastSavedIndex >= SaveEveryRows || sinceSave.Elapsed >= SaveEveryInterval)
+            {
+                ReportRow(workflowId, jobId, dataRow + 1, RowStatus.Processing, RowStage.SavingOutput);
+                output.Save();
+                lastSavedIndex = i + 1;
+                sinceSave.Restart();
+                await context.ReportAsync(
+                    new JobSnapshot(workflowId, jobId, JobStatus.Running, JobPhase.Generating, lastSavedIndex, spec,
+                        DateTimeOffset.UtcNow, dataRows.Count),
+                    false, ct).ConfigureAwait(false);
+            }
         }
     }
 
@@ -321,7 +351,7 @@ internal sealed class JobExecutor(
 
     #endregion
 
-    #region Phase D — images
+    #region Image helpers
 
     private async Task<IReadOnlyDictionary<string, ContentInfo?>> InspectSourcesAsync(
         JobSpecification spec, IReadOnlyList<IReadOnlyDictionary<ColumnIdentifier, string>> rows,
@@ -364,60 +394,6 @@ internal sealed class JobExecutor(
             () => cloudClient.InspectAsync(url, httpClient, ct), ct).ConfigureAwait(false);
 
         return info != null && info.IsImage() ? info : null;
-    }
-
-    private async Task RunFillingImagesAsync(
-        string workflowId, int jobId, JobSpecification spec,
-        IReadOnlyList<IReadOnlyDictionary<ColumnIdentifier, string>> rows,
-        IReadOnlyDictionary<ShapeIdentifier, IShape> templateShapesByIdentifier, IPresentation output,
-        int startIndex, IReadOnlyList<int> dataRows, IReadOnlyDictionary<string, ContentInfo?> inspected,
-        IJobContext context, ILogger jobLogger, CancellationToken ct)
-    {
-        var tempDir = JobTempFolder.GetPath(workflowId, jobId);
-
-        for (var i = startIndex; i < dataRows.Count; i++)
-        {
-            ct.ThrowIfCancellationRequested();
-            await context.CheckpointAsync(ct).ConfigureAwait(false);
-
-            var dataRow = dataRows[i];
-            using var rowScope = LogContext.PushProperty("RowIndex", dataRow + 1);
-            ReportRow(workflowId, jobId, dataRow + 1, RowStatus.Processing);
-
-            var rowValues = rows[i];
-            var slide = output.Slides.ElementAt(i);
-            var shapesByIdentifier = slide.Shapes.ToDictionary(s => s.Identifier);
-
-            foreach (var instruction in spec.ImageInstructions)
-            {
-                var source = Utilities.GetSource(rowValues, instruction.Columns);
-                foreach (var shapeIdentifier in instruction.Shapes)
-                {
-                    if (!templateShapesByIdentifier.TryGetValue(shapeIdentifier, out var templateShape)) continue;
-                    if (!shapesByIdentifier.TryGetValue(shapeIdentifier, out var targetShape)) continue;
-
-                    var targetSize = new Size(
-                        Math.Max(1,
-                            (int)Math.Round(templateShape.Bounds.Width, MidpointRounding.AwayFromZero)),
-                        Math.Max(1,
-                            (int)Math.Round(templateShape.Bounds.Height, MidpointRounding.AwayFromZero)));
-
-                    inspected.TryGetValue(source, out var contentInfo);
-                    var imageData = await ResolveShapeImageAsync(source, spec.AllowLocalPaths, instruction, targetSize,
-                        contentInfo, tempDir, workflowId, jobId, dataRow + 1, jobLogger, ct).ConfigureAwait(false);
-                    if (imageData != null) targetShape.ImageData = imageData;
-                }
-            }
-
-            ReportRow(workflowId, jobId, dataRow + 1, RowStatus.Processing, RowStage.SavingOutput);
-            output.Save();
-            ReportRow(workflowId, jobId, dataRow + 1, RowStatus.Done);
-
-            await context.ReportAsync(
-                new JobSnapshot(workflowId, jobId, JobStatus.Running, JobPhase.FillingImages, i + 1, spec,
-                    DateTimeOffset.UtcNow, dataRows.Count),
-                false, ct).ConfigureAwait(false);
-        }
     }
 
     private async Task<byte[]?> ResolveShapeImageAsync(

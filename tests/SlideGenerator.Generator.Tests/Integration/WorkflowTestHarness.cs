@@ -20,6 +20,8 @@ using Serilog;
 using Serilog.Events;
 using SlideGenerator.Cloud;
 using SlideGenerator.Document;
+using SlideGenerator.Document.Presentations;
+using SlideGenerator.Document.Presentations.Components;
 using SlideGenerator.Document.Presentations.Identifiers;
 using SlideGenerator.Document.Workbooks.Identifiers;
 using SlideGenerator.Generator.Jobs;
@@ -210,6 +212,16 @@ internal sealed class WorkflowTestHarness : IAsyncDisposable
 
     /// <summary>Real repository — used to read back job rows directly.</summary>
     public IJobsRepository Jobs => _provider.GetRequiredService<IJobsRepository>();
+
+    /// <summary>
+    ///     Opens a presentation read-only through the Document module — used by tests that need to inspect a
+    ///     working (<c>.partial</c>) file the running job still holds open.
+    /// </summary>
+    public Task<IReadOnlyPresentation> OpenPresentationReadOnlyAsync(string path, CancellationToken ct = default)
+    {
+        return _provider.GetRequiredService<IPresentationOpener>()
+            .OpenPresentationReadOnlyAsync(new PresentationIdentifier(path), ct);
+    }
 
     /// <summary>
     ///     Builds a fresh harness that opens the same SQLite file as <paramref name="previous" /> —

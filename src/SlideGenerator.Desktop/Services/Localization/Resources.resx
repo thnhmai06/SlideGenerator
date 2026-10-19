@@ -414,6 +414,9 @@
   <data name="enums.jobPhase.creatingOutput" xml:space="preserve">
     <value>Creating output</value>
   </data>
+  <data name="enums.jobPhase.generating" xml:space="preserve">
+    <value>Generating slides</value>
+  </data>
   <data name="enums.jobPhase.creatingSlides" xml:space="preserve">
     <value>Creating slides</value>
   </data>

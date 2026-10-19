@@ -38,17 +38,17 @@ using Xunit;
 namespace SlideGenerator.Generator.Tests.Integration;
 
 /// <summary>
-///     Runs the real 4-phase <see cref="JobExecutor" /> pipeline end to end against the
+///     Runs the real <see cref="JobExecutor" /> pipeline end to end against the
 ///     <c>Data.xlsx</c> / <c>Template.pptx</c> fixtures — real Syncfusion workbook/presentation I/O, no
-///     mocked domain logic. Per AGENTS.md's "What NOT to unit test", the phase bodies require a Syncfusion
+///     mocked domain logic. Per AGENTS.md's "What NOT to unit test", the per-row pipeline requires a Syncfusion
 ///     license and real files, so this belongs here rather than in <c>Unit/</c>.
 /// </summary>
 /// <remarks>
 ///     Requires <c>SYNCFUSION_LICENSE_KEY</c> or a populated <c>.env</c> file — an unlicensed/trial
 ///     Syncfusion registration stamps a <c>"SyncfusionLicense"</c>-named watermark shape onto slide 1 on
-///     every <c>output.Save()</c> call, which (since this job saves multiple times per phase)
-///     eventually crashes <c>Shapes.ToDictionary(...)</c> in <see cref="JobExecutor" /> with a
-///     duplicate-key <see cref="ArgumentException" />. <c>SlideGenerator.Document.csproj</c> pins the
+///     every <c>output.Save()</c> call, which (since this job saves several times) eventually crashes
+///     <c>Shapes.ToDictionary(...)</c> in <see cref="JobExecutor" /> with a duplicate-key
+///     <see cref="ArgumentException" />. <c>SlideGenerator.Document.csproj</c> pins the
 ///     Syncfusion package versions rather than floating <c>"*"</c> for exactly this reason — verify the
 ///     pinned version still validates before bumping it.
 /// </remarks>
@@ -80,7 +80,7 @@ public sealed class JobExecutorIntegrationTests : IDisposable
     }
 
     /// <summary>
-    ///     Runs all 4 phases (create output → create slides → fill text → fill images) against 3 real rows
+    ///     Runs the full pipeline (create output → one pipeline per row: slide, text, images) against 3 real rows
     ///     of <c>Data.xlsx</c>, mapped onto <c>Template.pptx</c>'s <c>{{Provider}}</c>/<c>{{Type}}</c>/
     ///     <c>{{ShouldDownload}}</c>/<c>{{Url}}</c> placeholders (all nested inside PowerPoint groups) and
     ///     its grouped <c>Picture 7</c> image shape (filled from a local fallback image, so no
@@ -94,7 +94,7 @@ public sealed class JobExecutorIntegrationTests : IDisposable
     ///     unlicensed Syncfusion stamps a watermark shape that crashes the job executor, so the test cannot run
     ///     meaningfully (CI sets the env var to <c>'empty'</c> when the secret is absent).
     /// </remarks>
-    [Fact(DisplayName = "INTEGRATION: full 4-phase job generation against real fixtures")]
+    [Fact(DisplayName = "INTEGRATION: full pipeline job generation against real fixtures")]
     public async Task RunAsync_RealFixtures_ProducesCompletedOutputWithComposedTextAndImage()
     {
         if (!File.Exists(FallbackImagePath))
@@ -191,6 +191,10 @@ public sealed class JobExecutorIntegrationTests : IDisposable
         public Task ReportAsync(JobSnapshot state, bool durable = false, CancellationToken ct = default)
         {
             return Task.CompletedTask;
+        }
+
+        public void Publish(JobSnapshot state)
+        {
         }
 
         public Task CheckpointAsync(CancellationToken ct)

@@ -61,7 +61,7 @@ internal sealed class SlideGenerationWorkflow(
         JobSnapshot job, IWorkflowContext<WorkflowSnapshot> context, ILogger workflowLogger, CancellationToken ct)
     {
         using var jobScope = LogContext.PushProperty("JobId", job.JobId);
-        var jobContext = new JobContext(job, context, workflowLogger, this);
+        var jobContext = new JobContext(job, context, workflowLogger, this, eventBus);
         var completed = false;
         try
         {
@@ -123,7 +123,7 @@ internal sealed class SlideGenerationWorkflow(
     /// <summary>Bridges one job to its workflow: reports persist/publish its snapshot, checkpoints use the workflow's gate.</summary>
     private sealed class JobContext(
         JobSnapshot initial, IWorkflowContext<WorkflowSnapshot> workflow, ILogger logger,
-        SlideGenerationWorkflow owner) : IJobContext
+        SlideGenerationWorkflow owner, IEventBus eventBus) : IJobContext
     {
         private readonly Lock _lock = new();
         private JobSnapshot _last = initial;
@@ -153,6 +153,15 @@ internal sealed class SlideGenerationWorkflow(
             }
 
             return owner.PersistAndPublishAsync(running, durable, ct);
+        }
+
+        /// <summary>
+        ///     Publishes live progress only — deliberately does not touch <see cref="_last" /> (so a cancellation
+        ///     or crash still reports the last durably-persisted state) and never enqueues it for persistence.
+        /// </summary>
+        public void Publish(JobSnapshot state)
+        {
+            eventBus.Publish(state with { JobStatus = JobStatus.Running });
         }
 
         public Task CheckpointAsync(CancellationToken ct)

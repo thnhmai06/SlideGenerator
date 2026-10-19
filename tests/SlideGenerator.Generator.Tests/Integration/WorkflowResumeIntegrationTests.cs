@@ -37,10 +37,13 @@ public sealed class WorkflowResumeIntegrationTests
 {
     private static readonly TimeSpan TestTimeout = TimeSpan.FromSeconds(60);
 
+    // Mirrors JobExecutor.SaveEveryRows: the first periodic save of the working file happens after this many rows.
+    private const int FirstSaveRow = 10;
+
     /// <summary>
-    ///     Runs a single job, waits for the executor to enter <see cref="JobPhase.FillingText" /> with
-    ///     <see cref="JobSnapshot.CurrentIndex" /> &gt;= 1, then cancels the first engine and rewinds the
-    ///     <c>Workflows</c> row's status back to <see cref="JobStatus.Running" /> (the crash the engine
+    ///     Runs a single job, waits for the executor to enter <see cref="JobPhase.Generating" /> with a
+    ///     durably-persisted <see cref="JobSnapshot.CurrentIndex" /> &gt;= 1, then cancels the first engine and
+    ///     rewinds the <c>Workflows</c> row's status back to <see cref="JobStatus.Running" /> (the crash the engine
     ///     itself prevented the terminal write from completing). A second harness over the same DB then
     ///     calls <see cref="IWorkflowController.InitializeAsync" />; the resumed
     ///     <see cref="SlideGenerator.Generator.Workflows.SlideGenerationWorkflow" /> loads the job from its
@@ -67,20 +70,37 @@ public sealed class WorkflowResumeIntegrationTests
         {
             var specs = new[]
             {
-                first.BuildSpec(rowRange: new IndexRangeFilter(1, 3))
+                first.BuildSpec(rowRange: new IndexRangeFilter(1, 18))
             };
             var workflowId = await first.StartAsync(specs, name: "resume-test",
                 TestContext.Current.CancellationToken);
 
-            // Wait until the job reaches FillingText and CurrentIndex >= 1 (at least one row processed).
-            await first.WaitForJobsAsync(workflowId,
-                jobs => jobs.Count == 1 && jobs[0].Phase == JobPhase.FillingText && jobs[0].CurrentIndex >= 1,
+            // Wait for the live row report at/past the first save boundary (row 10; see JobExecutor's
+            // SaveEveryRows). Pausing on the live bus — not on the DB — guarantees the run is still in the row
+            // loop: the row in flight then finishes its save, and the runner parks before the last row commits.
+            await WaitForLiveEventAsync(first, workflowId,
+                j => j.Phase == JobPhase.Generating && j.CurrentIndex >= FirstSaveRow,
                 TestTimeout, TestContext.Current.CancellationToken);
 
-            // Capture the persisted (Phase, CurrentIndex) — the resume must continue from exactly this.
+            // Simulate the crash: a real kill -9 never reaches the workflow's cleanup, which discards the
+            // job's working (.partial) file on a cancellation. Pause first (the in-flight row finishes and
+            // the runner parks at its next checkpoint), preserve the working file, then cancel the engine
+            // and restore it — the resume needs it to continue where the job stopped.
+            var outputPath = specs[0].OutputPath;
+            var partialPath = JobOutput.GetPartialPath(outputPath);
+            (await first.Controller.PauseWorkflowAsync(workflowId)).Should().BeTrue();
+
+            // The first durable CurrentIndex comes from that periodic save (row 10, or the 5 s interval). It is
+            // the (Phase, CurrentIndex) the resumed run must continue from exactly.
+            await first.WaitForJobsAsync(workflowId,
+                jobs => jobs.Count == 1 && jobs[0].Phase == JobPhase.Generating && jobs[0].CurrentIndex >= 1,
+                TestTimeout, TestContext.Current.CancellationToken);
+
+            await Task.Delay(300, TestContext.Current.CancellationToken);
+
             midSnapshot = (await first.Jobs.GetByWorkflowIdAsync(workflowId,
                 TestContext.Current.CancellationToken))[0];
-            midSnapshot.Phase.Should().Be(JobPhase.FillingText);
+            midSnapshot.Phase.Should().Be(JobPhase.Generating);
             midSnapshot.CurrentIndex.Should().BeGreaterThanOrEqualTo(1);
 
             // Capture the workflow row's LogPath so the resumed run can be compared to the same file.
@@ -92,15 +112,6 @@ public sealed class WorkflowResumeIntegrationTests
 
             File.Exists(logPath).Should().BeTrue(
                 "the LoggingWorkflowRunner opened the file during the first run");
-
-            // Simulate the crash: a real kill -9 never reaches the workflow's cleanup, which discards the
-            // job's working (.partial) file on a cancellation. Pause first (the in-flight row finishes and
-            // the runner parks at its next checkpoint), preserve the working file, then cancel the engine
-            // and restore it — the resume needs it to continue where the job stopped.
-            var outputPath = specs[0].OutputPath;
-            var partialPath = JobOutput.GetPartialPath(outputPath);
-            (await first.Controller.PauseWorkflowAsync(workflowId)).Should().BeTrue();
-            await Task.Delay(300, TestContext.Current.CancellationToken);
 
             File.Exists(partialPath).Should().BeTrue("the job is mid-run and writes into its working file");
             var partialBackupPath = Path.Combine(first.TempRoot, "partial-backup.pptx.partial");
@@ -172,7 +183,7 @@ public sealed class WorkflowResumeIntegrationTests
 
             // The resumed run CONTINUED rather than restarting: no published snapshot may sit in a phase
             // earlier than the persisted one, and same-phase snapshots may never report an index before
-            // the persisted one (the executor resumes the FillingText loop at CurrentIndex, so its first
+            // the persisted one (the executor resumes the Generating loop at CurrentIndex, so its first
             // report is CurrentIndex + 1 — re-reporting the same index is tolerated too).
             var resumedSnapshots = second.EventBus.Jobs
                 .Where(j => j.WorkflowId == workflowId)
@@ -189,8 +200,8 @@ public sealed class WorkflowResumeIntegrationTests
             finalJobs.Should().ContainSingle();
             finalJobs[0].JobStatus.Should().Be(JobStatus.Complete);
             finalJobs[0].Phase.Should().Be(JobPhase.Done);
-            finalJobs[0].CurrentIndex.Should().Be(3,
-                "IndexRangeFilter(1, 3) yields 3 rows; the resumed run reaches the last one");
+            finalJobs[0].CurrentIndex.Should().Be(18,
+                "IndexRangeFilter(1, 18) yields 18 rows; the resumed run reaches the last one");
 
             // The resumed job committed its working file onto the final output path.
             File.Exists(outputPath).Should().BeTrue("the resumed run committed the finished presentation");
@@ -213,6 +224,33 @@ public sealed class WorkflowResumeIntegrationTests
             // temp directory and the SQLite file, so it is disposed last.
             await first.DisposeAsync();
         }
+    }
+
+    /// <summary>
+    ///     Polls the harness's live event bus until an already-published snapshot of <paramref name="workflowId" />
+    ///     matches <paramref name="predicate" />, or the timeout elapses.
+    /// </summary>
+    private static async Task WaitForLiveEventAsync(
+        WorkflowTestHarness harness, string workflowId, Func<JobSnapshot, bool> predicate, TimeSpan timeout,
+        CancellationToken ct)
+    {
+        var deadline = DateTimeOffset.UtcNow + timeout;
+        while (DateTimeOffset.UtcNow < deadline)
+        {
+            foreach (var j in harness.EventBus.Jobs)
+            {
+                if (j.WorkflowId != workflowId) continue;
+                if (predicate(j)) return;
+            }
+
+            await Task.Delay(20, ct);
+        }
+
+        throw new TimeoutException(
+            $"Predicate did not become true within {timeout}. Last snapshot for {workflowId}: " +
+            string.Join(", ", harness.EventBus.Jobs
+                .Where(j => j.WorkflowId == workflowId)
+                .Select(j => $"[{j.JobId} {j.JobStatus} {j.Phase} idx={j.CurrentIndex}]")));
     }
 
     /// <summary>Counts newline-terminated lines in <paramref name="path" /> — used to assert the log was appended to.</summary>

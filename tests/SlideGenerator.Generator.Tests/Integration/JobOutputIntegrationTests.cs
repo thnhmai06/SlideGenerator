@@ -24,13 +24,16 @@ namespace SlideGenerator.Generator.Tests.Integration;
 
 /// <summary>
 ///     End-to-end checks that a job writes into its working (<c>.partial</c>) file and only replaces the final
-///     result once every phase has succeeded: an existing result must survive a cancelled run, and a
+///     result once every row has been generated: an existing result must survive a cancelled run, and a
 ///     completed run must swap the new presentation in atomically and leave no working file behind.
 /// </summary>
 [Trait("Category", "Integration")]
 public sealed class JobOutputIntegrationTests
 {
     private static readonly TimeSpan TestTimeout = TimeSpan.FromSeconds(60);
+
+    // Mirrors JobExecutor.SaveEveryRows: the first periodic save of the working file happens after this many rows.
+    private const int FirstSaveRow = 10;
 
     private static readonly byte[] Sentinel = Encoding.UTF8.GetBytes("previous result that must survive");
 
@@ -88,7 +91,7 @@ public sealed class JobOutputIntegrationTests
         var workflowId = await harness.StartAsync([spec], name: "output-cancel", ct);
 
         await WaitForLiveEventAsync(harness, workflowId,
-            j => j.JobId == 0 && j.JobStatus == JobStatus.Running && j.Phase == JobPhase.FillingText &&
+            j => j.JobId == 0 && j.JobStatus == JobStatus.Running && j.Phase == JobPhase.Generating &&
                  j.CurrentIndex >= 1,
             TestTimeout, ct);
 
@@ -104,6 +107,68 @@ public sealed class JobOutputIntegrationTests
 
         var jobs = await harness.Jobs.GetByWorkflowIdAsync(workflowId, ct);
         jobs.Should().ContainSingle().Which.JobStatus.Should().Be(JobStatus.Cancelled);
+    }
+
+    /// <summary>
+    ///     Runs a 1-job workflow over 18 rows, waits until the live row reports reach the first periodic save
+    ///     boundary, pauses the job, then reads the durably persisted index and asserts that the working file
+    ///     holds at least as many slides as that index claims. This is the "the DB is never ahead of the file"
+    ///     invariant.
+    /// </summary>
+    [Fact]
+    public async Task Job_PersistedIndexNeverExceedsTheRowsSavedInTheWorkingFile()
+    {
+        if (!WorkflowTestHarness.HasLicense())
+        {
+            Assert.Skip("SYNCFUSION_LICENSE_KEY not set — add the secret to run this integration test");
+        }
+
+        var ct = TestContext.Current.CancellationToken;
+        await using var harness = new WorkflowTestHarness();
+
+        var spec = harness.BuildSpec(rowRange: new IndexRangeFilter(1, 18));
+        var outputPath = spec.OutputPath;
+        var partialPath = JobOutput.GetPartialPath(outputPath);
+        var workflowId = await harness.StartAsync([spec], name: "output-invariant", ct);
+
+        // Wait for the live row report at/past the first save boundary (row 10; see JobExecutor's SaveEveryRows)
+        // before pausing: the row in flight then finishes its save and the runner parks before the last row
+        // commits, so the working file is guaranteed to exist and to hold the first saved batch.
+        await WaitForLiveEventAsync(harness, workflowId,
+            j => j.Phase == JobPhase.Generating && j.CurrentIndex >= FirstSaveRow,
+            TestTimeout, ct);
+
+        (await harness.Controller.PauseWorkflowAsync(workflowId)).Should().BeTrue();
+
+        // The persisted index only advances on a save, so observing it at >= 1 in the DB proves one happened.
+        await harness.WaitForJobsAsync(workflowId,
+            jobs => jobs.Count == 1 && jobs[0].Phase == JobPhase.Generating && jobs[0].CurrentIndex >= 1,
+            TestTimeout, ct);
+
+        // Settle: the row in flight at pause time finishes and the runner parks at its next checkpoint.
+        await Task.Delay(300, ct);
+
+        await harness.Jobs.FlushAsync(ct);
+        var persistedIndex = (await harness.Jobs.GetByWorkflowIdAsync(workflowId, ct)).Single().CurrentIndex;
+        persistedIndex.Should().BeGreaterThanOrEqualTo(1);
+
+        File.Exists(partialPath).Should().BeTrue("a paused job keeps its working file");
+
+        // Inspect a copy: the paused job still holds the working file open.
+        var copyPath = Path.Combine(harness.TempRoot, "partial-copy.pptx");
+        File.Copy(partialPath, copyPath, overwrite: true);
+        int slideCountInFile;
+        using (var presentation = await harness.OpenPresentationReadOnlyAsync(copyPath, ct))
+        {
+            slideCountInFile = presentation.SlidesCount;
+        }
+
+        slideCountInFile.Should().BeGreaterThanOrEqualTo(persistedIndex,
+            "the persisted index counts rows already saved in the working file, so the file can never lag behind it");
+
+        (await harness.Controller.ResumeWorkflowAsync(workflowId)).Should().BeTrue();
+        var terminal = await harness.Observer.WaitTerminalAsync(workflowId).WaitAsync(TestTimeout, ct);
+        terminal.Outcome.Should().Be(WorkflowOutcome.Completed);
     }
 
     /// <summary>
