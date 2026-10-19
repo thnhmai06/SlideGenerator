@@ -153,18 +153,20 @@ Foundation
 
 Domain
 ├── Settings      - JSON user settings (ISettingProvider/ISettingManager) + the shared SQLite schema migrator
-├── Recipe        - Recipe CRUD (SQLite) + *.recipe export/import packages; a Recipe is a flat list of Mappings
-└── Summarizer    - Workbook/presentation metadata scanner (used by the recipe editor)
+└── Recipe        - Recipe CRUD (SQLite) + *.recipe export/import packages; a Recipe is a flat list of Mappings
 
 Application
 ├── Generator     - IService facade, JobRunner (adapter over the Job Engine), SlideGenerationWorkload,
 │                   Requests/Jobs persistence, progress + log contracts
+└── Summarizer    - Workbook/presentation metadata scanner (used by the recipe editor)
+
+Host
 └── Desktop       - Avalonia UI host: DI wiring, ViewModels, progress hub, localization, theming
 ```
 
 ### Dependency Rules
 
-- Dependencies flow downward only — no circular references.
+- Dependencies flow downward only (Foundation → Domain → Application → Host) — no circular references.
 - `SlideGenerator.Workflows` has zero project references.
 - Each module has a root `Registration.cs` as its DI entry point.
 - `SlideGenerator.Desktop` is the executable that wires all modules (`App.axaml.cs`).

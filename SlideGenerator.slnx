@@ -18,6 +18,8 @@
     <Folder Name="/Sources/Application/">
         <Project Path="src/SlideGenerator.Generator/SlideGenerator.Generator.csproj"/>
         <Project Path="src/SlideGenerator.Summarizer/SlideGenerator.Summarizer.csproj"/>
+    </Folder>
+    <Folder Name="/Sources/Host/">
         <Project Path="src/SlideGenerator.Desktop/SlideGenerator.Desktop.csproj"/>
     </Folder>
     <Folder Name="/Tests/Foundation/">
@@ -35,6 +37,8 @@
     <Folder Name="/Tests/"/>
     <Folder Name="/Tests/Application/">
         <Project Path="tests/SlideGenerator.Generator.Tests/SlideGenerator.Generator.Tests.csproj"/>
+    </Folder>
+    <Folder Name="/Tests/Host/">
         <Project Path="tests/SlideGenerator.Desktop.Tests/SlideGenerator.Desktop.Tests.csproj"/>
     </Folder>
 </Solution>
