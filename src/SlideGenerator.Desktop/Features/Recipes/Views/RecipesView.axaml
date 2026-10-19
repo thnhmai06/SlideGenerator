@@ -125,7 +125,7 @@
                                             <TextBlock Grid.Column="0" Classes="body" Text="{Binding Name}"/>
                                             <TextBlock Grid.Column="1" Classes="muted">
                                                 <TextBlock.Text>
-                                                    <MultiBinding Converter="{x:Static conv:EnumLocalizedTextConverter.Instance}" ConverterParameter="workflowStatus">
+                                                    <MultiBinding Converter="{x:Static conv:EnumLocalizedTextConverter.Instance}" ConverterParameter="jobStatus">
                                                         <Binding Path="Status"/>
                                                         <Binding Path="Revision" Source="{x:Static loc:LocalizationService.Instance}"/>
                                                     </MultiBinding>

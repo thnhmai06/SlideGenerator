@@ -17,7 +17,7 @@ using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using SlideGenerator.Desktop.Services.Localization;
 using SlideGenerator.Desktop.Services.Progress;
-using SlideGenerator.Generator.Workflows.Models;
+using SlideGenerator.Generator.Jobs.Models;
 
 namespace SlideGenerator.Desktop.Shell;
 
@@ -28,7 +28,7 @@ namespace SlideGenerator.Desktop.Shell;
 ///     <see cref="ShellViewModel" /> — splash lifecycle and page navigation are different concerns, and
 ///     <see cref="ShellViewModel" /> should not need to know it was ever preceded by a splash screen.
 ///     Also owns <see cref="WindowTitle" /> — cheap, v1-inherited polish: the taskbar/window title shows how
-///     many workflows are currently active, visible without switching back to the app (blueprint §5.1).
+///     many jobs are currently active, visible without switching back to the app (blueprint §5.1).
 /// </summary>
 public sealed partial class MainWindowViewModel : ObservableObject
 {
@@ -39,25 +39,25 @@ public sealed partial class MainWindowViewModel : ObservableObject
     [ObservableProperty] private ObservableObject? _currentContent;
     [ObservableProperty] private string _windowTitle = BaseTitle;
 
-    /// <summary>Constructs the VM and starts tracking <paramref name="progressHub" />'s workflows for the window title.</summary>
-    /// <param name="progressHub">Source of truth for how many workflows are currently active.</param>
-    /// <param name="localizationService">Localizes the "N workflow(s) running" suffix; re-applied on language change.</param>
+    /// <summary>Constructs the VM and starts tracking <paramref name="progressHub" />'s jobs for the window title.</summary>
+    /// <param name="progressHub">Source of truth for how many jobs are currently active.</param>
+    /// <param name="localizationService">Localizes the "N job(s) running" suffix; re-applied on language change.</param>
     public MainWindowViewModel(IProgressHub progressHub, ILocalizationService localizationService)
     {
         _localizationService = localizationService;
-        progressHub.Workflows.CollectionChanged += (_, _) => UpdateWindowTitle(progressHub.Workflows.Count(IsActive));
-        localizationService.PropertyChanged += (_, _) => UpdateWindowTitle(progressHub.Workflows.Count(IsActive));
+        progressHub.Jobs.CollectionChanged += (_, _) => UpdateWindowTitle(progressHub.Jobs.Count(IsActive));
+        localizationService.PropertyChanged += (_, _) => UpdateWindowTitle(progressHub.Jobs.Count(IsActive));
     }
 
-    private static bool IsActive(WorkflowSnapshot workflow)
+    private static bool IsActive(JobSnapshot job)
     {
-        return workflow.WorkflowStatus is WorkflowStatus.Pending or WorkflowStatus.Running;
+        return job.JobStatus is JobStatus.Pending or JobStatus.Running;
     }
 
     private void UpdateWindowTitle(int activeCount)
     {
         WindowTitle = activeCount > 0
-            ? BaseTitle + string.Format(_localizationService["shell.activeWorkflowsTitleSuffix"], activeCount)
+            ? BaseTitle + string.Format(_localizationService["shell.activeJobsTitleSuffix"], activeCount)
             : BaseTitle;
     }
 }

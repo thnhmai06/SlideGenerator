@@ -139,9 +139,9 @@ public sealed partial class ShellViewModel : ObservableObject
     }
 
     // After a run starts from Recipes, jump to Runs with the new request preselected (plan §5.1 step 23).
-    private void OnRunStartedFromRecipes(string requestId)
+    private void OnRunStartedFromRecipes(string workflowId)
     {
         Navigate(ShellDestination.Runs);
-        if (_pages[ShellDestination.Runs] is RunsViewModel runs) _ = runs.SelectRequestAsync(requestId);
+        if (_pages[ShellDestination.Runs] is RunsViewModel runs) _ = runs.SelectRequestAsync(workflowId);
     }
 }

@@ -12,22 +12,20 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Generator.Workflows.Models;
-using SlideGenerator.Generator.Workflows.Runners;
+using SlideGenerator.Generator.Jobs.Models;
 using SlideGenerator.Generator.Persistence;
 using SlideGenerator.Generator.Progress;
-using SlideGenerator.Workflows.Engine;
+using SlideGenerator.Generator.Workflows.Models;
 using SlideGenerator.Logging.FileLogging;
+using SlideGenerator.Workflows.Engine;
 
 namespace SlideGenerator.Generator.Workflows;
 
 /// <summary>
-///     Runs workflows by delegating to <see cref="IWorkflowEngine{TKey,TState}" /> (the generic scheduler/lifecycle
-///     engine, in <c>SlideGenerator.Workflows</c>) with a <see cref="SlideGenerationRunner" /> (the 4-phase
-///     slide-generation logic) wrapped in a <see cref="LoggingRunner" />. This type itself is a thin
-///     adapter — its public contract is unchanged from before the Engine/Runner split, so
-///     <c>Service</c>/<c>Program.Startup.cs</c>/existing tests mocking <see cref="IWorkflowController" /> don't need
-///     to change.
+///     Starts and controls workflows by delegating to <see cref="IWorkflowEngine{TKey,TState}" /> (the generic
+///     lifecycle engine, in <c>SlideGenerator.Workflows</c>) with a <see cref="SlideGenerationWorkflow" /> wrapped in a
+///     <see cref="LoggingWorkflowRunner" />. This type itself is a thin adapter. Pause, resume and stop act on a
+///     whole workflow (all of its jobs at once) — there is no per-job control.
 /// </summary>
 public interface IWorkflowController
 {
@@ -38,34 +36,31 @@ public interface IWorkflowController
     Task ShutdownAsync(CancellationToken ct = default);
 
     /// <summary>
-    ///     Registers and starts a fresh workflow. Persists its initial <see cref="WorkflowSnapshot" /> (flushed
-    ///     immediately, not on the next tick — so it is visible to conflict checks on newly created
-    ///     requests right away) before starting execution, then returns without waiting for it to finish.
+    ///     Registers a fresh workflow: persists one <see cref="JobStatus.Pending" /> job row per entry of
+    ///     <paramref name="jobs" /> (flushed immediately, so they are visible to conflict checks right away), then
+    ///     starts execution and returns without waiting for it to finish. The workflow's own row must already exist.
     /// </summary>
-    Task StartWorkflowAsync(string requestId, int workflowId, WorkflowSpecification spec, string logPath,
+    Task StartWorkflowAsync(string workflowId, IReadOnlyList<JobSpecification> jobs, string logPath,
         CancellationToken ct = default);
 
-    /// <summary>
-    ///     Pauses a running workflow at its next row/phase checkpoint. Returns <see langword="false" /> if not currently
-    ///     running.
-    /// </summary>
-    Task<bool> PauseWorkflowAsync(string requestId, int workflowId);
+    /// <summary>Pauses a running workflow at its next checkpoint. Returns <see langword="false" /> if not currently running.</summary>
+    Task<bool> PauseWorkflowAsync(string workflowId);
 
-    /// <summary>Resumes a paused workflow. Returns <see langword="false" /> if not currently paused.</summary>
-    Task<bool> ResumeWorkflowAsync(string requestId, int workflowId);
+    /// <summary>Resumes a paused workflow. Returns <see langword="false" /> if not currently running.</summary>
+    Task<bool> ResumeWorkflowAsync(string workflowId);
 
-    /// <summary>Cancels a running or paused workflow. Returns <see langword="false" /> if already terminal.</summary>
-    Task<bool> StopWorkflowAsync(string requestId, int workflowId);
+    /// <summary>Cancels a running or paused workflow. Returns <see langword="false" /> if not currently running.</summary>
+    Task<bool> StopWorkflowAsync(string workflowId);
 }
 
 /// <inheritdoc cref="IWorkflowController" />
 internal sealed class WorkflowController(
-    IWorkflowEngine<WorkflowKey, WorkflowSnapshot> engine,
-    IWorkflowResumeSource<WorkflowKey, WorkflowSnapshot> resumeSource,
-    SlideGenerationRunner slideGenerationRunner,
+    IWorkflowEngine<string, WorkflowSnapshot> engine,
+    IWorkflowResumeSource<string, WorkflowSnapshot> resumeSource,
+    SlideGenerationWorkflow slideGenerationWorkflow,
     IFileLoggerFactory fileLoggerFactory,
     ILogNotifier logNotifier,
-    IWorkflowsRepository workflowsRepository) : IWorkflowController
+    IJobsRepository jobsRepository) : IWorkflowController
 {
     /// <inheritdoc />
     public Task InitializeAsync(CancellationToken ct = default)
@@ -76,40 +71,42 @@ internal sealed class WorkflowController(
     /// <inheritdoc />
     public async Task ShutdownAsync(CancellationToken ct = default)
     {
-        // Ordering matters: the engine guarantees no runner is still calling ReportAsync once
-        // ShutdownAsync returns, so it is safe to flush right after.
+        // Ordering matters: the engine guarantees no runner is still reporting once ShutdownAsync returns, so it
+        // is safe to flush right after.
         await engine.ShutdownAsync(ct).ConfigureAwait(false);
-        await workflowsRepository.FlushAsync(CancellationToken.None).ConfigureAwait(false);
+        await jobsRepository.FlushAsync(CancellationToken.None).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
     public async Task StartWorkflowAsync(
-        string requestId, int workflowId, WorkflowSpecification spec, string logPath, CancellationToken ct = default)
+        string workflowId, IReadOnlyList<JobSpecification> jobs, string logPath, CancellationToken ct = default)
     {
-        var initial = new WorkflowSnapshot(requestId, workflowId, WorkflowStatus.Pending, WorkflowPhase.CreatingOutput, 0, spec,
-            DateTimeOffset.UtcNow);
-        workflowsRepository.Enqueue(initial);
-        await workflowsRepository.FlushAsync(ct).ConfigureAwait(false);
+        var now = DateTimeOffset.UtcNow;
+        for (var jobId = 0; jobId < jobs.Count; jobId++)
+            jobsRepository.Enqueue(new JobSnapshot(workflowId, jobId, JobStatus.Pending, JobPhase.CreatingOutput, 0,
+                jobs[jobId], now));
+        await jobsRepository.FlushAsync(ct).ConfigureAwait(false);
 
-        var runner = new LoggingRunner(logPath, slideGenerationRunner, fileLoggerFactory, logNotifier);
-        await engine.StartWorkflowAsync((requestId, workflowId), initial, runner, ct).ConfigureAwait(false);
+        var runner = new LoggingWorkflowRunner(logPath, slideGenerationWorkflow, fileLoggerFactory, logNotifier);
+        await engine.StartWorkflowAsync(workflowId, new WorkflowSnapshot(workflowId, JobStatus.Pending, now), runner, ct)
+            .ConfigureAwait(false);
     }
 
     /// <inheritdoc />
-    public Task<bool> PauseWorkflowAsync(string requestId, int workflowId)
+    public Task<bool> PauseWorkflowAsync(string workflowId)
     {
-        return engine.PauseAsync((requestId, workflowId));
+        return engine.PauseAsync(workflowId);
     }
 
     /// <inheritdoc />
-    public Task<bool> ResumeWorkflowAsync(string requestId, int workflowId)
+    public Task<bool> ResumeWorkflowAsync(string workflowId)
     {
-        return engine.ResumeAsync((requestId, workflowId));
+        return engine.ResumeAsync(workflowId);
     }
 
     /// <inheritdoc />
-    public Task<bool> StopWorkflowAsync(string requestId, int workflowId)
+    public Task<bool> StopWorkflowAsync(string workflowId)
     {
-        return engine.StopAsync((requestId, workflowId));
+        return engine.StopAsync(workflowId);
     }
 }

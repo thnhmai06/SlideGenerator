@@ -163,7 +163,7 @@ public sealed class App : Application
         NameAndPaths.InitializeDirectories();
         Log.Information("Data DB: {Path}", NameAndPaths.DataFolder.DataFile.FilePath);
 
-        // Must resolve (construct + subscribe) before IService.InitializeAsync() — crash-resumed workflows are
+        // Must resolve (construct + subscribe) before IService.InitializeAsync() — crash-resumed jobs are
         // scheduled immediately by WorkflowController.InitializeAsync and their first progress events would be lost
         // by a subscriber attached any later. See IProgressHub's remarks.
         services.GetRequiredService<IProgressHub>();
@@ -176,7 +176,7 @@ public sealed class App : Application
         services.GetRequiredService<ILocalizationService>().SetLanguage(settingManager.Current.Appearance.Language);
 
         var service = services.GetRequiredService<IService>();
-        Log.Information("Starting workflow runner...");
+        Log.Information("Starting job runner...");
         await service.InitializeAsync().ConfigureAwait(true);
 
         // Fire-and-forget — an update check must never hold up startup or the splash screen.

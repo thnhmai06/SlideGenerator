@@ -76,7 +76,7 @@ public sealed class DialogService(IServiceProvider serviceProvider) : IDialogSer
         viewModel.Initialize(recipeId, recipeName);
         var dialog = new RunDialogView { DataContext = viewModel };
         var started = await dialog.ShowDialog<bool>(Owner).ConfigureAwait(false);
-        return started ? viewModel.CreatedRequestId : null;
+        return started ? viewModel.CreatedWorkflowId : null;
     }
 
     /// <inheritdoc />

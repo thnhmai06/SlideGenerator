@@ -23,7 +23,7 @@ namespace SlideGenerator.Workflows.Tests;
 ///     Domain-free behavioral tests for <see cref="WorkflowEngine{TKey,TState}" />, using
 ///     <see cref="ScriptedRunner" />/<see cref="RecordingObserver" /> to control and observe execution
 ///     deterministically (no <c>Thread.Sleep</c>/timing-based flakiness). Locks down the invariants recorded
-///     in the Engine/Runner split design: pause/stop checkpointing, semaphore swap-not-resize,
+///     in the Engine/Runner split design: pause/stop checkpointing,
 ///     non-blocking initialize, and terminal-state ownership rules.
 /// </summary>
 public sealed class WorkflowEngineTests
@@ -31,15 +31,12 @@ public sealed class WorkflowEngineTests
     private static readonly TimeSpan ShortTimeout = TimeSpan.FromSeconds(3);
     private static readonly TimeSpan NoProgressWindow = TimeSpan.FromMilliseconds(250);
 
-    private static (WorkflowEngine<string, TestState> Engine, RecordingObserver Observer, FakeConcurrencyProvider Concurrency
-        )
-        CreateEngine(int maxConcurrent = 5)
+    private static (WorkflowEngine<string, TestState> Engine, RecordingObserver Observer) CreateEngine()
     {
-        var concurrency = new FakeConcurrencyProvider(maxConcurrent);
         var observer = new RecordingObserver();
         var engine =
-            new WorkflowEngine<string, TestState>(concurrency, observer, NullLogger<WorkflowEngine<string, TestState>>.Instance);
-        return (engine, observer, concurrency);
+            new WorkflowEngine<string, TestState>(observer, NullLogger<WorkflowEngine<string, TestState>>.Instance);
+        return (engine, observer);
     }
 
     /// <summary>
@@ -56,7 +53,7 @@ public sealed class WorkflowEngineTests
     [Fact]
     public async Task Pause_BlocksAtNextCheckpoint_ButNotMidStep()
     {
-        var (engine, observer, _) = CreateEngine();
+        var (engine, observer) = CreateEngine();
         var runner = new ScriptedRunner(2, new TestState(99));
 
         await engine.StartWorkflowAsync("workflow", new TestState(0), runner, TestContext.Current.CancellationToken);
@@ -81,7 +78,7 @@ public sealed class WorkflowEngineTests
     [Fact]
     public async Task Stop_UnblocksAPausedWorkflow_DoesNotDeadlock()
     {
-        var (engine, observer, _) = CreateEngine();
+        var (engine, observer) = CreateEngine();
         var runner = new ScriptedRunner(2, new TestState(99));
 
         await engine.StartWorkflowAsync("workflow", new TestState(0), runner, TestContext.Current.CancellationToken);
@@ -98,35 +95,11 @@ public sealed class WorkflowEngineTests
         result.Outcome.Should().Be(WorkflowOutcome.Cancelled);
     }
 
-    /// <summary>A workflow stopped while still queued for a concurrency slot must end Canceled without ever running its runner.</summary>
-    [Fact]
-    public async Task Stop_BeforeSemaphoreAcquired_NeverRunsTheRunner()
-    {
-        var (engine, observer, _) = CreateEngine(1);
-
-        var blocker = new ScriptedRunner(1, new TestState(1));
-        await engine.StartWorkflowAsync("blocker", new TestState(0), blocker, TestContext.Current.CancellationToken);
-        await blocker.Reported[0].Task
-            .WaitAsync(ShortTimeout, TestContext.Current.CancellationToken); // blocker now holds the only slot
-
-        var queued = new UnreachableRunner();
-        await engine.StartWorkflowAsync("queued", new TestState(0), queued, TestContext.Current.CancellationToken);
-        (await engine.StopAsync("queued")).Should().BeTrue();
-
-        var result = await observer.WaitTerminalAsync("queued")
-            .WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
-        result.Outcome.Should().Be(WorkflowOutcome.Cancelled);
-        queued.WasCalled.Should().BeFalse();
-
-        blocker.Release[0].SetResult();
-        await observer.WaitTerminalAsync("blocker").WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
-    }
-
     /// <summary>Shutting down while a workflow is paused must still complete, unblocking the pause rather than hanging forever.</summary>
     [Fact]
     public async Task Shutdown_WithAPausedWorkflow_DoesNotHang()
     {
-        var (engine, observer, _) = CreateEngine();
+        var (engine, observer) = CreateEngine();
         var runner = new ScriptedRunner(2, new TestState(99));
 
         await engine.StartWorkflowAsync("workflow", new TestState(0), runner, TestContext.Current.CancellationToken);
@@ -144,64 +117,11 @@ public sealed class WorkflowEngineTests
         result.Outcome.Should().Be(WorkflowOutcome.Cancelled);
     }
 
-    /// <summary>The concurrency limit must hold: a workflow beyond the cap waits until a slot frees up.</summary>
-    [Fact]
-    public async Task ConcurrencyCap_LimitsParallelWorkflows()
-    {
-        var (engine, observer, _) = CreateEngine(1);
-        var a = new ScriptedRunner(1, new TestState(1));
-        var b = new ScriptedRunner(1, new TestState(1));
-
-        await engine.StartWorkflowAsync("a", new TestState(0), a, TestContext.Current.CancellationToken);
-        await a.Reported[0].Task.WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
-
-        await engine.StartWorkflowAsync("b", new TestState(0), b, TestContext.Current.CancellationToken);
-        (await CompletesWithinAsync(b.Reported[0].Task, NoProgressWindow)).Should().BeFalse("b must wait for a's slot");
-
-        a.Release[0].SetResult();
-        await observer.WaitTerminalAsync("a").WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
-        await b.Reported[0].Task.WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
-
-        b.Release[0].SetResult();
-        await observer.WaitTerminalAsync("b").WaitAsync(ShortTimeout, TestContext.Current.CancellationToken);
-    }
-
-    /// <summary>
-    ///     Raising the limit mid-run swaps in a new semaphore instance rather than resizing the shared one — a workflow
-    ///     started after the swap is independent of workflows still holding the old one.
-    /// </summary>
-    [Fact]
-    public async Task ConcurrencyLimit_SwapDoesNotAffectAlreadyRunningWorkflows()
-    {
-        var (engine, observer, concurrency) = CreateEngine(1);
-        var a = new ScriptedRunner(1, new TestState(1));
-
-        await engine.StartWorkflowAsync("a", new TestState(0), a, TestContext.Current.CancellationToken);
-        await a.Reported[0].Task
-            .WaitAsync(ShortTimeout,
-                TestContext.Current.CancellationToken); // a holds the only slot on the original semaphore
-
-        concurrency.MaxConcurrentWorkflows = 5; // takes effect only on the next StartWorkflowAsync/InitializeAsync
-        var b = new ScriptedRunner(1, new TestState(1));
-        await engine.StartWorkflowAsync("b", new TestState(0), b,
-            TestContext.Current.CancellationToken); // swaps in a fresh semaphore(5)
-        await b.Reported[0].Task
-            .WaitAsync(ShortTimeout,
-                TestContext.Current.CancellationToken); // b runs immediately despite a still holding its own slot
-
-        a.Release[0].SetResult();
-        b.Release[0].SetResult();
-        (await observer.WaitTerminalAsync("a").WaitAsync(ShortTimeout, TestContext.Current.CancellationToken)).Outcome
-            .Should().Be(WorkflowOutcome.Completed);
-        (await observer.WaitTerminalAsync("b").WaitAsync(ShortTimeout, TestContext.Current.CancellationToken)).Outcome
-            .Should().Be(WorkflowOutcome.Completed);
-    }
-
     /// <summary>InitializeAsync must only schedule resumed workflows and return — never wait for them to finish.</summary>
     [Fact]
     public async Task Initialize_DoesNotWaitForResumedWorkflowsToFinish_AndStartsAllOfThem()
     {
-        var (engine, observer, _) = CreateEngine();
+        var (engine, observer) = CreateEngine();
         var runnerA = new ScriptedRunner(1, new TestState(1));
         var runnerB = new ScriptedRunner(1, new TestState(1));
         var pending = new List<PendingWorkflow<string, TestState>>
@@ -234,7 +154,7 @@ public sealed class WorkflowEngineTests
     [Fact]
     public async Task Terminal_OnCompleted_UsesTheRunnersReturnValue_NotTheLastReportedState()
     {
-        var (engine, observer, _) = CreateEngine();
+        var (engine, observer) = CreateEngine();
         var returnedState = new TestState(999); // deliberately different from what gets reported mid-run
         var runner = new ScriptedRunner(1, returnedState);
 
@@ -252,7 +172,7 @@ public sealed class WorkflowEngineTests
     [Fact]
     public async Task Terminal_OnFaulted_UsesTheLastReportedState_NotTheInitialState()
     {
-        var (engine, observer, _) = CreateEngine();
+        var (engine, observer) = CreateEngine();
         var exception = new InvalidOperationException("boom");
         var runner = new ScriptedRunner(2, new TestState(999), 1, exception);
 
@@ -278,7 +198,7 @@ public sealed class WorkflowEngineTests
     [Fact]
     public async Task StartWorkflowAsync_DuplicateKey_ThrowsInvalidOperationException()
     {
-        var (engine, _, _) = CreateEngine();
+        var (engine, _) = CreateEngine();
         var runner1 = new ScriptedRunner(1, new TestState(1));
         var runner2 = new UnreachableRunner();
 

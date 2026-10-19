@@ -15,42 +15,28 @@
 namespace SlideGenerator.Generator.Progress;
 
 /// <summary>
-///     Identifies the aggregate lifecycle phase of a generation request, derived across every workflow spawned
-///     for it. Monotonically increasing — never regresses once reported.
+///     Identifies the aggregate lifecycle phase of a workflow, derived across every job it spawned. Monotonically increasing — never regresses once reported.
 /// </summary>
-public enum RequestPhase
+public enum WorkflowPhase
 {
-    /// <summary>At least one workflow has been spawned and is running its preparation step.</summary>
+    /// <summary>At least one job has been spawned and is running its preparation step.</summary>
     PreparationStarted,
 
-    /// <summary>Every known workflow of this request has left its preparation phase.</summary>
+    /// <summary>Every known job of this request has left its preparation phase.</summary>
     ProcessingStarted,
 
-    /// <summary>Every workflow of this request has reached a terminal state.</summary>
+    /// <summary>Every job of this request has reached a terminal state.</summary>
     Completed
-}
-
-/// <summary>Request-scoped progress notification — reports the aggregate lifecycle phase of a request.</summary>
-public sealed record RequestProgress
-{
-    /// <summary>Gets the request id this progress belongs to.</summary>
-    public required string RequestId { get; init; }
-
-    /// <summary>Gets the aggregate lifecycle phase.</summary>
-    public required RequestPhase Phase { get; init; }
-
-    /// <summary>Gets the UTC timestamp when this event was emitted.</summary>
-    public required DateTimeOffset Timestamp { get; init; }
 }
 
 /// <summary>Row-scoped progress notification — reports the processing status of a single data row.</summary>
 public sealed record RowProgress
 {
-    /// <summary>Gets the request id this row belongs to.</summary>
-    public required string RequestId { get; init; }
+    /// <summary>Gets the workflow id this row belongs to.</summary>
+    public required string WorkflowId { get; init; }
 
-    /// <summary>Gets the workflow id (ordinal within the request) this row belongs to.</summary>
-    public required int WorkflowId { get; init; }
+    /// <summary>Gets the job id (ordinal within the workflow) this row belongs to.</summary>
+    public required int JobId { get; init; }
 
     /// <summary>Gets the 1-based data row index (excludes the header row).</summary>
     public required int RowIndex { get; init; }

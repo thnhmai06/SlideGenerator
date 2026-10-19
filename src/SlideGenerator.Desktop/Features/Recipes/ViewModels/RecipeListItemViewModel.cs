@@ -75,8 +75,8 @@ public sealed partial class RecipeListItemViewModel : ObservableObject
     [RelayCommand]
     private async Task RunAsync()
     {
-        var requestId = await _dialogService.ShowRunDialogAsync(Id, Name).ConfigureAwait(true);
-        if (requestId is not null) RunStarted?.Invoke(requestId);
+        var workflowId = await _dialogService.ShowRunDialogAsync(Id, Name).ConfigureAwait(true);
+        if (workflowId is not null) RunStarted?.Invoke(workflowId);
     }
 
     [RelayCommand]

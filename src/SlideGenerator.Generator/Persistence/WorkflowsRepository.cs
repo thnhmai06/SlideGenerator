@@ -13,135 +13,102 @@
  */
 
 using System.Globalization;
-using System.Text.Json;
 using Dapper;
 using Microsoft.Data.Sqlite;
-using Microsoft.Extensions.Logging;
-using SlideGenerator.Document.Workbooks.Identifiers;
-using SlideGenerator.Generator.Workflows.Models;
-using SlideGenerator.Recipe.Models;
+using SlideGenerator.Document.Presentations.Identifiers;
+using SlideGenerator.Generator.Jobs.Models;
 
 namespace SlideGenerator.Generator.Persistence;
 
 /// <summary>
-///     Buffered current-state store for the <c>Workflows</c> table — the only frequently-changing table left
-///     (Requests are write-once, Recipes barely change). Writers call <see cref="Enqueue" /> as often as
-///     they like; a background loop coalesces and flushes to SQLite roughly once per second.
+///     Store for the <c>Workflows</c> table: one row per workflow (the execution of one <see cref="Request" />),
+///     holding the request it came from, its log file and its lifecycle status. Rows are written once and only
+///     their status changes afterwards, so — unlike <see cref="IJobsRepository" /> — nothing here is buffered.
 /// </summary>
 public interface IWorkflowsRepository
 {
-    /// <summary>Marks <paramref name="snapshot" /> dirty for the next flush — last write for a given key wins.</summary>
-    void Enqueue(WorkflowSnapshot snapshot);
+    /// <summary>Inserts a new workflow row.</summary>
+    Task CreateAsync(WorkflowRecord record, CancellationToken ct = default);
 
-    /// <summary>Flushes every dirty record to storage immediately, bypassing the ~1s tick.</summary>
-    Task FlushAsync(CancellationToken ct = default);
+    /// <summary>Gets the workflow row for <paramref name="workflowId" />, or <see langword="null" /> if absent.</summary>
+    Task<WorkflowRecord?> GetAsync(string workflowId, CancellationToken ct = default);
 
-    /// <summary>Raised after each successful flush with the batch that was just persisted.</summary>
-    event Action<IReadOnlyList<WorkflowSnapshot>>? Flushed;
+    /// <summary>
+    ///     Gets every workflow still <see cref="JobStatus.Pending" />, <see cref="JobStatus.Running" /> or
+    ///     <see cref="JobStatus.Paused" /> — at startup, by definition crash leftovers to resume.
+    /// </summary>
+    Task<IReadOnlyList<WorkflowRecord>> GetNonTerminalAsync(CancellationToken ct = default);
 
-    /// <summary>Gets every workflow belonging to <paramref name="requestId" />, ordered by workflow id.</summary>
-    Task<IReadOnlyList<WorkflowSnapshot>> GetByRequestIdAsync(string requestId, CancellationToken ct = default);
+    /// <summary>Updates the lifecycle status of <paramref name="workflowId" />.</summary>
+    Task UpdateStatusAsync(string workflowId, JobStatus status, CancellationToken ct = default);
 
-    /// <summary>Gets every workflow across all requests whose status is not yet terminal (for crash recovery).</summary>
-    Task<IReadOnlyList<WorkflowSnapshot>> GetNonTerminalAsync(CancellationToken ct = default);
-
-    /// <summary>Gets every workflow row across every request, regardless of status (for request-group listing).</summary>
-    Task<IReadOnlyList<WorkflowSnapshot>> GetAllAsync(CancellationToken ct = default);
-
-    /// <summary>Deletes every workflow row belonging to <paramref name="requestId" />.</summary>
-    Task DeleteByRequestIdAsync(string requestId, CancellationToken ct = default);
+    /// <summary>Deletes the workflow row for <paramref name="workflowId" />.</summary>
+    Task DeleteAsync(string workflowId, CancellationToken ct = default);
 }
 
-/// <summary>
-///     Buffered SQLite-backed implementation of <see cref="IWorkflowsRepository" /> for the <c>Workflows</c> table —
-///     the only table in the shared database that changes on every row/phase transition. Every field of
-///     <see cref="WorkflowSpecification" /> gets an explicit column; only the free-form nested lists
-///     (<c>UsedColumns</c>/<c>TextInstructions</c>/<c>ImageInstructions</c>) are stored as named JSON
-///     columns — see <c>001_2.0.0.sql</c> (<see cref="SlideGenerator.Settings.Database.DatabaseMigrator" />) for the
-///     original schema, and <c>002_add-total-rows-to-jobs.sql</c> for the <c>TotalRows</c> column added later
-///     (an existing <c>Data.db</c> only gets a new column via a follow-up migration — <c>CREATE TABLE IF NOT
-///     EXISTS</c> alone would silently no-op on a database that already has the table).
-/// </summary>
-internal sealed class WorkflowsRepository(SqliteConnectionStringBuilder builder, ILogger<WorkflowsRepository> logger)
-    : BufferedRepository<(string RequestId, int WorkflowId), WorkflowSnapshot>(logger), IWorkflowsRepository
+/// <summary>SQLite-backed implementation of <see cref="IWorkflowsRepository" /> for the shared <c>Data.db</c>.</summary>
+internal sealed class WorkflowsRepository(SqliteConnectionStringBuilder builder) : IWorkflowsRepository
 {
-    /// <inheritdoc cref="IWorkflowsRepository.Enqueue" />
-    public void Enqueue(WorkflowSnapshot snapshot)
-    {
-        Enqueue((snapshot.RequestId, snapshot.WorkflowId), snapshot);
-    }
-
-    /// <inheritdoc />
-    public async Task<IReadOnlyList<WorkflowSnapshot>> GetByRequestIdAsync(string requestId, CancellationToken ct = default)
+    public async Task CreateAsync(WorkflowRecord record, CancellationToken ct = default)
     {
         await using var conn = await OpenConnectionAsync(ct).ConfigureAwait(false);
-        var rows = await conn.QueryAsync<WorkflowRow>(new CommandDefinition(
-            "SELECT * FROM Workflows WHERE RequestId = @requestId ORDER BY WorkflowId",
-            new { requestId }, cancellationToken: ct)).ConfigureAwait(false);
-        return [.. rows.Select(FromRow)];
+        await conn.ExecuteAsync(new CommandDefinition(
+            """
+            INSERT INTO Workflows (WorkflowId, RecipeId, Name, OutputType, SaveFolder, AllowLocalPaths, LogPath, CreatedAt, Status)
+            VALUES (@WorkflowId, @RecipeId, @Name, @OutputType, @SaveFolder, @AllowLocalPaths, @LogPath, @CreatedAt, @Status)
+            """,
+            new
+            {
+                record.WorkflowId,
+                record.Request.RecipeId,
+                record.Request.Name,
+                OutputType = record.Request.OutputType.ToString(),
+                record.Request.SaveFolder,
+                AllowLocalPaths = record.Request.AllowLocalPaths ? 1 : 0,
+                record.LogPath,
+                CreatedAt = DbFormatUtc(record.CreatedAt),
+                Status = record.Status.ToString()
+            }, cancellationToken: ct)).ConfigureAwait(false);
     }
 
-    /// <inheritdoc />
-    public async Task<IReadOnlyList<WorkflowSnapshot>> GetNonTerminalAsync(CancellationToken ct = default)
+    public async Task<WorkflowRecord?> GetAsync(string workflowId, CancellationToken ct = default)
+    {
+        await using var conn = await OpenConnectionAsync(ct).ConfigureAwait(false);
+        var row = await conn.QuerySingleOrDefaultAsync<WorkflowRow>(new CommandDefinition(
+                "SELECT * FROM Workflows WHERE WorkflowId = @workflowId", new { workflowId }, cancellationToken: ct))
+            .ConfigureAwait(false);
+        return row is null ? null : FromRow(row);
+    }
+
+    public async Task<IReadOnlyList<WorkflowRecord>> GetNonTerminalAsync(CancellationToken ct = default)
     {
         await using var conn = await OpenConnectionAsync(ct).ConfigureAwait(false);
         var rows = await conn.QueryAsync<WorkflowRow>(new CommandDefinition(
             "SELECT * FROM Workflows WHERE Status IN (@pending, @running, @paused)",
             new
             {
-                pending = WorkflowStatus.Pending.ToString(),
-                running = WorkflowStatus.Running.ToString(),
-                paused = WorkflowStatus.Paused.ToString()
+                pending = JobStatus.Pending.ToString(),
+                running = JobStatus.Running.ToString(),
+                paused = JobStatus.Paused.ToString()
             }, cancellationToken: ct)).ConfigureAwait(false);
         return [.. rows.Select(FromRow)];
     }
 
-    /// <inheritdoc />
-    public async Task<IReadOnlyList<WorkflowSnapshot>> GetAllAsync(CancellationToken ct = default)
-    {
-        await using var conn = await OpenConnectionAsync(ct).ConfigureAwait(false);
-        var rows = await conn.QueryAsync<WorkflowRow>(new CommandDefinition(
-            "SELECT * FROM Workflows ORDER BY RequestId, WorkflowId", cancellationToken: ct)).ConfigureAwait(false);
-        return [.. rows.Select(FromRow)];
-    }
-
-    /// <inheritdoc />
-    public async Task DeleteByRequestIdAsync(string requestId, CancellationToken ct = default)
+    public async Task UpdateStatusAsync(string workflowId, JobStatus status, CancellationToken ct = default)
     {
         await using var conn = await OpenConnectionAsync(ct).ConfigureAwait(false);
         await conn.ExecuteAsync(new CommandDefinition(
-                "DELETE FROM Workflows WHERE RequestId = @requestId", new { requestId }, cancellationToken: ct))
+                "UPDATE Workflows SET Status = @status WHERE WorkflowId = @workflowId",
+                new { workflowId, status = status.ToString() }, cancellationToken: ct))
             .ConfigureAwait(false);
     }
 
-    /// <inheritdoc />
-    protected override async Task UpsertBatchAsync(IReadOnlyList<WorkflowSnapshot> batch, CancellationToken ct)
+    public async Task DeleteAsync(string workflowId, CancellationToken ct = default)
     {
-        if (batch.Count == 0) return;
-
         await using var conn = await OpenConnectionAsync(ct).ConfigureAwait(false);
-        await using var tx = await conn.BeginTransactionAsync(ct).ConfigureAwait(false);
         await conn.ExecuteAsync(new CommandDefinition(
-            """
-            INSERT INTO Workflows (
-                RequestId, WorkflowId, Status, Phase, CurrentIndex,
-                WorkbookPath, WorksheetName, UsedColumnsJson,
-                RowFilterType, RowFilterStart, RowFilterEnd, RowFilterPartitionIndex, RowFilterPartitionCount,
-                TemplatePresentationPath, TemplateSlideIndex, TextInstructionsJson, ImageInstructionsJson,
-                OutputPath, Timestamp, TotalRows
-            ) VALUES (
-                @RequestId, @WorkflowId, @Status, @Phase, @CurrentIndex,
-                @WorkbookPath, @WorksheetName, @UsedColumnsJson,
-                @RowFilterType, @RowFilterStart, @RowFilterEnd, @RowFilterPartitionIndex, @RowFilterPartitionCount,
-                @TemplatePresentationPath, @TemplateSlideIndex, @TextInstructionsJson, @ImageInstructionsJson,
-                @OutputPath, @Timestamp, @TotalRows
-            )
-            ON CONFLICT(RequestId, WorkflowId) DO UPDATE SET
-                Status = excluded.Status, Phase = excluded.Phase, CurrentIndex = excluded.CurrentIndex,
-                OutputPath = excluded.OutputPath, Timestamp = excluded.Timestamp, TotalRows = excluded.TotalRows
-            """,
-            batch.Select(ToRow), tx, cancellationToken: ct)).ConfigureAwait(false);
-        await tx.CommitAsync(ct).ConfigureAwait(false);
+                "DELETE FROM Workflows WHERE WorkflowId = @workflowId", new { workflowId }, cancellationToken: ct))
+            .ConfigureAwait(false);
     }
 
     #region Connection / schema
@@ -158,104 +125,29 @@ internal sealed class WorkflowsRepository(SqliteConnectionStringBuilder builder,
     #region Row mapping
 
     private sealed record WorkflowRow(
-        string RequestId,
-        long WorkflowId,
-        string Status,
-        string Phase,
-        long CurrentIndex,
-        string WorkbookPath,
-        string WorksheetName,
-        string? UsedColumnsJson,
-        string? RowFilterType,
-        long? RowFilterStart,
-        long? RowFilterEnd,
-        long? RowFilterPartitionIndex,
-        long? RowFilterPartitionCount,
-        string TemplatePresentationPath,
-        long TemplateSlideIndex,
-        string TextInstructionsJson,
-        string ImageInstructionsJson,
-        string OutputPath,
-        string Timestamp,
-        long? TotalRows);
+        string WorkflowId,
+        long RecipeId,
+        string Name,
+        string OutputType,
+        string SaveFolder,
+        long AllowLocalPaths,
+        string LogPath,
+        string CreatedAt,
+        string Status);
 
-    private static object ToRow(WorkflowSnapshot r)
+    private static WorkflowRecord FromRow(WorkflowRow row)
     {
-        var spec = r.Specification;
-        var rowFilterType = spec.RowFilter switch
-        {
-            null or AllRowFilter => null,
-            IndexRangeFilter => "IndexRange",
-            PartitionBlockFilter => "PartitionBlock",
-            _ => throw new NotSupportedException($"Unsupported RowFilter type: {spec.RowFilter.GetType().Name}")
-        };
-        var (start, end) = spec.RowFilter is IndexRangeFilter irf ? (irf.Start, irf.End) : ((int?)null, (int?)null);
-        var (pIdx, pCount) = spec.RowFilter is PartitionBlockFilter pbf
-            ? (pbf.PartitionIndex, pbf.PartitionCount)
-            : ((int?)null, (int?)null);
-
-        return new
-        {
-            r.RequestId,
-            r.WorkflowId,
-            Status = r.WorkflowStatus.ToString(),
-            Phase = r.Phase.ToString(),
-            r.CurrentIndex,
-            spec.WorkbookPath,
-            spec.WorksheetName,
-            UsedColumnsJson = spec.UsedColumns is null
-                ? null
-                : JsonSerializer.Serialize(spec.UsedColumns, WorkflowSpecificationJson.Options),
-            RowFilterType = rowFilterType,
-            RowFilterStart = start,
-            RowFilterEnd = end,
-            RowFilterPartitionIndex = pIdx,
-            RowFilterPartitionCount = pCount,
-            spec.TemplatePresentationPath,
-            spec.TemplateSlideIndex,
-            TextInstructionsJson = JsonSerializer.Serialize(spec.TextInstructions, WorkflowSpecificationJson.Options),
-            ImageInstructionsJson = JsonSerializer.Serialize(spec.ImageInstructions, WorkflowSpecificationJson.Options),
-            spec.OutputPath,
-            Timestamp = DbFormatUtc(r.Timestamp),
-            r.TotalRows
-        };
-    }
-
-    private static WorkflowSnapshot FromRow(WorkflowRow row)
-    {
-        RowFilter? rowFilter = row.RowFilterType switch
-        {
-            "IndexRange" => new IndexRangeFilter((int)row.RowFilterStart!.Value, (int)row.RowFilterEnd!.Value),
-            "PartitionBlock" => new PartitionBlockFilter((int)row.RowFilterPartitionIndex!.Value,
-                (int)row.RowFilterPartitionCount!.Value),
-            _ => null
-        };
-
-        var spec = new WorkflowSpecification(
-            row.WorkbookPath,
-            row.WorksheetName,
-            row.UsedColumnsJson is null
-                ? null
-                : JsonSerializer.Deserialize<IReadOnlySet<ColumnIdentifier>>(row.UsedColumnsJson,
-                    WorkflowSpecificationJson.Options),
-            rowFilter,
-            row.TemplatePresentationPath,
-            (int)row.TemplateSlideIndex,
-            JsonSerializer.Deserialize<IReadOnlyList<TextInstruction>>(row.TextInstructionsJson,
-                WorkflowSpecificationJson.Options) ?? [],
-            JsonSerializer.Deserialize<IReadOnlyList<ImageInstruction>>(row.ImageInstructionsJson,
-                WorkflowSpecificationJson.Options) ?? [],
-            row.OutputPath);
-
-        return new WorkflowSnapshot(
-            row.RequestId,
-            (int)row.WorkflowId,
-            Enum.Parse<WorkflowStatus>(row.Status),
-            Enum.Parse<WorkflowPhase>(row.Phase),
-            (int)row.CurrentIndex,
-            spec,
-            DbParseUtc(row.Timestamp),
-            (int?)row.TotalRows);
+        return new WorkflowRecord(
+            row.WorkflowId,
+            new Request(
+                (int)row.RecipeId,
+                row.Name,
+                Enum.Parse<PresentationType>(row.OutputType),
+                row.SaveFolder,
+                row.AllowLocalPaths != 0),
+            row.LogPath,
+            DbParseUtc(row.CreatedAt),
+            Enum.Parse<JobStatus>(row.Status));
     }
 
     private static string DbFormatUtc(DateTimeOffset value)

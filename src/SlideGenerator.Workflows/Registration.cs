@@ -23,7 +23,7 @@ public static class Registration
     /// <summary>
     ///     Adds <see cref="WorkflowEngine{TKey,TState}" /> as the <see cref="IWorkflowEngine{TKey,TState}" /> for the
     ///     given <typeparamref name="TKey" />/<typeparamref name="TState" /> pair. The caller must separately
-    ///     register <see cref="IWorkflowConcurrencyProvider" /> and <see cref="IWorkflowObserver{TKey,TState}" /> for
+    ///     register <see cref="IWorkflowObserver{TKey,TState}" /> for
     ///     the same pair.
     /// </summary>
     /// <returns>The updated service collection.</returns>

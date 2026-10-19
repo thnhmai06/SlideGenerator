@@ -114,7 +114,7 @@ public static class NameAndPaths
 
     /// <summary>
     ///     Provides the shared, app-wide temp directory used to cache downloaded images that are
-    ///     reused across multiple rows/workflows before being deleted once no longer referenced.
+    ///     reused across multiple rows/jobs before being deleted once no longer referenced.
     /// </summary>
     public static class TempFolder
     {
@@ -148,8 +148,8 @@ public static class NameAndPaths
         public static string FolderPath => Path.Combine(UserPath, "Data");
 
         /// <summary>
-        ///     Contains naming rules for the single shared SQLite database (<c>Recipes</c>/<c>Requests</c>/
-        ///     <c>Workflows</c> tables) — replaces the old per-purpose <c>Workflows.db</c>/<c>Recipes.db</c>/
+        ///     Contains naming rules for the single shared SQLite database (<c>Recipes</c>/<c>Workflows</c>/
+        ///     <c>Jobs</c> tables) — replaces the old per-purpose <c>Workflows.db</c>/<c>Recipes.db</c>/
         ///     <c>Cache.db</c>/<c>Studio.db</c> split.
         /// </summary>
         public static class DataFile

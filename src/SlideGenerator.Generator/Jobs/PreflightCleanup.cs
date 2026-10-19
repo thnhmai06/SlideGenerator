@@ -14,12 +14,12 @@
 
 using Microsoft.Extensions.Logging;
 
-namespace SlideGenerator.Generator.Workflows;
+namespace SlideGenerator.Generator.Jobs;
 
 /// <summary>
-///     Runs first when a fresh (non-resumed) workflow starts, to overwrite any prior output file left by an
-///     earlier run of this exact workflow. Only ever touches this workflow's own output path — never its parent
-///     directory or sibling files, since other workflows may share the same output folder.
+///     Runs first when a fresh (non-resumed) job starts, to overwrite any prior output file left by an
+///     earlier run of this exact job. Only ever touches this job's own output path — never its parent
+///     directory or sibling files, since other jobs may share the same output folder.
 /// </summary>
 internal static class PreflightCleanup
 {

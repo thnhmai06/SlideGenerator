@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Generator
- * File: LoggingRunner.cs
+ * File: LoggingWorkflowRunner.cs
  *
  * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -15,16 +15,16 @@
 using Microsoft.Extensions.Logging;
 using Serilog.Context;
 using Serilog.Events;
-using SlideGenerator.Generator.Workflows.Models;
 using SlideGenerator.Generator.Progress;
-using SlideGenerator.Workflows.Engine;
+using SlideGenerator.Generator.Workflows.Models;
 using SlideGenerator.Logging.FileLogging;
+using SlideGenerator.Workflows.Engine;
 
-namespace SlideGenerator.Generator.Workflows.Runners;
+namespace SlideGenerator.Generator.Workflows;
 
 /// <summary>
-///     A per-workflow logger, threaded from <see cref="LoggingRunner" /> (which owns the file-backed
-///     <c>ILoggerFactory</c> for one workflow's run) down to <see cref="SlideGenerationRunner" />, without the
+///     A per-workflow logger, threaded from <see cref="LoggingWorkflowRunner" /> (which owns the file-backed
+///     <c>ILoggerFactory</c> for one workflow's run) down to <see cref="SlideGenerationWorkflow" />, without the
 ///     generic <see cref="IWorkflowContext{TState}" /> contract knowing anything about logging.
 /// </summary>
 internal interface IScopedLoggerContext
@@ -33,21 +33,22 @@ internal interface IScopedLoggerContext
 }
 
 /// <summary>
-///     Pure decorator: opens a file-backed log scope for the duration of one workflow's run, then delegates
-///     entirely to <paramref name="inner" />. Never calls <see cref="IWorkflowContext{TState}.ReportAsync" />,
-///     never publishes an event, never inspects the outcome — doing so would leak domain semantics into a
-///     class that only exists to route log lines to the right file.
+///     Pure decorator: opens one file-backed log scope for the duration of a workflow's whole run — shared by
+///     every job it runs concurrently, so there is exactly one sink per log file — then delegates entirely to
+///     <paramref name="inner" />. Never calls <see cref="IWorkflowContext{TState}.ReportAsync" />, never publishes
+///     an event, never inspects the outcome.
 /// </summary>
-internal sealed class LoggingRunner(
+internal sealed class LoggingWorkflowRunner(
     string logPath,
     IWorkflowRunner<WorkflowSnapshot> inner,
     IFileLoggerFactory fileLoggerFactory,
     ILogNotifier logNotifier) : IWorkflowRunner<WorkflowSnapshot>
 {
-    private static readonly string[] ScopePropertyNames = ["RequestId", "WorkflowId", "RowIndex"];
+    private static readonly string[] ScopePropertyNames = ["WorkflowId", "JobId", "RowIndex"];
 
     /// <inheritdoc />
-    public async Task<WorkflowSnapshot> RunAsync(WorkflowSnapshot state, IWorkflowContext<WorkflowSnapshot> context, CancellationToken ct)
+    public async Task<WorkflowSnapshot> RunAsync(
+        WorkflowSnapshot state, IWorkflowContext<WorkflowSnapshot> context, CancellationToken ct)
     {
         using var loggerFactory = fileLoggerFactory.CreateFile(logPath, ScopePropertyNames, notification =>
             logNotifier.Publish(new LogEntry
@@ -57,9 +58,8 @@ internal sealed class LoggingRunner(
                 Level = ToLevelAbbreviation(notification.Level),
                 Info = notification.Message
             }));
-        var workflowLogger = loggerFactory.CreateLogger(nameof(SlideGenerationRunner));
+        var workflowLogger = loggerFactory.CreateLogger(nameof(SlideGenerationWorkflow));
 
-        using var requestScope = LogContext.PushProperty("RequestId", state.RequestId);
         using var workflowScope = LogContext.PushProperty("WorkflowId", state.WorkflowId);
 
         return await inner.RunAsync(state, new ScopedContext(context, workflowLogger), ct).ConfigureAwait(false);

@@ -12,47 +12,41 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using SlideGenerator.Generator.Workflows.Models;
-using SlideGenerator.Generator.Workflows.Runners;
+using SlideGenerator.Generator.Jobs.Models;
 using SlideGenerator.Generator.Persistence;
 using SlideGenerator.Generator.Progress;
-using SlideGenerator.Workflows.Engine;
+using SlideGenerator.Generator.Workflows.Models;
 using SlideGenerator.Logging.FileLogging;
-using SlideGenerator.Settings.Immutable;
+using SlideGenerator.Workflows.Engine;
 
 namespace SlideGenerator.Generator.Workflows;
 
 /// <summary>
-///     Finds workflows left non-terminal by a crash and rebuilds everything <see cref="IWorkflowEngine{TKey,TState}" />
-///     needs to resume them — including a real per-request <see cref="LoggingRunner" /> log path read
-///     from <see cref="IRequestsRepository" />, fixing the previous behavior of always falling back to a
-///     synthetic <c>{requestId}.log</c> path on resume regardless of what the request actually used.
+///     Finds workflows left non-terminal by a crash and rebuilds everything
+///     <see cref="IWorkflowEngine{TKey,TState}" /> needs to resume them — including a <see cref="LoggingWorkflowRunner" />
+///     writing to the same log file the original run used, read from the persisted <see cref="WorkflowRecord" />.
+///     Each workflow's own unfinished jobs are re-read by <see cref="SlideGenerationWorkflow" /> when it runs.
 /// </summary>
 internal sealed class GeneratorResumeSource(
     IWorkflowsRepository workflowsRepository,
-    IRequestsRepository requestsRepository,
-    SlideGenerationRunner slideGenerationRunner,
+    SlideGenerationWorkflow slideGenerationWorkflow,
     IFileLoggerFactory fileLoggerFactory,
-    ILogNotifier logNotifier) : IWorkflowResumeSource<WorkflowKey, WorkflowSnapshot>
+    ILogNotifier logNotifier) : IWorkflowResumeSource<string, WorkflowSnapshot>
 {
     /// <inheritdoc />
-    public async Task<IReadOnlyList<PendingWorkflow<WorkflowKey, WorkflowSnapshot>>> GetPendingWorkflowsAsync(CancellationToken ct)
+    public async Task<IReadOnlyList<PendingWorkflow<string, WorkflowSnapshot>>> GetPendingWorkflowsAsync(
+        CancellationToken ct)
     {
         var nonTerminal = await workflowsRepository.GetNonTerminalAsync(ct).ConfigureAwait(false);
-        var result = new List<PendingWorkflow<WorkflowKey, WorkflowSnapshot>>(nonTerminal.Count);
-        foreach (var snapshot in nonTerminal)
+        var result = new List<PendingWorkflow<string, WorkflowSnapshot>>(nonTerminal.Count);
+        foreach (var record in nonTerminal)
         {
-            var request = await requestsRepository.GetAsync(snapshot.RequestId, ct).ConfigureAwait(false);
-            var logPath = request?.LogPath ?? DefaultLogPath(snapshot.RequestId);
-            var runner = new LoggingRunner(logPath, slideGenerationRunner, fileLoggerFactory, logNotifier);
-            result.Add(new PendingWorkflow<WorkflowKey, WorkflowSnapshot>((snapshot.RequestId, snapshot.WorkflowId), snapshot, runner));
+            // A workflow that was Paused before the crash resumes as plain Running — there is no persisted "why".
+            var state = new WorkflowSnapshot(record.WorkflowId, JobStatus.Running, DateTimeOffset.UtcNow);
+            var runner = new LoggingWorkflowRunner(record.LogPath, slideGenerationWorkflow, fileLoggerFactory, logNotifier);
+            result.Add(new PendingWorkflow<string, WorkflowSnapshot>(record.WorkflowId, state, runner));
         }
 
         return result;
-    }
-
-    private static string DefaultLogPath(string requestId)
-    {
-        return Path.Combine(NameAndPaths.LogsFolder.WorkflowPath, $"{requestId}.log");
     }
 }

@@ -25,7 +25,7 @@ public sealed partial record Setting
     public NetworkSetting Network { get; init; } = new();
 
     /// <summary>
-    ///     Gets the configuration settings related to workflow execution and parallelism.
+    ///     Gets the configuration settings related to job execution and parallelism.
     /// </summary>
     public PerformanceSetting Performance { get; init; } = new();
 

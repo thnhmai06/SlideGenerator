@@ -288,13 +288,13 @@ public sealed class RecipeEditorViewModelTests
         await vm.InitializeAsync(recipe);
         vm.Name = "Recipe A";
 
-        string? startedRequestId = null;
-        vm.RunStarted += id => startedRequestId = id;
+        string? startedWorkflowId = null;
+        vm.RunStarted += id => startedWorkflowId = id;
         await vm.SaveAndRunCommand.ExecuteAsync(null);
 
         await repository.Received(1).AddAsync(Arg.Any<RecipeInput>());
         await dialogService.Received(1).ShowRunDialogAsync(9, "Recipe A");
-        startedRequestId.Should().Be("req-1");
+        startedWorkflowId.Should().Be("req-1");
     }
 
     [Fact]

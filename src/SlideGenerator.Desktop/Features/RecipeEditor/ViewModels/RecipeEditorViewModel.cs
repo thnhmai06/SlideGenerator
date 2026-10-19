@@ -94,7 +94,7 @@ public sealed partial class RecipeEditorViewModel : ObservableObject
     public bool HasTemplate => Sessions.Count > 0;
 
     /// <summary>Gets the file count Guided step ④ shows ("sẽ tạo N file") — in Guided there's always exactly one
-    ///     mapping, so this is just its worksheet-source count (mirrors <c>Service.BuildWorkflows</c>'s
+    ///     mapping, so this is just its worksheet-source count (mirrors <c>Service.BuildJobs</c>'s
     ///     mapping×source flattening for the single-mapping case).</summary>
     public int GuidedFileCount => Sources.Sources.Count;
 
@@ -256,8 +256,8 @@ public sealed partial class RecipeEditorViewModel : ObservableObject
         if (IsDirty) await PersistAsync().ConfigureAwait(true);
         if (Id is null) return;
 
-        var requestId = await _dialogService.ShowRunDialogAsync(Id.Value, Name).ConfigureAwait(true);
-        if (requestId is not null) RunStarted?.Invoke(requestId);
+        var workflowId = await _dialogService.ShowRunDialogAsync(Id.Value, Name).ConfigureAwait(true);
+        if (workflowId is not null) RunStarted?.Invoke(workflowId);
     }
 
     private async Task PersistAsync()
@@ -406,7 +406,7 @@ public sealed partial class RecipeEditorViewModel : ObservableObject
     ///     call before navigating away so edits aren't lost. A no-op unless <see cref="SelectedSession" /> is
     ///     the session actually reflected in the panels right now — otherwise a load that bailed early
     ///     (missing template slide) would project stale, previous-session content onto the new session. Real
-    ///     dirty tracking is P4.6's workflow; this intentionally leaves <see cref="IsDirty" /> untouched so merely
+    ///     dirty tracking is P4.6's job; this intentionally leaves <see cref="IsDirty" /> untouched so merely
     ///     switching mappings to look at them doesn't mark the recipe dirty.</summary>
     public void ProjectCurrentSessionEdits()
     {

@@ -18,10 +18,11 @@ using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using SlideGenerator.Document.Presentations.Identifiers;
 using SlideGenerator.Document.Workbooks.Identifiers;
-using SlideGenerator.Generator.Workflows;
-using SlideGenerator.Generator.Workflows.Models;
+using SlideGenerator.Generator.Jobs;
+using SlideGenerator.Generator.Jobs.Models;
 using SlideGenerator.Generator.Persistence;
 using SlideGenerator.Generator.Progress;
+using SlideGenerator.Generator.Workflows;
 using SlideGenerator.Recipe.Models;
 using SlideGenerator.Recipe.Services;
 using Xunit;
@@ -29,13 +30,13 @@ using Xunit;
 namespace SlideGenerator.Generator.Tests.Unit;
 
 /// <summary>
-///     Unit tests for <see cref="Service" />'s pure helper methods: <c>BuildWorkflows</c> (flattens a recipe's
-///     <c>Mappings</c> into one <see cref="WorkflowSpecification" /> per worksheet source) and
-///     <c>DeriveStatus</c> (multi-workflow status aggregation for one request's workflow list).
+///     Unit tests for <see cref="Service" />'s pure helper methods: <c>BuildJobs</c> (flattens a recipe's
+///     <c>Mappings</c> into one <see cref="JobSpecification" /> per worksheet source) and
+///     <c>DeriveStatus</c> (multi-job status aggregation for one request's job list).
 /// </summary>
 public sealed class ServiceTests
 {
-    #region BuildWorkflows
+    #region BuildJobs
 
     private static Recipe.Models.Recipe OneMappingOneSource()
     {
@@ -51,25 +52,25 @@ public sealed class ServiceTests
         return new Recipe.Models.Recipe([mapping]);
     }
 
-    /// <summary>Verifies that one mapping with one source produces exactly one workflow with resolved values.</summary>
+    /// <summary>Verifies that one mapping with one source produces exactly one job with resolved values.</summary>
     [Fact]
-    public void BuildWorkflows_OneMappingOneSource_ProducesOneWorkflow()
+    public void BuildJobs_OneMappingOneSource_ProducesOneJob()
     {
         var recipe = OneMappingOneSource();
         var request = new Request(1, "Test", PresentationType.Pptx, Path.GetTempPath());
 
-        var workflows = Service.BuildWorkflows(recipe, request);
+        var jobs = Service.BuildJobs(recipe, request);
 
-        workflows.Should().HaveCount(1);
-        var workflow = workflows[0];
-        workflow.WorksheetName.Should().Be("Sheet1");
-        workflow.TemplateSlideIndex.Should().Be(1);
-        workflow.OutputPath.Should().Contain("Sheet1");
+        jobs.Should().HaveCount(1);
+        var job = jobs[0];
+        job.WorksheetName.Should().Be("Sheet1");
+        job.TemplateSlideIndex.Should().Be(1);
+        job.OutputPath.Should().Contain("Sheet1");
     }
 
-    /// <summary>Verifies that a mapping with N sources produces N workflows, all sharing the mapping's template/instructions.</summary>
+    /// <summary>Verifies that a mapping with N sources produces N jobs, all sharing the mapping's template/instructions.</summary>
     [Fact]
-    public void BuildWorkflows_MappingWithMultipleSources_ProducesOneWorkflowPerSource()
+    public void BuildJobs_MappingWithMultipleSources_ProducesOneJobPerSource()
     {
         var mapping = new Mapping(
             [
@@ -85,113 +86,113 @@ public sealed class ServiceTests
         var recipe = new Recipe.Models.Recipe([mapping]);
         var request = new Request(1, "Test", PresentationType.Pptx, Path.GetTempPath());
 
-        var workflows = Service.BuildWorkflows(recipe, request);
+        var jobs = Service.BuildJobs(recipe, request);
 
-        workflows.Should().HaveCount(2);
-        workflows.Select(j => j.WorksheetName).Should().Contain(["A", "B"]);
+        jobs.Should().HaveCount(2);
+        jobs.Select(j => j.WorksheetName).Should().Contain(["A", "B"]);
     }
 
-    /// <summary>Verifies that an empty recipe (no mappings) produces no workflows.</summary>
+    /// <summary>Verifies that an empty recipe (no mappings) produces no jobs.</summary>
     [Fact]
-    public void BuildWorkflows_EmptyRecipe_ProducesNoWorkflows()
+    public void BuildJobs_EmptyRecipe_ProducesNoJobs()
     {
         var recipe = new Recipe.Models.Recipe([]);
         var request = new Request(1, "Empty", PresentationType.Pptx, Path.GetTempPath());
 
-        var workflows = Service.BuildWorkflows(recipe, request);
+        var jobs = Service.BuildJobs(recipe, request);
 
-        workflows.Should().BeEmpty();
+        jobs.Should().BeEmpty();
     }
 
     #endregion
 
     #region DeriveStatus
 
-    private static WorkflowSnapshot Workflow(WorkflowStatus workflowStatus)
+    private static JobSnapshot Job(JobStatus jobStatus)
     {
-        return new WorkflowSnapshot(
-            "req", 0, workflowStatus, WorkflowPhase.CreatingOutput, 0,
-            new WorkflowSpecification("wb", "Sheet1", null, null, "ppt", 1, [], [], "out.pptx"),
+        return new JobSnapshot(
+            "req", 0, jobStatus, JobPhase.CreatingOutput, 0,
+            new JobSpecification("wb", "Sheet1", null, null, "ppt", 1, [], [], "out.pptx"),
             DateTimeOffset.UtcNow);
     }
 
-    /// <summary>Any workflow Pending or Running → the whole request is Running.</summary>
+    /// <summary>Any job Pending or Running → the whole request is Running.</summary>
     [Fact]
     public void DeriveStatus_AnyPendingOrRunning_ReturnsRunning()
     {
-        var workflows = new[] { Workflow(WorkflowStatus.Complete), Workflow(WorkflowStatus.Pending), Workflow(WorkflowStatus.Cancelled) };
+        var jobs = new[] { Job(JobStatus.Complete), Job(JobStatus.Pending), Job(JobStatus.Cancelled) };
 
-        Service.DeriveStatus(workflows).Should().Be(WorkflowStatus.Running);
+        Service.DeriveStatus(jobs).Should().Be(JobStatus.Running);
     }
 
-    /// <summary>No workflow Pending/Running but at least one Paused → Paused.</summary>
+    /// <summary>No job Pending/Running but at least one Paused → Paused.</summary>
     [Fact]
     public void DeriveStatus_NoneRunningSomePaused_ReturnsPaused()
     {
-        var workflows = new[] { Workflow(WorkflowStatus.Complete), Workflow(WorkflowStatus.Paused) };
+        var jobs = new[] { Job(JobStatus.Complete), Job(JobStatus.Paused) };
 
-        Service.DeriveStatus(workflows).Should().Be(WorkflowStatus.Paused);
+        Service.DeriveStatus(jobs).Should().Be(JobStatus.Paused);
     }
 
-    /// <summary>Every workflow Canceled → Canceled.</summary>
+    /// <summary>Every job Canceled → Canceled.</summary>
     [Fact]
     public void DeriveStatus_AllCancelled_ReturnsCancelled()
     {
-        var workflows = new[] { Workflow(WorkflowStatus.Cancelled), Workflow(WorkflowStatus.Cancelled) };
+        var jobs = new[] { Job(JobStatus.Cancelled), Job(JobStatus.Cancelled) };
 
-        Service.DeriveStatus(workflows).Should().Be(WorkflowStatus.Cancelled);
+        Service.DeriveStatus(jobs).Should().Be(JobStatus.Cancelled);
     }
 
-    /// <summary>Every workflow Complete → Complete.</summary>
+    /// <summary>Every job Complete → Complete.</summary>
     [Fact]
     public void DeriveStatus_AllComplete_ReturnsComplete()
     {
-        var workflows = new[] { Workflow(WorkflowStatus.Complete), Workflow(WorkflowStatus.Complete) };
+        var jobs = new[] { Job(JobStatus.Complete), Job(JobStatus.Complete) };
 
-        Service.DeriveStatus(workflows).Should().Be(WorkflowStatus.Complete);
+        Service.DeriveStatus(jobs).Should().Be(JobStatus.Complete);
     }
 
     /// <summary>A mix of Complete and Canceled (no Pending/Running/Paused) falls back to Complete.</summary>
     [Fact]
     public void DeriveStatus_MixedCompleteAndCancelled_ReturnsComplete()
     {
-        var workflows = new[] { Workflow(WorkflowStatus.Complete), Workflow(WorkflowStatus.Cancelled) };
+        var jobs = new[] { Job(JobStatus.Complete), Job(JobStatus.Cancelled) };
 
-        Service.DeriveStatus(workflows).Should().Be(WorkflowStatus.Complete);
+        Service.DeriveStatus(jobs).Should().Be(JobStatus.Complete);
     }
 
     #endregion
 
     #region FindDuplicateOutputPath
 
-    private static WorkflowSpecification Spec(string outputPath, string worksheetName = "Sheet1")
+    private static JobSpecification Spec(string outputPath, string worksheetName = "Sheet1")
     {
-        return new WorkflowSpecification("wb.xlsx", worksheetName, null, null, "template.pptx", 1, [], [], outputPath);
+        return new JobSpecification("wb.xlsx", worksheetName, null, null, "template.pptx", 1, [], [], outputPath);
     }
 
-    /// <summary>Two workflows writing to the same output path (e.g. two Mappings sharing a worksheet) are flagged.</summary>
+    /// <summary>Two jobs writing to the same output path (e.g. two Mappings sharing a worksheet) are flagged.</summary>
     [Fact]
-    public void FindDuplicateOutputPath_TwoWorkflowsSameOutputPath_ReturnsThatPath()
+    public void FindDuplicateOutputPath_TwoJobsSameOutputPath_ReturnsThatPath()
     {
-        var workflows = new[] { Spec("out.pptx", "Sheet1"), Spec("out.pptx", "Sheet2") };
+        var jobs = new[] { Spec("out.pptx", "Sheet1"), Spec("out.pptx", "Sheet2") };
 
-        var duplicates = Service.FindDuplicateOutputPath(workflows);
+        var duplicates = Service.FindDuplicateOutputPath(jobs);
 
         duplicates.Should().ContainSingle().Which.Should().Be("out.pptx");
     }
 
-    /// <summary>Workflows with all-distinct output paths produce no duplicates.</summary>
+    /// <summary>Jobs with all-distinct output paths produce no duplicates.</summary>
     [Fact]
     public void FindDuplicateOutputPath_AllUniqueOutputPaths_ReturnsEmpty()
     {
-        var workflows = new[] { Spec("a.pptx"), Spec("b.pptx") };
+        var jobs = new[] { Spec("a.pptx"), Spec("b.pptx") };
 
-        Service.FindDuplicateOutputPath(workflows).Should().BeEmpty();
+        Service.FindDuplicateOutputPath(jobs).Should().BeEmpty();
     }
 
-    /// <summary>An empty workflow list has no duplicates.</summary>
+    /// <summary>An empty job list has no duplicates.</summary>
     [Fact]
-    public void FindDuplicateOutputPath_EmptyWorkflowList_ReturnsEmpty()
+    public void FindDuplicateOutputPath_EmptyJobList_ReturnsEmpty()
     {
         Service.FindDuplicateOutputPath([]).Should().BeEmpty();
     }
@@ -201,22 +202,21 @@ public sealed class ServiceTests
 
 /// <summary>
 ///     Unit tests for <see cref="Service" /> instance behavior that needs mocked dependencies:
-///     <c>PreviewAsync</c> (per-workflow conflict classification, §8.5) and the <c>includeLogs</c> gate on
+///     <c>PreviewAsync</c> (per-job conflict classification, §8.5) and the <c>includeLogs</c> gate on
 ///     <c>ListActiveAsync</c>/<c>ListCompletedAsync</c> (§8.4 — list views must never touch the log file).
 /// </summary>
 public sealed class ServicePreviewAndLoggingTests
 {
     private readonly IWorkflowController _workflowController = Substitute.For<IWorkflowController>();
     private readonly IRecipeRepository _recipeRepository = Substitute.For<IRecipeRepository>();
-    private readonly IRequestsRepository _requestsRepository = Substitute.For<IRequestsRepository>();
     private readonly IWorkflowsRepository _workflowsRepository = Substitute.For<IWorkflowsRepository>();
-    private readonly IEventBus _eventBus = Substitute.For<IEventBus>();
+    private readonly IJobsRepository _jobsRepository = Substitute.For<IJobsRepository>();
     private readonly ILogFileReader _logFileReader = Substitute.For<ILogFileReader>();
     private readonly ILogger<Service> _logger = NullLogger<Service>.Instance;
 
     private Service CreateService()
     {
-        return new Service(_workflowController, _recipeRepository, _requestsRepository, _workflowsRepository, _eventBus,
+        return new Service(_workflowController, _recipeRepository, _workflowsRepository, _jobsRepository,
             _logFileReader, _logger);
     }
 
@@ -246,8 +246,8 @@ public sealed class ServicePreviewAndLoggingTests
     public async Task PreviewAsync_TwoMappingsSameWorksheet_FlagsDuplicateWithinRequest()
     {
         SetupRecipe(TwoMappingsSameWorksheet());
-        _workflowsRepository.GetNonTerminalAsync(Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<IReadOnlyList<WorkflowSnapshot>>([]));
+        _jobsRepository.GetNonTerminalAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<JobSnapshot>>([]));
         var request = new Request(1, "Test", PresentationType.Pptx, Path.GetTempPath());
 
         var planned = await CreateService().PreviewAsync(request);
@@ -256,13 +256,13 @@ public sealed class ServicePreviewAndLoggingTests
         planned.Should().OnlyContain(p => p.ConflictKind == ConflictKind.DuplicateWithinRequest);
     }
 
-    /// <summary>A recipe with no path collisions and no active requests reports every workflow as conflict-free.</summary>
+    /// <summary>A recipe with no path collisions and no active requests reports every job as conflict-free.</summary>
     [Fact]
     public async Task PreviewAsync_NoCollisions_ReturnsNone()
     {
         SetupRecipe(ServiceTests_OneMappingOneSource());
-        _workflowsRepository.GetNonTerminalAsync(Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<IReadOnlyList<WorkflowSnapshot>>([]));
+        _jobsRepository.GetNonTerminalAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<JobSnapshot>>([]));
         var request = new Request(1, "Test", PresentationType.Pptx, Path.GetTempPath());
 
         var planned = await CreateService().PreviewAsync(request);
@@ -270,13 +270,13 @@ public sealed class ServicePreviewAndLoggingTests
         planned.Should().ContainSingle().Which.ConflictKind.Should().Be(ConflictKind.None);
     }
 
-    /// <summary>A recipe with no mappings plans zero workflows — the "0 workflow" case the Run dialog must block on.</summary>
+    /// <summary>A recipe with no mappings plans zero jobs — the "0 job" case the Run dialog must block on.</summary>
     [Fact]
     public async Task PreviewAsync_EmptyRecipe_ReturnsEmptyList()
     {
         SetupRecipe(new Recipe.Models.Recipe([]));
-        _workflowsRepository.GetNonTerminalAsync(Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<IReadOnlyList<WorkflowSnapshot>>([]));
+        _jobsRepository.GetNonTerminalAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<JobSnapshot>>([]));
         var request = new Request(1, "Test", PresentationType.Pptx, Path.GetTempPath());
 
         var planned = await CreateService().PreviewAsync(request);
@@ -284,18 +284,18 @@ public sealed class ServicePreviewAndLoggingTests
         planned.Should().BeEmpty();
     }
 
-    /// <summary>A workflow whose output path is already claimed by another active request is flagged, not thrown.</summary>
+    /// <summary>A job whose output path is already claimed by another active request is flagged, not thrown.</summary>
     [Fact]
     public async Task PreviewAsync_PathClaimedByActiveRequest_FlagsConflictsWithActiveRequest()
     {
         var recipe = ServiceTests_OneMappingOneSource();
         SetupRecipe(recipe);
         var request = new Request(1, "Test", PresentationType.Pptx, Path.GetTempPath());
-        var plannedPath = Service.BuildWorkflows(recipe, request)[0].OutputPath;
-        var activeWorkflow = new WorkflowSnapshot("other-request", 0, WorkflowStatus.Running, WorkflowPhase.FillingImages, 5,
-            new WorkflowSpecification("wb", "Sheet1", null, null, "ppt", 1, [], [], plannedPath), DateTimeOffset.UtcNow);
-        _workflowsRepository.GetNonTerminalAsync(Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<IReadOnlyList<WorkflowSnapshot>>([activeWorkflow]));
+        var plannedPath = Service.BuildJobs(recipe, request)[0].OutputPath;
+        var activeJob = new JobSnapshot("other-request", 0, JobStatus.Running, JobPhase.FillingImages, 5,
+            new JobSpecification("wb", "Sheet1", null, null, "ppt", 1, [], [], plannedPath), DateTimeOffset.UtcNow);
+        _jobsRepository.GetNonTerminalAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<JobSnapshot>>([activeJob]));
 
         var planned = await CreateService().PreviewAsync(request);
 
@@ -327,22 +327,128 @@ public sealed class ServicePreviewAndLoggingTests
     [Fact]
     public async Task ListActiveAsync_IncludeLogsFalse_NeverReadsLogFileAndOmitsLogs()
     {
-        const string requestId = "req-1";
-        var workflow = new WorkflowSnapshot(requestId, 0, WorkflowStatus.Running, WorkflowPhase.FillingText, 3,
-            new WorkflowSpecification("wb", "Sheet1", null, null, "ppt", 1, [], [], "out.pptx"), DateTimeOffset.UtcNow);
-        _workflowsRepository.GetAllAsync(Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<IReadOnlyList<WorkflowSnapshot>>([workflow]));
-        _requestsRepository.GetAsync(requestId, Arg.Any<CancellationToken>())
-            .Returns(new RequestRecord(requestId,
+        const string workflowId = "req-1";
+        var job = new JobSnapshot(workflowId, 0, JobStatus.Running, JobPhase.FillingText, 3,
+            new JobSpecification("wb", "Sheet1", null, null, "ppt", 1, [], [], "out.pptx"), DateTimeOffset.UtcNow);
+        _jobsRepository.GetAllAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<JobSnapshot>>([job]));
+        _workflowsRepository.GetAsync(workflowId, Arg.Any<CancellationToken>())
+            .Returns(new WorkflowRecord(workflowId,
                 new Request(1, "Test", PresentationType.Pptx, Path.GetTempPath()), "unused.log",
                 DateTimeOffset.UtcNow));
+        _workflowsRepository.GetNonTerminalAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<WorkflowRecord>>([]));
 
         var summaries = await CreateService().ListActiveAsync(includeLogs: false);
 
         _logFileReader.DidNotReceive().ReadAll(Arg.Any<string>());
-        summaries.Should().ContainKey(requestId);
-        summaries[requestId].Logs.Should().BeEmpty();
-        summaries[requestId].Workflows[0].Logs.Should().BeEmpty();
+        summaries.Should().ContainKey(workflowId);
+        summaries[workflowId].Logs.Should().BeEmpty();
+        summaries[workflowId].Jobs[0].Logs.Should().BeEmpty();
+    }
+
+    #endregion
+
+    #region Workflow control
+
+    private void SetupWorkflow(string workflowId, JobStatus workflowStatus, params JobStatus[] jobStatuses)
+    {
+        var spec = new JobSpecification("wb", "Sheet1", null, null, "ppt", 1, [], [], "out.pptx");
+        IReadOnlyList<JobSnapshot> jobs =
+        [
+            .. jobStatuses.Select((status, i) =>
+                new JobSnapshot(workflowId, i, status, JobPhase.FillingText, 0, spec, DateTimeOffset.UtcNow))
+        ];
+        _jobsRepository.GetByWorkflowIdAsync(workflowId, Arg.Any<CancellationToken>()).Returns(Task.FromResult(jobs));
+        _workflowsRepository.GetAsync(workflowId, Arg.Any<CancellationToken>())
+            .Returns(new WorkflowRecord(workflowId, new Request(1, "Test", PresentationType.Pptx, Path.GetTempPath()),
+                "unused.log", DateTimeOffset.UtcNow, workflowStatus));
+    }
+
+    /// <summary>A running workflow is paused with exactly one workflow-level call, never one call per job.</summary>
+    [Fact]
+    public async Task PauseAsync_RunningWorkflow_PausesTheWorkflowOnce()
+    {
+        SetupWorkflow("wf", JobStatus.Running, JobStatus.Running, JobStatus.Running, JobStatus.Pending);
+        _workflowController.PauseWorkflowAsync("wf").Returns(true);
+
+        var result = await CreateService().PauseAsync("wf");
+
+        result.Should().Be(new PartialResult(1, 0));
+        await _workflowController.Received(1).PauseWorkflowAsync("wf");
+    }
+
+    /// <summary>Stopping a workflow whose jobs have all finished is skipped, not failed, and calls nothing.</summary>
+    [Fact]
+    public async Task StopAsync_FinishedWorkflow_IsSkipped()
+    {
+        SetupWorkflow("wf", JobStatus.Complete, JobStatus.Complete, JobStatus.Complete);
+
+        var result = await CreateService().StopAsync("wf");
+
+        result.Should().Be(new PartialResult(0, 1));
+        await _workflowController.DidNotReceive().StopWorkflowAsync(Arg.Any<string>());
+    }
+
+    /// <summary>A workflow paused at workflow level is resumable even though its job rows still read as running.</summary>
+    [Fact]
+    public async Task ResumeAsync_PausedWorkflowWithRunningJobRows_ResumesTheWorkflow()
+    {
+        SetupWorkflow("wf", JobStatus.Paused, JobStatus.Running, JobStatus.Pending);
+        _workflowController.ResumeWorkflowAsync("wf").Returns(true);
+
+        var result = await CreateService().ResumeAsync("wf");
+
+        result.Should().Be(new PartialResult(1, 0));
+    }
+
+    /// <summary>
+    ///     <c>CreateAsync</c> registers one workflow holding every computed job, in a single controller call, and
+    ///     persists the workflow row first.
+    /// </summary>
+    [Fact]
+    public async Task CreateAsync_TwoSources_StartsOneWorkflowWithTwoJobs()
+    {
+        var mapping = new Mapping(
+            [
+                new WorksheetSource(new WorkbookIdentifier(Path.Combine(Path.GetTempPath(), "a.xlsx")),
+                    new WorksheetIdentifier("A")),
+                new WorksheetSource(new WorkbookIdentifier(Path.Combine(Path.GetTempPath(), "b.xlsx")),
+                    new WorksheetIdentifier("B"))
+            ],
+            new PresentationSource(
+                new PresentationIdentifier(Path.Combine(Path.GetTempPath(), "template.pptx")),
+                new SlideIdentifier(1)),
+            [], []);
+        SetupRecipe(new Recipe.Models.Recipe([mapping]));
+        _jobsRepository.GetNonTerminalAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<JobSnapshot>>([]));
+
+        var workflowId = await CreateService()
+            .CreateAsync(new Request(1, "Test", PresentationType.Pptx, Path.GetTempPath()));
+
+        await _workflowsRepository.Received(1).CreateAsync(
+            Arg.Is<WorkflowRecord>(r => r.WorkflowId == workflowId && r.Status == JobStatus.Pending),
+            Arg.Any<CancellationToken>());
+        await _workflowController.Received(1).StartWorkflowAsync(workflowId,
+            Arg.Is<IReadOnlyList<JobSpecification>>(jobs => jobs.Count == 2), Arg.Any<string>(),
+            Arg.Any<CancellationToken>());
+    }
+
+    /// <summary>
+    ///     A workflow stored as paused whose job rows still derive as running reports as paused; once every job has
+    ///     finished the stored pause no longer matters.
+    /// </summary>
+    [Fact]
+    public void DeriveStatus_WorkflowPaused_OnlyOverridesRunningJobs()
+    {
+        var spec = new JobSpecification("wb", "Sheet1", null, null, "ppt", 1, [], [], "out.pptx");
+        JobSnapshot Job(JobStatus status) =>
+            new("wf", 0, status, JobPhase.FillingText, 0, spec, DateTimeOffset.UtcNow);
+
+        Service.DeriveStatus([Job(JobStatus.Running)], JobStatus.Paused).Should().Be(JobStatus.Paused);
+        Service.DeriveStatus([Job(JobStatus.Complete)], JobStatus.Paused).Should().Be(JobStatus.Complete);
+        Service.DeriveStatus([Job(JobStatus.Running)], JobStatus.Running).Should().Be(JobStatus.Running);
     }
 
     #endregion

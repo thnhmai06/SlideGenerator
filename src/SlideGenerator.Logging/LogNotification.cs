@@ -17,7 +17,7 @@ using Serilog.Events;
 namespace SlideGenerator.Logging;
 
 /// <summary>
-///     A single log event, captured at the point of writing, carrying the Request/Workflow/Row scope path it
+///     A single log event, captured at the point of writing, carrying the Request/Job/Row scope path it
 ///     was written under. Passed to <c>IFileLoggerFactory.CreateFile</c>'s <c>onLogEvent</c> callback so a
 ///     caller can forward it to the frontend in real time, without this module depending upward on any
 ///     consumer-specific type.
@@ -29,8 +29,8 @@ public sealed record LogNotification
 
     /// <summary>
     ///     Gets the dotted scope path this event was written under, with one segment per scope level —
-    ///     e.g. <c>"&lt;requestId&gt;"</c>, <c>"&lt;requestId&gt;/&lt;workflowId&gt;"</c>, or
-    ///     <c>"&lt;requestId&gt;/&lt;workflowId&gt;/&lt;rowIndex&gt;"</c>.
+    ///     e.g. <c>"&lt;requestId&gt;"</c>, <c>"&lt;requestId&gt;/&lt;jobId&gt;"</c>, or
+    ///     <c>"&lt;requestId&gt;/&lt;jobId&gt;/&lt;rowIndex&gt;"</c>.
     /// </summary>
     public required string Location { get; init; }
 

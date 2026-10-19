@@ -14,11 +14,11 @@
 
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.DependencyInjection;
-using SlideGenerator.Generator.Workflows;
-using SlideGenerator.Generator.Workflows.Models;
-using SlideGenerator.Generator.Workflows.Runners;
+using SlideGenerator.Generator.Jobs;
 using SlideGenerator.Generator.Persistence;
 using SlideGenerator.Generator.Progress;
+using SlideGenerator.Generator.Workflows;
+using SlideGenerator.Generator.Workflows.Models;
 using SlideGenerator.Workflows;
 using SlideGenerator.Workflows.Engine;
 using SlideGenerator.Settings.Immutable;
@@ -32,7 +32,7 @@ public static class Registration
     extension(IServiceCollection services)
     {
         /// <summary>
-        ///     Adds the workflow runner, its Requests/Workflows persistence, and the <see cref="IService" /> facade to
+        ///     Adds the workflow controller, its Workflows/Jobs persistence, and the <see cref="IService" /> facade to
         ///     the service collection.
         /// </summary>
         /// <returns>The updated service collection.</returns>
@@ -51,24 +51,30 @@ public static class Registration
                     };
                 });
 
-            // Shared connection builder for the single Data.db (Recipes/Requests/Workflows tables).
+            // Shared connection builder for the single Data.db (Recipes/Workflows/Jobs tables).
             services.AddSingleton(new SqliteConnectionStringBuilder(NameAndPaths.DataFolder.DataFile.ConnectionString));
 
-            services.AddSingleton<IRequestsRepository, RequestsRepository>();
             services.AddSingleton<IWorkflowsRepository, WorkflowsRepository>();
+            services.AddSingleton<IJobsRepository, JobsRepository>();
 
-            // Reads the per-request workflow log file back into scoped LogEntry records for Summary.Logs.
+            // Reads the per-workflow log file back into scoped LogEntry records for Summary.Logs.
             services.AddSingleton<ILogFileReader, LogFileReader>();
 
-            // Workflow execution — generic Workflow Engine (SlideGenerator.Workflows) driving the slide-generation runner.
-            services.AddSingleton<IWorkflowConcurrencyProvider, SettingConcurrencyProvider>();
-            services.AddSingleton<SlideGenerationRunner>();
-            services.AddSingleton<IWorkflowObserver<WorkflowKey, WorkflowSnapshot>, GeneratorWorkflowObserver>();
-            services.AddSingleton<IWorkflowResumeSource<WorkflowKey, WorkflowSnapshot>, GeneratorResumeSource>();
-            services.AddWorkflowEngine<WorkflowKey, WorkflowSnapshot>();
+            // Job execution — each request runs as one workflow on the generic Workflow Engine
+            // (SlideGenerator.Workflows); the workflow runs its jobs concurrently, throttled by one shared JobGate.
+            services.AddSingleton(sp =>
+            {
+                var settings = sp.GetRequiredService<ISettingProvider>();
+                return new JobGate(() => (int)settings.Current.Performance.MaxConcurrentJobs);
+            });
+            services.AddSingleton<JobExecutor>();
+            services.AddSingleton<SlideGenerationWorkflow>();
+            services.AddSingleton<IWorkflowObserver<string, WorkflowSnapshot>, GeneratorWorkflowObserver>();
+            services.AddSingleton<IWorkflowResumeSource<string, WorkflowSnapshot>, GeneratorResumeSource>();
+            services.AddWorkflowEngine<string, WorkflowSnapshot>();
             services.AddSingleton<IWorkflowController, WorkflowController>();
 
-            // Service facade — Ipc depends on this, not on IWorkflowController directly.
+            // Service facade — The UI depends on this, not on IWorkflowController directly.
             services.AddSingleton<IService, Service>();
 
             return services;

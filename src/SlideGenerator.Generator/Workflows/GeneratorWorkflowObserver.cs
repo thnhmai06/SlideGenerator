@@ -13,81 +13,64 @@
  */
 
 using Microsoft.Extensions.Logging;
-using SlideGenerator.Generator.Workflows.Models;
+using SlideGenerator.Generator.Jobs.Models;
 using SlideGenerator.Generator.Persistence;
 using SlideGenerator.Generator.Progress;
+using SlideGenerator.Generator.Workflows.Models;
 using SlideGenerator.Workflows.Engine;
 
 namespace SlideGenerator.Generator.Workflows;
 
 /// <summary>
 ///     Maps <see cref="IWorkflowEngine{TKey,TState}" />'s generic lifecycle callbacks onto
-///     <see cref="IWorkflowsRepository" />/<see cref="IEventBus" /> — the only place <see cref="WorkflowStatus" />
-///     values get assigned. The enqueue (persist) and publish (event) side effects below are not atomic
-///     with each other; that is an accepted application-level integration detail, not a guarantee
-///     <c>SlideGenerator.Workflows</c> makes.
+///     <see cref="IWorkflowsRepository" />/<see cref="IEventBus" /> — the only place a workflow's own
+///     <see cref="JobStatus" /> is assigned. (Job statuses are assigned by <see cref="SlideGenerationWorkflow" />.)
+///     The persist and publish side effects below are not atomic with each other; that is an accepted
+///     application-level integration detail, not a guarantee <c>SlideGenerator.Workflows</c> makes.
 /// </summary>
 internal sealed class GeneratorWorkflowObserver(
     IWorkflowsRepository workflowsRepository,
     IEventBus eventBus,
-    ILogger<GeneratorWorkflowObserver> logger) : IWorkflowObserver<WorkflowKey, WorkflowSnapshot>
+    ILogger<GeneratorWorkflowObserver> logger) : IWorkflowObserver<string, WorkflowSnapshot>
 {
     /// <inheritdoc />
-    public Task OnProgressAsync(WorkflowKey key, WorkflowSnapshot state, bool durable, CancellationToken ct)
+    public Task OnProgressAsync(string key, WorkflowSnapshot state, bool durable, CancellationToken ct)
     {
-        return PersistAndPublishAsync(state with { WorkflowStatus = WorkflowStatus.Running }, durable, ct);
+        return PersistAndPublishAsync(state with { Status = JobStatus.Running, Timestamp = DateTimeOffset.UtcNow }, ct);
     }
 
     /// <inheritdoc />
-    public Task OnPausedAsync(WorkflowKey key, WorkflowSnapshot state, CancellationToken ct)
+    public Task OnPausedAsync(string key, WorkflowSnapshot state, CancellationToken ct)
     {
-        return PersistAndPublishAsync(state with { WorkflowStatus = WorkflowStatus.Paused, Timestamp = DateTimeOffset.UtcNow },
-            false, ct);
+        return PersistAndPublishAsync(state with { Status = JobStatus.Paused, Timestamp = DateTimeOffset.UtcNow }, ct);
     }
 
     /// <inheritdoc />
-    public Task OnResumedAsync(WorkflowKey key, WorkflowSnapshot state, CancellationToken ct)
+    public Task OnResumedAsync(string key, WorkflowSnapshot state, CancellationToken ct)
     {
-        return PersistAndPublishAsync(state with { WorkflowStatus = WorkflowStatus.Running, Timestamp = DateTimeOffset.UtcNow },
-            false, ct);
+        return PersistAndPublishAsync(state with { Status = JobStatus.Running, Timestamp = DateTimeOffset.UtcNow }, ct);
     }
 
     /// <inheritdoc />
-    public async Task OnTerminalAsync(WorkflowKey key, WorkflowTerminalResult<WorkflowSnapshot> result, CancellationToken ct)
+    public Task OnTerminalAsync(string key, WorkflowTerminalResult<WorkflowSnapshot> result, CancellationToken ct)
     {
         var status = result.Outcome switch
         {
-            WorkflowOutcome.Completed => WorkflowStatus.Complete,
-            WorkflowOutcome.Cancelled => WorkflowStatus.Cancelled,
-            WorkflowOutcome.Faulted => WorkflowStatus.Error,
+            WorkflowOutcome.Completed => JobStatus.Complete,
+            WorkflowOutcome.Cancelled => JobStatus.Cancelled,
+            WorkflowOutcome.Faulted => JobStatus.Error,
             _ => throw new ArgumentOutOfRangeException(nameof(result), result.Outcome, null)
         };
         if (result.Outcome == WorkflowOutcome.Faulted)
-            logger.LogError(result.Exception, "Workflow {RequestId}/{WorkflowId} failed.", key.RequestId, key.WorkflowId);
+            logger.LogError(result.Exception, "Workflow {WorkflowId} failed.", key);
 
-        await PersistAndPublishAsync(result.State with { WorkflowStatus = status, Timestamp = DateTimeOffset.UtcNow },
-            true, ct).ConfigureAwait(false);
-        CleanupWorkflowTempFolder(key.RequestId, key.WorkflowId);
+        return PersistAndPublishAsync(
+            result.State with { Status = status, Timestamp = DateTimeOffset.UtcNow }, ct);
     }
 
-    private async Task PersistAndPublishAsync(WorkflowSnapshot state, bool durable, CancellationToken ct)
+    private async Task PersistAndPublishAsync(WorkflowSnapshot state, CancellationToken ct)
     {
-        workflowsRepository.Enqueue(state);
-        if (durable) await workflowsRepository.FlushAsync(ct).ConfigureAwait(false);
+        await workflowsRepository.UpdateStatusAsync(state.WorkflowId, state.Status, ct).ConfigureAwait(false);
         eventBus.Publish(state);
-    }
-
-    /// <summary>Deletes the per-workflow download folder after a terminal (non-Paused) outcome.</summary>
-    private void CleanupWorkflowTempFolder(string requestId, int workflowId)
-    {
-        var dir = WorkflowTempFolder.GetPath(requestId, workflowId);
-        try
-        {
-            if (Directory.Exists(dir)) Directory.Delete(dir, true);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            logger.LogWarning(ex, "Failed to clean up workflow temp folder '{Dir}'.", dir);
-        }
     }
 }

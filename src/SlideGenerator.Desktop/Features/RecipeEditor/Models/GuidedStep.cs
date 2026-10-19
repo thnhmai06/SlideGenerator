@@ -31,6 +31,6 @@ public enum GuidedStep
     /// <summary>③ Confirm text-placeholder and image-shape bindings.</summary>
     Binding,
 
-    /// <summary>④ Review the workflow count, then save (optionally + run).</summary>
+    /// <summary>④ Review the job count, then save (optionally + run).</summary>
     Review
 }

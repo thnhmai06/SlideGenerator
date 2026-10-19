@@ -35,9 +35,9 @@
         <ProjectReference Include="../../src/SlideGenerator.Workflows/SlideGenerator.Workflows.csproj"/>
     </ItemGroup>
 
-    <!-- Needed for the SlideGenerationRunner integration test: Document's SfWorkbookOpener/SfPresentationOpener
+    <!-- Needed for the JobExecutor integration test: Document's SfWorkbookOpener/SfPresentationOpener
          load Syncfusion at runtime, and Microsoft.Extensions.Http.IHttpClientFactory is referenced by the
-         runner's constructor. Neither package flows transitively through a ProjectReference (see
+         workload's constructor. Neither package flows transitively through a ProjectReference (see
          AGENTS.md's NuGet-transitivity pitfall — Directory.Build.props sets PrivateAssets="all" on all
          ProjectReference items), so both must be declared explicitly here. -->
     <ItemGroup>

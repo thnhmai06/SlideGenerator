@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Generator
- * File: WorkflowPhase.cs
+ * File: JobPhase.cs
  *
  * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -12,14 +12,14 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Generator.Workflows.Models;
+namespace SlideGenerator.Generator.Jobs.Models;
 
 /// <summary>
-///     Identifies which of the 4 sequential phases a workflow is currently in. A workflow always progresses
-///     forward (never regresses) through these phases; <see cref="WorkflowSnapshot.CurrentIndex" />
+///     Identifies which of the 4 sequential phases a job is currently in. A job always progresses
+///     forward (never regresses) through these phases; <see cref="JobSnapshot.CurrentIndex" />
 ///     tracks how far it got within the current phase.
 /// </summary>
-public enum WorkflowPhase : byte
+public enum JobPhase : byte
 {
     /// <summary>Just get started, didn't do anything.</summary>
     Queued,
@@ -36,6 +36,6 @@ public enum WorkflowPhase : byte
     /// <summary>Downloading, cropping, and inserting images into every appended slide.</summary>
     FillingImages,
 
-    /// <summary>Every phase has completed for this workflow.</summary>
+    /// <summary>Every phase has completed for this job.</summary>
     Done
 }

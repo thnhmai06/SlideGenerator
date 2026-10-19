@@ -18,9 +18,10 @@ using Microsoft.Extensions.Logging;
 namespace SlideGenerator.Workflows.Engine;
 
 /// <summary>
-///     Runs workflows concurrently — bounded by <see cref="IWorkflowConcurrencyProvider" />, tracked by
-///     <typeparamref name="TKey" /> — without knowing what a workflow does or what <typeparamref name="TState" />
-///     means. See <see cref="IWorkflowRunner{TState}" /> for the domain-specific half of the contract.
+///     Runs workflows concurrently, tracked by <typeparamref name="TKey" />, without knowing what a workflow does
+///     or what <typeparamref name="TState" /> means. It imposes no concurrency limit of its own: a runner that fans
+///     out into parallel work throttles that work itself. See <see cref="IWorkflowRunner{TState}" /> for the
+///     domain-specific half of the contract.
 /// </summary>
 public interface IWorkflowEngine<TKey, TState> where TKey : notnull
 {
@@ -42,7 +43,8 @@ public interface IWorkflowEngine<TKey, TState> where TKey : notnull
     ///     <paramref name="key" /> is already registered — a duplicate key is a caller bug, not a state to
     ///     silently tolerate.
     /// </summary>
-    Task StartWorkflowAsync(TKey key, TState initialState, IWorkflowRunner<TState> runner, CancellationToken ct = default);
+    Task StartWorkflowAsync(TKey key, TState initialState, IWorkflowRunner<TState> runner,
+        CancellationToken ct = default);
 
     /// <summary>Pauses a running workflow at its next checkpoint. Returns <see langword="false" /> if not currently registered.</summary>
     Task<bool> PauseAsync(TKey key);
@@ -55,31 +57,26 @@ public interface IWorkflowEngine<TKey, TState> where TKey : notnull
 }
 
 /// <summary>
-///     Runs each workflow's <see cref="IWorkflowRunner{TState}" /> on its own <see cref="Task.Run(Action)" />, gated
-///     by a concurrency semaphore sized from <see cref="IWorkflowConcurrencyProvider" />. See
+///     Runs each workflow's <see cref="IWorkflowRunner{TState}" /> on its own <see cref="Task.Run(Action)" />. See
 ///     <see cref="IWorkflowEngine{TKey,TState}" /> for the full contract — this type knows nothing about what a
 ///     workflow does, or what <typeparamref name="TState" />/<typeparamref name="TKey" /> mean.
 /// </summary>
 public sealed class WorkflowEngine<TKey, TState>(
-    IWorkflowConcurrencyProvider concurrencyProvider,
     IWorkflowObserver<TKey, TState> observer,
     ILogger<WorkflowEngine<TKey, TState>> logger) : IWorkflowEngine<TKey, TState> where TKey : notnull
 {
     private readonly ConcurrentDictionary<TKey, RunningWorkflow> _running = new();
-    private int _currentLimit = 1;
-    private SemaphoreSlim _semaphore = new(1, 1);
 
     /// <inheritdoc />
     public async Task InitializeAsync(IWorkflowResumeSource<TKey, TState> resumeSource, CancellationToken ct = default)
     {
-        ApplyConcurrencyLimit();
-
         var pending = await resumeSource.GetPendingWorkflowsAsync(ct).ConfigureAwait(false);
         foreach (var workflow in pending)
         {
             var running = Register(workflow.Key, workflow.State);
             running.RunTask = Task.Run(
-                () => RunWorkflowAsync(workflow.Key, workflow.State, workflow.Runner, true, running), CancellationToken.None);
+                () => RunWorkflowAsync(workflow.Key, workflow.State, workflow.Runner, true, running),
+                CancellationToken.None);
         }
 
         logger.LogInformation("WorkflowEngine initialized. Resumed {Count} pending workflow(s).", pending.Count);
@@ -94,7 +91,7 @@ public sealed class WorkflowEngine<TKey, TState>(
             workflow.Gate.Resume(); // unblock a paused checkpoint so cancellation is observed promptly
         }
 
-        await Task.WhenAll(_running.Values.Select(j => j.RunTask ?? Task.CompletedTask))
+        await Task.WhenAll(_running.Values.Select(w => w.RunTask ?? Task.CompletedTask))
             .ContinueWith(_ => { }, TaskScheduler.Default).ConfigureAwait(false);
         logger.LogInformation("WorkflowEngine shut down.");
     }
@@ -103,8 +100,6 @@ public sealed class WorkflowEngine<TKey, TState>(
     public Task StartWorkflowAsync(
         TKey key, TState initialState, IWorkflowRunner<TState> runner, CancellationToken ct = default)
     {
-        ApplyConcurrencyLimit();
-
         var running = Register(key, initialState);
         running.RunTask = Task.Run(
             () => RunWorkflowAsync(key, initialState, runner, false, running), CancellationToken.None);
@@ -138,22 +133,6 @@ public sealed class WorkflowEngine<TKey, TState>(
         return Task.FromResult(true);
     }
 
-    /// <summary>
-    ///     Re-applies <see cref="IWorkflowConcurrencyProvider.MaxConcurrentWorkflows" /> onto <see cref="_semaphore" />,
-    ///     but only when the value actually changed since the last apply — swapping unconditionally on
-    ///     every call would give each newly-started workflow its own private, uncontended semaphore instead of
-    ///     sharing the pool with workflows already running, defeating the limit entirely. When it does change,
-    ///     a new instance is swapped in rather than mutating the old one, so workflows already waiting on the
-    ///     previous instance are unaffected — only newly-queued waits see the new limit.
-    /// </summary>
-    private void ApplyConcurrencyLimit()
-    {
-        var value = concurrencyProvider.MaxConcurrentWorkflows;
-        if (value == _currentLimit) return;
-        _currentLimit = value;
-        _semaphore = new SemaphoreSlim(value, value);
-    }
-
     /// <summary>Registers a new running workflow. Throws if <paramref name="key" /> is already registered.</summary>
     private RunningWorkflow Register(TKey key, TState initialState)
     {
@@ -164,31 +143,22 @@ public sealed class WorkflowEngine<TKey, TState>(
     }
 
     /// <summary>
-    ///     Runs one workflow to completion (or until paused/cancelled/faulted), publishing the initial "starting
-    ///     execution" progress before the concurrency slot is acquired, then the terminal outcome on exit.
+    ///     Runs one workflow to completion (or until cancelled/faulted), publishing the initial "starting
+    ///     execution" progress first, then the terminal outcome on exit.
     /// </summary>
     private async Task RunWorkflowAsync(
         TKey key, TState initialState, IWorkflowRunner<TState> runner, bool isResume, RunningWorkflow running)
     {
         var ct = running.Cts.Token;
-
-        await observer.OnProgressAsync(key, initialState, true, CancellationToken.None)
-            .ConfigureAwait(false);
-
-        // Captured once, up front: if a later StartWorkflowAsync/InitializeAsync swaps _semaphore while this
-        // workflow is in flight, Wait and Release below must still pair on the SAME instance — reading the
-        // mutable field again at Release time could release a slot on a semaphore this workflow never
-        // acquired from (SemaphoreFullException) or silently corrupt the new one's count.
-        var semaphore = _semaphore;
-        var acquired = false;
         try
         {
-            await semaphore.WaitAsync(ct).ConfigureAwait(false);
-            acquired = true;
+            await observer.OnProgressAsync(key, initialState, true, CancellationToken.None)
+                .ConfigureAwait(false);
 
             var context = new WorkflowContext(isResume, running, observer, key);
             var finalState = await runner.RunAsync(initialState, context, ct).ConfigureAwait(false);
-            await observer.OnTerminalAsync(key, new WorkflowTerminalResult<TState>(WorkflowOutcome.Completed, finalState, null),
+            await observer.OnTerminalAsync(key,
+                new WorkflowTerminalResult<TState>(WorkflowOutcome.Completed, finalState, null),
                 CancellationToken.None).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (running.Cts.IsCancellationRequested)
@@ -206,7 +176,6 @@ public sealed class WorkflowEngine<TKey, TState>(
         }
         finally
         {
-            if (acquired) semaphore.Release();
             _running.TryRemove(key, out _);
         }
     }
@@ -239,10 +208,11 @@ public sealed class WorkflowEngine<TKey, TState>(
     }
 
     /// <summary>
-    ///     Bridges a running workflow's <see cref="RunningWorkflow" />/<see cref="IWorkflowObserver{TKey,TState}" /> to the
-    ///     <see cref="IWorkflowContext{TState}" /> a runner sees.
+    ///     Bridges a running workflow's <see cref="RunningWorkflow" />/<see cref="IWorkflowObserver{TKey,TState}" />
+    ///     to the <see cref="IWorkflowContext{TState}" /> a runner sees.
     /// </summary>
-    private sealed class WorkflowContext(bool isResume, RunningWorkflow running, IWorkflowObserver<TKey, TState> observer, TKey key)
+    private sealed class WorkflowContext(
+        bool isResume, RunningWorkflow running, IWorkflowObserver<TKey, TState> observer, TKey key)
         : IWorkflowContext<TState>
     {
         public bool IsResume { get; } = isResume;

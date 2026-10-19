@@ -14,10 +14,11 @@
 
 using Microsoft.Extensions.Logging;
 using SlideGenerator.Document.Presentations.Identifiers;
-using SlideGenerator.Generator.Workflows;
-using SlideGenerator.Generator.Workflows.Models;
+using SlideGenerator.Generator.Jobs;
+using SlideGenerator.Generator.Jobs.Models;
 using SlideGenerator.Generator.Persistence;
 using SlideGenerator.Generator.Progress;
+using SlideGenerator.Generator.Workflows;
 using SlideGenerator.Recipe.Services;
 using SlideGenerator.Settings.Immutable;
 using SlideGenerator.Utilities;
@@ -25,60 +26,60 @@ using SlideGenerator.Utilities;
 namespace SlideGenerator.Generator;
 
 /// <summary>
-///     Defines the facade for workflow lifecycle operations exposed to the IPC layer.
+///     Defines the facade for job lifecycle operations exposed to the IPC layer.
 ///     Consumers (e.g. <c>GeneratingActiveHandler</c>) depend only on this interface and are
 ///     completely decoupled from <see cref="IWorkflowController" /> internals.
 /// </summary>
 public interface IService
 {
     /// <summary>
-    ///     Resumes any crashed non-terminal workflow and starts the underlying workflow runner.
+    ///     Resumes any crashed non-terminal job and starts the underlying job runner.
     ///     Must be called once during application startup before any other method.
     /// </summary>
     Task InitializeAsync(CancellationToken ct = default);
 
     /// <summary>
-    ///     Stops the underlying workflow runner gracefully.
+    ///     Stops the underlying job runner gracefully.
     ///     Must be called during application shutdown.
     /// </summary>
     Task ShutdownAsync(CancellationToken ct = default);
 
     /// <summary>
-    ///     Computes the workflow list <see cref="CreateAsync" /> would spawn for <paramref name="request" />,
+    ///     Computes the job list <see cref="CreateAsync" /> would spawn for <paramref name="request" />,
     ///     without spawning anything — lets a caller (e.g. a run confirmation dialog) show exactly what will
     ///     be created and flag every output-path conflict <see cref="CreateAsync" /> would otherwise reject
     ///     at submit time, using the identical conflict definition. Does not itself throw on conflicts —
-    ///     conflicts are reported per workflow via <see cref="PlannedWorkflow.ConflictKind" /> instead.
+    ///     conflicts are reported per job via <see cref="PlannedJob.ConflictKind" /> instead.
     /// </summary>
-    Task<IReadOnlyList<PlannedWorkflow>> PreviewAsync(Request request, CancellationToken ct = default);
+    Task<IReadOnlyList<PlannedJob>> PreviewAsync(Request request, CancellationToken ct = default);
 
     /// <summary>
     ///     Starts a new slide-generation request for the given <paramref name="request" /> — spawns one
-    ///     workflow per computed workflow specification. Multiple active requests for the same recipe are
-    ///     allowed; throws if two of the request's own workflows would write to the same output path, or if a
-    ///     computed workflow's output path collides with one already claimed by another active (running or
-    ///     paused) request's workflow.
+    ///     job per computed job specification. Multiple active requests for the same recipe are
+    ///     allowed; throws if two of the request's own jobs would write to the same output path, or if a
+    ///     computed job's output path collides with one already claimed by another active (running or
+    ///     paused) request's job.
     /// </summary>
-    /// <returns>The generated request id grouping every workflow spawned for it.</returns>
+    /// <returns>The generated workflow id grouping every job spawned for it.</returns>
     Task<string> CreateAsync(Request request, CancellationToken ct = default);
 
     /// <summary>
-    ///     Cancels every workflow belonging to <paramref name="requestId" /> that is still runnable or paused.
-    ///     Best-effort — workflows already complete/terminated are counted as skipped.
+    ///     Cancels every job belonging to <paramref name="workflowId" /> that is still runnable or paused.
+    ///     Best-effort — jobs already complete/terminated are counted as skipped.
     /// </summary>
-    Task<PartialResult> StopAsync(string requestId, CancellationToken ct = default);
+    Task<PartialResult> StopAsync(string workflowId, CancellationToken ct = default);
 
     /// <summary>
-    ///     Pauses every workflow belonging to <paramref name="requestId" /> that is still running.
-    ///     Best-effort — workflows not currently running are counted as skipped.
+    ///     Pauses every job belonging to <paramref name="workflowId" /> that is still running.
+    ///     Best-effort — jobs not currently running are counted as skipped.
     /// </summary>
-    Task<PartialResult> PauseAsync(string requestId, CancellationToken ct = default);
+    Task<PartialResult> PauseAsync(string workflowId, CancellationToken ct = default);
 
     /// <summary>
-    ///     Resumes every workflow belonging to <paramref name="requestId" /> that is currently paused.
-    ///     Best-effort — workflows not currently paused are counted as skipped.
+    ///     Resumes every job belonging to <paramref name="workflowId" /> that is currently paused.
+    ///     Best-effort — jobs not currently paused are counted as skipped.
     /// </summary>
-    Task<PartialResult> ResumeAsync(string requestId, CancellationToken ct = default);
+    Task<PartialResult> ResumeAsync(string workflowId, CancellationToken ct = default);
 
     /// <summary>
     ///     Stops every currently active (running or paused) request. Best-effort.
@@ -93,10 +94,10 @@ public interface IService
     Task<int> PauseAllAsync(CancellationToken ct = default);
 
     /// <summary>
-    ///     Returns summaries of all currently active (running or paused) requests, keyed by request id.
+    ///     Returns summaries of all currently active (running or paused) requests, keyed by workflow id.
     /// </summary>
     /// <param name="includeLogs">
-    ///     When <see langword="false" />, <see cref="Summary.Logs" />/<see cref="WorkflowSummary.Logs" /> are
+    ///     When <see langword="false" />, <see cref="Summary.Logs" />/<see cref="JobSummary.Logs" /> are
     ///     empty and no request's log file is read from disk — pass <see langword="false" /> when only the
     ///     list itself is needed (e.g. rendering a list of requests), since every group would otherwise pay
     ///     for a full read-and-parse of its <c>.log</c> file even though the list view never shows it.
@@ -105,21 +106,21 @@ public interface IService
     Task<IReadOnlyDictionary<string, Summary>> ListActiveAsync(bool includeLogs = true, CancellationToken ct = default);
 
     /// <summary>
-    ///     Returns summaries of all completed, canceled, or errored requests, keyed by request id.
+    ///     Returns summaries of all completed, canceled, or errored requests, keyed by workflow id.
     /// </summary>
     /// <param name="includeLogs">See <see cref="ListActiveAsync" />.</param>
     /// <param name="ct"></param>
     Task<IReadOnlyDictionary<string, Summary>> ListCompletedAsync(bool includeLogs = true, CancellationToken ct = default);
 
     /// <summary>
-    ///     Permanently deletes every workflow belonging to a request. If the request is still
+    ///     Permanently deletes every job belonging to a request. If the request is still
     ///     active (running or paused), it is stopped first.
     /// </summary>
     /// <returns>
     ///     <see langword="true" /> if the request was found and deleted;
     ///     <see langword="false" /> if not found.
     /// </returns>
-    Task<bool> DeleteAsync(string requestId, CancellationToken ct = default);
+    Task<bool> DeleteAsync(string workflowId, CancellationToken ct = default);
 
     /// <summary>
     ///     Permanently deletes all completed and canceled requests and their associated data.
@@ -129,17 +130,16 @@ public interface IService
 }
 
 /// <summary>
-///     Implements <see cref="IService" /> on top of <see cref="IWorkflowController" /> (plain C#/Task workflow execution
-///     — WorkflowCore is gone). <c>CreateAsync</c>'s spawn phase (reading the recipe, computing the workflow
-///     list) runs as plain code here, deliberately not itself throttled by <c>MaxConcurrentWorkflows</c> —
-///     see <see cref="IWorkflowController" /> remarks.
+///     Implements <see cref="IService" /> on top of <see cref="IWorkflowController" />. A request runs as one
+///     workflow whose jobs (one per worksheet/presentation pair) are created here; <c>CreateAsync</c> only
+///     registers the workflow and returns, deliberately not itself throttled by <c>MaxConcurrentJobs</c> — see
+///     <see cref="IWorkflowController" /> remarks.
 /// </summary>
 internal sealed class Service(
     IWorkflowController workflowController,
     IRecipeRepository recipeRepository,
-    IRequestsRepository requestsRepository,
     IWorkflowsRepository workflowsRepository,
-    IEventBus eventBus,
+    IJobsRepository jobsRepository,
     ILogFileReader logFileReader,
     ILogger<Service> logger)
     : IService
@@ -157,17 +157,17 @@ internal sealed class Service(
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<PlannedWorkflow>> PreviewAsync(Request request, CancellationToken ct = default)
+    public async Task<IReadOnlyList<PlannedJob>> PreviewAsync(Request request, CancellationToken ct = default)
     {
         var entry = await recipeRepository.GetAsync(request.RecipeId, ct).ConfigureAwait(false)
                     ?? throw new InvalidOperationException($"Recipe {request.RecipeId} not found.");
 
-        var workflows = BuildWorkflows(entry.Recipe, request);
-        var duplicatePaths = FindDuplicateOutputPath(workflows);
+        var jobs = BuildJobs(entry.Recipe, request);
+        var duplicatePaths = FindDuplicateOutputPath(jobs);
         var activeOutputPaths = await GetActiveOutputPathsAsync().ConfigureAwait(false);
 
-        return workflows
-            .Select(j => new PlannedWorkflow(j.OutputPath, j.WorkbookPath, j.WorksheetName,
+        return jobs
+            .Select(j => new PlannedJob(j.OutputPath, j.WorkbookPath, j.WorksheetName,
                 duplicatePaths.Contains(j.OutputPath) ? ConflictKind.DuplicateWithinRequest
                 : activeOutputPaths.Contains(j.OutputPath) ? ConflictKind.ConflictsWithActiveRequest
                 : ConflictKind.None))
@@ -182,64 +182,48 @@ internal sealed class Service(
         var entry = await recipeRepository.GetAsync(request.RecipeId, ct).ConfigureAwait(false)
                     ?? throw new InvalidOperationException($"Recipe {request.RecipeId} not found.");
 
-        var requestId = Guid.NewGuid().ToString();
+        var workflowId = Guid.NewGuid().ToString();
         var logPath = ResolveWorkflowLogPath(request);
-        var workflows = BuildWorkflows(entry.Recipe, request);
+        var jobs = BuildJobs(entry.Recipe, request);
 
-        var duplicatePaths = FindDuplicateOutputPath(workflows);
+        var duplicatePaths = FindDuplicateOutputPath(jobs);
         if (duplicatePaths.Count > 0)
             throw new InvalidOperationException(
                 $"Output path '{duplicatePaths.First()}' is used by more than one mapping in this recipe.");
 
-        var conflictingPath = await FindConflictingOutputPathAsync(workflows).ConfigureAwait(false);
+        var conflictingPath = await FindConflictingOutputPathAsync(jobs).ConfigureAwait(false);
         if (conflictingPath is not null)
             throw new InvalidOperationException(
                 $"Output path '{conflictingPath}' is already being generated by an active request.");
 
-        await requestsRepository.CreateAsync(
-            new RequestRecord(requestId, request, logPath, DateTimeOffset.UtcNow), ct).ConfigureAwait(false);
+        await workflowsRepository.CreateAsync(
+            new WorkflowRecord(workflowId, request, logPath, DateTimeOffset.UtcNow), ct).ConfigureAwait(false);
 
-        eventBus.Publish(new RequestProgress
-        {
-            RequestId = requestId,
-            Phase = RequestPhase.PreparationStarted,
-            Timestamp = DateTimeOffset.UtcNow
-        });
-        eventBus.AnnounceExpectedWorkflowCount(requestId, workflows.Count);
+        await workflowController.StartWorkflowAsync(workflowId, jobs, logPath, ct).ConfigureAwait(false);
 
-        for (var workflowId = 0; workflowId < workflows.Count; workflowId++)
-        {
-            await workflowController.StartWorkflowAsync(requestId, workflowId, workflows[workflowId], logPath, ct).ConfigureAwait(false);
-            logger.LogInformation("Workflow spawned | WorkflowId: {WorkflowId} | OutputPath: {OutputPath}", workflowId,
-                workflows[workflowId].OutputPath);
-        }
-
-        logger.LogInformation("Request started | RequestId: {RequestId} | Workflows: {Count}", requestId, workflows.Count);
-        return requestId;
+        logger.LogInformation("Request started | WorkflowId: {WorkflowId} | Jobs: {Count}", workflowId, jobs.Count);
+        return workflowId;
     }
 
     /// <inheritdoc />
-    public async Task<PartialResult> StopAsync(string requestId, CancellationToken ct = default)
+    public Task<PartialResult> StopAsync(string workflowId, CancellationToken ct = default)
     {
-        var workflows = await workflowsRepository.GetByRequestIdAsync(requestId, ct).ConfigureAwait(false);
-        return await FanOutAsync(workflows, j => j.WorkflowStatus is WorkflowStatus.Running or WorkflowStatus.Pending or WorkflowStatus.Paused,
-            j => workflowController.StopWorkflowAsync(requestId, j.WorkflowId)).ConfigureAwait(false);
+        return ControlAsync(workflowId, status => status is JobStatus.Running or JobStatus.Pending or JobStatus.Paused,
+            workflowController.StopWorkflowAsync, ct);
     }
 
     /// <inheritdoc />
-    public async Task<PartialResult> PauseAsync(string requestId, CancellationToken ct = default)
+    public Task<PartialResult> PauseAsync(string workflowId, CancellationToken ct = default)
     {
-        var workflows = await workflowsRepository.GetByRequestIdAsync(requestId, ct).ConfigureAwait(false);
-        return await FanOutAsync(workflows, j => j.WorkflowStatus == WorkflowStatus.Running,
-            j => workflowController.PauseWorkflowAsync(requestId, j.WorkflowId)).ConfigureAwait(false);
+        return ControlAsync(workflowId, status => status == JobStatus.Running,
+            workflowController.PauseWorkflowAsync, ct);
     }
 
     /// <inheritdoc />
-    public async Task<PartialResult> ResumeAsync(string requestId, CancellationToken ct = default)
+    public Task<PartialResult> ResumeAsync(string workflowId, CancellationToken ct = default)
     {
-        var workflows = await workflowsRepository.GetByRequestIdAsync(requestId, ct).ConfigureAwait(false);
-        return await FanOutAsync(workflows, j => j.WorkflowStatus == WorkflowStatus.Paused,
-            j => workflowController.ResumeWorkflowAsync(requestId, j.WorkflowId)).ConfigureAwait(false);
+        return ControlAsync(workflowId, status => status == JobStatus.Paused,
+            workflowController.ResumeWorkflowAsync, ct);
     }
 
     /// <inheritdoc />
@@ -247,8 +231,8 @@ internal sealed class Service(
     {
         var actives = await ListActiveAsync(includeLogs: false, ct).ConfigureAwait(false);
         var count = 0;
-        foreach (var requestId in actives.Keys)
-            if ((await StopAsync(requestId, ct).ConfigureAwait(false)).Succeeded > 0)
+        foreach (var workflowId in actives.Keys)
+            if ((await StopAsync(workflowId, ct).ConfigureAwait(false)).Succeeded > 0)
                 count++;
         return count;
     }
@@ -258,8 +242,8 @@ internal sealed class Service(
     {
         var actives = await ListActiveAsync(includeLogs: false, ct).ConfigureAwait(false);
         var count = 0;
-        foreach (var requestId in actives.Where(kv => kv.Value.WorkflowStatus == WorkflowStatus.Running).Select(kv => kv.Key))
-            if ((await PauseAsync(requestId, ct).ConfigureAwait(false)).Succeeded > 0)
+        foreach (var workflowId in actives.Where(kv => kv.Value.JobStatus == JobStatus.Running).Select(kv => kv.Key))
+            if ((await PauseAsync(workflowId, ct).ConfigureAwait(false)).Succeeded > 0)
                 count++;
         return count;
     }
@@ -269,7 +253,10 @@ internal sealed class Service(
         CancellationToken ct = default)
     {
         var groups = await ListGroupsAsync(ct).ConfigureAwait(false);
-        var active = groups.Where(kv => DeriveStatus(kv.Value) is WorkflowStatus.Running or WorkflowStatus.Paused);
+        var paused = await GetPausedWorkflowIdsAsync(ct).ConfigureAwait(false);
+        var active = groups.Where(kv =>
+            DeriveStatus(kv.Value, paused.Contains(kv.Key) ? JobStatus.Paused : null) is JobStatus.Running
+                or JobStatus.Paused);
         return await ToSummariesAsync(active, includeLogs, ct).ConfigureAwait(false);
     }
 
@@ -278,26 +265,27 @@ internal sealed class Service(
         CancellationToken ct = default)
     {
         var groups = await ListGroupsAsync(ct).ConfigureAwait(false);
-        var completed = groups.Where(kv => DeriveStatus(kv.Value) is WorkflowStatus.Complete or WorkflowStatus.Cancelled);
+        var completed = groups.Where(kv => DeriveStatus(kv.Value) is JobStatus.Complete or JobStatus.Cancelled);
         return await ToSummariesAsync(completed, includeLogs, ct).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
-    public async Task<bool> DeleteAsync(string requestId, CancellationToken ct = default)
+    public async Task<bool> DeleteAsync(string workflowId, CancellationToken ct = default)
     {
-        var workflows = await workflowsRepository.GetByRequestIdAsync(requestId, ct).ConfigureAwait(false);
-        if (workflows.Count == 0)
+        var jobs = await jobsRepository.GetByWorkflowIdAsync(workflowId, ct).ConfigureAwait(false);
+        if (jobs.Count == 0)
         {
-            logger.LogWarning("Request {RequestId} not found — delete skipped.", requestId);
+            logger.LogWarning("Request {WorkflowId} not found — delete skipped.", workflowId);
             return false;
         }
 
-        if (DeriveStatus(workflows) is WorkflowStatus.Running or WorkflowStatus.Paused)
-            await StopAsync(requestId, ct).ConfigureAwait(false);
+        var record = await workflowsRepository.GetAsync(workflowId, ct).ConfigureAwait(false);
+        if (DeriveStatus(jobs, record?.Status) is JobStatus.Running or JobStatus.Paused)
+            await StopAsync(workflowId, ct).ConfigureAwait(false);
 
-        await workflowsRepository.DeleteByRequestIdAsync(requestId, ct).ConfigureAwait(false);
-        await requestsRepository.DeleteAsync(requestId, ct).ConfigureAwait(false);
-        logger.LogInformation("Deleted request {RequestId} ({Count} workflow(s)).", requestId, workflows.Count);
+        await jobsRepository.DeleteByWorkflowIdAsync(workflowId, ct).ConfigureAwait(false);
+        await workflowsRepository.DeleteAsync(workflowId, ct).ConfigureAwait(false);
+        logger.LogInformation("Deleted request {WorkflowId} ({Count} job(s)).", workflowId, jobs.Count);
         return true;
     }
 
@@ -306,10 +294,10 @@ internal sealed class Service(
     {
         var completed = await ListCompletedAsync(includeLogs: false, ct).ConfigureAwait(false);
         var deleted = 0;
-        foreach (var requestId in completed.Keys)
+        foreach (var workflowId in completed.Keys)
         {
-            await workflowsRepository.DeleteByRequestIdAsync(requestId, ct).ConfigureAwait(false);
-            await requestsRepository.DeleteAsync(requestId, ct).ConfigureAwait(false);
+            await jobsRepository.DeleteByWorkflowIdAsync(workflowId, ct).ConfigureAwait(false);
+            await workflowsRepository.DeleteAsync(workflowId, ct).ConfigureAwait(false);
             deleted++;
         }
 
@@ -326,36 +314,36 @@ internal sealed class Service(
 
     #region Aggregation helpers
 
-    private async Task<IReadOnlyDictionary<string, IReadOnlyList<WorkflowSnapshot>>> ListGroupsAsync(
+    private async Task<IReadOnlyDictionary<string, IReadOnlyList<JobSnapshot>>> ListGroupsAsync(
         CancellationToken ct = default)
     {
-        var all = await workflowsRepository.GetAllAsync(ct).ConfigureAwait(false);
+        var all = await jobsRepository.GetAllAsync(ct).ConfigureAwait(false);
         return all
-            .GroupBy(j => j.RequestId)
-            .ToDictionary(g => g.Key, IReadOnlyList<WorkflowSnapshot> (g) => [.. g]);
+            .GroupBy(j => j.WorkflowId)
+            .ToDictionary(g => g.Key, IReadOnlyList<JobSnapshot> (g) => [.. g]);
     }
 
     private async Task<IReadOnlyDictionary<string, Summary>> ToSummariesAsync(
-        IEnumerable<KeyValuePair<string, IReadOnlyList<WorkflowSnapshot>>> groups, bool includeLogs, CancellationToken ct)
+        IEnumerable<KeyValuePair<string, IReadOnlyList<JobSnapshot>>> groups, bool includeLogs, CancellationToken ct)
     {
         var result = new Dictionary<string, Summary>();
-        foreach (var (requestId, workflows) in groups)
+        foreach (var (workflowId, jobs) in groups)
         {
-            var summary = await ToSummaryAsync(requestId, workflows, includeLogs, ct).ConfigureAwait(false);
-            if (summary != null) result[requestId] = summary;
+            var summary = await ToSummaryAsync(workflowId, jobs, includeLogs, ct).ConfigureAwait(false);
+            if (summary != null) result[workflowId] = summary;
         }
 
         return result;
     }
 
     /// <summary>
-    ///     Returns every output path in <paramref name="workflows" /> that is claimed by more than one workflow — i.e.
-    ///     two Mappings sharing the same worksheet (see <see cref="BuildWorkflows" />). Empty when no workflow's output
-    ///     path collides with another workflow's within the same request.
+    ///     Returns every output path in <paramref name="jobs" /> that is claimed by more than one job — i.e.
+    ///     two Mappings sharing the same worksheet (see <see cref="BuildJobs" />). Empty when no job's output
+    ///     path collides with another job's within the same request.
     /// </summary>
-    internal static IReadOnlySet<string> FindDuplicateOutputPath(IReadOnlyList<WorkflowSpecification> workflows)
+    internal static IReadOnlySet<string> FindDuplicateOutputPath(IReadOnlyList<JobSpecification> jobs)
     {
-        return workflows
+        return jobs
             .GroupBy(j => j.OutputPath, StringComparer.OrdinalIgnoreCase)
             .Where(g => g.Count() > 1)
             .Select(g => g.Key)
@@ -363,58 +351,52 @@ internal sealed class Service(
     }
 
     /// <summary>
-    ///     Returns the output paths claimed by every workflow of another active (running, pending, or paused)
+    ///     Returns the output paths claimed by every job of another active (running, pending, or paused)
     ///     request — shared by <see cref="FindConflictingOutputPathAsync" /> and <see cref="PreviewAsync" />
     ///     so both use the exact same conflict definition.
     /// </summary>
     private async Task<IReadOnlySet<string>> GetActiveOutputPathsAsync()
     {
-        var active = await workflowsRepository.GetNonTerminalAsync().ConfigureAwait(false);
+        var active = await jobsRepository.GetNonTerminalAsync().ConfigureAwait(false);
         return active
-            .Where(j => j.WorkflowStatus is WorkflowStatus.Running or WorkflowStatus.Pending or WorkflowStatus.Paused)
+            .Where(j => j.JobStatus is JobStatus.Running or JobStatus.Pending or JobStatus.Paused)
             .Select(j => j.OutputPath)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
     }
 
     /// <summary>
-    ///     Returns the first output path among <paramref name="workflows" /> that collides with an output path
-    ///     already claimed by a workflow of another active (running or paused) request.
+    ///     Returns the first output path among <paramref name="jobs" /> that collides with an output path
+    ///     already claimed by a job of another active (running or paused) request.
     /// </summary>
-    private async Task<string?> FindConflictingOutputPathAsync(IReadOnlyList<WorkflowSpecification> workflows)
+    private async Task<string?> FindConflictingOutputPathAsync(IReadOnlyList<JobSpecification> jobs)
     {
         var activeOutputPaths = await GetActiveOutputPathsAsync().ConfigureAwait(false);
-        return workflows.Select(j => j.OutputPath).FirstOrDefault(activeOutputPaths.Contains);
-    }
-
-    private static async Task<PartialResult> FanOutAsync(
-        IReadOnlyList<WorkflowSnapshot> workflows, Func<WorkflowSnapshot, bool> eligible, Func<WorkflowSnapshot, Task<bool>> action)
-    {
-        var succeeded = 0;
-        var skipped = 0;
-        foreach (var workflow in workflows)
-        {
-            if (!eligible(workflow))
-            {
-                skipped++;
-                continue;
-            }
-
-            if (await action(workflow).ConfigureAwait(false)) succeeded++;
-            else skipped++;
-        }
-
-        return new PartialResult(succeeded, skipped);
+        return jobs.Select(j => j.OutputPath).FirstOrDefault(activeOutputPaths.Contains);
     }
 
     /// <summary>
-    ///     Flattens a recipe's <c>Mappings</c> into one <see cref="WorkflowSpecification" /> per
+    ///     Applies a workflow-wide control action when the workflow's current status makes it eligible, counting
+    ///     it as skipped (not failed) otherwise — e.g. stopping a workflow that already finished.
+    /// </summary>
+    private async Task<PartialResult> ControlAsync(
+        string workflowId, Func<JobStatus, bool> eligible, Func<string, Task<bool>> action, CancellationToken ct)
+    {
+        var jobs = await jobsRepository.GetByWorkflowIdAsync(workflowId, ct).ConfigureAwait(false);
+        var record = await workflowsRepository.GetAsync(workflowId, ct).ConfigureAwait(false);
+        if (!eligible(DeriveStatus(jobs, record?.Status))) return new PartialResult(0, 1);
+
+        return await action(workflowId).ConfigureAwait(false) ? new PartialResult(1, 0) : new PartialResult(0, 1);
+    }
+
+    /// <summary>
+    ///     Flattens a recipe's <c>Mappings</c> into one <see cref="JobSpecification" /> per
     ///     (worksheet source × mapping) pair — every value already resolved, no id left to look up.
     /// </summary>
-    internal static List<WorkflowSpecification> BuildWorkflows(Recipe.Models.Recipe recipe, Request request)
+    internal static List<JobSpecification> BuildJobs(Recipe.Models.Recipe recipe, Request request)
     {
         return
         [
-            .. recipe.Mappings.SelectMany(m => m.Sources.Select(s => new WorkflowSpecification(
+            .. recipe.Mappings.SelectMany(m => m.Sources.Select(s => new JobSpecification(
                 s.Workbook.BookPath,
                 s.Worksheet.SheetName,
                 s.UsedColumns,
@@ -435,79 +417,96 @@ internal sealed class Service(
     }
 
     /// <summary>
-    ///     Aggregates a request's workflow statuses into one request-level <see cref="WorkflowStatus" />. Any workflow still
-    ///     <see cref="WorkflowStatus.Pending" /> or <see cref="WorkflowStatus.Running" /> counts as the request Running
-    ///     (a request with only just-spawned Pending workflows is "in progress", not idle) — this is the fix
+    ///     Aggregates a request's job statuses into one request-level <see cref="JobStatus" />. Any job still
+    ///     <see cref="JobStatus.Pending" /> or <see cref="JobStatus.Running" /> counts as the request Running
+    ///     (a request with only just-spawned Pending jobs is "in progress", not idle) — this is the fix
     ///     for the gap where an all-Pending request used to fall through to Complete.
     /// </summary>
-    internal static WorkflowStatus DeriveStatus(IReadOnlyList<WorkflowSnapshot> workflows)
+    internal static JobStatus DeriveStatus(IReadOnlyList<JobSnapshot> jobs)
     {
-        if (workflows.Count == 0) return WorkflowStatus.Complete;
-        if (workflows.Any(j => j.WorkflowStatus is WorkflowStatus.Running or WorkflowStatus.Pending)) return WorkflowStatus.Running;
-        if (workflows.Any(j => j.WorkflowStatus == WorkflowStatus.Paused)) return WorkflowStatus.Paused;
-        if (workflows.All(j => j.WorkflowStatus == WorkflowStatus.Cancelled)) return WorkflowStatus.Cancelled;
-        return WorkflowStatus.Complete;
+        if (jobs.Count == 0) return JobStatus.Complete;
+        if (jobs.Any(j => j.JobStatus is JobStatus.Running or JobStatus.Pending)) return JobStatus.Running;
+        if (jobs.Any(j => j.JobStatus == JobStatus.Paused)) return JobStatus.Paused;
+        if (jobs.All(j => j.JobStatus == JobStatus.Cancelled)) return JobStatus.Cancelled;
+        return JobStatus.Complete;
     }
 
-    private async Task<Summary?> ToSummaryAsync(string requestId, IReadOnlyList<WorkflowSnapshot> workflows, bool includeLogs,
+    /// <summary>
+    ///     Like <see cref="DeriveStatus(IReadOnlyList{JobSnapshot})" />, but also honors a workflow-level pause:
+    ///     pausing acts on the whole workflow without touching individual job rows, so a workflow stored as
+    ///     <see cref="JobStatus.Paused" /> whose jobs still derive as running is reported as paused.
+    /// </summary>
+    internal static JobStatus DeriveStatus(IReadOnlyList<JobSnapshot> jobs, JobStatus? workflowStatus)
+    {
+        var derived = DeriveStatus(jobs);
+        return workflowStatus == JobStatus.Paused && derived == JobStatus.Running ? JobStatus.Paused : derived;
+    }
+
+    private async Task<IReadOnlySet<string>> GetPausedWorkflowIdsAsync(CancellationToken ct)
+    {
+        var nonTerminal = await workflowsRepository.GetNonTerminalAsync(ct).ConfigureAwait(false);
+        return nonTerminal.Where(r => r.Status == JobStatus.Paused).Select(r => r.WorkflowId).ToHashSet();
+    }
+
+    private async Task<Summary?> ToSummaryAsync(string workflowId, IReadOnlyList<JobSnapshot> jobs, bool includeLogs,
         CancellationToken ct)
     {
-        if (workflows.Count == 0) return null;
-        var record = await requestsRepository.GetAsync(requestId, ct).ConfigureAwait(false);
+        if (jobs.Count == 0) return null;
+        var record = await workflowsRepository.GetAsync(workflowId, ct).ConfigureAwait(false);
         if (record is null) return null;
 
-        var status = DeriveStatus(workflows);
+        var status = DeriveStatus(jobs, record.Status);
         var createdAt = record.CreatedAt;
-        var completedAt = status is WorkflowStatus.Complete or WorkflowStatus.Cancelled
-            ? workflows.Max(j => j.Timestamp)
+        var completedAt = status is JobStatus.Complete or JobStatus.Cancelled
+            ? jobs.Max(j => j.Timestamp)
             : (DateTimeOffset?)null;
         // Reading and regex-parsing a request's whole .log file is the expensive part of building a Summary —
         // skip it entirely for list views, which never display log content anyway (see IService.ListActiveAsync).
         IReadOnlyList<LogEntry> logEntries = includeLogs ? logFileReader.ReadAll(record.LogPath) : [];
 
-        var workflowSummaries = workflows.ToDictionary(j => j.WorkflowId, j => ToWorkflowSummary(requestId, j, logEntries));
+        var jobSummaries = jobs.ToDictionary(j => j.JobId, j => ToJobSummary(workflowId, j, logEntries));
 
         return new Summary
         {
             Request = record.Request,
-            WorkflowStatus = status,
-            Phase = DeriveRequestPhase(workflows),
+            JobStatus = status,
+            Phase = DeriveWorkflowPhase(jobs),
             CreatedAt = createdAt,
             CompletedAt = completedAt,
-            Logs = [.. logEntries.Where(e => e.Path == requestId)],
-            Workflows = workflowSummaries
+            Logs = [.. logEntries.Where(e => e.Path == workflowId)],
+            Jobs = jobSummaries
         };
     }
 
-    private static WorkflowSummary ToWorkflowSummary(string requestId, WorkflowSnapshot workflow, IReadOnlyList<LogEntry> logEntries)
+    private static JobSummary ToJobSummary(string workflowId, JobSnapshot job, IReadOnlyList<LogEntry> logEntries)
     {
-        var workflowScopePrefix = $"{requestId}/{workflow.WorkflowId}";
-        return new WorkflowSummary
+        var jobScopePrefix = $"{workflowId}/{job.JobId}";
+        return new JobSummary
         {
-            WorkflowStatus = workflow.WorkflowStatus,
-            Phase = workflow.Phase,
-            CurrentIndex = workflow.CurrentIndex,
-            TotalRows = workflow.TotalRows,
-            OutputPath = workflow.OutputPath,
-            CompletedAt = workflow.WorkflowStatus is WorkflowStatus.Complete or WorkflowStatus.Cancelled or WorkflowStatus.Error
-                ? workflow.Timestamp
+            JobStatus = job.JobStatus,
+            Phase = job.Phase,
+            CurrentIndex = job.CurrentIndex,
+            TotalRows = job.TotalRows,
+            OutputPath = job.OutputPath,
+            CompletedAt = job.JobStatus is JobStatus.Complete or JobStatus.Cancelled or JobStatus.Error
+                ? job.Timestamp
                 : null,
             Logs =
             [
                 .. logEntries
-                    .Where(e => e.Path == workflowScopePrefix ||
-                                e.Path.StartsWith(workflowScopePrefix + "/", StringComparison.Ordinal))
+                    .Where(e => e.Path == jobScopePrefix ||
+                                e.Path.StartsWith(jobScopePrefix + "/", StringComparison.Ordinal))
             ]
         };
     }
 
-    /// <summary>Derives the aggregate request phase purely from current workflow statuses — not persisted.</summary>
-    private static RequestPhase DeriveRequestPhase(IReadOnlyList<WorkflowSnapshot> workflows)
+    /// <summary>Derives the aggregate request phase purely from current job statuses — not persisted.</summary>
+    private static WorkflowPhase DeriveWorkflowPhase(IReadOnlyList<JobSnapshot> jobs)
     {
-        if (workflows.All(j => j.WorkflowStatus == WorkflowStatus.Pending)) return RequestPhase.PreparationStarted;
-        if (workflows.All(j => j.WorkflowStatus is WorkflowStatus.Complete or WorkflowStatus.Cancelled or WorkflowStatus.Error))
-            return RequestPhase.Completed;
-        return RequestPhase.ProcessingStarted;
+        if (jobs.All(j => j.JobStatus == JobStatus.Pending)) return WorkflowPhase.PreparationStarted;
+        if (jobs.All(j => j.JobStatus is JobStatus.Complete or JobStatus.Cancelled or JobStatus.Error))
+            return WorkflowPhase.Completed;
+        return WorkflowPhase.ProcessingStarted;
     }
 
     #endregion

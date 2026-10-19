@@ -76,7 +76,7 @@ internal sealed class ImmediateRunner(Func<TestState, TestState> transform) : IW
     }
 }
 
-/// <summary>A runner that must never actually run — used to assert a workflow never left the concurrency queue.</summary>
+/// <summary>A runner that must never actually run — used to assert a runner is never invoked.</summary>
 internal sealed class UnreachableRunner : IWorkflowRunner<TestState>
 {
     public bool WasCalled { get; private set; }
@@ -151,12 +151,6 @@ internal sealed class RecordingObserver : IWorkflowObserver<string, TestState>
             return tcs;
         }
     }
-}
-
-/// <summary>Mutable concurrency limit, so tests can change it mid-run.</summary>
-internal sealed class FakeConcurrencyProvider(int initial) : IWorkflowConcurrencyProvider
-{
-    public int MaxConcurrentWorkflows { get; set; } = initial;
 }
 
 /// <summary>Returns a fixed, test-supplied list of workflows to resume.</summary>

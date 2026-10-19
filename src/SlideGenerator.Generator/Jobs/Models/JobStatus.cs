@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Generator
- * File: WorkflowStatus.cs
+ * File: JobStatus.cs
  *
  * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -12,12 +12,12 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-namespace SlideGenerator.Generator.Workflows.Models;
+namespace SlideGenerator.Generator.Jobs.Models;
 
-/// <summary>Identifies the execution status of a workflow.</summary>
-public enum WorkflowStatus : byte
+/// <summary>Identifies the execution status of a job.</summary>
+public enum JobStatus : byte
 {
-    /// <summary>Spawned but not yet picked up for execution by <c>WorkflowController</c>.</summary>
+    /// <summary>Spawned but not yet picked up for execution by its workflow.</summary>
     Pending,
     Running,
     Complete,

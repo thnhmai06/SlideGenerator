@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Generator.Tests
- * File: WorkflowControllerHelpersTests.cs
+ * File: JobExecutorHelpersTests.cs
  *
  * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -16,17 +16,17 @@ using FluentAssertions;
 using NSubstitute;
 using SlideGenerator.Document.Workbooks.Components;
 using SlideGenerator.Document.Workbooks.Identifiers;
-using SlideGenerator.Generator.Workflows.Runners;
+using SlideGenerator.Generator.Jobs;
 using SlideGenerator.Recipe.Models;
 using Xunit;
 
 namespace SlideGenerator.Generator.Tests.Unit;
 
 /// <summary>
-///     Unit tests for the internal helper methods of <see cref="SlideGenerationRunner" /> (formerly on
-///     <c>WorkflowController</c>, before the Engine/Runner split).
+///     Unit tests for the internal helper methods of <see cref="JobExecutor" /> (formerly on
+///     <c>JobRunner</c>, before the Engine/Workflow split).
 /// </summary>
-public sealed class WorkflowControllerHelpersTests
+public sealed class JobExecutorHelpersTests
 {
     #region BuildHeaderToIndexMap
 
@@ -124,7 +124,7 @@ public sealed class WorkflowControllerHelpersTests
                 })
         };
 
-        var result = SlideGenerationRunner.BuildRowTextValues(rowValues, instructions);
+        var result = JobExecutor.BuildRowTextValues(rowValues, instructions);
 
         result.Should().ContainKey("Placeholder").WhoseValue.Should().Be("X");
     }
@@ -148,7 +148,7 @@ public sealed class WorkflowControllerHelpersTests
                 })
         };
 
-        var result = SlideGenerationRunner.BuildRowTextValues(rowValues, instructions);
+        var result = JobExecutor.BuildRowTextValues(rowValues, instructions);
 
         result.Should().ContainKey("Placeholder").WhoseValue.Should().Be("");
     }
@@ -167,7 +167,7 @@ public sealed class WorkflowControllerHelpersTests
             new(new HashSet<string> { "Role" }, new List<ColumnIdentifier> { new("Role") })
         };
 
-        var result = SlideGenerationRunner.BuildRowTextValues(rowValues, instructions);
+        var result = JobExecutor.BuildRowTextValues(rowValues, instructions);
 
         result.Should().ContainKey("Name").WhoseValue.Should().Be("Alice");
         result.Should().ContainKey("Role").WhoseValue.Should().Be("Manager");

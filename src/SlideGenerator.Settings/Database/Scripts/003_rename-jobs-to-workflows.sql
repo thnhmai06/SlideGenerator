@@ -1,2 +1,0 @@
-ALTER TABLE Jobs RENAME TO Workflows;
-ALTER TABLE Workflows RENAME COLUMN JobId TO WorkflowId;

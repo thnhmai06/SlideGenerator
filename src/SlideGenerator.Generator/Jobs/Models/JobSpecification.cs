@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Generator
- * File: WorkflowSpecification.cs
+ * File: JobSpecification.cs
  *
  * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -15,12 +15,12 @@
 using SlideGenerator.Document.Workbooks.Identifiers;
 using SlideGenerator.Recipe.Models;
 
-namespace SlideGenerator.Generator.Workflows.Models;
+namespace SlideGenerator.Generator.Jobs.Models;
 
 /// <summary>
 ///     Represents a single slide-generation unit: one worksheet mapped to one template slide, with every
-///     value already resolved from the recipe at spawn time (see <c>Service.BuildWorkflows</c>) — no id needs
-///     to be looked back up against the recipe once a workflow has started, so a workflow survives independently of
+///     value already resolved from the recipe at spawn time (see <c>Service.BuildJobs</c>) — no id needs
+///     to be looked back up against the recipe once a job has started, so a job survives independently of
 ///     whether the originating recipe still exists.
 /// </summary>
 /// <param name="WorkbookPath">Absolute path to the source workbook.</param>
@@ -31,8 +31,8 @@ namespace SlideGenerator.Generator.Workflows.Models;
 /// <param name="TemplateSlideIndex">1-based index of the template slide within <see cref="TemplatePresentationPath" />.</param>
 /// <param name="TextInstructions">Rules for mapping worksheet columns to slide text placeholders.</param>
 /// <param name="ImageInstructions">Rules for mapping worksheet columns to slide image shapes.</param>
-/// <param name="OutputPath">Absolute path to the output presentation file for this workflow.</param>
-public sealed record WorkflowSpecification(
+/// <param name="OutputPath">Absolute path to the output presentation file for this job.</param>
+public sealed record JobSpecification(
     string WorkbookPath,
     string WorksheetName,
     IReadOnlySet<ColumnIdentifier>? UsedColumns,

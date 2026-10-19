@@ -82,7 +82,7 @@ public sealed class SerilogFileLoggerFactoryTests : IDisposable
         logger.Should().NotBeNull();
     }
 
-    #region Inner logger behaviour — mirrors real usage: one per-workflow logger whose lines carry a Request/Workflow/Row scope path
+    #region Inner logger behaviour — mirrors real usage: one per-job logger whose lines carry a Request/Job/Row scope path
 
     /// <summary>Information log level is enabled by default — matches the minimum level of LoggerConfiguration.</summary>
     [Fact]
@@ -102,7 +102,7 @@ public sealed class SerilogFileLoggerFactoryTests : IDisposable
 
         using (var loggerFactory = _factory.CreateFile(filePath))
         {
-            loggerFactory.CreateLogger("SlideGenerationRunner").LogInformation("workflow started");
+            loggerFactory.CreateLogger("SlideGenerationWorkload").LogInformation("job started");
         }
 
         File.Exists(filePath).Should().BeTrue();
@@ -110,8 +110,8 @@ public sealed class SerilogFileLoggerFactoryTests : IDisposable
 
     /// <summary>
     ///     Logged message text appears in the file after dispose flushes the sink.
-    ///     Mirrors the real pattern: <c>LoggingRunner.CreateFile(logPath, ["RequestId", "WorkflowId", "RowIndex"])</c>
-    ///     followed by a single <c>CreateLogger(nameof(SlideGenerationRunner)).LogInformation(...)</c> per workflow.
+    ///     Mirrors the real pattern: <c>LoggingWorkload.CreateFile(logPath, ["RequestId", "JobId", "RowIndex"])</c>
+    ///     followed by a single <c>CreateLogger(nameof(SlideGenerationWorkload)).LogInformation(...)</c> per job.
     /// </summary>
     [Fact]
     public void CreateFile_ValidPath_LoggedMessageAppearsInFile()
@@ -121,21 +121,21 @@ public sealed class SerilogFileLoggerFactoryTests : IDisposable
 
         using (var loggerFactory = _factory.CreateFile(filePath))
         {
-            loggerFactory.CreateLogger("SlideGenerationRunner").LogInformation(expectedMessage);
+            loggerFactory.CreateLogger("SlideGenerationWorkload").LogInformation(expectedMessage);
         }
 
-        File.ReadAllText(filePath).Should().Contain("SlideGenerationRunner").And.Contain(expectedMessage);
+        File.ReadAllText(filePath).Should().Contain("SlideGenerationWorkload").And.Contain(expectedMessage);
     }
 
     /// <summary>
     ///     The category name passed to <c>CreateLogger</c> appears in the file as the logger name field.
-    ///     Real usage: <c>CreateLogger(nameof(SlideGenerationRunner))</c> → file shows <c>SlideGenerationRunner/...</c>
+    ///     Real usage: <c>CreateLogger(nameof(SlideGenerationWorkload))</c> → file shows <c>SlideGenerationWorkload/...</c>
     /// </summary>
     [Fact]
     public void CreateFile_ValidPath_CategoryNameAppearsInFile()
     {
         var filePath = NewTempFilePath();
-        const string categoryName = "SlideGenerationRunner";
+        const string categoryName = "SlideGenerationWorkload";
 
         using (var loggerFactory = _factory.CreateFile(filePath))
         {
@@ -146,29 +146,29 @@ public sealed class SerilogFileLoggerFactoryTests : IDisposable
     }
 
     /// <summary>
-    ///     When Request/Workflow scope properties are pushed onto <see cref="LogContext" /> around a log call,
-    ///     the resulting scope path appears in the log line. Real usage: <c>LoggingRunner</c> pushes
-    ///     <c>LogContext.PushProperty("RequestId", ...)</c>/<c>PushProperty("WorkflowId", ...)</c> for the whole
-    ///     workflow, and the per-row loop additionally pushes <c>"RowIndex"</c>.
+    ///     When Request/Job scope properties are pushed onto <see cref="LogContext" /> around a log call,
+    ///     the resulting scope path appears in the log line. Real usage: <c>LoggingWorkload</c> pushes
+    ///     <c>LogContext.PushProperty("RequestId", ...)</c>/<c>PushProperty("JobId", ...)</c> for the whole
+    ///     job, and the per-row loop additionally pushes <c>"RowIndex"</c>.
     /// </summary>
     [Fact]
     public void CreateFile_WithLogContextScope_ScopePathAppearsInFile()
     {
         var filePath = NewTempFilePath();
 
-        using (var loggerFactory = _factory.CreateFile(filePath, ["RequestId", "WorkflowId"]))
+        using (var loggerFactory = _factory.CreateFile(filePath, ["RequestId", "JobId"]))
         using (LogContext.PushProperty("RequestId", "req-1"))
-        using (LogContext.PushProperty("WorkflowId", "workflow-1"))
+        using (LogContext.PushProperty("JobId", "job-1"))
         {
-            loggerFactory.CreateLogger("SlideGenerationRunner").LogInformation("row filled");
+            loggerFactory.CreateLogger("SlideGenerationWorkload").LogInformation("row filled");
         }
 
-        File.ReadAllText(filePath).Should().Contain("SlideGenerationRunner").And.Contain("req-1/workflow-1");
+        File.ReadAllText(filePath).Should().Contain("SlideGenerationWorkload").And.Contain("req-1/job-1");
     }
 
     /// <summary>
     ///     The <c>onLogEvent</c> callback is invoked once per log line written through the factory, carrying
-    ///     the rendered message and scope path — the mechanism <c>LoggingRunner</c> uses to forward log
+    ///     the rendered message and scope path — the mechanism <c>LoggingWorkload</c> uses to forward log
     ///     lines to the frontend in real time via <c>ILogNotifier</c>.
     /// </summary>
     [Fact]
@@ -180,7 +180,7 @@ public sealed class SerilogFileLoggerFactoryTests : IDisposable
         using (var loggerFactory = _factory.CreateFile(filePath, ["RequestId"], notifications.Add))
         using (LogContext.PushProperty("RequestId", "req-1"))
         {
-            loggerFactory.CreateLogger("SlideGenerationRunner").LogInformation("row filled");
+            loggerFactory.CreateLogger("SlideGenerationWorkload").LogInformation("row filled");
         }
 
         notifications.Should().ContainSingle(n => n.Message == "row filled" && n.Location == "req-1");
@@ -188,7 +188,7 @@ public sealed class SerilogFileLoggerFactoryTests : IDisposable
 
     /// <summary>
     ///     Multiple named loggers from the same factory all write to the same file.
-    ///     Mirrors how different parts of the pipeline create named loggers from the one per-workflow factory.
+    ///     Mirrors how different parts of the pipeline create named loggers from the one per-job factory.
     /// </summary>
     [Fact]
     public void CreateFile_ValidPath_MultipleNamedLoggers_AllMessagesInFile()
@@ -197,13 +197,13 @@ public sealed class SerilogFileLoggerFactoryTests : IDisposable
 
         using (var loggerFactory = _factory.CreateFile(filePath))
         {
-            loggerFactory.CreateLogger("SlideGenerationRunner").LogInformation("slides created");
+            loggerFactory.CreateLogger("SlideGenerationWorkload").LogInformation("slides created");
             loggerFactory.CreateLogger("PreflightCleanup").LogInformation("cleanup done");
             loggerFactory.CreateLogger("ImageProcessor").LogInformation("image cropped");
         }
 
         var content = File.ReadAllText(filePath);
-        content.Should().Contain("SlideGenerationRunner").And.Contain("slides created");
+        content.Should().Contain("SlideGenerationWorkload").And.Contain("slides created");
         content.Should().Contain("PreflightCleanup").And.Contain("cleanup done");
         content.Should().Contain("ImageProcessor").And.Contain("image cropped");
     }
@@ -217,7 +217,7 @@ public sealed class SerilogFileLoggerFactoryTests : IDisposable
 
         using (var loggerFactory = _factory.CreateFile(filePath))
         {
-            loggerFactory.CreateLogger("SlideGenerationRunner")
+            loggerFactory.CreateLogger("SlideGenerationWorkload")
                 .LogError(exception, "row failed");
         }
 
@@ -231,7 +231,7 @@ public sealed class SerilogFileLoggerFactoryTests : IDisposable
     public void CreateFile_ValidPath_DisposeDoesNotThrow()
     {
         var loggerFactory = _factory.CreateFile(NewTempFilePath());
-        loggerFactory.CreateLogger("SlideGenerationRunner").LogInformation("message");
+        loggerFactory.CreateLogger("SlideGenerationWorkload").LogInformation("message");
 
         var act = loggerFactory.Dispose;
 

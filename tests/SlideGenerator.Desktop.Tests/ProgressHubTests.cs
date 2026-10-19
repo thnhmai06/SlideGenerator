@@ -15,64 +15,65 @@
 using FluentAssertions;
 using SlideGenerator.Desktop.Services.Progress;
 using SlideGenerator.Generator;
-using SlideGenerator.Generator.Workflows.Models;
+using SlideGenerator.Generator.Jobs.Models;
 using SlideGenerator.Generator.Progress;
+using SlideGenerator.Generator.Workflows.Models;
 using Xunit;
 
 namespace SlideGenerator.Desktop.Tests;
 
 /// <summary>
-///     Unit tests for <see cref="ProgressHub" />'s coalescing: workflow snapshots and row progress keep only the
+///     Unit tests for <see cref="ProgressHub" />'s coalescing: workflow snapshots, job snapshots and row progress keep only the
 ///     latest value per key (last write wins), while log lines are never dropped. <c>Drain()</c> is called
 ///     directly rather than waiting on the real 250ms timer tick.
 /// </summary>
 public sealed class ProgressHubTests
 {
-    private static WorkflowSnapshot Workflow(string requestId, int workflowId, int currentIndex)
+    private static JobSnapshot Job(string workflowId, int jobId, int currentIndex)
     {
-        return new WorkflowSnapshot(requestId, workflowId, WorkflowStatus.Running, WorkflowPhase.FillingText, currentIndex,
-            new WorkflowSpecification("wb", "Sheet1", null, null, "ppt", 1, [], [], "out.pptx"), DateTimeOffset.UtcNow);
+        return new JobSnapshot(workflowId, jobId, JobStatus.Running, JobPhase.FillingText, currentIndex,
+            new JobSpecification("wb", "Sheet1", null, null, "ppt", 1, [], [], "out.pptx"), DateTimeOffset.UtcNow);
     }
 
-    private static RowProgress Row(string requestId, int workflowId, int rowIndex, RowStatus status)
+    private static RowProgress Row(string workflowId, int jobId, int rowIndex, RowStatus status)
     {
         return new RowProgress
         {
-            RequestId = requestId, WorkflowId = workflowId, RowIndex = rowIndex, Status = status,
+            WorkflowId = workflowId, JobId = jobId, RowIndex = rowIndex, Status = status,
             Timestamp = DateTimeOffset.UtcNow
         };
     }
 
-    /// <summary>Two snapshots for the same (RequestId, WorkflowId) coalesce into one — the most recent value.</summary>
+    /// <summary>Two snapshots for the same (WorkflowId, JobId) coalesce into one — the most recent value.</summary>
     [Fact]
-    public void Drain_TwoWorkflowSnapshotsSameKey_KeepsOnlyLatest()
+    public void Drain_TwoJobSnapshotsSameKey_KeepsOnlyLatest()
     {
         var eventBus = new GeneratingEventBus();
         using var hub = new ProgressHub(eventBus, new LogNotifier());
 
-        eventBus.Publish(Workflow("req", 0, 1));
-        eventBus.Publish(Workflow("req", 0, 5));
+        eventBus.Publish(Job("req", 0, 1));
+        eventBus.Publish(Job("req", 0, 5));
         hub.Drain();
 
-        hub.Workflows.Should().ContainSingle();
-        hub.Workflows[0].CurrentIndex.Should().Be(5);
+        hub.Jobs.Should().ContainSingle();
+        hub.Jobs[0].CurrentIndex.Should().Be(5);
     }
 
-    /// <summary>Snapshots for different workflows both survive a drain — coalescing is per-key, not global.</summary>
+    /// <summary>Snapshots for different jobs both survive a drain — coalescing is per-key, not global.</summary>
     [Fact]
-    public void Drain_DifferentWorkflowKeys_KeepsBoth()
+    public void Drain_DifferentJobKeys_KeepsBoth()
     {
         var eventBus = new GeneratingEventBus();
         using var hub = new ProgressHub(eventBus, new LogNotifier());
 
-        eventBus.Publish(Workflow("req", 0, 1));
-        eventBus.Publish(Workflow("req", 1, 1));
+        eventBus.Publish(Job("req", 0, 1));
+        eventBus.Publish(Job("req", 1, 1));
         hub.Drain();
 
-        hub.Workflows.Should().HaveCount(2);
+        hub.Jobs.Should().HaveCount(2);
     }
 
-    /// <summary>Row progress coalesces by the finer-grained (RequestId, WorkflowId, RowIndex) key.</summary>
+    /// <summary>Row progress coalesces by the finer-grained (WorkflowId, JobId, RowIndex) key.</summary>
     [Fact]
     public void Drain_TwoRowUpdatesSameRow_KeepsOnlyLatestStatus()
     {
@@ -103,6 +104,22 @@ public sealed class ProgressHubTests
         hub.Logs.Should().Equal(first, second);
     }
 
+    /// <summary>Two snapshots for the same workflow coalesce into one — the most recent lifecycle status.</summary>
+    [Fact]
+    public void Drain_TwoWorkflowSnapshotsSameId_KeepsOnlyLatest()
+    {
+        var eventBus = new GeneratingEventBus();
+        using var hub = new ProgressHub(eventBus, new LogNotifier());
+
+        eventBus.Publish(new WorkflowSnapshot("req", JobStatus.Running, DateTimeOffset.UtcNow));
+        eventBus.Publish(new WorkflowSnapshot("req", JobStatus.Paused, DateTimeOffset.UtcNow));
+        eventBus.Publish(new WorkflowSnapshot("other", JobStatus.Running, DateTimeOffset.UtcNow));
+        hub.Drain();
+
+        hub.Workflows.Should().HaveCount(2);
+        hub.Workflows.Single(w => w.WorkflowId == "req").Status.Should().Be(JobStatus.Paused);
+    }
+
     /// <summary>A drain with nothing published does not add empty/placeholder entries.</summary>
     [Fact]
     public void Drain_NothingPublished_CollectionsStayEmpty()
@@ -112,6 +129,7 @@ public sealed class ProgressHubTests
         hub.Drain();
 
         hub.Workflows.Should().BeEmpty();
+        hub.Jobs.Should().BeEmpty();
         hub.Rows.Should().BeEmpty();
         hub.Logs.Should().BeEmpty();
     }

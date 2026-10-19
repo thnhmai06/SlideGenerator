@@ -220,7 +220,7 @@ public sealed partial class RecipesViewModel : ObservableObject
                 .Where(kv => kv.Value.Request.RecipeId == recipeId)
                 .OrderByDescending(kv => kv.Value.CreatedAt)
                 .Take(5)
-                .Select(kv => new RecentRunViewModel(kv.Key, kv.Value.Request.Name, kv.Value.WorkflowStatus, kv.Value.CreatedAt));
+                .Select(kv => new RecentRunViewModel(kv.Key, kv.Value.Request.Name, kv.Value.JobStatus, kv.Value.CreatedAt));
 
             RecentRuns.Clear();
             foreach (var run in runs) RecentRuns.Add(run);
@@ -248,13 +248,13 @@ public sealed partial class RecipesViewModel : ObservableObject
         Editor = editor;
     }
 
-    private void OnRunStarted(string requestId)
+    private void OnRunStarted(string workflowId)
     {
         // No-op when the run started from a list row (no editor open) — closes the editor when it started
         // from Guided step ④'s "Lưu và chạy" instead, since the Shell is about to navigate to Runs anyway.
         IsEditorOpen = false;
         Editor = null;
-        RunStarted?.Invoke(requestId);
+        RunStarted?.Invoke(workflowId);
     }
 
     private void OnDeleted(RecipeListItemViewModel item)

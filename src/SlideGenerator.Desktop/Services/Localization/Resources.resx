@@ -90,8 +90,8 @@
   <data name="shell.closeTooltip" xml:space="preserve">
     <value>Close</value>
   </data>
-  <data name="shell.activeWorkflowsTitleSuffix" xml:space="preserve">
-    <value> — {0} workflow running</value>
+  <data name="shell.activeJobsTitleSuffix" xml:space="preserve">
+    <value> — {0} job running</value>
   </data>
   <data name="runs.filter.all" xml:space="preserve">
     <value>All</value>
@@ -144,8 +144,8 @@
   <data name="runs.activitySeparator" xml:space="preserve">
     <value>: </value>
   </data>
-  <data name="runs.workflowSeparator" xml:space="preserve">
-    <value> workflow · </value>
+  <data name="runs.jobSeparator" xml:space="preserve">
+    <value> job · </value>
   </data>
   <data name="runs.rowSeparator" xml:space="preserve">
     <value> · row </value>
@@ -300,11 +300,11 @@
   <data name="settings.performance" xml:space="preserve">
     <value>Performance</value>
   </data>
-  <data name="settings.maxConcurrentWorkflows" xml:space="preserve">
-    <value>Max concurrent workflows</value>
+  <data name="settings.maxConcurrentJobs" xml:space="preserve">
+    <value>Max concurrent jobs</value>
   </data>
-  <data name="settings.maxConcurrentWorkflowsHint" xml:space="preserve">
-    <value>Higher values generate faster but use more RAM: each running workflow keeps a workbook/presentation open in memory.</value>
+  <data name="settings.maxConcurrentJobsHint" xml:space="preserve">
+    <value>Higher values generate faster but use more RAM: each running job keeps a workbook/presentation open in memory.</value>
   </data>
   <data name="settings.resetDefaults" xml:space="preserve">
     <value>Restore default</value>
@@ -369,40 +369,40 @@
   <data name="settings.about.updateStatus.failed" xml:space="preserve">
     <value>Update check failed. Try again later.</value>
   </data>
-  <data name="enums.workflowStatus.pending" xml:space="preserve">
+  <data name="enums.jobStatus.pending" xml:space="preserve">
     <value>Pending</value>
   </data>
-  <data name="enums.workflowStatus.running" xml:space="preserve">
+  <data name="enums.jobStatus.running" xml:space="preserve">
     <value>Running</value>
   </data>
-  <data name="enums.workflowStatus.complete" xml:space="preserve">
+  <data name="enums.jobStatus.complete" xml:space="preserve">
     <value>Complete</value>
   </data>
-  <data name="enums.workflowStatus.paused" xml:space="preserve">
+  <data name="enums.jobStatus.paused" xml:space="preserve">
     <value>Paused</value>
   </data>
-  <data name="enums.workflowStatus.cancelled" xml:space="preserve">
+  <data name="enums.jobStatus.cancelled" xml:space="preserve">
     <value>Cancelled</value>
   </data>
-  <data name="enums.workflowStatus.error" xml:space="preserve">
+  <data name="enums.jobStatus.error" xml:space="preserve">
     <value>Error</value>
   </data>
-  <data name="enums.workflowPhase.queued" xml:space="preserve">
+  <data name="enums.jobPhase.queued" xml:space="preserve">
     <value>Queued</value>
   </data>
-  <data name="enums.workflowPhase.creatingOutput" xml:space="preserve">
+  <data name="enums.jobPhase.creatingOutput" xml:space="preserve">
     <value>Creating output</value>
   </data>
-  <data name="enums.workflowPhase.creatingSlides" xml:space="preserve">
+  <data name="enums.jobPhase.creatingSlides" xml:space="preserve">
     <value>Creating slides</value>
   </data>
-  <data name="enums.workflowPhase.fillingText" xml:space="preserve">
+  <data name="enums.jobPhase.fillingText" xml:space="preserve">
     <value>Filling text</value>
   </data>
-  <data name="enums.workflowPhase.fillingImages" xml:space="preserve">
+  <data name="enums.jobPhase.fillingImages" xml:space="preserve">
     <value>Filling images</value>
   </data>
-  <data name="enums.workflowPhase.done" xml:space="preserve">
+  <data name="enums.jobPhase.done" xml:space="preserve">
     <value>Done</value>
   </data>
   <data name="enums.roiMode.anchor" xml:space="preserve">

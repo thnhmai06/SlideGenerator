@@ -24,8 +24,8 @@ namespace SlideGenerator.Workflows.Engine;
 public interface IWorkflowObserver<in TKey, TState>
 {
     /// <summary>
-    ///     A workflow reported progress — including the "starting execution" tick published before a concurrency
-    ///     slot is acquired, which is always <paramref name="durable" /> = <see langword="true" />.
+    ///     A workflow reported progress — including the "starting execution" tick published before the runner
+    ///     starts, which is always <paramref name="durable" /> = <see langword="true" />.
     /// </summary>
     Task OnProgressAsync(TKey key, TState state, bool durable, CancellationToken ct);
 

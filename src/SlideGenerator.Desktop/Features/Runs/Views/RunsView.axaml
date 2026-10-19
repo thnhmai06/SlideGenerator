@@ -4,7 +4,7 @@
              xmlns:models="clr-namespace:SlideGenerator.Desktop.Features.Runs.Models"
              xmlns:conv="clr-namespace:SlideGenerator.Desktop.Converters"
              xmlns:loc="clr-namespace:SlideGenerator.Desktop.Services.Localization"
-             xmlns:workflows="clr-namespace:SlideGenerator.Generator.Workflows.Models;assembly=SlideGenerator.Generator"
+             xmlns:jobs="clr-namespace:SlideGenerator.Generator.Jobs.Models;assembly=SlideGenerator.Generator"
              xmlns:gen="clr-namespace:SlideGenerator.Generator;assembly=SlideGenerator.Generator"
              xmlns:prog="clr-namespace:SlideGenerator.Generator.Progress;assembly=SlideGenerator.Generator"
              x:Class="SlideGenerator.Desktop.Features.Runs.Views.RunsView"
@@ -45,16 +45,16 @@
                             <KeyBinding Gesture="Delete" Command="{Binding SelectedRequest.DeleteCommand}"/>
                         </ListBox.KeyBindings>
                         <ListBox.ItemTemplate>
-                            <DataTemplate x:DataType="vm:RequestRunViewModel">
+                            <DataTemplate x:DataType="vm:WorkflowRunViewModel">
                                 <Border Classes="hairline-row">
                                     <StackPanel Spacing="{StaticResource Space1}">
                                         <TextBlock Classes="body" Text="{Binding Name}" FontWeight="SemiBold"/>
                                         <TextBlock Classes="muted" FontSize="{StaticResource FontSizeSm}">
-                                            <Run Text="{Binding Workflows.Count}"/>
-                                            <Run Text="{loc:Tr runs.workflowSeparator}"/>
+                                            <Run Text="{Binding Jobs.Count}"/>
+                                            <Run Text="{loc:Tr runs.jobSeparator}"/>
                                             <Run>
                                                 <Run.Text>
-                                                    <MultiBinding Converter="{x:Static conv:EnumLocalizedTextConverter.Instance}" ConverterParameter="workflowStatus">
+                                                    <MultiBinding Converter="{x:Static conv:EnumLocalizedTextConverter.Instance}" ConverterParameter="jobStatus">
                                                         <Binding Path="Status"/>
                                                         <Binding Path="Revision" Source="{x:Static loc:LocalizationService.Instance}"/>
                                                     </MultiBinding>
@@ -83,9 +83,9 @@
                 </StackPanel>
 
                 <ScrollViewer Grid.Row="1">
-                    <ItemsControl ItemsSource="{Binding SelectedRequest.Workflows}" Margin="{StaticResource PaddingPanel}">
+                    <ItemsControl ItemsSource="{Binding SelectedRequest.Jobs}" Margin="{StaticResource PaddingPanel}">
                         <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="vm:WorkflowRunViewModel">
+                            <DataTemplate x:DataType="vm:JobRunViewModel">
                                 <Border Classes="hairline-row">
                                     <Grid ColumnDefinitions="80,*,Auto" ColumnSpacing="{StaticResource Space3}">
                                         <ProgressBar Grid.Column="0" Height="4" VerticalAlignment="Center"
@@ -95,7 +95,7 @@
                                             <TextBlock Classes="body">
                                                 <Run>
                                                     <Run.Text>
-                                                        <MultiBinding Converter="{x:Static conv:EnumLocalizedTextConverter.Instance}" ConverterParameter="workflowPhase">
+                                                        <MultiBinding Converter="{x:Static conv:EnumLocalizedTextConverter.Instance}" ConverterParameter="jobPhase">
                                                             <Binding Path="Phase"/>
                                                             <Binding Path="Revision" Source="{x:Static loc:LocalizationService.Instance}"/>
                                                         </MultiBinding>
@@ -123,8 +123,8 @@
                                         </StackPanel>
                                         <TextBlock Grid.Column="2" Classes="muted" VerticalAlignment="Center">
                                             <TextBlock.Text>
-                                                <MultiBinding Converter="{x:Static conv:EnumLocalizedTextConverter.Instance}" ConverterParameter="workflowStatus">
-                                                    <Binding Path="WorkflowStatus"/>
+                                                <MultiBinding Converter="{x:Static conv:EnumLocalizedTextConverter.Instance}" ConverterParameter="jobStatus">
+                                                    <Binding Path="JobStatus"/>
                                                     <Binding Path="Revision" Source="{x:Static loc:LocalizationService.Instance}"/>
                                                 </MultiBinding>
                                             </TextBlock.Text>

@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Generator
- * File: WorkflowSpecificationJson.cs
+ * File: JobSpecificationJson.cs
  *
  * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -15,22 +15,22 @@
 using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using SlideGenerator.Generator.Workflows.Models;
+using SlideGenerator.Generator.Jobs.Models;
 using SlideGenerator.Image.Cropping;
 
 namespace SlideGenerator.Generator.Persistence;
 
 /// <summary>
-///     JSON (de)serialization support for the free-form columns of the <c>Workflows</c> table
+///     JSON (de)serialization support for the free-form columns of the <c>Jobs</c> table
 ///     (<c>UsedColumnsJson</c>/<c>TextInstructionsJson</c>/<c>ImageInstructionsJson</c> — see
-///     <see cref="WorkflowsRepository" />). Module-local duplicate of the equivalent converters used
+///     <see cref="JobsRepository" />). Module-local duplicate of the equivalent converters used
 ///     by <c>SlideGenerator.Recipe</c>/<c>SlideGenerator.Stdio</c> for their own JSON boundaries — kept
 ///     separate rather than shared, since Generator cannot depend on Stdio and this is a small, cheap
 ///     duplication for a DB-storage concern distinct from the IPC wire format.
 /// </summary>
-internal static class WorkflowSpecificationJson
+internal static class JobSpecificationJson
 {
-    /// <summary>Shared options for serializing <see cref="WorkflowSpecification" />'s JSON columns.</summary>
+    /// <summary>Shared options for serializing <see cref="JobSpecification" />'s JSON columns.</summary>
     internal static readonly JsonSerializerOptions Options = Build();
 
     private static JsonSerializerOptions Build()

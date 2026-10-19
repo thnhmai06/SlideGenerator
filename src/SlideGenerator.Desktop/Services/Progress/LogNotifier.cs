@@ -19,7 +19,7 @@ namespace SlideGenerator.Desktop.Services.Progress;
 
 /// <summary>
 ///     A lightweight, in-process event bus for scoped log line notifications. Decouples
-///     <c>WorkflowController</c> (Generator, publisher) from whichever ViewModel subscribes,
+///     <c>LoggingWorkflowRunner</c> (Generator, publisher) from whichever ViewModel subscribes,
 ///     mirroring <see cref="GeneratingEventBus" />'s pattern for <c>IEventBus</c>.
 /// </summary>
 internal sealed class LogNotifier : ILogNotifier

@@ -32,6 +32,7 @@ using SlideGenerator.Desktop.Services.Localization;
 using SlideGenerator.Desktop.Services.Progress;
 using SlideGenerator.Desktop.Services.Theme;
 using SlideGenerator.Generator;
+using SlideGenerator.Generator.Jobs.Models;
 using SlideGenerator.Generator.Workflows.Models;
 using SlideGenerator.Generator.Progress;
 using SlideGenerator.Recipe.Services;
@@ -47,7 +48,7 @@ namespace SlideGenerator.Desktop.Tests;
 ///     <see cref="Window" />, and asserts nothing throws. A <c>{StaticResource}</c> key typo'd or removed from
 ///     <c>Resources/*.axaml</c> that a view still references throws at this point — the same class of
 ///     regression a live smoke run would catch, but automated and fast. Does not assert on rendered pixels or
-///     specific bound values — that's each ViewModel's own unit tests' workflow (see
+///     specific bound values — that's each ViewModel's own unit tests' job (see
 ///     <see cref="RecipesViewModelTests" />/<see cref="SettingsViewModelTests" />/etc.).
 ///     <para>
 ///         Uses <see cref="HeadlessUnitTestSession" /> directly instead of the <c>[AvaloniaFact]</c>
@@ -91,6 +92,7 @@ public sealed class ViewConstructionTests
         {
             var progressHub = Substitute.For<IProgressHub>();
             progressHub.Workflows.Returns(new ObservableCollection<WorkflowSnapshot>());
+            progressHub.Jobs.Returns(new ObservableCollection<JobSnapshot>());
             progressHub.Rows.Returns(new ObservableCollection<RowProgress>());
             progressHub.Logs.Returns(new ObservableCollection<LogEntry>());
             var service = Substitute.For<IService>();

@@ -16,7 +16,7 @@ namespace SlideGenerator.Desktop.Features.Runs.Models;
 
 /// <summary>
 ///     Chip filter over the one Runs list — <c>ListActiveAsync</c>/<c>ListCompletedAsync</c> already return
-///     the identical <c>Summary</c> shape, differing only by aggregate <c>WorkflowStatus</c>, so "active" and
+///     the identical <c>Summary</c> shape, differing only by aggregate <c>JobStatus</c>, so "active" and
 ///     "completed" are filters on one list, not separate pages.
 /// </summary>
 public enum RunStatusFilter

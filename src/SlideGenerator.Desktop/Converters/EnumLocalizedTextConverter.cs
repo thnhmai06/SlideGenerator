@@ -21,7 +21,7 @@ namespace SlideGenerator.Desktop.Converters;
 
 /// <summary>
 ///     Localizes an enum value via <c>enums.{ConverterParameter}.{camelCasedMemberName}</c> resource keys (e.g.
-///     <c>WorkflowStatus.Running</c> with parameter <c>"workflowStatus"</c> → <c>enums.workflowStatus.running</c>). Takes a
+///     <c>JobStatus.Running</c> with parameter <c>"jobStatus"</c> → <c>enums.jobStatus.running</c>). Takes a
 ///     <see cref="Avalonia.Data.MultiBinding" /> of (the enum value, <see cref="ILocalizationService.Revision" />)
 ///     rather than a plain <see cref="IValueConverter" /> — the same live-refresh requirement <see cref="TrExtension" />
 ///     solves by binding to <see cref="ILocalizationService.Revision" />: the enum value itself does not change when

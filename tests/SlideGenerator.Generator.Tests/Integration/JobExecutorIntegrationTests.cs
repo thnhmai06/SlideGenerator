@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Generator.Tests
- * File: SlideGenerationRunnerIntegrationTests.cs
+ * File: JobExecutorIntegrationTests.cs
  *
  * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -14,6 +14,7 @@
 
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using SlideGenerator.Cloud;
@@ -23,14 +24,13 @@ using SlideGenerator.Document.Presentations.Identifiers;
 using SlideGenerator.Document.Template;
 using SlideGenerator.Document.Workbooks;
 using SlideGenerator.Document.Workbooks.Identifiers;
-using SlideGenerator.Generator.Workflows.Models;
-using SlideGenerator.Generator.Workflows.Runners;
+using SlideGenerator.Generator.Jobs;
+using SlideGenerator.Generator.Jobs.Models;
 using SlideGenerator.Generator.Progress;
 using SlideGenerator.Image;
 using SlideGenerator.Image.Cropping;
 using SlideGenerator.Image.FaceDetection;
 using SlideGenerator.Image.Loading;
-using SlideGenerator.Workflows.Engine;
 using SlideGenerator.Recipe.Models;
 using SlideGenerator.Settings.Mutable;
 using Xunit;
@@ -38,7 +38,7 @@ using Xunit;
 namespace SlideGenerator.Generator.Tests.Integration;
 
 /// <summary>
-///     Runs the real 4-phase <see cref="SlideGenerationRunner" /> pipeline end to end against the
+///     Runs the real 4-phase <see cref="JobExecutor" /> pipeline end to end against the
 ///     <c>Data.xlsx</c> / <c>Template.pptx</c> fixtures — real Syncfusion workbook/presentation I/O, no
 ///     mocked domain logic. Per AGENTS.md's "What NOT to unit test", the phase bodies require a Syncfusion
 ///     license and real files, so this belongs here rather than in <c>Unit/</c>.
@@ -46,14 +46,14 @@ namespace SlideGenerator.Generator.Tests.Integration;
 /// <remarks>
 ///     Requires <c>SYNCFUSION_LICENSE_KEY</c> or a populated <c>.env</c> file — an unlicensed/trial
 ///     Syncfusion registration stamps a <c>"SyncfusionLicense"</c>-named watermark shape onto slide 1 on
-///     every <c>output.Save()</c> call, which (since this runner saves multiple times per phase)
-///     eventually crashes <c>Shapes.ToDictionary(...)</c> in <see cref="SlideGenerationRunner" /> with a
+///     every <c>output.Save()</c> call, which (since this job saves multiple times per phase)
+///     eventually crashes <c>Shapes.ToDictionary(...)</c> in <see cref="JobExecutor" /> with a
 ///     duplicate-key <see cref="ArgumentException" />. <c>SlideGenerator.Document.csproj</c> pins the
 ///     Syncfusion package versions rather than floating <c>"*"</c> for exactly this reason — verify the
 ///     pinned version still validates before bumping it.
 /// </remarks>
 [Trait("Category", "Integration")]
-public sealed class SlideGenerationRunnerIntegrationTests : IDisposable
+public sealed class JobExecutorIntegrationTests : IDisposable
 {
     private static readonly string WorkbookPath =
         Path.GetFullPath(Path.Combine("fixtures", "data", "Data.xlsx"));
@@ -67,9 +67,9 @@ public sealed class SlideGenerationRunnerIntegrationTests : IDisposable
     private readonly string _tempDir;
 
     /// <summary>Prepares a scratch output directory for the generated presentation.</summary>
-    public SlideGenerationRunnerIntegrationTests()
+    public JobExecutorIntegrationTests()
     {
-        _tempDir = Path.Combine(Path.GetTempPath(), $"slidegen-runner-{Guid.NewGuid():N}");
+        _tempDir = Path.Combine(Path.GetTempPath(), $"slidegen-job-{Guid.NewGuid():N}");
         Directory.CreateDirectory(_tempDir);
     }
 
@@ -84,17 +84,17 @@ public sealed class SlideGenerationRunnerIntegrationTests : IDisposable
     ///     of <c>Data.xlsx</c>, mapped onto <c>Template.pptx</c>'s <c>{{Provider}}</c>/<c>{{Type}}</c>/
     ///     <c>{{ShouldDownload}}</c>/<c>{{Url}}</c> placeholders (all nested inside PowerPoint groups) and
     ///     its grouped <c>Picture 7</c> image shape (filled from a local fallback image, so no
-    ///     network/OpenCV involved). Asserts the workflow reaches <see cref="WorkflowStatus.Complete" /> and the
+    ///     network/OpenCV involved). Asserts the job reaches <see cref="JobStatus.Complete" /> and the
     ///     output <c>.pptx</c> genuinely contains composed text and a real (non-degenerate) cropped image.
     /// </summary>
     /// <remarks>
     ///     Skips when <c>faces/single/f_0.jpg</c> hasn't been downloaded yet (it is not committed; the Image
     ///     tests' <c>FaceDatasetFixture</c> downloads it into <c>tests/fixtures/faces</c>), so the build can
     ///     succeed before any download has happened. Also skips when <c>SYNCFUSION_LICENSE_KEY</c> is unset —
-    ///     unlicensed Syncfusion stamps a watermark shape that crashes the runner, so the test cannot run
+    ///     unlicensed Syncfusion stamps a watermark shape that crashes the job executor, so the test cannot run
     ///     meaningfully (CI sets the env var to <c>'empty'</c> when the secret is absent).
     /// </remarks>
-    [Fact(DisplayName = "INTEGRATION: full 4-phase workflow generation against real fixtures")]
+    [Fact(DisplayName = "INTEGRATION: full 4-phase job generation against real fixtures")]
     public async Task RunAsync_RealFixtures_ProducesCompletedOutputWithComposedTextAndImage()
     {
         if (!File.Exists(FallbackImagePath))
@@ -112,7 +112,7 @@ public sealed class SlideGenerationRunnerIntegrationTests : IDisposable
         services.AddSingleton(Substitute.For<IFaceDetector>());
         await using var provider = services.BuildServiceProvider();
 
-        var runner = new SlideGenerationRunner(
+        var executor = new JobExecutor(
             provider.GetRequiredService<IWorkbookOpener>(),
             provider.GetRequiredService<IPresentationOpener>(),
             provider.GetRequiredService<TextComposer>(),
@@ -122,10 +122,10 @@ public sealed class SlideGenerationRunnerIntegrationTests : IDisposable
             Substitute.For<IHttpClientFactory>(),
             FakeSettingProvider(),
             Substitute.For<IEventBus>(),
-            NullLogger<SlideGenerationRunner>.Instance);
+            NullLogger<JobExecutor>.Instance);
 
         var outputPath = Path.Combine(_tempDir, "output.pptx");
-        var spec = new WorkflowSpecification(
+        var spec = new JobSpecification(
             WorkbookPath,
             "Data",
             null,
@@ -146,13 +146,13 @@ public sealed class SlideGenerationRunnerIntegrationTests : IDisposable
                     FallbackImagePath)
             ],
             outputPath);
-        var initial = new WorkflowSnapshot("req-1", 0, WorkflowStatus.Pending, WorkflowPhase.CreatingOutput, 0, spec,
+        var initial = new JobSnapshot("req-1", 0, JobStatus.Pending, JobPhase.CreatingOutput, 0, spec,
             DateTimeOffset.UtcNow);
 
-        var result = await runner.RunAsync(initial, new FakeWorkflowContext(), TestContext.Current.CancellationToken);
+        var result = await executor.RunAsync(initial, new FakeJobContext(), TestContext.Current.CancellationToken);
 
-        result.WorkflowStatus.Should().Be(WorkflowStatus.Complete);
-        result.Phase.Should().Be(WorkflowPhase.Done);
+        result.JobStatus.Should().Be(JobStatus.Complete);
+        result.Phase.Should().Be(JobPhase.Done);
         result.CurrentIndex.Should().Be(3);
         File.Exists(outputPath).Should().BeTrue();
 
@@ -181,12 +181,14 @@ public sealed class SlideGenerationRunnerIntegrationTests : IDisposable
         return provider;
     }
 
-    /// <summary>Minimal <see cref="IWorkflowContext{TState}" /> — never resuming, never paused, records nothing.</summary>
-    private sealed class FakeWorkflowContext : IWorkflowContext<WorkflowSnapshot>
+    /// <summary>Minimal <see cref="IJobContext" /> — never resuming, never paused, records nothing.</summary>
+    private sealed class FakeJobContext : IJobContext
     {
         public bool IsResume => false;
 
-        public Task ReportAsync(WorkflowSnapshot state, bool durable = false, CancellationToken ct = default)
+        public ILogger? Logger => null;
+
+        public Task ReportAsync(JobSnapshot state, bool durable = false, CancellationToken ct = default)
         {
             return Task.CompletedTask;
         }

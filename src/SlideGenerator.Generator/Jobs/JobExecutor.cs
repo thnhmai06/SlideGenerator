@@ -3,7 +3,7 @@
  *
  * Solution: SlideGenerator
  * Project: SlideGenerator.Generator
- * File: SlideGenerationRunner.cs
+ * File: JobExecutor.cs
  *
  * This file is part of this solution.
  * You can find the full source code here: https://github.com/thnhmai06/SlideGenerator.
@@ -23,26 +23,43 @@ using SlideGenerator.Document.Template;
 using SlideGenerator.Document.Workbooks;
 using SlideGenerator.Document.Workbooks.Components;
 using SlideGenerator.Document.Workbooks.Identifiers;
-using SlideGenerator.Generator.Workflows.Models;
+using SlideGenerator.Generator.Jobs.Models;
 using SlideGenerator.Generator.Progress;
 using SlideGenerator.Image.Cropping;
 using SlideGenerator.Image.Loading;
-using SlideGenerator.Workflows.Engine;
 using SlideGenerator.Recipe.Models;
 using SlideGenerator.Settings.Mutable;
 using SlideGenerator.Utilities;
 using Math = System.Math;
 
-namespace SlideGenerator.Generator.Workflows.Runners;
+namespace SlideGenerator.Generator.Jobs;
 
 /// <summary>
-///     The 4-phase slide-generation workflow (create/open output → create slides → fill text → fill images), as
-///     an <see cref="IWorkflowRunner{TState}" />. Knows nothing about concurrency, pause/resume checkpointing
-///     beyond what <see cref="IWorkflowContext{TState}" /> hands it, or persistence beyond
-///     <see cref="IWorkflowContext{TState}.ReportAsync" /> — that is <c>SlideGenerator.Workflows</c>'s concern. Ported
-///     from the former <c>WorkflowController.Phases.cs</c>.
+///     What a <see cref="JobExecutor" /> sees of the workflow running it: resume flag, a per-workflow logger,
+///     progress reporting for the job's own <see cref="JobSnapshot" />, and the cooperative pause checkpoint.
 /// </summary>
-internal sealed class SlideGenerationRunner(
+internal interface IJobContext
+{
+    /// <summary><see langword="true" /> when the owning workflow is being resumed after a crash.</summary>
+    bool IsResume { get; }
+
+    /// <summary>The logger scoped to the owning workflow's log file, or <see langword="null" /> to use the default.</summary>
+    ILogger? Logger { get; }
+
+    /// <summary>Persists/publishes the job's latest state; <paramref name="durable" /> flushes it immediately.</summary>
+    Task ReportAsync(JobSnapshot state, bool durable = false, CancellationToken ct = default);
+
+    /// <summary>Blocks while the owning workflow is paused; returns immediately otherwise.</summary>
+    Task CheckpointAsync(CancellationToken ct);
+}
+
+/// <summary>
+///     The 4-phase slide-generation job (create/open output → create slides → fill text → fill images) for one
+///     worksheet/presentation pair. Knows nothing about concurrency, pause/resume beyond what
+///     <see cref="IJobContext" /> hands it, or persistence beyond <see cref="IJobContext.ReportAsync" /> — the
+///     owning <c>SlideGenerationWorkflow</c> handles those. Ported from the former <c>JobRunner.Phases.cs</c>.
+/// </summary>
+internal sealed class JobExecutor(
     IWorkbookOpener workbookOpener,
     IPresentationOpener presentationOpener,
     TextComposer textComposer,
@@ -52,17 +69,17 @@ internal sealed class SlideGenerationRunner(
     IHttpClientFactory httpClientFactory,
     ISettingProvider settingProvider,
     IEventBus eventBus,
-    ILogger<SlideGenerationRunner> logger) : IWorkflowRunner<WorkflowSnapshot>
+    ILogger<JobExecutor> logger)
 {
-    /// <inheritdoc />
-    public async Task<WorkflowSnapshot> RunAsync(WorkflowSnapshot initial, IWorkflowContext<WorkflowSnapshot> context, CancellationToken ct)
+    /// <summary>Runs the job to completion, or until <paramref name="ct" /> is cancelled.</summary>
+    public async Task<JobSnapshot> RunAsync(JobSnapshot initial, IJobContext context, CancellationToken ct)
     {
-        var workflowLogger = context is IScopedLoggerContext scoped ? scoped.Logger : logger;
-        var requestId = initial.RequestId;
+        var jobLogger = context.Logger ?? logger;
         var workflowId = initial.WorkflowId;
+        var jobId = initial.JobId;
         var spec = initial.Specification;
 
-        if (!context.IsResume) PreflightCleanup.Run(spec.OutputPath, workflowLogger);
+        if (!context.IsResume) PreflightCleanup.Run(spec.OutputPath, jobLogger);
 
         using var workbook = await workbookOpener.OpenWorkbookReadOnlyAsync(
             new WorkbookIdentifier(spec.WorkbookPath), ct).ConfigureAwait(false);
@@ -76,13 +93,13 @@ internal sealed class SlideGenerationRunner(
 
         // Phase A — create/open output.
         var templateId = new PresentationIdentifier(spec.TemplatePresentationPath);
-        var output = initial.Phase == WorkflowPhase.CreatingOutput && !File.Exists(spec.OutputPath)
-            ? await CreateOutputAsync(spec, templateId, workflowLogger, ct).ConfigureAwait(false)
-            : await OpenOutputAsync(new PresentationIdentifier(spec.OutputPath), workflowLogger, ct).ConfigureAwait(false);
+        var output = initial.Phase == JobPhase.CreatingOutput && !File.Exists(spec.OutputPath)
+            ? await CreateOutputAsync(spec, templateId, jobLogger, ct).ConfigureAwait(false)
+            : await OpenOutputAsync(new PresentationIdentifier(spec.OutputPath), jobLogger, ct).ConfigureAwait(false);
         try
         {
             var (templatePresentation, templateSlide) = await LoadTemplateSlideAsync(
-                    templateId, spec.TemplateSlideIndex, workflowLogger, ct)
+                    templateId, spec.TemplateSlideIndex, jobLogger, ct)
                 .ConfigureAwait(false);
             // Kept alive for the rest of this method: Syncfusion's ISlide.Clone() doesn't fully detach from
             // its source presentation (still resolves layout/master through it), so AddSlide()-ing a clone
@@ -97,39 +114,39 @@ internal sealed class SlideGenerationRunner(
             var phase = initial.Phase;
             var currentIndex = initial.CurrentIndex;
 
-            if (phase == WorkflowPhase.CreatingOutput)
+            if (phase == JobPhase.CreatingOutput)
             {
-                (phase, currentIndex) = (WorkflowPhase.CreatingSlides, output.SlidesCount);
-                await AdvancePhaseAsync(context, requestId, workflowId, spec, phase, currentIndex, dataRows.Count, ct).ConfigureAwait(false);
+                (phase, currentIndex) = (JobPhase.CreatingSlides, output.SlidesCount);
+                await AdvancePhaseAsync(context, workflowId, jobId, spec, phase, currentIndex, dataRows.Count, ct).ConfigureAwait(false);
             }
 
-            if (phase == WorkflowPhase.CreatingSlides)
+            if (phase == JobPhase.CreatingSlides)
             {
-                await RunCreatingSlidesAsync(requestId, workflowId, spec, output, templateSlide, context, dataRows, ct)
+                await RunCreatingSlidesAsync(workflowId, jobId, spec, output, templateSlide, context, dataRows, ct)
                     .ConfigureAwait(false);
-                (phase, currentIndex) = (WorkflowPhase.FillingText, 0);
-                await AdvancePhaseAsync(context, requestId, workflowId, spec, phase, currentIndex, dataRows.Count, ct).ConfigureAwait(false);
+                (phase, currentIndex) = (JobPhase.FillingText, 0);
+                await AdvancePhaseAsync(context, workflowId, jobId, spec, phase, currentIndex, dataRows.Count, ct).ConfigureAwait(false);
             }
 
-            if (phase == WorkflowPhase.FillingText)
+            if (phase == JobPhase.FillingText)
             {
-                await RunFillingTextAsync(requestId, workflowId, spec, worksheet, headerToIndex, output, currentIndex,
+                await RunFillingTextAsync(workflowId, jobId, spec, worksheet, headerToIndex, output, currentIndex,
                     dataRows, context, ct).ConfigureAwait(false);
-                (phase, currentIndex) = (WorkflowPhase.FillingImages, 0);
-                await AdvancePhaseAsync(context, requestId, workflowId, spec, phase, currentIndex, dataRows.Count, ct).ConfigureAwait(false);
+                (phase, currentIndex) = (JobPhase.FillingImages, 0);
+                await AdvancePhaseAsync(context, workflowId, jobId, spec, phase, currentIndex, dataRows.Count, ct).ConfigureAwait(false);
             }
 
-            if (phase == WorkflowPhase.FillingImages)
+            if (phase == JobPhase.FillingImages)
             {
-                var inspected = await InspectSourcesAsync(spec, worksheet, headerToIndex, dataRows, workflowLogger, ct)
+                var inspected = await InspectSourcesAsync(spec, worksheet, headerToIndex, dataRows, jobLogger, ct)
                     .ConfigureAwait(false);
-                await RunFillingImagesAsync(requestId, workflowId, spec, worksheet, headerToIndex,
-                        templateShapesByIdentifier, output, currentIndex, dataRows, inspected, context, workflowLogger, ct)
+                await RunFillingImagesAsync(workflowId, jobId, spec, worksheet, headerToIndex,
+                        templateShapesByIdentifier, output, currentIndex, dataRows, inspected, context, jobLogger, ct)
                     .ConfigureAwait(false);
             }
 
-            workflowLogger.LogInformation("Workflow complete: {OutputPath}", spec.OutputPath);
-            return new WorkflowSnapshot(requestId, workflowId, WorkflowStatus.Complete, WorkflowPhase.Done, dataRows.Count, spec,
+            jobLogger.LogInformation("Job complete: {OutputPath}", spec.OutputPath);
+            return new JobSnapshot(workflowId, jobId, JobStatus.Complete, JobPhase.Done, dataRows.Count, spec,
                 DateTimeOffset.UtcNow, dataRows.Count);
         }
         finally
@@ -139,10 +156,10 @@ internal sealed class SlideGenerationRunner(
     }
 
     private static async Task AdvancePhaseAsync(
-        IWorkflowContext<WorkflowSnapshot> context, string requestId, int workflowId, WorkflowSpecification spec, WorkflowPhase phase,
+        IJobContext context, string workflowId, int jobId, JobSpecification spec, JobPhase phase,
         int currentIndex, int totalRows, CancellationToken ct)
     {
-        var record = new WorkflowSnapshot(requestId, workflowId, WorkflowStatus.Running, phase, currentIndex, spec,
+        var record = new JobSnapshot(workflowId, jobId, JobStatus.Running, phase, currentIndex, spec,
             DateTimeOffset.UtcNow, totalRows);
         await context.ReportAsync(record, true, ct).ConfigureAwait(false);
     }
@@ -150,8 +167,8 @@ internal sealed class SlideGenerationRunner(
     #region Phase B — slides
 
     private static async Task RunCreatingSlidesAsync(
-        string requestId, int workflowId, WorkflowSpecification spec, IPresentation output, ISlide templateSlide,
-        IWorkflowContext<WorkflowSnapshot> context, IReadOnlyList<int> dataRows, CancellationToken ct)
+        string workflowId, int jobId, JobSpecification spec, IPresentation output, ISlide templateSlide,
+        IJobContext context, IReadOnlyList<int> dataRows, CancellationToken ct)
     {
         for (var i = output.SlidesCount; i < dataRows.Count; i++)
         {
@@ -162,7 +179,7 @@ internal sealed class SlideGenerationRunner(
             output.Save();
 
             await context.ReportAsync(
-                new WorkflowSnapshot(requestId, workflowId, WorkflowStatus.Running, WorkflowPhase.CreatingSlides, i + 1, spec,
+                new JobSnapshot(workflowId, jobId, JobStatus.Running, JobPhase.CreatingSlides, i + 1, spec,
                     DateTimeOffset.UtcNow, dataRows.Count),
                 false, ct).ConfigureAwait(false);
         }
@@ -172,24 +189,24 @@ internal sealed class SlideGenerationRunner(
 
     #region Phase A — output
 
-    private async Task<IPresentation> OpenOutputAsync(PresentationIdentifier id, ILogger workflowLogger,
+    private async Task<IPresentation> OpenOutputAsync(PresentationIdentifier id, ILogger jobLogger,
         CancellationToken ct)
     {
-        workflowLogger.LogInformation("Opening output: {OutputPath}", id.PresentationPath);
+        jobLogger.LogInformation("Opening output: {OutputPath}", id.PresentationPath);
         var presentation = await presentationOpener.OpenPresentationAsync(id, ct).ConfigureAwait(false);
         if (presentation.IsWriteProtected) presentation.RemoveWriteProtection();
         return presentation;
     }
 
     private async Task<IPresentation> CreateOutputAsync(
-        WorkflowSpecification spec, PresentationIdentifier templateId, ILogger workflowLogger, CancellationToken ct)
+        JobSpecification spec, PresentationIdentifier templateId, ILogger jobLogger, CancellationToken ct)
     {
-        workflowLogger.LogInformation("Creating output: {OutputPath}", spec.OutputPath);
+        jobLogger.LogInformation("Creating output: {OutputPath}", spec.OutputPath);
         var dir = Path.GetDirectoryName(spec.OutputPath);
         if (dir != null) Directory.CreateDirectory(dir);
         File.Copy(templateId.PresentationPath, spec.OutputPath, true);
 
-        var presentation = await OpenOutputAsync(new PresentationIdentifier(spec.OutputPath), workflowLogger, ct)
+        var presentation = await OpenOutputAsync(new PresentationIdentifier(spec.OutputPath), jobLogger, ct)
             .ConfigureAwait(false);
         for (var i = presentation.SlidesCount - 1; i >= 0; i--) presentation.RemoveSlideAt(i);
         return presentation;
@@ -202,9 +219,9 @@ internal sealed class SlideGenerationRunner(
     ///     <see cref="RunAsync" /> for why.
     /// </summary>
     private async Task<(IReadOnlyPresentation Template, ISlide? Slide)> LoadTemplateSlideAsync(
-        PresentationIdentifier templateId, int slideIndex, ILogger workflowLogger, CancellationToken ct)
+        PresentationIdentifier templateId, int slideIndex, ILogger jobLogger, CancellationToken ct)
     {
-        workflowLogger.LogInformation("Loading template slide: {Ppt} #{Index}", templateId.PresentationPath, slideIndex);
+        jobLogger.LogInformation("Loading template slide: {Ppt} #{Index}", templateId.PresentationPath, slideIndex);
         var template = await presentationOpener.OpenPresentationReadOnlyAsync(templateId, ct)
             .ConfigureAwait(false);
         var index = slideIndex - 1;
@@ -217,9 +234,9 @@ internal sealed class SlideGenerationRunner(
     #region Phase C — text
 
     private async Task RunFillingTextAsync(
-        string requestId, int workflowId, WorkflowSpecification spec, IReadOnlyWorksheet worksheet,
+        string workflowId, int jobId, JobSpecification spec, IReadOnlyWorksheet worksheet,
         IReadOnlyDictionary<ColumnIdentifier, int> headerToIndex, IPresentation output, int startIndex,
-        IReadOnlyList<int> dataRows, IWorkflowContext<WorkflowSnapshot> context, CancellationToken ct)
+        IReadOnlyList<int> dataRows, IJobContext context, CancellationToken ct)
     {
         for (var i = startIndex; i < dataRows.Count; i++)
         {
@@ -228,7 +245,7 @@ internal sealed class SlideGenerationRunner(
 
             var dataRow = dataRows[i];
             using var rowScope = LogContext.PushProperty("RowIndex", dataRow + 1);
-            ReportRow(requestId, workflowId, dataRow + 1, RowStatus.Processing);
+            ReportRow(workflowId, jobId, dataRow + 1, RowStatus.Processing);
 
             var rowValues = ReadRowValues(worksheet, headerToIndex, dataRow);
             var textValues = BuildRowTextValues(rowValues, spec.TextInstructions);
@@ -236,9 +253,9 @@ internal sealed class SlideGenerationRunner(
             foreach (var shape in slide.Shapes) textComposer.Compose(shape, textValues);
             output.Save();
 
-            ReportRow(requestId, workflowId, dataRow + 1, RowStatus.Done);
+            ReportRow(workflowId, jobId, dataRow + 1, RowStatus.Done);
             await context.ReportAsync(
-                new WorkflowSnapshot(requestId, workflowId, WorkflowStatus.Running, WorkflowPhase.FillingText, i + 1, spec,
+                new JobSnapshot(workflowId, jobId, JobStatus.Running, JobPhase.FillingText, i + 1, spec,
                     DateTimeOffset.UtcNow, dataRows.Count),
                 false, ct).ConfigureAwait(false);
         }
@@ -268,8 +285,8 @@ internal sealed class SlideGenerationRunner(
     #region Phase D — images
 
     private async Task<IReadOnlyDictionary<string, ContentInfo?>> InspectSourcesAsync(
-        WorkflowSpecification spec, IReadOnlyWorksheet worksheet, IReadOnlyDictionary<ColumnIdentifier, int> headerToIndex,
-        IReadOnlyList<int> dataRows, ILogger workflowLogger, CancellationToken ct)
+        JobSpecification spec, IReadOnlyWorksheet worksheet, IReadOnlyDictionary<ColumnIdentifier, int> headerToIndex,
+        IReadOnlyList<int> dataRows, ILogger jobLogger, CancellationToken ct)
     {
         var result = new Dictionary<string, ContentInfo?>();
         if (spec.ImageInstructions.Count == 0) return result;
@@ -289,15 +306,15 @@ internal sealed class SlideGenerationRunner(
         foreach (var source in sources)
         {
             ct.ThrowIfCancellationRequested();
-            result[source] = await InspectAsync(source, workflowLogger, ct).ConfigureAwait(false);
+            result[source] = await InspectAsync(source, jobLogger, ct).ConfigureAwait(false);
         }
 
         return result;
     }
 
-    private async Task<ContentInfo?> InspectAsync(string source, ILogger workflowLogger, CancellationToken ct)
+    private async Task<ContentInfo?> InspectAsync(string source, ILogger jobLogger, CancellationToken ct)
     {
-        workflowLogger.LogInformation("Resolving URL: {Source}", source);
+        jobLogger.LogInformation("Resolving URL: {Source}", source);
         var urlStr = source.Contains("://") ? source : "https://" + source;
         if (!Uri.TryCreate(urlStr, UriKind.Absolute, out var parsedUri)) return null;
 
@@ -311,13 +328,13 @@ internal sealed class SlideGenerationRunner(
     }
 
     private async Task RunFillingImagesAsync(
-        string requestId, int workflowId, WorkflowSpecification spec, IReadOnlyWorksheet worksheet,
+        string workflowId, int jobId, JobSpecification spec, IReadOnlyWorksheet worksheet,
         IReadOnlyDictionary<ColumnIdentifier, int> headerToIndex,
         IReadOnlyDictionary<ShapeIdentifier, IShape> templateShapesByIdentifier, IPresentation output,
         int startIndex, IReadOnlyList<int> dataRows, IReadOnlyDictionary<string, ContentInfo?> inspected,
-        IWorkflowContext<WorkflowSnapshot> context, ILogger workflowLogger, CancellationToken ct)
+        IJobContext context, ILogger jobLogger, CancellationToken ct)
     {
-        var tempDir = WorkflowTempFolder.GetPath(requestId, workflowId);
+        var tempDir = JobTempFolder.GetPath(workflowId, jobId);
 
         for (var i = startIndex; i < dataRows.Count; i++)
         {
@@ -326,7 +343,7 @@ internal sealed class SlideGenerationRunner(
 
             var dataRow = dataRows[i];
             using var rowScope = LogContext.PushProperty("RowIndex", dataRow + 1);
-            ReportRow(requestId, workflowId, dataRow + 1, RowStatus.Processing);
+            ReportRow(workflowId, jobId, dataRow + 1, RowStatus.Processing);
 
             var rowValues = ReadRowValues(worksheet, headerToIndex, dataRow);
             var slide = output.Slides.ElementAt(i);
@@ -348,17 +365,17 @@ internal sealed class SlideGenerationRunner(
 
                     inspected.TryGetValue(source, out var contentInfo);
                     var imageData = await ResolveShapeImageAsync(source, instruction, targetSize, contentInfo,
-                        tempDir, requestId, workflowId, dataRow + 1, workflowLogger, ct).ConfigureAwait(false);
+                        tempDir, workflowId, jobId, dataRow + 1, jobLogger, ct).ConfigureAwait(false);
                     if (imageData != null) targetShape.ImageData = imageData;
                 }
             }
 
-            ReportRow(requestId, workflowId, dataRow + 1, RowStatus.Processing, RowStage.SavingOutput);
+            ReportRow(workflowId, jobId, dataRow + 1, RowStatus.Processing, RowStage.SavingOutput);
             output.Save();
-            ReportRow(requestId, workflowId, dataRow + 1, RowStatus.Done);
+            ReportRow(workflowId, jobId, dataRow + 1, RowStatus.Done);
 
             await context.ReportAsync(
-                new WorkflowSnapshot(requestId, workflowId, WorkflowStatus.Running, WorkflowPhase.FillingImages, i + 1, spec,
+                new JobSnapshot(workflowId, jobId, JobStatus.Running, JobPhase.FillingImages, i + 1, spec,
                     DateTimeOffset.UtcNow, dataRows.Count),
                 false, ct).ConfigureAwait(false);
         }
@@ -366,42 +383,42 @@ internal sealed class SlideGenerationRunner(
 
     private async Task<byte[]?> ResolveShapeImageAsync(
         string source, ImageInstruction instruction, Size targetSize, ContentInfo? inspected, string tempDir,
-        string requestId, int workflowId, int rowIndex, ILogger workflowLogger, CancellationToken ct)
+        string workflowId, int jobId, int rowIndex, ILogger jobLogger, CancellationToken ct)
     {
         if (!string.IsNullOrWhiteSpace(source))
         {
             if (File.Exists(source))
-                return await EditImageFromPathAsync(source, targetSize, instruction.ImageEditInstruction, workflowLogger)
+                return await EditImageFromPathAsync(source, targetSize, instruction.ImageEditInstruction, jobLogger)
                     .ConfigureAwait(false);
 
             if (inspected != null)
             {
-                var bytes = await EnsureDownloadedAsync(inspected, tempDir, requestId, workflowId, rowIndex, workflowLogger, ct)
+                var bytes = await EnsureDownloadedAsync(inspected, tempDir, workflowId, jobId, rowIndex, jobLogger, ct)
                     .ConfigureAwait(false);
                 if (bytes != null)
                 {
                     var edited = await EditImageFromBytesAsync(bytes, targetSize, instruction.ImageEditInstruction,
-                        workflowLogger).ConfigureAwait(false);
+                        jobLogger).ConfigureAwait(false);
                     if (edited != null) return edited;
                 }
             }
         }
 
         if (instruction.FallbackImagePath is { } fallback && File.Exists(fallback))
-            return await EditImageFromPathAsync(fallback, targetSize, instruction.ImageEditInstruction, workflowLogger)
+            return await EditImageFromPathAsync(fallback, targetSize, instruction.ImageEditInstruction, jobLogger)
                 .ConfigureAwait(false);
 
         return null;
     }
 
     /// <summary>
-    ///     Ensures the per-workflow download cache at <c>{tempDir}/{hash(resolvedUri)}{ext}</c> exists,
-    ///     downloading it if not already present. Ponytail: no file-lock/wait-for-unlock dance — each workflow
-    ///     has its own temp folder (see <see cref="WorkflowTempFolder" />) so no two workflows contend on the same
-    ///     file; a within-workflow re-download race is harmless (same bytes, last write wins).
+    ///     Ensures the per-job download cache at <c>{tempDir}/{hash(resolvedUri)}{ext}</c> exists,
+    ///     downloading it if not already present. Ponytail: no file-lock/wait-for-unlock dance — each job
+    ///     has its own temp folder (see <see cref="JobTempFolder" />) so no two jobs contend on the same
+    ///     file; a within-job re-download race is harmless (same bytes, last write wins).
     /// </summary>
     private async Task<byte[]?> EnsureDownloadedAsync(
-        ContentInfo inspected, string tempDir, string requestId, int workflowId, int rowIndex, ILogger workflowLogger,
+        ContentInfo inspected, string tempDir, string workflowId, int jobId, int rowIndex, ILogger jobLogger,
         CancellationToken ct)
     {
         Directory.CreateDirectory(tempDir);
@@ -410,11 +427,11 @@ internal sealed class SlideGenerationRunner(
 
         if (Utilities.ExceedsMaxDownloadBytes(inspected, settingProvider.Current.Network.MaxDownloadBytes))
         {
-            workflowLogger.LogWarning("Skipped download exceeding MaxDownloadBytes: {Uri}", inspected.Uri);
+            jobLogger.LogWarning("Skipped download exceeding MaxDownloadBytes: {Uri}", inspected.Uri);
             return null;
         }
 
-        ReportRow(requestId, workflowId, rowIndex, RowStatus.Processing, RowStage.Downloading, inspected.Uri.ToString());
+        ReportRow(workflowId, jobId, rowIndex, RowStatus.Processing, RowStage.Downloading, inspected.Uri.ToString());
         using var httpClient = httpClientFactory.CreateHttpClientWithSetting(settingProvider);
         var bytes = await Utilities.ExecuteWithBackoffAsync(
             settingProvider.Current.Network.Retry.MaxRetries,
@@ -427,22 +444,22 @@ internal sealed class SlideGenerationRunner(
     }
 
     private async Task<byte[]?> EditImageFromPathAsync(
-        string path, Size targetSize, ImageEditInstruction editInstruction, ILogger workflowLogger)
+        string path, Size targetSize, ImageEditInstruction editInstruction, ILogger jobLogger)
     {
         using var image = imageLoader.Open(path);
-        return await CropToPngAsync(image, targetSize, editInstruction, path, workflowLogger).ConfigureAwait(false);
+        return await CropToPngAsync(image, targetSize, editInstruction, path, jobLogger).ConfigureAwait(false);
     }
 
     private async Task<byte[]?> EditImageFromBytesAsync(
-        byte[] data, Size targetSize, ImageEditInstruction editInstruction, ILogger workflowLogger)
+        byte[] data, Size targetSize, ImageEditInstruction editInstruction, ILogger jobLogger)
     {
         using var image = imageLoader.Open(data);
-        return await CropToPngAsync(image, targetSize, editInstruction, "<in-memory>", workflowLogger)
+        return await CropToPngAsync(image, targetSize, editInstruction, "<in-memory>", jobLogger)
             .ConfigureAwait(false);
     }
 
     private async Task<byte[]?> CropToPngAsync(
-        IImage image, Size targetSize, ImageEditInstruction editInstruction, string sourceLabel, ILogger workflowLogger)
+        IImage image, Size targetSize, ImageEditInstruction editInstruction, string sourceLabel, ILogger jobLogger)
     {
         try
         {
@@ -456,7 +473,7 @@ internal sealed class SlideGenerationRunner(
         }
         catch (Exception ex)
         {
-            workflowLogger.LogWarning(ex, "Image edit failed: {Source}", sourceLabel);
+            jobLogger.LogWarning(ex, "Image edit failed: {Source}", sourceLabel);
             return null;
         }
     }
@@ -472,13 +489,13 @@ internal sealed class SlideGenerationRunner(
         return headerToIndex.ToDictionary(kv => kv.Key, kv => row[kv.Value]);
     }
 
-    private void ReportRow(string requestId, int workflowId, int rowIndex, RowStatus status,
+    private void ReportRow(string workflowId, int jobId, int rowIndex, RowStatus status,
         RowStage stage = RowStage.None, string? note = null)
     {
         eventBus.Publish(new RowProgress
         {
-            RequestId = requestId,
             WorkflowId = workflowId,
+            JobId = jobId,
             RowIndex = rowIndex,
             Status = status,
             Stage = stage,

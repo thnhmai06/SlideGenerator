@@ -9,25 +9,27 @@ CREATE TABLE IF NOT EXISTS Recipes
     UpdatedTimestamp TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 );
 
-CREATE TABLE IF NOT EXISTS Requests
+CREATE TABLE IF NOT EXISTS Workflows
 (
-    RequestId       TEXT PRIMARY KEY,
+    WorkflowId      TEXT PRIMARY KEY,
     RecipeId        INTEGER NOT NULL,
     Name            TEXT    NOT NULL,
     OutputType      TEXT    NOT NULL,
     SaveFolder      TEXT    NOT NULL,
     AllowLocalPaths INTEGER NOT NULL,
     LogPath         TEXT    NOT NULL,
-    CreatedAt       TEXT    NOT NULL
+    CreatedAt       TEXT    NOT NULL,
+    Status          TEXT    NOT NULL DEFAULT 'Pending'
 );
 
 CREATE TABLE IF NOT EXISTS Jobs
 (
-    RequestId                TEXT    NOT NULL,
+    WorkflowId               TEXT    NOT NULL,
     JobId                    INTEGER NOT NULL,
     Status                   TEXT    NOT NULL,
     Phase                    TEXT    NOT NULL DEFAULT 'CreatingOutput',
     CurrentIndex             INTEGER NOT NULL DEFAULT 0,
+    TotalRows                INTEGER NULL,
 
     WorkbookPath             TEXT    NOT NULL,
     WorksheetName            TEXT    NOT NULL,
@@ -45,5 +47,5 @@ CREATE TABLE IF NOT EXISTS Jobs
 
     OutputPath               TEXT    NOT NULL,
     Timestamp                TEXT    NOT NULL,
-    PRIMARY KEY (RequestId, JobId)
+    PRIMARY KEY (WorkflowId, JobId)
 );

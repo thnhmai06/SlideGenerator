@@ -12,71 +12,176 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using SlideGenerator.Desktop.Services.Dialogs;
+using SlideGenerator.Desktop.Services.Localization;
 using SlideGenerator.Generator;
-using SlideGenerator.Generator.Workflows.Models;
+using SlideGenerator.Generator.Jobs.Models;
 using SlideGenerator.Generator.Progress;
+using SlideGenerator.Generator.Workflows.Models;
 
 namespace SlideGenerator.Desktop.Features.Runs.ViewModels;
 
 /// <summary>
-///     One read-only workflow row within a request's detail panel. <c>IService</c> exposes control only
-///     at the request level (<c>Stop/Pause/Resume(requestId)</c>) — there is no per-workflow command here by
-///     design, matching what the backend actually allows.
+///     One request row + its detail panel. Owns its own Pause/Resume/Stop/Delete commands (all request-scoped
+///     — <c>IService</c> has no per-job control) so each row is self-sufficient rather than routing actions
+///     back through the parent list ViewModel.
 /// </summary>
 public sealed partial class WorkflowRunViewModel : ObservableObject
 {
-    /// <summary>Gets the workflow's ordinal position within its request.</summary>
-    public int WorkflowId { get; }
+    private readonly IDialogService _dialogService;
+    private readonly IService _service;
 
-    [ObservableProperty] private WorkflowStatus _workflowStatus;
-    [ObservableProperty] private WorkflowPhase _phase;
-    [ObservableProperty] private int _currentIndex;
-    [ObservableProperty] private int? _totalRows;
-    [ObservableProperty] private string _outputPath;
+    /// <summary>Gets the id grouping every job of this request.</summary>
+    public string WorkflowId { get; }
+
+    /// <summary>Gets the recipe id this request was generated from — <see langword="null" /> for requests predating recipes.</summary>
+    public int RecipeId { get; }
+
+    [ObservableProperty] private string _name;
+    [ObservableProperty] private JobStatus _status;
+    [ObservableProperty] private WorkflowPhase? _phase;
+    [ObservableProperty] private DateTimeOffset _createdAt;
     [ObservableProperty] private DateTimeOffset? _completedAt;
+    [ObservableProperty] private ObservableCollection<LogEntry> _logs = [];
+    [ObservableProperty] private bool _isLoadingLogs;
 
-    /// <summary>Gets the current row's stage, for the live activity line — <see cref="RowStage.None" /> hides
-    ///     it (no image-editing sub-stage in progress right now). Never persisted — live-only, sourced from
-    ///     <c>IProgressHub.Rows</c> (plan §5.4: "dòng hoạt động live").</summary>
-    [ObservableProperty] private RowStage _currentActivityStage;
+    // Pause acts on the whole workflow without touching job rows, so it is tracked separately from the jobs.
+    private bool _isWorkflowPaused;
 
-    /// <summary>Gets the current row's free-text note (e.g. the URL being downloaded) — <see langword="null" />
-    ///     until the first live row update arrives.</summary>
-    [ObservableProperty] private string? _currentActivityNote;
+    /// <summary>Gets every job of this request, keyed by job id order.</summary>
+    public ObservableCollection<JobRunViewModel> Jobs { get; } = [];
 
-    /// <summary>Constructs a row from an initial <see cref="WorkflowSummary" /> fetched at load time.</summary>
-    public WorkflowRunViewModel(int workflowId, WorkflowSummary summary)
+    /// <summary>Constructs a row from an initial <see cref="Summary" /> fetched at load time.</summary>
+    public WorkflowRunViewModel(string workflowId, Summary summary, IService service, IDialogService dialogService)
     {
         WorkflowId = workflowId;
-        _workflowStatus = summary.WorkflowStatus;
+        _service = service;
+        _dialogService = dialogService;
+        RecipeId = summary.Request.RecipeId;
+        _name = summary.Request.Name;
+        _status = summary.JobStatus;
+        _isWorkflowPaused = summary.JobStatus == JobStatus.Paused;
         _phase = summary.Phase;
-        _currentIndex = summary.CurrentIndex;
-        _totalRows = summary.TotalRows;
-        _outputPath = summary.OutputPath;
+        _createdAt = summary.CreatedAt;
         _completedAt = summary.CompletedAt;
+        foreach (var (jobId, jobSummary) in summary.Jobs) Jobs.Add(new JobRunViewModel(jobId, jobSummary));
     }
 
-    /// <summary>
-    ///     Patches this row from a live <see cref="WorkflowSnapshot" /> (see <c>IProgressHub</c>) — called on
-    ///     every drain tick instead of re-fetching the whole request from the backend.
-    /// </summary>
-    public void ApplyLiveUpdate(WorkflowSnapshot snapshot)
+    /// <summary>Patches this row's job at <paramref name="snapshot" />'s <c>JobId</c> from a live update.</summary>
+    public void ApplyLiveJobUpdate(JobSnapshot snapshot)
     {
-        WorkflowStatus = snapshot.WorkflowStatus;
-        Phase = snapshot.Phase;
-        CurrentIndex = snapshot.CurrentIndex;
-        TotalRows = snapshot.TotalRows;
-        OutputPath = snapshot.OutputPath;
-        if (snapshot.WorkflowStatus is WorkflowStatus.Complete or WorkflowStatus.Cancelled or WorkflowStatus.Error)
-            CompletedAt = snapshot.Timestamp;
+        var job = Jobs.FirstOrDefault(j => j.JobId == snapshot.JobId);
+        job?.ApplyLiveUpdate(snapshot);
+        Status = DeriveDisplayStatus();
+        if (Status is JobStatus.Complete or JobStatus.Cancelled) CompletedAt ??= snapshot.Timestamp;
     }
 
-    /// <summary>Patches the live activity line from a <see cref="RowProgress" /> event (see <c>IProgressHub.Rows</c>) —
-    ///     only the most recent row matters here, so this always overwrites rather than accumulating.</summary>
+    /// <summary>Patches this row's job at <paramref name="row" />'s <c>JobId</c> with a live row-activity update.</summary>
+    public void ApplyLiveWorkflowUpdate(WorkflowSnapshot snapshot)
+    {
+        _isWorkflowPaused = snapshot.Status == JobStatus.Paused;
+        Status = DeriveDisplayStatus();
+    }
+
     public void ApplyLiveRowUpdate(RowProgress row)
     {
-        CurrentActivityStage = row.Stage;
-        CurrentActivityNote = row.Note;
+        Jobs.FirstOrDefault(j => j.JobId == row.JobId)?.ApplyLiveRowUpdate(row);
+    }
+
+    private JobStatus DeriveDisplayStatus()
+    {
+        if (Jobs.Count == 0) return JobStatus.Complete;
+        if (Jobs.Any(j => j.JobStatus is JobStatus.Running or JobStatus.Pending))
+            return _isWorkflowPaused ? JobStatus.Paused : JobStatus.Running;
+        if (Jobs.Any(j => j.JobStatus == JobStatus.Paused)) return JobStatus.Paused;
+        if (Jobs.All(j => j.JobStatus == JobStatus.Cancelled)) return JobStatus.Cancelled;
+        return JobStatus.Complete;
+    }
+
+    /// <summary>Loads this request's log entries (never fetched at list time — see <c>includeLogs</c>).</summary>
+    public async Task LoadLogsAsync()
+    {
+        if (IsLoadingLogs || Logs.Count > 0) return;
+        IsLoadingLogs = true;
+        try
+        {
+            var summaries = Status is JobStatus.Running or JobStatus.Paused
+                ? await _service.ListActiveAsync().ConfigureAwait(true)
+                : await _service.ListCompletedAsync().ConfigureAwait(true);
+            if (summaries.TryGetValue(WorkflowId, out var summary))
+                Logs = new ObservableCollection<LogEntry>(summary.Logs.Concat(summary.Jobs.Values.SelectMany(j => j.Logs))
+                    .OrderBy(e => e.Timestamp));
+        }
+        finally
+        {
+            IsLoadingLogs = false;
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanPause))]
+    private async Task PauseAsync()
+    {
+        await _service.PauseAsync(WorkflowId).ConfigureAwait(true);
+    }
+
+    private bool CanPause()
+    {
+        return Status == JobStatus.Running;
+    }
+
+    [RelayCommand(CanExecute = nameof(CanResume))]
+    private async Task ResumeAsync()
+    {
+        await _service.ResumeAsync(WorkflowId).ConfigureAwait(true);
+    }
+
+    private bool CanResume()
+    {
+        return Status == JobStatus.Paused;
+    }
+
+    [RelayCommand(CanExecute = nameof(CanStop))]
+    private async Task StopAsync()
+    {
+        await _service.StopAsync(WorkflowId).ConfigureAwait(true);
+    }
+
+    private bool CanStop()
+    {
+        return Status is JobStatus.Running or JobStatus.Paused or JobStatus.Pending;
+    }
+
+    [RelayCommand]
+    private async Task DeleteAsync()
+    {
+        var confirmed = await _dialogService
+            .ConfirmAsync(LocalizationService.Instance["runs.delete.title"],
+                string.Format(LocalizationService.Instance["runs.delete.message"], Name),
+                LocalizationService.Instance["runs.delete.confirm"], LocalizationService.Instance["runs.delete.cancel"],
+                danger: true)
+            .ConfigureAwait(true);
+        if (confirmed) await _service.DeleteAsync(WorkflowId).ConfigureAwait(true);
+    }
+
+    [RelayCommand]
+    private void OpenFolder()
+    {
+        var job = Jobs.FirstOrDefault();
+        if (job is null) return;
+        var folder = Path.GetDirectoryName(job.OutputPath);
+        if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder)) return;
+
+        var startInfo = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? new ProcessStartInfo("explorer.exe", $"\"{folder}\"")
+            : RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
+                ? new ProcessStartInfo("open", $"\"{folder}\"")
+                : new ProcessStartInfo("xdg-open", $"\"{folder}\"");
+        startInfo.UseShellExecute = false;
+        Process.Start(startInfo);
     }
 }
