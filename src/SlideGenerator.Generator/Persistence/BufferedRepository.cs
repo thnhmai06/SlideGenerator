@@ -12,7 +12,6 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
 
 namespace SlideGenerator.Generator.Persistence;
@@ -23,15 +22,19 @@ namespace SlideGenerator.Generator.Persistence;
 ///     calls <see cref="UpsertBatchAsync" /> once per tick, then raises <see cref="Flushed" /> with the
 ///     batch. Extracted from the pattern used by the old Stdio-side progress coalescer so any table that
 ///     often changes (here, just <c>Jobs</c>) can reuse the same buffering without re-deriving it.
+///     Flushes are serialized, so batches reach storage in the order they were drained; a failed flush keeps
+///     its values for the next one.
 /// </summary>
 internal abstract class BufferedRepository<TKey, TValue> : IAsyncDisposable where TKey : notnull
 {
     private const uint FlushIntervalSeconds = 1;
     private readonly CancellationTokenSource _cts = new();
+    private readonly SemaphoreSlim _flushLock = new(1, 1);
+    private readonly Lock _gate = new();
 
     private readonly ILogger _logger;
     private readonly Task _loop;
-    private ConcurrentDictionary<TKey, TValue> _dirty = new();
+    private Dictionary<TKey, TValue> _dirty = [];
 
     protected BufferedRepository(ILogger logger)
     {
@@ -62,12 +65,16 @@ internal abstract class BufferedRepository<TKey, TValue> : IAsyncDisposable wher
         }
 
         _cts.Dispose();
+        _flushLock.Dispose();
     }
 
     /// <summary>Marks <paramref name="value" /> dirty under <paramref name="key" /> — last write wins.</summary>
     public void Enqueue(TKey key, TValue value)
     {
-        _dirty[key] = value;
+        lock (_gate)
+        {
+            _dirty[key] = value;
+        }
     }
 
     /// <summary>Rose after each successful flush with the batch that was just persisted.</summary>
@@ -79,12 +86,39 @@ internal abstract class BufferedRepository<TKey, TValue> : IAsyncDisposable wher
     /// <summary>Atomically drains every dirty value and persists it immediately, bypassing the ~1s tick.</summary>
     public async Task FlushAsync(CancellationToken ct = default)
     {
-        var old = Interlocked.Exchange(ref _dirty, new ConcurrentDictionary<TKey, TValue>());
-        if (old.IsEmpty) return;
+        await _flushLock.WaitAsync(ct).ConfigureAwait(false);
+        try
+        {
+            Dictionary<TKey, TValue> drained;
+            lock (_gate)
+            {
+                if (_dirty.Count == 0) return;
+                drained = _dirty;
+                _dirty = [];
+            }
 
-        var batch = old.Values.ToList();
-        await UpsertBatchAsync(batch, ct).ConfigureAwait(false);
-        Flushed?.Invoke(batch);
+            var batch = drained.Values.ToList();
+            try
+            {
+                await UpsertBatchAsync(batch, ct).ConfigureAwait(false);
+            }
+            catch
+            {
+                // Keep the drained values for the next flush; a value enqueued meanwhile is newer and wins.
+                lock (_gate)
+                {
+                    foreach (var (key, value) in drained) _dirty.TryAdd(key, value);
+                }
+
+                throw;
+            }
+
+            Flushed?.Invoke(batch);
+        }
+        finally
+        {
+            _flushLock.Release();
+        }
     }
 
     private async Task RunFlushLoopAsync(CancellationToken ct)

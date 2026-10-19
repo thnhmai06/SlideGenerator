@@ -325,6 +325,23 @@ internal sealed class WorkflowTestHarness : IAsyncDisposable
                     $"({j.JobId},{j.JobStatus},{j.Phase},idx={j.CurrentIndex})")));
     }
 
+    /// <summary>
+    ///     Sets every job row of the workflow to <paramref name="status" /> straight in SQLite, bypassing
+    ///     <see cref="IJobsRepository" /> whose upsert never rewinds a terminal row — used to reproduce the rows a
+    ///     crash leaves behind.
+    /// </summary>
+    public async Task ForceJobStatusAsync(string workflowId, JobStatus status, CancellationToken ct = default)
+    {
+        var connectionString = new SqliteConnectionStringBuilder { DataSource = DbPath }.ConnectionString;
+        await using var conn = new SqliteConnection(connectionString);
+        await conn.OpenAsync(ct).ConfigureAwait(false);
+        await using var command = conn.CreateCommand();
+        command.CommandText = "UPDATE Jobs SET Status = $status WHERE WorkflowId = $id";
+        command.Parameters.AddWithValue("$status", status.ToString());
+        command.Parameters.AddWithValue("$id", workflowId);
+        await command.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+    }
+
     /// <summary>Cancels the engine and waits for it to unwind (a graceful shutdown — never the crash scenario).</summary>
     public Task ShutdownAsync() => Controller.ShutdownAsync();
 

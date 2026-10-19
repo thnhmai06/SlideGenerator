@@ -30,7 +30,11 @@ namespace SlideGenerator.Generator.Persistence;
 /// </summary>
 public interface IJobsRepository
 {
-    /// <summary>Marks <paramref name="snapshot" /> dirty for the next flush — last write for a given key wins.</summary>
+    /// <summary>
+    ///     Marks <paramref name="snapshot" /> dirty for the next flush — last write for a given key wins.
+    ///     A job row that already reached a terminal status (Complete, Cancelled, Error) is never overwritten by a
+    ///     later snapshot.
+    /// </summary>
     void Enqueue(JobSnapshot snapshot);
 
     /// <summary>Flushes every dirty record to storage immediately, bypassing the ~1s tick.</summary>
@@ -139,6 +143,7 @@ internal sealed class JobsRepository(SqliteConnectionStringBuilder builder, ILog
             ON CONFLICT(WorkflowId, JobId) DO UPDATE SET
                 Status = excluded.Status, Phase = excluded.Phase, CurrentIndex = excluded.CurrentIndex,
                 OutputPath = excluded.OutputPath, Timestamp = excluded.Timestamp, TotalRows = excluded.TotalRows
+            WHERE Jobs.Status NOT IN ('Complete', 'Cancelled', 'Error')
             """,
             batch.Select(ToRow), tx, cancellationToken: ct)).ConfigureAwait(false);
         await tx.CommitAsync(ct).ConfigureAwait(false);

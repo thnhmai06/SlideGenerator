@@ -25,6 +25,8 @@ namespace SlideGenerator.Generator.Tests.Unit;
 /// </summary>
 public sealed class BufferedRepositoryTests
 {
+    private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(10);
+
     /// <summary>Verifies that an explicit <c>FlushAsync</c> with nothing enqueued does not call <c>UpsertBatchAsync</c>.</summary>
     [Fact]
     public async Task FlushAsync_NothingEnqueued_DoesNotUpsert()
@@ -91,14 +93,131 @@ public sealed class BufferedRepositoryTests
         repo.UpsertedBatches.Should().ContainSingle();
     }
 
+    /// <summary>
+    ///     Verifies that concurrent flushes are serialized: while the first upsert is blocked, the second flush
+    ///     cannot start its own upsert, and once released the batches arrive in the order they were drained.
+    /// </summary>
+    [Fact]
+    public async Task FlushAsync_TwoConcurrentCalls_UpsertsAreSerializedInDrainOrder()
+    {
+        await using var repo = new FakeRepository();
+        var firstUpsertEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseFirstUpsert = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var upsertCount = 0;
+        repo.OnUpsert = async _ =>
+        {
+            if (Interlocked.Increment(ref upsertCount) != 1) return;
+            firstUpsertEntered.TrySetResult();
+            await releaseFirstUpsert.Task.ConfigureAwait(false);
+        };
+
+        repo.Enqueue("a", 1);
+        var firstFlush = repo.FlushAsync(TestContext.Current.CancellationToken);
+        await firstUpsertEntered.Task.WaitAsync(Timeout, TestContext.Current.CancellationToken);
+
+        repo.Enqueue("a", 2);
+        var secondFlush = repo.FlushAsync(TestContext.Current.CancellationToken);
+
+        repo.UpsertedBatches.Should().ContainSingle("the second flush must wait for the first to finish");
+        repo.ConcurrentUpsertsMax.Should().Be(1);
+
+        releaseFirstUpsert.TrySetResult();
+        await Task.WhenAll(firstFlush, secondFlush).WaitAsync(Timeout, TestContext.Current.CancellationToken);
+
+        repo.UpsertedBatches.Should().HaveCount(2);
+        repo.UpsertedBatches[0].Should().Equal(1);
+        repo.UpsertedBatches[1].Should().Equal(2);
+    }
+
+    /// <summary>
+    ///     Verifies that a failed upsert keeps its drained values for the next flush instead of dropping the batch,
+    ///     and that <c>Flushed</c> is not raised for the failed attempt.
+    /// </summary>
+    [Fact]
+    public async Task FlushAsync_UpsertFails_KeepsTheValuesForTheNextFlush()
+    {
+        await using var repo = new FakeRepository { FailNext = true };
+        var flushedCount = 0;
+        repo.Flushed += _ => flushedCount++;
+        repo.Enqueue("a", 1);
+
+        var failingFlush = () => repo.FlushAsync(TestContext.Current.CancellationToken);
+        await failingFlush.Should().ThrowAsync<InvalidOperationException>();
+
+        flushedCount.Should().Be(0);
+
+        await repo.FlushAsync(TestContext.Current.CancellationToken);
+
+        repo.UpsertedBatches[^1].Should().Equal(1);
+        flushedCount.Should().Be(1);
+    }
+
+    /// <summary>
+    ///     Verifies that when a newer value is enqueued while a failing upsert is in flight, restoring the drained
+    ///     value does not overwrite the newer one — the next flush persists exactly the newer value.
+    /// </summary>
+    [Fact]
+    public async Task FlushAsync_UpsertFailsWhileNewerValueEnqueued_NewerValueWins()
+    {
+        await using var repo = new FakeRepository { FailNext = true };
+        repo.OnUpsert = _ =>
+        {
+            repo.Enqueue("a", 2);
+            return Task.CompletedTask;
+        };
+        repo.Enqueue("a", 1);
+
+        var failingFlush = () => repo.FlushAsync(TestContext.Current.CancellationToken);
+        await failingFlush.Should().ThrowAsync<InvalidOperationException>();
+
+        repo.OnUpsert = null;
+        await repo.FlushAsync(TestContext.Current.CancellationToken);
+
+        repo.UpsertedBatches[^1].Should().Equal(2);
+    }
+
     private sealed class FakeRepository() : BufferedRepository<string, int>(NullLogger.Instance)
     {
+        private readonly Lock _lock = new();
+        private int _concurrentUpserts;
+
         public readonly List<IReadOnlyList<int>> UpsertedBatches = [];
 
-        protected override Task UpsertBatchAsync(IReadOnlyList<int> batch, CancellationToken ct)
+        /// <summary>Highest number of <c>UpsertBatchAsync</c> calls that ever ran at the same time.</summary>
+        public int ConcurrentUpsertsMax { get; private set; }
+
+        /// <summary>Optional hook awaited inside <c>UpsertBatchAsync</c>, after the batch is recorded.</summary>
+        public Func<IReadOnlyList<int>, Task>? OnUpsert { get; set; }
+
+        /// <summary>When <see langword="true" />, the next upsert throws <see cref="InvalidOperationException" />.</summary>
+        public bool FailNext { get; set; }
+
+        protected override async Task UpsertBatchAsync(IReadOnlyList<int> batch, CancellationToken ct)
         {
-            UpsertedBatches.Add(batch);
-            return Task.CompletedTask;
+            var concurrent = Interlocked.Increment(ref _concurrentUpserts);
+            try
+            {
+                lock (_lock)
+                {
+                    UpsertedBatches.Add(batch);
+                    ConcurrentUpsertsMax = Math.Max(ConcurrentUpsertsMax, concurrent);
+                }
+
+                if (OnUpsert is not null)
+                {
+                    await OnUpsert(batch).ConfigureAwait(false);
+                }
+
+                if (FailNext)
+                {
+                    FailNext = false;
+                    throw new InvalidOperationException("Simulated upsert failure.");
+                }
+            }
+            finally
+            {
+                Interlocked.Decrement(ref _concurrentUpserts);
+            }
         }
     }
 }

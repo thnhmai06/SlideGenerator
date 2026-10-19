@@ -170,4 +170,48 @@ public sealed class JobsRepositoryTests : IDisposable
 
         jobs[0].TotalRows.Should().BeNull();
     }
+
+    /// <summary>
+    ///     Verifies that a late Running snapshot cannot overwrite a row that already reached a terminal status —
+    ///     a buffered flush that lands after the job finished must not rewind it.
+    /// </summary>
+    [Theory]
+    [InlineData(JobStatus.Complete)]
+    [InlineData(JobStatus.Cancelled)]
+    [InlineData(JobStatus.Error)]
+    public async Task Enqueue_RunningSnapshotAfterTerminalRow_LeavesTheTerminalRowUnchanged(JobStatus terminal)
+    {
+        _repo.Enqueue(new JobSnapshot("req8", 0, terminal, JobPhase.Done, 3, Spec(), DateTimeOffset.UtcNow));
+        await _repo.FlushAsync(TestContext.Current.CancellationToken);
+
+        _repo.Enqueue(new JobSnapshot("req8", 0, JobStatus.Running, JobPhase.FillingText, 5, Spec(),
+            DateTimeOffset.UtcNow));
+        await _repo.FlushAsync(TestContext.Current.CancellationToken);
+
+        var jobs = await _repo.GetByWorkflowIdAsync("req8", TestContext.Current.CancellationToken);
+
+        jobs.Should().ContainSingle();
+        jobs[0].JobStatus.Should().Be(terminal);
+        jobs[0].CurrentIndex.Should().Be(3);
+    }
+
+    /// <summary>Verifies that a non-terminal row still updates normally, including to a terminal status.</summary>
+    [Fact]
+    public async Task Enqueue_RunningThenComplete_UpdatesTheRow()
+    {
+        _repo.Enqueue(new JobSnapshot("req9", 0, JobStatus.Running, JobPhase.FillingText, 2, Spec(),
+            DateTimeOffset.UtcNow));
+        await _repo.FlushAsync(TestContext.Current.CancellationToken);
+
+        _repo.Enqueue(new JobSnapshot("req9", 0, JobStatus.Complete, JobPhase.Done, 4, Spec(),
+            DateTimeOffset.UtcNow));
+        await _repo.FlushAsync(TestContext.Current.CancellationToken);
+
+        var jobs = await _repo.GetByWorkflowIdAsync("req9", TestContext.Current.CancellationToken);
+
+        jobs.Should().ContainSingle();
+        jobs[0].JobStatus.Should().Be(JobStatus.Complete);
+        jobs[0].Phase.Should().Be(JobPhase.Done);
+        jobs[0].CurrentIndex.Should().Be(4);
+    }
 }

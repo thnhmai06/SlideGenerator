@@ -107,19 +107,13 @@ public sealed class WorkflowResumeIntegrationTests
             await first.Observer.WaitTerminalAsync(workflowId)
                 .WaitAsync(TestTimeout, TestContext.Current.CancellationToken);
 
-            // Rewind the workflow row and every job row back to Running. FlushAsync now is the final
-            // write the row will see before the new engine takes over.
+            // Rewind the workflow row and every job row back to Running. The job rows must be forced straight in
+            // SQLite: the buffered repository's upsert never rewinds a row that already reached a terminal status,
+            // which is exactly why a real crash leaves them behind instead of a later snapshot rewriting them.
             await first.Workflows.UpdateStatusAsync(workflowId, JobStatus.Running,
                 TestContext.Current.CancellationToken);
 
-            var midJobsForRewind = await first.Jobs.GetByWorkflowIdAsync(workflowId,
-                TestContext.Current.CancellationToken);
-            foreach (var j in midJobsForRewind)
-            {
-                first.Jobs.Enqueue(j with { JobStatus = JobStatus.Running });
-            }
-
-            await first.Jobs.FlushAsync(TestContext.Current.CancellationToken);
+            await first.ForceJobStatusAsync(workflowId, JobStatus.Running, TestContext.Current.CancellationToken);
 
             // Cleanly shut the first engine down so its background task exits.
             await first.ShutdownAsync();
