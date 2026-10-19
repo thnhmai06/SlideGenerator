@@ -40,3 +40,32 @@ Plan điều phối: `C:\Users\haith\.claude\plans\c-c-c-file-plans-twinkly-sedg
 | 5.3a `ImageCache` theo workflow | xong | (xem git log) | minimax-m3 (spec do Claude thiết kế) | Generator 153 → 162 (+14 ImageCacheTests, −5 ExceedsMaxDownloadBytes) | Một `ImageCache` mỗi workflow dùng chung cho mọi job (`ImageCacheFactory`, thay `JobTempFolder`): inspect theo nhu cầu (dedupe `Lazy<Task>` theo URL), tải về `.tmp` rồi kiểm tra bằng `IImageLoader.TryGetInfo` mới `File.Move`, tải song song có giới hạn, `Prefetch` 3 hàng tiếp theo, `Dispose` huỷ + xoá thư mục khi `RunAsync` unwind (pause không unwind nên giữ cache), `WorkflowController.InitializeAsync` dọn thư mục mồ côi (giữ workflow còn dang dở). Orchestrator sửa khi review: bỏ `Dispose` của `_cts`/`_downloadSlots` (prefetch nền có thể còn chạy → `ObjectDisposedException`), bỏ cast thừa, bỏ `using` thừa. Gate: Generator 162/0, Desktop 138/0, `ImageCacheTests`+Integration (24) ×13 lần đều xanh. |
 | 5.3b dọn Cloud | xong | (xem git log) | orchestrator tự làm (cơ học, xoá code) | Cloud 63 → 58 (−5 test của API đã xoá), Generator 162, Desktop 138 | Xoá `ContentInfo.Extension` + `ExtractExtension`, hai overload `ICloudClient.DownloadAsync` (không còn caller sau 5.3a); chỉ còn `DownloadToFileAsync` có giới hạn byte. |
 | 6 dọn dẹp + tài liệu | xong | (xem git log) | orchestrator tự làm (tài liệu) | — | `AGENTS.md` cập nhật theo code hiện tại (`CreatingOutput → Generating`, file `.partial`, mốc lưu, `RequestStatus`, `ImageSourcePolicy`, `ImageCache`, `Images/` trong gói recipe, Preview/Create validate, Delete chờ thoát + xoá log, buffered upsert không hạ trạng thái); "Known gaps" chỉ còn các điểm thật sự chưa làm; Invariants thêm 3 mục; `Taskfile.yml` `run` trỏ `Desktop`; bỏ comment cũ nhắc `Stdio`; `plans/backend-remediation.md` thêm khối trạng thái + commit theo mục. |
+
+## Tóm tắt buổi sáng (2026-10-20)
+
+**Đã xong (backend, giai đoạn A → 6):** mọi mục 1.1 → 5.3b + 6 đã commit trên `develop` (không push). Một commit mỗi mục,
+cổng 7 bước (đọc diff từng dòng, Rider lint, build, test, commit có ledger).
+
+**Số test (Debug, đều xanh):** 555 → 730. Cloud 48 → 58, Desktop 118 → 138, Document 75 → 80, Generator 64 → 162,
+Image 142, Logging 15 → 17, Recipe 26 → 62, Settings 7, Utilities 53, Workflows 7 → 11. `dotnet build SlideGenerator.slnx -c Release`
+sạch (0 lỗi, 33 cảnh báo có sẵn).
+
+**Lưu ý Release:** `Document.Tests` chạy ở cấu hình Release thì 80/80 lỗi `TypeLoadException` — target `ObfuscateAssembly`
+(`SlideGenerator.Document.csproj`, chỉ chạy khi `Configuration == Release`) đổi tên kiểu nên test không tìm thấy kiểu. Có từ
+trước, không do đợt này; test chuẩn chạy ở Debug (như CI cũ). Không sửa.
+
+**Không làm / để lại (xem "Known gaps" trong `AGENTS.md`):**
+- 2.1b — workflow lỗi ngoài phạm vi job chưa đánh dấu các job dở là `Error`; `Workflows.Status` vẫn dùng `JobStatus`.
+- Đổi `Logs/Workflows/` → `Logs/Requests/` — chưa được duyệt, giữ nguyên.
+- Redesign Guided UX của Recipe Editor (Phụ lục B của plan) — để phiên sau.
+- Test `Desktop.Tests` headless có flaky ~1/20 lần (race khởi tạo session Avalonia, ví dụ `ViewConstructionTests.AboutView_...`,
+  `ThemeServiceTests...ReducedMotion...`), có từ trước, đã ghi ở trên.
+
+**Quyết định chờ duyệt:** xem cột ghi chú từng dòng ở trên (đáng chú ý: 2.1 không làm `WorkflowLifecycle`/"parked"; 3.3a
+kiểm tra tên sheet/chỉ số slide ở lúc job bắt đầu; 4.3 `FallbackImagePath` lộ cwd người xuất vào JSON; không có integration
+test cho `AllowLocalPaths` với đường dẫn cục bộ trong ô dữ liệu).
+
+**Người dùng kiểm tra trên GUI:** (1) mở app với `Data.db` mới, tạo một run nhiều sheet; (2) Pause / Resume / Stop từ Runs;
+(3) chip trạng thái "Failed" mới; (4) Run dialog hiện lỗi đầu vào (file/sheet/slide/phạm vi hàng) và cảnh báo ghi đè file;
+(5) xoá run thì file `.log` biến mất; (6) export/import `.recipe` có ảnh dự phòng (ảnh nằm trong gói, nhập xong dùng được);
+(7) ảnh URL: tải về, cắt, ô chữ thường không gây request mạng; (8) đóng app giữa chừng rồi mở lại để xem crash-resume.
